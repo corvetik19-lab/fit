@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#14614b" />
+    <title>fit offline</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --background: #f5f4ee;
+        --surface: rgba(255, 253, 247, 0.94);
+        --foreground: #181613;
+        --muted: #6f675b;
+        --accent: #14614b;
+        --accent-soft: #d7efe7;
+        --border: rgba(24, 22, 19, 0.1);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: Manrope, "Segoe UI", sans-serif;
+        color: var(--foreground);
+        background:
+          radial-gradient(circle at top right, rgba(20, 97, 75, 0.16), transparent 24%),
+          linear-gradient(180deg, #faf8f2 0%, var(--background) 100%);
+      }
+
+      main {
+        width: min(760px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 32px 0 48px;
+      }
+
+      .card {
+        border: 1px solid var(--border);
+        border-radius: 28px;
+        background: var(--surface);
+        box-shadow: 0 18px 45px rgba(24, 22, 19, 0.08);
+        padding: 32px;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 14px;
+        border-radius: 999px;
+        background: var(--accent-soft);
+        color: var(--accent);
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 18px 0 16px;
+        font-size: clamp(36px, 7vw, 56px);
+        line-height: 1.02;
+      }
+
+      p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 18px;
+        line-height: 1.7;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 28px;
+      }
+
+      a,
+      button {
+        border: 0;
+        border-radius: 999px;
+        padding: 14px 18px;
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+        text-decoration: none;
+      }
+
+      .primary {
+        background: var(--accent);
+        color: white;
+      }
+
+      .secondary {
+        color: var(--foreground);
+        background: white;
+        border: 1px solid var(--border);
+      }
+
+      .tips {
+        display: grid;
+        gap: 14px;
+        margin-top: 24px;
+      }
+
+      .tip {
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 16px 18px;
+        background: rgba(255, 255, 255, 0.72);
+      }
+
+      .tip strong {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 14px;
+      }
+
+      .tip span {
+        color: var(--muted);
+        font-size: 15px;
+        line-height: 1.6;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="card">
+        <div class="eyebrow">fit offline</div>
+        <h1>Соединение недоступно, но shell приложения уже на устройстве.</h1>
+        <p>
+          Статические ассеты, manifest и offline fallback закешированы service worker-ом.
+          Когда сеть вернётся, можно продолжить работу с защищёнными разделами и будущим sync flow.
+        </p>
+
+        <div class="actions">
+          <button class="primary" type="button" onclick="window.location.reload()">
+            Повторить загрузку
+          </button>
+          <a class="secondary" href="/">На главную</a>
+        </div>
+
+        <div class="tips">
+          <div class="tip">
+            <strong>Что уже работает офлайн</strong>
+            <span>App shell, иконка, manifest и критичные next-ассеты после первого посещения.</span>
+          </div>
+          <div class="tip">
+            <strong>Что будет следующим</strong>
+            <span>Очередь мутаций, optimistic updates и двусторонний sync с `/api/sync/*`.</span>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,4 @@
+interface:
+  display_name: "fit Android Verification"
+  short_description: "Run build, test, lint, emulator, and adb verification for the Android app."
+  default_prompt: "Use $fit-android-verification to verify the Android change for the fit app and report blockers without editing source code."

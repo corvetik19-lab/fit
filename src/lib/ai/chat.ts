@@ -1,0 +1,180 @@
+import type { ModelMessage } from "ai";
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+export type AiChatSessionRow = {
+  id: string;
+  title: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type AiChatMessageRow = {
+  id: string;
+  session_id: string;
+  role: "user" | "assistant";
+  content: string;
+  created_at: string;
+};
+
+function buildSessionTitle(input: string) {
+  const trimmed = input.trim();
+
+  if (trimmed.length <= 72) {
+    return trimmed;
+  }
+
+  return `${trimmed.slice(0, 69)}...`;
+}
+
+export async function ensureAiChatSession(
+  supabase: SupabaseClient,
+  userId: string,
+  sessionId: string | null | undefined,
+  firstPrompt: string,
+) {
+  if (sessionId) {
+    const { data } = await supabase
+      .from("ai_chat_sessions")
+      .select("id, title, created_at, updated_at")
+      .eq("id", sessionId)
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (data) {
+      return data as AiChatSessionRow;
+    }
+  }
+
+  const { data, error } = await supabase
+    .from("ai_chat_sessions")
+    .insert({
+      user_id: userId,
+      title: buildSessionTitle(firstPrompt),
+    })
+    .select("id, title, created_at, updated_at")
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return data as AiChatSessionRow;
+}
+
+export async function touchAiChatSession(
+  supabase: SupabaseClient,
+  userId: string,
+  sessionId: string,
+  title?: string | null,
+) {
+  const payload: Record<string, unknown> = {
+    updated_at: new Date().toISOString(),
+  };
+
+  if (title) {
+    payload.title = title;
+  }
+
+  const { error } = await supabase
+    .from("ai_chat_sessions")
+    .update(payload)
+    .eq("id", sessionId)
+    .eq("user_id", userId);
+
+  if (error) {
+    throw error;
+  }
+}
+
+export async function createAiChatMessage(
+  supabase: SupabaseClient,
+  input: {
+    userId: string;
+    sessionId: string;
+    role: "user" | "assistant";
+    content: string;
+  },
+) {
+  const { data, error } = await supabase
+    .from("ai_chat_messages")
+    .insert({
+      user_id: input.userId,
+      session_id: input.sessionId,
+      role: input.role,
+      content: input.content,
+    })
+    .select("id, session_id, role, content, created_at")
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return data as AiChatMessageRow;
+}
+
+export async function listAiChatMessages(
+  supabase: SupabaseClient,
+  userId: string,
+  sessionId: string,
+  limit = 20,
+) {
+  const { data, error } = await supabase
+    .from("ai_chat_messages")
+    .select("id, session_id, role, content, created_at")
+    .eq("user_id", userId)
+    .eq("session_id", sessionId)
+    .order("created_at", { ascending: true })
+    .limit(limit);
+
+  if (error) {
+    throw error;
+  }
+
+  return (data as AiChatMessageRow[] | null) ?? [];
+}
+
+export async function getLatestAiChatState(
+  supabase: SupabaseClient,
+  userId: string,
+) {
+  const { data: sessionData, error: sessionError } = await supabase
+    .from("ai_chat_sessions")
+    .select("id, title, created_at, updated_at")
+    .eq("user_id", userId)
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (sessionError) {
+    throw sessionError;
+  }
+
+  const session = (sessionData as AiChatSessionRow | null) ?? null;
+
+  if (!session) {
+    return {
+      session: null,
+      messages: [] as AiChatMessageRow[],
+    };
+  }
+
+  const messages = await listAiChatMessages(supabase, userId, session.id, 24);
+
+  return {
+    session,
+    messages,
+  };
+}
+
+export function toModelMessages(messages: AiChatMessageRow[]): ModelMessage[] {
+  return messages
+    .filter(
+      (message): message is AiChatMessageRow & { role: "user" | "assistant" } =>
+        message.role === "user" || message.role === "assistant",
+    )
+    .map((message) => ({
+      role: message.role,
+      content: message.content,
+    }));
+}

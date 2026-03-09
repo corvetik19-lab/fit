@@ -1,0 +1,15 @@
+interface:
+  display_name: "fit Docs Research"
+  short_description: "Verify Android, Codex, and MCP docs before implementation relies on them."
+  default_prompt: "Use $fit-docs-research to verify the current documentation needed for the fit app and return concise implementation guidance."
+
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "context7"
+      description: "Third-party developer documentation for Android and Kotlin ecosystem APIs."
+    - type: "mcp"
+      value: "openaiDeveloperDocs"
+      description: "Official OpenAI and Codex documentation."
+      transport: "streamable_http"
+      url: "https://developers.openai.com/mcp"

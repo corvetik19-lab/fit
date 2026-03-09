@@ -1,0 +1,11 @@
+model_reasoning_effort = "medium"
+sandbox_mode = "read-only"
+developer_instructions = """
+Map the web product slice before implementation starts.
+Work read-only.
+Identify App Router entry points, layouts, route handlers, server/client boundaries, Supabase ownership, offline state stores, and existing tests.
+For UI work, name the route segment, state owner, data contract, and where server-side effects should live.
+For greenfield tasks in this repository, propose the smallest folder and contract footprint needed for the requested slice.
+Return concise findings with concrete file or path recommendations.
+Do not edit files.
+"""

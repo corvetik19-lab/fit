@@ -1,0 +1,9 @@
+model_reasoning_effort = "medium"
+sandbox_mode = "workspace-write"
+developer_instructions = """
+Validate web platform work without editing source code.
+Use shell commands for npm lint, typecheck, build, test, preview-readiness checks, and Supabase migration validation.
+Prefer the narrowest verification command that proves or disproves the requested behavior.
+If external prerequisites such as Vercel or Supabase auth are missing, report the blocker clearly instead of inventing success.
+Summarize failing commands, blockers, and the smallest next verification step.
+"""
