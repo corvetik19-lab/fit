@@ -1,12 +1,26 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { startTransition, useMemo, useState } from "react";
+import {
+  useCallback,
+  startTransition,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
+import {
+  flushOfflineMutations,
+  getPendingOfflineMutationCount,
+  listQueuedWorkoutMutationsForDay,
+  queueWorkoutDayStatusMutation,
+  queueWorkoutSetActualRepsMutation,
+} from "@/lib/offline/workout-sync";
 import {
   formatPlannedRepTarget,
   getActualRepOptions,
 } from "@/lib/workout/rep-ranges";
+import type { OfflineMutation } from "@/lib/offline/db";
 import type { WorkoutDayDetail } from "@/lib/workout/weekly-programs";
 
 const inputClassName =
@@ -53,27 +67,78 @@ function getInitialActualRepsMap(day: WorkoutDayDetail) {
   return nextState;
 }
 
+function applyWorkoutDayStatus(
+  day: WorkoutDayDetail,
+  nextStatus: WorkoutDayDetail["status"],
+) {
+  return {
+    ...day,
+    status: nextStatus,
+  };
+}
+
+function applyWorkoutSetActualReps(
+  day: WorkoutDayDetail,
+  setId: string,
+  actualReps: number | null,
+) {
+  return {
+    ...day,
+    exercises: day.exercises.map((exercise) => ({
+      ...exercise,
+      sets: exercise.sets.map((set) =>
+        set.id === setId
+          ? {
+              ...set,
+              actual_reps: actualReps,
+            }
+          : set,
+      ),
+    })),
+  };
+}
+
+function applyQueuedMutations(day: WorkoutDayDetail, mutations: OfflineMutation[]) {
+  return mutations.reduce((currentDay, mutation) => {
+    if (mutation.entity === "workout_day_status") {
+      return applyWorkoutDayStatus(currentDay, mutation.payload.status);
+    }
+
+    return applyWorkoutSetActualReps(
+      currentDay,
+      mutation.payload.setId,
+      mutation.payload.actualReps,
+    );
+  }, day);
+}
+
 export function WorkoutDaySession({ initialDay }: { initialDay: WorkoutDayDetail }) {
   const router = useRouter();
+  const [day, setDay] = useState(initialDay);
   const [actualRepsBySetId, setActualRepsBySetId] = useState<Record<string, string>>(
     () => getInitialActualRepsMap(initialDay),
   );
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [pendingMutationCount, setPendingMutationCount] = useState(0);
+  const [isOnline, setIsOnline] = useState(
+    () => (typeof navigator === "undefined" ? true : navigator.onLine),
+  );
 
   const completedSetsCount = useMemo(
     () =>
-      initialDay.exercises.flatMap((exercise) => exercise.sets).filter((set) => {
+      day.exercises.flatMap((exercise) => exercise.sets).filter((set) => {
         const currentValue = actualRepsBySetId[set.id];
         return currentValue != null && currentValue.trim().length > 0;
       }).length,
-    [actualRepsBySetId, initialDay.exercises],
+    [actualRepsBySetId, day.exercises],
   );
 
   const totalSetsCount = useMemo(
-    () => initialDay.exercises.flatMap((exercise) => exercise.sets).length,
-    [initialDay.exercises],
+    () => day.exercises.flatMap((exercise) => exercise.sets).length,
+    [day.exercises],
   );
 
   function setActualRepsValue(setId: string, value: string) {
@@ -83,14 +148,128 @@ export function WorkoutDaySession({ initialDay }: { initialDay: WorkoutDayDetail
     }));
   }
 
+  const refreshPendingMutationCount = useCallback(async () => {
+    const count = await getPendingOfflineMutationCount();
+    setPendingMutationCount(count);
+  }, []);
+
+  const hydrateQueuedMutations = useCallback(async () => {
+    const queuedMutations = await listQueuedWorkoutMutationsForDay(initialDay.id);
+
+    setDay(applyQueuedMutations(initialDay, queuedMutations));
+    setActualRepsBySetId((current) => {
+      const nextState = {
+        ...getInitialActualRepsMap(initialDay),
+        ...current,
+      };
+
+      for (const mutation of queuedMutations) {
+        if (mutation.entity === "workout_set_actual_reps") {
+          nextState[mutation.payload.setId] =
+            mutation.payload.actualReps?.toString() ?? "";
+        }
+      }
+
+      return nextState;
+    });
+
+    await refreshPendingMutationCount();
+  }, [initialDay, refreshPendingMutationCount]);
+
+  const flushQueuedMutations = useCallback(async () => {
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      setIsOnline(false);
+      return;
+    }
+
+    const queuedCount = await getPendingOfflineMutationCount();
+
+    if (!queuedCount) {
+      setPendingMutationCount(0);
+      return;
+    }
+
+    setIsSyncing(true);
+
+    try {
+      const result = await flushOfflineMutations();
+      await refreshPendingMutationCount();
+
+      const rejectedMutations = result.processed.filter(
+        (mutation) => mutation.status === "rejected",
+      );
+
+      if (rejectedMutations.length) {
+        setError(
+          rejectedMutations[0]?.message ??
+            "Часть локальных изменений не удалось синхронизировать.",
+        );
+      } else if (result.applied > 0) {
+        setNotice("Локальные изменения синхронизированы.");
+      }
+
+      if (result.applied > 0 || rejectedMutations.length > 0) {
+        startTransition(() => {
+          router.refresh();
+        });
+      }
+    } catch {
+      await refreshPendingMutationCount();
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [refreshPendingMutationCount, router]);
+
+  useEffect(() => {
+    setDay(initialDay);
+    setActualRepsBySetId(getInitialActualRepsMap(initialDay));
+
+    void hydrateQueuedMutations();
+  }, [hydrateQueuedMutations, initialDay]);
+
+  useEffect(() => {
+    function handleOnline() {
+      setIsOnline(true);
+      void flushQueuedMutations();
+    }
+
+    function handleOffline() {
+      setIsOnline(false);
+    }
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    if (navigator.onLine) {
+      void flushQueuedMutations();
+    }
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, [flushQueuedMutations]);
+
   function updateDayStatus(nextStatus: "planned" | "in_progress" | "done") {
     setError(null);
     setNotice(null);
     setIsPending(true);
+    const previousStatus = day.status;
+    setDay((current) => applyWorkoutDayStatus(current, nextStatus));
 
     startTransition(async () => {
       try {
-        const response = await fetch(`/api/workout-days/${initialDay.id}`, {
+        if (!navigator.onLine) {
+          await queueWorkoutDayStatusMutation({
+            dayId: day.id,
+            status: nextStatus,
+          });
+          await refreshPendingMutationCount();
+          setNotice("Статус сохранён локально и будет синхронизирован при подключении.");
+          return;
+        }
+
+        const response = await fetch(`/api/workout-days/${day.id}`, {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
@@ -105,12 +284,21 @@ export function WorkoutDaySession({ initialDay }: { initialDay: WorkoutDayDetail
           | null;
 
         if (!response.ok) {
+          setDay((current) => applyWorkoutDayStatus(current, previousStatus));
           setError(payload?.message ?? "Не удалось обновить статус дня.");
           return;
         }
 
+        setIsOnline(true);
         setNotice("Статус тренировочного дня обновлён.");
-        router.refresh();
+      } catch {
+        await queueWorkoutDayStatusMutation({
+          dayId: day.id,
+          status: nextStatus,
+        });
+        await refreshPendingMutationCount();
+        setIsOnline(false);
+        setNotice("Нет сети: статус сохранён локально и будет синхронизирован позже.");
       } finally {
         setIsPending(false);
       }
@@ -131,8 +319,43 @@ export function WorkoutDaySession({ initialDay }: { initialDay: WorkoutDayDetail
       return;
     }
 
+    const previousStatus = day.status;
+    const previousSet = day.exercises
+      .flatMap((exercise) => exercise.sets)
+      .find((set) => set.id === setId);
+    const previousActualReps = previousSet?.actual_reps ?? null;
+    const shouldPromoteDayStatus = day.status === "planned";
+
+    setDay((current) => {
+      const nextDay = applyWorkoutSetActualReps(current, setId, actualReps);
+      return shouldPromoteDayStatus
+        ? applyWorkoutDayStatus(nextDay, "in_progress")
+        : nextDay;
+    });
+
     startTransition(async () => {
       try {
+        if (!navigator.onLine) {
+          await queueWorkoutSetActualRepsMutation({
+            dayId: day.id,
+            setId,
+            actualReps,
+          });
+
+          if (shouldPromoteDayStatus) {
+            await queueWorkoutDayStatusMutation({
+              dayId: day.id,
+              status: "in_progress",
+            });
+          }
+
+          await refreshPendingMutationCount();
+          setNotice(
+            "Повторы сохранены локально и будут синхронизированы при подключении.",
+          );
+          return;
+        }
+
         const response = await fetch(`/api/workout-sets/${setId}`, {
           method: "PATCH",
           headers: {
@@ -148,12 +371,25 @@ export function WorkoutDaySession({ initialDay }: { initialDay: WorkoutDayDetail
           | null;
 
         if (!response.ok) {
+          setDay((current) => {
+            const restoredDay = applyWorkoutSetActualReps(
+              current,
+              setId,
+              previousActualReps,
+            );
+
+            return applyWorkoutDayStatus(restoredDay, previousStatus);
+          });
+          setActualRepsBySetId((current) => ({
+            ...current,
+            [setId]: previousActualReps?.toString() ?? "",
+          }));
           setError(payload?.message ?? "Не удалось сохранить фактические повторы.");
           return;
         }
 
-        if (initialDay.status === "planned") {
-          const dayStatusResponse = await fetch(`/api/workout-days/${initialDay.id}`, {
+        if (shouldPromoteDayStatus) {
+          const dayStatusResponse = await fetch(`/api/workout-days/${day.id}`, {
             method: "PATCH",
             headers: {
               "Content-Type": "application/json",
@@ -167,17 +403,40 @@ export function WorkoutDaySession({ initialDay }: { initialDay: WorkoutDayDetail
             const dayStatusPayload = (await dayStatusResponse
               .json()
               .catch(() => null)) as { message?: string } | null;
-            setError(
+            await queueWorkoutDayStatusMutation({
+              dayId: day.id,
+              status: "in_progress",
+            });
+            await refreshPendingMutationCount();
+            setNotice(
               dayStatusPayload?.message ??
-                "Повторы сохранены, но статус дня не удалось перевести в состояние «в процессе».",
+                "Повторы сохранены, статус дня добавлен в локальную очередь синхронизации.",
             );
-            router.refresh();
             return;
           }
         }
 
+        setIsOnline(true);
         setNotice("Фактические повторы сохранены.");
-        router.refresh();
+      } catch {
+        await queueWorkoutSetActualRepsMutation({
+          dayId: day.id,
+          setId,
+          actualReps,
+        });
+
+        if (shouldPromoteDayStatus) {
+          await queueWorkoutDayStatusMutation({
+            dayId: day.id,
+            status: "in_progress",
+          });
+        }
+
+        await refreshPendingMutationCount();
+        setIsOnline(false);
+        setNotice(
+          "Нет сети: повторы сохранены локально и будут синхронизированы позже.",
+        );
       } finally {
         setIsPending(false);
       }
@@ -193,24 +452,24 @@ export function WorkoutDaySession({ initialDay }: { initialDay: WorkoutDayDetail
               День тренировки
             </p>
             <h2 className="mt-2 text-2xl font-semibold text-foreground">
-              {dayLabels[initialDay.day_of_week] ?? `День ${initialDay.day_of_week}`}
+              {dayLabels[day.day_of_week] ?? `День ${day.day_of_week}`}
             </h2>
             <p className="mt-2 text-sm leading-7 text-muted">
-              {initialDay.program_title} · {formatWeekRange(initialDay)}
+              {day.program_title} · {formatWeekRange(day)}
             </p>
           </div>
 
           <div className="flex flex-wrap gap-2">
             <span className="pill">
-              {dayStatusLabels[initialDay.status] ?? initialDay.status}
+              {dayStatusLabels[day.status] ?? day.status}
             </span>
-            <span className="pill">{initialDay.is_locked ? "Неделя зафиксирована" : "Черновик недели"}</span>
+            <span className="pill">{day.is_locked ? "Неделя зафиксирована" : "Черновик недели"}</span>
           </div>
         </div>
 
         <div className="grid gap-4 md:grid-cols-3">
           {[
-            ["Упражнений", String(initialDay.exercises.length)],
+            ["Упражнений", String(day.exercises.length)],
             ["Подходов", String(totalSetsCount)],
             ["Заполнено", `${completedSetsCount}/${totalSetsCount}`],
           ].map(([label, value]) => (
@@ -222,10 +481,10 @@ export function WorkoutDaySession({ initialDay }: { initialDay: WorkoutDayDetail
         </div>
 
         <div className="mt-6 flex flex-wrap gap-3">
-          {initialDay.status === "planned" ? (
+          {day.status === "planned" ? (
             <button
               className="rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={isPending || !initialDay.is_locked}
+              disabled={isPending || isSyncing || !day.is_locked}
               onClick={() => updateDayStatus("in_progress")}
               type="button"
             >
@@ -233,11 +492,11 @@ export function WorkoutDaySession({ initialDay }: { initialDay: WorkoutDayDetail
             </button>
           ) : null}
 
-          {initialDay.status === "in_progress" ? (
+          {day.status === "in_progress" ? (
             <>
               <button
                 className="rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-                disabled={isPending}
+                disabled={isPending || isSyncing}
                 onClick={() => updateDayStatus("done")}
                 type="button"
               >
@@ -245,7 +504,7 @@ export function WorkoutDaySession({ initialDay }: { initialDay: WorkoutDayDetail
               </button>
               <button
                 className="rounded-full border border-border px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
-                disabled={isPending}
+                disabled={isPending || isSyncing}
                 onClick={() => updateDayStatus("planned")}
                 type="button"
               >
@@ -254,21 +513,49 @@ export function WorkoutDaySession({ initialDay }: { initialDay: WorkoutDayDetail
             </>
           ) : null}
 
-          {initialDay.status === "done" ? (
+          {day.status === "done" ? (
             <button
               className="rounded-full border border-border px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={isPending}
+              disabled={isPending || isSyncing}
               onClick={() => updateDayStatus("in_progress")}
               type="button"
             >
               Вернуть в процесс
             </button>
           ) : null}
+
+          {pendingMutationCount > 0 && isOnline ? (
+            <button
+              className="rounded-full border border-border px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={isPending || isSyncing}
+              onClick={() => {
+                void flushQueuedMutations();
+              }}
+              type="button"
+            >
+              {isSyncing
+                ? "Синхронизация..."
+                : `Синхронизировать (${pendingMutationCount})`}
+            </button>
+          ) : null}
         </div>
 
-        {!initialDay.is_locked ? (
+        {!day.is_locked ? (
           <p className="mt-4 rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             Выполнение тренировки доступно только после `Зафиксировать неделю`.
+          </p>
+        ) : null}
+
+        {!isOnline ? (
+          <p className="mt-4 rounded-2xl border border-sky-300/60 bg-sky-50 px-4 py-3 text-sm text-sky-800">
+            Нет сети. Изменения по этой тренировке будут сохраняться локально и
+            отправятся на сервер после восстановления соединения.
+          </p>
+        ) : null}
+
+        {pendingMutationCount > 0 ? (
+          <p className="mt-4 rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            В локальной очереди ждут синхронизации: {pendingMutationCount}.
           </p>
         ) : null}
 
@@ -286,8 +573,8 @@ export function WorkoutDaySession({ initialDay }: { initialDay: WorkoutDayDetail
       </section>
 
       <section className="grid gap-4">
-        {initialDay.exercises.length ? (
-          initialDay.exercises.map((exercise) => (
+        {day.exercises.length ? (
+          day.exercises.map((exercise) => (
             <article className="card p-6" key={exercise.id}>
               <div className="mb-4">
                 <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
@@ -321,7 +608,7 @@ export function WorkoutDaySession({ initialDay }: { initialDay: WorkoutDayDetail
                         Факт
                         <select
                           className={inputClassName}
-                          disabled={!initialDay.is_locked || isPending}
+                          disabled={!day.is_locked || isPending || isSyncing}
                           onChange={(event) =>
                             setActualRepsValue(set.id, event.target.value)
                           }
@@ -351,7 +638,7 @@ export function WorkoutDaySession({ initialDay }: { initialDay: WorkoutDayDetail
 
                       <button
                         className="rounded-full border border-border px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
-                        disabled={!initialDay.is_locked || isPending}
+                        disabled={!day.is_locked || isPending || isSyncing}
                         onClick={() => saveSet(set.id)}
                         type="button"
                       >

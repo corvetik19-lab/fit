@@ -1,12 +1,31 @@
 import Dexie, { type Table } from "dexie";
 
-export interface OfflineMutation {
+export type WorkoutDayStatusOfflineMutation = {
   id: string;
-  entity: string;
-  op: "insert" | "update" | "delete";
-  payload: Record<string, unknown>;
+  entity: "workout_day_status";
+  op: "update";
+  payload: {
+    dayId: string;
+    status: "planned" | "in_progress" | "done";
+  };
   createdAt: string;
-}
+};
+
+export type WorkoutSetActualRepsOfflineMutation = {
+  id: string;
+  entity: "workout_set_actual_reps";
+  op: "update";
+  payload: {
+    dayId: string;
+    setId: string;
+    actualReps: number | null;
+  };
+  createdAt: string;
+};
+
+export type OfflineMutation =
+  | WorkoutDayStatusOfflineMutation
+  | WorkoutSetActualRepsOfflineMutation;
 
 export interface CacheSnapshot {
   key: string;

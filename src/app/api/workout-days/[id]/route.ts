@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import { logger } from "@/lib/logger";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { updateWorkoutDayStatus } from "@/lib/workout/execution";
 
 const workoutDayUpdateSchema = z.object({
   status: z.enum(["planned", "in_progress", "done"]),
@@ -29,59 +30,18 @@ export async function PATCH(
     const { id } = await params;
     const payload = workoutDayUpdateSchema.parse(await request.json());
 
-    const { data: dayRow, error: dayError } = await supabase
-      .from("workout_days")
-      .select("id, weekly_program_id, status")
-      .eq("id", id)
-      .eq("user_id", user.id)
-      .maybeSingle();
+    const result = await updateWorkoutDayStatus(
+      supabase,
+      user.id,
+      id,
+      payload.status,
+    );
 
-    if (dayError) {
-      throw dayError;
+    if (result.error) {
+      return createApiErrorResponse(result.error);
     }
 
-    if (!dayRow) {
-      return createApiErrorResponse({
-        status: 404,
-        code: "WORKOUT_DAY_NOT_FOUND",
-        message: "Workout day was not found.",
-      });
-    }
-
-    const { data: programRow, error: programError } = await supabase
-      .from("weekly_programs")
-      .select("id, is_locked")
-      .eq("id", dayRow.weekly_program_id)
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    if (programError) {
-      throw programError;
-    }
-
-    if (!programRow?.is_locked) {
-      return createApiErrorResponse({
-        status: 400,
-        code: "WORKOUT_DAY_REQUIRES_LOCKED_PROGRAM",
-        message: "Workout day execution is available only for locked weeks.",
-      });
-    }
-
-    const { data, error } = await supabase
-      .from("workout_days")
-      .update({
-        status: payload.status,
-      })
-      .eq("id", id)
-      .eq("user_id", user.id)
-      .select("id, status")
-      .single();
-
-    if (error) {
-      throw error;
-    }
-
-    return Response.json({ data });
+    return Response.json({ data: result.data });
   } catch (error) {
     logger.error("workout day update route failed", { error });
 
