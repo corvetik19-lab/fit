@@ -2,6 +2,34 @@
 
 ## 2026-03-09
 
+### Mobile app shell и admin control center
+
+- `src/components/app-shell-nav.tsx` переведён на контекстный mobile bottom-nav: на телефоне нижняя навигация всегда остаётся в пяти слотах и не ломает сетку на `/history` и `/admin`, а текущий раздел подменяет пятый таб вместо переполнения.
+- В `src/app/globals.css` добавлены мобильные polish-правки для app-shell: скрытие scrollbar у route strip, обрезка длинных подписей в нижней навигации и более явное active-состояние для app-like bottom bar.
+- `/admin` расширен до control center: экран теперь показывает текущую admin-сессию, быстрые переходы в каталог пользователей, roster действующих админов с email и last sign-in, а также последние изменения доступов из `admin_audit_logs`.
+- `/admin/users` усилен под реальное управление доступами: каталог поддерживает поиск по email/UUID, фильтр по роли, summary-карточки по текущей выборке и прямой CTA в карточку управления доступом.
+- `AdminRoleManager` упрощён до прямого server-backed flow без ручного ввода SQL: супер-админ может выдать, подтвердить, изменить и отозвать admin-role, а UI подчёркивает actor role и аудит изменений.
+
+### Проверка mobile/admin slice
+
+- `npm run lint` прошёл локально
+- `npm run build` прошёл локально
+- `npm run typecheck` прошёл локально
+
+### Mobile burger drawer для PWA shell
+
+- `src/components/app-shell.tsx` теперь сам подтягивает `viewer` и прокидывает его в shell-навигацию, чтобы телефонный PWA-режим видел email, имя и admin-role без ручной передачи этих данных по страницам.
+- `src/components/app-shell-nav.tsx` переделан под mobile drawer: на телефоне появился burger trigger, затемнение фона, slide-in панель, сгруппированные разделы, account block и выход из сессии прямо из выезжающего меню.
+- Нижний tab bar сохранён для core-разделов, а расширенная навигация и admin-входы переехали в drawer, чтобы не перегружать экран телефона и не ломать app-like UX.
+- `src/app/globals.css` дополнен стилями `app-drawer*` и `app-drawer-link*`, чтобы drawer открывался как нативный sheet, а не как обычный список ссылок.
+- `src/components/sign-out-button.tsx` получил `className`, чтобы кнопка выхода могла переиспользоваться и в settings-экране, и в mobile drawer без дублирования логики.
+
+### Проверка mobile drawer slice
+
+- `npm run lint` прошёл локально
+- `npm run build` прошёл локально
+- `npm run typecheck` прошёл локально
+
 ### PWA service worker и offline shell
 
 - Добавлен `public/sw.js` с предкешем `offline.html`, `manifest.webmanifest` и `icon.svg`, а также с runtime-кешем для критичных `/_next/static`-ассетов, шрифтов, стилей и изображений.
@@ -47,7 +75,22 @@
 - `formatPlannedRepTarget` и `getActualRepOptions` теперь умеют восстанавливать выбранный диапазон повторов по `planned_reps`, если в БД пока нет `planned_reps_min/max`, но в `planned_reps` лежит верхняя граница пресета.
 - Это даёт ограниченный список повторов даже без применённой remote-миграции для новых программ, созданных после перехода на rep range presets.
 
+### Workout offline logging и sync queue
+
+- Добавлен `src/lib/workout/execution.ts`, который выносит общий server-side контракт обновления статуса дня и `actual_reps` из route handlers.
+- `PATCH /api/workout-days/[id]` и `PATCH /api/workout-sets/[id]` переведены на общий execution helper, чтобы online-обновления и sync push использовали одну и ту же валидацию.
+- `POST /api/sync/push` больше не заглушка: route теперь принимает офлайн-мутации `workout_day_status` и `workout_set_actual_reps`, применяет их на сервере и возвращает список `applied/rejected`.
+- `src/lib/offline/db.ts` типизирован под реальные workout-мутации, а `src/lib/offline/workout-sync.ts` добавляет enqueue, dedupe по цели мутации, чтение очереди по дню и flush в `/api/sync/push`.
+- `WorkoutDaySession` теперь поддерживает optimistic updates, локальное сохранение статуса дня и `actual_reps` при отсутствии сети, отображение состояния очереди и автосинхронизацию при возвращении сети.
+- Локальный queue slice сделан только для workout day execution; `sync/pull` и остальные домены по-прежнему не доведены до полного incremental sync.
+
 ### Проверка production hotfix
+
+- `npm run lint` прошёл локально
+- `npm run build` прошёл локально
+- `npm run typecheck` повторно прошёл локально после отдельного запуска на уже сгенерированных `.next/types`
+
+### Проверка workout offline/sync slice
 
 - `npm run lint` прошёл локально
 - `npm run build` прошёл локально

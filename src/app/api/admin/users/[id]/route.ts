@@ -8,11 +8,12 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    await requireAdminRouteAccess();
+    const currentAdmin = await requireAdminRouteAccess();
     const { id } = await params;
     const adminSupabase = createAdminSupabaseClient();
 
     const [
+      authUserResult,
       profileResult,
       onboardingResult,
       goalResult,
@@ -20,7 +21,9 @@ export async function GET(
       exercisesCountResult,
       programsCountResult,
       supportActionsResult,
+      auditLogsResult,
     ] = await Promise.all([
+      adminSupabase.auth.admin.getUserById(id),
       adminSupabase
         .from("profiles")
         .select("user_id, full_name, avatar_url, created_at, updated_at")
@@ -62,7 +65,17 @@ export async function GET(
         .eq("target_user_id", id)
         .order("created_at", { ascending: false })
         .limit(10),
+      adminSupabase
+        .from("admin_audit_logs")
+        .select("id, action, reason, created_at")
+        .eq("target_user_id", id)
+        .order("created_at", { ascending: false })
+        .limit(10),
     ]);
+
+    if (authUserResult.error) {
+      throw authUserResult.error;
+    }
 
     const failedResult = [
       profileResult,
@@ -72,6 +85,7 @@ export async function GET(
       exercisesCountResult,
       programsCountResult,
       supportActionsResult,
+      auditLogsResult,
     ].find((result) => result.error);
 
     if (failedResult?.error) {
@@ -94,6 +108,14 @@ export async function GET(
     return Response.json({
       data: {
         id,
+        currentAdminRole: currentAdmin.role,
+        authUser: authUserResult.data.user
+          ? {
+              email: authUserResult.data.user.email ?? null,
+              created_at: authUserResult.data.user.created_at,
+              last_sign_in_at: authUserResult.data.user.last_sign_in_at ?? null,
+            }
+          : null,
         profile: profileResult.data,
         onboarding: onboardingResult.data,
         latestGoal: goalResult.data,
@@ -103,6 +125,7 @@ export async function GET(
           programs: programsCountResult.count ?? 0,
         },
         recentSupportActions: supportActionsResult.data ?? [],
+        recentAdminAuditLogs: auditLogsResult.data ?? [],
       },
     });
   } catch (error) {

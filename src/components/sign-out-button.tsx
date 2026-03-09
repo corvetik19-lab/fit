@@ -6,7 +6,7 @@ import { startTransition, useState } from "react";
 
 import { createClient } from "@/lib/supabase/browser";
 
-export function SignOutButton() {
+export function SignOutButton({ className = "" }: { className?: string }) {
   const router = useRouter();
   const supabase = createClient();
   const [isPending, setIsPending] = useState(false);
@@ -27,7 +27,7 @@ export function SignOutButton() {
 
   return (
     <button
-      className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
+      className={`rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60 ${className}`.trim()}
       disabled={isPending}
       onClick={signOut}
       type="button"

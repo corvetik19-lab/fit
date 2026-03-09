@@ -4,10 +4,17 @@ import type { Route } from "next";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { AdminRoleManager } from "@/components/admin-role-manager";
 import { AdminUserActions } from "@/components/admin-user-actions";
 
 type AdminUserDetailData = {
   id: string;
+  currentAdminRole: "super_admin" | "support_admin" | "analyst";
+  authUser: {
+    email: string | null;
+    created_at: string;
+    last_sign_in_at: string | null;
+  } | null;
   profile: {
     user_id: string;
     full_name: string | null;
@@ -46,6 +53,12 @@ type AdminUserDetailData = {
     id: string;
     action: string;
     status: string;
+    created_at: string;
+  }>;
+  recentAdminAuditLogs: Array<{
+    id: string;
+    action: string;
+    reason: string | null;
     created_at: string;
   }>;
 };
@@ -93,7 +106,15 @@ function renderList(items: string[] | undefined) {
   return items.join(", ");
 }
 
-export function AdminUserDetail({ userId }: { userId: string }) {
+export function AdminUserDetail({
+  currentUserId,
+  currentUserRole,
+  userId,
+}: {
+  currentUserId: string;
+  currentUserRole: "super_admin" | "support_admin" | "analyst";
+  userId: string;
+}) {
   const [detail, setDetail] = useState<AdminUserDetailData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -185,7 +206,7 @@ export function AdminUserDetail({ userId }: { userId: string }) {
         </div>
 
         <div className="grid gap-4 md:grid-cols-3">
-          {[
+          {[ 
             ["Активные упражнения", String(detail.stats.activeExercises)],
             ["Программы", String(detail.stats.programs)],
             [
@@ -217,6 +238,20 @@ export function AdminUserDetail({ userId }: { userId: string }) {
           <div className="grid gap-4 md:grid-cols-2">
             <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm">
               <p className="font-semibold text-foreground">Профиль</p>
+              <p className="mt-3 text-muted">
+                Email:{" "}
+                <span className="text-foreground">
+                  {detail.authUser?.email ?? "Нет данных"}
+                </span>
+              </p>
+              <p className="mt-2 text-muted">
+                Последний вход:{" "}
+                <span className="text-foreground">
+                  {detail.authUser?.last_sign_in_at
+                    ? dateFormatter.format(new Date(detail.authUser.last_sign_in_at))
+                    : "Нет данных"}
+                </span>
+              </p>
               <p className="mt-3 text-muted">
                 Создан:{" "}
                 <span className="text-foreground">
@@ -316,6 +351,15 @@ export function AdminUserDetail({ userId }: { userId: string }) {
         </section>
 
         <div className="grid gap-6">
+          <AdminRoleManager
+            currentAdminRole={currentUserRole}
+            isSelf={currentUserId === userId}
+            onUpdated={() => setReloadVersion((current) => current + 1)}
+            targetAdminRole={detail.adminRole?.role as "super_admin" | "support_admin" | "analyst" | null}
+            userEmail={detail.authUser?.email ?? null}
+            userId={userId}
+          />
+
           <AdminUserActions
             onUpdated={() => setReloadVersion((current) => current + 1)}
             userId={userId}
@@ -351,6 +395,43 @@ export function AdminUserDetail({ userId }: { userId: string }) {
               ) : (
                 <p className="text-sm leading-7 text-muted">
                   Действия поддержки для этого пользователя пока не запускались.
+                </p>
+              )}
+            </div>
+          </section>
+
+          <section className="card p-6">
+            <div className="mb-5 flex items-center justify-between gap-3">
+              <div>
+                <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
+                  Аудит
+                </p>
+                <h2 className="mt-2 text-2xl font-semibold text-foreground">
+                  Последние admin-изменения
+                </h2>
+              </div>
+              <div className="pill">{detail.recentAdminAuditLogs.length}</div>
+            </div>
+
+            <div className="grid gap-3">
+              {detail.recentAdminAuditLogs.length ? (
+                detail.recentAdminAuditLogs.map((entry) => (
+                  <article
+                    className="rounded-2xl border border-border bg-white/60 p-4 text-sm"
+                    key={entry.id}
+                  >
+                    <p className="font-semibold text-foreground">{entry.action}</p>
+                    <p className="mt-1 text-muted">
+                      {entry.reason ?? "Без пояснения"}
+                    </p>
+                    <p className="mt-2 text-muted">
+                      {dateFormatter.format(new Date(entry.created_at))}
+                    </p>
+                  </article>
+                ))
+              ) : (
+                <p className="text-sm leading-7 text-muted">
+                  Изменений ролей и административных действий по этому пользователю пока нет.
                 </p>
               )}
             </div>

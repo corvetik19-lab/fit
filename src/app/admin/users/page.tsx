@@ -12,10 +12,9 @@ export default async function AdminUsersPage() {
         <PanelCard caption="Пользователи" title="Каталог пользователей">
           <ul className="grid gap-3 text-sm leading-7 text-muted">
             <li>Экран читает реальные профили через `/api/admin/users`.</li>
-            <li>Отсюда можно перейти в карточку каждого пользователя.</li>
+            <li>Каталог поддерживает поиск по имени, email и UUID, а также фильтр по admin role.</li>
             <li>
-              Следующий шаг для этого контура: добавить поиск, фильтры и сводные
-              статусы по подпискам и правам доступа.
+              Из карточки пользователя можно выдать, обновить или отозвать admin-доступ, не уходя в SQL.
             </li>
           </ul>
         </PanelCard>
@@ -24,6 +23,7 @@ export default async function AdminUsersPage() {
           <ul className="grid gap-3 text-sm leading-7 text-muted">
             <li>Список последних профилей.</li>
             <li>Переход в карточку пользователя.</li>
+            <li>Управление ролями `super_admin`, `support_admin`, `analyst`.</li>
             <li>Блокировка, восстановление и кастомные действия поддержки через карточку пользователя.</li>
           </ul>
         </PanelCard>

@@ -33,16 +33,20 @@
 html {
   background:
     radial-gradient(circle at top right, rgba(20, 97, 75, 0.16), transparent 24%),
+    radial-gradient(circle at bottom left, rgba(207, 162, 74, 0.18), transparent 20%),
     linear-gradient(180deg, #faf8f2 0%, #f5f4ee 100%);
   color: var(--foreground);
   min-height: 100%;
+  overscroll-behavior-y: none;
 }
 
 body {
-  background: var(--background);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.38), rgba(255, 255, 255, 0)),
+    var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), sans-serif;
-  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 a {
@@ -81,4 +85,167 @@ textarea {
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.72);
   backdrop-filter: blur(14px);
+}
+
+.app-route-strip {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.app-route-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.app-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  background: rgba(24, 22, 19, 0.34);
+  backdrop-filter: blur(8px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease;
+}
+
+.app-drawer-backdrop--visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.app-drawer {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 60;
+  width: min(26rem, calc(100vw - 0.9rem));
+  pointer-events: none;
+}
+
+.app-drawer__surface {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.88)),
+    var(--surface);
+  border-right: 1px solid rgba(24, 22, 19, 0.1);
+  box-shadow: 0 24px 60px rgba(24, 22, 19, 0.16);
+  transform: translateX(-104%);
+  transition: transform 220ms ease;
+  overflow: hidden;
+}
+
+.app-drawer--open {
+  pointer-events: auto;
+}
+
+.app-drawer--open .app-drawer__surface {
+  transform: translateX(0);
+}
+
+.app-drawer-link {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 1.25rem;
+  background: rgba(255, 255, 255, 0.74);
+  padding: 0.95rem 1rem;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    transform 160ms ease,
+    color 160ms ease;
+}
+
+.app-drawer-link:hover {
+  border-color: rgba(20, 97, 75, 0.26);
+  background: rgba(255, 255, 255, 0.96);
+  transform: translateX(2px);
+}
+
+.app-drawer-link--active {
+  border-color: rgba(20, 97, 75, 0.28);
+  background: color-mix(in srgb, var(--accent-soft) 66%, white);
+  color: var(--foreground);
+}
+
+.app-drawer-link__icon {
+  display: inline-flex;
+  height: 2.5rem;
+  width: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: rgba(20, 97, 75, 0.08);
+  color: var(--accent);
+}
+
+.app-bottom-nav {
+  position: fixed;
+  z-index: 40;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 0 0.9rem calc(0.85rem + env(safe-area-inset-bottom));
+  pointer-events: none;
+}
+
+.app-bottom-nav__inner {
+  pointer-events: auto;
+  margin: 0 auto;
+  display: grid;
+  max-width: 42rem;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.45rem;
+  border: 1px solid rgba(24, 22, 19, 0.08);
+  border-radius: 24px;
+  background: rgba(255, 253, 247, 0.88);
+  box-shadow: 0 18px 45px rgba(24, 22, 19, 0.12);
+  backdrop-filter: blur(18px);
+  padding: 0.5rem;
+}
+
+.app-bottom-nav__item {
+  min-width: 0;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  border-radius: 18px;
+  color: var(--muted);
+  padding: 0.65rem 0.35rem;
+  font-size: 0.69rem;
+  font-weight: 700;
+  line-height: 1.1;
+  text-align: center;
+  overflow: hidden;
+  transition:
+    color 160ms ease,
+    background-color 160ms ease,
+    transform 160ms ease;
+}
+
+.app-bottom-nav__item span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-bottom-nav__item:hover {
+  background: rgba(20, 97, 75, 0.08);
+  color: var(--foreground);
+}
+
+.app-bottom-nav__item--active {
+  background: linear-gradient(180deg, rgba(20, 97, 75, 0.96), rgba(20, 97, 75, 0.88));
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px rgba(20, 97, 75, 0.18);
+}
+
+.app-bottom-nav__item--active:hover {
+  color: white;
 }

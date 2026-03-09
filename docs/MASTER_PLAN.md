@@ -115,12 +115,13 @@
 - [ ] Назначить первого admin user
 - [x] Реализовать user directory UI
 - [x] Реализовать user detail UI
+- [x] Реализовать назначение `super_admin` / `support_admin` / `analyst` из UI
 - [x] Реализовать suspend/reactivate flow
 - [x] Реализовать support actions UI
-- [ ] Реализовать audit log views
+- [x] Реализовать audit log views
 - [ ] Реализовать system health dashboard
 - [ ] Реализовать sync health dashboard
-- [ ] Реализовать AI usage monitoring для admin
+- [x] Реализовать AI usage monitoring для admin
 - [ ] Подключить Sentry
 - [ ] Подключить Vercel Analytics / Speed Insights
 
@@ -243,6 +244,8 @@
 - [ ] Проверить, что список `actual_reps` ограничен диапазоном подхода
 - [ ] Проверить fallback `1..25` для legacy-сетов без сохранённого диапазона
 - [ ] Проверить backward-compatible поведение workout API до применения remote SQL-миграции
+- [ ] Проверить локальное сохранение `actual_reps` offline и последующую синхронизацию
+- [ ] Проверить локальное обновление статуса workout day offline и последующую синхронизацию
 
 ### Nutrition
 
@@ -255,6 +258,7 @@
 
 - [ ] Проверить агрегаты на desktop
 - [ ] Проверить агрегаты на mobile
+- [ ] Проверить burger drawer и нижний tab bar на mobile PWA
 - [ ] Проверить сравнение периодов
 
 ### AI
@@ -273,7 +277,9 @@
 
 ### Admin
 
-- [ ] Проверить доступ в `/admin` только для `super_admin`
+- [ ] Проверить доступ в `/admin` только для назначенных `platform_admin`
+- [ ] Проверить поиск и фильтр пользователей по email и admin role
+- [ ] Проверить выдачу, смену и отзыв admin role из `/admin/users/[id]`
 - [ ] Проверить запись admin actions в audit log
 - [ ] Проверить suspend/reactivate
 - [ ] Проверить support actions

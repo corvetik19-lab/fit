@@ -7,12 +7,16 @@ export default async function AdminUserDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await requirePlatformAdminViewer();
+  const viewer = await requirePlatformAdminViewer();
   const { id } = await params;
 
   return (
     <AppShell eyebrow="Админ" title="Карточка пользователя">
-      <AdminUserDetail userId={id} />
+      <AdminUserDetail
+        currentUserId={viewer.user.id}
+        currentUserRole={viewer.platformAdminRole ?? "support_admin"}
+        userId={id}
+      />
     </AppShell>
   );
 }

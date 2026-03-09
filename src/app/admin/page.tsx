@@ -9,7 +9,11 @@ import { hasAiGatewayEnv, hasSupabasePublicEnv, serverEnv } from "@/lib/env";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { requireViewer } from "@/lib/viewer";
 
-function formatDateTime(value: string) {
+function formatDateTime(value: string | null | undefined) {
+  if (!value) {
+    return "Нет данных";
+  }
+
   return new Intl.DateTimeFormat("ru-RU", {
     day: "2-digit",
     month: "2-digit",
@@ -74,6 +78,27 @@ function formatRouteKey(value: string) {
   }
 }
 
+function formatAuditAction(value: string) {
+  switch (value) {
+    case "admin_role_granted":
+      return "Выдача admin-доступа";
+    case "admin_role_updated":
+      return "Изменение admin-роли";
+    case "admin_role_confirmed":
+      return "Подтверждение admin-роли";
+    case "admin_role_revoked":
+      return "Отзыв admin-доступа";
+    default:
+      return value;
+  }
+}
+
+const adminRoleOrder: Record<string, number> = {
+  super_admin: 0,
+  support_admin: 1,
+  analyst: 2,
+};
+
 export default async function AdminPage() {
   const viewer = await requireViewer();
 
@@ -82,9 +107,18 @@ export default async function AdminPage() {
       <AppShell eyebrow="Админ" title="Супер-админ платформы">
         <PanelCard caption="Доступ" title="Назначение первого супер-админа">
           <p className="mb-4 text-sm leading-7 text-muted">
-            Текущий пользователь уже авторизован, но записи в `platform_admins`
-            для него пока нет. Для локальной разработки можно назначить себя
-            первым `super_admin` через `ADMIN_BOOTSTRAP_TOKEN`.
+            Текущий пользователь уже авторизован, но записи в
+            {" "}
+            <code>platform_admins</code>
+            {" "}
+            для него пока нет. Для локальной
+            разработки можно назначить себя первым
+            {" "}
+            <code>super_admin</code>
+            {" "}
+            через
+            {" "}
+            <code>ADMIN_BOOTSTRAP_TOKEN</code>.
           </p>
           <AdminBootstrapForm userEmail={viewer.user.email ?? "неизвестно"} />
         </PanelCard>
@@ -109,6 +143,8 @@ export default async function AdminPage() {
     knowledgeChunksCountResult,
     knowledgeEmbeddingsCountResult,
     reindexActionsCountResult,
+    authUsersResult,
+    adminAuditLogsResult,
   ] = await Promise.all([
     adminSupabase
       .from("profiles")
@@ -119,7 +155,7 @@ export default async function AdminPage() {
       .from("platform_admins")
       .select("user_id, role, created_at")
       .order("created_at", { ascending: false })
-      .limit(8),
+      .limit(20),
     adminSupabase
       .from("support_actions")
       .select("id, action, status, created_at, target_user_id")
@@ -166,7 +202,34 @@ export default async function AdminPage() {
       .from("support_actions")
       .select("*", { count: "exact", head: true })
       .eq("action", "reindex_knowledge"),
+    adminSupabase.auth.admin.listUsers({
+      page: 1,
+      perPage: 100,
+    }),
+    adminSupabase
+      .from("admin_audit_logs")
+      .select("id, action, reason, created_at, actor_user_id, target_user_id")
+      .order("created_at", { ascending: false })
+      .limit(8),
   ]);
+
+  if (authUsersResult.error) {
+    throw authUsersResult.error;
+  }
+
+  const failedResult = [
+    usersResult,
+    adminsResult,
+    supportActionsResult,
+    aiEvalRunsResult,
+    aiSafetyEventsResult,
+    aiChatSessionsResult,
+    adminAuditLogsResult,
+  ].find((result) => result.error);
+
+  if (failedResult?.error) {
+    throw failedResult.error;
+  }
 
   const users = usersResult.data ?? [];
   const admins = adminsResult.data ?? [];
@@ -174,6 +237,42 @@ export default async function AdminPage() {
   const aiEvalRuns = aiEvalRunsResult.data ?? [];
   const aiSafetyEvents = aiSafetyEventsResult.data ?? [];
   const aiChatSessions = aiChatSessionsResult.data ?? [];
+  const adminAuditLogs = (adminAuditLogsResult.data ?? []).filter((entry) =>
+    entry.action.startsWith("admin_role_"),
+  );
+  const authUsersById = new Map(
+    (authUsersResult.data.users ?? []).map((user) => [user.id, user]),
+  );
+
+  const adminRoster = admins
+    .map((admin) => {
+      const authUser = authUsersById.get(admin.user_id);
+
+      return {
+        ...admin,
+        email: authUser?.email ?? null,
+        lastSignInAt: authUser?.last_sign_in_at ?? null,
+      };
+    })
+    .sort((left, right) => {
+      const roleDiff =
+        (adminRoleOrder[left.role] ?? Number.MAX_SAFE_INTEGER) -
+        (adminRoleOrder[right.role] ?? Number.MAX_SAFE_INTEGER);
+
+      if (roleDiff !== 0) {
+        return roleDiff;
+      }
+
+      return (
+        new Date(right.created_at).getTime() - new Date(left.created_at).getTime()
+      );
+    });
+
+  const accessSummary = [
+    ["Супер-админы", String(admins.filter((admin) => admin.role === "super_admin").length)],
+    ["Поддержка", String(admins.filter((admin) => admin.role === "support_admin").length)],
+    ["Аналитики", String(admins.filter((admin) => admin.role === "analyst").length)],
+  ];
 
   const kpis = [
     ["Пользователи", String(usersCountResult.count ?? 0)],
@@ -193,7 +292,90 @@ export default async function AdminPage() {
   ];
 
   return (
-    <AppShell eyebrow="Админ" title="Супер-админ платформы">
+    <AppShell eyebrow="Админ" title="Центр управления платформой">
+      <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+        <PanelCard caption="Сессия" title="Текущий доступ">
+          <div className="grid gap-4 md:grid-cols-[1.15fr_0.85fr]">
+            <article className="rounded-3xl border border-border bg-white/60 p-5 text-sm">
+              <p className="font-semibold text-foreground">
+                {viewer.user.email ?? "Email не найден"}
+              </p>
+              <p className="mt-2 text-muted">
+                Роль:
+                {" "}
+                <span className="text-foreground">
+                  {viewer.platformAdminRole
+                    ? formatAdminRole(viewer.platformAdminRole)
+                    : "нет admin-роли"}
+                </span>
+              </p>
+              <p className="mt-2 text-muted">
+                Последний вход:
+                {" "}
+                <span className="text-foreground">
+                  {formatDateTime(viewer.user.last_sign_in_at)}
+                </span>
+              </p>
+              <p className="mt-2 text-muted">
+                Пользователь:
+                {" "}
+                <span className="break-all text-foreground">{viewer.user.id}</span>
+              </p>
+            </article>
+
+            <article className="rounded-3xl border border-border bg-white/60 p-5 text-sm">
+              <p className="font-semibold text-foreground">
+                Что можно делать из панели
+              </p>
+              <p className="mt-3 leading-7 text-muted">
+                Супер-админ выдаёт и отзывает роли, а все изменения доступа
+                автоматически пишутся в audit log.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Link
+                  className="inline-flex rounded-full bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
+                  href={"/admin/users" as Route}
+                >
+                  Каталог пользователей
+                </Link>
+                <Link
+                  className="inline-flex rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-white/70"
+                  href={`/admin/users/${viewer.user.id}` as Route}
+                >
+                  Моя admin-карточка
+                </Link>
+              </div>
+            </article>
+          </div>
+        </PanelCard>
+
+        <PanelCard caption="Доступы" title="Контур администрирования">
+          <div className="grid gap-4 sm:grid-cols-3">
+            {accessSummary.map(([label, value]) => (
+              <article className="kpi p-4" key={label}>
+                <p className="text-sm text-muted">{label}</p>
+                <p className="mt-2 text-xl font-semibold text-foreground">{value}</p>
+              </article>
+            ))}
+          </div>
+          <p className="mt-5 text-sm leading-7 text-muted">
+            Панель уже умеет искать пользователей по email и UUID, открывать
+            детальную карточку, выполнять support actions и управлять ролями
+            {" "}
+            <code>super_admin</code>
+            ,
+            {" "}
+            <code>support_admin</code>
+            {" "}
+            и
+            {" "}
+            <code>analyst</code>
+            {" "}
+            без ручной работы в SQL.
+          </p>
+        </PanelCard>
+      </div>
+
       <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
         <PanelCard caption="Контроль" title="AI usage и состояние платформы">
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -214,7 +396,9 @@ export default async function AdminPage() {
                 }`}
                 key={label}
               >
-                {label}: {ready ? "готово" : "не настроено"}
+                {label}
+                :{" "}
+                {ready ? "готово" : "не настроено"}
               </span>
             ))}
           </div>
@@ -228,12 +412,89 @@ export default async function AdminPage() {
               заметных изменений профиля, тренировок или питания.
             </p>
             <AdminAiOperations defaultTargetUserId={viewer.user.id} />
-            <Link
-              className="inline-flex w-fit rounded-full border border-border px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-white/70"
-              href={"/admin/users" as Route}
-            >
-              Открыть каталог пользователей
-            </Link>
+            <div className="flex flex-wrap gap-2">
+              <Link
+                className="inline-flex w-fit rounded-full border border-border px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-white/70"
+                href={"/admin/users" as Route}
+              >
+                Открыть каталог пользователей
+              </Link>
+            </div>
+          </div>
+        </PanelCard>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <PanelCard caption="Команда" title="Кто сейчас управляет платформой">
+          <div className="grid gap-3">
+            {adminRoster.length ? (
+              adminRoster.map((admin) => (
+                <div
+                  className="rounded-2xl border border-border bg-white/60 px-4 py-3 text-sm"
+                  key={`${admin.user_id}-${admin.created_at}`}
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-foreground">
+                        {admin.email ?? admin.user_id}
+                      </p>
+                      <p className="mt-1 break-all text-muted">{admin.user_id}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold text-foreground">
+                        {formatAdminRole(admin.role)}
+                      </p>
+                      <p className="mt-1 text-muted">
+                        Вход:
+                        {" "}
+                        {formatDateTime(admin.lastSignInAt)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-muted">Пока нет назначенных админов.</p>
+            )}
+          </div>
+        </PanelCard>
+
+        <PanelCard caption="Аудит" title="Последние изменения доступов">
+          <div className="grid gap-3">
+            {adminAuditLogs.length ? (
+              adminAuditLogs.map((entry) => (
+                <div
+                  className="rounded-2xl border border-border bg-white/60 px-4 py-3 text-sm"
+                  key={entry.id}
+                >
+                  <p className="font-semibold text-foreground">
+                    {formatAuditAction(entry.action)}
+                  </p>
+                  <p className="mt-1 text-muted">
+                    Причина:
+                    {" "}
+                    {entry.reason ?? "Без пояснения"}
+                  </p>
+                  <p className="mt-1 break-all text-muted">
+                    Actor:
+                    {" "}
+                    {entry.actor_user_id}
+                  </p>
+                  <p className="mt-1 break-all text-muted">
+                    Target:
+                    {" "}
+                    {entry.target_user_id}
+                  </p>
+                  <p className="mt-2 text-muted">
+                    {formatDateTime(entry.created_at)}
+                  </p>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-muted">
+                Изменений ролей и доступов пока не зафиксировано.
+              </p>
+            )}
           </div>
         </PanelCard>
       </div>
@@ -262,28 +523,6 @@ export default async function AdminPage() {
           </div>
         </PanelCard>
 
-        <PanelCard caption="Роли" title="Текущие admin-роли">
-          <div className="grid gap-3">
-            {admins.length ? (
-              admins.map((admin) => (
-                <div
-                  className="rounded-2xl border border-border bg-white/60 px-4 py-3 text-sm"
-                  key={`${admin.user_id}-${admin.created_at}`}
-                >
-                  <p className="font-semibold text-foreground">
-                    {formatAdminRole(admin.role)}
-                  </p>
-                  <p className="text-muted">{admin.user_id}</p>
-                </div>
-              ))
-            ) : (
-              <p className="text-sm text-muted">Пока нет назначенных админов.</p>
-            )}
-          </div>
-        </PanelCard>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-2">
         <PanelCard caption="Поддержка" title="Последние support actions">
           <div className="grid gap-3">
             {supportActions.length ? (
@@ -296,10 +535,16 @@ export default async function AdminPage() {
                     {formatSupportAction(action.action)}
                   </p>
                   <p className="mt-1 text-muted">
-                    Статус: {formatStatus(action.status)} · {formatDateTime(action.created_at)}
+                    Статус:
+                    {" "}
+                    {formatStatus(action.status)}
+                    {" · "}
+                    {formatDateTime(action.created_at)}
                   </p>
                   <p className="mt-1 text-muted">
-                    Пользователь: {action.target_user_id ?? "не указан"}
+                    Пользователь:
+                    {" "}
+                    {action.target_user_id ?? "не указан"}
                   </p>
                 </div>
               ))
@@ -310,7 +555,9 @@ export default async function AdminPage() {
             )}
           </div>
         </PanelCard>
+      </div>
 
+      <div className="grid gap-6 lg:grid-cols-2">
         <PanelCard caption="Безопасность" title="Последние AI safety events">
           <div className="grid gap-3">
             {aiSafetyEvents.length ? (
@@ -320,7 +567,9 @@ export default async function AdminPage() {
                   key={event.id}
                 >
                   <p className="font-semibold text-foreground">
-                    {formatRouteKey(event.route_key)} · {event.action}
+                    {formatRouteKey(event.route_key)}
+                    {" · "}
+                    {event.action}
                   </p>
                   <p className="mt-1 text-muted">{formatDateTime(event.created_at)}</p>
                   <p className="mt-2 text-muted">
@@ -335,9 +584,7 @@ export default async function AdminPage() {
             )}
           </div>
         </PanelCard>
-      </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
         <PanelCard caption="AI-чат" title="Последние chat sessions">
           <div className="grid gap-3">
             {aiChatSessions.length ? (
@@ -350,10 +597,14 @@ export default async function AdminPage() {
                     {session.title || "Без заголовка"}
                   </p>
                   <p className="mt-1 text-muted">
-                    Пользователь: {session.user_id}
+                    Пользователь:
+                    {" "}
+                    {session.user_id}
                   </p>
                   <p className="mt-1 text-muted">
-                    Обновлено: {formatDateTime(session.updated_at)}
+                    Обновлено:
+                    {" "}
+                    {formatDateTime(session.updated_at)}
                   </p>
                 </div>
               ))
@@ -364,7 +615,9 @@ export default async function AdminPage() {
             )}
           </div>
         </PanelCard>
+      </div>
 
+      <div className="grid gap-6 lg:grid-cols-2">
         <PanelCard caption="AI-оценки" title="Последние AI eval runs">
           <div className="grid gap-3">
             {aiEvalRuns.length ? (
@@ -375,7 +628,11 @@ export default async function AdminPage() {
                 >
                   <p className="font-semibold text-foreground">{run.label}</p>
                   <p className="mt-1 text-muted">
-                    Статус: {formatStatus(run.status)} · {formatDateTime(run.created_at)}
+                    Статус:
+                    {" "}
+                    {formatStatus(run.status)}
+                    {" · "}
+                    {formatDateTime(run.created_at)}
                   </p>
                 </div>
               ))

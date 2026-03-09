@@ -32,6 +32,7 @@ export type Viewer = {
   onboarding: OnboardingRow | null;
   goal: GoalRow | null;
   isPlatformAdmin: boolean;
+  platformAdminRole: "super_admin" | "support_admin" | "analyst" | null;
   hasCompletedOnboarding: boolean;
 };
 
@@ -85,7 +86,7 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
         .maybeSingle(),
       supabase
         .from("platform_admins")
-        .select("id")
+        .select("id, role")
         .eq("user_id", user.id)
         .maybeSingle(),
     ]);
@@ -99,6 +100,12 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
     onboarding,
     goal,
     isPlatformAdmin: Boolean(adminResult.data),
+    platformAdminRole:
+      (adminResult.data?.role as
+        | "super_admin"
+        | "support_admin"
+        | "analyst"
+        | undefined) ?? null,
     hasCompletedOnboarding: hasCompletedOnboarding(onboarding, goal),
   };
 });

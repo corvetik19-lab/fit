@@ -87,8 +87,12 @@
 - workout template routes для сохранения и повторного использования структуры недели
 - workout rep range contract с `planned_reps_min` / `planned_reps_max` и общими пресетами диапазонов повторов
 - совместимый fallback для `workout_sets` на случай, если remote Supabase ещё не получила миграцию с rep range колонками
+- execution helper для workout day/status updates и sync push поверх того же server-side контракта
 - admin bootstrap route для первого `super_admin`
 - session-based admin access через `platform_admins`
+- `GET /api/admin/users` теперь объединяет `profiles`, `platform_admins` и `auth.admin.listUsers`, а также поддерживает поиск по email/UUID и фильтр по admin role
+- `GET /api/admin/users/[id]` теперь отдаёт auth metadata, текущую роль администратора и последние записи audit log по конкретному пользователю
+- `PATCH` / `DELETE` `/api/admin/users/[id]/role` управляют `platform_admins` через server-side валидацию и пишут события в `admin_audit_logs`
 - queueing для `support_actions`, `ai_eval_runs` и `ai/reindex` admin flows
 - audit log записи для privileged admin действий
 - real user detail/admin support routes под `/api/admin/users/[id]/*`
@@ -123,6 +127,7 @@
 - `POST /api/weekly-programs/[id]/lock` переводит draft-программу в `active` и блокирует её от дальнейших структурных изменений
 - `PATCH /api/workout-days/[id]` меняет статус тренировочного дня только для locked week
 - `PATCH /api/workout-sets/[id]` сохраняет `actual_reps` только для locked week
+- `POST /api/sync/push` принимает офлайн-мутации workout execution и прогоняет их через тот же execution helper, что и прямые PATCH routes
 - `GET /api/workout-templates` отдаёт последние workout templates пользователя вместе с rep range metadata в payload
 - `POST /api/workout-templates` сохраняет выбранную weekly program как template с payload в `workout_templates`, включая диапазоны повторов
 - `src/lib/workout/workout-sets.ts` централизует fallback для select/insert в `workout_sets`, если удалённая БД ещё живёт на legacy-схеме без `planned_reps_min/max`
@@ -150,8 +155,10 @@
 ## Что сейчас делает admin backend
 
 - `POST /api/admin/bootstrap` назначает текущего авторизованного пользователя первым `super_admin` по `ADMIN_BOOTSTRAP_TOKEN`
-- `GET /api/admin/users` отдаёт список последних профилей
-- `GET /api/admin/users/[id]` отдаёт профиль, onboarding, goal snapshot и последние support actions по пользователю
+- `GET /api/admin/users` отдаёт список пользователей с email, last sign-in и admin-role, поддерживает поиск и role filter
+- `GET /api/admin/users/[id]` отдаёт профиль, onboarding, goal snapshot, auth metadata, последние support actions и admin audit log по пользователю
+- `PATCH /api/admin/users/[id]/role` назначает или обновляет `super_admin`, `support_admin`, `analyst`
+- `DELETE /api/admin/users/[id]/role` отзывает admin-доступ и фиксирует это в audit log
 - `POST /api/admin/users/[id]/suspend` и `POST /api/admin/users/[id]/restore` создают queued support actions и пишут audit log
 - `POST /api/admin/users/[id]/support-action` создаёт произвольный queued support action и пишет audit log
 - `GET /api/admin/ai-evals` отдаёт последние eval runs
@@ -173,6 +180,7 @@
 - service-role использовать только server-side
 - лучше расширять текущие route handlers, чем создавать параллельный API-слой
 - при rollout schema changes учитывать, что Vercel может задеплоить код раньше, чем remote Supabase получит миграцию; для user-facing workout flow теперь есть временный backward-compatible fallback, но это не замена нормальному применению миграций
+- sync push пока реализован только для workout execution slice; `sync/pull` и остальные домены ещё не переведены на incremental sync
 ## AI chat и knowledge indexing
 
 - Добавлен рабочий route [chat/route.ts](/C:/fit/src/app/api/ai/chat/route.ts).

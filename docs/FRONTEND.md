@@ -76,6 +76,7 @@
 
 - landing CTA теперь зависит от состояния сессии
 - верхняя навигация и пользовательские подписи по приложению переведены на русский
+- mobile-first app shell теперь использует sticky header, burger drawer и контекстный нижний tab bar, чтобы `/dashboard`, `/workouts`, `/nutrition`, `/ai`, `/settings` и служебные разделы ощущались как полноценное телефонное приложение
 - service worker для offline shell и critical caches уже подключён в production runtime
 - auth form
 - onboarding form
@@ -103,6 +104,9 @@
 - clone action для weekly programs
 - workout templates на `/workouts`
 - `/admin/users` и `/admin/users/[id]` с живыми данными
+- `/admin` теперь работает как control center: показывает текущую admin-сессию, roster действующих администраторов, последние изменения доступов и быстрые входы в user management
+- `/admin/users` поддерживает поиск по имени, email и UUID, фильтр по admin role, summary-карточки по выборке и прямой переход в управление доступом пользователя
+- `/admin/users/[id]` показывает auth metadata пользователя и server-backed manager для ролей `super_admin`, `support_admin`, `analyst`
 - UI для queued `suspend`, `restore` и custom support actions
 - settings page показывает текущий account context
 - sign-out button
@@ -112,12 +116,15 @@
 Пока остаётся заглушкой:
 
 - history UI пока в основном scaffold-поверхность
-- admin UI уже умеет bootstrap первого super-admin и базовый user management, но audit/system dashboards пока не собраны в полноценную панель
+- admin UI уже умеет bootstrap первого super-admin, полноценный user directory, role management и audit views, но system/sync dashboards пока не собраны полностью
 
 ## PWA и offline slice
 
 - `src/components/service-worker-registration.tsx` регистрирует `public/sw.js` в production runtime и форсирует быстрое применение новой версии service worker.
 - `public/sw.js` предкеширует `offline.html`, `manifest.webmanifest` и `icon.svg`.
+- `AppShell` теперь сам получает `viewer` и передаёт его в shell-навигацию, поэтому мобильный PWA-shell может показать имя, email, admin-role и account actions в общем выезжающем меню.
+- `AppShellNav` на телефоне использует burger drawer с overlay, grouped routes и встроенным `SignOutButton`, а нижний tab bar оставляет только быстрые core-переходы.
+- `src/app/globals.css` содержит отдельный `app-drawer` слой, который открывается как slide-in sheet и не конфликтует с нижним таббаром.
 - runtime-кеш применяется только к критичным same-origin ассетам: `/_next/static`, стилям, скриптам, шрифтам и изображениям.
 - приватные HTML-страницы пользователя не кешируются намеренно, чтобы не держать пользовательский SSR-срез в shared browser cache.
 - при offline navigation service worker отдаёт `public/offline.html`, а не браузерную network error page.
@@ -154,6 +161,8 @@
 - диапазон повторов сохраняется в `workout_sets` и переиспользуется в clone/template/AI apply flow
 - для legacy-сетов без `planned_reps_min/max` UI даёт fallback-список `1..25`
 - для новых legacy-записей на ещё не мигрированной БД UI умеет восстановить диапазон по `planned_reps`, если там сохранена верхняя граница пресета
+- `WorkoutDaySession` поддерживает optimistic updates и локальную очередь для `actual_reps` и статуса тренировочного дня
+- при offline-режиме экран выполнения тренировки показывает состояние сети, размер очереди и отдельное действие синхронизации при возвращении online
 - экран показывает краткий snapshot по активным и архивным упражнениям
 - экран показывает последние сохранённые weekly programs
 - после CRUD-действий используется `router.refresh()`, поэтому серверная страница остаётся источником правды
