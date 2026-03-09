@@ -4,6 +4,8 @@ export type WeeklyProgramSetSummary = {
   id: string;
   set_number: number;
   planned_reps: number;
+  planned_reps_min: number | null;
+  planned_reps_max: number | null;
   actual_reps: number | null;
 };
 
@@ -148,7 +150,9 @@ export async function listWeeklyPrograms(
   const exerciseIds = workoutExercises.map((exercise) => exercise.id);
   const { data: sets, error: setsError } = await supabase
     .from("workout_sets")
-    .select("id, workout_exercise_id, set_number, planned_reps, actual_reps")
+    .select(
+      "id, workout_exercise_id, set_number, planned_reps, planned_reps_min, planned_reps_max, actual_reps",
+    )
     .eq("user_id", userId)
     .in("workout_exercise_id", exerciseIds)
     .order("set_number", { ascending: true });
@@ -166,6 +170,8 @@ export async function listWeeklyPrograms(
       id: workoutSet.id,
       set_number: workoutSet.set_number,
       planned_reps: workoutSet.planned_reps,
+      planned_reps_min: workoutSet.planned_reps_min,
+      planned_reps_max: workoutSet.planned_reps_max,
       actual_reps: workoutSet.actual_reps,
     });
     setsByExerciseId.set(workoutSet.workout_exercise_id, currentSets);
@@ -274,7 +280,9 @@ export async function getWorkoutDayDetail(
   const exerciseIds = workoutExercises.map((exercise) => exercise.id);
   const { data: sets, error: setsError } = await supabase
     .from("workout_sets")
-    .select("id, workout_exercise_id, set_number, planned_reps, actual_reps")
+    .select(
+      "id, workout_exercise_id, set_number, planned_reps, planned_reps_min, planned_reps_max, actual_reps",
+    )
     .eq("user_id", userId)
     .in("workout_exercise_id", exerciseIds)
     .order("set_number", { ascending: true });
@@ -292,6 +300,8 @@ export async function getWorkoutDayDetail(
       id: workoutSet.id,
       set_number: workoutSet.set_number,
       planned_reps: workoutSet.planned_reps,
+      planned_reps_min: workoutSet.planned_reps_min,
+      planned_reps_max: workoutSet.planned_reps_max,
       actual_reps: workoutSet.actual_reps,
     });
     setsByExerciseId.set(workoutSet.workout_exercise_id, currentSets);

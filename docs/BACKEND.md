@@ -20,6 +20,7 @@
 
 - `20260308093000_initial_fit_platform.sql`
 - `20260308095500_platform_admin_ai_rls.sql`
+- `20260309121000_workout_rep_ranges.sql`
 
 ## Основные домены, уже смоделированные в схеме
 
@@ -84,6 +85,7 @@
 - lock route для перевода weekly program в `active`
 - workout execution routes для `status` дня и `actual_reps` подходов
 - workout template routes для сохранения и повторного использования структуры недели
+- workout rep range contract с `planned_reps_min` / `planned_reps_max` и общими пресетами диапазонов повторов
 - admin bootstrap route для первого `super_admin`
 - session-based admin access через `platform_admins`
 - queueing для `support_actions`, `ai_eval_runs` и `ai/reindex` admin flows
@@ -115,13 +117,13 @@
 - `GET /api/exercises` и `POST /api/exercises` обслуживают библиотеку упражнений
 - `PATCH /api/exercises/[id]` обновляет и архивирует упражнения
 - `GET /api/weekly-programs` отдаёт последние weekly programs текущего пользователя
-- `POST /api/weekly-programs` создаёт draft weekly program вместе с `workout_days`, `workout_exercises` и `workout_sets`
-- `POST /api/weekly-programs/[id]/clone` создаёт новый draft на основе предыдущей недели и копирует плановую структуру
+- `POST /api/weekly-programs` создаёт draft weekly program вместе с `workout_days`, `workout_exercises` и `workout_sets`, сохраняя диапазон повторов в `planned_reps_min/max`
+- `POST /api/weekly-programs/[id]/clone` создаёт новый draft на основе предыдущей недели и копирует плановую структуру вместе с диапазонами повторов
 - `POST /api/weekly-programs/[id]/lock` переводит draft-программу в `active` и блокирует её от дальнейших структурных изменений
 - `PATCH /api/workout-days/[id]` меняет статус тренировочного дня только для locked week
 - `PATCH /api/workout-sets/[id]` сохраняет `actual_reps` только для locked week
-- `GET /api/workout-templates` отдаёт последние workout templates пользователя
-- `POST /api/workout-templates` сохраняет выбранную weekly program как template с payload в `workout_templates`
+- `GET /api/workout-templates` отдаёт последние workout templates пользователя вместе с rep range metadata в payload
+- `POST /api/workout-templates` сохраняет выбранную weekly program как template с payload в `workout_templates`, включая диапазоны повторов
 - при неудаче создания weekly program route пытается откатить созданную программу удалением корневой записи
 - `getDashboardSnapshot` считает реальные summary-метрики по weekly programs, workout days, workout sets, exercise library, workout templates, AI chat sessions и nutrition summaries
 - `getDashboardPeriodComparison` считает сравнение текущего и предыдущего периода по завершённым тренировкам, калориям и AI-сессиям
@@ -140,7 +142,7 @@
 - `POST /api/ai/meal-plan` генерирует proposal плана питания и сохраняет его в `ai_plan_proposals`
 - `POST /api/ai/workout-plan` генерирует proposal тренировочного плана и сохраняет его в `ai_plan_proposals`
 - `POST /api/ai/proposals/[id]/approve` подтверждает предложение без немедленного применения
-- `POST /api/ai/proposals/[id]/apply` применяет workout proposal в draft weekly program, а meal proposal — в `meal_templates` как reference-only артефакты
+- `POST /api/ai/proposals/[id]/apply` применяет workout proposal в draft weekly program, восстанавливая ближайший rep range preset из AI-текста, а meal proposal — в `meal_templates` как reference-only артефакты
 
 ## Что сейчас делает admin backend
 

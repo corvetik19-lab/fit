@@ -93,7 +93,9 @@ export async function POST(
     const { data: sourceSets, error: sourceSetsError } = sourceExerciseIds.length
       ? await supabase
           .from("workout_sets")
-          .select("id, workout_exercise_id, set_number, planned_reps")
+          .select(
+            "id, workout_exercise_id, set_number, planned_reps, planned_reps_min, planned_reps_max",
+          )
           .eq("user_id", user.id)
           .in("workout_exercise_id", sourceExerciseIds)
           .order("set_number", { ascending: true })
@@ -189,6 +191,8 @@ export async function POST(
           workout_exercise_id: nextWorkoutExerciseId,
           set_number: sourceSet.set_number,
           planned_reps: sourceSet.planned_reps,
+          planned_reps_min: sourceSet.planned_reps_min,
+          planned_reps_max: sourceSet.planned_reps_max,
           actual_reps: null,
         });
 

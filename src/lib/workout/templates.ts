@@ -1,10 +1,15 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import type { RepRangePresetKey } from "@/lib/workout/rep-ranges";
+
 export type WorkoutTemplateExercise = {
   exerciseLibraryId: string | null;
   exerciseTitleSnapshot: string;
   setsCount: number;
-  plannedReps: number;
+  plannedReps?: number | null;
+  plannedRepsMin?: number | null;
+  plannedRepsMax?: number | null;
+  repRangeKey?: RepRangePresetKey | null;
 };
 
 export type WorkoutTemplateDay = {

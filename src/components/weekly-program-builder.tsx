@@ -6,6 +6,13 @@ import { useRouter } from "next/navigation";
 import { startTransition, useState } from "react";
 
 import type { WeeklyProgramSummary } from "@/lib/workout/weekly-programs";
+import {
+  defaultRepRangePresetKey,
+  formatPlannedRepTarget,
+  repRangePresets,
+  resolveRepRangePreset,
+  type RepRangePresetKey,
+} from "@/lib/workout/rep-ranges";
 import type { WorkoutTemplateSummary } from "@/lib/workout/templates";
 
 type ExerciseOption = {
@@ -18,7 +25,7 @@ type BuilderExercise = {
   localId: string;
   exerciseLibraryId: string;
   setsCount: string;
-  plannedReps: string;
+  repRangeKey: RepRangePresetKey;
 };
 
 type BuilderDay = {
@@ -67,7 +74,7 @@ function createExerciseEntry(): BuilderExercise {
     localId: createLocalId(),
     exerciseLibraryId: "",
     setsCount: "4",
-    plannedReps: "10",
+    repRangeKey: defaultRepRangePresetKey,
   };
 }
 
@@ -218,7 +225,7 @@ export function WeeklyProgramBuilder({
       exercises: Array<{
         exerciseLibraryId: string;
         setsCount: number;
-        plannedReps: number;
+        repRangeKey: RepRangePresetKey;
       }>;
     }> = [];
     const usedDays = new Set<number>();
@@ -251,7 +258,6 @@ export function WeeklyProgramBuilder({
 
       for (const exercise of day.exercises) {
         const setsCount = Number(exercise.setsCount);
-        const plannedReps = Number(exercise.plannedReps);
 
         if (!exercise.exerciseLibraryId) {
           setError("Выбери упражнение для каждого слота внутри дня.");
@@ -263,15 +269,10 @@ export function WeeklyProgramBuilder({
           return;
         }
 
-        if (!Number.isInteger(plannedReps) || plannedReps < 1) {
-          setError("Плановые повторы должны быть положительным целым числом.");
-          return;
-        }
-
         normalizedExercises.push({
           exerciseLibraryId: exercise.exerciseLibraryId,
           setsCount,
-          plannedReps,
+          repRangeKey: exercise.repRangeKey,
         });
       }
 
@@ -419,7 +420,7 @@ export function WeeklyProgramBuilder({
         localId: createLocalId(),
         exerciseLibraryId: exercise.exerciseLibraryId ?? "",
         setsCount: exercise.setsCount.toString(),
-        plannedReps: exercise.plannedReps.toString(),
+        repRangeKey: resolveRepRangePreset(exercise).key,
       })),
     }));
 
@@ -575,23 +576,35 @@ export function WeeklyProgramBuilder({
                       </label>
 
                       <label className="grid gap-2 text-sm text-muted">
-                        Повторов в подходе
-                        <input
+                        Диапазон повторов
+                        <select
                           className={inputClassName}
-                          min={1}
                           onChange={(event) =>
                             updateExerciseField(
                               day.localId,
                               exercise.localId,
-                              "plannedReps",
+                              "repRangeKey",
                               event.target.value,
                             )
                           }
-                          type="number"
-                          value={exercise.plannedReps}
-                        />
+                          value={exercise.repRangeKey}
+                        >
+                          {repRangePresets.map((preset) => (
+                            <option key={preset.key} value={preset.key}>
+                              {preset.label}
+                            </option>
+                          ))}
+                        </select>
                       </label>
                     </div>
+
+                    <p className="mt-3 text-sm text-muted">
+                      В выполнении будут доступны только значения из диапазона{" "}
+                      <span className="font-semibold text-foreground">
+                        {resolveRepRangePreset(exercise.repRangeKey).label}
+                      </span>
+                      .
+                    </p>
                   </div>
                 ))}
               </div>
@@ -822,7 +835,9 @@ export function WeeklyProgramBuilder({
                           {day.exercises.map((exercise) => (
                             <p key={exercise.id}>
                               {exercise.exercise_title_snapshot} · {exercise.sets_count} x{" "}
-                              {exercise.sets[0]?.planned_reps ?? "?"}
+                              {exercise.sets[0]
+                                ? formatPlannedRepTarget(exercise.sets[0])
+                                : "?"}
                             </p>
                           ))}
                         </div>

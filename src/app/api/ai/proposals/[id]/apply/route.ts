@@ -6,6 +6,7 @@ import {
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import { logger } from "@/lib/logger";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { resolveRepRangePresetFromText } from "@/lib/workout/rep-ranges";
 
 function getUtcMonday(date: Date) {
   const nextDate = new Date(date);
@@ -160,16 +161,15 @@ async function createWorkoutDraftFromProposal(
           throw workoutExerciseError;
         }
 
-        const firstRepsMatch = exercise.reps.match(/\d+/);
-        const plannedReps = firstRepsMatch
-          ? Number.parseInt(firstRepsMatch[0], 10)
-          : Number.NaN;
+        const repRangePreset = resolveRepRangePresetFromText(exercise.reps);
 
         const setsPayload = Array.from({ length: exercise.sets }, (_, setIndex) => ({
           user_id: userId,
           workout_exercise_id: workoutExerciseRow.id,
           set_number: setIndex + 1,
-          planned_reps: Number.isFinite(plannedReps) && plannedReps > 0 ? plannedReps : 10,
+          planned_reps: repRangePreset.max,
+          planned_reps_min: repRangePreset.min,
+          planned_reps_max: repRangePreset.max,
           actual_reps: null,
         }));
 

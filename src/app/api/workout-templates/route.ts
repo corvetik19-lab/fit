@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import { logger } from "@/lib/logger";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { resolveRepRangePreset } from "@/lib/workout/rep-ranges";
 import { listWorkoutTemplates } from "@/lib/workout/templates";
 
 const createWorkoutTemplateSchema = z.object({
@@ -105,7 +106,9 @@ export async function POST(request: Request) {
     const { data: setRows, error: setRowsError } = exerciseIds.length
       ? await supabase
           .from("workout_sets")
-          .select("workout_exercise_id, set_number, planned_reps")
+          .select(
+            "workout_exercise_id, set_number, planned_reps, planned_reps_min, planned_reps_max",
+          )
           .eq("user_id", user.id)
           .in("workout_exercise_id", exerciseIds)
           .order("set_number", { ascending: true })
@@ -115,13 +118,24 @@ export async function POST(request: Request) {
       throw setRowsError;
     }
 
-    const firstPlannedRepsByExerciseId = new Map<string, number>();
+    const firstRepRangeByExerciseId = new Map<
+      string,
+      {
+        plannedReps: number;
+        plannedRepsMin: number | null;
+        plannedRepsMax: number | null;
+      }
+    >();
 
     for (const setRow of setRows ?? []) {
-      if (!firstPlannedRepsByExerciseId.has(setRow.workout_exercise_id)) {
-        firstPlannedRepsByExerciseId.set(
+      if (!firstRepRangeByExerciseId.has(setRow.workout_exercise_id)) {
+        firstRepRangeByExerciseId.set(
           setRow.workout_exercise_id,
-          setRow.planned_reps,
+          {
+            plannedReps: setRow.planned_reps,
+            plannedRepsMin: setRow.planned_reps_min,
+            plannedRepsMax: setRow.planned_reps_max,
+          },
         );
       }
     }
@@ -133,17 +147,29 @@ export async function POST(request: Request) {
         exerciseTitleSnapshot: string;
         setsCount: number;
         plannedReps: number;
+        plannedRepsMin: number | null;
+        plannedRepsMax: number | null;
+        repRangeKey: string;
       }>
     >();
 
     for (const exerciseRow of exerciseRows ?? []) {
       const currentExercises = exercisesByDayId.get(exerciseRow.workout_day_id) ?? [];
+      const firstRepRange = firstRepRangeByExerciseId.get(exerciseRow.id) ?? {
+        plannedReps: exerciseRow.sets_count,
+        plannedRepsMin: null,
+        plannedRepsMax: null,
+      };
+      const repRangePreset = resolveRepRangePreset(firstRepRange);
+
       currentExercises.push({
         exerciseLibraryId: exerciseRow.exercise_library_id,
         exerciseTitleSnapshot: exerciseRow.exercise_title_snapshot,
         setsCount: exerciseRow.sets_count,
-        plannedReps:
-          firstPlannedRepsByExerciseId.get(exerciseRow.id) ?? exerciseRow.sets_count,
+        plannedReps: firstRepRange.plannedReps,
+        plannedRepsMin: firstRepRange.plannedRepsMin,
+        plannedRepsMax: firstRepRange.plannedRepsMax,
+        repRangeKey: repRangePreset.key,
       });
       exercisesByDayId.set(exerciseRow.workout_day_id, currentExercises);
     }

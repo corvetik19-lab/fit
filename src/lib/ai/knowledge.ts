@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { models } from "@/lib/ai/gateway";
 import { logger } from "@/lib/logger";
+import { formatPlannedRepTarget } from "@/lib/workout/rep-ranges";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -94,6 +95,8 @@ type WorkoutSetRow = {
   workout_exercise_id: string;
   set_number: number;
   planned_reps: number;
+  planned_reps_min: number | null;
+  planned_reps_max: number | null;
   actual_reps: number | null;
 };
 
@@ -387,7 +390,9 @@ async function buildKnowledgeDocuments(
     const { data: workoutSetsData } = exerciseIds.length
       ? await supabase
           .from("workout_sets")
-          .select("id, workout_exercise_id, set_number, planned_reps, actual_reps")
+          .select(
+            "id, workout_exercise_id, set_number, planned_reps, planned_reps_min, planned_reps_max, actual_reps",
+          )
           .eq("user_id", userId)
           .in("workout_exercise_id", exerciseIds)
           .order("set_number", { ascending: true })
@@ -426,8 +431,8 @@ async function buildKnowledgeDocuments(
             const repsSummary = sets
               .map((set) =>
                 set.actual_reps != null
-                  ? `${set.actual_reps}/${set.planned_reps}`
-                  : `${set.planned_reps}`,
+                  ? `${set.actual_reps}/${formatPlannedRepTarget(set)}`
+                  : formatPlannedRepTarget(set),
               )
               .join(", ");
 

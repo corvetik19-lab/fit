@@ -3,12 +3,17 @@ import { z } from "zod";
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import { logger } from "@/lib/logger";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import {
+  defaultRepRangePresetKey,
+  getRepRangePreset,
+  isRepRangePresetKey,
+} from "@/lib/workout/rep-ranges";
 import { listWeeklyPrograms } from "@/lib/workout/weekly-programs";
 
 const weeklyProgramExerciseSchema = z.object({
   exerciseLibraryId: z.string().uuid(),
   setsCount: z.number().int().min(1).max(12),
-  plannedReps: z.number().int().min(1).max(200),
+  repRangeKey: z.string().refine(isRepRangePresetKey),
 });
 
 const weeklyProgramDaySchema = z.object({
@@ -168,6 +173,18 @@ export async function POST(request: Request) {
       }
 
       for (const [index, exercise] of day.exercises.entries()) {
+        const repRangePreset =
+          getRepRangePreset(exercise.repRangeKey) ??
+          getRepRangePreset(defaultRepRangePresetKey);
+
+        if (!repRangePreset) {
+          return createApiErrorResponse({
+            status: 400,
+            code: "WEEKLY_PROGRAM_REP_RANGE_INVALID",
+            message: "Rep range preset is invalid.",
+          });
+        }
+
         const { data: workoutExerciseRow, error: workoutExerciseError } =
           await supabase
             .from("workout_exercises")
@@ -194,7 +211,9 @@ export async function POST(request: Request) {
             user_id: user.id,
             workout_exercise_id: workoutExerciseRow.id,
             set_number: setIndex + 1,
-            planned_reps: exercise.plannedReps,
+            planned_reps: repRangePreset.max,
+            planned_reps_min: repRangePreset.min,
+            planned_reps_max: repRangePreset.max,
             actual_reps: null,
           }),
         );

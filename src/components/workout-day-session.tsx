@@ -3,6 +3,10 @@
 import { useRouter } from "next/navigation";
 import { startTransition, useMemo, useState } from "react";
 
+import {
+  formatPlannedRepTarget,
+  getActualRepOptions,
+} from "@/lib/workout/rep-ranges";
 import type { WorkoutDayDetail } from "@/lib/workout/weekly-programs";
 
 const inputClassName =
@@ -309,23 +313,27 @@ export function WorkoutDaySession({ initialDay }: { initialDay: WorkoutDayDetail
                           Подход {set.set_number}
                         </p>
                         <p className="mt-1 text-sm text-muted">
-                          План: {set.planned_reps} повторов
+                          План: {formatPlannedRepTarget(set)} повторов
                         </p>
                       </div>
 
                       <label className="grid gap-2 text-sm text-muted">
                         Факт
-                        <input
+                        <select
                           className={inputClassName}
                           disabled={!initialDay.is_locked || isPending}
-                          min={0}
                           onChange={(event) =>
                             setActualRepsValue(set.id, event.target.value)
                           }
-                          placeholder="Например: 10"
-                          type="number"
                           value={actualRepsBySetId[set.id] ?? ""}
-                        />
+                        >
+                          <option value="">Выбери повторы</option>
+                          {getActualRepOptions(set).map((value) => (
+                            <option key={value} value={value}>
+                              {value}
+                            </option>
+                          ))}
+                        </select>
                       </label>
 
                       <div className="text-sm text-muted">
