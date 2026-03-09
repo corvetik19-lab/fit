@@ -5,6 +5,7 @@ import { logger } from "@/lib/logger";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { resolveRepRangePreset } from "@/lib/workout/rep-ranges";
 import { listWorkoutTemplates } from "@/lib/workout/templates";
+import { listWorkoutSetsWithRepRangeFallback } from "@/lib/workout/workout-sets";
 
 const createWorkoutTemplateSchema = z.object({
   programId: z.string().uuid(),
@@ -103,20 +104,11 @@ export async function POST(request: Request) {
     }
 
     const exerciseIds = (exerciseRows ?? []).map((exercise) => exercise.id);
-    const { data: setRows, error: setRowsError } = exerciseIds.length
-      ? await supabase
-          .from("workout_sets")
-          .select(
-            "workout_exercise_id, set_number, planned_reps, planned_reps_min, planned_reps_max",
-          )
-          .eq("user_id", user.id)
-          .in("workout_exercise_id", exerciseIds)
-          .order("set_number", { ascending: true })
-      : { data: [], error: null };
-
-    if (setRowsError) {
-      throw setRowsError;
-    }
+    const setRows = await listWorkoutSetsWithRepRangeFallback(
+      supabase,
+      user.id,
+      exerciseIds,
+    );
 
     const firstRepRangeByExerciseId = new Map<
       string,
@@ -127,7 +119,7 @@ export async function POST(request: Request) {
       }
     >();
 
-    for (const setRow of setRows ?? []) {
+    for (const setRow of setRows) {
       if (!firstRepRangeByExerciseId.has(setRow.workout_exercise_id)) {
         firstRepRangeByExerciseId.set(
           setRow.workout_exercise_id,

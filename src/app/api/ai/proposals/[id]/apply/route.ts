@@ -7,6 +7,7 @@ import { createApiErrorResponse } from "@/lib/api/error-response";
 import { logger } from "@/lib/logger";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { resolveRepRangePresetFromText } from "@/lib/workout/rep-ranges";
+import { insertWorkoutSetsWithRepRangeFallback } from "@/lib/workout/workout-sets";
 
 function getUtcMonday(date: Date) {
   const nextDate = new Date(date);
@@ -173,13 +174,7 @@ async function createWorkoutDraftFromProposal(
           actual_reps: null,
         }));
 
-        const { error: setsError } = await supabase
-          .from("workout_sets")
-          .insert(setsPayload);
-
-        if (setsError) {
-          throw setsError;
-        }
+        await insertWorkoutSetsWithRepRangeFallback(supabase, setsPayload);
       }
     }
 

@@ -1,5 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { listWorkoutSetsWithRepRangeFallback } from "@/lib/workout/workout-sets";
+
 export type WeeklyProgramSetSummary = {
   id: string;
   set_number: number;
@@ -59,10 +61,6 @@ type WorkoutDayRow = {
 
 type WorkoutExerciseRow = Omit<WeeklyProgramExerciseSummary, "sets"> & {
   workout_day_id: string;
-};
-
-type WorkoutSetRow = WeeklyProgramSetSummary & {
-  workout_exercise_id: string;
 };
 
 export async function listWeeklyPrograms(
@@ -148,20 +146,11 @@ export async function listWeeklyPrograms(
   }
 
   const exerciseIds = workoutExercises.map((exercise) => exercise.id);
-  const { data: sets, error: setsError } = await supabase
-    .from("workout_sets")
-    .select(
-      "id, workout_exercise_id, set_number, planned_reps, planned_reps_min, planned_reps_max, actual_reps",
-    )
-    .eq("user_id", userId)
-    .in("workout_exercise_id", exerciseIds)
-    .order("set_number", { ascending: true });
-
-  if (setsError) {
-    throw setsError;
-  }
-
-  const workoutSets = (sets as WorkoutSetRow[] | null) ?? [];
+  const workoutSets = await listWorkoutSetsWithRepRangeFallback(
+    supabase,
+    userId,
+    exerciseIds,
+  );
   const setsByExerciseId = new Map<string, WeeklyProgramSetSummary[]>();
 
   for (const workoutSet of workoutSets) {
@@ -278,20 +267,11 @@ export async function getWorkoutDayDetail(
   }
 
   const exerciseIds = workoutExercises.map((exercise) => exercise.id);
-  const { data: sets, error: setsError } = await supabase
-    .from("workout_sets")
-    .select(
-      "id, workout_exercise_id, set_number, planned_reps, planned_reps_min, planned_reps_max, actual_reps",
-    )
-    .eq("user_id", userId)
-    .in("workout_exercise_id", exerciseIds)
-    .order("set_number", { ascending: true });
-
-  if (setsError) {
-    throw setsError;
-  }
-
-  const workoutSets = (sets as WorkoutSetRow[] | null) ?? [];
+  const workoutSets = await listWorkoutSetsWithRepRangeFallback(
+    supabase,
+    userId,
+    exerciseIds,
+  );
   const setsByExerciseId = new Map<string, WeeklyProgramSetSummary[]>();
 
   for (const workoutSet of workoutSets) {

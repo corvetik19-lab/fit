@@ -4,6 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { models } from "@/lib/ai/gateway";
 import { logger } from "@/lib/logger";
 import { formatPlannedRepTarget } from "@/lib/workout/rep-ranges";
+import { listWorkoutSetsWithRepRangeFallback } from "@/lib/workout/workout-sets";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -387,18 +388,9 @@ async function buildKnowledgeDocuments(
       (workoutExercisesData as WorkoutExerciseRow[] | null) ?? [];
     const exerciseIds = workoutExercises.map((exercise) => exercise.id);
 
-    const { data: workoutSetsData } = exerciseIds.length
-      ? await supabase
-          .from("workout_sets")
-          .select(
-            "id, workout_exercise_id, set_number, planned_reps, planned_reps_min, planned_reps_max, actual_reps",
-          )
-          .eq("user_id", userId)
-          .in("workout_exercise_id", exerciseIds)
-          .order("set_number", { ascending: true })
-      : { data: [] };
-
-    const workoutSets = (workoutSetsData as WorkoutSetRow[] | null) ?? [];
+    const workoutSets = exerciseIds.length
+      ? await listWorkoutSetsWithRepRangeFallback(supabase, userId, exerciseIds)
+      : [];
 
     const daysByProgram = new Map<string, WorkoutDayRow[]>();
     for (const day of workoutDays) {

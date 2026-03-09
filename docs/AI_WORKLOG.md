@@ -32,6 +32,20 @@
 - `npm run build` прошёл локально
 - `npm run typecheck` прошёл локально после повторного запуска на уже сгенерированных `.next/types`
 
+### Production hotfix для отстающей Supabase-схемы
+
+- После деплоя обнаружено, что production `/workouts` падает server-side ошибкой, потому что удалённая таблица `workout_sets` ещё не содержит `planned_reps_min/max`.
+- Причина подтверждена прямым запросом к remote Supabase: `column workout_sets.planned_reps_min does not exist`.
+- Добавлен совместимый fallback в `src/lib/workout/workout-sets.ts`: чтение и запись `workout_sets` теперь автоматически откатываются на legacy-схему без новых колонок, если remote БД ещё не мигрирована.
+- Обновлены `listWeeklyPrograms`, `Workout Day`, workout templates, history clone, AI workout apply и knowledge-сборка так, чтобы production не падал до применения SQL-миграции.
+- Полная функциональность диапазонов повторов на production всё ещё зависит от применения миграции `20260309121000_workout_rep_ranges.sql` в удалённой Supabase БД.
+
+### Проверка production hotfix
+
+- `npm run lint` прошёл локально
+- `npm run typecheck` прошёл локально
+- `npm run build` прошёл локально
+
 ## 2026-03-08
 
 ### Бутстрап платформы

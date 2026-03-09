@@ -3,6 +3,10 @@ import { z } from "zod";
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import { logger } from "@/lib/logger";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import {
+  insertWorkoutSetWithRepRangeFallback,
+  listWorkoutSetsWithRepRangeFallback,
+} from "@/lib/workout/workout-sets";
 
 const weeklyProgramCloneSchema = z.object({
   weekStartDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -89,21 +93,11 @@ export async function POST(
 
     const sourceExerciseRows = sourceExercises ?? [];
     const sourceExerciseIds = sourceExerciseRows.map((exercise) => exercise.id);
-
-    const { data: sourceSets, error: sourceSetsError } = sourceExerciseIds.length
-      ? await supabase
-          .from("workout_sets")
-          .select(
-            "id, workout_exercise_id, set_number, planned_reps, planned_reps_min, planned_reps_max",
-          )
-          .eq("user_id", user.id)
-          .in("workout_exercise_id", sourceExerciseIds)
-          .order("set_number", { ascending: true })
-      : { data: [], error: null };
-
-    if (sourceSetsError) {
-      throw sourceSetsError;
-    }
+    const sourceSets = await listWorkoutSetsWithRepRangeFallback(
+      supabase,
+      user.id,
+      sourceExerciseIds,
+    );
 
     const weekEndDate = computeWeekEndDate(payload.weekStartDate);
     const { data: createdProgram, error: createdProgramError } = await supabase
@@ -175,7 +169,7 @@ export async function POST(
       createdExerciseIdsBySourceId.set(sourceExercise.id, createdExercise.id);
     }
 
-    for (const sourceSet of sourceSets ?? []) {
+    for (const sourceSet of sourceSets) {
       const nextWorkoutExerciseId = createdExerciseIdsBySourceId.get(
         sourceSet.workout_exercise_id,
       );
@@ -184,9 +178,7 @@ export async function POST(
         continue;
       }
 
-      const { error: createdSetError } = await supabase
-        .from("workout_sets")
-        .insert({
+      await insertWorkoutSetWithRepRangeFallback(supabase, {
           user_id: user.id,
           workout_exercise_id: nextWorkoutExerciseId,
           set_number: sourceSet.set_number,
@@ -195,10 +187,6 @@ export async function POST(
           planned_reps_max: sourceSet.planned_reps_max,
           actual_reps: null,
         });
-
-      if (createdSetError) {
-        throw createdSetError;
-      }
     }
 
     return Response.json({

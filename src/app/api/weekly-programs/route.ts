@@ -8,6 +8,7 @@ import {
   getRepRangePreset,
   isRepRangePresetKey,
 } from "@/lib/workout/rep-ranges";
+import { insertWorkoutSetsWithRepRangeFallback } from "@/lib/workout/workout-sets";
 import { listWeeklyPrograms } from "@/lib/workout/weekly-programs";
 
 const weeklyProgramExerciseSchema = z.object({
@@ -218,13 +219,7 @@ export async function POST(request: Request) {
           }),
         );
 
-        const { error: setsError } = await supabase
-          .from("workout_sets")
-          .insert(setsPayload);
-
-        if (setsError) {
-          throw setsError;
-        }
+        await insertWorkoutSetsWithRepRangeFallback(supabase, setsPayload);
       }
     }
 

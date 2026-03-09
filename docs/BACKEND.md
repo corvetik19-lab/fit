@@ -86,6 +86,7 @@
 - workout execution routes для `status` дня и `actual_reps` подходов
 - workout template routes для сохранения и повторного использования структуры недели
 - workout rep range contract с `planned_reps_min` / `planned_reps_max` и общими пресетами диапазонов повторов
+- совместимый fallback для `workout_sets` на случай, если remote Supabase ещё не получила миграцию с rep range колонками
 - admin bootstrap route для первого `super_admin`
 - session-based admin access через `platform_admins`
 - queueing для `support_actions`, `ai_eval_runs` и `ai/reindex` admin flows
@@ -124,6 +125,7 @@
 - `PATCH /api/workout-sets/[id]` сохраняет `actual_reps` только для locked week
 - `GET /api/workout-templates` отдаёт последние workout templates пользователя вместе с rep range metadata в payload
 - `POST /api/workout-templates` сохраняет выбранную weekly program как template с payload в `workout_templates`, включая диапазоны повторов
+- `src/lib/workout/workout-sets.ts` централизует fallback для select/insert в `workout_sets`, если удалённая БД ещё живёт на legacy-схеме без `planned_reps_min/max`
 - при неудаче создания weekly program route пытается откатить созданную программу удалением корневой записи
 - `getDashboardSnapshot` считает реальные summary-метрики по weekly programs, workout days, workout sets, exercise library, workout templates, AI chat sessions и nutrition summaries
 - `getDashboardPeriodComparison` считает сравнение текущего и предыдущего периода по завершённым тренировкам, калориям и AI-сессиям
@@ -169,6 +171,7 @@
 - все schema changes делать только через migrations
 - service-role использовать только server-side
 - лучше расширять текущие route handlers, чем создавать параллельный API-слой
+- при rollout schema changes учитывать, что Vercel может задеплоить код раньше, чем remote Supabase получит миграцию; для user-facing workout flow теперь есть временный backward-compatible fallback, но это не замена нормальному применению миграций
 ## AI chat и knowledge indexing
 
 - Добавлен рабочий route [chat/route.ts](/C:/fit/src/app/api/ai/chat/route.ts).
