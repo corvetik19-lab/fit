@@ -47,7 +47,7 @@ export function isMissingRepRangeColumnsError(error: unknown) {
   const message = `${error.message ?? ""}`.toLowerCase();
 
   return (
-    error.code === "42703" &&
+    (error.code === "42703" || error.code === "PGRST204") &&
     (message.includes("planned_reps_min") ||
       message.includes("planned_reps_max"))
   );

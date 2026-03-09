@@ -126,6 +126,7 @@
 - `GET /api/workout-templates` отдаёт последние workout templates пользователя вместе с rep range metadata в payload
 - `POST /api/workout-templates` сохраняет выбранную weekly program как template с payload в `workout_templates`, включая диапазоны повторов
 - `src/lib/workout/workout-sets.ts` централизует fallback для select/insert в `workout_sets`, если удалённая БД ещё живёт на legacy-схеме без `planned_reps_min/max`
+- fallback для insert учитывает как Postgres-ошибку `42703`, так и PostgREST schema-cache ошибку `PGRST204`
 - при неудаче создания weekly program route пытается откатить созданную программу удалением корневой записи
 - `getDashboardSnapshot` считает реальные summary-метрики по weekly programs, workout days, workout sets, exercise library, workout templates, AI chat sessions и nutrition summaries
 - `getDashboardPeriodComparison` считает сравнение текущего и предыдущего периода по завершённым тренировкам, калориям и AI-сессиям

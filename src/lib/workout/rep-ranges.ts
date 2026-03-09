@@ -51,6 +51,10 @@ export function formatRepRange(min: number, max: number) {
   return min === max ? `${min}` : `${min}-${max}`;
 }
 
+function findPresetByExactMax(value: number) {
+  return repRangePresets.find((preset) => preset.max === value) ?? null;
+}
+
 export function getSetRepRange(source: PlannedRepRangeLike) {
   if (
     source.planned_reps_min == null ||
@@ -70,21 +74,33 @@ export function getSetRepRange(source: PlannedRepRangeLike) {
 export function formatPlannedRepTarget(source: PlannedRepRangeLike) {
   const bounds = getSetRepRange(source);
 
-  if (!bounds) {
-    return `${source.planned_reps}`;
+  if (bounds) {
+    return formatRepRange(bounds.min, bounds.max);
   }
 
-  return formatRepRange(bounds.min, bounds.max);
+  const legacyPreset = findPresetByExactMax(source.planned_reps);
+
+  if (legacyPreset) {
+    return formatRepRange(legacyPreset.min, legacyPreset.max);
+  }
+
+  return `${source.planned_reps}`;
 }
 
 export function getActualRepOptions(source: PlannedRepRangeLike) {
   const bounds = getSetRepRange(source);
 
-  if (!bounds) {
-    return getRepRangeValues(1, 25);
+  if (bounds) {
+    return getRepRangeValues(bounds.min, bounds.max);
   }
 
-  return getRepRangeValues(bounds.min, bounds.max);
+  const legacyPreset = findPresetByExactMax(source.planned_reps);
+
+  if (legacyPreset) {
+    return getRepRangeValues(legacyPreset.min, legacyPreset.max);
+  }
+
+  return getRepRangeValues(1, 25);
 }
 
 function findPresetByBounds(min: number, max: number) {

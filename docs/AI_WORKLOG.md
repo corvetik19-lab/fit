@@ -40,11 +40,18 @@
 - Обновлены `listWeeklyPrograms`, `Workout Day`, workout templates, history clone, AI workout apply и knowledge-сборка так, чтобы production не падал до применения SQL-миграции.
 - Полная функциональность диапазонов повторов на production всё ещё зависит от применения миграции `20260309121000_workout_rep_ranges.sql` в удалённой Supabase БД.
 
+### Дополнительный hotfix для legacy PostgREST и диапазонов без миграции
+
+- Выяснено, что для `insert` в `workout_sets` remote PostgREST возвращает не `42703`, а `PGRST204` (`Could not find the 'planned_reps_max' column ... in the schema cache`).
+- Fallback-детектор обновлён: теперь он ловит и `42703`, и `PGRST204`, поэтому создание новой weekly program больше не должно падать на legacy-схеме.
+- `formatPlannedRepTarget` и `getActualRepOptions` теперь умеют восстанавливать выбранный диапазон повторов по `planned_reps`, если в БД пока нет `planned_reps_min/max`, но в `planned_reps` лежит верхняя граница пресета.
+- Это даёт ограниченный список повторов даже без применённой remote-миграции для новых программ, созданных после перехода на rep range presets.
+
 ### Проверка production hotfix
 
 - `npm run lint` прошёл локально
-- `npm run typecheck` прошёл локально
 - `npm run build` прошёл локально
+- `npm run typecheck` повторно прошёл локально после отдельного запуска на уже сгенерированных `.next/types`
 
 ## 2026-03-08
 
