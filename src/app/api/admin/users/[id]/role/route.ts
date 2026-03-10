@@ -1,7 +1,12 @@
 import { z } from "zod";
 
-import { requireAdminRouteAccess } from "@/lib/admin-auth";
 import { createApiErrorResponse } from "@/lib/api/error-response";
+import {
+  PRIMARY_SUPER_ADMIN_EMAIL,
+  canAssignAdminRole,
+  isPrimarySuperAdminEmail,
+} from "@/lib/admin-permissions";
+import { isAdminAccessError, requireAdminRouteAccess } from "@/lib/admin-auth";
 import { logger } from "@/lib/logger";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 
@@ -15,15 +20,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const actor = await requireAdminRouteAccess();
-
-    if (actor.role !== "super_admin") {
-      return createApiErrorResponse({
-        status: 403,
-        code: "SUPER_ADMIN_REQUIRED",
-        message: "Only super admins can manage admin roles.",
-      });
-    }
+    const actor = await requireAdminRouteAccess("manage_admin_roles");
 
     const { id } = await params;
     const payload = roleSchema.parse(await request.json());
@@ -47,6 +44,16 @@ export async function PATCH(
       });
     }
 
+    const targetEmail = authUserResult.data.user.email ?? null;
+
+    if (!canAssignAdminRole(payload.role, targetEmail)) {
+      return createApiErrorResponse({
+        status: 400,
+        code: "PRIMARY_SUPER_ADMIN_EMAIL_ONLY",
+        message: `Роль super_admin закреплена только за ${PRIMARY_SUPER_ADMIN_EMAIL}.`,
+      });
+    }
+
     const { data: previousRoleRow, error: previousRoleError } = await adminSupabase
       .from("platform_admins")
       .select("role")
@@ -55,6 +62,18 @@ export async function PATCH(
 
     if (previousRoleError) {
       throw previousRoleError;
+    }
+
+    if (
+      previousRoleRow?.role === "super_admin" &&
+      payload.role !== "super_admin" &&
+      isPrimarySuperAdminEmail(targetEmail)
+    ) {
+      return createApiErrorResponse({
+        status: 400,
+        code: "PRIMARY_SUPER_ADMIN_DOWNGRADE_BLOCKED",
+        message: "Основного super-admin нельзя понизить.",
+      });
     }
 
     const { data, error } = await adminSupabase
@@ -108,6 +127,14 @@ export async function PATCH(
   } catch (error) {
     logger.error("admin role update route failed", { error });
 
+    if (isAdminAccessError(error)) {
+      return createApiErrorResponse({
+        status: error.status,
+        code: error.code,
+        message: error.message,
+      });
+    }
+
     if (error instanceof z.ZodError) {
       return createApiErrorResponse({
         status: 400,
@@ -130,15 +157,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const actor = await requireAdminRouteAccess();
-
-    if (actor.role !== "super_admin") {
-      return createApiErrorResponse({
-        status: 403,
-        code: "SUPER_ADMIN_REQUIRED",
-        message: "Only super admins can manage admin roles.",
-      });
-    }
+    const actor = await requireAdminRouteAccess("manage_admin_roles");
 
     const { id } = await params;
     const body = await request.json().catch(() => ({}));
@@ -154,6 +173,17 @@ export async function DELETE(
     }
 
     const adminSupabase = createAdminSupabaseClient();
+    const authUserResult = await adminSupabase.auth.admin.getUserById(id);
+
+    if (authUserResult.error || !authUserResult.data.user) {
+      return createApiErrorResponse({
+        status: 404,
+        code: "ADMIN_TARGET_NOT_FOUND",
+        message: "Target user was not found.",
+      });
+    }
+
+    const targetEmail = authUserResult.data.user.email ?? null;
     const { data: previousRoleRow, error: previousRoleError } = await adminSupabase
       .from("platform_admins")
       .select("role")
@@ -169,6 +199,17 @@ export async function DELETE(
         status: 404,
         code: "ADMIN_ROLE_NOT_FOUND",
         message: "Admin role was not found for this user.",
+      });
+    }
+
+    if (
+      previousRoleRow.role === "super_admin" &&
+      isPrimarySuperAdminEmail(targetEmail)
+    ) {
+      return createApiErrorResponse({
+        status: 400,
+        code: "PRIMARY_SUPER_ADMIN_REVOKE_BLOCKED",
+        message: "Доступ основного super-admin нельзя отозвать.",
       });
     }
 
@@ -205,6 +246,14 @@ export async function DELETE(
     });
   } catch (error) {
     logger.error("admin role revoke route failed", { error });
+
+    if (isAdminAccessError(error)) {
+      return createApiErrorResponse({
+        status: error.status,
+        code: error.code,
+        message: error.message,
+      });
+    }
 
     return createApiErrorResponse({
       status: 500,

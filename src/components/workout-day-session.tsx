@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import {
   useCallback,
   startTransition,
@@ -10,9 +9,12 @@ import {
 } from "react";
 
 import {
+  cacheWorkoutDaySnapshot,
   flushOfflineMutations,
+  getCachedWorkoutDaySnapshot,
   getPendingOfflineMutationCount,
   listQueuedWorkoutMutationsForDay,
+  pullWorkoutDaySnapshot,
   queueWorkoutDayStatusMutation,
   queueWorkoutSetActualRepsMutation,
 } from "@/lib/offline/workout-sync";
@@ -47,12 +49,27 @@ const dateFormatter = new Intl.DateTimeFormat("ru-RU", {
   month: "long",
 });
 
+const snapshotTimeFormatter = new Intl.DateTimeFormat("ru-RU", {
+  day: "2-digit",
+  month: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+});
+
 function formatWeekRange(day: WorkoutDayDetail) {
   const startDate = dateFormatter.format(
     new Date(`${day.week_start_date}T00:00:00`),
   );
   const endDate = dateFormatter.format(new Date(`${day.week_end_date}T00:00:00`));
   return `${startDate} - ${endDate}`;
+}
+
+function formatSnapshotTime(value: string | null) {
+  if (!value) {
+    return "локальная копия ещё не сохранена";
+  }
+
+  return snapshotTimeFormatter.format(new Date(value));
 }
 
 function getInitialActualRepsMap(day: WorkoutDayDetail) {
@@ -113,7 +130,6 @@ function applyQueuedMutations(day: WorkoutDayDetail, mutations: OfflineMutation[
 }
 
 export function WorkoutDaySession({ initialDay }: { initialDay: WorkoutDayDetail }) {
-  const router = useRouter();
   const [day, setDay] = useState(initialDay);
   const [actualRepsBySetId, setActualRepsBySetId] = useState<Record<string, string>>(
     () => getInitialActualRepsMap(initialDay),
@@ -126,6 +142,8 @@ export function WorkoutDaySession({ initialDay }: { initialDay: WorkoutDayDetail
   const [isOnline, setIsOnline] = useState(
     () => (typeof navigator === "undefined" ? true : navigator.onLine),
   );
+  const [pullCursor, setPullCursor] = useState<string | null>(null);
+  const [lastSnapshotAt, setLastSnapshotAt] = useState<string | null>(null);
 
   const completedSetsCount = useMemo(
     () =>
@@ -148,33 +166,57 @@ export function WorkoutDaySession({ initialDay }: { initialDay: WorkoutDayDetail
     }));
   }
 
+  const persistWorkoutDay = useCallback(async (nextDay: WorkoutDayDetail) => {
+    const updatedAt = await cacheWorkoutDaySnapshot(nextDay);
+    setLastSnapshotAt(updatedAt);
+  }, []);
+
+  const applyDaySnapshot = useCallback(
+    async (nextDay: WorkoutDayDetail) => {
+      setDay(nextDay);
+      setActualRepsBySetId(getInitialActualRepsMap(nextDay));
+      await persistWorkoutDay(nextDay);
+    },
+    [persistWorkoutDay],
+  );
+
   const refreshPendingMutationCount = useCallback(async () => {
     const count = await getPendingOfflineMutationCount();
     setPendingMutationCount(count);
   }, []);
 
-  const hydrateQueuedMutations = useCallback(async () => {
-    const queuedMutations = await listQueuedWorkoutMutationsForDay(initialDay.id);
+  const hydrateLocalDay = useCallback(async () => {
+    const [cachedSnapshot, queuedMutations] = await Promise.all([
+      getCachedWorkoutDaySnapshot(initialDay.id),
+      listQueuedWorkoutMutationsForDay(initialDay.id),
+    ]);
+    const baseDay = cachedSnapshot.day ?? initialDay;
+    const hydratedDay = applyQueuedMutations(baseDay, queuedMutations);
 
-    setDay(applyQueuedMutations(initialDay, queuedMutations));
-    setActualRepsBySetId((current) => {
-      const nextState = {
-        ...getInitialActualRepsMap(initialDay),
-        ...current,
-      };
-
-      for (const mutation of queuedMutations) {
-        if (mutation.entity === "workout_set_actual_reps") {
-          nextState[mutation.payload.setId] =
-            mutation.payload.actualReps?.toString() ?? "";
-        }
-      }
-
-      return nextState;
-    });
-
+    setDay(hydratedDay);
+    setActualRepsBySetId(getInitialActualRepsMap(hydratedDay));
+    setLastSnapshotAt(cachedSnapshot.updatedAt);
+    await persistWorkoutDay(hydratedDay);
     await refreshPendingMutationCount();
-  }, [initialDay, refreshPendingMutationCount]);
+  }, [initialDay, persistWorkoutDay, refreshPendingMutationCount]);
+
+  const pullLatestDaySnapshot = useCallback(async () => {
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      setIsOnline(false);
+      return null;
+    }
+
+    const result = await pullWorkoutDaySnapshot(initialDay.id, pullCursor);
+
+    if (result.snapshot) {
+      await applyDaySnapshot(result.snapshot);
+    }
+
+    setPullCursor(result.nextCursor ?? null);
+    setIsOnline(true);
+
+    return result.snapshot;
+  }, [applyDaySnapshot, initialDay.id, pullCursor]);
 
   const flushQueuedMutations = useCallback(async () => {
     if (typeof navigator !== "undefined" && !navigator.onLine) {
@@ -202,35 +244,35 @@ export function WorkoutDaySession({ initialDay }: { initialDay: WorkoutDayDetail
       if (rejectedMutations.length) {
         setError(
           rejectedMutations[0]?.message ??
-            "Часть локальных изменений не удалось синхронизировать.",
+            "Не все изменения удалось отправить. Попробуй ещё раз позже.",
         );
       } else if (result.applied > 0) {
-        setNotice("Локальные изменения синхронизированы.");
+        setNotice("Изменения отправлены.");
       }
 
       if (result.applied > 0 || rejectedMutations.length > 0) {
-        startTransition(() => {
-          router.refresh();
-        });
+        await pullLatestDaySnapshot().catch(() => null);
       }
     } catch {
       await refreshPendingMutationCount();
     } finally {
       setIsSyncing(false);
     }
-  }, [refreshPendingMutationCount, router]);
+  }, [pullLatestDaySnapshot, refreshPendingMutationCount]);
 
   useEffect(() => {
     setDay(initialDay);
     setActualRepsBySetId(getInitialActualRepsMap(initialDay));
+    setPullCursor(null);
 
-    void hydrateQueuedMutations();
-  }, [hydrateQueuedMutations, initialDay]);
+    void hydrateLocalDay();
+  }, [hydrateLocalDay, initialDay]);
 
   useEffect(() => {
     function handleOnline() {
       setIsOnline(true);
       void flushQueuedMutations();
+      void pullLatestDaySnapshot().catch(() => null);
     }
 
     function handleOffline() {
@@ -242,20 +284,23 @@ export function WorkoutDaySession({ initialDay }: { initialDay: WorkoutDayDetail
 
     if (navigator.onLine) {
       void flushQueuedMutations();
+      void pullLatestDaySnapshot().catch(() => null);
     }
 
     return () => {
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
     };
-  }, [flushQueuedMutations]);
+  }, [flushQueuedMutations, pullLatestDaySnapshot]);
 
   function updateDayStatus(nextStatus: "planned" | "in_progress" | "done") {
     setError(null);
     setNotice(null);
     setIsPending(true);
     const previousStatus = day.status;
-    setDay((current) => applyWorkoutDayStatus(current, nextStatus));
+    const optimisticDay = applyWorkoutDayStatus(day, nextStatus);
+    setDay(optimisticDay);
+    void persistWorkoutDay(optimisticDay);
 
     startTransition(async () => {
       try {
@@ -265,7 +310,7 @@ export function WorkoutDaySession({ initialDay }: { initialDay: WorkoutDayDetail
             status: nextStatus,
           });
           await refreshPendingMutationCount();
-          setNotice("Статус сохранён локально и будет синхронизирован при подключении.");
+          setNotice("Статус сохранён на устройстве и отправится, когда связь вернётся.");
           return;
         }
 
@@ -284,13 +329,16 @@ export function WorkoutDaySession({ initialDay }: { initialDay: WorkoutDayDetail
           | null;
 
         if (!response.ok) {
-          setDay((current) => applyWorkoutDayStatus(current, previousStatus));
+          const restoredDay = applyWorkoutDayStatus(optimisticDay, previousStatus);
+          setDay(restoredDay);
+          await persistWorkoutDay(restoredDay);
           setError(payload?.message ?? "Не удалось обновить статус дня.");
           return;
         }
 
         setIsOnline(true);
-        setNotice("Статус тренировочного дня обновлён.");
+        setNotice("Статус дня обновлён.");
+        await pullLatestDaySnapshot().catch(() => null);
       } catch {
         await queueWorkoutDayStatusMutation({
           dayId: day.id,
@@ -298,7 +346,7 @@ export function WorkoutDaySession({ initialDay }: { initialDay: WorkoutDayDetail
         });
         await refreshPendingMutationCount();
         setIsOnline(false);
-        setNotice("Нет сети: статус сохранён локально и будет синхронизирован позже.");
+        setNotice("Нет связи. Статус сохранён на устройстве и отправится позже.");
       } finally {
         setIsPending(false);
       }
@@ -325,13 +373,13 @@ export function WorkoutDaySession({ initialDay }: { initialDay: WorkoutDayDetail
       .find((set) => set.id === setId);
     const previousActualReps = previousSet?.actual_reps ?? null;
     const shouldPromoteDayStatus = day.status === "planned";
+    const optimisticSetDay = applyWorkoutSetActualReps(day, setId, actualReps);
+    const optimisticDay = shouldPromoteDayStatus
+      ? applyWorkoutDayStatus(optimisticSetDay, "in_progress")
+      : optimisticSetDay;
 
-    setDay((current) => {
-      const nextDay = applyWorkoutSetActualReps(current, setId, actualReps);
-      return shouldPromoteDayStatus
-        ? applyWorkoutDayStatus(nextDay, "in_progress")
-        : nextDay;
-    });
+    setDay(optimisticDay);
+    void persistWorkoutDay(optimisticDay);
 
     startTransition(async () => {
       try {
@@ -351,7 +399,7 @@ export function WorkoutDaySession({ initialDay }: { initialDay: WorkoutDayDetail
 
           await refreshPendingMutationCount();
           setNotice(
-            "Повторы сохранены локально и будут синхронизированы при подключении.",
+            "Повторы сохранены на устройстве и отправятся, когда связь вернётся.",
           );
           return;
         }
@@ -371,15 +419,15 @@ export function WorkoutDaySession({ initialDay }: { initialDay: WorkoutDayDetail
           | null;
 
         if (!response.ok) {
-          setDay((current) => {
-            const restoredDay = applyWorkoutSetActualReps(
-              current,
-              setId,
-              previousActualReps,
-            );
+          const restoredSetDay = applyWorkoutSetActualReps(
+            optimisticDay,
+            setId,
+            previousActualReps,
+          );
+          const restoredDay = applyWorkoutDayStatus(restoredSetDay, previousStatus);
 
-            return applyWorkoutDayStatus(restoredDay, previousStatus);
-          });
+          setDay(restoredDay);
+          await persistWorkoutDay(restoredDay);
           setActualRepsBySetId((current) => ({
             ...current,
             [setId]: previousActualReps?.toString() ?? "",
@@ -410,7 +458,7 @@ export function WorkoutDaySession({ initialDay }: { initialDay: WorkoutDayDetail
             await refreshPendingMutationCount();
             setNotice(
               dayStatusPayload?.message ??
-                "Повторы сохранены, статус дня добавлен в локальную очередь синхронизации.",
+                "Повторы сохранены. Статус дня отправится автоматически чуть позже.",
             );
             return;
           }
@@ -418,6 +466,7 @@ export function WorkoutDaySession({ initialDay }: { initialDay: WorkoutDayDetail
 
         setIsOnline(true);
         setNotice("Фактические повторы сохранены.");
+        await pullLatestDaySnapshot().catch(() => null);
       } catch {
         await queueWorkoutSetActualRepsMutation({
           dayId: day.id,
@@ -435,7 +484,7 @@ export function WorkoutDaySession({ initialDay }: { initialDay: WorkoutDayDetail
         await refreshPendingMutationCount();
         setIsOnline(false);
         setNotice(
-          "Нет сети: повторы сохранены локально и будут синхронизированы позже.",
+          "Нет связи. Повторы сохранены на устройстве и отправятся позже.",
         );
       } finally {
         setIsPending(false);
@@ -479,6 +528,10 @@ export function WorkoutDaySession({ initialDay }: { initialDay: WorkoutDayDetail
             </article>
           ))}
         </div>
+
+        <p className="mt-4 text-sm text-muted">
+          Последнее сохранение на устройстве: {formatSnapshotTime(lastSnapshotAt)}
+        </p>
 
         <div className="mt-6 flex flex-wrap gap-3">
           {day.status === "planned" ? (
@@ -534,28 +587,28 @@ export function WorkoutDaySession({ initialDay }: { initialDay: WorkoutDayDetail
               type="button"
             >
               {isSyncing
-                ? "Синхронизация..."
-                : `Синхронизировать (${pendingMutationCount})`}
+                ? "Отправляю..."
+                : `Отправить изменения (${pendingMutationCount})`}
             </button>
           ) : null}
         </div>
 
         {!day.is_locked ? (
           <p className="mt-4 rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            Выполнение тренировки доступно только после `Зафиксировать неделю`.
+            Отмечать выполнение можно после фиксации недели.
           </p>
         ) : null}
 
         {!isOnline ? (
           <p className="mt-4 rounded-2xl border border-sky-300/60 bg-sky-50 px-4 py-3 text-sm text-sky-800">
-            Нет сети. Изменения по этой тренировке будут сохраняться локально и
-            отправятся на сервер после восстановления соединения.
+            Нет связи. Изменения по этой тренировке сохраняются на устройстве и
+            отправятся автоматически, когда интернет вернётся.
           </p>
         ) : null}
 
         {pendingMutationCount > 0 ? (
           <p className="mt-4 rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            В локальной очереди ждут синхронизации: {pendingMutationCount}.
+            Ждут отправки с этого устройства: {pendingMutationCount}.
           </p>
         ) : null}
 

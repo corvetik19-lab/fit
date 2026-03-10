@@ -1,4 +1,4 @@
-import { AppShell } from "@/components/app-shell";
+﻿import { AppShell } from "@/components/app-shell";
 import { ExerciseLibraryManager } from "@/components/exercise-library-manager";
 import { PanelCard } from "@/components/panel-card";
 import { WeeklyProgramBuilder } from "@/components/weekly-program-builder";
@@ -39,33 +39,29 @@ export default async function WorkoutsPage() {
     : null;
 
   return (
-    <AppShell eyebrow="Тренировки" title="Программы и упражнения">
-      <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-        <PanelCard caption="Тренировочный контур" title="Первые рабочие тренировочные срезы">
-          <ul className="grid gap-3 text-sm leading-7 text-muted">
-            <li>
-              Пользователь{" "}
-              <span className="font-semibold text-foreground">
-                {viewer.profile?.full_name ?? viewer.user.email ?? "пользователь fit"}
-              </span>{" "}
-              уже может вести персональную библиотеку упражнений и собирать
-              черновики недель.
-            </li>
-            <li>
-              Управление упражнениями и конструктор недель проходят через Supabase с
-              RLS-политиками на владельца, поэтому весь тренировочный домен изолирован по `user_id`.
-            </li>
-            <li>
-              Следующие срезы для этого экрана: фиксация недели, `Моя неделя`,
-              экран выполнения и клонирование истории.
-            </li>
-          </ul>
+    <AppShell eyebrow="Тренировки" title="Программы, недели и упражнения">
+      <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+        <PanelCard caption="План на неделю" title="Собери удобную структуру тренировок">
+          <div className="space-y-3 text-sm leading-7 text-muted">
+            <p>
+              Здесь ты собираешь неделю из любимых упражнений, шаблонов и готовых сетов. Всё
+              сохранено за твоим профилем и всегда под рукой на телефоне.
+            </p>
+            <p>
+              Сначала удобно собрать библиотеку, затем выбрать упражнения для дней недели и
+              зафиксировать черновик программы. После этого можно переходить к выполнению.
+            </p>
+            <p>
+              {viewer.profile?.full_name ?? viewer.user.email ?? "Пользователь fit"}, начни с
+              рабочего плана и оставь в библиотеке только то, что действительно используешь.
+            </p>
+          </div>
         </PanelCard>
 
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2">
           {[
             ["Активные упражнения", String(activeExercises.length)],
-            ["Архив", String(archivedExercises.length)],
+            ["В архиве", String(archivedExercises.length)],
             ["Черновики программ", String(draftPrograms.length)],
             ["Последнее обновление", lastUpdatedAt ?? "Пока пусто"],
           ].map(([label, value]) => (

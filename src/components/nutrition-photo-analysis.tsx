@@ -1,6 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { startTransition, useMemo, useState } from "react";
+
+import type { FeatureAccessSnapshot } from "@/lib/billing-access";
 
 type MealPhotoAnalysis = {
   title: string;
@@ -20,8 +23,12 @@ type MealPhotoAnalysis = {
   suggestions: string[];
 };
 
+type NutritionPhotoAnalysisProps = {
+  access: FeatureAccessSnapshot;
+};
+
 const inputClassName =
-  "w-full rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15";
+  "w-full rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15 disabled:cursor-not-allowed disabled:opacity-60";
 
 function formatConfidence(value: MealPhotoAnalysis["confidence"]) {
   switch (value) {
@@ -35,7 +42,9 @@ function formatConfidence(value: MealPhotoAnalysis["confidence"]) {
   }
 }
 
-export function NutritionPhotoAnalysis() {
+export function NutritionPhotoAnalysis({
+  access,
+}: NutritionPhotoAnalysisProps) {
   const [file, setFile] = useState<File | null>(null);
   const [notes, setNotes] = useState("");
   const [result, setResult] = useState<MealPhotoAnalysis | null>(null);
@@ -52,6 +61,14 @@ export function NutritionPhotoAnalysis() {
   }, [file]);
 
   function runAnalysis() {
+    if (!access.allowed) {
+      setError(
+        access.reason ?? "AI-анализ фото сейчас недоступен для текущего плана.",
+      );
+      setResult(null);
+      return;
+    }
+
     if (!file) {
       setError("Сначала выбери фото блюда.");
       setResult(null);
@@ -80,7 +97,7 @@ export function NutritionPhotoAnalysis() {
           setResult(null);
           setError(
             payload?.message ??
-              "Не удалось проанализировать фото блюда. Попробуй другой ракурс или более чёткое изображение.",
+              "Не удалось проанализировать фото блюда. Попробуй другой ракурс или более четкое изображение.",
           );
           return;
         }
@@ -103,14 +120,27 @@ export function NutritionPhotoAnalysis() {
             Анализ фото блюда
           </h2>
           <p className="mt-3 max-w-2xl text-sm leading-7 text-muted">
-            Загрузи фото блюда, и AI оценит состав, ориентировочную калорийность и
-            КБЖУ. Это online-only proposal: данные не записываются в дневник автоматически.
+            Загрузи фото блюда, и AI оценит состав, ориентировочную калорийность
+            и КБЖУ. Это online-only proposal: данные не записываются в дневник
+            автоматически.
           </p>
+          {!access.allowed ? (
+            <Link
+              className="mt-3 inline-flex rounded-full border border-border bg-white/80 px-4 py-2 font-semibold text-foreground transition hover:bg-white"
+              href="/settings#billing-center"
+            >
+              Открыть billing center
+            </Link>
+          ) : null}
         </div>
 
         <div className="rounded-3xl border border-border bg-white/60 px-5 py-4 text-sm text-muted">
-          Используется для быстрой оценки, а не для точного медицинского или
-          диетологического заключения.
+          <p>
+            Использовано: {access.usage.count}
+            {typeof access.usage.limit === "number" ? ` / ${access.usage.limit}` : ""}
+          </p>
+          <p className="mt-1">Источник доступа: {access.source}</p>
+          {access.reason ? <p className="mt-2 text-amber-700">{access.reason}</p> : null}
         </div>
       </div>
 
@@ -127,6 +157,7 @@ export function NutritionPhotoAnalysis() {
             <input
               accept="image/*"
               className={inputClassName}
+              disabled={!access.allowed}
               onChange={(event) => setFile(event.target.files?.[0] ?? null)}
               type="file"
             />
@@ -138,6 +169,7 @@ export function NutritionPhotoAnalysis() {
             Контекст для AI
             <textarea
               className={`${inputClassName} min-h-32 resize-y`}
+              disabled={!access.allowed}
               onChange={(event) => setNotes(event.target.value)}
               placeholder="Например: это был обед после тренировки, на фото курица, рис и овощи."
               value={notes}
@@ -146,7 +178,7 @@ export function NutritionPhotoAnalysis() {
 
           <button
             className="rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-            disabled={isPending || !file}
+            disabled={isPending || !file || !access.allowed}
             onClick={runAnalysis}
             type="button"
           >
@@ -162,7 +194,9 @@ export function NutritionPhotoAnalysis() {
                   <p className="text-xl font-semibold text-foreground">{result.title}</p>
                   <p className="mt-2 text-sm leading-7 text-muted">{result.summary}</p>
                 </div>
-                <div className="pill">Уверенность: {formatConfidence(result.confidence)}</div>
+                <div className="pill">
+                  Уверенность: {formatConfidence(result.confidence)}
+                </div>
               </div>
 
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -194,18 +228,23 @@ export function NutritionPhotoAnalysis() {
 
               <div className="grid gap-4 lg:grid-cols-2">
                 <div className="rounded-2xl border border-border bg-white/70 p-4">
-                  <p className="text-sm font-semibold text-foreground">Что AI увидел на фото</p>
+                  <p className="text-sm font-semibold text-foreground">
+                    Что AI увидел на фото
+                  </p>
                   <ul className="mt-3 grid gap-2 text-sm leading-7 text-muted">
                     {result.items.map((item) => (
                       <li key={`${item.name}-${item.portion}`}>
-                        {item.name} · {item.portion} · уверенность {formatConfidence(item.confidence).toLowerCase()}
+                        {item.name} · {item.portion} · уверенность{" "}
+                        {formatConfidence(item.confidence).toLowerCase()}
                       </li>
                     ))}
                   </ul>
                 </div>
 
                 <div className="rounded-2xl border border-border bg-white/70 p-4">
-                  <p className="text-sm font-semibold text-foreground">Что делать дальше</p>
+                  <p className="text-sm font-semibold text-foreground">
+                    Что делать дальше
+                  </p>
                   <ul className="mt-3 grid gap-2 text-sm leading-7 text-muted">
                     {result.suggestions.map((suggestion) => (
                       <li key={suggestion}>{suggestion}</li>
@@ -215,8 +254,8 @@ export function NutritionPhotoAnalysis() {
               </div>
 
               <p className="text-sm leading-7 text-muted">
-                Дальше можно вручную занести приём пищи в лог ниже и использовать эту
-                оценку как ориентир по составу и КБЖУ.
+                Дальше можно вручную занести прием пищи в лог ниже и использовать
+                эту оценку как ориентир по составу и КБЖУ.
               </p>
             </div>
           ) : (
@@ -226,8 +265,8 @@ export function NutritionPhotoAnalysis() {
                 ориентировочные калории и КБЖУ.
               </p>
               <p>
-                Лучше всего работают чёткие фотографии тарелки или упаковки при хорошем
-                освещении и без лишних объектов в кадре.
+                Лучше всего работают четкие фотографии тарелки или упаковки при
+                хорошем освещении и без лишних объектов в кадре.
               </p>
             </div>
           )}

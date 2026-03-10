@@ -1,11 +1,11 @@
 import { createApiErrorResponse } from "@/lib/api/error-response";
-import { requireAdminRouteAccess } from "@/lib/admin-auth";
+import { isAdminAccessError, requireAdminRouteAccess } from "@/lib/admin-auth";
 import { logger } from "@/lib/logger";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 
 export async function GET() {
   try {
-    await requireAdminRouteAccess();
+    await requireAdminRouteAccess("view_ai_usage");
     const adminSupabase = createAdminSupabaseClient();
 
     const { data, error } = await adminSupabase
@@ -24,6 +24,14 @@ export async function GET() {
     });
   } catch (error) {
     logger.error("admin ai eval list route failed", { error });
+
+    if (isAdminAccessError(error)) {
+      return createApiErrorResponse({
+        status: error.status,
+        code: error.code,
+        message: error.message,
+      });
+    }
 
     return createApiErrorResponse({
       status: 401,

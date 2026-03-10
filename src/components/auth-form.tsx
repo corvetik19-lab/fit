@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
@@ -47,25 +47,28 @@ export function AuthForm() {
 
           if (!data.session) {
             setNotice(
-              "Аккаунт создан. Если Supabase требует подтверждение почты, подтверди email и затем войди.",
+              "Аккаунт создан. Если нужно подтверждение почты, подтвердите email и затем войдите в приложение.",
             );
             setMode("sign-in");
             return;
           }
-        } else {
-          const { error: signInError } =
-            await supabase.auth.signInWithPassword({
-              email,
-              password,
-            });
 
-          if (signInError) {
-            setError(signInError.message);
-            return;
-          }
+          router.replace("/onboarding" as Route);
+          router.refresh();
+          return;
         }
 
-        router.replace("/onboarding" as Route);
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (signInError) {
+          setError(signInError.message);
+          return;
+        }
+
+        router.replace("/dashboard" as Route);
         router.refresh();
       } finally {
         setIsPending(false);
@@ -75,28 +78,40 @@ export function AuthForm() {
 
   return (
     <div className="card w-full max-w-xl p-6 sm:p-8">
-      <div className="mb-6 flex gap-2">
-        {([
-          ["sign-in", "Вход"],
-          ["sign-up", "Регистрация"],
-        ] as const).map(([nextMode, label]) => (
-          <button
-            className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-              mode === nextMode
-                ? "bg-accent text-white"
-                : "border border-border text-foreground hover:bg-white/70"
-            }`}
-            key={nextMode}
-            onClick={() => {
-              setMode(nextMode);
-              setError(null);
-              setNotice(null);
-            }}
-            type="button"
-          >
-            {label}
-          </button>
-        ))}
+      <div className="mb-6 space-y-3">
+        <div className="flex gap-2">
+          {([
+            ["sign-in", "Вход"],
+            ["sign-up", "Регистрация"],
+          ] as const).map(([nextMode, label]) => (
+            <button
+              className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                mode === nextMode
+                  ? "bg-accent text-white"
+                  : "border border-border text-foreground hover:bg-white/70"
+              }`}
+              key={nextMode}
+              onClick={() => {
+                setMode(nextMode);
+                setError(null);
+                setNotice(null);
+              }}
+              type="button"
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        <div>
+          <h2 className="text-2xl font-semibold text-foreground">
+            {mode === "sign-up" ? "Создайте аккаунт" : "Войдите в приложение"}
+          </h2>
+          <p className="mt-2 text-sm leading-7 text-muted">
+            После входа приложение сохранит сессию на этом устройстве, пока вы
+            сами не выйдете из аккаунта.
+          </p>
+        </div>
       </div>
 
       <div className="grid gap-4">
@@ -106,7 +121,7 @@ export function AuthForm() {
             <input
               className={inputClassName}
               onChange={(event) => setFullName(event.target.value)}
-              placeholder="Владислав"
+              placeholder="Например, Владислав"
               type="text"
               value={fullName}
             />

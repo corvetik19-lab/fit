@@ -4,6 +4,9 @@ import {
   type WorkoutDayStatusOfflineMutation,
   type WorkoutSetActualRepsOfflineMutation,
 } from "@/lib/offline/db";
+import type { WorkoutDayDetail } from "@/lib/workout/weekly-programs";
+
+const WORKOUT_DAY_CACHE_KEY_PREFIX = "workout-day:";
 
 function generateOfflineMutationId() {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -81,6 +84,78 @@ export async function listQueuedWorkoutMutationsForDay(dayId: string) {
 
 export async function getPendingOfflineMutationCount() {
   return offlineDb.mutationQueue.count();
+}
+
+function getWorkoutDayCacheKey(dayId: string) {
+  return `${WORKOUT_DAY_CACHE_KEY_PREFIX}${dayId}`;
+}
+
+export async function cacheWorkoutDaySnapshot(day: WorkoutDayDetail) {
+  const updatedAt = new Date().toISOString();
+
+  await offlineDb.cacheSnapshots.put({
+    key: getWorkoutDayCacheKey(day.id),
+    value: day as unknown as Record<string, unknown>,
+    updatedAt,
+  });
+
+  return updatedAt;
+}
+
+export async function getCachedWorkoutDaySnapshot(dayId: string) {
+  const snapshot = await offlineDb.cacheSnapshots.get(getWorkoutDayCacheKey(dayId));
+
+  return {
+    day: (snapshot?.value as WorkoutDayDetail | undefined) ?? null,
+    updatedAt: snapshot?.updatedAt ?? null,
+  };
+}
+
+export async function pullWorkoutDaySnapshot(
+  dayId: string,
+  cursor?: string | null,
+) {
+  const searchParams = new URLSearchParams({
+    scope: "workout_day",
+    dayId,
+  });
+
+  if (cursor) {
+    searchParams.set("cursor", cursor);
+  }
+
+  const response = await fetch(`/api/sync/pull?${searchParams.toString()}`, {
+    cache: "no-store",
+  });
+
+  const payload = (await response.json().catch(() => null)) as
+    | {
+        data?: {
+          cursor?: string | null;
+          nextCursor?: string | null;
+          snapshot?: WorkoutDayDetail | null;
+        };
+        message?: string;
+      }
+    | null;
+
+  if (!response.ok) {
+    throw new Error(payload?.message ?? "Unable to pull workout snapshot.");
+  }
+
+  const snapshot = payload?.data?.snapshot ?? null;
+  let updatedAt: string | null = null;
+
+  if (snapshot) {
+    updatedAt = await cacheWorkoutDaySnapshot(snapshot);
+  }
+
+  return {
+    cursor: payload?.data?.cursor ?? cursor ?? null,
+    nextCursor: payload?.data?.nextCursor ?? null,
+    snapshot,
+    updatedAt,
+  };
 }
 
 export async function flushOfflineMutations() {

@@ -1,75 +1,38 @@
-import type { Route } from "next";
-import Link from "next/link";
+﻿import type { Route } from "next";
+import { redirect } from "next/navigation";
 
+import { AuthForm } from "@/components/auth-form";
 import { getViewer } from "@/lib/viewer";
 
 export default async function Home() {
   const viewer = await getViewer();
-  const primaryHref = (viewer
-    ? viewer.hasCompletedOnboarding
-      ? "/dashboard"
-      : "/onboarding"
-    : "/auth") as Route;
-  const primaryLabel = viewer
-    ? viewer.hasCompletedOnboarding
-      ? "Открыть приложение"
-      : "Продолжить онбординг"
-    : "Войти в fit";
+
+  if (viewer) {
+    redirect((viewer.hasCompletedOnboarding ? "/dashboard" : "/onboarding") as Route);
+  }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-7xl flex-col gap-10 px-6 py-10 sm:px-10">
-      <section className="card overflow-hidden p-8 sm:p-12">
-        <div className="mb-4 flex flex-wrap gap-3">
-          <span className="pill">Веб-PWA</span>
-          <span className="pill">AI Gateway</span>
-          <span className="pill">Supabase + pgvector</span>
-        </div>
-        <div className="grid gap-10 lg:grid-cols-[1.35fr_0.9fr]">
-          <div className="space-y-6">
-            <h1 className="max-w-3xl text-5xl font-semibold tracking-tight text-foreground sm:text-6xl">
-              fit объединяет тренировки, питание, аналитику и AI-помощника в
-              одном приложении с офлайн-сценариями.
+    <main className="mx-auto flex min-h-dvh w-full max-w-[1180px] items-center px-4 py-4 sm:px-6 sm:py-8 lg:px-10">
+      <section className="grid w-full gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+        <article className="card overflow-hidden p-6 sm:p-8 lg:p-10">
+          <div className="flex flex-wrap gap-2">
+            <span className="pill">fit</span>
+            <span className="pill">вход в приложение</span>
+          </div>
+
+          <div className="mt-6 space-y-4">
+            <h1 className="max-w-3xl text-4xl font-semibold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
+              Откройте платформу и продолжайте с того места, где остановились.
             </h1>
-            <p className="max-w-2xl text-lg leading-8 text-muted">
-              В репозитории уже собран первый рабочий срез платформы: навигация,
-              админ-панель, контракты Supabase, AI-маршруты, workout core и
-              подготовка eval-контура для будущих RAG/CAG/KAG-проверок.
+            <p className="max-w-2xl text-base leading-8 text-muted sm:text-lg">
+              Войдите в аккаунт или создайте новый. Сессия сохранится на этом
+              устройстве, пока вы сами не выйдете из приложения.
             </p>
-            <div className="flex flex-wrap gap-3">
-              <Link
-                className="rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90"
-                href={primaryHref}
-              >
-                {primaryLabel}
-              </Link>
-              <Link
-                className="rounded-full border border-border px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-white/70"
-                href="/admin"
-              >
-                Открыть админ-панель
-              </Link>
-            </div>
           </div>
-          <div className="grid gap-4">
-            {[
-              [
-                "Авторизация",
-                viewer
-                  ? `Сессия активна для ${viewer.user.email ?? "текущего пользователя"}.`
-                  : "Вход и регистрация через Supabase уже работают.",
-              ],
-              ["Тренировки", "Недельные планы, фиксация недели и логирование подходов."],
-              ["Питание", "Учёт приёмов пищи, рецепты, КБЖУ и будущий анализ фото."],
-              ["AI", "Планирование на Gemini, embeddings на Voyage и выпуск через eval-контур."],
-            ].map(([title, copy]) => (
-              <article className="kpi p-5" key={title}>
-                <p className="mb-2 font-mono text-xs uppercase tracking-[0.24em] text-muted">
-                  {title}
-                </p>
-                <p className="text-base leading-7 text-foreground">{copy}</p>
-              </article>
-            ))}
-          </div>
+        </article>
+
+        <div className="flex items-center justify-center xl:justify-end">
+          <AuthForm />
         </div>
       </section>
     </main>

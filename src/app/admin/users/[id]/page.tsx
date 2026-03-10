@@ -11,9 +11,10 @@ export default async function AdminUserDetailPage({
   const { id } = await params;
 
   return (
-    <AppShell eyebrow="Админ" title="Карточка пользователя">
+    <AppShell eyebrow="Админ" title="Операционная карточка пользователя">
       <AdminUserDetail
         currentUserId={viewer.user.id}
+        currentUserEmail={viewer.user.email ?? null}
         currentUserRole={viewer.platformAdminRole ?? "support_admin"}
         userId={id}
       />

@@ -1,5 +1,23 @@
 # AI Worklog
 
+## 2026-03-10
+
+### Stripe checkout return retry flow
+
+- `src/components/settings-billing-center.tsx` теперь не останавливается на одном `checkout/reconcile` после возврата из Stripe: billing center делает несколько auto-retry попыток с backoff, показывает текущий sync state и сохраняет ручной retry как fallback.
+- `POST /api/billing/checkout/reconcile` остаётся источником истины для прямой post-checkout синхронизации, но UX вокруг него стал app-like: пользователь на телефоне видит session/payment/sync status вместо немого ожидания webhook.
+
+### Billing health для super-admin
+
+- `GET /api/admin/stats` расширен новым `billingHealth` slice: Stripe subscription counters, linked customer coverage, queued/completed `billing_access_review`, recent checkout return reconcile за 24 часа и последние timestamps по billing activity.
+- `src/components/admin-health-dashboard.tsx` теперь показывает отдельный billing operations блок рядом с sync queues, а `src/components/admin-user-detail.tsx` раскрывает self-service billing audit logs с полезными payload-полями (`requestedFeatures`, `paymentStatus`, `sessionStatus`, `reconciled`).
+
+### Проверка billing ops slice
+
+- `npm run lint` прошёл локально
+- `npm run typecheck` прошёл локально
+- отдельный `npm run build` через `NEXT_DIST_DIR=.next_codex_ops_health` не завершился за timeout и был остановлен; основной `.next` build по-прежнему нежелательно трогать, пока в workspace работает локальный `next dev`
+
 ## 2026-03-09
 
 ### Mobile app shell и admin control center
@@ -25,6 +43,20 @@
 - `src/components/sign-out-button.tsx` получил `className`, чтобы кнопка выхода могла переиспользоваться и в settings-экране, и в mobile drawer без дублирования логики.
 
 ### Проверка mobile drawer slice
+
+- `npm run lint` прошёл локально
+- `npm run build` прошёл локально
+- `npm run typecheck` прошёл локально
+
+### Role-based permission matrix для admin panel
+
+- Добавлен единый контракт `src/lib/admin-permissions.ts` с ролями `super_admin`, `support_admin`, `analyst` и capability-matrix для чтения админских экранов, support actions, knowledge reindex, AI eval runs и управления admin-ролями.
+- `src/lib/admin-auth.ts` теперь умеет требовать не просто факт admin-доступа, а конкретную capability, и отдаёт типизированные `401/403` ошибки для route handlers.
+- Admin API routes переведены на capability-checks: user directory/detail, support actions, role management, admin stats, AI eval list/run и `POST /api/ai/reindex`.
+- `AdminUserActions` и `AdminAiOperations` больше не притворяются доступными всем admin-ролям: `support_admin` и `super_admin` могут выполнять operational actions, а `analyst` видит read-only состояние с явным объяснением ограничений.
+- `/admin` теперь показывает capability-статус текущей роли, чтобы из overview было видно, кто может запускать support actions, reindex и AI eval операции.
+
+### Проверка admin permission slice
 
 - `npm run lint` прошёл локально
 - `npm run build` прошёл локально
@@ -383,3 +415,389 @@
 - `npm run typecheck`
 - `npm run lint`
 - `npm run build`
+
+### Live admin UX для AI eval runs
+
+- На `/admin` статичная карточка последних eval runs заменена на живой client-side блок `AdminAiEvalRuns`.
+- Админ теперь может вручную поставить новый `ai_eval_run` в очередь прямо из control center и сразу увидеть его в списке без полного обновления страницы.
+- `GET /api/admin/ai-evals` и `POST /api/admin/ai-evals/run` теперь используются как единый live-контур для списка и queue action.
+- UI уважает capability `queue_ai_eval_runs`: `analyst` и `super_admin` могут ставить eval runs в очередь, остальные роли видят read-only состояние.
+
+### Проверка live admin UX для AI eval runs
+
+- `npm run lint`
+- `npm run build`
+- `npm run typecheck`
+
+### User detail operations timeline
+
+- `GET /api/admin/users/[id]` расширен actor-aware payload для super-admin карточки пользователя: теперь route отдает `recentExportJobs`, `recentOperationAuditLogs`, обогащенные `recentSupportActions`, а также actor refs для lifecycle/export/deletion/subscription history.
+- В карточке пользователя `AdminUserDetail` собран полноценный operations view: текущий export/deletion state, история export jobs, support actions с resolution info, отдельный timeline по status transitions и расширенный billing/subscription timeline.
+- `src/app/admin/users/[id]/page.tsx` переписан с чистым admin shell title, чтобы detail route выглядел как полноценный раздел панели, а не временный debug screen.
+
+### Проверка user detail operations timeline
+
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
+
+### Queue processor для admin operations
+
+- Добавлен server-side helper `processAdminOperationQueues` и новый route `POST /api/admin/operations/process`, чтобы support-admin / super-admin могли прогонять admin queues не только ручными status clicks, но и пакетной обработкой.
+- Export lifecycle теперь имеет автоматический wave flow: queued export jobs переводятся в `processing`, получают synthetic `artifact_path` и завершаются в `completed` с audit trail по обеим transition-точкам.
+- Deletion lifecycle получил server wave logic: legacy `queued` requests нормализуются в `holding`, а просроченные hold-записи релизятся в queued support action `purge_user_data` с отдельным audit событием `queue_deletion_purge_action`.
+- На `/admin` `AdminOperationsInbox` теперь умеет запускать `Прогнать wave`, а `AdminHealthDashboard` показывает due deletion holds и последние export/deletion timestamps.
+
+### Проверка queue processor
+
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
+
+### Support action execution и suspended state
+
+- Добавлена миграция `user_admin_states`, чтобы `suspend_user` / `restore_user` имели реальный persisted account state, а не оставались только support queue action.
+- `getViewer` теперь учитывает `user_admin_states`: suspended пользователь без admin-прав уходит на `/suspended`, где видит reason/state и может выйти из сессии.
+- `processAdminOperationQueues` расширен support execution flow: wave теперь обрабатывает `suspend_user`, `restore_user`, `resync_user_context` и `purge_user_data`.
+- `resync_user_context` создает `admin_support_resync` snapshot в `user_context_snapshots`, а `purge_user_data` формирует `admin_purge_manifest` snapshot с реальным inventory по user-scoped таблицам.
+- В user detail появился текущий suspended state, так что super-admin видит не только timeline очереди, но и фактическое состояние аккаунта.
+
+### Проверка support action execution
+
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
+
+### Operations inbox и manual status workflow
+
+- Добавлен `AdminOperationsInbox` на `/admin`: единый inbox по `support_actions`, `export_jobs` и `deletion_requests` с KPI, переходом в карточку пользователя и ручным refresh.
+- Добавлен `GET /api/admin/operations`, который собирает pending/recent operations, подтягивает actor/target identity из Auth и profiles и возвращает summary для super-admin dashboard.
+- Добавлен `PATCH /api/admin/operations/[kind]/[id]` для ручного разбора очередей: support actions переводятся из `queued` в `completed/failed`, export jobs — в `processing/completed/failed`, deletion requests — в `holding/completed/canceled`.
+- Все ручные status transitions пишутся в `admin_audit_logs` с `fromStatus`, `toStatus`, `kind` и operator note.
+- `GET /api/admin/stats` и `AdminHealthDashboard` приведены к реальной support-схеме: больше нет ложного `running` для `support_actions`, вместо этого считаются `queued/completed/failed`, а также отдельно показываются export backlog и deletion holds.
+
+### Проверка operations inbox и admin health
+
+- `npm run lint`
+- `npm run build`
+- `npm run typecheck`
+
+### Workout offline sync pull и cache snapshots
+
+- `GET /api/sync/pull` больше не заглушка для workout execution slice: route поддерживает scope `workout_day` и отдаёт канонический snapshot конкретного тренировочного дня.
+- В `src/lib/offline/workout-sync.ts` добавлены helpers для `cacheWorkoutDaySnapshot`, чтения локального snapshot и server pull без полного обновления страницы.
+- `WorkoutDaySession` теперь гидратится из Dexie snapshot + локальной очереди, а после online sync подтягивает свежий server state через `sync/pull`, а не через `router.refresh()`.
+- На экране дня тренировки показывается время последнего локального snapshot, что полезно для phone-first PWA сценария с нестабильной сетью.
+
+### Проверка workout offline sync pull и cache snapshots
+
+- `npm run lint`
+- `npm run build`
+- `npm run typecheck`
+
+### Admin system health и sync health dashboards
+
+- `GET /api/admin/stats` расширен из простого counters endpoint в health API с отдельными срезами `systemHealth` и `syncHealth`.
+- На `/admin` добавлен живой client-side блок `AdminHealthDashboard`, который умеет вручную обновлять runtime readiness, workload counters, support/eval backlog и workout sync activity.
+- В health dashboard выведены readiness-флаги для `SUPABASE_PUBLIC`, `AI_GATEWAY`, `SUPABASE_SERVICE_ROLE_KEY` и scoped `workout sync pull`, а также свежесть последних профилей, программ, support actions, eval runs и сохранённых `actual_reps`.
+- `/admin` теперь закрывает не только user management и AI operations, но и базовую operational observability для текущей PWA/offline архитектуры.
+
+### Проверка admin system health и sync health dashboards
+
+- `npm run lint`
+- `npm run build`
+- `npm run typecheck`
+
+### Primary super-admin policy и расширенный user analytics
+
+- Root-политика закреплена серверно: `super_admin` можно bootstrap/назначить только для `corvetik1@yandex.ru`, а снять или понизить этот доступ нельзя.
+- `manage_admin_roles` теперь реально является root-only capability: UI и route handlers больше не считают любой `super_admin` в таблице достаточным для управления ролями.
+- `/admin` получил отдельный root-only `Super-admin контур`, который виден только основному владельцу платформы и показывает policy drift по root-доступу.
+- `GET /api/admin/users/[id]` расширен до полноценного analytics payload по пользователю: workout, nutrition, AI и lifecycle counters вместе с последними activity timestamps.
+- Клиентская карточка пользователя на `/admin/users/[id]` теперь показывает подробную операционную статистику по аккаунту, а каталог пользователей прямо сообщает root-policy для `super_admin`.
+
+### Проверка primary super-admin policy и user analytics
+
+- `npm run lint`
+- `npm run build`
+- `npm run typecheck`
+
+### Admin user operations: export и deletion
+
+- Добавлены admin routes `POST /api/admin/users/[id]/export` и `POST` / `DELETE` `/api/admin/users/[id]/deletion` для живого управления export jobs и deletion hold flow без SQL.
+- `AdminUserActions` теперь умеет ставить экспорт данных в очередь, переводить deletion request в `holding` и отменять его из карточки пользователя.
+- User detail payload дополнен текущими состояниями `latestExportJob`, `deletionRequest` и `latestSubscription`, чтобы у админа был не только счётчик, но и реальный operational state.
+- Карточка пользователя показывает отдельный operations/billing блок с export status, deletion hold, subscription state и access counters.
+
+### Проверка admin user operations: export и deletion
+
+- `npm run lint`
+- `npm run build`
+- `npm run typecheck`
+
+### Admin users catalog: activity, backlog и billing signals
+
+- `GET /api/admin/users` расширен до операционного каталога: route теперь обходит все страницы Supabase Auth users и агрегирует по каждому пользователю workout, nutrition, AI, support backlog, export/deletion state и subscription state.
+- Каталог пользователей на `/admin/users` получил дополнительные фильтры `activity` и `paid`, server-driven сортировки по активности, входам, workout, AI и backlog, а также KPI summary по активным за 7 дней, backlog, пользователям без входов и платящим аккаунтам.
+- Каждая карточка пользователя в списке теперь показывает mobile-friendly ops snapshot: роль, activity bucket, root/backlog/billing badges, workout/nutrition/AI/operations мини-панели и footer с источником последней активности.
+
+### Проверка admin users catalog: activity, backlog и billing signals
+
+- `npm run lint`
+- `npm run build`
+- `npm run typecheck`
+
+### Admin users catalog: cohort analytics и priority segments
+
+- `/api/admin/users` теперь возвращает не только `data`, но и server-side `summary` и `segments` для super-admin панели: activity buckets, backlog totals, billing hygiene и приоритетные выборки пользователей.
+- В `/admin/users` добавлены cohort-блоки по активности, operational summary по backlog/export/deletion/subscriptions, а также три приоритетных сегмента: `priorityQueue`, `inactivePaid`, `newestUsers` и `topWorkoutUsers`.
+- Панель позволяет супер-админу сразу видеть, кого нужно разбирать в первую очередь: пользователей с backlog, платящих без активности, новых аккаунтов без входов и самых активных workout users.
+
+### Проверка admin users catalog: cohort analytics и priority segments
+
+- `npm run lint`
+- `npm run build`
+- `npm run typecheck`
+
+### Root billing controls и bulk user actions
+
+- Добавлены root-only admin routes `POST /api/admin/users/[id]/billing` и `POST /api/admin/users/bulk` для server-backed управления subscription state, entitlements и массовыми действиями по выбранным пользователям.
+- В user detail появился billing/access control block: root super-admin может выдать `trial`, активировать/отменить подписку, пометить `past_due`, а также включать и выключать entitlements по `feature_key`.
+- В `/admin/users` добавлена bulk-панель с выбором пользователей прямо из каталога. Root super-admin теперь может массово запускать `queue_export`, `queue_resync`, `queue_suspend`, `grant_trial` и `enable_entitlement`.
+- User detail payload расширен `recentEntitlements` и `recentUsageCounters`, чтобы billing/access state был не только редактируемым, но и наблюдаемым из UI.
+
+### Проверка root billing controls и bulk user actions
+
+- `npm run lint`
+- `npm run build`
+- `npm run typecheck`
+
+### Billing timeline и bulk wave history
+
+- `POST /api/admin/users/[id]/billing` теперь пишет subscription-side audit не только в `admin_audit_logs`, но и в `subscription_events`, чтобы user detail показывал реальную timeline по admin billing actions.
+- `POST /api/admin/users/bulk` теперь формирует `batchId`, добавляет его в per-user audit payload и пишет отдельную summary-запись `bulk_wave_completed` в `admin_audit_logs`.
+- `/api/admin/users` возвращает `recentBulkWaves`, а `/api/admin/users/[id]` возвращает `recentSubscriptionEvents`, поэтому super-admin видит и историю массовых операций, и историю billing updates на уровне пользователя.
+- В UI это отображено как `Bulk history` на `/admin/users` и `Subscription timeline` в user detail.
+
+### Проверка billing timeline и bulk wave history
+
+- `npm run lint`
+- `npm run build`
+- `npm run typecheck`
+### Settings data center and self-service export
+
+- Added a real self-service data center in `Settings`: users can queue a data export, request account deletion with a 14-day hold, cancel that deletion request, and refresh statuses without leaving the screen.
+- Added `GET/POST/DELETE /api/settings/data` for authenticated user-scoped export/deletion actions and `GET /api/settings/data/export/[id]/download` for completed export downloads.
+- Added server helpers to load the settings snapshot and build a JSON export bundle across profile, onboarding, workouts, nutrition, AI history, billing, snapshots, and privacy records.
+- Applied remote Supabase migrations before this slice: `20260309121000_workout_rep_ranges.sql` and `20260309173000_user_admin_states.sql`.
+
+### Verification: settings data center
+
+- `npm run lint`
+- `npm run build`
+- `npm run typecheck`
+
+### Settings export archive upgrade
+
+- Upgraded self-service export delivery from a raw JSON response to a real ZIP archive.
+- Added a server-side archive builder that ships `export.json`, `summary.csv`, and CSV slices for workouts, nutrition, AI, billing, and privacy records.
+- Updated the download route in settings to return `application/zip` and aligned the settings UI with ZIP-first copy.
+
+### Verification: settings export archive
+
+- `npm run lint`
+- `npm run build`
+- `npm run typecheck`
+
+### Settings privacy timeline
+
+- Extended the settings data snapshot with user-facing privacy events derived from `admin_audit_logs`.
+- `/settings` now shows a privacy timeline for export/deletion lifecycle plus next-step summaries for the current export and deletion state.
+- Timeline intentionally exposes actor scope as `you / support / system` instead of leaking internal admin identity fields.
+
+### Verification: settings privacy timeline
+
+- `npm run lint`
+- `npm run build`
+- `npm run typecheck`
+
+### Hard-delete purge worker and protected primary admin
+
+- `purge_user_data` in the admin queue processor now executes a real hard-delete via `auth.admin.deleteUser(..., false)` instead of stopping at a manifest-only placeholder.
+- Purge manifests are now persisted in surviving `support_actions` and audit payloads before deletion, because `user_context_snapshots` are cascaded away with the deleted account and cannot serve as a durable audit artifact.
+- Added protection for the root account `corvetik1@yandex.ru`: self-service deletion, admin deletion requests, direct destructive support actions, and bulk suspend now reject the primary super admin.
+
+### Verification: hard-delete purge worker
+
+- `npm run lint`
+- `npm run build`
+- `npm run typecheck`
+
+### Sentry and Vercel observability
+
+- Added `@sentry/nextjs`, `@vercel/analytics`, and `@vercel/speed-insights` to the app and wired them into the App Router shell.
+- Added current Sentry manual setup for Next.js App Router: `src/instrumentation.ts`, `src/instrumentation-client.ts`, `src/sentry.server.config.ts`, `src/sentry.edge.config.ts`, and `src/app/global-error.tsx`.
+- `next.config.ts` now conditionally wraps the app with `withSentryConfig(...)` when build-time Sentry credentials are present, including source-map upload support, a tunnel route, and automatic Vercel monitors.
+- `logger.error(...)` now forwards handled server-side errors into Sentry so route failures show up in monitoring even when they are caught and converted to API responses.
+- `/api/admin/stats` and the admin health dashboard now expose readiness for Sentry runtime/build config and Vercel runtime observability next to the existing Supabase and AI readiness checks.
+- No new SQL migration was required for this slice.
+
+### Verification: Sentry and Vercel observability
+
+- `npm run lint`
+- `npm run build`
+- `npm run typecheck`
+
+### Sentry smoke test and readiness diagnostics
+
+- Added root-only `POST /api/admin/observability/sentry-test`, which emits a real Sentry smoke-test event and returns the resulting event id for operational verification.
+- Expanded `/api/admin/stats` with non-secret observability diagnostics: missing Sentry runtime/build env keys, configured Sentry org/project/environment, and current Vercel runtime environment.
+- `AdminHealthDashboard` now shows those diagnostics directly in `/admin` and exposes a smoke-test button to the primary super-admin.
+
+### Verification: Sentry smoke test and readiness diagnostics
+
+- `npm run lint`
+- `npm run build`
+- `npm run typecheck`
+
+### Runtime entitlements, AI usage accounting and settings billing center
+
+- Added `src/lib/billing-access.ts` as the runtime contract for subscriptions, entitlements, monthly usage counters, and per-feature access snapshots for `ai_chat`, `meal_plan`, `workout_plan`, and `meal_photo`.
+- AI routes now enforce plan access and increment usage counters on success: `POST /api/ai/chat`, `POST /api/ai/meal-plan`, `POST /api/ai/workout-plan`, `POST /api/ai/meal-photo`, plus proposal `approve/apply` flows.
+- `/ai` and `/nutrition` no longer act as if every AI feature is always available: the UI now shows access source, monthly usage, reset window, and blocked reasons directly in the product surface.
+- `/settings` now includes a dedicated `SettingsBillingCenter` with plan summary, feature usage cards, billing timeline, and a self-service `billing_access_review` request flow for blocked premium AI features.
+- Added `GET/POST /api/settings/billing` for user-scoped billing refresh and access-review requests; those requests are written into `support_actions` plus `admin_audit_logs`, so they are visible to the admin inbox.
+- Admin billing mutations now also write entitlement changes into `subscription_events`, so user-facing billing history is not limited to subscription status changes only.
+- Production Sentry rollout is intentionally deferred until `SENTRY_PROJECT` and `NEXT_PUBLIC_SENTRY_DSN` are provided; runtime diagnostics already surface this gap in `/admin`.
+
+### Verification: runtime entitlements and settings billing center
+
+- `npm run lint`
+- `npm run build`
+- `npm run typecheck`
+
+### Stripe billing integration foundation
+
+- Added Stripe SDK integration and shared billing helpers in `src/lib/stripe-billing.ts` for customer creation, subscription reconciliation, event idempotency, and local subscription upserts.
+- Added user-facing Stripe routes: `POST /api/billing/checkout`, `POST /api/billing/portal`, and `POST /api/billing/webhook/stripe`.
+- `/settings` billing center now exposes Stripe-aware CTAs for checkout and subscription management when runtime env is ready, and shows configuration warnings when Stripe env is incomplete.
+- `/api/admin/stats` and `AdminHealthDashboard` now surface readiness for Stripe checkout, Stripe portal, and Stripe webhook configuration alongside the existing observability diagnostics.
+- Added admin reconcile route `POST /api/admin/users/[id]/billing/reconcile` so a root admin can force local subscription state to match Stripe after manual provider changes.
+- Added SQL migration `20260310121500_stripe_provider_customer.sql` and applied it to remote Supabase project `nactzaxrjzsdkyfqwecf`.
+- Remaining external dependency for this slice is production Stripe env rollout: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, and `STRIPE_PREMIUM_MONTHLY_PRICE_ID`.
+
+### Verification: Stripe billing integration foundation
+
+- `npm run lint`
+- `npm run build`
+- `npm run typecheck`
+
+### Stripe admin UX and live billing refresh
+
+- Fixed a real settings bug in `SettingsBillingCenter`: `GET/POST /api/settings/billing` now return both billing snapshot and live access state, so refresh/update flows no longer leave subscription-feature cards stale until a full page reload.
+- Added root-admin Stripe reconcile action to `AdminUserActions`, so billing operators can trigger provider-to-local sync from the user card instead of relying on direct API calls only.
+- Extended `/api/admin/users/[id]` and `AdminUserDetail` with Stripe-specific references: latest `provider_customer_id`, latest `provider_subscription_id`, and `provider_event_id` visibility inside the subscription timeline.
+- Manual reconcile now also writes `admin_reconcile_stripe_subscription` into `admin_audit_logs`, so billing corrections remain visible in the super-admin audit trail.
+
+### Verification: Stripe admin UX and live billing refresh
+
+- `npm run lint`
+- `npm run build`
+- `npm run typecheck`
+
+### Stripe return flow and in-product billing CTA
+
+- `SettingsBillingCenter` now handles `?billing=success|canceled|portal_return` on `/settings`, clears the query state after handling, and performs a live refresh so the user sees current subscription access instead of stale cards after returning from Stripe.
+- Added direct `Открыть billing center` links from blocked AI surfaces: `AiChatPanel`, `AiProposalStudio`, and `NutritionPhotoAnalysis`, so mobile users can move from a paywall state straight into `/settings#billing-center`.
+- Added `id="billing-center"` to the settings billing section so those deep links land on the right surface in the PWA.
+- `GET/POST /api/settings/billing` now act as a combined refresh endpoint for both timeline snapshot data and runtime feature access.
+
+### Verification: Stripe return flow and in-product billing CTA
+
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build` could not be re-run on the default `.next` because the local `next dev` process is active, and a separate env-driven build directory run hung after manifest generation.
+
+### Direct Stripe checkout return reconcile
+
+- `POST /api/billing/checkout/reconcile` now lets the signed-in user reconcile a just-completed Stripe checkout session by `session_id` immediately after returning from Stripe, without waiting for webhook timing.
+- Checkout success URLs now include `session_id={CHECKOUT_SESSION_ID}`, so `/settings` can perform direct provider reconciliation on successful return.
+- `SettingsBillingCenter` now prefers the direct reconcile route on `billing=success&session_id=...`; plain refresh remains the fallback for cancel and portal-return flows.
+- Added best-effort audit logging for `user_reconciled_stripe_checkout_return` so self-service billing recovery is visible to operators.
+
+### Verification: direct Stripe checkout return reconcile
+
+- `npm run lint`
+- `npm run typecheck`
+
+### Stripe checkout return status banner
+
+- `SettingsBillingCenter` now keeps a local `checkoutReturn` state and renders a dedicated banner for checkout return outcomes instead of only showing a generic success notice.
+- Success returns now show whether the Stripe session has already been reconciled into a local subscription or is still waiting for confirmation.
+- If the checkout session exists but local subscription state is not confirmed yet, the user gets a direct `Проверить Stripe ещё раз` retry action in `/settings`.
+- Portal and canceled return flows now also show explicit status messaging inside the billing center instead of silently falling back to a generic refresh.
+
+### Verification: Stripe checkout return status banner
+
+- `npm run lint`
+- `npm run typecheck`
+- Separate compile-build in an alternative `distDir` was attempted again but hung and was stopped manually; default `npm run build` is still blocked by the active local `next dev` process using `.next`.
+
+### Primary super-admin root policy and admin shell refresh
+
+- Added migration `20260310164000_primary_super_admin_root_policy.sql` and applied it to remote Supabase project `nactzaxrjzsdkyfqwecf`.
+- The migration now enforces `corvetik1@yandex.ru` as the only `super_admin`: it upserts the matching `platform_admins` row, demotes any other `super_admin` rows to `support_admin`, writes `primary_super_admin_enforced` into `admin_audit_logs`, and creates a partial unique index for `role = 'super_admin'`.
+- Verified against the linked remote project that `corvetik1@yandex.ru` exists in `auth.users`, has a `platform_admins` row, and is the only current `super_admin`.
+- Reworked the public landing page `/` into a cleaner product-first PWA entry screen with lighter copy, clearer CTAs, and a more professional mobile-first composition.
+- Reworked `/admin` into a wider, less compressed control-center layout with a root summary hero, KPI strip, health dashboard, operations inbox, user-management entry point, AI ops, admin roster, audit stream, and product-signal panels.
+- Expanded the global app shell width to `max-w-[1500px]` so admin and settings surfaces have more usable room on desktop without changing the mobile PWA rhythm.
+
+### Verification: root-admin policy and landing/admin shell
+
+- `npx supabase db push --linked --include-all`
+- `npx eslint src/app/page.tsx src/app/admin/page.tsx src/components/app-shell.tsx`
+- `npm run typecheck`
+- `cmd /c "set NEXT_DIST_DIR=.next_codex_root_admin_ui&& npm run build"`
+
+### Login-first app shell and PWA icon polish
+
+- `/` is now the real entry point of the product: signed-out users see a compact Russian auth screen with `AuthForm`, while signed-in users are redirected straight to `/dashboard` or `/onboarding`.
+- `/auth` now collapses into the same entry flow by redirecting back to `/`, and unauthenticated protected routes now also return to `/` instead of a separate auth surface.
+- The shared `AppShell` now uses a fixed, collapsible top bar with persisted local state, which gives the mobile PWA more vertical space and keeps the navigation behavior consistent between phone and desktop.
+- Reworked `/dashboard`, `/workouts`, `/nutrition`, `/settings`, and the main admin wrappers so they read like product screens in Russian rather than technical internal checklists.
+- Fixed the broken PWA icon pipeline: `public/icon.svg` now closes correctly, generated real `icon-192.png`, `icon-512.png`, and `apple-touch-icon.png`, and updated metadata/manifest to use PNG icons so install surfaces stop warning about invalid images.
+- Browser verification on local `http://127.0.0.1:3000/` confirmed the new root auth screen, and both `/dashboard` and `/auth` now redirect back to the unified root login flow when no session exists.
+
+### Verification: login-first shell and PWA polish
+
+- `npx eslint src/app/page.tsx src/app/auth/page.tsx src/app/dashboard/page.tsx src/app/workouts/page.tsx src/app/nutrition/page.tsx src/app/settings/page.tsx src/app/admin/page.tsx src/app/admin/users/page.tsx src/components/auth-form.tsx src/components/app-shell.tsx src/components/app-shell-frame.tsx src/components/app-shell-nav.tsx src/components/admin-users-directory.tsx src/components/admin-user-detail.tsx src/app/layout.tsx src/app/manifest.ts src/lib/viewer.ts`
+- `npm run typecheck`
+- `npm run build`
+- Playwright manual verification on `http://127.0.0.1:3000/`, `/dashboard`, and `/auth`
+
+### Admin UX language cleanup
+
+- Continued the product polish pass for the super-admin workflow so admin surfaces read like a finished product instead of an internal console.
+- `AdminUsersDirectory` now uses more product-facing Russian labels for user queue, paid risk, bulk actions, subscription summaries, and footer state chips.
+- Bulk-action history and controls now present Russian labels instead of enum-like phrases, including clearer success/error notices and queue wording.
+- `AdminUserDetail` now uses more user-facing Russian copy for support actions, export/deletion history, subscription history, Stripe references, and admin audit sections.
+- The admin detail page now describes billing/access state, opened features, and manual actions in a calmer product tone rather than mixed English/internal wording.
+
+### Verification: admin UX language cleanup
+
+- `npx eslint src/components/admin-users-directory.tsx src/components/admin-user-detail.tsx src/app/admin/page.tsx src/app/admin/users/page.tsx src/app/admin/users/[id]/page.tsx`
+- `npm run typecheck`
+- `npm run build`
+
+### AI, billing, and workout product copy cleanup
+
+- Reworked `/ai` so the page reads like a user-facing AI workspace in Russian instead of a mixed internal billing/debug panel.
+- Simplified the access wording in `/ai`: subscription state, provider, feature availability, and usage reset copy now use product language rather than raw `Provider / Active / reset` labels.
+- Cleaned `/settings` billing center copy around checkout return, payment status, feature access review, and access history so the screen feels like a real billing section rather than Stripe/session diagnostics.
+- Reduced technical wording inside the workout day session: local save state, reconnect notices, pending changes, and send actions now speak about device saving and sending changes instead of snapshots/queues/sync internals.
+
+### Verification: AI/billing/workout polish
+
+- `npx eslint src/app/ai/page.tsx src/components/settings-billing-center.tsx src/components/workout-day-session.tsx src/components/admin-users-directory.tsx src/components/admin-user-detail.tsx`
+- `npm run build`
+- `npm run typecheck` (rerun after build because `.next/types` is still occasionally flaky on the first pass)

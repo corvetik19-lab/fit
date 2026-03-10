@@ -606,4 +606,4 @@ end
 $$;
 
 drop function if exists public.apply_owner_rls(text, text);
-drop function if exists public.apply_owner_or_shared_select_rls(text, text);
+drop function if exists public.apply_owner_or_shared_select_rls(text, text);;

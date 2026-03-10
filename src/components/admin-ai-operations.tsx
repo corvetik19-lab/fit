@@ -2,22 +2,37 @@
 
 import { useState } from "react";
 
+import {
+  getAdminRoleLabel,
+  hasAdminCapability,
+  type PlatformAdminRole,
+} from "@/lib/admin-permissions";
+
 const inputClassName =
   "w-full rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15";
 
 export function AdminAiOperations({
   defaultTargetUserId,
+  currentAdminRole,
 }: {
   defaultTargetUserId: string;
+  currentAdminRole: PlatformAdminRole;
 }) {
   const [targetUserId, setTargetUserId] = useState(defaultTargetUserId);
-  const [reason, setReason] = useState("Обновление контекста после AI/RAG-изменений");
+  const [reason, setReason] = useState(
+    "Обновление контекста после AI/RAG-изменений",
+  );
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
+  const canRunReindex = hasAdminCapability(
+    currentAdminRole,
+    "run_knowledge_reindex",
+  );
+
   async function runReindex() {
-    if (!targetUserId.trim() || pending) {
+    if (!targetUserId.trim() || pending || !canRunReindex) {
       return;
     }
 
@@ -70,9 +85,17 @@ export function AdminAiOperations({
           {error}
         </p>
       ) : null}
+
       {notice ? (
         <p className="rounded-2xl border border-emerald-300/60 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
           {notice}
+        </p>
+      ) : null}
+
+      {!canRunReindex ? (
+        <p className="rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          Роль {getAdminRoleLabel(currentAdminRole)} работает здесь в read-only режиме.
+          Переиндексацию базы знаний может запускать только `super_admin` или `support_admin`.
         </p>
       ) : null}
 
@@ -80,6 +103,7 @@ export function AdminAiOperations({
         Пользователь для reindex
         <input
           className={inputClassName}
+          disabled={!canRunReindex}
           onChange={(event) => setTargetUserId(event.target.value)}
           placeholder="UUID пользователя"
           value={targetUserId}
@@ -90,6 +114,7 @@ export function AdminAiOperations({
         Причина
         <textarea
           className={`${inputClassName} min-h-28 resize-y`}
+          disabled={!canRunReindex}
           onChange={(event) => setReason(event.target.value)}
           value={reason}
         />
@@ -97,7 +122,7 @@ export function AdminAiOperations({
 
       <button
         className="inline-flex w-fit rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-        disabled={pending || !targetUserId.trim()}
+        disabled={pending || !targetUserId.trim() || !canRunReindex}
         onClick={runReindex}
         type="button"
       >

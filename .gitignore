@@ -43,6 +43,7 @@ lint.err
 .vercel
 .idea
 .codex
+supabase/.temp/
 
 # typescript
 *.tsbuildinfo

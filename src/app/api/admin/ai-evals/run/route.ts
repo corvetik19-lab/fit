@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { createApiErrorResponse } from "@/lib/api/error-response";
-import { requireAdminRouteAccess } from "@/lib/admin-auth";
+import { isAdminAccessError, requireAdminRouteAccess } from "@/lib/admin-auth";
 import { logger } from "@/lib/logger";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 
@@ -12,7 +12,7 @@ const aiEvalRunSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    const { user } = await requireAdminRouteAccess();
+    const { user } = await requireAdminRouteAccess("queue_ai_eval_runs");
     const payload = aiEvalRunSchema.parse(await request.json().catch(() => ({})));
     const adminSupabase = createAdminSupabaseClient();
 
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
         model_id: modelId,
         status: "queued",
       })
-      .select("id, label, model_id, status, created_at")
+      .select("id, label, model_id, status, created_at, started_at, completed_at")
       .single();
 
     if (error) {
@@ -59,6 +59,14 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     logger.error("admin ai eval run route failed", { error });
+
+    if (isAdminAccessError(error)) {
+      return createApiErrorResponse({
+        status: error.status,
+        code: error.code,
+        message: error.message,
+      });
+    }
 
     if (error instanceof z.ZodError) {
       return createApiErrorResponse({

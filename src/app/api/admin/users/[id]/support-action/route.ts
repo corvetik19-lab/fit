@@ -1,7 +1,11 @@
 import { z } from "zod";
 
 import { createApiErrorResponse } from "@/lib/api/error-response";
-import { requireAdminRouteAccess } from "@/lib/admin-auth";
+import { isAdminAccessError, requireAdminRouteAccess } from "@/lib/admin-auth";
+import {
+  PRIMARY_SUPER_ADMIN_GUARD_MESSAGE,
+  assertUserIsNotPrimarySuperAdmin,
+} from "@/lib/admin-target-guard";
 import { logger } from "@/lib/logger";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 
@@ -16,10 +20,14 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const { user } = await requireAdminRouteAccess();
+    const { user } = await requireAdminRouteAccess("queue_support_actions");
     const { id } = await params;
     const body = supportActionSchema.parse(await request.json());
     const adminSupabase = createAdminSupabaseClient();
+
+    if (["purge_user_data", "suspend_user"].includes(body.action)) {
+      await assertUserIsNotPrimarySuperAdmin(adminSupabase, id);
+    }
 
     const { data, error } = await adminSupabase
       .from("support_actions")
@@ -59,6 +67,25 @@ export async function POST(
     });
   } catch (error) {
     logger.error("admin support action route failed", { error });
+
+    if (isAdminAccessError(error)) {
+      return createApiErrorResponse({
+        status: error.status,
+        code: error.code,
+        message: error.message,
+      });
+    }
+
+    if (
+      error instanceof Error &&
+      error.message === PRIMARY_SUPER_ADMIN_GUARD_MESSAGE
+    ) {
+      return createApiErrorResponse({
+        status: 403,
+        code: "PRIMARY_SUPER_ADMIN_PROTECTED",
+        message: error.message,
+      });
+    }
 
     if (error instanceof z.ZodError) {
       return createApiErrorResponse({

@@ -1,6 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
+
+import type { FeatureAccessSnapshot } from "@/lib/billing-access";
 
 type ChatMessage = {
   id: string;
@@ -19,13 +22,14 @@ type ChatSource = {
 };
 
 type AiChatPanelProps = {
+  access: FeatureAccessSnapshot;
   initialSessionId: string | null;
   initialSessionTitle: string | null;
   initialMessages: ChatMessage[];
 };
 
 const textareaClassName =
-  "min-h-28 w-full rounded-3xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15";
+  "min-h-28 w-full rounded-3xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15 disabled:cursor-not-allowed disabled:opacity-60";
 
 function formatRole(role: ChatMessage["role"]) {
   return role === "assistant" ? "AI-коуч" : "Ты";
@@ -51,6 +55,7 @@ function formatSourceType(value: string) {
 }
 
 export function AiChatPanel({
+  access,
   initialSessionId,
   initialSessionTitle,
   initialMessages,
@@ -66,7 +71,7 @@ export function AiChatPanel({
   async function submitMessage() {
     const trimmed = draft.trim();
 
-    if (!trimmed || pending) {
+    if (!trimmed || pending || !access.allowed) {
       return;
     }
 
@@ -141,11 +146,17 @@ export function AiChatPanel({
               : "Новый AI-чат без сохранённого заголовка"}
           </p>
           <p className="mt-1 text-sm text-muted">
-            Чат работает только онлайн и использует сохранённый пользовательский контекст.
+            Чат работает только онлайн и использует сохранённый пользовательский
+            контекст.
+          </p>
+          <p className="mt-1 text-sm text-muted">
+            Использовано: {access.usage.count}
+            {typeof access.usage.limit === "number" ? ` / ${access.usage.limit}` : ""}
           </p>
         </div>
         <button
-          className="rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:bg-white/70"
+          className="rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
+          disabled={!access.allowed}
           onClick={resetChat}
           type="button"
         >
@@ -157,6 +168,18 @@ export function AiChatPanel({
         <p className="rounded-2xl border border-red-300/60 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
         </p>
+      ) : null}
+
+      {!access.allowed ? (
+        <div className="rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          {access.reason ?? "AI-чат сейчас недоступен для текущего плана."}
+          <Link
+            className="mt-3 inline-flex rounded-full border border-amber-400/70 bg-white/80 px-4 py-2 font-semibold text-foreground transition hover:bg-white"
+            href="/settings#billing-center"
+          >
+            Открыть billing center
+          </Link>
+        </div>
       ) : null}
 
       <div className="grid max-h-[36rem] gap-4 overflow-y-auto rounded-3xl border border-border bg-white/50 p-4">
@@ -197,7 +220,8 @@ export function AiChatPanel({
                       key={`${message.id}-${source.id}`}
                     >
                       <p className="font-medium text-foreground">
-                        {formatSourceType(source.sourceType)} · релевантность {source.similarity}
+                        {formatSourceType(source.sourceType)} · релевантность{" "}
+                        {source.similarity}
                       </p>
                       <p className="mt-1 text-muted">{source.contentPreview}</p>
                     </div>
@@ -208,7 +232,7 @@ export function AiChatPanel({
           ))
         ) : (
           <div className="rounded-3xl border border-dashed border-border bg-white/60 px-4 py-6 text-sm leading-7 text-muted">
-            Здесь появится диалог с AI-коучем. Он будет опираться на профиль, цели,
+            Здесь появится диалог с AI-коучем. Он опирается на профиль, цели,
             питание, тренировки и сохранённые context snapshots.
           </div>
         )}
@@ -217,6 +241,7 @@ export function AiChatPanel({
       <div className="grid gap-3">
         <textarea
           className={textareaClassName}
+          disabled={!access.allowed}
           onChange={(event) => setDraft(event.target.value)}
           placeholder="Например: подскажи, как перестроить неделю тренировок без перегруза плеч."
           value={draft}
@@ -227,7 +252,7 @@ export function AiChatPanel({
           </p>
           <button
             className="rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-            disabled={pending || !draft.trim()}
+            disabled={pending || !draft.trim() || !access.allowed}
             onClick={submitMessage}
             type="button"
           >

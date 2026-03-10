@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import type { Route } from "next";
 import Link from "next/link";
@@ -30,6 +30,7 @@ type AppRouteDefinition = {
 type PlatformAdminRole = "super_admin" | "support_admin" | "analyst" | null;
 
 type AppShellNavProps = {
+  compact?: boolean;
   viewer: {
     email: string | null;
     fullName: string | null;
@@ -40,50 +41,50 @@ type AppShellNavProps = {
 
 const dashboardRoute: AppRouteDefinition = {
   href: "/dashboard",
-  label: "Дашборд",
-  description: "Сводка, графики и текущий статус.",
+  label: "Обзор",
+  description: "Главные метрики и прогресс.",
   icon: BarChart3,
 };
 
 const workoutsRoute: AppRouteDefinition = {
   href: "/workouts",
   label: "Тренировки",
-  description: "Программы, упражнения и выполнение.",
+  description: "План, дни и выполнение.",
   icon: Dumbbell,
 };
 
 const nutritionRoute: AppRouteDefinition = {
   href: "/nutrition",
   label: "Питание",
-  description: "Логи, дневные цели и фото-анализ.",
+  description: "Логи, цели и анализ фото.",
   icon: Activity,
 };
 
 const historyRoute: AppRouteDefinition = {
   href: "/history",
   label: "История",
-  description: "Прошлые программы и ретроспектива.",
+  description: "Прошлые недели и срезы.",
   icon: History,
 };
 
 const aiRoute: AppRouteDefinition = {
   href: "/ai",
   label: "AI",
-  description: "Чат, предложения и AI-коуч.",
+  description: "Чат и предложения.",
   icon: Sparkles,
 };
 
 const settingsRoute: AppRouteDefinition = {
   href: "/settings",
   label: "Настройки",
-  description: "Профиль, аккаунт и управление данными.",
+  description: "Профиль, доступ и данные.",
   icon: Settings2,
 };
 
 const adminRoute: AppRouteDefinition = {
   href: "/admin",
   label: "Админ",
-  description: "Пользователи, доступы и аудит.",
+  description: "Пользователи и контроль.",
   icon: Shield,
 };
 
@@ -124,7 +125,8 @@ function getBottomNavRoutes(pathname: string) {
 
 function getCurrentSectionLabel(pathname: string) {
   const currentRoute =
-    desktopRoutes.find((route) => isRouteActive(pathname, route.href)) ?? dashboardRoute;
+    desktopRoutes.find((route) => isRouteActive(pathname, route.href)) ??
+    dashboardRoute;
 
   return currentRoute.label;
 }
@@ -159,7 +161,7 @@ function DrawerRouteLink({
   );
 }
 
-export function AppShellNav({ viewer }: AppShellNavProps) {
+export function AppShellNav({ compact = false, viewer }: AppShellNavProps) {
   const pathname = usePathname();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const bottomNavRoutes = getBottomNavRoutes(pathname);
@@ -213,15 +215,19 @@ export function AppShellNav({ viewer }: AppShellNavProps) {
           })}
       </nav>
 
-      <div className="grid gap-3 lg:hidden">
+      <div className="grid gap-2 lg:hidden">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="font-mono text-[0.68rem] uppercase tracking-[0.22em] text-muted">
-              PWA navigation
-            </p>
-            <p className="mt-1 truncate text-sm font-semibold text-foreground">
-              Сейчас открыт:
-              {" "}
+            {!compact ? (
+              <p className="font-mono text-[0.68rem] uppercase tracking-[0.22em] text-muted">
+                Навигация
+              </p>
+            ) : null}
+            <p
+              className={`truncate font-semibold text-foreground ${
+                compact ? "text-sm" : "mt-1 text-sm"
+              }`}
+            >
               {currentSectionLabel}
             </p>
           </div>
@@ -254,13 +260,13 @@ export function AppShellNav({ viewer }: AppShellNavProps) {
           <div className="flex items-start justify-between gap-3 border-b border-border px-5 pb-4 pt-[calc(1.1rem+env(safe-area-inset-top))]">
             <div className="min-w-0">
               <p className="font-mono text-[0.68rem] uppercase tracking-[0.22em] text-muted">
-                fit app
+                Меню
               </p>
               <h2 className="mt-2 text-xl font-semibold text-foreground">
-                Быстрое меню
+                Разделы приложения
               </h2>
               <p className="mt-2 truncate text-sm text-muted">
-                {viewer?.fullName ?? viewer?.email ?? "Пользователь fit"}
+                {viewer?.fullName ?? viewer?.email ?? "Аккаунт fit"}
               </p>
             </div>
 
@@ -277,18 +283,10 @@ export function AppShellNav({ viewer }: AppShellNavProps) {
           <div className="grid gap-5 overflow-y-auto px-5 py-5">
             <section className="rounded-3xl border border-border bg-white/70 p-4">
               <p className="text-sm font-semibold text-foreground">
-                {viewer?.email ?? "Нет email"}
+                {viewer?.email ?? "Аккаунт fit"}
               </p>
               <p className="mt-2 text-sm text-muted">
-                Роль:
-                {" "}
-                <span className="text-foreground">
-                  {adminRoleLabel ?? "Пользователь"}
-                </span>
-              </p>
-              <p className="mt-3 text-sm leading-6 text-muted">
-                Меню собрано под телефонный PWA-режим: основные разделы остаются
-                под рукой, а расширенная навигация живёт в drawer.
+                Роль: <span className="text-foreground">{adminRoleLabel ?? "Пользователь"}</span>
               </p>
             </section>
 
@@ -317,10 +315,10 @@ export function AppShellNav({ viewer }: AppShellNavProps) {
             <section className="grid gap-3">
               <div>
                 <p className="font-mono text-[0.68rem] uppercase tracking-[0.22em] text-muted">
-                  Сервис
+                  Дополнительно
                 </p>
                 <h3 className="mt-2 text-lg font-semibold text-foreground">
-                  Профиль и история
+                  История, настройки и админка
                 </h3>
               </div>
 
@@ -346,10 +344,6 @@ export function AppShellNav({ viewer }: AppShellNavProps) {
 
             <section className="rounded-3xl border border-border bg-[color-mix(in_srgb,var(--surface)_92%,white)] p-4">
               <p className="font-semibold text-foreground">Аккаунт</p>
-              <p className="mt-2 text-sm leading-6 text-muted">
-                Выход остаётся доступным из drawer, чтобы в PWA-режиме не
-                приходилось искать его на отдельном экране.
-              </p>
               <div className="mt-4">
                 <SignOutButton className="w-full justify-center bg-white/75" />
               </div>

@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { createApiErrorResponse } from "@/lib/api/error-response";
+import { PRIMARY_SUPER_ADMIN_EMAIL, isPrimarySuperAdminEmail } from "@/lib/admin-permissions";
 import { logger } from "@/lib/logger";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -40,6 +41,14 @@ export async function POST(request: Request) {
         status: 403,
         code: "ADMIN_BOOTSTRAP_DENIED",
         message: "Invalid bootstrap token.",
+      });
+    }
+
+    if (!isPrimarySuperAdminEmail(user.email ?? null)) {
+      return createApiErrorResponse({
+        status: 403,
+        code: "PRIMARY_SUPER_ADMIN_EMAIL_REQUIRED",
+        message: `Роль super_admin закреплена только за ${PRIMARY_SUPER_ADMIN_EMAIL}.`,
       });
     }
 

@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { reindexUserKnowledgeBase } from "@/lib/ai/knowledge";
 import { createApiErrorResponse } from "@/lib/api/error-response";
-import { requireAdminRouteAccess } from "@/lib/admin-auth";
+import { isAdminAccessError, requireAdminRouteAccess } from "@/lib/admin-auth";
 import { logger } from "@/lib/logger";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 
@@ -13,7 +13,7 @@ const reindexSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    const { user } = await requireAdminRouteAccess();
+    const { user } = await requireAdminRouteAccess("run_knowledge_reindex");
     const payload = reindexSchema.parse(await request.json().catch(() => ({})));
     const adminSupabase = createAdminSupabaseClient();
 
@@ -65,6 +65,14 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     logger.warn("reindex route rejected", { error });
+
+    if (isAdminAccessError(error)) {
+      return createApiErrorResponse({
+        status: error.status,
+        code: error.code,
+        message: error.message,
+      });
+    }
 
     if (error instanceof z.ZodError) {
       return createApiErrorResponse({

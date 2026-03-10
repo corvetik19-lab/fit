@@ -246,4 +246,4 @@ create table if not exists public.knowledge_embeddings (
 
 create index if not exists knowledge_embeddings_embedding_idx
 on public.knowledge_embeddings
-using hnsw (embedding vector_cosine_ops);
+using hnsw (embedding vector_cosine_ops);;

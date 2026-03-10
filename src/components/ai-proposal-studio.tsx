@@ -1,12 +1,14 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { startTransition, useMemo, useState } from "react";
 
+import type { FeatureAccessSnapshot } from "@/lib/billing-access";
 import type { AiPlanProposalRow } from "@/lib/ai/proposals";
 
 const inputClassName =
-  "w-full rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15";
+  "w-full rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15 disabled:cursor-not-allowed disabled:opacity-60";
 
 type AiProposalStudioProps = {
   contextSnapshot: {
@@ -16,7 +18,9 @@ type AiProposalStudioProps = {
     equipment: string[];
     dietaryPreferences: string[];
   };
+  mealPlanAccess: FeatureAccessSnapshot;
   proposals: AiPlanProposalRow[];
+  workoutPlanAccess: FeatureAccessSnapshot;
 };
 
 type MealPlanProposal = {
@@ -72,11 +76,11 @@ function formatProposalStatus(value: string) {
     case "draft":
       return "черновик";
     case "approved":
-      return "подтверждён";
+      return "подтвержден";
     case "applied":
-      return "применён";
+      return "применен";
     case "rejected":
-      return "отклонён";
+      return "отклонен";
     default:
       return value;
   }
@@ -109,9 +113,168 @@ function extractWorkoutProposal(row: AiPlanProposalRow) {
   return payload.proposal ?? null;
 }
 
+function AccessHint({
+  access,
+}: {
+  access: FeatureAccessSnapshot;
+}) {
+  return (
+    <div className="mt-4 rounded-2xl border border-border bg-white/60 px-4 py-3 text-sm text-muted">
+      <p>
+        Использовано: {access.usage.count}
+        {typeof access.usage.limit === "number" ? ` / ${access.usage.limit}` : ""}
+      </p>
+      <p className="mt-1">Источник доступа: {access.source}</p>
+      {access.reason ? <p className="mt-2 text-amber-700">{access.reason}</p> : null}
+      {!access.allowed ? (
+        <Link
+          className="mt-3 inline-flex rounded-full border border-border bg-white/80 px-4 py-2 font-semibold text-foreground transition hover:bg-white"
+          href="/settings#billing-center"
+        >
+          Открыть billing center
+        </Link>
+      ) : null}
+    </div>
+  );
+}
+
+function LatestProposalCard({
+  access,
+  isPending,
+  onApply,
+  onApprove,
+  proposal,
+}: {
+  access: FeatureAccessSnapshot;
+  isPending: boolean;
+  onApply: (proposal: AiPlanProposalRow) => void;
+  onApprove: (proposal: AiPlanProposalRow) => void;
+  proposal: AiPlanProposalRow | null;
+}) {
+  if (!proposal) {
+    return null;
+  }
+
+  if (proposal.proposal_type === "meal_plan") {
+    const payload = extractMealProposal(proposal);
+
+    if (!payload) {
+      return null;
+    }
+
+    return (
+      <div className="mt-6 rounded-3xl border border-border bg-white/60 p-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="text-lg font-semibold text-foreground">{payload.title}</p>
+            <p className="text-sm text-muted">
+              Сохранено {formatDateTime(proposal.created_at)} · статус{" "}
+              {formatProposalStatus(proposal.status)}
+            </p>
+          </div>
+          <div className="pill">{payload.caloriesTarget} ккал</div>
+        </div>
+
+        <p className="mt-3 text-sm text-muted">
+          Б {payload.macros.protein} · Ж {payload.macros.fat} · У{" "}
+          {payload.macros.carbs}
+        </p>
+
+        <ul className="mt-4 grid gap-2 text-sm leading-7 text-muted">
+          {payload.meals.map((meal) => (
+            <li key={`${proposal.id}-${meal.name}`}>
+              {meal.name} · {meal.kcal} ккал · {meal.items.join(", ")}
+            </li>
+          ))}
+        </ul>
+
+        {proposal.status !== "applied" ? (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {proposal.status === "draft" ? (
+              <button
+                className="rounded-full border border-border px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={isPending || !access.allowed}
+                onClick={() => onApprove(proposal)}
+                type="button"
+              >
+                Подтвердить
+              </button>
+            ) : null}
+            <button
+              className="rounded-full border border-border px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={isPending || !access.allowed}
+              onClick={() => onApply(proposal)}
+              type="button"
+            >
+              Применить
+            </button>
+          </div>
+        ) : null}
+      </div>
+    );
+  }
+
+  const payload = extractWorkoutProposal(proposal);
+
+  if (!payload) {
+    return null;
+  }
+
+  return (
+    <div className="mt-6 rounded-3xl border border-border bg-white/60 p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-lg font-semibold text-foreground">{payload.title}</p>
+          <p className="text-sm text-muted">
+            Сохранено {formatDateTime(proposal.created_at)} · статус{" "}
+            {formatProposalStatus(proposal.status)}
+          </p>
+        </div>
+        <div className="pill">{payload.days.length} дня</div>
+      </div>
+
+      <p className="mt-3 text-sm leading-7 text-muted">{payload.summary}</p>
+
+      <ul className="mt-4 grid gap-3 text-sm leading-7 text-muted">
+        {payload.days.map((day) => (
+          <li key={`${proposal.id}-${day.day}`}>
+            <span className="font-semibold text-foreground">{day.day}</span> ·{" "}
+            {day.focus}
+          </li>
+        ))}
+      </ul>
+
+      {proposal.status !== "applied" ? (
+        <div className="mt-4 flex flex-wrap gap-2">
+          {proposal.status === "draft" ? (
+            <button
+              className="rounded-full border border-border px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={isPending || !access.allowed}
+              onClick={() => onApprove(proposal)}
+              type="button"
+            >
+              Подтвердить
+            </button>
+          ) : null}
+          <button
+            className="rounded-full border border-border px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={isPending || !access.allowed}
+            onClick={() => onApply(proposal)}
+            type="button"
+          >
+            Применить
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export function AiProposalStudio({
   contextSnapshot,
+  mealPlanAccess,
   proposals,
+  workoutPlanAccess,
 }: AiProposalStudioProps) {
   const router = useRouter();
   const [mealGoal, setMealGoal] = useState(contextSnapshot.goalType ?? "maintenance");
@@ -146,6 +309,18 @@ export function AiProposalStudio({
     [proposals],
   );
 
+  function canUseProposal(proposal: AiPlanProposalRow) {
+    return proposal.proposal_type === "meal_plan"
+      ? mealPlanAccess.allowed
+      : workoutPlanAccess.allowed;
+  }
+
+  function getProposalReason(proposal: AiPlanProposalRow) {
+    return proposal.proposal_type === "meal_plan"
+      ? mealPlanAccess.reason
+      : workoutPlanAccess.reason;
+  }
+
   function runMutation(action: () => Promise<void>) {
     setError(null);
     setNotice(null);
@@ -161,6 +336,13 @@ export function AiProposalStudio({
   }
 
   function createMealPlanProposal() {
+    if (!mealPlanAccess.allowed) {
+      setError(
+        mealPlanAccess.reason ?? "AI-план питания недоступен для текущего плана.",
+      );
+      return;
+    }
+
     runMutation(async () => {
       const response = await fetch("/api/ai/meal-plan", {
         method: "POST",
@@ -181,7 +363,8 @@ export function AiProposalStudio({
 
       if (!response.ok) {
         setError(
-          payload?.message ?? "Не удалось сгенерировать AI-предложение плана питания.",
+          payload?.message ??
+            "Не удалось сгенерировать AI-предложение плана питания.",
         );
         return;
       }
@@ -192,6 +375,14 @@ export function AiProposalStudio({
   }
 
   function createWorkoutPlanProposal() {
+    if (!workoutPlanAccess.allowed) {
+      setError(
+        workoutPlanAccess.reason ??
+          "AI-план тренировок недоступен для текущего плана.",
+      );
+      return;
+    }
+
     runMutation(async () => {
       const response = await fetch("/api/ai/workout-plan", {
         method: "POST",
@@ -227,6 +418,14 @@ export function AiProposalStudio({
   }
 
   function approveProposal(proposal: AiPlanProposalRow) {
+    if (!canUseProposal(proposal)) {
+      setError(
+        getProposalReason(proposal) ??
+          "Это AI-предложение недоступно для текущего плана.",
+      );
+      return;
+    }
+
     runMutation(async () => {
       const response = await fetch(`/api/ai/proposals/${proposal.id}/approve`, {
         method: "POST",
@@ -251,6 +450,14 @@ export function AiProposalStudio({
   }
 
   function applyProposal(proposal: AiPlanProposalRow) {
+    if (!canUseProposal(proposal)) {
+      setError(
+        getProposalReason(proposal) ??
+          "Это AI-предложение недоступно для текущего плана.",
+      );
+      return;
+    }
+
     runMutation(async () => {
       const response = await fetch(`/api/ai/proposals/${proposal.id}/apply`, {
         method: "POST",
@@ -260,10 +467,8 @@ export function AiProposalStudio({
         | {
             message?: string;
             meta?: {
-              appliedEntity?: string;
-              weeklyProgramId?: string;
-              weekStartDate?: string;
               mealTemplateIds?: string[];
+              weekStartDate?: string;
             };
           }
         | null;
@@ -275,11 +480,17 @@ export function AiProposalStudio({
 
       if (proposal.proposal_type === "workout_plan") {
         setNotice(
-          `AI-тренировочный план применён в черновик недели${payload?.meta?.weekStartDate ? ` с датой старта ${payload.meta.weekStartDate}` : ""}.`,
+          `AI-тренировочный план применен в черновик недели${
+            payload?.meta?.weekStartDate
+              ? ` со стартом ${payload.meta.weekStartDate}`
+              : ""
+          }.`,
         );
       } else {
         setNotice(
-          `AI-план питания применён как ${payload?.meta?.mealTemplateIds?.length ?? 0} справочных шаблонов питания.`,
+          `AI-план питания применен как ${
+            payload?.meta?.mealTemplateIds?.length ?? 0
+          } справочных шаблонов питания.`,
         );
       }
 
@@ -314,11 +525,14 @@ export function AiProposalStudio({
             `ai_plan_proposals`, не применяя его автоматически к дневнику.
           </p>
 
+          <AccessHint access={mealPlanAccess} />
+
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             <label className="grid gap-2 text-sm text-muted">
               Цель
               <select
                 className={inputClassName}
+                disabled={!mealPlanAccess.allowed}
                 onChange={(event) => setMealGoal(event.target.value)}
                 value={mealGoal}
               >
@@ -332,6 +546,7 @@ export function AiProposalStudio({
               Цель по калориям
               <input
                 className={inputClassName}
+                disabled={!mealPlanAccess.allowed}
                 inputMode="numeric"
                 onChange={(event) => setMealKcalTarget(event.target.value)}
                 type="number"
@@ -339,9 +554,10 @@ export function AiProposalStudio({
               />
             </label>
             <label className="grid gap-2 text-sm text-muted">
-              Приёмов пищи в день
+              Приемов пищи в день
               <input
                 className={inputClassName}
+                disabled={!mealPlanAccess.allowed}
                 inputMode="numeric"
                 min="1"
                 onChange={(event) => setMealsPerDay(event.target.value)}
@@ -353,6 +569,7 @@ export function AiProposalStudio({
               Дополнительные ограничения
               <textarea
                 className={`${inputClassName} min-h-28 resize-y`}
+                disabled={!mealPlanAccess.allowed}
                 onChange={(event) => setMealDietaryNotes(event.target.value)}
                 value={mealDietaryNotes}
               />
@@ -361,72 +578,20 @@ export function AiProposalStudio({
 
           <button
             className="mt-6 rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-            disabled={isPending}
+            disabled={isPending || !mealPlanAccess.allowed}
             onClick={createMealPlanProposal}
             type="button"
           >
             {isPending ? "Генерирую..." : "Сгенерировать предложение плана"}
           </button>
 
-          {latestMealProposal ? (
-            <div className="mt-6 rounded-3xl border border-border bg-white/60 p-5">
-              {(() => {
-                const proposal = extractMealProposal(latestMealProposal);
-
-                if (!proposal) {
-                  return null;
-                }
-
-                return (
-                  <div className="grid gap-4">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <p className="text-lg font-semibold text-foreground">
-                        {proposal.title}
-                      </p>
-                      <p className="text-sm text-muted">
-                          Сохранено {formatDateTime(latestMealProposal.created_at)} · статус {formatProposalStatus(latestMealProposal.status)}
-                      </p>
-                    </div>
-                    <div className="pill">{proposal.caloriesTarget} ккал</div>
-                  </div>
-                    <p className="text-sm text-muted">
-                      Б {proposal.macros.protein} · Ж {proposal.macros.fat} · У {proposal.macros.carbs}
-                    </p>
-                    <ul className="grid gap-2 text-sm leading-7 text-muted">
-                      {proposal.meals.map((meal) => (
-                        <li key={`${proposal.title}-${meal.name}`}>
-                          {meal.name} · {meal.kcal} ккал · {meal.items.join(", ")}
-                        </li>
-                      ))}
-                    </ul>
-                    {latestMealProposal.status !== "applied" ? (
-                      <div className="flex flex-wrap gap-2">
-                        {latestMealProposal.status === "draft" ? (
-                          <button
-                            className="rounded-full border border-border px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white/70"
-                            disabled={isPending}
-                            onClick={() => approveProposal(latestMealProposal)}
-                            type="button"
-                          >
-                            Подтвердить
-                          </button>
-                        ) : null}
-                        <button
-                          className="rounded-full border border-border px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white/70"
-                          disabled={isPending}
-                          onClick={() => applyProposal(latestMealProposal)}
-                          type="button"
-                        >
-                          Применить
-                        </button>
-                      </div>
-                    ) : null}
-                  </div>
-                );
-              })()}
-            </div>
-          ) : null}
+          <LatestProposalCard
+            access={mealPlanAccess}
+            isPending={isPending}
+            onApply={applyProposal}
+            onApprove={approveProposal}
+            proposal={latestMealProposal}
+          />
         </div>
 
         <div className="card p-6">
@@ -437,15 +602,18 @@ export function AiProposalStudio({
             AI-тренировочный план
           </h2>
           <p className="mt-3 text-sm leading-7 text-muted">
-            Генерирует безопасный черновик тренировочной недели и также сохраняет
-            результат в `ai_plan_proposals`.
+            Генерирует безопасный черновик тренировочной недели и также
+            сохраняет результат в `ai_plan_proposals`.
           </p>
+
+          <AccessHint access={workoutPlanAccess} />
 
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             <label className="grid gap-2 text-sm text-muted">
               Цель
               <select
                 className={inputClassName}
+                disabled={!workoutPlanAccess.allowed}
                 onChange={(event) => setWorkoutGoal(event.target.value)}
                 value={workoutGoal}
               >
@@ -459,6 +627,7 @@ export function AiProposalStudio({
               Дней в неделю
               <input
                 className={inputClassName}
+                disabled={!workoutPlanAccess.allowed}
                 inputMode="numeric"
                 min="1"
                 onChange={(event) => setWorkoutDaysPerWeek(event.target.value)}
@@ -470,6 +639,7 @@ export function AiProposalStudio({
               Оборудование
               <textarea
                 className={`${inputClassName} min-h-24 resize-y`}
+                disabled={!workoutPlanAccess.allowed}
                 onChange={(event) => setWorkoutEquipment(event.target.value)}
                 placeholder="гантели, штанга, турник"
                 value={workoutEquipment}
@@ -479,6 +649,7 @@ export function AiProposalStudio({
               Фокус
               <textarea
                 className={`${inputClassName} min-h-24 resize-y`}
+                disabled={!workoutPlanAccess.allowed}
                 onChange={(event) => setWorkoutFocus(event.target.value)}
                 value={workoutFocus}
               />
@@ -487,70 +658,20 @@ export function AiProposalStudio({
 
           <button
             className="mt-6 rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-            disabled={isPending}
+            disabled={isPending || !workoutPlanAccess.allowed}
             onClick={createWorkoutPlanProposal}
             type="button"
           >
             {isPending ? "Генерирую..." : "Сгенерировать предложение тренировки"}
           </button>
 
-          {latestWorkoutProposal ? (
-            <div className="mt-6 rounded-3xl border border-border bg-white/60 p-5">
-              {(() => {
-                const proposal = extractWorkoutProposal(latestWorkoutProposal);
-
-                if (!proposal) {
-                  return null;
-                }
-
-                return (
-                  <div className="grid gap-4">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <p className="text-lg font-semibold text-foreground">
-                          {proposal.title}
-                        </p>
-                        <p className="text-sm text-muted">
-                          Сохранено {formatDateTime(latestWorkoutProposal.created_at)} · статус {formatProposalStatus(latestWorkoutProposal.status)}
-                        </p>
-                      </div>
-                      <div className="pill">{proposal.days.length} дня</div>
-                    </div>
-                    <p className="text-sm leading-7 text-muted">{proposal.summary}</p>
-                    <ul className="grid gap-3 text-sm leading-7 text-muted">
-                      {proposal.days.map((day) => (
-                        <li key={`${proposal.title}-${day.day}`}>
-                          <span className="font-semibold text-foreground">{day.day}</span> · {day.focus}
-                        </li>
-                      ))}
-                    </ul>
-                    {latestWorkoutProposal.status !== "applied" ? (
-                      <div className="flex flex-wrap gap-2">
-                        {latestWorkoutProposal.status === "draft" ? (
-                          <button
-                            className="rounded-full border border-border px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white/70"
-                            disabled={isPending}
-                            onClick={() => approveProposal(latestWorkoutProposal)}
-                            type="button"
-                          >
-                            Подтвердить
-                          </button>
-                        ) : null}
-                        <button
-                          className="rounded-full border border-border px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white/70"
-                          disabled={isPending}
-                          onClick={() => applyProposal(latestWorkoutProposal)}
-                          type="button"
-                        >
-                          Применить
-                        </button>
-                      </div>
-                    ) : null}
-                  </div>
-                );
-              })()}
-            </div>
-          ) : null}
+          <LatestProposalCard
+            access={workoutPlanAccess}
+            isPending={isPending}
+            onApply={applyProposal}
+            onApprove={approveProposal}
+            proposal={latestWorkoutProposal}
+          />
         </div>
       </section>
 
@@ -565,7 +686,10 @@ export function AiProposalStudio({
             </h2>
           </div>
           <div className="rounded-3xl border border-border bg-white/60 px-5 py-4 text-sm text-muted">
-            Цель профиля: <span className="font-semibold text-foreground">{formatGoal(contextSnapshot.goalType)}</span>
+            Цель профиля:{" "}
+            <span className="font-semibold text-foreground">
+              {formatGoal(contextSnapshot.goalType)}
+            </span>
           </div>
         </div>
 
@@ -582,7 +706,8 @@ export function AiProposalStudio({
                       {formatProposalType(proposal.proposal_type)}
                     </p>
                     <p className="text-sm text-muted">
-                      {formatDateTime(proposal.created_at)} · статус {formatProposalStatus(proposal.status)}
+                      {formatDateTime(proposal.created_at)} · статус{" "}
+                      {formatProposalStatus(proposal.status)}
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -590,8 +715,8 @@ export function AiProposalStudio({
                       <>
                         {proposal.status === "draft" ? (
                           <button
-                            className="rounded-full border border-border px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white/70"
-                            disabled={isPending}
+                            className="rounded-full border border-border px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
+                            disabled={isPending || !canUseProposal(proposal)}
                             onClick={() => approveProposal(proposal)}
                             type="button"
                           >
@@ -599,8 +724,8 @@ export function AiProposalStudio({
                           </button>
                         ) : null}
                         <button
-                          className="rounded-full border border-border px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white/70"
-                          disabled={isPending}
+                          className="rounded-full border border-border px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
+                          disabled={isPending || !canUseProposal(proposal)}
                           onClick={() => applyProposal(proposal)}
                           type="button"
                         >
@@ -611,12 +736,18 @@ export function AiProposalStudio({
                     <div className="pill">{proposal.id.slice(0, 8)}</div>
                   </div>
                 </div>
+
+                {!canUseProposal(proposal) && getProposalReason(proposal) ? (
+                  <p className="mt-3 text-sm text-amber-700">
+                    {getProposalReason(proposal)}
+                  </p>
+                ) : null}
               </article>
             ))
           ) : (
             <p className="text-sm leading-7 text-muted">
-              Пока нет ни одного сохранённого AI-предложения. Сгенерируй первый план
-              выше, и он появится в истории.
+              Пока нет сохраненных AI-предложений. Сгенерируй первый план выше,
+              и он появится в истории.
             </p>
           )}
         </div>

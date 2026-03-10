@@ -2,9 +2,16 @@
 
 import { useEffect, useState } from "react";
 
+import {
+  PRIMARY_SUPER_ADMIN_EMAIL,
+  canUseRootAdminControls,
+  isPrimarySuperAdminEmail,
+} from "@/lib/admin-permissions";
+
 type AdminRoleManagerProps = {
   userId: string;
   userEmail: string | null;
+  currentUserEmail: string | null;
   currentAdminRole: "super_admin" | "support_admin" | "analyst" | null;
   targetAdminRole: "super_admin" | "support_admin" | "analyst" | null;
   isSelf: boolean;
@@ -27,6 +34,7 @@ async function readJsonSafely(response: Response) {
 export function AdminRoleManager({
   userId,
   userEmail,
+  currentUserEmail,
   currentAdminRole,
   targetAdminRole,
   isSelf,
@@ -40,7 +48,11 @@ export function AdminRoleManager({
   const [notice, setNotice] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
 
-  const canManageRoles = currentAdminRole === "super_admin";
+  const canManageRoles = canUseRootAdminControls(
+    currentAdminRole,
+    currentUserEmail,
+  );
+  const targetCanBeSuperAdmin = isPrimarySuperAdminEmail(userEmail);
   const primaryActionLabel = !targetAdminRole
     ? "Выдать доступ"
     : targetAdminRole === selectedRole
@@ -50,6 +62,12 @@ export function AdminRoleManager({
   useEffect(() => {
     setSelectedRole(targetAdminRole ?? "support_admin");
   }, [targetAdminRole]);
+
+  useEffect(() => {
+    if (!targetCanBeSuperAdmin && selectedRole === "super_admin") {
+      setSelectedRole("support_admin");
+    }
+  }, [selectedRole, targetCanBeSuperAdmin]);
 
   async function applyRole() {
     if (!canManageRoles || isPending) {
@@ -176,9 +194,17 @@ export function AdminRoleManager({
           >
             <option value="support_admin">Поддержка</option>
             <option value="analyst">Аналитик</option>
-            <option value="super_admin">Супер-админ</option>
+            <option disabled={!targetCanBeSuperAdmin} value="super_admin">
+              Супер-админ
+            </option>
           </select>
         </label>
+
+        {!targetCanBeSuperAdmin ? (
+          <p className="rounded-2xl border border-sky-300/60 bg-sky-50 px-4 py-3 text-sm text-sky-800">
+            Роль `super_admin` закреплена только за {PRIMARY_SUPER_ADMIN_EMAIL}.
+          </p>
+        ) : null}
 
         <label className="grid gap-2 text-sm text-muted">
           Причина изменения
@@ -213,7 +239,7 @@ export function AdminRoleManager({
 
         {!canManageRoles ? (
           <p className="rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            Управлять ролями может только супер-админ.
+            Управлять ролями может только корневой super-admin {PRIMARY_SUPER_ADMIN_EMAIL}.
           </p>
         ) : null}
 

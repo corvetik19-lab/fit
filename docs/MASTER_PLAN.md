@@ -30,8 +30,8 @@
 - [x] Подготовлен manifest для installable PWA
 - [x] Подготовлен Dexie-контракт для IndexedDB
 - [x] Реализован service worker для app shell и critical caches
-- [ ] Реализованы optimistic updates
-- [ ] Реализован полноценный mutation queue sync flow
+- [x] Реализованы optimistic updates
+- [x] Реализован полноценный mutation queue sync flow
 
 ### Supabase и backend
 
@@ -58,7 +58,7 @@
 - [x] В схеме заложены admin, SaaS и eval таблицы
 - [x] Реализован bootstrap flow для первого `super_admin`
 - [ ] Настроен первый реальный `super_admin`
-- [ ] Реализован product-level feature gating
+- [x] Реализован product-level feature gating
 - [ ] Подготовлен Android wrapper контур
 
 ## Чек-лист по фазам
@@ -104,7 +104,8 @@
 - [x] Реализовать `Workout Day`
 - [x] Реализовать workout logging с `actual_reps`
 - [x] Реализовать history cloning flow
-- [ ] Реализовать offline logging и sync для workout domain
+- [x] Реализовать offline logging и sync для workout domain
+- [x] Реализовать `sync/pull + cacheSnapshots` для workout day execution
 
 ## Фаза 3. Admin panel v1 + observability
 
@@ -115,15 +116,20 @@
 - [ ] Назначить первого admin user
 - [x] Реализовать user directory UI
 - [x] Реализовать user detail UI
+- [x] Закрепить primary super-admin policy для `corvetik1@yandex.ru`
 - [x] Реализовать назначение `super_admin` / `support_admin` / `analyst` из UI
+- [x] Реализовать role-based capability gating для admin routes и UI
+- [x] Расширить user detail до подробной analytics-карточки
+- [x] Реализовать admin operations для export/deletion lifecycle
 - [x] Реализовать suspend/reactivate flow
 - [x] Реализовать support actions UI
 - [x] Реализовать audit log views
-- [ ] Реализовать system health dashboard
-- [ ] Реализовать sync health dashboard
+- [x] Реализовать system health dashboard
+- [x] Реализовать sync health dashboard
+- [x] Добавить billing health dashboard для super-admin
 - [x] Реализовать AI usage monitoring для admin
-- [ ] Подключить Sentry
-- [ ] Подключить Vercel Analytics / Speed Insights
+- [x] Подключить Sentry
+- [x] Подключить Vercel Analytics / Speed Insights
 
 ## Фаза 4. Analytics dashboard
 
@@ -172,6 +178,7 @@
 - [x] Добавить README для eval workspace
 - [x] Добавить README для datasets
 - [x] Подготовить admin AI eval route scaffolds
+- [x] Собрать live admin UI для queue/list AI eval runs
 - [ ] Подключить Ragas как реальный eval layer
 - [ ] Собрать evaluation datasets
 - [ ] Настроить benchmark runs для chat
@@ -188,9 +195,10 @@
 - [x] Завести schema tables для entitlements
 - [x] Завести schema tables для usage counters
 - [x] Завести schema tables для subscription events
-- [ ] Реализовать entitlements model в runtime
-- [ ] Реализовать usage accounting для AI
-- [ ] Реализовать feature gating по user plan
+- [x] Реализовать entitlements model в runtime
+- [x] Реализовать usage accounting для AI
+- [x] Реализовать feature gating по user plan
+- [x] Улучшить post-checkout return reconcile flow в `/settings`
 - [ ] Подготовить Stripe billing integration
 - [ ] Подготовить webhook integration
 
@@ -212,8 +220,8 @@
 - [ ] Реализовать daily nutrition summaries job
 - [ ] Реализовать stale mutation queue retry/cleanup
 - [ ] Реализовать embeddings refresh / reindex job
-- [ ] Реализовать export job processing
-- [ ] Реализовать deletion request purge
+- [x] Реализовать export job processing
+- [x] Реализовать deletion request purge
 - [ ] Реализовать subscription state reconciliation
 - [ ] Реализовать scheduled AI eval runs
 
@@ -278,8 +286,13 @@
 ### Admin
 
 - [ ] Проверить доступ в `/admin` только для назначенных `platform_admin`
-- [ ] Проверить поиск и фильтр пользователей по email и admin role
+- [ ] Проверить поиск, activity/backlog filters и сортировки пользователей в `/admin/users`
+- [ ] Проверить cohort analytics и priority segments в `/admin/users`
+- [ ] Проверить bulk user actions в `/admin/users`
 - [ ] Проверить выдачу, смену и отзыв admin role из `/admin/users/[id]`
+- [ ] Проверить root-only billing controls и entitlement updates из `/admin/users/[id]`
+- [ ] Проверить bulk wave history и subscription timeline в admin UI
+- [ ] Проверить role matrix: `super_admin` / `support_admin` / `analyst` на read-write и read-only сценариях
 - [ ] Проверить запись admin actions в audit log
 - [ ] Проверить suspend/reactivate
 - [ ] Проверить support actions
@@ -310,3 +323,67 @@
 - Deletion flow по умолчанию - soft-delete hold с последующим hard purge job
 - `support_admin` и `analyst` закладываются заранее, но в первой поставке активен только `super_admin`
 - `Ragas` используется только как internal eval framework, не как runtime dependency приложения
+## Дополнение по admin очередям
+
+- [ ] Проверить operations inbox на `/admin` и вручную пройти status transitions для support/export/deletion queues
+- [ ] Проверить user detail на `/admin/users/[id]`: export history, support resolution notes, operations timeline и actor refs по администраторам
+- [ ] Проверить server queue processor на `/admin`: wave button, auto-complete export jobs, normalize queued deletion requests и release overdue holds в `purge_user_data`
+- [ ] Применить миграцию `user_admin_states` в remote Supabase и вручную проверить suspended flow: `suspend_user` -> `/suspended` -> `restore_user`
+## Settings data center
+
+- [x] Build self-service export/deletion center in `/settings`
+- [x] Add user-scoped export status refresh and deletion hold cancel flow
+- [x] Add completed export JSON download endpoint
+- [x] Upgrade export delivery from JSON response to true zip bundle with JSON + CSV artifacts
+- [x] Add user-facing privacy timeline and next-step status guidance in `/settings`
+- [x] Finalize user-facing deletion timeline before hard purge; no post-purge screen is expected because the auth account is removed
+
+## Hard-delete purge and primary admin protection
+
+- [x] Execute `purge_user_data` as a real hard-delete worker via Supabase admin auth deletion
+- [x] Persist purge manifest details in surviving audit/support payloads instead of only in user-scoped snapshots
+- [x] Protect primary super admin `corvetik1@yandex.ru` from self-service deletion, admin deletion queueing, destructive support actions, and bulk suspend
+
+## Runtime observability
+
+- [x] Add Sentry App Router instrumentation for client, server, and edge runtimes
+- [x] Add branded global error fallback with Sentry capture
+- [x] Mount Vercel Analytics and Speed Insights in the root PWA shell
+- [x] Surface Sentry and Vercel readiness in the admin health dashboard
+- [x] Add root-only Sentry smoke test and detailed env diagnostics in `/admin`
+- [ ] Finish production Sentry env rollout after `SENTRY_PROJECT` and `NEXT_PUBLIC_SENTRY_DSN` are provided
+
+## Runtime billing and settings access center
+
+- [x] Surface runtime subscription, entitlement, and usage state in `/ai`, `/nutrition`, and `/settings`
+- [x] Add self-service billing access review flow in `/settings` and route it into admin operations
+- [x] Mirror admin entitlement changes into `subscription_events` so user-facing billing history is complete
+- [x] Add Stripe checkout, customer portal, and webhook reconciliation foundation
+- [x] Apply Stripe provider migration `20260310121500_stripe_provider_customer.sql` to remote Supabase
+- [x] Add super-admin Stripe reconcile UX and expose Stripe refs in `/admin/users/[id]`
+- [x] Fix `/settings` billing refresh so runtime access state updates without full page reload
+- [x] Add Stripe return-state handling in `/settings` and deep-link billing CTA from blocked AI product surfaces
+- [x] Add direct checkout return reconcile by Stripe `session_id` to reduce dependence on webhook latency
+- [x] Add checkout return status banner and retry flow in `/settings`
+- [ ] Roll out production Stripe env: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PREMIUM_MONTHLY_PRICE_ID`
+- [ ] Verify end-to-end Stripe lifecycle: checkout -> webhook sync -> portal update -> admin reconcile fallback
+
+## Applied remote migrations note
+
+- [x] `20260309173000_user_admin_states.sql` is already applied on remote Supabase; the old checklist entry about applying it is now stale and only the manual suspended-flow E2E check remains.
+- [x] `20260310121500_stripe_provider_customer.sql` is already applied on remote Supabase `nactzaxrjzsdkyfqwecf`.
+- [x] `20260310164000_primary_super_admin_root_policy.sql` is already applied on remote Supabase `nactzaxrjzsdkyfqwecf`.
+
+## Root admin and shell refresh
+
+- [x] Enforce `corvetik1@yandex.ru` as the only `super_admin` in the remote database, not only in runtime guards
+- [x] Add an audit trail entry and single-super-admin database constraint for the root-admin policy
+- [x] Rework the public landing page into a cleaner mobile-first professional PWA entry screen
+- [x] Rebuild `/admin` into a wider, less compressed control center for the single-root workflow
+- [x] Consolidate sign-in into a single login-first root screen on `/` and redirect `/auth` into the same flow
+- [x] Keep signed-out protected-route redirects pointing back to `/` so session restore feels app-like in the PWA
+- [x] Add a fixed collapsible top shell with persisted local state for better mobile vertical space
+- [x] Replace broken SVG-only manifest icon usage with generated PNG app icons plus Apple touch icon metadata
+- [x] Browser-check the anonymous root/login flow and route redirects on local `localhost`
+- [x] Continue product-language cleanup for `/admin/users` and `/admin/users/[id]` so the super-admin flow no longer exposes enum-like or mixed-language UI copy
+- [x] Continue product-language cleanup for `/ai`, `/settings#billing-center`, and the workout day execution flow so core user surfaces no longer expose billing/sync internals

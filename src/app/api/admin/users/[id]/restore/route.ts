@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { createApiErrorResponse } from "@/lib/api/error-response";
-import { requireAdminRouteAccess } from "@/lib/admin-auth";
+import { isAdminAccessError, requireAdminRouteAccess } from "@/lib/admin-auth";
 import { logger } from "@/lib/logger";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 
@@ -14,7 +14,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const { user } = await requireAdminRouteAccess();
+    const { user } = await requireAdminRouteAccess("queue_support_actions");
     const { id } = await params;
     const payload = restoreSchema.parse(await request.json().catch(() => ({})));
     const adminSupabase = createAdminSupabaseClient();
@@ -61,6 +61,14 @@ export async function POST(
     });
   } catch (error) {
     logger.error("admin restore route failed", { error });
+
+    if (isAdminAccessError(error)) {
+      return createApiErrorResponse({
+        status: error.status,
+        code: error.code,
+        message: error.message,
+      });
+    }
 
     if (error instanceof z.ZodError) {
       return createApiErrorResponse({

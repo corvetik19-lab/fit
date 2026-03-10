@@ -1,6 +1,12 @@
 import { generateObject } from "ai";
 
 import { createAiPlanProposal } from "@/lib/ai/proposals";
+import {
+  BILLING_FEATURE_KEYS,
+  createFeatureAccessDeniedResponse,
+  incrementFeatureUsage,
+  readUserBillingAccess,
+} from "@/lib/billing-access";
 import { workoutPlanSchema } from "@/lib/ai/schemas";
 import { getAiUserContext } from "@/lib/ai/user-context";
 import { createApiErrorResponse } from "@/lib/api/error-response";
@@ -36,6 +42,13 @@ export async function POST(request: Request) {
         code: "UNAUTHORIZED",
         message: "Нужно войти в аккаунт, чтобы генерировать AI-тренировки.",
       });
+    }
+
+    const access = await readUserBillingAccess(supabase, user.id);
+    const feature = access.features[BILLING_FEATURE_KEYS.workoutPlan];
+
+    if (!feature.allowed) {
+      return createFeatureAccessDeniedResponse(feature);
     }
 
     const context = await getAiUserContext(supabase, user.id);
@@ -87,6 +100,12 @@ export async function POST(request: Request) {
         proposal: result.object,
       },
     });
+
+    await incrementFeatureUsage(
+      supabase,
+      user.id,
+      BILLING_FEATURE_KEYS.workoutPlan,
+    );
 
     return Response.json({ data: proposal });
   } catch (error) {

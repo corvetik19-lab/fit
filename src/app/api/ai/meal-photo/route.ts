@@ -1,5 +1,11 @@
 import { ZodError } from "zod";
 
+import {
+  BILLING_FEATURE_KEYS,
+  createFeatureAccessDeniedResponse,
+  incrementFeatureUsage,
+  readUserBillingAccess,
+} from "@/lib/billing-access";
 import { mealPhotoAnalysisSchema } from "@/lib/ai/schemas";
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import { hasAiGatewayEnv, serverEnv } from "@/lib/env";
@@ -71,6 +77,13 @@ export async function POST(request: Request) {
         code: "UNAUTHORIZED",
         message: "Нужно войти в аккаунт, чтобы использовать AI-анализ фото.",
       });
+    }
+
+    const access = await readUserBillingAccess(supabase, user.id);
+    const feature = access.features[BILLING_FEATURE_KEYS.mealPhoto];
+
+    if (!feature.allowed) {
+      return createFeatureAccessDeniedResponse(feature);
     }
 
     const formData = await request.formData();
@@ -200,6 +213,8 @@ export async function POST(request: Request) {
 
     const parsedJson = JSON.parse(stripCodeFences(outputText));
     const analysis = mealPhotoAnalysisSchema.parse(parsedJson);
+
+    await incrementFeatureUsage(supabase, user.id, BILLING_FEATURE_KEYS.mealPhoto);
 
     return Response.json({ data: analysis });
   } catch (error) {

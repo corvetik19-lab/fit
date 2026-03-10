@@ -1,5 +1,10 @@
 import { getAiPlanProposal, updateAiPlanProposal } from "@/lib/ai/proposals";
 import { createApiErrorResponse } from "@/lib/api/error-response";
+import {
+  BILLING_FEATURE_KEYS,
+  createFeatureAccessDeniedResponse,
+  readUserBillingAccess,
+} from "@/lib/billing-access";
 import { logger } from "@/lib/logger";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -30,6 +35,17 @@ export async function POST(
         code: "AI_PROPOSAL_NOT_FOUND",
         message: "AI-предложение не найдено.",
       });
+    }
+
+    const access = await readUserBillingAccess(supabase, user.id);
+    const featureKey =
+      proposal.proposal_type === "meal_plan"
+        ? BILLING_FEATURE_KEYS.mealPlan
+        : BILLING_FEATURE_KEYS.workoutPlan;
+    const feature = access.features[featureKey];
+
+    if (!feature.allowed) {
+      return createFeatureAccessDeniedResponse(feature);
     }
 
     if (proposal.status === "applied") {

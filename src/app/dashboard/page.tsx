@@ -1,8 +1,7 @@
-import { DashboardNutritionCharts } from "@/components/dashboard-nutrition-charts";
+﻿import { DashboardNutritionCharts } from "@/components/dashboard-nutrition-charts";
 import { AppShell } from "@/components/app-shell";
 import { DashboardPeriodComparison } from "@/components/dashboard-period-comparison";
 import { DashboardWorkoutCharts } from "@/components/dashboard-workout-charts";
-import { PanelCard } from "@/components/panel-card";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireReadyViewer } from "@/lib/viewer";
 import {
@@ -24,46 +23,65 @@ export default async function DashboardPage() {
     ]);
 
   const metrics = [
-    { label: "Активные недели", value: String(snapshot.activePrograms) },
-    { label: "Выполненные дни", value: String(snapshot.completedDays) },
-    { label: "Логов подходов", value: String(snapshot.loggedSets) },
-    { label: "Шаблоны", value: String(snapshot.templates) },
+    {
+      label: "Активные недели",
+      value: String(snapshot.activePrograms),
+      detail: "программы со статусом active",
+    },
+    {
+      label: "Выполненные дни",
+      value: String(snapshot.completedDays),
+      detail: "дни, закрытые в тренировочном цикле",
+    },
+    {
+      label: "Сохранённые подходы",
+      value: String(snapshot.loggedSets),
+      detail: "зафиксированные рабочие сеты",
+    },
+    {
+      label: "Дни питания",
+      value: String(snapshot.nutritionDays),
+      detail: "дни с заполненным food log",
+    },
   ];
 
   return (
-    <AppShell eyebrow="Обзор" title="Дашборд платформы">
-      <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-        <PanelCard caption="Живой срез" title="Текущий пользовательский срез">
-          <ul className="grid gap-3 text-sm leading-7 text-muted">
-            <li>
-              <span className="font-semibold text-foreground">
-                {viewer.user.email ?? "Авторизованный пользователь"}
-              </span>{" "}
-              уже работает внутри защищённого приложения.
-            </li>
-            <li>
-              Активных упражнений: <span className="font-semibold text-foreground">{snapshot.exercises}</span>.
-            </li>
-            <li>
-              Черновиков недель: <span className="font-semibold text-foreground">{snapshot.draftPrograms}</span>.
-            </li>
-            <li>
-              AI-сессий: <span className="font-semibold text-foreground">{snapshot.aiSessions}</span>, дней питания:{" "}
-              <span className="font-semibold text-foreground">{snapshot.nutritionDays}</span>.
-            </li>
-          </ul>
-        </PanelCard>
-        <div className="grid gap-4">
-          {metrics.map((metric) => (
-            <article className="kpi p-5" key={metric.label}>
-              <p className="text-sm text-muted">{metric.label}</p>
-              <p className="mt-2 text-3xl font-semibold text-foreground">
-                {metric.value}
+    <AppShell eyebrow="Обзор" title="Ваш прогресс">
+      <section className="card overflow-hidden p-6 sm:p-8">
+        <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+          <div className="space-y-4">
+            <div className="flex flex-wrap gap-2">
+              <span className="pill">{viewer.profile?.full_name ?? "fit"}</span>
+              <span className="pill">{viewer.user.email ?? "Аккаунт"}</span>
+            </div>
+
+            <div className="space-y-3">
+              <h2 className="max-w-4xl text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+                Сегодня вы работаете внутри своего основного пространства.
+              </h2>
+              <p className="max-w-3xl text-sm leading-7 text-muted sm:text-base">
+                Здесь собран текущий срез по тренировкам, питанию и истории
+                активности без лишнего служебного текста.
               </p>
-            </article>
-          ))}
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            {metrics.map((metric) => (
+              <article
+                className="rounded-3xl border border-border bg-white/72 p-5 shadow-[0_18px_48px_-40px_rgba(15,23,42,0.28)]"
+                key={metric.label}
+              >
+                <p className="text-sm text-muted">{metric.label}</p>
+                <p className="mt-2 text-3xl font-semibold text-foreground">
+                  {metric.value}
+                </p>
+                <p className="mt-2 text-sm leading-6 text-muted">{metric.detail}</p>
+              </article>
+            ))}
+          </div>
         </div>
-      </div>
+      </section>
 
       <DashboardPeriodComparison
         initialMetrics={periodComparison}

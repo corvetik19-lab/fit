@@ -8,6 +8,12 @@ import {
   toModelMessages,
   touchAiChatSession,
 } from "@/lib/ai/chat";
+import {
+  BILLING_FEATURE_KEYS,
+  createFeatureAccessDeniedResponse,
+  incrementFeatureUsage,
+  readUserBillingAccess,
+} from "@/lib/billing-access";
 import { models } from "@/lib/ai/gateway";
 import { retrieveKnowledgeMatches } from "@/lib/ai/knowledge";
 import { createApiErrorResponse } from "@/lib/api/error-response";
@@ -84,6 +90,13 @@ export async function POST(request: Request) {
       });
     }
 
+    const access = await readUserBillingAccess(supabase, user.id);
+    const feature = access.features[BILLING_FEATURE_KEYS.aiChat];
+
+    if (!feature.allowed) {
+      return createFeatureAccessDeniedResponse(feature);
+    }
+
     const session = await ensureAiChatSession(
       supabase,
       user.id,
@@ -92,6 +105,7 @@ export async function POST(request: Request) {
     );
 
     await touchAiChatSession(supabase, user.id, session.id);
+    await incrementFeatureUsage(supabase, user.id, BILLING_FEATURE_KEYS.aiChat);
 
     const userMessage = await createAiChatMessage(supabase, {
       userId: user.id,

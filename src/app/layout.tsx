@@ -1,4 +1,6 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { IBM_Plex_Mono, Manrope } from "next/font/google";
 import "./globals.css";
 
@@ -22,7 +24,7 @@ export const metadata: Metadata = {
     template: "%s · fit",
   },
   description:
-    "Офлайн-ориентированная фитнес-платформа для тренировок, питания, аналитики, админ-панели и AI-планирования.",
+    "Фитнес-платформа с офлайн-поддержкой для тренировок, питания, аналитики, админ-панели и AI-планирования.",
   applicationName: "fit",
   appleWebApp: {
     capable: true,
@@ -30,6 +32,13 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
   },
   manifest: "/manifest.webmanifest",
+  icons: {
+    icon: [
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
 };
 
 export const dynamic = "force-dynamic";
@@ -41,11 +50,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ru">
-      <body
-        className={`${sans.variable} ${mono.variable} antialiased`}
-      >
+      <body className={`${sans.variable} ${mono.variable} antialiased`}>
         <ServiceWorkerRegistration />
         {children}
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
