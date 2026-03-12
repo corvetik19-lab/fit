@@ -513,7 +513,7 @@ export function AiAssistantWidget(props: AiAssistantWidgetProps) {
                 </button>
 
                 <button
-                  aria-label="Открыть шаблоны запросов"
+                  aria-label="??????? ???????"
                   className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border bg-white/80 text-foreground transition hover:bg-white"
                   onClick={() => setIsPromptLibraryOpen(true)}
                   type="button"
@@ -565,10 +565,7 @@ export function AiAssistantWidget(props: AiAssistantWidgetProps) {
                     </article>
                   ))
                 ) : (
-                  <div className="rounded-3xl border border-dashed border-border bg-white/70 px-4 py-6 text-sm leading-7 text-muted">
-                    Спроси про тренировку, питание, восстановление или открой полный экран для
-                    фото еды, истории и подробного контекста.
-                  </div>
+                  <div className="rounded-3xl border border-dashed border-border bg-white/70 px-4 py-6" />
                 )}
               </div>
             </div>

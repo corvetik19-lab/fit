@@ -1323,3 +1323,15 @@
 - `npx eslint src/app/admin/page.tsx src/app/admin/users/page.tsx src/components/admin-health-dashboard.tsx src/components/admin-ai-eval-runs.tsx src/components/admin-ai-operations.tsx src/components/admin-operations-inbox.tsx src/components/admin-role-manager.tsx src/components/admin-user-actions.tsx src/components/admin-user-detail.tsx src/components/admin-users-directory.tsx src/components/app-shell-nav.tsx`
 - `npm run typecheck`
 - `npm run build`
+
+### 2026-03-12 12:08 - Упрощение пустого состояния AI-чата
+
+- Убрал из AI-чата лишние пояснения про автоматическое сохранение истории и специализацию ассистента, чтобы верхняя часть экрана не забирала место у переписки.
+- Убрал длинный текст пустого состояния и отдельную кнопку `Открыть шаблоны запросов` из тела чата. Шаблоны остались доступны только через компактную иконку.
+- Почистил те же подписи в плавающем AI-виджете, чтобы новый чат открывался без лишнего текста.
+
+### Проверка: упрощение AI-чата
+
+- `npx eslint src/components/ai-chat-panel.tsx src/components/ai-assistant-widget.tsx`
+- `npm run typecheck`
+- `npm run build`

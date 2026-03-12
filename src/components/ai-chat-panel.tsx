@@ -816,10 +816,6 @@ export function AiChatPanel({
           <p className="truncate text-sm font-semibold text-foreground">
             {sessionTitle?.trim() || "Новый чат"}
           </p>
-          <p className="mt-1 text-xs text-muted">
-            История сохраняется автоматически. AI отвечает только по тренировкам, питанию,
-            восстановлению и форме.
-          </p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -841,13 +837,12 @@ export function AiChatPanel({
             <Globe size={18} strokeWidth={2.2} />
           </button>
           <button
-            aria-label="Открыть шаблоны запросов"
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-border bg-white/80 px-4 text-sm font-medium text-foreground transition hover:bg-white"
+            aria-label="??????? ???????"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border bg-white/80 text-foreground transition hover:bg-white"
             onClick={() => setIsPromptLibraryOpen(true)}
             type="button"
           >
             <WandSparkles size={16} strokeWidth={2.1} />
-            <span className="hidden sm:inline">Шаблоны</span>
           </button>
 
           <button
@@ -1034,22 +1029,7 @@ export function AiChatPanel({
               </article>
             ))
           ) : (
-            <div className="grid gap-3 rounded-3xl border border-dashed border-border bg-white/70 px-4 py-6">
-              <p className="text-sm leading-6 text-muted">
-                Спроси про тренировку, питание, восстановление, анализ прогресса или загрузи фото
-                еды для разбора.
-              </p>
-
-              <button
-                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-border bg-white/85 px-4 py-3 text-sm font-medium text-foreground transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
-                disabled={isComposerBusy || !access.allowed}
-                onClick={() => setIsPromptLibraryOpen(true)}
-                type="button"
-              >
-                <WandSparkles size={16} strokeWidth={2.1} />
-                Открыть шаблоны запросов
-              </button>
-            </div>
+            <div className="rounded-3xl border border-dashed border-border bg-white/70 px-4 py-6" />
           )}
         </div>
       </div>
