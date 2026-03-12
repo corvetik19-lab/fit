@@ -35,8 +35,6 @@ export type WorkoutSetActualRepsOfflineMutation = {
     actualReps: number | null;
     actualWeightKg: number | null;
     actualRpe: number | null;
-    restSeconds: number | null;
-    setNote: string | null;
   };
   createdAt: string;
 };

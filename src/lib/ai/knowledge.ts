@@ -113,8 +113,6 @@ type WorkoutSetRow = {
   actual_reps: number | null;
   actual_weight_kg: number | null;
   actual_rpe: number | null;
-  rest_seconds: number | null;
-  set_note: string | null;
 };
 
 type MealRow = {
@@ -789,7 +787,6 @@ async function buildKnowledgeDocuments(
         repNotes: string[];
         weightNotes: string[];
         rpeNotes: string[];
-        recoveryNotes: string[];
         totalTonnageKg: number;
         bestSetWeightKg: number | null;
       }
@@ -829,16 +826,9 @@ async function buildKnowledgeDocuments(
                   set.actual_weight_kg !== null ? ` @ ${set.actual_weight_kg} кг` : "";
                 const actualRpe =
                   set.actual_rpe !== null ? `, RPE ${set.actual_rpe}` : "";
-                const restText =
-                  set.rest_seconds !== null ? `, отдых ${set.rest_seconds} сек` : "";
-                const setNote =
-                  set.set_note && set.set_note.trim().length
-                    ? `, заметка: ${set.set_note.trim()}`
-                    : "";
-
                 return set.actual_reps != null
-                  ? `${set.actual_reps}/${formatPlannedRepTarget(set)}${actualWeight}${actualRpe}${restText}${setNote}`
-                  : `${formatPlannedRepTarget(set)}${actualWeight}${actualRpe}${restText}${setNote}`;
+                  ? `${set.actual_reps}/${formatPlannedRepTarget(set)}${actualWeight}${actualRpe}`
+                  : `${formatPlannedRepTarget(set)}${actualWeight}${actualRpe}`;
               })
               .join(", ");
 
@@ -884,15 +874,9 @@ async function buildKnowledgeDocuments(
               set.actual_weight_kg !== null ? `, вес ${set.actual_weight_kg} кг` : "";
             const rpeText =
               set.actual_rpe !== null ? `, RPE ${set.actual_rpe}` : "";
-            const restText =
-              set.rest_seconds !== null ? `, отдых ${set.rest_seconds} сек` : "";
-            const noteText =
-              set.set_note && set.set_note.trim().length
-                ? `, заметка ${set.set_note.trim()}`
-                : "";
             return set.actual_reps != null
-              ? `сет ${set.set_number}: факт ${set.actual_reps}, план ${planned}${weightText}${rpeText}${restText}${noteText}`
-              : `сет ${set.set_number}: план ${planned}${weightText}${rpeText}${restText}${noteText}`;
+              ? `сет ${set.set_number}: факт ${set.actual_reps}, план ${planned}${weightText}${rpeText}`
+              : `сет ${set.set_number}: план ${planned}${weightText}${rpeText}`;
           })
           .join("; ");
         const title = exercise.exercise_title_snapshot.trim() || "Без названия";
@@ -918,7 +902,6 @@ async function buildKnowledgeDocuments(
           repNotes: [],
           weightNotes: [],
           rpeNotes: [],
-          recoveryNotes: [],
           totalTonnageKg: 0,
           bestSetWeightKg: null,
         };
@@ -951,21 +934,6 @@ async function buildKnowledgeDocuments(
             rpeValues.reduce((sum, value) => sum + value, 0) / rpeValues.length;
           current.rpeNotes.push(
             `${day.updated_at}: средний RPE ${avgRpe.toFixed(1)}, пик ${Math.max(...rpeValues).toFixed(1)}`,
-          );
-        }
-        const restValues = sets
-          .map((set) => set.rest_seconds)
-          .filter((value): value is number => typeof value === "number");
-        const noteValues = sets
-          .map((set) => set.set_note?.trim() ?? "")
-          .filter((value) => value.length > 0);
-        if (restValues.length || noteValues.length) {
-          const avgRest =
-            restValues.length > 0
-              ? (restValues.reduce((sum, value) => sum + value, 0) / restValues.length).toFixed(0)
-              : null;
-          current.recoveryNotes.push(
-            `${day.updated_at}: отдых ${avgRest !== null ? `${avgRest} сек` : "не записан"}${noteValues.length ? `; заметки ${noteValues.slice(0, 2).join(" | ")}` : ""}`,
           );
         }
         exerciseHistory.set(title, current);
@@ -1004,7 +972,6 @@ async function buildKnowledgeDocuments(
           `Последние фактические записи: ${summary.repNotes.slice(0, 6).join(" | ") || "нет фактических повторений"}.`,
           `Последние записи по нагрузке: ${summary.weightNotes.slice(0, 6).join(" | ") || "нет данных по весу и тоннажу"}.`,
           `Последние записи по усилию: ${summary.rpeNotes.slice(0, 6).join(" | ") || "нет данных по RPE"}.`,
-          `Последние записи по отдыху и качеству: ${summary.recoveryNotes.slice(0, 6).join(" | ") || "нет данных по отдыху и заметкам"}.`,
         ].join("\n"),
         metadata: {
           category: "workout_exercise_history",

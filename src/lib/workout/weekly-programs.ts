@@ -11,8 +11,6 @@ export type WeeklyProgramSetSummary = {
   actual_reps: number | null;
   actual_weight_kg: number | null;
   actual_rpe: number | null;
-  rest_seconds: number | null;
-  set_note: string | null;
 };
 
 export type WeeklyProgramExerciseSummary = {
@@ -174,8 +172,6 @@ export async function listWeeklyPrograms(
       actual_reps: workoutSet.actual_reps,
       actual_weight_kg: workoutSet.actual_weight_kg,
       actual_rpe: workoutSet.actual_rpe,
-      rest_seconds: workoutSet.rest_seconds,
-      set_note: workoutSet.set_note,
     });
     setsByExerciseId.set(workoutSet.workout_exercise_id, currentSets);
   }
@@ -304,8 +300,6 @@ export async function getWorkoutDayDetail(
       actual_reps: workoutSet.actual_reps,
       actual_weight_kg: workoutSet.actual_weight_kg,
       actual_rpe: workoutSet.actual_rpe,
-      rest_seconds: workoutSet.rest_seconds,
-      set_note: workoutSet.set_note,
     });
     setsByExerciseId.set(workoutSet.workout_exercise_id, currentSets);
   }

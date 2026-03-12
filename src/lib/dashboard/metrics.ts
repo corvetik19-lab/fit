@@ -309,8 +309,6 @@ type WorkoutSetRow = {
   actual_reps: number | null;
   actual_weight_kg: number | string | null;
   actual_rpe: number | string | null;
-  rest_seconds: number | string | null;
-  set_note: string | null;
 };
 
 type WorkoutExerciseAnalyticsRow = {
@@ -338,7 +336,6 @@ type WorkoutSetAnalyticsRow = {
   actual_reps: number | null;
   actual_weight_kg: number | string | null;
   actual_rpe: number | string | null;
-  rest_seconds: number | string | null;
 };
 
 type GoalAnalyticsRow = {
@@ -726,14 +723,14 @@ export async function getDashboardWorkoutCharts(
         .gte("updated_at", oldestWeekStart.toISOString()),
       supabase
         .from("workout_sets")
-        .select("updated_at, actual_reps, actual_weight_kg, actual_rpe, rest_seconds")
+        .select("updated_at, actual_reps, actual_weight_kg, actual_rpe")
         .eq("user_id", userId)
         .not("actual_reps", "is", null)
         .gte("updated_at", oldestWeekStart.toISOString()),
       supabase
         .from("workout_exercises")
         .select(
-          "exercise_title_snapshot, updated_at, workout_sets(set_number, planned_reps, planned_reps_min, planned_reps_max, actual_reps, actual_weight_kg, actual_rpe, rest_seconds, set_note)",
+          "exercise_title_snapshot, updated_at, workout_sets(set_number, planned_reps, planned_reps_min, planned_reps_max, actual_reps, actual_weight_kg, actual_rpe)",
         )
         .eq("user_id", userId)
         .gte("updated_at", oldestWeekStart.toISOString())
@@ -741,7 +738,7 @@ export async function getDashboardWorkoutCharts(
       supabase
         .from("workout_days")
         .select(
-          "id, day_of_week, updated_at, body_weight_kg, session_note, workout_exercises(exercise_title_snapshot, workout_sets(set_number, planned_reps, planned_reps_min, planned_reps_max, actual_reps, actual_weight_kg, actual_rpe, rest_seconds, set_note))",
+          "id, day_of_week, updated_at, body_weight_kg, session_note, workout_exercises(exercise_title_snapshot, workout_sets(set_number, planned_reps, planned_reps_min, planned_reps_max, actual_reps, actual_weight_kg, actual_rpe))",
         )
         .eq("user_id", userId)
         .eq("status", "done")
@@ -853,9 +850,6 @@ export async function getDashboardWorkoutCharts(
   let recentWindowWeightSamples = 0;
   let previousWindowWeightTotal = 0;
   let previousWindowWeightSamples = 0;
-  let recentWindowRestTotalSeconds = 0;
-  let recentWindowRestSamples = 0;
-  let recentWindowNotedSets = 0;
   let bestSetWeightKg: number | null = null;
   let bestEstimatedOneRmKg: number | null = null;
 
@@ -866,13 +860,11 @@ export async function getDashboardWorkoutCharts(
     const title = row.exercise_title_snapshot.trim() || "Без названия";
     const loggedSets = (row.workout_sets ?? []).flatMap((set) =>
       typeof set.actual_reps === "number"
-        ? [
+          ? [
             {
               actualReps: set.actual_reps,
               actualWeightKg: toOptionalNumber(set.actual_weight_kg),
               actualRpe: toOptionalNumber(set.actual_rpe),
-              restSeconds: toOptionalNumber(set.rest_seconds),
-              setNote: set.set_note?.trim() ?? "",
             },
           ]
         : [],
@@ -925,10 +917,6 @@ export async function getDashboardWorkoutCharts(
       (sum, set) => sum + getSetTonnageKg(set.actualReps, set.actualWeightKg),
       0,
     );
-    const restValues = loggedSets.flatMap((set) =>
-      set.restSeconds !== null ? [set.restSeconds] : [],
-    );
-    const notedSets = loggedSets.filter((set) => set.setNote.length > 0).length;
     const exerciseBestWeight =
       weightValues.length > 0 ? Math.max(...weightValues) : null;
     const exerciseBestEstimatedOneRm = loggedSets.reduce<number | null>(
@@ -1004,9 +992,6 @@ export async function getDashboardWorkoutCharts(
       recentWindowTonnageKg += tonnageKg;
       recentWindowWeightTotal += weightTotal;
       recentWindowWeightSamples += weightSamples;
-      recentWindowRestTotalSeconds += restValues.reduce((sum, value) => sum + value, 0);
-      recentWindowRestSamples += restValues.length;
-      recentWindowNotedSets += notedSets;
     } else {
       previousWindowCompletedSets += loggedSets.length;
       previousWindowTonnageKg += tonnageKg;
@@ -1113,8 +1098,6 @@ export async function getDashboardWorkoutCharts(
                   actualReps: set.actual_reps,
                   actualWeightKg: toOptionalNumber(set.actual_weight_kg),
                   actualRpe: toOptionalNumber(set.actual_rpe),
-                  restSeconds: toOptionalNumber(set.rest_seconds),
-                  setNote: set.set_note?.trim() ?? "",
                   plannedRepTarget: formatPlannedRepTarget(set),
                 },
               ]
@@ -1178,11 +1161,8 @@ export async function getDashboardWorkoutCharts(
                       maximumFractionDigits: 1,
                     })}`
                   : "";
-              const restLabel =
-                set.restSeconds !== null ? ` · отдых ${set.restSeconds} сек` : "";
-              const noteLabel = set.setNote ? ` · заметка: ${set.setNote}` : "";
 
-              return `Сет ${set.setNumber}: ${set.actualReps} повт. · ${weightLabel}${rpeLabel}${restLabel} · план ${set.plannedRepTarget}${noteLabel}`;
+              return `Сет ${set.setNumber}: ${set.actualReps} повт. · ${weightLabel}${rpeLabel} · план ${set.plannedRepTarget}`;
             }),
           };
         })
@@ -1291,15 +1271,6 @@ export async function getDashboardWorkoutCharts(
           rpeValuesLast14.length,
       )
     : null;
-  const avgRestSecondsLast14 = loggedSetRows
-    .filter(
-      (row) =>
-        new Date(row.updated_at).getTime() >= new Date(recoveryWindowStart).getTime(),
-    )
-    .flatMap((row) => {
-      const value = toOptionalNumber(row.rest_seconds);
-      return value !== null ? [value] : [];
-    });
   const goalDaysPerWeek =
     (goalResult.data as GoalAnalyticsRow | null)?.weekly_training_days ?? null;
   const consistencyRatio =
@@ -1378,17 +1349,8 @@ export async function getDashboardWorkoutCharts(
     previousAvgActualWeightKg,
     avgActualRpeRecent: avgActualRpeLast14,
     hardSetShareRecent: hardSetShareLast14,
-    avgRestSecondsRecent: avgRestSecondsLast14.length
-      ? roundToSingleDecimal(
-          avgRestSecondsLast14.reduce((sum, value) => sum + value, 0) /
-            avgRestSecondsLast14.length,
-        )
-      : recentWindowRestSamples
-        ? roundToSingleDecimal(
-            recentWindowRestTotalSeconds / recentWindowRestSamples,
-          )
-        : null,
-    notedSetsRecent: recentWindowNotedSets,
+    avgRestSecondsRecent: null,
+    notedSetsRecent: 0,
     daysSinceLastWorkout,
     consistencyRatio,
     goalDaysPerWeek,

@@ -126,8 +126,6 @@ export async function updateWorkoutSetActualReps(
   actualReps: number | null,
   actualWeightKg: number | null,
   actualRpe: number | null,
-  restSeconds: number | null,
-  setNote: string | null,
 ) {
   const { data: workoutSetRow, error: workoutSetError } = await supabase
     .from("workout_sets")
@@ -224,12 +222,10 @@ export async function updateWorkoutSetActualReps(
       actual_reps: actualReps,
       actual_weight_kg: actualWeightKg,
       actual_rpe: actualRpe,
-      rest_seconds: restSeconds,
-      set_note: setNote,
     })
     .eq("id", setId)
     .eq("user_id", userId)
-    .select("id, actual_reps, actual_weight_kg, actual_rpe, rest_seconds, set_note")
+    .select("id, actual_reps, actual_weight_kg, actual_rpe")
     .single();
 
   if (error) {

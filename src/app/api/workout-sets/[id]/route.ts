@@ -9,8 +9,6 @@ const workoutSetUpdateSchema = z.object({
   actualReps: z.number().int().min(0).max(500).nullable(),
   actualWeightKg: z.number().min(0).max(1000).nullable(),
   actualRpe: z.number().min(1).max(10).nullable(),
-  restSeconds: z.number().int().min(0).max(3600).nullable(),
-  setNote: z.string().max(1000).nullable(),
 });
 
 export async function PATCH(
@@ -41,8 +39,6 @@ export async function PATCH(
       payload.actualReps,
       payload.actualWeightKg,
       payload.actualRpe,
-      payload.restSeconds,
-      payload.setNote,
     );
 
     if (result.error) {

@@ -25,8 +25,6 @@ export type WorkoutSetRow = {
   actual_reps: number | null;
   actual_weight_kg: number | null;
   actual_rpe: number | null;
-  rest_seconds: number | null;
-  set_note: string | null;
 };
 
 export type WorkoutSetInsertPayload = {
@@ -39,8 +37,6 @@ export type WorkoutSetInsertPayload = {
   actual_reps: number | null;
   actual_weight_kg: number | null;
   actual_rpe: number | null;
-  rest_seconds: number | null;
-  set_note: string | null;
 };
 
 function isPostgrestLikeError(error: unknown): error is PostgrestLikeError {
@@ -59,9 +55,7 @@ export function isMissingWorkoutSetColumnsError(error: unknown) {
     (message.includes("planned_reps_min") ||
       message.includes("planned_reps_max") ||
       message.includes("actual_weight_kg") ||
-      message.includes("actual_rpe") ||
-      message.includes("rest_seconds") ||
-      message.includes("set_note"))
+      message.includes("actual_rpe"))
   );
 }
 
@@ -76,8 +70,6 @@ function normalizeLegacyWorkoutSetRow(row: LegacyWorkoutSetRow): WorkoutSetRow {
     actual_reps: row.actual_reps,
     actual_weight_kg: null,
     actual_rpe: null,
-    rest_seconds: null,
-    set_note: null,
   };
 }
 
@@ -93,7 +85,7 @@ export async function listWorkoutSetsWithRepRangeFallback(
   const fullResult = await supabase
     .from("workout_sets")
     .select(
-      "id, workout_exercise_id, set_number, planned_reps, planned_reps_min, planned_reps_max, actual_reps, actual_weight_kg, actual_rpe, rest_seconds, set_note",
+      "id, workout_exercise_id, set_number, planned_reps, planned_reps_min, planned_reps_max, actual_reps, actual_weight_kg, actual_rpe",
     )
     .eq("user_id", userId)
     .in("workout_exercise_id", exerciseIds)
@@ -136,7 +128,7 @@ export async function listAllWorkoutSetsWithRepRangeFallback(
   const fullResult = await supabase
     .from("workout_sets")
     .select(
-      "id, workout_exercise_id, set_number, planned_reps, planned_reps_min, planned_reps_max, actual_reps, actual_weight_kg, actual_rpe, rest_seconds, set_note",
+      "id, workout_exercise_id, set_number, planned_reps, planned_reps_min, planned_reps_max, actual_reps, actual_weight_kg, actual_rpe",
     )
     .eq("user_id", userId)
     .order("updated_at", { ascending: false });

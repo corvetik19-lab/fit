@@ -44,8 +44,6 @@ const workoutSetActualRepsMutationSchema = z.object({
     actualReps: z.number().int().min(0).max(500).nullable(),
     actualWeightKg: z.number().min(0).max(1000).nullable(),
     actualRpe: z.number().min(1).max(10).nullable(),
-    restSeconds: z.number().int().min(0).max(3600).nullable(),
-    setNote: z.string().max(1000).nullable(),
   }),
   createdAt: z.string().min(1),
 });
@@ -152,8 +150,6 @@ export async function POST(request: Request) {
             mutation.payload.actualReps,
             mutation.payload.actualWeightKg,
             mutation.payload.actualRpe,
-            mutation.payload.restSeconds,
-            mutation.payload.setNote,
           );
 
           if (result.error) {

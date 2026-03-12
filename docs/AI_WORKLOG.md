@@ -1431,3 +1431,18 @@
 - В [workout-day-session.tsx](/C:/fit/src/components/workout-day-session.tsx) таймер тренировки теперь хранит локально `startedAt` для конкретного дня, восстанавливается после повторного открытия приложения и продолжает считать время в реальном времени.
 - Добавил жёсткий лимит `2 часа`: если таймер дошёл до лимита или пользователь вернулся позже, он автоматически сбрасывается в `0` и это значение сохраняется для дня тренировки.
 - При нажатии `Завершить` экран теперь спрашивает, сохранять время тренировки или нет. Если пользователь подтверждает сохранение, `session_duration_seconds` прикрепляется к завершённой тренировке; если нет, день завершается с нулевым временем.
+
+### 2026-03-13 00:15 - Упрощение тренировки: сохранение по упражнению и удаление rest/note
+
+- В [workout-day-session.tsx](/C:/fit/src/components/workout-day-session.tsx) убрал поля `Отдых, сек` и `Заметка к подходу`, оставил только `Повторы`, `Вес, кг` и `RPE`.
+- Сохранение теперь идёт один раз на всё упражнение: пока упражнение не сохранено, следующее не открывается, а кнопка `Завершить` не активируется.
+- После сохранения упражнение закрывается от редактирования, но рядом появляется `Редактировать`, чтобы при необходимости открыть его снова.
+- В аналитике и AI-контексте убрал зависимость от `rest_seconds` и `set_note`: обновлены [metrics.ts](/C:/fit/src/lib/dashboard/metrics.ts), [knowledge.ts](/C:/fit/src/lib/ai/knowledge.ts), [user-context.ts](/C:/fit/src/lib/ai/user-context.ts), [execution.ts](/C:/fit/src/lib/workout/execution.ts) и связанные API routes.
+- Добавил и применил миграцию [20260312223210_drop_workout_set_rest_and_note.sql](/C:/fit/supabase/migrations/20260312223210_drop_workout_set_rest_and_note.sql), которая удаляет `rest_seconds` и `set_note` из `workout_sets` и обновляет lock guard для фиксированных недель.
+
+### Проверка: сохранение по упражнению и drop rest/note
+
+- `npx eslint src/components/workout-day-session.tsx src/lib/offline/db.ts src/lib/workout/execution.ts src/app/api/workout-sets/[id]/route.ts src/app/api/sync/push/route.ts src/lib/workout/workout-sets.ts src/lib/workout/weekly-programs.ts src/app/api/weekly-programs/route.ts src/app/api/weekly-programs/[id]/clone/route.ts src/lib/ai/proposal-actions.ts src/lib/ai/user-context.ts src/lib/ai/knowledge.ts src/lib/dashboard/metrics.ts`
+- `npm run build`
+- `npm run typecheck`
+- `Supabase MCP: apply_migration + security advisors + performance advisors`

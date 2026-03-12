@@ -351,8 +351,6 @@ async function createWorkoutDraftFromProposal(
           actual_reps: null,
           actual_weight_kg: null,
           actual_rpe: null,
-          rest_seconds: null,
-          set_note: null,
         }));
 
         await insertWorkoutSetsWithRepRangeFallback(supabase, setsPayload);

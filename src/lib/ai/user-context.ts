@@ -69,9 +69,7 @@ export type AiUserContext = {
     avgActualReps: number | null;
     avgActualWeightKg: number | null;
     avgActualRpe: number | null;
-    avgRestSecondsLast28: number | null;
     hardSetShareLast28: number | null;
-    notedSetsLast28: number;
     tonnageLast28Kg: number | null;
     bestSetWeightKg: number | null;
     bestEstimatedOneRmKg: number | null;
@@ -337,7 +335,7 @@ export async function getAiUserContext(
       .order("updated_at", { ascending: false }),
     supabase
       .from("workout_sets")
-      .select("actual_reps, actual_weight_kg, actual_rpe, rest_seconds, set_note, updated_at")
+      .select("actual_reps, actual_weight_kg, actual_rpe, updated_at")
       .eq("user_id", userId)
       .not("actual_reps", "is", null)
       .gte("updated_at", last56Days.toISOString())
@@ -459,17 +457,6 @@ export async function getAiUserContext(
         ).toFixed(1),
       )
     : null;
-  const restSamples = currentWorkoutSets.flatMap((row) => {
-    const parsed = Number(row.rest_seconds);
-    return Number.isFinite(parsed) ? [parsed] : [];
-  });
-  const avgRestSecondsLast28 = restSamples.length
-    ? Number(
-        (
-          restSamples.reduce((sum, value) => sum + value, 0) / restSamples.length
-        ).toFixed(0),
-      )
-    : null;
   const hardSetShareLast28 = rpeSamples.length
     ? Number(
         (
@@ -477,9 +464,6 @@ export async function getAiUserContext(
         ).toFixed(2),
       )
     : null;
-  const notedSetsLast28 = currentWorkoutSets.filter(
-    (row) => typeof row.set_note === "string" && row.set_note.trim().length > 0,
-  ).length;
   const tonnageLast28Kg = currentWorkoutSets.reduce((sum, row) => {
     const actualReps = row.actual_reps ?? null;
     const actualWeightKg = Number(row.actual_weight_kg);
@@ -563,8 +547,8 @@ export async function getAiUserContext(
     previousAvgActualWeightKg,
     avgActualRpeRecent: avgActualRpe,
     hardSetShareRecent: hardSetShareLast28,
-    avgRestSecondsRecent: avgRestSecondsLast28,
-    notedSetsRecent: notedSetsLast28,
+    avgRestSecondsRecent: null,
+    notedSetsRecent: 0,
     daysSinceLastWorkout,
     consistencyRatio,
     goalDaysPerWeek,
@@ -712,9 +696,7 @@ export async function getAiUserContext(
       avgActualReps,
       avgActualWeightKg,
       avgActualRpe,
-      avgRestSecondsLast28,
       hardSetShareLast28,
-      notedSetsLast28,
       tonnageLast28Kg: currentWorkoutSets.length ? recentTonnageKg : null,
       bestSetWeightKg,
       bestEstimatedOneRmKg:
