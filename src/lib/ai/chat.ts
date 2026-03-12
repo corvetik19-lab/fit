@@ -165,7 +165,11 @@ export async function getAiChatState(
   supabase: SupabaseClient,
   userId: string,
   sessionId: string | null,
+  options?: {
+    fallbackToLatest?: boolean;
+  },
 ) {
+  const fallbackToLatest = options?.fallbackToLatest ?? true;
   let session: AiChatSessionRow | null = null;
 
   if (sessionId) {
@@ -183,7 +187,7 @@ export async function getAiChatState(
     session = (requestedSession as AiChatSessionRow | null) ?? null;
   }
 
-  if (!session) {
+  if (!session && fallbackToLatest) {
     const { data: latestSession, error: latestSessionError } = await supabase
       .from("ai_chat_sessions")
       .select("id, title, created_at, updated_at")
@@ -237,4 +241,53 @@ export function toUiMessages(messages: AiChatMessageRow[]): UIMessage[] {
       },
     ],
   }));
+}
+
+export async function deleteAiChatSession(
+  supabase: SupabaseClient,
+  userId: string,
+  sessionId: string,
+) {
+  const { error: messageDeleteError } = await supabase
+    .from("ai_chat_messages")
+    .delete()
+    .eq("user_id", userId)
+    .eq("session_id", sessionId);
+
+  if (messageDeleteError) {
+    throw messageDeleteError;
+  }
+
+  const { error: sessionDeleteError } = await supabase
+    .from("ai_chat_sessions")
+    .delete()
+    .eq("user_id", userId)
+    .eq("id", sessionId);
+
+  if (sessionDeleteError) {
+    throw sessionDeleteError;
+  }
+}
+
+export async function deleteAllAiChatSessions(
+  supabase: SupabaseClient,
+  userId: string,
+) {
+  const { error: messageDeleteError } = await supabase
+    .from("ai_chat_messages")
+    .delete()
+    .eq("user_id", userId);
+
+  if (messageDeleteError) {
+    throw messageDeleteError;
+  }
+
+  const { error: sessionDeleteError } = await supabase
+    .from("ai_chat_sessions")
+    .delete()
+    .eq("user_id", userId);
+
+  if (sessionDeleteError) {
+    throw sessionDeleteError;
+  }
 }

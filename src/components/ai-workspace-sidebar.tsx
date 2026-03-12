@@ -1,10 +1,18 @@
+"use client";
+
 import Link from "next/link";
+import { LoaderCircle, Trash2 } from "lucide-react";
 
 import type { AiChatSessionRow } from "@/lib/ai/chat";
 import type { AiStructuredKnowledgeSnapshot } from "@/lib/ai/structured-knowledge";
 
 type AiWorkspaceSidebarProps = {
   activeSessionId: string | null;
+  busySessionId?: string | null;
+  historyError?: string | null;
+  isClearingAll?: boolean;
+  onClearSessions?: () => void;
+  onDeleteSession?: (sessionId: string) => void;
   recentSessions: AiChatSessionRow[];
   section: "history" | "context";
   structuredKnowledge: AiStructuredKnowledgeSnapshot;
@@ -32,6 +40,11 @@ function formatSessionTime(value: string) {
 
 export function AiWorkspaceSidebar({
   activeSessionId,
+  busySessionId = null,
+  historyError = null,
+  isClearingAll = false,
+  onClearSessions,
+  onDeleteSession,
   recentSessions,
   section,
   structuredKnowledge,
@@ -87,43 +100,92 @@ export function AiWorkspaceSidebar({
           <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">История</p>
           <h2 className="mt-2 text-xl font-semibold text-foreground">Сохранённые чаты</h2>
         </div>
-        <Link
-          className="rounded-full border border-border bg-white/80 px-4 py-2 text-sm font-medium text-foreground transition hover:bg-white"
-          href="/ai"
-        >
-          Новый чат
-        </Link>
+
+        <div className="flex flex-wrap gap-2">
+          <Link
+            className="rounded-full border border-border bg-white/80 px-4 py-2 text-sm font-medium text-foreground transition hover:bg-white"
+            href="/ai"
+          >
+            Новый чат
+          </Link>
+
+          {recentSessions.length && onClearSessions ? (
+            <button
+              className="rounded-full border border-border bg-white/80 px-4 py-2 text-sm font-medium text-foreground transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={isClearingAll}
+              onClick={onClearSessions}
+              type="button"
+            >
+              {isClearingAll ? "Очищаю..." : "Очистить всё"}
+            </button>
+          ) : null}
+        </div>
       </div>
+
+      {historyError ? (
+        <div className="mt-4 rounded-2xl border border-red-300/60 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {historyError}
+        </div>
+      ) : null}
 
       <div className="mt-5 grid gap-3">
         {recentSessions.length ? (
           recentSessions.map((session) => {
             const isActive = session.id === activeSessionId;
+            const isDeleting = busySessionId === session.id;
 
             return (
-              <Link
+              <article
                 className={`rounded-2xl border px-4 py-4 text-sm transition ${
                   isActive
                     ? "border-accent/40 bg-accent/8"
                     : "border-border bg-white/70 hover:bg-white"
                 }`}
-                href={`/ai?session=${session.id}`}
                 key={session.id}
               >
-                <div className="flex items-center justify-between gap-3">
-                  <p className="line-clamp-2 font-semibold text-foreground">
-                    {session.title?.trim() || "Диалог без названия"}
-                  </p>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="line-clamp-2 font-semibold text-foreground">
+                      {session.title?.trim() || "Чат без названия"}
+                    </p>
+                    <p className="mt-2 text-muted">
+                      Обновлено {formatSessionTime(session.updated_at)}
+                    </p>
+                  </div>
                   {isActive ? <span className="pill">Открыт</span> : null}
                 </div>
-                <p className="mt-2 text-muted">Обновлено {formatSessionTime(session.updated_at)}</p>
-              </Link>
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Link
+                    className="rounded-full border border-border bg-white/90 px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white"
+                    href={`/ai?session=${session.id}`}
+                  >
+                    Открыть
+                  </Link>
+
+                  {onDeleteSession ? (
+                    <button
+                      className="inline-flex items-center gap-2 rounded-full border border-border bg-white/90 px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                      disabled={isDeleting || isClearingAll}
+                      onClick={() => onDeleteSession(session.id)}
+                      type="button"
+                    >
+                      {isDeleting ? (
+                        <LoaderCircle className="animate-spin" size={15} />
+                      ) : (
+                        <Trash2 size={15} strokeWidth={2.1} />
+                      )}
+                      {isDeleting ? "Удаляю..." : "Удалить"}
+                    </button>
+                  ) : null}
+                </div>
+              </article>
             );
           })
         ) : (
           <div className="rounded-2xl border border-dashed border-border bg-white/60 px-4 py-5 text-sm leading-6 text-muted">
-            После первых сообщений здесь появится история переписки. Любой чат можно будет открыть
-            и продолжить с того же места.
+            После первых сообщений здесь появится история переписки. Любой чат можно будет открыть,
+            продолжить или удалить.
           </div>
         )}
       </div>

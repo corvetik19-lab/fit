@@ -24,8 +24,10 @@ export default async function AiPage({ searchParams }: AiPageProps) {
   const [runtimeContext, proposals, chatState, recentSessions, access] = await Promise.all([
     getAiRuntimeContext(supabase, viewer.user.id),
     listAiPlanProposals(supabase, viewer.user.id, 10),
-    getAiChatState(supabase, viewer.user.id, sessionParam),
-    listAiChatSessions(supabase, viewer.user.id, 8),
+    getAiChatState(supabase, viewer.user.id, sessionParam, {
+      fallbackToLatest: false,
+    }),
+    listAiChatSessions(supabase, viewer.user.id, 30),
     readUserBillingAccess(supabase, viewer.user.id, {
       email: viewer.user.email,
     }),

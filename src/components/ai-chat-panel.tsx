@@ -18,7 +18,7 @@ import {
 import { AssistantMarkdown } from "@/components/assistant-markdown";
 import { AiPromptLibrary } from "@/components/ai-prompt-library";
 import type { FeatureAccessSnapshot } from "@/lib/billing-access";
-import { toUiMessages } from "@/lib/ai/chat";
+import { toUiMessages, type AiChatSessionRow } from "@/lib/ai/chat";
 
 type ChatMessage = {
   id: string;
@@ -153,6 +153,7 @@ type AiChatPanelProps = {
   initialSessionTitle: string | null;
   initialMessages: ChatMessage[];
   mealPhotoAccess: FeatureAccessSnapshot;
+  onSessionTouched?: (session: AiChatSessionRow) => void;
 };
 
 const quickPrompts = [
@@ -526,6 +527,7 @@ export function AiChatPanel({
   initialSessionTitle,
   initialMessages,
   mealPhotoAccess,
+  onSessionTouched,
 }: AiChatPanelProps) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -619,9 +621,19 @@ export function AiChatPanel({
   }
 
   function rememberLocalSession(nextSessionId: string, titleSeed: string) {
+    const trimmedSeed = titleSeed.trim();
+    const timestamp = new Date().toISOString();
+    const nextTitle = sessionTitle?.trim() || trimmedSeed.slice(0, 72) || null;
+
     setSessionId(nextSessionId);
-    setSessionTitle((current) => current ?? titleSeed.trim().slice(0, 72));
+    setSessionTitle((current) => current ?? nextTitle);
     updateSessionUrl(nextSessionId);
+    onSessionTouched?.({
+      id: nextSessionId,
+      title: nextTitle,
+      created_at: timestamp,
+      updated_at: timestamp,
+    });
   }
 
   function insertPromptTemplate(prompt: string) {

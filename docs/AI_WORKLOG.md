@@ -2,6 +2,19 @@
 
 ## 2026-03-12
 
+### AI chat history reset and session management
+
+- Changed `src/app/ai/page.tsx` and `src/lib/ai/chat.ts` so `/ai` now opens as a clean new chat by default instead of automatically loading the latest saved session into the main conversation area.
+- Added AI chat history management routes in `src/app/api/ai/sessions/route.ts` and `src/app/api/ai/sessions/[id]/route.ts` for bulk history clearing and single-session deletion.
+- Reworked `src/components/ai-workspace.tsx`, `src/components/ai-workspace-sidebar.tsx`, and `src/components/ai-chat-panel.tsx` so chat history updates locally when a new session is created, sessions can be deleted one by one, and the whole history can be cleared from the sidebar.
+
+### Verification: AI chat history reset
+
+- `npx eslint src/app/ai/page.tsx src/app/api/ai/sessions/route.ts src/app/api/ai/sessions/[id]/route.ts src/components/ai-workspace.tsx src/components/ai-workspace-sidebar.tsx src/components/ai-chat-panel.tsx src/lib/ai/chat.ts`
+- `npm run build`
+- `npm run typecheck`
+- Playwright local pass on `http://127.0.0.1:3030/ai`: verified that `/ai` opens with an empty new chat, the old starter chat stays only in history, and single-session deletion clears it from the sidebar
+
 ### AI prompt library and cleaner chat composer
 
 - Moved the built-in AI starter prompts out of the inline chat body and into a dedicated modal prompt library in `src/components/ai-prompt-library.tsx`, with search, local custom prompt storage, create/delete actions, and reusable behavior for both the full-page AI workspace and the floating widget.

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Brain, ChevronLeft, ClipboardList, History, Sparkles } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { AiChatPanel } from "@/components/ai-chat-panel";
 import { AiWorkspaceSidebar } from "@/components/ai-workspace-sidebar";
@@ -193,21 +193,112 @@ export function AiWorkspace({
 }: AiWorkspaceProps) {
   const router = useRouter();
   const [activeSection, setActiveSection] = useState<WorkspaceSectionKey>("history");
+  const [activeChatSessionId, setActiveChatSessionId] = useState(initialSessionId);
+  const [sessionList, setSessionList] = useState(recentSessions);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+  const [busySessionId, setBusySessionId] = useState<string | null>(null);
+  const [isClearingAll, setIsClearingAll] = useState(false);
 
-  const sectionContent = useMemo(() => {
-    if (activeSection === "plans") {
-      return <PlansSection proposals={proposals} />;
+  useEffect(() => {
+    setSessionList(recentSessions);
+  }, [recentSessions]);
+
+  useEffect(() => {
+    setActiveChatSessionId(initialSessionId);
+  }, [initialSessionId]);
+
+  function upsertSession(session: AiChatSessionRow) {
+    setActiveChatSessionId(session.id);
+    setSessionList((current) => [
+      session,
+      ...current.filter((item) => item.id !== session.id),
+    ]);
+  }
+
+  async function handleDeleteSession(sessionId: string) {
+    if (!window.confirm("Удалить этот чат из истории?")) {
+      return;
     }
 
-    return (
+    setHistoryError(null);
+    setBusySessionId(sessionId);
+
+    try {
+      const response = await fetch(`/api/ai/sessions/${sessionId}`, {
+        method: "DELETE",
+      });
+      const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+
+      if (!response.ok) {
+        throw new Error(payload?.message ?? "Не удалось удалить чат.");
+      }
+
+      setSessionList((current) => current.filter((item) => item.id !== sessionId));
+
+      if (sessionId === activeChatSessionId) {
+        setActiveChatSessionId(null);
+        router.push("/ai");
+      }
+
+      router.refresh();
+    } catch (error) {
+      setHistoryError(error instanceof Error ? error.message : "Не удалось удалить чат.");
+    } finally {
+      setBusySessionId(null);
+    }
+  }
+
+  async function handleClearSessions() {
+    if (!sessionList.length) {
+      return;
+    }
+
+    if (!window.confirm("Очистить всю историю AI-чатов? Это действие нельзя отменить.")) {
+      return;
+    }
+
+    setHistoryError(null);
+    setIsClearingAll(true);
+
+    try {
+      const response = await fetch("/api/ai/sessions", {
+        method: "DELETE",
+      });
+      const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+
+      if (!response.ok) {
+        throw new Error(payload?.message ?? "Не удалось очистить историю чатов.");
+      }
+
+      setSessionList([]);
+      setActiveChatSessionId(null);
+      router.push("/ai");
+      router.refresh();
+    } catch (error) {
+      setHistoryError(
+        error instanceof Error ? error.message : "Не удалось очистить историю чатов.",
+      );
+    } finally {
+      setIsClearingAll(false);
+    }
+  }
+
+  const sectionContent =
+    activeSection === "plans" ? (
+      <PlansSection proposals={proposals} />
+    ) : (
       <AiWorkspaceSidebar
-        activeSessionId={initialSessionId}
-        recentSessions={recentSessions}
+        activeSessionId={activeChatSessionId}
+        busySessionId={busySessionId}
+        historyError={historyError}
+        isClearingAll={isClearingAll}
+        onClearSessions={activeSection === "history" ? handleClearSessions : undefined}
+        onDeleteSession={activeSection === "history" ? handleDeleteSession : undefined}
+        recentSessions={sessionList}
         section={activeSection}
         structuredKnowledge={structuredKnowledge}
       />
     );
-  }, [activeSection, initialSessionId, proposals, recentSessions, structuredKnowledge]);
 
   const activeMeta = sectionMeta.find((item) => item.key === activeSection) ?? sectionMeta[0];
 
@@ -279,6 +370,7 @@ export function AiWorkspace({
             initialSessionId={initialSessionId}
             initialSessionTitle={initialSessionTitle}
             mealPhotoAccess={mealPhotoAccess}
+            onSessionTouched={upsertSession}
           />
         </div>
 
