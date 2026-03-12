@@ -18,9 +18,10 @@ export function AdminAiOperations({
   defaultTargetUserId: string;
   currentAdminRole: PlatformAdminRole;
 }) {
+  const [mode, setMode] = useState<"embeddings" | "full">("full");
   const [targetUserId, setTargetUserId] = useState(defaultTargetUserId);
   const [reason, setReason] = useState(
-    "Обновление контекста после AI/RAG-изменений",
+    "Обновление AI-контекста и retrieval после изменений в данных пользователя",
   );
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,6 +48,7 @@ export function AdminAiOperations({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          mode,
           targetUserId: targetUserId.trim(),
           reason: reason.trim(),
         }),
@@ -56,23 +58,25 @@ export function AdminAiOperations({
         | {
             message?: string;
             data?: {
-              message?: string;
               indexedChunks?: number;
+              message?: string;
             };
           }
         | null;
 
       if (!response.ok) {
-        setError(payload?.message ?? "Не удалось запустить переиндексацию базы знаний.");
+        setError(payload?.message ?? "Не удалось запустить обновление базы знаний.");
         return;
       }
 
       setNotice(
         payload?.data?.message ??
-          `Переиндексация завершена. Индексировано чанков: ${payload?.data?.indexedChunks ?? 0}.`,
+          (mode === "embeddings"
+            ? `Эмбеддинги обновлены. Чанков в базе знаний: ${payload?.data?.indexedChunks ?? 0}.`
+            : `Переиндексация завершена. Индексировано чанков: ${payload?.data?.indexedChunks ?? 0}.`),
       );
     } catch {
-      setError("Не удалось запустить переиндексацию базы знаний.");
+      setError("Не удалось запустить обновление базы знаний.");
     } finally {
       setPending(false);
     }
@@ -94,10 +98,41 @@ export function AdminAiOperations({
 
       {!canRunReindex ? (
         <p className="rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          Роль {getAdminRoleLabel(currentAdminRole)} работает здесь в read-only режиме.
-          Переиндексацию базы знаний может запускать только `super_admin` или `support_admin`.
+          Роль {getAdminRoleLabel(currentAdminRole)} работает здесь в режиме только
+          чтения. Запуск reindex и refresh embeddings доступен только `super_admin` и
+          `support_admin`.
         </p>
       ) : null}
+
+      <label className="grid gap-2 text-sm text-muted">
+        Режим обновления
+        <div className="flex flex-wrap gap-2">
+          <button
+            className={`rounded-full px-4 py-2 text-sm font-medium transition ${
+              mode === "full"
+                ? "bg-accent text-white"
+                : "border border-border bg-white/80 text-foreground hover:bg-white"
+            }`}
+            disabled={!canRunReindex}
+            onClick={() => setMode("full")}
+            type="button"
+          >
+            Полный reindex
+          </button>
+          <button
+            className={`rounded-full px-4 py-2 text-sm font-medium transition ${
+              mode === "embeddings"
+                ? "bg-accent text-white"
+                : "border border-border bg-white/80 text-foreground hover:bg-white"
+            }`}
+            disabled={!canRunReindex}
+            onClick={() => setMode("embeddings")}
+            type="button"
+          >
+            Только embeddings
+          </button>
+        </div>
+      </label>
 
       <label className="grid gap-2 text-sm text-muted">
         Пользователь для reindex
@@ -126,7 +161,11 @@ export function AdminAiOperations({
         onClick={runReindex}
         type="button"
       >
-        {pending ? "Переиндексирую..." : "Переиндексировать базу знаний"}
+        {pending
+          ? "Запускаю..."
+          : mode === "embeddings"
+            ? "Обновить embeddings"
+            : "Переиндексировать базу знаний"}
       </button>
     </div>
   );

@@ -22,10 +22,13 @@ const reconcileCheckoutSchema = z.object({
 async function loadBillingCenterData(
   supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
   userId: string,
+  userEmail?: string | null,
 ) {
   const [snapshot, access] = await Promise.all([
     loadSettingsDataSnapshot(supabase, userId),
-    readUserBillingAccess(supabase, userId),
+    readUserBillingAccess(supabase, userId, {
+      email: userEmail,
+    }),
   ]);
 
   return {
@@ -106,7 +109,7 @@ export async function POST(request: Request) {
     }
 
     if (checkoutSession.status !== "complete") {
-      const data = await loadBillingCenterData(supabase, user.id);
+      const data = await loadBillingCenterData(supabase, user.id, user.email);
 
       return Response.json({
         data: {
@@ -135,7 +138,7 @@ export async function POST(request: Request) {
       sessionStatus: checkoutSession.status,
     });
 
-    const data = await loadBillingCenterData(supabase, user.id);
+    const data = await loadBillingCenterData(supabase, user.id, user.email);
 
     return Response.json({
       data: {

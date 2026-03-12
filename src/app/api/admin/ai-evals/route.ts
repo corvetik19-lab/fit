@@ -10,7 +10,7 @@ export async function GET() {
 
     const { data, error } = await adminSupabase
       .from("ai_eval_runs")
-      .select("id, label, model_id, status, created_at, started_at, completed_at")
+      .select("id, label, model_id, status, created_at, started_at, completed_at, summary")
       .order("created_at", { ascending: false })
       .limit(20);
 

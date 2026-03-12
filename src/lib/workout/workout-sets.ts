@@ -23,6 +23,10 @@ export type WorkoutSetRow = {
   planned_reps_min: number | null;
   planned_reps_max: number | null;
   actual_reps: number | null;
+  actual_weight_kg: number | null;
+  actual_rpe: number | null;
+  rest_seconds: number | null;
+  set_note: string | null;
 };
 
 export type WorkoutSetInsertPayload = {
@@ -33,13 +37,17 @@ export type WorkoutSetInsertPayload = {
   planned_reps_min: number | null;
   planned_reps_max: number | null;
   actual_reps: number | null;
+  actual_weight_kg: number | null;
+  actual_rpe: number | null;
+  rest_seconds: number | null;
+  set_note: string | null;
 };
 
 function isPostgrestLikeError(error: unknown): error is PostgrestLikeError {
   return typeof error === "object" && error !== null;
 }
 
-export function isMissingRepRangeColumnsError(error: unknown) {
+export function isMissingWorkoutSetColumnsError(error: unknown) {
   if (!isPostgrestLikeError(error)) {
     return false;
   }
@@ -49,7 +57,11 @@ export function isMissingRepRangeColumnsError(error: unknown) {
   return (
     (error.code === "42703" || error.code === "PGRST204") &&
     (message.includes("planned_reps_min") ||
-      message.includes("planned_reps_max"))
+      message.includes("planned_reps_max") ||
+      message.includes("actual_weight_kg") ||
+      message.includes("actual_rpe") ||
+      message.includes("rest_seconds") ||
+      message.includes("set_note"))
   );
 }
 
@@ -62,6 +74,10 @@ function normalizeLegacyWorkoutSetRow(row: LegacyWorkoutSetRow): WorkoutSetRow {
     planned_reps_min: null,
     planned_reps_max: null,
     actual_reps: row.actual_reps,
+    actual_weight_kg: null,
+    actual_rpe: null,
+    rest_seconds: null,
+    set_note: null,
   };
 }
 
@@ -77,7 +93,7 @@ export async function listWorkoutSetsWithRepRangeFallback(
   const fullResult = await supabase
     .from("workout_sets")
     .select(
-      "id, workout_exercise_id, set_number, planned_reps, planned_reps_min, planned_reps_max, actual_reps",
+      "id, workout_exercise_id, set_number, planned_reps, planned_reps_min, planned_reps_max, actual_reps, actual_weight_kg, actual_rpe, rest_seconds, set_note",
     )
     .eq("user_id", userId)
     .in("workout_exercise_id", exerciseIds)
@@ -87,7 +103,7 @@ export async function listWorkoutSetsWithRepRangeFallback(
     return (fullResult.data as WorkoutSetRow[] | null) ?? [];
   }
 
-  if (!isMissingRepRangeColumnsError(fullResult.error)) {
+  if (!isMissingWorkoutSetColumnsError(fullResult.error)) {
     throw fullResult.error;
   }
 
@@ -113,6 +129,46 @@ export async function listWorkoutSetsWithRepRangeFallback(
   );
 }
 
+export async function listAllWorkoutSetsWithRepRangeFallback(
+  supabase: SupabaseClient,
+  userId: string,
+) {
+  const fullResult = await supabase
+    .from("workout_sets")
+    .select(
+      "id, workout_exercise_id, set_number, planned_reps, planned_reps_min, planned_reps_max, actual_reps, actual_weight_kg, actual_rpe, rest_seconds, set_note",
+    )
+    .eq("user_id", userId)
+    .order("updated_at", { ascending: false });
+
+  if (!fullResult.error) {
+    return (fullResult.data as WorkoutSetRow[] | null) ?? [];
+  }
+
+  if (!isMissingWorkoutSetColumnsError(fullResult.error)) {
+    throw fullResult.error;
+  }
+
+  logger.warn("workout set history query fell back to legacy schema", {
+    userId,
+    error: fullResult.error,
+  });
+
+  const legacyResult = await supabase
+    .from("workout_sets")
+    .select("id, workout_exercise_id, set_number, planned_reps, actual_reps")
+    .eq("user_id", userId)
+    .order("updated_at", { ascending: false });
+
+  if (legacyResult.error) {
+    throw legacyResult.error;
+  }
+
+  return ((legacyResult.data as LegacyWorkoutSetRow[] | null) ?? []).map(
+    normalizeLegacyWorkoutSetRow,
+  );
+}
+
 export async function insertWorkoutSetsWithRepRangeFallback(
   supabase: SupabaseClient,
   payload: WorkoutSetInsertPayload[],
@@ -127,7 +183,7 @@ export async function insertWorkoutSetsWithRepRangeFallback(
     return;
   }
 
-  if (!isMissingRepRangeColumnsError(fullResult.error)) {
+  if (!isMissingWorkoutSetColumnsError(fullResult.error)) {
     throw fullResult.error;
   }
 

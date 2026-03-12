@@ -59,9 +59,33 @@ function formatAccessSource(value: string) {
       return "по подписке";
     case "entitlement":
       return "открыто вручную";
+    case "privileged":
+      return "корневой доступ";
     default:
       return "базовый доступ";
   }
+}
+
+function formatSubscriptionStatus(
+  status: string | null,
+  isPrivilegedAccess: boolean,
+) {
+  if (isPrivilegedAccess) {
+    return "полный доступ super-admin";
+  }
+
+  return status ?? "нет";
+}
+
+function formatSubscriptionProvider(
+  provider: string | null,
+  isPrivilegedAccess: boolean,
+) {
+  if (isPrivilegedAccess) {
+    return "встроенный административный доступ";
+  }
+
+  return provider ?? "не задан";
 }
 
 function formatReviewStatus(value: string) {
@@ -200,9 +224,16 @@ export function SettingsBillingCenter({
     () => Object.values(accessState.features),
     [accessState.features],
   );
-  const blockedFeatures = featureCards.filter((feature) => !feature.allowed);
+  const blockedFeatures = useMemo(
+    () => featureCards.filter((feature) => !feature.allowed),
+    [featureCards],
+  );
+  const blockedFeatureKeys = useMemo(
+    () => blockedFeatures.map((feature) => feature.featureKey),
+    [blockedFeatures],
+  );
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>(
-    blockedFeatures.map((feature) => feature.featureKey),
+    blockedFeatureKeys,
   );
   const access = accessState;
   const billingReturnState = searchParams.get("billing");
@@ -216,6 +247,7 @@ export function SettingsBillingCenter({
         )
       : 0;
   const checkoutRetryEnabled = checkoutRetriesRemaining > 0;
+  const isPrivilegedAccess = access.subscription.isPrivilegedAccess;
 
   const applyBillingCenterData = useCallback(
     (data: SettingsBillingCenterResponseData, successMessage?: string) => {
@@ -357,15 +389,22 @@ export function SettingsBillingCenter({
   );
 
   useEffect(() => {
-    const blockedFeatureKeys = blockedFeatures.map((feature) => feature.featureKey);
     const blockedFeatureKeySet = new Set<string>(blockedFeatureKeys);
 
     setSelectedFeatures((current) => {
       const next = current.filter((featureKey) => blockedFeatureKeySet.has(featureKey));
+      const fallback = next.length ? next : blockedFeatureKeys;
 
-      return next.length ? next : blockedFeatureKeys;
+      if (
+        current.length === fallback.length &&
+        current.every((featureKey, index) => featureKey === fallback[index])
+      ) {
+        return current;
+      }
+
+      return fallback;
     });
-  }, [blockedFeatures]);
+  }, [blockedFeatureKeys]);
 
   useEffect(() => {
     if (!billingReturnState || hasHandledReturnState) {
@@ -599,7 +638,11 @@ export function SettingsBillingCenter({
                 </p>
               </div>
               <span className="pill">
-                {access.subscription.isActive ? "активен" : "без подписки"}
+                {isPrivilegedAccess
+                  ? "super-admin"
+                  : access.subscription.isActive
+                    ? "активен"
+                    : "без подписки"}
               </span>
             </div>
 
@@ -608,13 +651,19 @@ export function SettingsBillingCenter({
                 <p>
                   Статус:{" "}
                   <span className="text-foreground">
-                    {access.subscription.status ?? "нет"}
+                    {formatSubscriptionStatus(
+                      access.subscription.status,
+                      isPrivilegedAccess,
+                    )}
                   </span>
                 </p>
                 <p className="mt-1">
                   Провайдер:{" "}
                   <span className="text-foreground">
-                    {access.subscription.provider ?? "не задан"}
+                    {formatSubscriptionProvider(
+                      access.subscription.provider,
+                      isPrivilegedAccess,
+                    )}
                   </span>
                 </p>
               </div>
@@ -635,7 +684,12 @@ export function SettingsBillingCenter({
             </div>
 
             <div className="mt-4 flex flex-wrap gap-3">
-              {access.subscription.isActive ? (
+              {isPrivilegedAccess ? (
+                <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-3 text-sm text-emerald-900">
+                  Для основного super-admin все AI и premium-функции платформы
+                  открыты постоянно и не зависят от подписки.
+                </div>
+              ) : access.subscription.isActive ? (
                 <button
                   className="rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                   disabled={!stripe.portalReady || isPending}
@@ -665,7 +719,7 @@ export function SettingsBillingCenter({
                 </button>
               )}
 
-              {!access.subscription.isActive ? (
+              {!isPrivilegedAccess && !access.subscription.isActive ? (
                 <span className="rounded-full border border-border px-4 py-3 text-xs font-semibold text-muted">
                   Расширенный доступ нужен для AI-плана питания, AI-плана тренировок
                   и анализа фото еды.
@@ -673,7 +727,7 @@ export function SettingsBillingCenter({
               ) : null}
             </div>
 
-            {!stripe.checkoutReady || !stripe.portalReady ? (
+            {!isPrivilegedAccess && (!stripe.checkoutReady || !stripe.portalReady) ? (
               <div className="mt-4 rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800">
                 Платёжный модуль ещё не настроен полностью, поэтому оплата или
                 управление подпиской могут быть временно недоступны.

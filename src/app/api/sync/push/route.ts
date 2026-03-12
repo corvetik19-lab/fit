@@ -4,6 +4,7 @@ import { createApiErrorResponse } from "@/lib/api/error-response";
 import { logger } from "@/lib/logger";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import {
+  updateWorkoutDayExecution,
   updateWorkoutDayStatus,
   updateWorkoutSetActualReps,
 } from "@/lib/workout/execution";
@@ -19,6 +20,19 @@ const workoutDayStatusMutationSchema = z.object({
   createdAt: z.string().min(1),
 });
 
+const workoutDayExecutionMutationSchema = z.object({
+  id: z.string().min(1),
+  entity: z.literal("workout_day_execution"),
+  op: z.literal("update"),
+  payload: z.object({
+    dayId: z.string().uuid(),
+    status: z.enum(["planned", "in_progress", "done"]),
+    bodyWeightKg: z.number().min(0).max(500).nullable(),
+    sessionNote: z.string().max(4000).nullable(),
+  }),
+  createdAt: z.string().min(1),
+});
+
 const workoutSetActualRepsMutationSchema = z.object({
   id: z.string().min(1),
   entity: z.literal("workout_set_actual_reps"),
@@ -27,12 +41,17 @@ const workoutSetActualRepsMutationSchema = z.object({
     dayId: z.string().uuid(),
     setId: z.string().uuid(),
     actualReps: z.number().int().min(0).max(500).nullable(),
+    actualWeightKg: z.number().min(0).max(1000).nullable(),
+    actualRpe: z.number().min(1).max(10).nullable(),
+    restSeconds: z.number().int().min(0).max(3600).nullable(),
+    setNote: z.string().max(1000).nullable(),
   }),
   createdAt: z.string().min(1),
 });
 
 const syncMutationSchema = z.discriminatedUnion("entity", [
   workoutDayStatusMutationSchema,
+  workoutDayExecutionMutationSchema,
   workoutSetActualRepsMutationSchema,
 ]);
 
@@ -84,12 +103,55 @@ export async function POST(request: Request) {
           }
         }
 
+        if (mutation.entity === "workout_day_execution") {
+          const result = await updateWorkoutDayStatus(
+            supabase,
+            user.id,
+            mutation.payload.dayId,
+            mutation.payload.status,
+          );
+
+          if (result.error) {
+            processed.push({
+              id: mutation.id,
+              status: "rejected",
+              code: result.error.code,
+              message: result.error.message,
+            });
+            continue;
+          }
+
+          const executionResult = await updateWorkoutDayExecution(
+            supabase,
+            user.id,
+            mutation.payload.dayId,
+            {
+              bodyWeightKg: mutation.payload.bodyWeightKg,
+              sessionNote: mutation.payload.sessionNote,
+            },
+          );
+
+          if (executionResult.error) {
+            processed.push({
+              id: mutation.id,
+              status: "rejected",
+              code: executionResult.error.code,
+              message: executionResult.error.message,
+            });
+            continue;
+          }
+        }
+
         if (mutation.entity === "workout_set_actual_reps") {
           const result = await updateWorkoutSetActualReps(
             supabase,
             user.id,
             mutation.payload.setId,
             mutation.payload.actualReps,
+            mutation.payload.actualWeightKg,
+            mutation.payload.actualRpe,
+            mutation.payload.restSeconds,
+            mutation.payload.setNote,
           );
 
           if (result.error) {

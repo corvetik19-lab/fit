@@ -2,7 +2,7 @@
 
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
-import { startTransition, useState } from "react";
+import { startTransition, useState, type FormEvent } from "react";
 
 import { createClient } from "@/lib/supabase/browser";
 
@@ -22,7 +22,8 @@ export function AuthForm() {
   const [notice, setNotice] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
 
-  function submit() {
+  function submit(event?: FormEvent<HTMLFormElement>) {
+    event?.preventDefault();
     setError(null);
     setNotice(null);
     setIsPending(true);
@@ -114,7 +115,7 @@ export function AuthForm() {
         </div>
       </div>
 
-      <div className="grid gap-4">
+      <form className="grid gap-4" onSubmit={submit}>
         {mode === "sign-up" ? (
           <label className="grid gap-2 text-sm text-muted">
             Имя
@@ -151,37 +152,36 @@ export function AuthForm() {
             value={password}
           />
         </label>
-      </div>
 
-      {error ? (
-        <p className="mt-4 rounded-2xl border border-red-300/60 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
-        </p>
-      ) : null}
+        {error ? (
+          <p className="rounded-2xl border border-red-300/60 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {error}
+          </p>
+        ) : null}
 
-      {notice ? (
-        <p className="mt-4 rounded-2xl border border-emerald-300/60 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-          {notice}
-        </p>
-      ) : null}
+        {notice ? (
+          <p className="rounded-2xl border border-emerald-300/60 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+            {notice}
+          </p>
+        ) : null}
 
-      <button
-        className="mt-6 rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-        disabled={
-          isPending ||
-          !email.trim() ||
-          !password.trim() ||
-          (mode === "sign-up" && !fullName.trim())
-        }
-        onClick={submit}
-        type="button"
-      >
-        {isPending
-          ? "Обработка..."
-          : mode === "sign-up"
-            ? "Создать аккаунт"
-            : "Войти"}
-      </button>
+        <button
+          className="mt-2 rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+          disabled={
+            isPending ||
+            !email.trim() ||
+            !password.trim() ||
+            (mode === "sign-up" && !fullName.trim())
+          }
+          type="submit"
+        >
+          {isPending
+            ? "Обработка..."
+            : mode === "sign-up"
+              ? "Создать аккаунт"
+              : "Войти"}
+        </button>
+      </form>
     </div>
   );
 }

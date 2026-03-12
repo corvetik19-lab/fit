@@ -48,13 +48,15 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const isVercelRuntime = process.env.VERCEL === "1";
+
   return (
     <html lang="ru">
       <body className={`${sans.variable} ${mono.variable} antialiased`}>
         <ServiceWorkerRegistration />
         {children}
-        <Analytics />
-        <SpeedInsights />
+        {isVercelRuntime ? <Analytics /> : null}
+        {isVercelRuntime ? <SpeedInsights /> : null}
       </body>
     </html>
   );

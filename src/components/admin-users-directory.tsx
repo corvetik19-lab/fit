@@ -221,26 +221,26 @@ const dateTimeFormatter = new Intl.DateTimeFormat("ru-RU", {
 });
 
 const roleLabels: Record<NonNullable<AdminRole> | "user", string> = {
-  super_admin: "РЎСѓРїРµСЂ-Р°РґРјРёРЅ",
-  support_admin: "РџРѕРґРґРµСЂР¶РєР°",
-  analyst: "РђРЅР°Р»РёС‚РёРє",
-  user: "РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ",
+  super_admin: "Супер-админ",
+  support_admin: "Поддержка",
+  analyst: "Аналитик",
+  user: "Пользователь",
 };
 
 const activityLabels: Record<ActivityBucket, string> = {
-  today: "РђРєС‚РёРІРµРЅ СЃРµРіРѕРґРЅСЏ",
-  seven_days: "РђРєС‚РёРІРµРЅ 7 РґРЅРµР№",
-  thirty_days: "РђРєС‚РёРІРµРЅ 30 РґРЅРµР№",
-  stale: "РўРёС€РёРЅР° 30+ РґРЅРµР№",
-  never: "РќРµС‚ СЃРёРіРЅР°Р»РѕРІ",
+  today: "Активен сегодня",
+  seven_days: "Активен 7 дней",
+  thirty_days: "Активен 30 дней",
+  stale: "Тишина 30+ дней",
+  never: "Нет сигналов",
 };
 
 const activitySourceLabels: Record<Exclude<ActivitySource, null>, string> = {
   workout: "тренировки",
   nutrition: "питание",
   ai: "AI",
-  auth: "Р°РІС‚РѕСЂРёР·Р°С†РёСЏ",
-  profile: "РїСЂРѕС„РёР»СЊ",
+  auth: "авторизация",
+  profile: "профиль",
 };
 
 const activityToneClasses: Record<ActivityBucket, string> = {
@@ -253,7 +253,7 @@ const activityToneClasses: Record<ActivityBucket, string> = {
 
 function formatDate(value: string | null) {
   if (!value) {
-    return "РќРµС‚ РґР°РЅРЅС‹С…";
+    return "Нет данных";
   }
 
   return createdAtFormatter.format(new Date(value));
@@ -261,7 +261,7 @@ function formatDate(value: string | null) {
 
 function formatDateTime(value: string | null) {
   if (!value) {
-    return "РќРµС‚ РґР°РЅРЅС‹С…";
+    return "Нет данных";
   }
 
   return dateTimeFormatter.format(new Date(value));
@@ -269,7 +269,7 @@ function formatDateTime(value: string | null) {
 
 function formatStatus(value: string | null) {
   if (!value) {
-    return "РЅРµС‚";
+    return "нет";
   }
 
   return value.replaceAll("_", " ");
@@ -389,7 +389,7 @@ export function AdminUsersDirectory({
 
         if (!response.ok) {
           if (isActive) {
-            setError(payload?.message ?? "РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РіСЂСѓР·РёС‚СЊ РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№.");
+            setError(payload?.message ?? "Не удалось загрузить пользователей.");
             setUsers([]);
             setCatalogSummary(emptySummary);
             setSegments(emptySegments);
@@ -446,12 +446,12 @@ export function AdminUsersDirectory({
     visibleUserIds.length > 0 &&
     visibleUserIds.every((id) => selectedUserIds.includes(id));
   const activeFilterSummary = [
-    searchQuery.trim() ? `РџРѕРёСЃРє: ${searchQuery.trim()}` : null,
-    roleFilter !== "all" ? `Р РѕР»СЊ: ${roleLabels[roleFilter] ?? roleFilter}` : null,
+    searchQuery.trim() ? `Поиск: ${searchQuery.trim()}` : null,
+    roleFilter !== "all" ? `Роль: ${roleLabels[roleFilter] ?? roleFilter}` : null,
     activityFilter !== "all"
-      ? `РђРєС‚РёРІРЅРѕСЃС‚СЊ: ${activityFilter.replaceAll("_", " ")}`
+      ? `Активность: ${activityFilter.replaceAll("_", " ")}`
       : null,
-    sortKey !== "created_desc" ? `РЎРѕСЂС‚РёСЂРѕРІРєР°: ${sortKey.replaceAll("_", " ")}` : null,
+    sortKey !== "created_desc" ? `Сортировка: ${sortKey.replaceAll("_", " ")}` : null,
   ].filter((item): item is string => Boolean(item));
 
   function toggleUserSelection(userId: string) {
@@ -535,7 +535,7 @@ export function AdminUsersDirectory({
   if (isLoading) {
     return (
       <section className="card p-6">
-        <p className="text-sm text-muted">Р—Р°РіСЂСѓР¶Р°СЋ РѕРїРµСЂР°С†РёРѕРЅРЅСѓСЋ РїР°РЅРµР»СЊ РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№...</p>
+        <p className="text-sm text-muted">Загружаю операционную панель пользователей...</p>
       </section>
     );
   }
@@ -556,8 +556,8 @@ export function AdminUsersDirectory({
         <div className="space-y-5">
           <div className="flex flex-wrap gap-2">
             <span className="pill">Пользователи</span>
-            <span className="pill">РљР°С‚Р°Р»РѕРі: {summary.total}</span>
-            <span className="pill">Р РѕР»СЊ: {roleLabels[currentAdminRole] ?? currentAdminRole}</span>
+            <span className="pill">Каталог: {summary.total}</span>
+            <span className="pill">Роль: {roleLabels[currentAdminRole] ?? currentAdminRole}</span>
             {canRunBulkActions ? <span className="pill">Полный root-доступ</span> : null}
           </div>
 
@@ -577,7 +577,7 @@ export function AdminUsersDirectory({
               onClick={() => setReloadToken((value) => value + 1)}
               type="button"
             >
-              РћР±РЅРѕРІРёС‚СЊ РєР°С‚Р°Р»РѕРі
+              Обновить каталог
             </button>
             {isFiltered ? (
               <button
@@ -590,7 +590,7 @@ export function AdminUsersDirectory({
                 }}
                 type="button"
               >
-                РЎР±СЂРѕСЃРёС‚СЊ С„РёР»СЊС‚СЂС‹
+                Сбросить фильтры
               </button>
             ) : null}
           </div>
@@ -598,8 +598,8 @@ export function AdminUsersDirectory({
 
         <div className="grid gap-3 sm:grid-cols-2">
           <DirectoryMetricCard
-            detail="Р°РєС‚РёРІРЅС‹Рµ РїСЂРѕС„РёР»Рё РІ С‚РµРєСѓС‰РµРј РїСЂРµРґСЃС‚Р°РІР»РµРЅРёРё"
-            label="Р’РёРґРёРјС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№"
+            detail="активные профили в текущем представлении"
+            label="Видимых пользователей"
             value={String(summary.total)}
           />
           <DirectoryMetricCard
@@ -627,7 +627,7 @@ export function AdminUsersDirectory({
               Фильтры
             </p>
             <h3 className="mt-2 text-xl font-semibold text-foreground">
-              Р‘С‹СЃС‚СЂС‹Р№ РѕС‚Р±РѕСЂ РїРѕ СЂРѕР»Рё, Р°РєС‚РёРІРЅРѕСЃС‚Рё Рё СЂРёСЃРєСѓ
+              Быстрый отбор по роли, активности и риску
             </h3>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -638,7 +638,7 @@ export function AdminUsersDirectory({
                 </span>
               ))
             ) : (
-              <span className="pill">Р‘РµР· РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹С… С„РёР»СЊС‚СЂРѕРІ</span>
+              <span className="pill">Без дополнительных фильтров</span>
             )}
           </div>
         </div>
@@ -649,14 +649,14 @@ export function AdminUsersDirectory({
           <input
             className="w-full rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15"
             onChange={(event) => setSearchQuery(event.target.value)}
-            placeholder="РќР°РїСЂРёРјРµСЂ: corvetik1@yandex.ru"
+            placeholder="Например: corvetik1@yandex.ru"
             type="text"
             value={searchQuery}
           />
         </label>
 
         <label className="grid gap-2 text-sm text-muted">
-          Р РѕР»СЊ
+          Роль
           <select
             className="w-full rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15"
             onChange={(event) =>
@@ -671,42 +671,42 @@ export function AdminUsersDirectory({
             }
             value={roleFilter}
           >
-            <option value="all">Р’СЃРµ СЂРѕР»Рё</option>
-            <option value="super_admin">РЎСѓРїРµСЂ-Р°РґРјРёРЅ</option>
-            <option value="support_admin">РџРѕРґРґРµСЂР¶РєР°</option>
-            <option value="analyst">РђРЅР°Р»РёС‚РёРє</option>
-            <option value="user">РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ</option>
+            <option value="all">Все роли</option>
+            <option value="super_admin">Супер-админ</option>
+            <option value="support_admin">Поддержка</option>
+            <option value="analyst">Аналитик</option>
+            <option value="user">Пользователь</option>
           </select>
         </label>
 
         <label className="grid gap-2 text-sm text-muted">
-          РђРєС‚РёРІРЅРѕСЃС‚СЊ
+          Активность
           <select
             className="w-full rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15"
             onChange={(event) => setActivityFilter(event.target.value as ActivityFilter)}
             value={activityFilter}
           >
-            <option value="all">Р’СЃРµ СЃРёРіРЅР°Р»С‹</option>
-            <option value="active_7d">РђРєС‚РёРІРЅС‹ Р·Р° 7 РґРЅРµР№</option>
-            <option value="idle_30d">РўРёС€РёРЅР° 30+ РґРЅРµР№</option>
-            <option value="never_signed_in">Р‘РµР· РІС…РѕРґРѕРІ</option>
+            <option value="all">Все сигналы</option>
+            <option value="active_7d">Активны за 7 дней</option>
+            <option value="idle_30d">Тишина 30+ дней</option>
+            <option value="never_signed_in">Без входов</option>
             <option value="backlog">Только с очередью</option>
-            <option value="paid">РЎ Р°РєС‚РёРІРЅРѕР№ РїРѕРґРїРёСЃРєРѕР№</option>
+            <option value="paid">С активной подпиской</option>
           </select>
         </label>
 
         <label className="grid gap-2 text-sm text-muted">
-          РЎРѕСЂС‚РёСЂРѕРІРєР°
+          Сортировка
           <select
             className="w-full rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15"
             onChange={(event) => setSortKey(event.target.value as AdminUsersSortKey)}
             value={sortKey}
           >
-            <option value="created_desc">РЎРЅР°С‡Р°Р»Р° РЅРѕРІС‹Рµ</option>
-            <option value="activity_desc">РџРѕ Р°РєС‚РёРІРЅРѕСЃС‚Рё</option>
-            <option value="sign_in_desc">РџРѕ РїРѕСЃР»РµРґРЅРµРјСѓ РІС…РѕРґСѓ</option>
+            <option value="created_desc">Сначала новые</option>
+            <option value="activity_desc">По активности</option>
+            <option value="sign_in_desc">По последнему входу</option>
             <option value="workout_desc">По тренировкам</option>
-            <option value="ai_desc">РџРѕ AI-СЃРёРіРЅР°Р»Р°Рј</option>
+            <option value="ai_desc">По AI-сигналам</option>
             <option value="backlog_desc">По очереди и подписке</option>
           </select>
         </label>
@@ -714,15 +714,15 @@ export function AdminUsersDirectory({
 
       <div className="mt-5 grid gap-3 sm:grid-cols-2 2xl:grid-cols-6">
         {[
-          ["РќР°Р№РґРµРЅРѕ", String(summary.total), "РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№ РїРѕ С‚РµРєСѓС‰РµРјСѓ СЃСЂРµР·Сѓ"],
-          ["РђРєС‚РёРІРЅС‹ 7 РґРЅРµР№", String(summary.active7d), "Р¶РёРІР°СЏ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєР°СЏ Р°РєС‚РёРІРЅРѕСЃС‚СЊ"],
+          ["Найдено", String(summary.total), "пользователей по текущему срезу"],
+          ["Активны 7 дней", String(summary.active7d), "живая пользовательская активность"],
           ["С очередью", String(summary.backlog), "поддержка, выгрузка и удаление"],
           ["Без входов", String(summary.neverSignedIn), "аккаунты без авторизации"],
           ["Платящие", String(summary.paid), "активная подписка или пробный период"],
           [
             "Админ-аккаунты",
             String(summary.superAdmins + summary.supportAdmins + summary.analysts),
-            "РѕРїРµСЂР°С†РёРѕРЅРЅС‹Р№ РєРѕРЅС‚СѓСЂ РґРѕСЃС‚СѓРїР°",
+            "операционный контур доступа",
           ],
         ].map(([label, value, detail]) => (
           <DirectoryMetricCard
@@ -742,7 +742,7 @@ export function AdminUsersDirectory({
           </p>
           <p className="mt-2 leading-7">
             Единственный <code>super_admin</code> это{" "}
-            <strong>{PRIMARY_SUPER_ADMIN_EMAIL}</strong>. Р’ РєР°С‚Р°Р»РѕРіРµ РјРѕР¶РЅРѕ
+            <strong>{PRIMARY_SUPER_ADMIN_EMAIL}</strong>. В каталоге можно
             назначать только <code>support_admin</code> и <code>analyst</code> для остальных
             пользователей, поэтому основной доступ не потеряется случайно.
           </p>
@@ -765,24 +765,24 @@ export function AdminUsersDirectory({
                 Массовые действия
               </p>
               <h3 className="mt-2 text-lg font-semibold text-foreground">
-                РњР°СЃСЃРѕРІС‹Рµ РґРµР№СЃС‚РІРёСЏ РїРѕ РІС‹Р±СЂР°РЅРЅС‹Рј РїРѕР»СЊР·РѕРІР°С‚РµР»СЏРј
+                Массовые действия по выбранным пользователям
               </h3>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="pill">Р’С‹Р±СЂР°РЅРѕ: {selectedUserIds.length}</span>
+              <span className="pill">Выбрано: {selectedUserIds.length}</span>
               <button
                 className="inline-flex rounded-full border border-border px-3 py-2 text-xs font-semibold text-foreground transition hover:bg-white/70"
                 onClick={toggleVisibleSelection}
                 type="button"
               >
-                {allVisibleSelected ? "РЎРЅСЏС‚СЊ РІРёРґРёРјС‹Рµ" : "Р’С‹Р±СЂР°С‚СЊ РІРёРґРёРјС‹Рµ"}
+                {allVisibleSelected ? "Снять видимые" : "Выбрать видимые"}
               </button>
               <button
                 className="inline-flex rounded-full border border-border px-3 py-2 text-xs font-semibold text-foreground transition hover:bg-white/70"
                 onClick={() => setSelectedUserIds([])}
                 type="button"
               >
-                РћС‡РёСЃС‚РёС‚СЊ
+                Очистить
               </button>
             </div>
           </div>
@@ -939,36 +939,36 @@ export function AdminUsersDirectory({
                 Cohorts
               </p>
               <h3 className="mt-2 text-lg font-semibold text-foreground">
-                Р Р°СЃРїСЂРµРґРµР»РµРЅРёРµ РїРѕ Р°РєС‚РёРІРЅРѕСЃС‚Рё Рё РєР°С‡РµСЃС‚РІСѓ РґР°РЅРЅС‹С…
+                Распределение по активности и качеству данных
               </h3>
             </div>
-            <div className="pill">Р’СЃРµРіРѕ: {catalogSummary.totalUsers}</div>
+            <div className="pill">Всего: {catalogSummary.totalUsers}</div>
           </div>
 
           <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
             {[
               {
-                label: "РЎРµРіРѕРґРЅСЏ",
+                label: "Сегодня",
                 value: catalogSummary.activityBuckets.today,
                 bucket: "today" as ActivityBucket,
               },
               {
-                label: "7 РґРЅРµР№",
+                label: "7 дней",
                 value: catalogSummary.activityBuckets.sevenDays,
                 bucket: "seven_days" as ActivityBucket,
               },
               {
-                label: "30 РґРЅРµР№",
+                label: "30 дней",
                 value: catalogSummary.activityBuckets.thirtyDays,
                 bucket: "thirty_days" as ActivityBucket,
               },
               {
-                label: "30+ РґРЅРµР№",
+                label: "30+ дней",
                 value: catalogSummary.activityBuckets.stale,
                 bucket: "stale" as ActivityBucket,
               },
               {
-                label: "РќРµС‚ СЃРёРіРЅР°Р»РѕРІ",
+                label: "Нет сигналов",
                 value: catalogSummary.activityBuckets.never,
                 bucket: "never" as ActivityBucket,
               },
@@ -1006,8 +1006,8 @@ export function AdminUsersDirectory({
 
           <div className="mt-4 grid gap-3 md:grid-cols-3">
             {[
-              ["Р‘РµР· РїСЂРѕС„РёР»СЏ", catalogSummary.hygiene.withoutProfile],
-              ["Р‘РµР· РІС…РѕРґРѕРІ", catalogSummary.hygiene.neverSignedIn],
+              ["Без профиля", catalogSummary.hygiene.withoutProfile],
+              ["Без входов", catalogSummary.hygiene.neverSignedIn],
               ["Нарушения root-политики", catalogSummary.hygiene.rootPolicyViolations],
             ].map(([label, value]) => (
               <div
@@ -1028,7 +1028,7 @@ export function AdminUsersDirectory({
                 Операции
               </p>
               <h3 className="mt-2 text-lg font-semibold text-foreground">
-                РџСЂРёРѕСЂРёС‚РµС‚С‹ РґР»СЏ super-admin
+                Приоритеты для super-admin
               </h3>
             </div>
             <button
@@ -1069,7 +1069,7 @@ export function AdminUsersDirectory({
                 Приоритет
               </p>
               <h3 className="mt-2 text-lg font-semibold text-foreground">
-                РљРѕРіРѕ РЅСѓР¶РЅРѕ СЂР°Р·Р±РёСЂР°С‚СЊ СЃРµР№С‡Р°СЃ
+                Кого нужно разбирать сейчас
               </h3>
             </div>
             <div className="pill">{segments.priorityQueue.length}</div>
@@ -1131,7 +1131,7 @@ export function AdminUsersDirectory({
                   Риск оплаты
                 </p>
                 <h3 className="mt-2 text-lg font-semibold text-foreground">
-                  РџР»Р°С‚СЏС‰РёРµ Р±РµР· Р°РєС‚РёРІРЅРѕСЃС‚Рё
+                  Платящие без активности
                 </h3>
               </div>
               <button
@@ -1139,7 +1139,7 @@ export function AdminUsersDirectory({
                 onClick={() => setActivityFilter("paid")}
                 type="button"
               >
-                РџРѕРєР°Р·Р°С‚СЊ РїР»Р°С‚СЏС‰РёС…
+                Показать платящих
               </button>
             </div>
 
@@ -1160,17 +1160,17 @@ export function AdminUsersDirectory({
                         {activityLabels[user.activity_bucket]}
                       </span>
                       <span className="pill">
-                        РџРѕРґРїРёСЃРєР°: {formatStatus(user.subscription_status)}
+                        Подписка: {formatStatus(user.subscription_status)}
                       </span>
                       <span className="pill">
-                        РђРєС‚РёРІРЅРѕСЃС‚СЊ: {formatDateTime(user.last_activity_at)}
+                        Активность: {formatDateTime(user.last_activity_at)}
                       </span>
                     </div>
                   </Link>
                 ))
               ) : (
                 <p className="text-sm leading-7 text-muted">
-                  РџР»Р°С‚СЏС‰РёС… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№ Р±РµР· Р°РєС‚РёРІРЅРѕСЃС‚Рё СЃРµР№С‡Р°СЃ РЅРµС‚.
+                  Платящих пользователей без активности сейчас нет.
                 </p>
               )}
             </div>
@@ -1199,12 +1199,12 @@ export function AdminUsersDirectory({
                     <p className="font-semibold text-foreground">{user.display_name}</p>
                     <p className="mt-1 break-all text-muted">{user.email ?? user.user_id}</p>
                     <div className="mt-3 flex flex-wrap gap-2">
-                      <span className="pill">РЎРѕР·РґР°РЅ: {formatDate(user.created_at)}</span>
+                      <span className="pill">Создан: {formatDate(user.created_at)}</span>
                       {user.never_signed_in ? (
-                        <span className="pill">Р‘РµР· РІС…РѕРґРѕРІ</span>
+                        <span className="pill">Без входов</span>
                       ) : null}
                       {!user.has_profile ? (
-                        <span className="pill">Р‘РµР· РїСЂРѕС„РёР»СЏ</span>
+                        <span className="pill">Без профиля</span>
                       ) : null}
                     </div>
                   </Link>
@@ -1221,9 +1221,9 @@ export function AdminUsersDirectory({
                     <p className="font-semibold text-foreground">{user.display_name}</p>
                     <p className="mt-1 break-all text-muted">{user.email ?? user.user_id}</p>
                     <div className="mt-3 flex flex-wrap gap-2">
-                      <span className="pill">РЎРµС‚С‹: {user.logged_sets}</span>
-                      <span className="pill">Р”РЅРё: {user.completed_days}</span>
-                      <span className="pill">РџСЂРѕРіСЂР°РјРјС‹: {user.active_programs}</span>
+                      <span className="pill">Сеты: {user.logged_sets}</span>
+                      <span className="pill">Дни: {user.completed_days}</span>
+                      <span className="pill">Программы: {user.active_programs}</span>
                     </div>
                   </Link>
                 ))}
@@ -1239,7 +1239,7 @@ export function AdminUsersDirectory({
             const roleLabel =
               roleLabels[user.admin_role ?? "user"] ??
               user.admin_role ??
-              "РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ";
+              "Пользователь";
 
             return (
               <article
@@ -1259,7 +1259,7 @@ export function AdminUsersDirectory({
                         className="text-lg font-semibold text-foreground transition hover:text-accent"
                         href={`/admin/users/${user.user_id}` as Route}
                       >
-                        {user.full_name ?? "Р‘РµР· РёРјРµРЅРё"}
+                        {user.full_name ?? "Без имени"}
                       </Link>
                       <p className="mt-1 break-all text-sm text-muted">
                         {user.email ?? "Email не найден"}
@@ -1272,11 +1272,11 @@ export function AdminUsersDirectory({
 
                   <div className="text-left text-sm text-muted sm:text-right">
                     <p className="font-medium text-foreground">{roleLabel}</p>
-                    <p className="mt-2">РЎРѕР·РґР°РЅ</p>
+                    <p className="mt-2">Создан</p>
                     <p className="mt-1 font-medium text-foreground">
                       {formatDate(user.created_at)}
                     </p>
-                    <p className="mt-2">РџРѕСЃР»РµРґРЅРёР№ РІС…РѕРґ</p>
+                    <p className="mt-2">Последний вход</p>
                     <p className="mt-1 font-medium text-foreground">
                       {formatDate(user.last_sign_in_at)}
                     </p>
@@ -1302,17 +1302,17 @@ export function AdminUsersDirectory({
                   ) : null}
                   {user.billing.is_active ? (
                     <span className="rounded-full border border-emerald-300/70 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
-                      РџРѕРґРїРёСЃРєР° Р°РєС‚РёРІРЅР°
+                      Подписка активна
                     </span>
                   ) : null}
                   {user.flags.never_signed_in ? (
                     <span className="rounded-full border border-slate-300/70 bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
-                      Р‘РµР· РІС…РѕРґРѕРІ
+                      Без входов
                     </span>
                   ) : null}
                   {!user.flags.has_profile ? (
                     <span className="rounded-full border border-amber-300/70 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">
-                      Р‘РµР· РїСЂРѕС„РёР»СЏ
+                      Без профиля
                     </span>
                   ) : null}
                 </div>
@@ -1326,10 +1326,10 @@ export function AdminUsersDirectory({
                       {user.workout.logged_sets}
                     </p>
                     <p className="mt-1 text-sm text-muted">
-                      Р»РѕРіРѕРІ СЃРµС‚РѕРІ, {user.workout.completed_days} Р·Р°РІРµСЂС€С‘РЅРЅС‹С… РґРЅРµР№
+                      логов сетов, {user.workout.completed_days} завершённых дней
                     </p>
                     <p className="mt-2 text-xs text-muted">
-                      РђРєС‚РёРІРЅС‹С… РїСЂРѕРіСЂР°РјРј: {user.workout.active_programs}
+                      Активных программ: {user.workout.active_programs}
                     </p>
                   </article>
 
@@ -1340,9 +1340,9 @@ export function AdminUsersDirectory({
                     <p className="mt-2 text-xl font-semibold text-foreground">
                       {user.nutrition.meals}
                     </p>
-                    <p className="mt-1 text-sm text-muted">Р»РѕРіРѕРІ РїСЂРёС‘РјРѕРІ РїРёС‰Рё</p>
+                    <p className="mt-1 text-sm text-muted">логов приёмов пищи</p>
                     <p className="mt-2 text-xs text-muted">
-                      РџРѕСЃР»РµРґРЅРёР№ приём: {formatDateTime(user.nutrition.last_meal_at)}
+                      Последний приём: {formatDateTime(user.nutrition.last_meal_at)}
                     </p>
                   </article>
 
@@ -1353,7 +1353,7 @@ export function AdminUsersDirectory({
                     <p className="mt-2 text-xl font-semibold text-foreground">
                       {user.ai.messages}
                     </p>
-                    <p className="mt-1 text-sm text-muted">СЃРѕРѕР±С‰РµРЅРёР№ Рё AI-СЃРёРіРЅР°Р»РѕРІ</p>
+                    <p className="mt-1 text-sm text-muted">сообщений и AI-сигналов</p>
                     <p className="mt-2 text-xs text-muted">
                       Последний AI-сигнал: {formatDateTime(user.ai.last_ai_at)}
                     </p>
@@ -1379,7 +1379,7 @@ export function AdminUsersDirectory({
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border/70 pt-4 text-sm text-muted">
                   <div className="flex flex-wrap gap-4">
                     <span>
-                      РџРѕСЃР»РµРґРЅСЏСЏ Р°РєС‚РёРІРЅРѕСЃС‚СЊ:{" "}
+                      Последняя активность:{" "}
                       <strong className="text-foreground">
                         {formatDateTime(
                           user.activity.last_activity_at ?? user.last_sign_in_at,
@@ -1387,22 +1387,22 @@ export function AdminUsersDirectory({
                       </strong>
                     </span>
                     <span>
-                      РСЃС‚РѕС‡РЅРёРє:{" "}
+                      Источник:{" "}
                       <strong className="text-foreground">
                         {user.activity.source
                           ? activitySourceLabels[user.activity.source]
-                          : "РЅРµС‚ РґР°РЅРЅС‹С…"}
+                          : "нет данных"}
                       </strong>
                     </span>
                     <span>
-                      РџРѕРґРїРёСЃРєР°:{" "}
+                      Подписка:{" "}
                       <strong className="text-foreground">
                         {formatStatus(user.billing.subscription_status)}
                       </strong>
                     </span>
                     {user.billing.subscription_provider ? (
                       <span>
-                        РџСЂРѕРІР°Р№РґРµСЂ:{" "}
+                        Провайдер:{" "}
                         <strong className="text-foreground">
                           {user.billing.subscription_provider}
                         </strong>
@@ -1422,7 +1422,7 @@ export function AdminUsersDirectory({
                     className="inline-flex rounded-full border border-border px-4 py-2 font-semibold text-foreground transition hover:bg-white/70"
                     href={`/admin/users/${user.user_id}` as Route}
                   >
-                    РћС‚РєСЂС‹С‚СЊ РєР°СЂС‚РѕС‡РєСѓ
+                    Открыть карточку
                   </Link>
                 </div>
               </article>
@@ -1431,8 +1431,8 @@ export function AdminUsersDirectory({
         ) : (
           <p className="text-sm leading-7 text-muted">
             {isFiltered
-              ? "РџРѕ С‚РµРєСѓС‰РµРјСѓ РїРѕРёСЃРєСѓ Рё С„РёР»СЊС‚СЂР°Рј РЅРёС‡РµРіРѕ РЅРµ РЅР°Р№РґРµРЅРѕ."
-              : "Р’ РїСЂРѕС„РёР»СЏС… РїРѕРєР° РЅРµС‚ РґР°РЅРЅС‹С…. РљР°Рє С‚РѕР»СЊРєРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»Рё РїСЂРѕР№РґСѓС‚ РѕРЅР±РѕСЂРґРёРЅРі Рё РЅР°С‡РЅСѓС‚ Р°РєС‚РёРІРЅРѕСЃС‚СЊ, РѕРЅРё РїРѕСЏРІСЏС‚СЃСЏ Р·РґРµСЃСЊ."}
+              ? "По текущему поиску и фильтрам ничего не найдено."
+              : "В профилях пока нет данных. Как только пользователи пройдут онбординг и начнут активность, они появятся здесь."}
           </p>
         )}
       </div>

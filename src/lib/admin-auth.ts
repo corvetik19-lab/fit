@@ -6,6 +6,13 @@ import {
 } from "@/lib/admin-permissions";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
+const ROOT_ONLY_CAPABILITIES: AdminCapability[] = [
+  "manage_admin_roles",
+  "manage_billing",
+  "bulk_manage_users",
+  "run_admin_jobs",
+];
+
 export class AdminAccessError extends Error {
   code: string;
   status: number;
@@ -28,6 +35,8 @@ function getRootOnlyCapabilityMessage(capability: AdminCapability) {
       return "Управлять billing и entitlements может только основной super-admin.";
     case "bulk_manage_users":
       return "Запускать bulk-операции по пользователям может только основной super-admin.";
+    case "run_admin_jobs":
+      return "Запускать внутренние admin jobs может только основной super-admin.";
     case "manage_admin_roles":
     default:
       return "Управлять admin-ролями может только основной super-admin.";
@@ -62,9 +71,7 @@ export async function requireAdminRouteAccess(capability?: AdminCapability) {
 
   if (
     capability &&
-    ["manage_admin_roles", "manage_billing", "bulk_manage_users"].includes(
-      capability,
-    ) &&
+    ROOT_ONLY_CAPABILITIES.includes(capability) &&
     !canUseRootAdminControls(role, user.email ?? null)
   ) {
     throw new AdminAccessError(

@@ -216,6 +216,10 @@ export async function POST(request: Request) {
             planned_reps_min: repRangePreset.min,
             planned_reps_max: repRangePreset.max,
             actual_reps: null,
+            actual_weight_kg: null,
+            actual_rpe: null,
+            rest_seconds: null,
+            set_note: null,
           }),
         );
 

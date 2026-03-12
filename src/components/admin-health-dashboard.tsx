@@ -8,6 +8,10 @@ type AdminStatsPayload = {
   readiness: {
     supabasePublicEnv: boolean;
     aiGatewayEnv: boolean;
+    aiRuntimeEnv: boolean;
+    aiEmbeddingEnv: boolean;
+    openRouterEnv: boolean;
+    voyageEnv: boolean;
     serviceRoleEnv: boolean;
     sentryRuntimeEnv: boolean;
     sentryBuildEnv: boolean;
@@ -31,6 +35,16 @@ type AdminStatsPayload = {
       webhookMissing: string[];
       priceId: string | null;
     };
+    ai: {
+      gatewayEnabled: boolean;
+      runtimeEnabled: boolean;
+      embeddingEnabled: boolean;
+      openRouterEnabled: boolean;
+      voyageEnabled: boolean;
+      openRouterBaseUrl: string | null;
+      openRouterModel: string | null;
+      voyageModel: string | null;
+    };
     vercel: {
       environment: string | null;
     };
@@ -43,6 +57,17 @@ type AdminStatsPayload = {
     knowledgeEmbeddings: number;
     latestProfileAt: string | null;
     latestProgramAt: string | null;
+  };
+  knowledgeHealth: {
+    runtimeSnapshots: number;
+    structuredFactSheets: number;
+    structuredFacts: number;
+    recentReindexes24h: number;
+    embeddingCoverageRatio: number | null;
+    latestRuntimeSnapshotAt: string | null;
+    latestReindexAt: string | null;
+    latestReindexMode: "embeddings" | "full" | null;
+    latestReindexSearchMode: "text" | "vector" | null;
   };
   syncHealth: {
     workoutDaysInProgress: number;
@@ -71,8 +96,11 @@ type AdminStatsPayload = {
     stripeLinkedCustomers: number;
     queuedBillingReviews: number;
     completedBillingReviews: number;
+    recentBillingReconciles: number;
+    failedBillingReconciles: number;
     recentCheckoutReturnReconciles: number;
     latestBillingReviewAt: string | null;
+    latestBillingReconcileAt: string | null;
     latestStripeEventAt: string | null;
     latestCheckoutReturnReconcileAt: string | null;
   };
@@ -95,7 +123,55 @@ type SmokeTestResponse =
     }
   | null;
 
+type DashboardWarmJobResponse =
+  | {
+      data?: {
+        errorCount: number;
+        processedUsers: number;
+        successCount: number;
+      };
+      message?: string;
+    }
+  | null;
+
+type NutritionSummariesJobResponse =
+  | {
+      data?: {
+        days: number;
+        errorCount: number;
+        processedUsers: number;
+        successCount: number;
+      };
+      message?: string;
+    }
+  | null;
+
+type KnowledgeReindexJobResponse =
+  | {
+      data?: {
+        errorCount: number;
+        mode: "embeddings" | "full";
+        processedUsers: number;
+        successCount: number;
+      };
+      message?: string;
+    }
+  | null;
+
+type BillingReconcileJobResponse =
+  | {
+      data?: {
+        errorCount: number;
+        processedUsers: number;
+        skippedCount: number;
+        successCount: number;
+      };
+      message?: string;
+    }
+  | null;
+
 type AdminHealthDashboardProps = {
+  canRunAdminJobs: boolean;
   canTriggerSentrySmokeTest: boolean;
 };
 
@@ -124,6 +200,38 @@ function formatMissingEnv(keys: string[]) {
   return keys.length ? keys.join(", ") : "всё настроено";
 }
 
+function formatPercent(value: number | null) {
+  if (value === null) {
+    return "нет данных";
+  }
+
+  return `${Math.round(value * 100)}%`;
+}
+
+function formatReindexMode(value: "embeddings" | "full" | null) {
+  if (value === "embeddings") {
+    return "только embeddings";
+  }
+
+  if (value === "full") {
+    return "полный rebuild";
+  }
+
+  return "нет данных";
+}
+
+function formatSearchMode(value: "text" | "vector" | null) {
+  if (value === "text") {
+    return "text fallback";
+  }
+
+  if (value === "vector") {
+    return "vector search";
+  }
+
+  return "нет данных";
+}
+
 async function readStatsJson(response: Response) {
   return (await response.json().catch(() => null)) as AdminStatsResponse;
 }
@@ -132,14 +240,46 @@ async function readSmokeTestJson(response: Response) {
   return (await response.json().catch(() => null)) as SmokeTestResponse;
 }
 
+async function readDashboardWarmJobJson(response: Response) {
+  return (await response.json().catch(() => null)) as DashboardWarmJobResponse;
+}
+
+async function readNutritionSummariesJobJson(response: Response) {
+  return (await response.json().catch(() => null)) as NutritionSummariesJobResponse;
+}
+
+async function readKnowledgeReindexJobJson(response: Response) {
+  return (await response.json().catch(() => null)) as KnowledgeReindexJobResponse;
+}
+
+async function readBillingReconcileJobJson(response: Response) {
+  return (await response.json().catch(() => null)) as BillingReconcileJobResponse;
+}
+
 export function AdminHealthDashboard({
+  canRunAdminJobs,
   canTriggerSentrySmokeTest,
 }: AdminHealthDashboardProps) {
   const [stats, setStats] = useState<AdminStatsPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSendingSmokeTest, setIsSendingSmokeTest] = useState(false);
+  const [isWarmingSnapshots, setIsWarmingSnapshots] = useState(false);
+  const [isRefreshingNutritionSummaries, setIsRefreshingNutritionSummaries] =
+    useState(false);
+  const [isRefreshingKnowledge, setIsRefreshingKnowledge] = useState(false);
+  const [isRefreshingBilling, setIsRefreshingBilling] = useState(false);
   const [smokeTestMessage, setSmokeTestMessage] = useState<string | null>(null);
+  const [dashboardWarmMessage, setDashboardWarmMessage] = useState<string | null>(null);
+  const [nutritionSummariesMessage, setNutritionSummariesMessage] = useState<
+    string | null
+  >(null);
+  const [knowledgeReindexMessage, setKnowledgeReindexMessage] = useState<
+    string | null
+  >(null);
+  const [billingReconcileMessage, setBillingReconcileMessage] = useState<
+    string | null
+  >(null);
 
   const refreshStats = useCallback(async () => {
     setIsRefreshing(true);
@@ -194,9 +334,131 @@ export function AdminHealthDashboard({
     }
   }, [refreshStats]);
 
+  const runDashboardWarmJob = useCallback(async () => {
+    setIsWarmingSnapshots(true);
+    setDashboardWarmMessage(null);
+
+    try {
+      const response = await fetch("/api/internal/jobs/dashboard-warm?limit=25", {
+        method: "POST",
+      });
+      const payload = await readDashboardWarmJobJson(response);
+
+      if (!response.ok) {
+        setDashboardWarmMessage(
+          payload?.message ?? "Не удалось прогреть dashboard snapshots.",
+        );
+        return;
+      }
+
+      setDashboardWarmMessage(
+        payload?.data
+          ? `Прогрев завершён: ${payload.data.successCount} из ${payload.data.processedUsers} пользователей обновлены.`
+          : "Прогрев snapshots завершён.",
+      );
+      await refreshStats();
+    } finally {
+      setIsWarmingSnapshots(false);
+    }
+  }, [refreshStats]);
+
+  const runNutritionSummariesJob = useCallback(async () => {
+    setIsRefreshingNutritionSummaries(true);
+    setNutritionSummariesMessage(null);
+
+    try {
+      const response = await fetch(
+        "/api/internal/jobs/nutrition-summaries?limit=25&days=3",
+        {
+          method: "POST",
+        },
+      );
+      const payload = await readNutritionSummariesJobJson(response);
+
+      if (!response.ok) {
+        setNutritionSummariesMessage(
+          payload?.message ?? "Не удалось пересчитать nutrition summaries.",
+        );
+        return;
+      }
+
+      setNutritionSummariesMessage(
+        payload?.data
+          ? `Сводки пересчитаны: ${payload.data.successCount} из ${payload.data.processedUsers} пользователей за ${payload.data.days} дня.`
+          : "Nutrition summaries пересчитаны.",
+      );
+      await refreshStats();
+    } finally {
+      setIsRefreshingNutritionSummaries(false);
+    }
+  }, [refreshStats]);
+
+  const runKnowledgeReindexJob = useCallback(async () => {
+    setIsRefreshingKnowledge(true);
+    setKnowledgeReindexMessage(null);
+
+    try {
+      const response = await fetch(
+        "/api/internal/jobs/knowledge-reindex?limit=20&mode=embeddings",
+        {
+          method: "POST",
+        },
+      );
+      const payload = await readKnowledgeReindexJobJson(response);
+
+      if (!response.ok) {
+        setKnowledgeReindexMessage(
+          payload?.message ?? "Не удалось обновить AI-базу знаний.",
+        );
+        return;
+      }
+
+      setKnowledgeReindexMessage(
+        payload?.data
+          ? `База знаний обновлена: ${payload.data.successCount} из ${payload.data.processedUsers} пользователей обработаны (${payload.data.mode === "full" ? "полный reindex" : "refresh embeddings"}).`
+          : "AI-база знаний обновлена.",
+      );
+      await refreshStats();
+    } finally {
+      setIsRefreshingKnowledge(false);
+    }
+  }, [refreshStats]);
+
+  const runBillingReconcileJob = useCallback(async () => {
+    setIsRefreshingBilling(true);
+    setBillingReconcileMessage(null);
+
+    try {
+      const response = await fetch(
+        "/api/internal/jobs/billing-reconcile?limit=20",
+        {
+          method: "POST",
+        },
+      );
+      const payload = await readBillingReconcileJobJson(response);
+
+      if (!response.ok) {
+        setBillingReconcileMessage(
+          payload?.message ?? "Не удалось синхронизировать billing-состояние.",
+        );
+        return;
+      }
+
+      setBillingReconcileMessage(
+        payload?.data
+          ? `Billing-синхронизация завершена: ${payload.data.successCount} из ${payload.data.processedUsers} пользователей обновлены, пропущено ${payload.data.skippedCount}, ошибок ${payload.data.errorCount}.`
+          : "Billing-состояние синхронизировано.",
+      );
+      await refreshStats();
+    } finally {
+      setIsRefreshingBilling(false);
+    }
+  }, [refreshStats]);
+
   const readiness = stats?.readiness ?? null;
   const observability = stats?.observability ?? null;
   const systemHealth = stats?.systemHealth ?? null;
+  const knowledgeHealth = stats?.knowledgeHealth ?? null;
   const syncHealth = stats?.syncHealth ?? null;
   const billingHealth = stats?.billingHealth ?? null;
   const hasSyncBacklog = Boolean(
@@ -213,12 +475,21 @@ export function AdminHealthDashboard({
   const hasBillingAttention = Boolean(
     billingHealth &&
       (billingHealth.queuedBillingReviews > 0 ||
-        billingHealth.stripePastDueSubscriptions > 0),
+        billingHealth.stripePastDueSubscriptions > 0 ||
+        billingHealth.failedBillingReconciles > 0),
   );
   const canSendSmokeTest =
     canTriggerSentrySmokeTest &&
     Boolean(readiness?.sentryRuntimeEnv) &&
     !isSendingSmokeTest;
+  const canRunDashboardWarm =
+    canRunAdminJobs &&
+    !isWarmingSnapshots;
+  const canRunNutritionSummaryRefresh =
+    canRunAdminJobs &&
+    !isRefreshingNutritionSummaries;
+  const canRunKnowledgeRefresh = canRunAdminJobs && !isRefreshingKnowledge;
+  const canRunBillingReconcile = canRunAdminJobs && !isRefreshingBilling;
 
   return (
     <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
@@ -230,6 +501,54 @@ export function AdminHealthDashboard({
               runtime-конфигурация и насколько свежий operational-контур.
             </p>
             <div className="flex flex-wrap gap-2">
+              {canRunAdminJobs ? (
+                <button
+                  className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={!canRunDashboardWarm}
+                  onClick={() => void runDashboardWarmJob()}
+                  type="button"
+                >
+                  {isWarmingSnapshots
+                    ? "Прогреваю snapshots..."
+                    : "Прогреть snapshots"}
+                </button>
+              ) : null}
+              {canRunAdminJobs ? (
+                <button
+                  className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={!canRunNutritionSummaryRefresh}
+                  onClick={() => void runNutritionSummariesJob()}
+                  type="button"
+                >
+                  {isRefreshingNutritionSummaries
+                    ? "Собираю summaries..."
+                    : "Пересчитать summaries"}
+                </button>
+              ) : null}
+              {canRunAdminJobs ? (
+                <button
+                  className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={!canRunKnowledgeRefresh}
+                  onClick={() => void runKnowledgeReindexJob()}
+                  type="button"
+                >
+                  {isRefreshingKnowledge
+                    ? "Обновляю базу знаний..."
+                    : "Обновить базу знаний"}
+                </button>
+              ) : null}
+              {canRunAdminJobs ? (
+                <button
+                  className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={!canRunBillingReconcile}
+                  onClick={() => void runBillingReconcileJob()}
+                  type="button"
+                >
+                  {isRefreshingBilling
+                    ? "Синхронизирую billing..."
+                    : "Синхронизировать billing"}
+                </button>
+              ) : null}
               {canTriggerSentrySmokeTest ? (
                 <button
                   className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
@@ -265,10 +584,38 @@ export function AdminHealthDashboard({
             </p>
           ) : null}
 
+          {dashboardWarmMessage ? (
+            <p className="rounded-2xl border border-sky-300/60 bg-sky-50 px-4 py-3 text-sm text-sky-800">
+              {dashboardWarmMessage}
+            </p>
+          ) : null}
+
+          {nutritionSummariesMessage ? (
+            <p className="rounded-2xl border border-sky-300/60 bg-sky-50 px-4 py-3 text-sm text-sky-800">
+              {nutritionSummariesMessage}
+            </p>
+          ) : null}
+
+          {knowledgeReindexMessage ? (
+            <p className="rounded-2xl border border-sky-300/60 bg-sky-50 px-4 py-3 text-sm text-sky-800">
+              {knowledgeReindexMessage}
+            </p>
+          ) : null}
+
+          {billingReconcileMessage ? (
+            <p className="rounded-2xl border border-sky-300/60 bg-sky-50 px-4 py-3 text-sm text-sky-800">
+              {billingReconcileMessage}
+            </p>
+          ) : null}
+
           <div className="flex flex-wrap gap-2">
             {[
               ["Supabase public env", readiness?.supabasePublicEnv ?? false],
+              ["AI runtime", readiness?.aiRuntimeEnv ?? false],
               ["AI Gateway env", readiness?.aiGatewayEnv ?? false],
+              ["AI embeddings", readiness?.aiEmbeddingEnv ?? false],
+              ["OpenRouter env", readiness?.openRouterEnv ?? false],
+              ["Voyage env", readiness?.voyageEnv ?? false],
               ["Service role", readiness?.serviceRoleEnv ?? false],
               ["Sentry runtime", readiness?.sentryRuntimeEnv ?? false],
               ["Sentry build", readiness?.sentryBuildEnv ?? false],
@@ -304,6 +651,39 @@ export function AdminHealthDashboard({
                 <p>
                   Build missing:{" "}
                   {formatMissingEnv(observability?.sentry.buildMissing ?? [])}
+                </p>
+              </div>
+            </article>
+
+            <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm">
+              <p className="font-semibold text-foreground">AI providers</p>
+              <div className="mt-3 grid gap-1 text-muted">
+                <p>
+                  Runtime enabled:{" "}
+                  {observability?.ai.runtimeEnabled ? "да" : "нет"}
+                </p>
+                <p>
+                  Embeddings enabled:{" "}
+                  {observability?.ai.embeddingEnabled ? "да" : "нет"}
+                </p>
+                <p>
+                  OpenRouter: {observability?.ai.openRouterEnabled ? "да" : "нет"}
+                </p>
+                <p>
+                  OpenRouter model:{" "}
+                  {observability?.ai.openRouterModel ?? "не задан"}
+                </p>
+                <p>
+                  OpenRouter base URL:{" "}
+                  {observability?.ai.openRouterBaseUrl ?? "по умолчанию"}
+                </p>
+                <p>Voyage: {observability?.ai.voyageEnabled ? "да" : "нет"}</p>
+                <p>
+                  Voyage model: {observability?.ai.voyageModel ?? "не задан"}
+                </p>
+                <p>
+                  AI Gateway fallback:{" "}
+                  {observability?.ai.gatewayEnabled ? "да" : "нет"}
                 </p>
               </div>
             </article>
@@ -378,6 +758,49 @@ export function AdminHealthDashboard({
               <p className="mt-2 text-muted">
                 {formatDateTime(systemHealth?.latestProgramAt ?? null)}
               </p>
+            </article>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-2">
+            <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm">
+              <p className="font-semibold text-foreground">Knowledge runtime</p>
+              <div className="mt-3 grid gap-1 text-muted">
+                <p>Runtime snapshots: {knowledgeHealth?.runtimeSnapshots ?? 0}</p>
+                <p>
+                  Embeddings coverage:{" "}
+                  {formatPercent(knowledgeHealth?.embeddingCoverageRatio ?? null)}
+                </p>
+                <p>
+                  Structured fact sheets:{" "}
+                  {knowledgeHealth?.structuredFactSheets ?? 0}
+                </p>
+                <p>Structured facts: {knowledgeHealth?.structuredFacts ?? 0}</p>
+                <p>
+                  Latest runtime snapshot:{" "}
+                  {formatDateTime(knowledgeHealth?.latestRuntimeSnapshotAt ?? null)}
+                </p>
+              </div>
+            </article>
+
+            <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm">
+              <p className="font-semibold text-foreground">Knowledge reindex</p>
+              <div className="mt-3 grid gap-1 text-muted">
+                <p>Reindexes за 24ч: {knowledgeHealth?.recentReindexes24h ?? 0}</p>
+                <p>
+                  Latest mode:{" "}
+                  {formatReindexMode(knowledgeHealth?.latestReindexMode ?? null)}
+                </p>
+                <p>
+                  Latest search mode:{" "}
+                  {formatSearchMode(
+                    knowledgeHealth?.latestReindexSearchMode ?? null,
+                  )}
+                </p>
+                <p>
+                  Latest reindex:{" "}
+                  {formatDateTime(knowledgeHealth?.latestReindexAt ?? null)}
+                </p>
+              </div>
             </article>
           </div>
         </div>
@@ -484,12 +907,23 @@ export function AdminHealthDashboard({
                 <p>Queued reviews: {billingHealth?.queuedBillingReviews ?? 0}</p>
                 <p>Completed reviews: {billingHealth?.completedBillingReviews ?? 0}</p>
                 <p>
+                  Billing reconciles за 24ч:{" "}
+                  {billingHealth?.recentBillingReconciles ?? 0}
+                </p>
+                <p>
+                  Failed reconciles: {billingHealth?.failedBillingReconciles ?? 0}
+                </p>
+                <p>
                   Checkout return reconciles за 24ч:{" "}
                   {billingHealth?.recentCheckoutReturnReconciles ?? 0}
                 </p>
                 <p>
                   Latest review activity:{" "}
                   {formatDateTime(billingHealth?.latestBillingReviewAt ?? null)}
+                </p>
+                <p>
+                  Latest billing reconcile:{" "}
+                  {formatDateTime(billingHealth?.latestBillingReconcileAt ?? null)}
                 </p>
                 <p>
                   Latest checkout return:{" "}

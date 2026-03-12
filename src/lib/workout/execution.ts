@@ -2,15 +2,36 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type WorkoutDayStatus = "planned" | "in_progress" | "done";
 
-export async function updateWorkoutDayStatus(
+export type WorkoutDayExecutionInput = {
+  status?: WorkoutDayStatus;
+  bodyWeightKg?: number | null;
+  sessionNote?: string | null;
+};
+
+export async function updateWorkoutDayExecution(
   supabase: SupabaseClient,
   userId: string,
   dayId: string,
-  nextStatus: WorkoutDayStatus,
+  input: WorkoutDayExecutionInput,
 ) {
+  if (
+    input.status === undefined &&
+    input.bodyWeightKg === undefined &&
+    input.sessionNote === undefined
+  ) {
+    return {
+      error: {
+        status: 400,
+        code: "WORKOUT_DAY_EXECUTION_EMPTY",
+        message: "Workout day execution update requires at least one field.",
+      },
+      data: null,
+    } as const;
+  }
+
   const { data: dayRow, error: dayError } = await supabase
     .from("workout_days")
-    .select("id, weekly_program_id, status")
+    .select("id, weekly_program_id, status, body_weight_kg, session_note")
     .eq("id", dayId)
     .eq("user_id", userId)
     .maybeSingle();
@@ -55,11 +76,17 @@ export async function updateWorkoutDayStatus(
   const { data, error } = await supabase
     .from("workout_days")
     .update({
-      status: nextStatus,
+      ...(input.status !== undefined ? { status: input.status } : {}),
+      ...(input.bodyWeightKg !== undefined
+        ? { body_weight_kg: input.bodyWeightKg }
+        : {}),
+      ...(input.sessionNote !== undefined
+        ? { session_note: input.sessionNote }
+        : {}),
     })
     .eq("id", dayId)
     .eq("user_id", userId)
-    .select("id, status")
+    .select("id, status, body_weight_kg, session_note")
     .single();
 
   if (error) {
@@ -72,11 +99,26 @@ export async function updateWorkoutDayStatus(
   } as const;
 }
 
+export async function updateWorkoutDayStatus(
+  supabase: SupabaseClient,
+  userId: string,
+  dayId: string,
+  nextStatus: WorkoutDayStatus,
+) {
+  return updateWorkoutDayExecution(supabase, userId, dayId, {
+    status: nextStatus,
+  });
+}
+
 export async function updateWorkoutSetActualReps(
   supabase: SupabaseClient,
   userId: string,
   setId: string,
   actualReps: number | null,
+  actualWeightKg: number | null,
+  actualRpe: number | null,
+  restSeconds: number | null,
+  setNote: string | null,
 ) {
   const { data: workoutSetRow, error: workoutSetError } = await supabase
     .from("workout_sets")
@@ -161,7 +203,7 @@ export async function updateWorkoutSetActualReps(
       error: {
         status: 400,
         code: "WORKOUT_SET_REQUIRES_LOCKED_PROGRAM",
-        message: "Actual reps can be saved only for locked weeks.",
+        message: "Workout set performance can be saved only for locked weeks.",
       },
       data: null,
     } as const;
@@ -171,10 +213,14 @@ export async function updateWorkoutSetActualReps(
     .from("workout_sets")
     .update({
       actual_reps: actualReps,
+      actual_weight_kg: actualWeightKg,
+      actual_rpe: actualRpe,
+      rest_seconds: restSeconds,
+      set_note: setNote,
     })
     .eq("id", setId)
     .eq("user_id", userId)
-    .select("id, actual_reps")
+    .select("id, actual_reps, actual_weight_kg, actual_rpe, rest_seconds, set_note")
     .single();
 
   if (error) {

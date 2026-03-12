@@ -44,6 +44,12 @@ lint.err
 .idea
 .codex
 supabase/.temp/
+ai-evals/.venv/
+ai-evals/output/
+ai-evals/.pytest_cache/
+ai-evals/__pycache__/
+ai-evals/fit_eval/__pycache__/
+.next_codex_*/
 
 # typescript
 *.tsbuildinfo

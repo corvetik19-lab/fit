@@ -11,18 +11,27 @@ import {
   getMissingSentryBuildEnv,
   getMissingSentryRuntimeEnv,
   getVercelRuntimeEnv,
+  hasAiEmbeddingEnv,
   hasAiGatewayEnv,
+  hasAiRuntimeEnv,
+  hasOpenRouterEnv,
   hasStripeCheckoutEnv,
   hasStripePortalEnv,
   hasStripeWebhookEnv,
   hasSentryBuildEnv,
   hasSentryRuntimeEnv,
   hasSupabasePublicEnv,
+  hasVoyageEnv,
   hasVercelRuntimeEnv,
   serverEnv,
 } from "@/lib/env";
 import { logger } from "@/lib/logger";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
+import { AI_RUNTIME_CONTEXT_SNAPSHOT_REASON } from "@/lib/ai/user-context";
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
 
 export async function GET() {
   try {
@@ -47,6 +56,8 @@ export async function GET() {
       stripePastDueSubscriptionsCountResult,
       stripeLinkedCustomersCountResult,
       recentCheckoutReturnReconcilesCountResult,
+      recentBillingReconcilesCountResult,
+      failedBillingReconcilesCountResult,
       aiEvalRunsCountResult,
       queuedAiEvalRunsCountResult,
       runningAiEvalRunsCountResult,
@@ -57,7 +68,11 @@ export async function GET() {
       aiSafetyEventsCountResult,
       knowledgeChunksCountResult,
       knowledgeEmbeddingsCountResult,
+      runtimeContextSnapshotsCountResult,
+      structuredFactSheetsCountResult,
+      structuredFactsCountResult,
       reindexActionsCountResult,
+      reindexActions24hCountResult,
       workoutDaysInProgressCountResult,
       workoutDaysDoneCountResult,
       loggedWorkoutSetsCountResult,
@@ -66,11 +81,14 @@ export async function GET() {
       latestWorkoutSetResult,
       latestSupportActionResult,
       latestBillingReviewActionResult,
+      latestBillingReconcileResult,
       latestExportJobResult,
       latestDeletionRequestResult,
       latestAiEvalRunResult,
       latestStripeEventResult,
       latestCheckoutReturnReconcileResult,
+      latestRuntimeContextSnapshotResult,
+      latestReindexActionResult,
     ] = await Promise.all([
       adminSupabase
         .from("profiles")
@@ -148,6 +166,16 @@ export async function GET() {
         .eq("action", "user_reconciled_stripe_checkout_return")
         .gte("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()),
       adminSupabase
+        .from("support_actions")
+        .select("*", { count: "exact", head: true })
+        .eq("action", "reconcile_billing_state")
+        .gte("updated_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()),
+      adminSupabase
+        .from("support_actions")
+        .select("*", { count: "exact", head: true })
+        .eq("action", "reconcile_billing_state")
+        .eq("status", "failed"),
+      adminSupabase
         .from("ai_eval_runs")
         .select("*", { count: "exact", head: true }),
       adminSupabase
@@ -181,9 +209,26 @@ export async function GET() {
         .from("knowledge_embeddings")
         .select("*", { count: "exact", head: true }),
       adminSupabase
+        .from("user_context_snapshots")
+        .select("*", { count: "exact", head: true })
+        .eq("snapshot_reason", AI_RUNTIME_CONTEXT_SNAPSHOT_REASON),
+      adminSupabase
+        .from("knowledge_chunks")
+        .select("*", { count: "exact", head: true })
+        .eq("source_type", "structured_fact_sheet"),
+      adminSupabase
+        .from("knowledge_chunks")
+        .select("*", { count: "exact", head: true })
+        .eq("source_type", "structured_fact"),
+      adminSupabase
         .from("support_actions")
         .select("*", { count: "exact", head: true })
         .eq("action", "reindex_knowledge"),
+      adminSupabase
+        .from("support_actions")
+        .select("*", { count: "exact", head: true })
+        .eq("action", "reindex_knowledge")
+        .gte("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()),
       adminSupabase
         .from("workout_days")
         .select("*", { count: "exact", head: true })
@@ -229,6 +274,13 @@ export async function GET() {
         .limit(1)
         .maybeSingle(),
       adminSupabase
+        .from("support_actions")
+        .select("updated_at")
+        .eq("action", "reconcile_billing_state")
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      adminSupabase
         .from("export_jobs")
         .select("updated_at")
         .order("updated_at", { ascending: false })
@@ -259,6 +311,20 @@ export async function GET() {
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle(),
+      adminSupabase
+        .from("user_context_snapshots")
+        .select("created_at, snapshot_reason")
+        .eq("snapshot_reason", AI_RUNTIME_CONTEXT_SNAPSHOT_REASON)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      adminSupabase
+        .from("support_actions")
+        .select("created_at, payload")
+        .eq("action", "reindex_knowledge")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
     ]);
 
     const results = [
@@ -279,6 +345,8 @@ export async function GET() {
       stripePastDueSubscriptionsCountResult,
       stripeLinkedCustomersCountResult,
       recentCheckoutReturnReconcilesCountResult,
+      recentBillingReconcilesCountResult,
+      failedBillingReconcilesCountResult,
       aiEvalRunsCountResult,
       queuedAiEvalRunsCountResult,
       runningAiEvalRunsCountResult,
@@ -289,7 +357,11 @@ export async function GET() {
       aiSafetyEventsCountResult,
       knowledgeChunksCountResult,
       knowledgeEmbeddingsCountResult,
+      runtimeContextSnapshotsCountResult,
+      structuredFactSheetsCountResult,
+      structuredFactsCountResult,
       reindexActionsCountResult,
+      reindexActions24hCountResult,
       workoutDaysInProgressCountResult,
       workoutDaysDoneCountResult,
       loggedWorkoutSetsCountResult,
@@ -298,11 +370,14 @@ export async function GET() {
       latestWorkoutSetResult,
       latestSupportActionResult,
       latestBillingReviewActionResult,
+      latestBillingReconcileResult,
       latestExportJobResult,
       latestDeletionRequestResult,
       latestAiEvalRunResult,
       latestStripeEventResult,
       latestCheckoutReturnReconcileResult,
+      latestRuntimeContextSnapshotResult,
+      latestReindexActionResult,
     ];
 
     const failedResult = results.find((result) => result.error);
@@ -311,11 +386,35 @@ export async function GET() {
       throw failedResult.error;
     }
 
+    const latestReindexPayload = isRecord(latestReindexActionResult.data?.payload)
+      ? latestReindexActionResult.data.payload
+      : null;
+    const latestReindexMode =
+      latestReindexPayload?.mode === "embeddings" ||
+      latestReindexPayload?.mode === "full"
+        ? latestReindexPayload.mode
+        : null;
+    const latestReindexSearchMode =
+      latestReindexPayload?.searchMode === "text" ||
+      latestReindexPayload?.searchMode === "vector"
+        ? latestReindexPayload.searchMode
+        : null;
+    const knowledgeChunks = knowledgeChunksCountResult.count ?? 0;
+    const knowledgeEmbeddings = knowledgeEmbeddingsCountResult.count ?? 0;
+    const embeddingCoverageRatio =
+      knowledgeChunks > 0
+        ? Number((knowledgeEmbeddings / knowledgeChunks).toFixed(2))
+        : null;
+
     return Response.json({
       data: {
         readiness: {
           supabasePublicEnv: hasSupabasePublicEnv(),
           aiGatewayEnv: hasAiGatewayEnv(),
+          aiRuntimeEnv: hasAiRuntimeEnv(),
+          aiEmbeddingEnv: hasAiEmbeddingEnv(),
+          openRouterEnv: hasOpenRouterEnv(),
+          voyageEnv: hasVoyageEnv(),
           serviceRoleEnv: Boolean(serverEnv.SUPABASE_SERVICE_ROLE_KEY),
           sentryRuntimeEnv: hasSentryRuntimeEnv(),
           sentryBuildEnv: hasSentryBuildEnv(),
@@ -342,6 +441,16 @@ export async function GET() {
             webhookMissing: getMissingStripeWebhookEnv(),
             priceId: serverEnv.STRIPE_PREMIUM_MONTHLY_PRICE_ID ?? null,
           },
+          ai: {
+            gatewayEnabled: hasAiGatewayEnv(),
+            runtimeEnabled: hasAiRuntimeEnv(),
+            embeddingEnabled: hasAiEmbeddingEnv(),
+            openRouterEnabled: hasOpenRouterEnv(),
+            voyageEnabled: hasVoyageEnv(),
+            openRouterBaseUrl: serverEnv.OPENROUTER_BASE_URL ?? null,
+            openRouterModel: serverEnv.OPENROUTER_CHAT_MODEL ?? null,
+            voyageModel: serverEnv.VOYAGE_EMBEDDING_MODEL ?? null,
+          },
         },
         snapshot: {
           users: usersCountResult.count ?? 0,
@@ -353,18 +462,30 @@ export async function GET() {
           aiChatMessages: aiChatMessagesCountResult.count ?? 0,
           aiPlanProposals: aiPlanProposalsCountResult.count ?? 0,
           aiSafetyEvents: aiSafetyEventsCountResult.count ?? 0,
-          knowledgeChunks: knowledgeChunksCountResult.count ?? 0,
-          knowledgeEmbeddings: knowledgeEmbeddingsCountResult.count ?? 0,
+          knowledgeChunks,
+          knowledgeEmbeddings,
           knowledgeReindexes: reindexActionsCountResult.count ?? 0,
         },
         systemHealth: {
           users: usersCountResult.count ?? 0,
           exercises: exercisesCountResult.count ?? 0,
           activePrograms: activeProgramsCountResult.count ?? 0,
-          knowledgeChunks: knowledgeChunksCountResult.count ?? 0,
-          knowledgeEmbeddings: knowledgeEmbeddingsCountResult.count ?? 0,
+          knowledgeChunks,
+          knowledgeEmbeddings,
           latestProfileAt: latestProfileResult.data?.created_at ?? null,
           latestProgramAt: latestProgramResult.data?.updated_at ?? null,
+        },
+        knowledgeHealth: {
+          runtimeSnapshots: runtimeContextSnapshotsCountResult.count ?? 0,
+          structuredFactSheets: structuredFactSheetsCountResult.count ?? 0,
+          structuredFacts: structuredFactsCountResult.count ?? 0,
+          recentReindexes24h: reindexActions24hCountResult.count ?? 0,
+          embeddingCoverageRatio,
+          latestRuntimeSnapshotAt:
+            latestRuntimeContextSnapshotResult.data?.created_at ?? null,
+          latestReindexAt: latestReindexActionResult.data?.created_at ?? null,
+          latestReindexMode,
+          latestReindexSearchMode,
         },
         syncHealth: {
           workoutDaysInProgress: workoutDaysInProgressCountResult.count ?? 0,
@@ -395,10 +516,14 @@ export async function GET() {
           queuedBillingReviews: queuedBillingReviewActionsCountResult.count ?? 0,
           completedBillingReviews:
             completedBillingReviewActionsCountResult.count ?? 0,
+          recentBillingReconciles: recentBillingReconcilesCountResult.count ?? 0,
+          failedBillingReconciles: failedBillingReconcilesCountResult.count ?? 0,
           recentCheckoutReturnReconciles:
             recentCheckoutReturnReconcilesCountResult.count ?? 0,
           latestBillingReviewAt:
             latestBillingReviewActionResult.data?.updated_at ?? null,
+          latestBillingReconcileAt:
+            latestBillingReconcileResult.data?.updated_at ?? null,
           latestStripeEventAt: latestStripeEventResult.data?.created_at ?? null,
           latestCheckoutReturnReconcileAt:
             latestCheckoutReturnReconcileResult.data?.created_at ?? null,

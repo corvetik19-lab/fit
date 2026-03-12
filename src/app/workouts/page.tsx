@@ -1,11 +1,11 @@
-﻿import { AppShell } from "@/components/app-shell";
+import { AppShell } from "@/components/app-shell";
 import { ExerciseLibraryManager } from "@/components/exercise-library-manager";
-import { PanelCard } from "@/components/panel-card";
+import { PageWorkspace } from "@/components/page-workspace";
 import { WeeklyProgramBuilder } from "@/components/weekly-program-builder";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { requireReadyViewer } from "@/lib/viewer";
-import { listWeeklyPrograms } from "@/lib/workout/weekly-programs";
 import { listWorkoutTemplates } from "@/lib/workout/templates";
+import { listWeeklyPrograms } from "@/lib/workout/weekly-programs";
+import { requireReadyViewer } from "@/lib/viewer";
 
 export default async function WorkoutsPage() {
   const viewer = await requireReadyViewer();
@@ -40,46 +40,56 @@ export default async function WorkoutsPage() {
 
   return (
     <AppShell eyebrow="Тренировки" title="Программы, недели и упражнения">
-      <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-        <PanelCard caption="План на неделю" title="Собери удобную структуру тренировок">
-          <div className="space-y-3 text-sm leading-7 text-muted">
-            <p>
-              Здесь ты собираешь неделю из любимых упражнений, шаблонов и готовых сетов. Всё
-              сохранено за твоим профилем и всегда под рукой на телефоне.
-            </p>
-            <p>
-              Сначала удобно собрать библиотеку, затем выбрать упражнения для дней недели и
-              зафиксировать черновик программы. После этого можно переходить к выполнению.
-            </p>
-            <p>
-              {viewer.profile?.full_name ?? viewer.user.email ?? "Пользователь fit"}, начни с
-              рабочего плана и оставь в библиотеке только то, что действительно используешь.
-            </p>
-          </div>
-        </PanelCard>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          {[
-            ["Активные упражнения", String(activeExercises.length)],
-            ["В архиве", String(archivedExercises.length)],
-            ["Черновики программ", String(draftPrograms.length)],
-            ["Последнее обновление", lastUpdatedAt ?? "Пока пусто"],
-          ].map(([label, value]) => (
-            <article className="kpi p-5" key={label}>
-              <p className="text-sm text-muted">{label}</p>
-              <p className="mt-2 text-2xl font-semibold text-foreground">{value}</p>
-            </article>
-          ))}
-        </div>
-      </div>
-
-      <WeeklyProgramBuilder
-        activeExercises={activeExercises}
-        initialPrograms={programs}
-        initialTemplates={templates}
+      <PageWorkspace
+        badges={[
+          viewer.profile?.full_name ?? viewer.user.email ?? "fit",
+          lastUpdatedAt ? `Обновлено ${lastUpdatedAt}` : "Библиотека ещё пустая",
+        ]}
+        description="Здесь собраны только два логических слоя: рабочий план недели и личная библиотека упражнений. На телефоне это открывается через меню разделов, а не превращается в одну длинную ленту."
+        metrics={[
+          {
+            label: "Активные",
+            value: String(activeExercises.length),
+            note: "упражнений в работе",
+          },
+          {
+            label: "В архиве",
+            value: String(archivedExercises.length),
+            note: "убрано из текущей базы",
+          },
+          {
+            label: "Черновики",
+            value: String(draftPrograms.length),
+            note: "недель ждут фиксации",
+          },
+          {
+            label: "Программ",
+            value: String(programs.length),
+            note: "в истории профиля",
+          },
+        ]}
+        sections={[
+          {
+            key: "plan",
+            label: "План недели",
+            description: "Программа, дни и шаблоны.",
+            content: (
+              <WeeklyProgramBuilder
+                activeExercises={activeExercises}
+                initialPrograms={programs}
+                initialTemplates={templates}
+              />
+            ),
+          },
+          {
+            key: "library",
+            label: "Упражнения",
+            description: "Своя база, архив и быстрые правки.",
+            content: <ExerciseLibraryManager initialExercises={exercises} />,
+          },
+        ]}
+        title="Рабочая зона для недельного плана и библиотеки упражнений"
       />
-
-      <ExerciseLibraryManager initialExercises={exercises} />
     </AppShell>
   );
 }

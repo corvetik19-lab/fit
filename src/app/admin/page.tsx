@@ -19,7 +19,7 @@ import { requireViewer } from "@/lib/viewer";
 
 function formatDateTime(value: string | null | undefined) {
   if (!value) {
-    return "РќРµС‚ РґР°РЅРЅС‹С…";
+    return "Нет данных";
   }
 
   return new Intl.DateTimeFormat("ru-RU", {
@@ -33,11 +33,11 @@ function formatDateTime(value: string | null | undefined) {
 function formatAdminRole(value: string) {
   switch (value) {
     case "super_admin":
-      return "РЎСѓРїРµСЂ-Р°РґРјРёРЅ";
+      return "Супер-админ";
     case "support_admin":
-      return "РџРѕРґРґРµСЂР¶РєР°";
+      return "Поддержка";
     case "analyst":
-      return "РђРЅР°Р»РёС‚РёРє";
+      return "Аналитик";
     default:
       return value;
   }
@@ -46,17 +46,17 @@ function formatAdminRole(value: string) {
 function formatSupportAction(value: string) {
   switch (value) {
     case "billing_access_review":
-      return "РџСЂРѕРІРµСЂРєР° billing-РґРѕСЃС‚СѓРїР°";
+      return "Проверка billing-доступа";
     case "purge_user_data":
-      return "РџРѕР»РЅР°СЏ РѕС‡РёСЃС‚РєР° РґР°РЅРЅС‹С…";
+      return "Полная очистка данных";
     case "reindex_knowledge":
-      return "РџРµСЂРµРёРЅРґРµРєСЃР°С†РёСЏ Р±Р°Р·С‹ Р·РЅР°РЅРёР№";
+      return "Переиндексация базы знаний";
     case "resync_user_context":
-      return "РџРµСЂРµСЃРёРЅС…СЂРѕРЅРёР·Р°С†РёСЏ РєРѕРЅС‚РµРєСЃС‚Р°";
+      return "Пересинхронизация контекста";
     case "restore_user":
-      return "Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ";
+      return "Восстановление пользователя";
     case "suspend_user":
-      return "Р‘Р»РѕРєРёСЂРѕРІРєР° РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ";
+      return "Блокировка пользователя";
     default:
       return value;
   }
@@ -65,25 +65,25 @@ function formatSupportAction(value: string) {
 function formatStatus(value: string) {
   switch (value) {
     case "queued":
-      return "РІ РѕС‡РµСЂРµРґРё";
+      return "в очереди";
     case "running":
-      return "РІ СЂР°Р±РѕС‚Рµ";
+      return "в работе";
     case "processing":
-      return "РІ РѕР±СЂР°Р±РѕС‚РєРµ";
+      return "в обработке";
     case "completed":
-      return "Р·Р°РІРµСЂС€РµРЅРѕ";
+      return "завершено";
     case "failed":
-      return "РѕС€РёР±РєР°";
+      return "ошибка";
     case "holding":
-      return "РЅР° СѓРґРµСЂР¶Р°РЅРёРё";
+      return "на удержании";
     case "canceled":
-      return "РѕС‚РјРµРЅРµРЅРѕ";
+      return "отменено";
     case "active":
-      return "Р°РєС‚РёРІРЅРѕ";
+      return "активно";
     case "trial":
-      return "trial";
+      return "пробный период";
     case "past_due":
-      return "past_due";
+      return "нужна оплата";
     default:
       return value;
   }
@@ -92,13 +92,13 @@ function formatStatus(value: string) {
 function formatRouteKey(value: string) {
   switch (value) {
     case "ai_chat":
-      return "AI-С‡Р°С‚";
+      return "AI-чат";
     case "meal_plan":
-      return "РџР»Р°РЅ РїРёС‚Р°РЅРёСЏ";
+      return "План питания";
     case "workout_plan":
-      return "РџР»Р°РЅ С‚СЂРµРЅРёСЂРѕРІРѕРє";
+      return "План тренировок";
     case "meal_photo":
-      return "Р¤РѕС‚Рѕ-Р°РЅР°Р»РёР· РµРґС‹";
+      return "Фото-анализ еды";
     default:
       return value;
   }
@@ -107,15 +107,15 @@ function formatRouteKey(value: string) {
 function formatAuditAction(value: string) {
   switch (value) {
     case "admin_role_granted":
-      return "Р’С‹РґР°С‡Р° admin-РґРѕСЃС‚СѓРїР°";
+      return "Выдача admin-доступа";
     case "admin_role_updated":
-      return "РР·РјРµРЅРµРЅРёРµ admin-СЂРѕР»Рё";
+      return "Изменение admin-роли";
     case "admin_role_confirmed":
-      return "РџРѕРґС‚РІРµСЂР¶РґРµРЅРёРµ admin-СЂРѕР»Рё";
+      return "Подтверждение admin-роли";
     case "admin_role_revoked":
-      return "РћС‚Р·С‹РІ admin-РґРѕСЃС‚СѓРїР°";
+      return "Отзыв admin-доступа";
     case "primary_super_admin_enforced":
-      return "Р¤РёРєСЃР°С†РёСЏ primary super-admin";
+      return "Фиксация primary super-admin";
     default:
       return value;
   }
@@ -159,39 +159,39 @@ export default async function AdminPage() {
 
   if (!viewer.isPlatformAdmin) {
     return (
-      <AppShell eyebrow="РђРґРјРёРЅ" title="Р”РѕСЃС‚СѓРї Рє admin-РїР°РЅРµР»Рё">
-        <PanelCard caption="Р”РѕСЃС‚СѓРї" title="Root-admin Р·Р°РєСЂРµРїР»С‘РЅ Р·Р° РѕРґРЅРёРј Р°РєРєР°СѓРЅС‚РѕРј">
+      <AppShell eyebrow="Админ" title="Доступ к admin-панели">
+        <PanelCard caption="Доступ" title="Root-admin закреплён за одним аккаунтом">
           <div className="grid gap-4 md:grid-cols-[1.1fr_0.9fr]">
             <article className="rounded-3xl border border-border bg-white/60 p-5 text-sm">
               <p className="font-semibold text-foreground">
-                Admin-РїР°РЅРµР»СЊ РїСЂРµРґРЅР°Р·РЅР°С‡РµРЅР° РґР»СЏ root-РєРѕРЅС‚СѓСЂР° РїР»Р°С‚С„РѕСЂРјС‹.
+                Admin-панель предназначена для root-контура платформы.
               </p>
               <p className="mt-3 leading-7 text-muted">
-                Primary super-admin Р¶С‘СЃС‚РєРѕ Р·Р°РєСЂРµРїР»С‘РЅ Р·Р°{" "}
+                Primary super-admin жёстко закреплён за{" "}
                 <span className="font-semibold text-foreground">
                   {PRIMARY_SUPER_ADMIN_EMAIL}
                 </span>
-                . Р•СЃР»Рё С‚С‹ РІРѕС€С‘Р» РїРѕРґ СЌС‚РёРј email Рё РІСЃС‘ РµС‰С‘ РЅРµ РІРёРґРёС€СЊ РґРѕСЃС‚СѓРї, РјРѕР¶РЅРѕ
-                РІС‹РїРѕР»РЅРёС‚СЊ bootstrap РёР»Рё РїСЂРѕСЃС‚Рѕ РѕР±РЅРѕРІРёС‚СЊ СЃРµСЃСЃРёСЋ РїРѕСЃР»Рµ РјРёРіСЂР°С†РёРё.
+                . Если ты вошёл под этим email и всё ещё не видишь доступ, можно
+                выполнить bootstrap или просто обновить сессию после миграции.
               </p>
             </article>
 
             <article className="rounded-3xl border border-border bg-white/60 p-5 text-sm">
               <p className="font-semibold text-foreground">
-                РўРµРєСѓС‰РёР№ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ
+                Текущий пользователь
               </p>
               <p className="mt-3 text-muted">
-                {viewer.user.email ?? "Email РЅРµ РЅР°Р№РґРµРЅ"}
+                {viewer.user.email ?? "Email не найден"}
               </p>
               <p className="mt-2 text-muted">
-                РџРѕСЃР»РµРґРЅРёР№ РІС…РѕРґ:{" "}
+                Последний вход:{" "}
                 <span className="text-foreground">
                   {formatDateTime(viewer.user.last_sign_in_at)}
                 </span>
               </p>
               <div className="mt-4">
                 <AdminBootstrapForm
-                  userEmail={viewer.user.email ?? "РЅРµРёР·РІРµСЃС‚РЅРѕ"}
+                  userEmail={viewer.user.email ?? "неизвестно"}
                 />
               </div>
             </article>
@@ -354,50 +354,49 @@ export default async function AdminPage() {
     adminRoster.find((admin) => admin.role === "super_admin") ?? null;
   const heroMetrics = [
     {
-      label: "РџРѕР»СЊР·РѕРІР°С‚РµР»Рё",
+      label: "Пользователи",
       value: String(usersCountResult.count ?? 0),
-      detail: "Р°РєС‚РёРІРЅР°СЏ Р±Р°Р·Р° РїСЂРѕС„РёР»РµР№",
+      detail: "активная база профилей",
     },
     {
-      label: "РђРєС‚РёРІРЅС‹Рµ РЅРµРґРµР»Рё",
+      label: "Активные недели",
       value: String(activeProgramsCountResult.count ?? 0),
-      detail: "РїСЂРѕРіСЂР°РјРјС‹ СЃРѕ СЃС‚Р°С‚СѓСЃРѕРј active",
+      detail: "программы со статусом active",
     },
     {
-      label: "AI СЃРѕРѕР±С‰РµРЅРёСЏ",
+      label: "AI сообщения",
       value: String(aiChatMessagesCountResult.count ?? 0),
-      detail: "Р¶РёРІРѕР№ usage СЃСЂРµР· РїСЂРѕРґСѓРєС‚Р°",
+      detail: "живой срез активности продукта",
     },
     {
       label: "Контроль root-политики",
       value: String(superAdminPolicyViolations),
       detail: superAdminPolicyViolations
-        ? "РІ Р‘Р” РµСЃС‚СЊ Р»РёС€РЅРёРµ super_admin"
-        : "root-РїРѕР»РёС‚РёРєР° РІ РЅРѕСЂРјРµ",
+        ? "в БД есть лишние super_admin"
+        : "root-политика в норме",
       tone: superAdminPolicyViolations ? ("warning" as const) : ("success" as const),
     },
   ];
 
   return (
-    <AppShell eyebrow="РђРґРјРёРЅ" title="РћРїРµСЂР°С†РёРѕРЅРЅР°СЏ РїР°РЅРµР»СЊ fit">
+    <AppShell eyebrow="Админ" title="Операционная панель fit">
       <section className="card overflow-hidden p-6 sm:p-8">
         <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
           <div className="space-y-5">
             <div className="flex flex-wrap gap-2">
               <span className="pill">{formatAdminRole(viewer.platformAdminRole ?? "analyst")}</span>
               <span className="pill">Root: {PRIMARY_SUPER_ADMIN_EMAIL}</span>
-              {canUseSuperAdminConsole ? <span className="pill">РџРѕР»РЅС‹Р№ РєРѕРЅС‚СѓСЂ</span> : null}
+              {canUseSuperAdminConsole ? <span className="pill">Полный контур</span> : null}
             </div>
 
             <div className="space-y-3">
               <h2 className="max-w-4xl text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-                РћРґРёРЅ СЂР°Р±РѕС‡РёР№ С†РµРЅС‚СЂ СѓРїСЂР°РІР»РµРЅРёСЏ РґР»СЏ РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№, РѕРїРµСЂР°С†РёР№ Рё AI-РєРѕРЅС‚СѓСЂР°.
+                Один рабочий центр управления для пользователей, операций и AI-контура.
               </h2>
               <p className="max-w-3xl text-sm leading-7 text-muted sm:text-base">
-                РџР°РЅРµР»СЊ СЃРѕР±СЂР°РЅР° РїРѕРґ РѕРґРёРЅ root-admin СЃС†РµРЅР°СЂРёР№: Р±С‹СЃС‚СЂС‹Р№ РїРµСЂРµС…РѕРґ РІ
-                user
-                management, РєРѕРЅС‚СЂРѕР»СЊ РѕС‡РµСЂРµРґРµР№, health-РґРёР°РіРЅРѕСЃС‚РёРєР°, Р°СѓРґРёС‚ Рё AI
-                operations Р±РµР· РїР»РѕС‚РЅРѕР№ СЃС‚РµРЅС‹ РѕРґРёРЅР°РєРѕРІС‹С… Р±Р»РѕРєРѕРІ.
+                Панель собрана под единый root-сценарий: быстрый переход в каталог
+                пользователей, контроль очередей, диагностика системы, аудит и AI-операции
+                без длинной стены одинаковых блоков.
               </p>
             </div>
 
@@ -406,50 +405,85 @@ export default async function AdminPage() {
                 className="rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90"
                 href={"/admin/users" as Route}
               >
-                РћС‚РєСЂС‹С‚СЊ РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№
+                Открыть пользователей
               </Link>
               <Link
                 className="rounded-full border border-border px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-white/70"
                 href={`/admin/users/${viewer.user.id}` as Route}
               >
-                РњРѕСЏ admin-РєР°СЂС‚РѕС‡РєР°
+                Моя admin-карточка
               </Link>
               <Link
                 className="rounded-full border border-border px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-white/70"
                 href={"/dashboard" as Route}
               >
-                Р’РµСЂРЅСѓС‚СЊСЃСЏ РІ РїСЂРѕРґСѓРєС‚
+                Вернуться в продукт
               </Link>
             </div>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
             <StatTile
-              label="РўРµРєСѓС‰РёР№ РѕРїРµСЂР°С‚РѕСЂ"
+              label="Текущий оператор"
               value={viewer.user.email ?? "email не найден"}
-              detail={`Р РѕР»СЊ: ${formatAdminRole(viewer.platformAdminRole ?? "analyst")}`}
+              detail={`Роль: ${formatAdminRole(viewer.platformAdminRole ?? "analyst")}`}
             />
             <StatTile
               label="Главный супер-админ"
               value={rootAdminRecord?.email ?? PRIMARY_SUPER_ADMIN_EMAIL}
               detail={
                 rootAdminRecord
-                  ? `РџРѕСЃР»РµРґРЅРёР№ РІС…РѕРґ: ${formatDateTime(rootAdminRecord.lastSignInAt)}`
-                  : "Root-РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ СѓР¶Рµ Р·Р°РєСЂРµРїР»С‘РЅ РјРёРіСЂР°С†РёРµР№"
+                  ? `Последний вход: ${formatDateTime(rootAdminRecord.lastSignInAt)}`
+                  : "Root-пользователь уже закреплён миграцией"
               }
               tone={superAdminPolicyViolations ? "warning" : "success"}
             />
             <StatTile
-              label="РљРѕРјР°РЅРґР° Р°РґРјРёРЅРѕРІ"
+              label="Команда админов"
               value={String(adminRoster.length)}
               detail={`super_admin: ${adminRoster.filter((item) => item.role === "super_admin").length}`}
             />
             <StatTile
               label="База знаний"
               value={String(knowledgeEmbeddingsCountResult.count ?? 0)}
-              detail={`chunks: ${knowledgeChunksCountResult.count ?? 0} В· reindex jobs: ${reindexActionsCountResult.count ?? 0}`}
+              detail={`chunks: ${knowledgeChunksCountResult.count ?? 0} · reindex jobs: ${reindexActionsCountResult.count ?? 0}`}
             />
           </div>
+        </div>
+      </section>
+
+      <section className="rounded-[30px] border border-border bg-white/72 p-4 sm:p-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
+              Разделы центра
+            </p>
+            <h2 className="mt-2 text-xl font-semibold text-foreground">
+              Быстрые переходы по панели
+            </h2>
+          </div>
+          <span className="pill">Мобильный control center</span>
+        </div>
+
+        <div className="mt-4 grid gap-3 md:flex md:flex-wrap">
+          {[
+            ["#health", "Состояние", "Состояние runtime и интеграций."],
+            ["#operations", "Очереди", "Inbox, wave и операционные хвосты."],
+            ["#users", "Пользователи", "Каталог, карточки и доступы."],
+            ["#ai-ops", "AI", "База знаний, reindex и eval runs."],
+            ...(canUseSuperAdminConsole
+              ? [["#root-policy", "Root", "Root-политика и главный доступ."]]
+              : []),
+          ].map(([href, label, description]) => (
+            <a
+              className="w-full rounded-3xl border border-border bg-white px-4 py-3 text-left transition hover:border-accent/30 hover:bg-accent-soft md:w-auto md:min-w-[13rem]"
+              href={href}
+              key={href}
+            >
+              <span className="block text-sm font-semibold text-foreground">{label}</span>
+              <span className="mt-1 block text-xs leading-5 text-muted">{description}</span>
+            </a>
+          ))}
         </div>
       </section>
 
@@ -465,19 +499,26 @@ export default async function AdminPage() {
         ))}
       </section>
 
-      <AdminHealthDashboard canTriggerSentrySmokeTest={canUseSuperAdminConsole} />
+      <div className="scroll-mt-28" id="health">
+        <AdminHealthDashboard
+          canRunAdminJobs={canUseSuperAdminConsole}
+          canTriggerSentrySmokeTest={canUseSuperAdminConsole}
+        />
+      </div>
 
-      <AdminOperationsInbox
-        currentAdminRole={viewer.platformAdminRole ?? "analyst"}
-      />
+      <div className="scroll-mt-28" id="operations">
+        <AdminOperationsInbox
+          currentAdminRole={viewer.platformAdminRole ?? "analyst"}
+        />
+      </div>
 
-      <div className="grid gap-6 2xl:grid-cols-[1.05fr_0.95fr]">
-        <PanelCard caption="РџРѕР»СЊР·РѕРІР°С‚РµР»Рё" title="РЈРїСЂР°РІР»РµРЅРёРµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏРјРё">
+      <div className="grid gap-6 2xl:grid-cols-[1.05fr_0.95fr] scroll-mt-28" id="users">
+        <PanelCard caption="Пользователи" title="Управление пользователями">
           <div className="grid gap-5">
             <p className="text-sm leading-7 text-muted">
-              Р—РґРµСЃСЊ РЅР°С‡РёРЅР°РµС‚СЃСЏ РѕСЃРЅРѕРІРЅРѕР№ СЂР°Р±РѕС‡РёР№ СЃС†РµРЅР°СЂРёР№ root-admin: РїРµСЂРµР№С‚Рё РІ
-              РєР°С‚Р°Р»РѕРі, РѕС‚РєСЂС‹С‚СЊ РґРµС‚Р°Р»СЊРЅСѓСЋ РєР°СЂС‚РѕС‡РєСѓ, РІС‹РґР°С‚СЊ РґРѕСЃС‚СѓРї, РїСЂРѕРІРµСЂРёС‚СЊ billing,
-              export, deletion Рё РёСЃС‚РѕСЂРёСЋ РѕРїРµСЂР°С†РёР№.
+              Здесь начинается основной рабочий сценарий root-admin: перейти в
+              каталог, открыть детальную карточку, выдать доступ, проверить billing,
+              export, deletion и историю операций.
             </p>
 
             <div className="flex flex-wrap gap-3">
@@ -485,13 +526,13 @@ export default async function AdminPage() {
                 className="rounded-full bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
                 href={"/admin/users" as Route}
               >
-                РџРѕР»РЅС‹Р№ РєР°С‚Р°Р»РѕРі
+                Полный каталог
               </Link>
               <Link
                 className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-white/70"
                 href={`/admin/users/${viewer.user.id}` as Route}
               >
-                Root-РєР°СЂС‚РѕС‡РєР°
+                Root-карточка
               </Link>
             </div>
 
@@ -504,22 +545,23 @@ export default async function AdminPage() {
                     key={user.user_id}
                   >
                     <p className="font-semibold text-foreground">
-                      {user.full_name ?? "Р‘РµР· РёРјРµРЅРё"}
+                      {user.full_name ?? "Без имени"}
                     </p>
                     <p className="mt-1 break-all text-muted">{user.user_id}</p>
                     <p className="mt-2 text-muted">
-                      РЎРѕР·РґР°РЅ: {formatDateTime(user.created_at)}
+                      Создан: {formatDateTime(user.created_at)}
                     </p>
                   </Link>
                 ))
               ) : (
-                <p className="text-sm text-muted">РџРѕРєР° РЅРµС‚ РїСЂРѕС„РёР»РµР№ РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№.</p>
+                <p className="text-sm text-muted">Пока нет профилей пользователей.</p>
               )}
             </div>
           </div>
         </PanelCard>
 
-        <PanelCard caption="AI Ops" title="AI Рё knowledge operations">
+        <div className="scroll-mt-28" id="ai-ops">
+          <PanelCard caption="AI" title="AI и база знаний">
           <div className="grid gap-5">
             <div className="flex flex-wrap gap-2">
               <span className="pill">
@@ -534,9 +576,9 @@ export default async function AdminPage() {
             </div>
 
             <p className="text-sm leading-7 text-muted">
-              РћС‚СЃСЋРґР° Р·Р°РїСѓСЃРєР°СЋС‚СЃСЏ manual AI/knowledge РѕРїРµСЂР°С†РёРё. Р‘Р»РѕРє РѕСЃС‚Р°РІР»РµРЅ
-              РѕС‚РґРµР»СЊРЅС‹Рј, С‡С‚РѕР±С‹ РЅРµ СЃРјРµС€РёРІР°С‚СЊ user management Рё С‚РµС…РЅРёС‡РµСЃРєРёРµ РґРµР№СЃС‚РІРёСЏ
-              РІ РѕРґРЅРѕР№ РєРѕР»РѕРЅРєРµ.
+              Отсюда запускаются ручные AI-операции и обслуживание базы знаний.
+              Блок вынесен отдельно, чтобы не смешивать пользовательский контур
+              и технические действия в одной колонке.
             </p>
 
             <AdminAiOperations
@@ -544,11 +586,12 @@ export default async function AdminPage() {
               defaultTargetUserId={viewer.user.id}
             />
           </div>
-        </PanelCard>
+          </PanelCard>
+        </div>
       </div>
 
       <div className="grid gap-6 2xl:grid-cols-[0.95fr_1.05fr]">
-        <PanelCard caption="РљРѕРјР°РЅРґР°" title="РљС‚Рѕ СѓРїСЂР°РІР»СЏРµС‚ РїР»Р°С‚С„РѕСЂРјРѕР№">
+        <PanelCard caption="Команда" title="Кто управляет платформой">
           <div className="grid gap-3">
             {adminRoster.length ? (
               adminRoster.map((admin) => (
@@ -573,12 +616,12 @@ export default async function AdminPage() {
                 </article>
               ))
             ) : (
-              <p className="text-sm text-muted">РќР°Р·РЅР°С‡РµРЅРЅС‹С… Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂРѕРІ РїРѕРєР° РЅРµС‚.</p>
+              <p className="text-sm text-muted">Назначенных администраторов пока нет.</p>
             )}
           </div>
         </PanelCard>
 
-        <PanelCard caption="РђСѓРґРёС‚" title="РџРѕСЃР»РµРґРЅРёРµ РёР·РјРµРЅРµРЅРёСЏ РґРѕСЃС‚СѓРїР°">
+        <PanelCard caption="Аудит" title="Последние изменения доступа">
           <div className="grid gap-3">
             {adminAuditLogs.length ? (
               adminAuditLogs.map((entry) => (
@@ -590,14 +633,14 @@ export default async function AdminPage() {
                     {formatAuditAction(entry.action)}
                   </p>
                   <p className="mt-1 text-muted">
-                    РџСЂРёС‡РёРЅР°: {entry.reason ?? "Р‘РµР· РїРѕСЏСЃРЅРµРЅРёСЏ"}
+                    Причина: {entry.reason ?? "Без пояснения"}
                   </p>
-                  <p className="mt-1 break-all text-muted">
-                    Кто изменил: {entry.actor_user_id ?? "РЅРµ СѓРєР°Р·Р°РЅ"}
-                  </p>
-                  <p className="mt-1 break-all text-muted">
-                    Для кого: {entry.target_user_id ?? "РЅРµ СѓРєР°Р·Р°РЅ"}
-                  </p>
+              <p className="mt-1 break-all text-muted">
+                    Кто изменил: {entry.actor_user_id ?? "не указан"}
+              </p>
+              <p className="mt-1 break-all text-muted">
+                    Для кого: {entry.target_user_id ?? "не указан"}
+              </p>
                   <p className="mt-2 text-muted">
                     {formatDateTime(entry.created_at)}
                   </p>
@@ -605,7 +648,7 @@ export default async function AdminPage() {
               ))
             ) : (
               <p className="text-sm text-muted">
-                Audit log РїРѕ РґРѕСЃС‚СѓРїР°Рј РїРѕРєР° РїСѓСЃС‚.
+                Audit log по доступам пока пуст.
               </p>
             )}
           </div>
@@ -613,7 +656,7 @@ export default async function AdminPage() {
       </div>
 
       <div className="grid gap-6 2xl:grid-cols-[1.05fr_0.95fr]">
-        <PanelCard caption="РЎРёРіРЅР°Р»С‹" title="РџРѕСЃР»РµРґРЅРёРµ product-СЃРёРіРЅР°Р»С‹">
+        <PanelCard caption="Сигналы" title="Последние product-сигналы">
           <div className="grid gap-5 lg:grid-cols-2">
             <div className="grid gap-3">
               <p className="text-sm font-semibold text-foreground">Служебные действия</p>
@@ -627,16 +670,16 @@ export default async function AdminPage() {
                       {formatSupportAction(action.action)}
                     </p>
                     <p className="mt-1 text-muted">
-                      {formatStatus(action.status)} В· {formatDateTime(action.created_at)}
+                      {formatStatus(action.status)} · {formatDateTime(action.created_at)}
                     </p>
                     <p className="mt-1 break-all text-muted">
-                      РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ: {action.target_user_id ?? "РЅРµ СѓРєР°Р·Р°РЅ"}
+                      Пользователь: {action.target_user_id ?? "не указан"}
                     </p>
                   </article>
                 ))
               ) : (
                 <p className="text-sm text-muted">
-                  Support actions РµС‰С‘ РЅРµ Р·Р°РїСѓСЃРєР°Р»РёСЃСЊ.
+                  Support actions ещё не запускались.
                 </p>
               )}
             </div>
@@ -650,19 +693,19 @@ export default async function AdminPage() {
                     key={event.id}
                   >
                     <p className="font-semibold text-foreground">
-                      {formatRouteKey(event.route_key)} В· {event.action}
+                      {formatRouteKey(event.route_key)} · {event.action}
                     </p>
                     <p className="mt-1 text-muted">
                       {formatDateTime(event.created_at)}
                     </p>
                     <p className="mt-2 text-muted">
-                      {event.prompt_excerpt || "Р¤СЂР°РіРјРµРЅС‚ Р·Р°РїСЂРѕСЃР° РЅРµ СЃРѕС…СЂР°РЅС‘РЅ."}
+                      {event.prompt_excerpt || "Фрагмент запроса не сохранён."}
                     </p>
                   </article>
                 ))
               ) : (
                 <p className="text-sm text-muted">
-                  AI safety events РїРѕРєР° РЅРµ Р·Р°С„РёРєСЃРёСЂРѕРІР°РЅС‹.
+                  AI safety events пока не зафиксированы.
                 </p>
               )}
             </div>
@@ -676,23 +719,24 @@ export default async function AdminPage() {
       </div>
 
       {canUseSuperAdminConsole ? (
-        <PanelCard caption="Root policy" title="Primary super-admin Р·Р°РєСЂРµРїР»С‘РЅ">
+        <div className="scroll-mt-28" id="root-policy">
+        <PanelCard caption="Root policy" title="Главный super-admin закреплён">
           <div className="grid gap-4 md:grid-cols-[1.1fr_0.9fr]">
             <article className="rounded-3xl border border-emerald-200/70 bg-emerald-50/70 p-5 text-sm">
               <p className="font-semibold text-foreground">
-                Р•РґРёРЅСЃС‚РІРµРЅРЅС‹Р№ super_admin: {PRIMARY_SUPER_ADMIN_EMAIL}
+                Единственный super_admin: {PRIMARY_SUPER_ADMIN_EMAIL}
               </p>
               <p className="mt-3 leading-7 text-muted">
-                Р‘Р°Р·Р° Рё runtime С‚РµРїРµСЂСЊ СЃРёРЅС…СЂРѕРЅРЅРѕ Р·Р°РєСЂРµРїР»СЏСЋС‚ root-РґРѕСЃС‚СѓРї С‚РѕР»СЊРєРѕ Р·Р°
-                СЌС‚РёРј email. Р”СЂСѓРіРѕР№ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РЅРµ СЃРјРѕР¶РµС‚ СЃС‚Р°С‚СЊ `super_admin`
-                С‡РµСЂРµР· UI РёР»Рё РѕР±С‹С‡РЅС‹Рµ admin routes.
+                База и runtime теперь синхронно закрепляют root-доступ только за
+                этим email. Другой пользователь не сможет стать `super_admin`
+                через UI или обычные admin routes.
               </p>
             </article>
 
             <article className="rounded-3xl border border-border bg-white/60 p-5 text-sm">
-              <p className="font-semibold text-foreground">РЎСЂРµР· root-РєРѕРЅС‚СѓСЂР°</p>
+              <p className="font-semibold text-foreground">Срез root-контура</p>
               <p className="mt-3 text-muted">
-                РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ:{" "}
+                Пользователь:{" "}
                 <span className="font-semibold text-foreground">
                   {viewer.user.email ?? PRIMARY_SUPER_ADMIN_EMAIL}
                 </span>
@@ -711,7 +755,8 @@ export default async function AdminPage() {
               </p>
             </article>
           </div>
-        </PanelCard>
+          </PanelCard>
+        </div>
       ) : null}
     </AppShell>
   );

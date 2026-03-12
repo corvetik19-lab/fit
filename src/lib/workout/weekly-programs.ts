@@ -9,6 +9,10 @@ export type WeeklyProgramSetSummary = {
   planned_reps_min: number | null;
   planned_reps_max: number | null;
   actual_reps: number | null;
+  actual_weight_kg: number | null;
+  actual_rpe: number | null;
+  rest_seconds: number | null;
+  set_note: string | null;
 };
 
 export type WeeklyProgramExerciseSummary = {
@@ -42,6 +46,8 @@ export type WorkoutDayDetail = {
   weekly_program_id: string;
   day_of_week: number;
   status: string;
+  body_weight_kg: number | null;
+  session_note: string | null;
   program_title: string;
   week_start_date: string;
   week_end_date: string;
@@ -57,6 +63,8 @@ type WorkoutDayRow = {
   weekly_program_id: string;
   day_of_week: number;
   status: string;
+  body_weight_kg?: number | null;
+  session_note?: string | null;
 };
 
 type WorkoutExerciseRow = Omit<WeeklyProgramExerciseSummary, "sets"> & {
@@ -162,6 +170,10 @@ export async function listWeeklyPrograms(
       planned_reps_min: workoutSet.planned_reps_min,
       planned_reps_max: workoutSet.planned_reps_max,
       actual_reps: workoutSet.actual_reps,
+      actual_weight_kg: workoutSet.actual_weight_kg,
+      actual_rpe: workoutSet.actual_rpe,
+      rest_seconds: workoutSet.rest_seconds,
+      set_note: workoutSet.set_note,
     });
     setsByExerciseId.set(workoutSet.workout_exercise_id, currentSets);
   }
@@ -206,7 +218,7 @@ export async function getWorkoutDayDetail(
 ) {
   const { data: dayRow, error: dayError } = await supabase
     .from("workout_days")
-    .select("id, weekly_program_id, day_of_week, status")
+    .select("id, weekly_program_id, day_of_week, status, body_weight_kg, session_note")
     .eq("id", dayId)
     .eq("user_id", userId)
     .maybeSingle();
@@ -257,6 +269,8 @@ export async function getWorkoutDayDetail(
       weekly_program_id: dayRow.weekly_program_id,
       day_of_week: dayRow.day_of_week,
       status: dayRow.status,
+      body_weight_kg: dayRow.body_weight_kg ?? null,
+      session_note: dayRow.session_note ?? null,
       program_title: programRow.title,
       week_start_date: programRow.week_start_date,
       week_end_date: programRow.week_end_date,
@@ -283,6 +297,10 @@ export async function getWorkoutDayDetail(
       planned_reps_min: workoutSet.planned_reps_min,
       planned_reps_max: workoutSet.planned_reps_max,
       actual_reps: workoutSet.actual_reps,
+      actual_weight_kg: workoutSet.actual_weight_kg,
+      actual_rpe: workoutSet.actual_rpe,
+      rest_seconds: workoutSet.rest_seconds,
+      set_note: workoutSet.set_note,
     });
     setsByExerciseId.set(workoutSet.workout_exercise_id, currentSets);
   }
@@ -292,6 +310,8 @@ export async function getWorkoutDayDetail(
     weekly_program_id: dayRow.weekly_program_id,
     day_of_week: dayRow.day_of_week,
     status: dayRow.status,
+    body_weight_kg: dayRow.body_weight_kg ?? null,
+    session_note: dayRow.session_note ?? null,
     program_title: programRow.title,
     week_start_date: programRow.week_start_date,
     week_end_date: programRow.week_end_date,

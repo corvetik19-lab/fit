@@ -31,7 +31,9 @@ type PlatformAdminRole = "super_admin" | "support_admin" | "analyst" | null;
 
 type AppShellNavProps = {
   compact?: boolean;
+  minimal?: boolean;
   viewer: {
+    userId: string;
     email: string | null;
     fullName: string | null;
     isPlatformAdmin: boolean;
@@ -88,6 +90,20 @@ const adminRoute: AppRouteDefinition = {
   icon: Shield,
 };
 
+const adminControlRoute: AppRouteDefinition = {
+  href: "/admin",
+  label: "Центр управления",
+  description: "Очереди, health и системный обзор.",
+  icon: Shield,
+};
+
+const adminUsersRoute: AppRouteDefinition = {
+  href: "/admin/users",
+  label: "Пользователи",
+  description: "Каталог, доступы и операции.",
+  icon: Shield,
+};
+
 const coreRoutes = [dashboardRoute, workoutsRoute, nutritionRoute, aiRoute];
 const utilityRoutes = [historyRoute, settingsRoute];
 const desktopRoutes = [...coreRoutes, ...utilityRoutes, adminRoute];
@@ -124,6 +140,10 @@ function getBottomNavRoutes(pathname: string) {
 }
 
 function getCurrentSectionLabel(pathname: string) {
+  if (pathname.startsWith("/admin/users")) {
+    return "Пользователи";
+  }
+
   const currentRoute =
     desktopRoutes.find((route) => isRouteActive(pathname, route.href)) ??
     dashboardRoute;
@@ -161,12 +181,32 @@ function DrawerRouteLink({
   );
 }
 
-export function AppShellNav({ compact = false, viewer }: AppShellNavProps) {
+export function AppShellNav({
+  compact = false,
+  minimal = false,
+  viewer,
+}: AppShellNavProps) {
   const pathname = usePathname();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const bottomNavRoutes = getBottomNavRoutes(pathname);
   const currentSectionLabel = getCurrentSectionLabel(pathname);
   const adminRoleLabel = formatAdminRole(viewer?.platformAdminRole ?? null);
+  const adminDrawerRoutes: AppRouteDefinition[] = viewer?.isPlatformAdmin
+    ? [
+        adminControlRoute,
+        adminUsersRoute,
+        ...(viewer?.userId
+          ? [
+              {
+                href: `/admin/users/${viewer.userId}` as Route,
+                label: "Моя admin-карточка",
+                description: "Ваши доступы, аудит и операции.",
+                icon: Shield,
+              },
+            ]
+          : []),
+      ]
+    : [];
 
   useEffect(() => {
     if (!isDrawerOpen) {
@@ -192,58 +232,75 @@ export function AppShellNav({ compact = false, viewer }: AppShellNavProps) {
 
   return (
     <>
-      <nav className="hidden flex-wrap gap-2 lg:flex">
-        {desktopRoutes
-          .filter((route) => viewer?.isPlatformAdmin || route.href !== "/admin")
-          .map((route) => {
-            const isActive = isRouteActive(pathname, route.href);
+      {!minimal ? (
+        <>
+          <nav className="hidden flex-wrap gap-2 lg:flex">
+            {desktopRoutes
+              .filter((route) => viewer?.isPlatformAdmin || route.href !== "/admin")
+              .map((route) => {
+                const isActive = isRouteActive(pathname, route.href);
 
-            return (
-              <Link
-                aria-current={isActive ? "page" : undefined}
-                className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
-                  isActive
-                    ? "border-accent bg-accent text-white"
-                    : "border-border text-foreground hover:bg-white/70"
-                }`}
-                href={route.href}
-                key={route.href}
+                return (
+                  <Link
+                    aria-current={isActive ? "page" : undefined}
+                    className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
+                      isActive
+                        ? "border-accent bg-accent text-white"
+                        : "border-border text-foreground hover:bg-white/70"
+                    }`}
+                    href={route.href}
+                    key={route.href}
+                  >
+                    {route.label}
+                  </Link>
+                );
+              })}
+          </nav>
+
+          <div className="grid gap-2 lg:hidden">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                {!compact ? (
+                  <p className="font-mono text-[0.68rem] uppercase tracking-[0.22em] text-muted">
+                    Навигация
+                  </p>
+                ) : null}
+                <p
+                  className={`truncate font-semibold text-foreground ${
+                    compact ? "text-sm" : "mt-1 text-sm"
+                  }`}
+                >
+                  {currentSectionLabel}
+                </p>
+              </div>
+
+              <button
+                aria-controls="app-mobile-drawer"
+                aria-expanded={isDrawerOpen}
+                className="inline-flex items-center gap-2 rounded-full border border-border bg-white/75 px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-white"
+                onClick={() => setIsDrawerOpen(true)}
+                type="button"
               >
-                {route.label}
-              </Link>
-            );
-          })}
-      </nav>
-
-      <div className="grid gap-2 lg:hidden">
-        <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            {!compact ? (
-              <p className="font-mono text-[0.68rem] uppercase tracking-[0.22em] text-muted">
-                Навигация
-              </p>
-            ) : null}
-            <p
-              className={`truncate font-semibold text-foreground ${
-                compact ? "text-sm" : "mt-1 text-sm"
-              }`}
-            >
-              {currentSectionLabel}
-            </p>
+                <Menu size={18} strokeWidth={2.2} />
+                Меню
+              </button>
+            </div>
           </div>
-
+        </>
+      ) : (
+        <div className="flex justify-end lg:hidden">
           <button
             aria-controls="app-mobile-drawer"
             aria-expanded={isDrawerOpen}
-            className="inline-flex items-center gap-2 rounded-full border border-border bg-white/75 px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-white"
+            aria-label="Открыть меню"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border bg-white/82 text-foreground shadow-[0_16px_40px_-28px_rgba(24,22,19,0.5)] transition hover:bg-white"
             onClick={() => setIsDrawerOpen(true)}
             type="button"
           >
             <Menu size={18} strokeWidth={2.2} />
-            Меню
           </button>
         </div>
-      </div>
+      )}
 
       <div
         aria-hidden={!isDrawerOpen}
@@ -315,10 +372,10 @@ export function AppShellNav({ compact = false, viewer }: AppShellNavProps) {
             <section className="grid gap-3">
               <div>
                 <p className="font-mono text-[0.68rem] uppercase tracking-[0.22em] text-muted">
-                  Дополнительно
+                  Личное
                 </p>
                 <h3 className="mt-2 text-lg font-semibold text-foreground">
-                  История, настройки и админка
+                  История и настройки
                 </h3>
               </div>
 
@@ -332,15 +389,32 @@ export function AppShellNav({ compact = false, viewer }: AppShellNavProps) {
                   />
                 ))}
 
-                {viewer?.isPlatformAdmin ? (
-                  <DrawerRouteLink
-                    {...adminRoute}
-                    isActive={isRouteActive(pathname, adminRoute.href)}
-                    onNavigate={() => setIsDrawerOpen(false)}
-                  />
-                ) : null}
               </div>
             </section>
+
+            {viewer?.isPlatformAdmin ? (
+              <section className="grid gap-3">
+                <div>
+                  <p className="font-mono text-[0.68rem] uppercase tracking-[0.22em] text-muted">
+                    Управление
+                  </p>
+                  <h3 className="mt-2 text-lg font-semibold text-foreground">
+                    Платформа и пользователи
+                  </h3>
+                </div>
+
+                <div className="grid gap-2">
+                  {adminDrawerRoutes.map((route) => (
+                    <DrawerRouteLink
+                      {...route}
+                      isActive={isRouteActive(pathname, route.href)}
+                      key={route.href}
+                      onNavigate={() => setIsDrawerOpen(false)}
+                    />
+                  ))}
+                </div>
+              </section>
+            ) : null}
 
             <section className="rounded-3xl border border-border bg-[color-mix(in_srgb,var(--surface)_92%,white)] p-4">
               <p className="font-semibold text-foreground">Аккаунт</p>

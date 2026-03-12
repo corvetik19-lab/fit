@@ -1,4 +1,5 @@
-import { getAiPlanProposal, updateAiPlanProposal } from "@/lib/ai/proposals";
+import { approveAiPlanProposal } from "@/lib/ai/proposal-actions";
+import { getAiPlanProposal } from "@/lib/ai/proposals";
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import {
   BILLING_FEATURE_KEYS,
@@ -37,7 +38,9 @@ export async function POST(
       });
     }
 
-    const access = await readUserBillingAccess(supabase, user.id);
+    const access = await readUserBillingAccess(supabase, user.id, {
+      email: user.email,
+    });
     const featureKey =
       proposal.proposal_type === "meal_plan"
         ? BILLING_FEATURE_KEYS.mealPlan
@@ -48,27 +51,12 @@ export async function POST(
       return createFeatureAccessDeniedResponse(feature);
     }
 
-    if (proposal.status === "applied") {
-      return createApiErrorResponse({
-        status: 409,
-        code: "AI_PROPOSAL_ALREADY_APPLIED",
-        message: "AI-предложение уже применено и не требует отдельного подтверждения.",
-      });
-    }
-
-    const payload = {
-      ...proposal.payload,
-      approvedAt: new Date().toISOString(),
-    };
-
-    const updated = await updateAiPlanProposal(supabase, {
+    const approved = await approveAiPlanProposal(supabase, {
       userId: user.id,
       proposalId: proposal.id,
-      status: "approved",
-      payload,
     });
 
-    return Response.json({ data: updated });
+    return Response.json({ data: approved.proposal });
   } catch (error) {
     logger.error("ai proposal approve route failed", { error });
 

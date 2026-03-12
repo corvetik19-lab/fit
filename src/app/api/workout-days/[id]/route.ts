@@ -3,11 +3,24 @@ import { z } from "zod";
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import { logger } from "@/lib/logger";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { updateWorkoutDayStatus } from "@/lib/workout/execution";
+import { updateWorkoutDayExecution } from "@/lib/workout/execution";
 
-const workoutDayUpdateSchema = z.object({
-  status: z.enum(["planned", "in_progress", "done"]),
-});
+const workoutDayUpdateSchema = z
+  .object({
+    status: z.enum(["planned", "in_progress", "done"]).optional(),
+    bodyWeightKg: z.number().min(0).max(500).nullable().optional(),
+    sessionNote: z.string().max(4000).nullable().optional(),
+  })
+  .refine(
+    (value) =>
+      value.status !== undefined ||
+      value.bodyWeightKg !== undefined ||
+      value.sessionNote !== undefined,
+    {
+      message: "At least one workout day field is required.",
+      path: ["status"],
+    },
+  );
 
 export async function PATCH(
   request: Request,
@@ -30,11 +43,15 @@ export async function PATCH(
     const { id } = await params;
     const payload = workoutDayUpdateSchema.parse(await request.json());
 
-    const result = await updateWorkoutDayStatus(
+    const result = await updateWorkoutDayExecution(
       supabase,
       user.id,
       id,
-      payload.status,
+      {
+        status: payload.status,
+        bodyWeightKg: payload.bodyWeightKg,
+        sessionNote: payload.sessionNote,
+      },
     );
 
     if (result.error) {

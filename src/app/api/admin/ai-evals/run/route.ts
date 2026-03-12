@@ -1,13 +1,16 @@
 import { z } from "zod";
 
 import { createApiErrorResponse } from "@/lib/api/error-response";
+import { queueAiEvalRun } from "@/lib/ai/eval-runs";
 import { isAdminAccessError, requireAdminRouteAccess } from "@/lib/admin-auth";
+import { AI_EVAL_SUITES } from "@/lib/ai/eval-suites";
 import { logger } from "@/lib/logger";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 
 const aiEvalRunSchema = z.object({
   label: z.string().trim().min(2).max(120).optional(),
   modelId: z.string().trim().min(2).max(160).optional(),
+  suite: z.enum(AI_EVAL_SUITES).optional(),
 });
 
 export async function POST(request: Request) {
@@ -16,36 +19,30 @@ export async function POST(request: Request) {
     const payload = aiEvalRunSchema.parse(await request.json().catch(() => ({})));
     const adminSupabase = createAdminSupabaseClient();
 
-    const label =
-      payload.label ?? `Локальный eval run ${new Date().toISOString()}`;
+    const suite = payload.suite ?? "all";
+    const label = payload.label ?? `AI eval ${suite} ${new Date().toISOString()}`;
     const modelId = payload.modelId ?? "google/gemini-3.1-pro-preview";
 
-    const { data, error } = await adminSupabase
-      .from("ai_eval_runs")
-      .insert({
-        requested_by: user.id,
-        label,
-        model_id: modelId,
-        status: "queued",
-      })
-      .select("id, label, model_id, status, created_at, started_at, completed_at")
-      .single();
+    const queuedRun = await queueAiEvalRun(adminSupabase, {
+      isScheduled: false,
+      label,
+      modelId,
+      requestedBy: user.id,
+      suite,
+      trigger: "manual_admin",
+    });
+    const data = queuedRun.data;
 
-    if (error) {
-      throw error;
-    }
-
-    const { error: auditError } = await adminSupabase
-      .from("admin_audit_logs")
-      .insert({
-        actor_user_id: user.id,
-        action: "queue_ai_eval_run",
-        reason: "manual admin request",
-        payload: {
-          runId: data.id,
-          modelId,
-        },
-      });
+    const { error: auditError } = await adminSupabase.from("admin_audit_logs").insert({
+      actor_user_id: user.id,
+      action: "queue_ai_eval_run",
+      reason: "manual admin request",
+      payload: {
+        runId: data.id,
+        modelId,
+        suite,
+      },
+    });
 
     if (auditError) {
       throw auditError;

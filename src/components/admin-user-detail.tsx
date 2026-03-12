@@ -209,42 +209,42 @@ const dateFormatter = new Intl.DateTimeFormat("ru-RU", {
 });
 
 const goalTypeLabels: Record<string, string> = {
-  fat_loss: "РЎРЅРёР¶РµРЅРёРµ РІРµСЃР°",
-  maintenance: "РџРѕРґРґРµСЂР¶Р°РЅРёРµ С„РѕСЂРјС‹",
-  muscle_gain: "РќР°Р±РѕСЂ РјС‹С€С†",
-  performance: "Р РµР·СѓР»СЊС‚Р°С‚ Рё РІС‹РЅРѕСЃР»РёРІРѕСЃС‚СЊ",
+  fat_loss: "Снижение веса",
+  maintenance: "Поддержание формы",
+  muscle_gain: "Набор мышц",
+  performance: "Результат и выносливость",
 };
 
 const sexLabels: Record<string, string> = {
-  female: "Р–РµРЅС‰РёРЅР°",
-  male: "РњСѓР¶С‡РёРЅР°",
-  other: "Р”СЂСѓРіРѕРµ",
-  prefer_not_to_say: "РќРµ СѓРєР°Р·Р°РЅРѕ",
+  female: "Женщина",
+  male: "Мужчина",
+  other: "Другое",
+  prefer_not_to_say: "Не указано",
 };
 
 const fitnessLevelLabels: Record<string, string> = {
-  beginner: "РќР°С‡РёРЅР°СЋС‰РёР№",
-  intermediate: "РЎСЂРµРґРЅРёР№",
-  advanced: "РџСЂРѕРґРІРёРЅСѓС‚С‹Р№",
+  beginner: "Начинающий",
+  intermediate: "Средний",
+  advanced: "Продвинутый",
 };
 
 const adminRoleLabels: Record<string, string> = {
-  super_admin: "РЎСѓРїРµСЂ-Р°РґРјРёРЅ",
-  support_admin: "РџРѕРґРґРµСЂР¶РєР°",
-  analyst: "РђРЅР°Р»РёС‚РёРє",
-  user: "РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ",
+  super_admin: "Супер-админ",
+  support_admin: "Поддержка",
+  analyst: "Аналитик",
+  user: "Пользователь",
 };
 
 const statusLabels: Record<string, string> = {
   active: "активно",
-  canceled: "РѕС‚РјРµРЅРµРЅРѕ",
+  canceled: "отменено",
   canceled_subscription: "подписка отменена",
-  completed: "Р·Р°РІРµСЂС€РµРЅРѕ",
-  failed: "РѕС€РёР±РєР°",
-  holding: "РЅР° СѓРґРµСЂР¶Р°РЅРёРё",
+  completed: "завершено",
+  failed: "ошибка",
+  holding: "на удержании",
   past_due: "нужна оплата",
-  processing: "РІ РѕР±СЂР°Р±РѕС‚РєРµ",
-  queued: "РІ РѕС‡РµСЂРµРґРё",
+  processing: "в обработке",
+  queued: "в очереди",
   trial: "пробный период",
 };
 
@@ -264,14 +264,15 @@ const supportActionLabels: Record<string, string> = {
   enable_entitlement: "Открыть доступ к функции",
   grant_trial: "Выдать пробный доступ",
   purge_user_data: "Полная очистка данных",
-  restore_user: "Р’РѕСЃСЃС‚Р°РЅРѕРІРёС‚СЊ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ",
-  resync_user_context: "РџРµСЂРµСЃРёРЅС…СЂРѕРЅРёР·РёСЂРѕРІР°С‚СЊ РєРѕРЅС‚РµРєСЃС‚",
-  suspend_user: "Р—Р°РјРѕСЂРѕР·РёС‚СЊ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ",
+  reconcile_billing_state: "Синхронизация billing-состояния",
+  restore_user: "Восстановить пользователя",
+  resync_user_context: "Пересинхронизировать контекст",
+  suspend_user: "Заморозить пользователя",
 };
 
 function formatDateTime(value: string | null | undefined) {
   if (!value) {
-    return "РќРµС‚ РґР°РЅРЅС‹С…";
+    return "Нет данных";
   }
 
   return dateFormatter.format(new Date(value));
@@ -279,7 +280,7 @@ function formatDateTime(value: string | null | undefined) {
 
 function formatStatus(value: string | null | undefined) {
   if (!value) {
-    return "РќРµС‚ РґР°РЅРЅС‹С…";
+    return "Нет данных";
   }
 
   return statusLabels[value] ?? value;
@@ -287,7 +288,7 @@ function formatStatus(value: string | null | undefined) {
 
 function formatSnakeLabel(value: string | null | undefined) {
   if (!value) {
-    return "РќРµС‚ РґР°РЅРЅС‹С…";
+    return "Нет данных";
   }
 
   return value.replaceAll("_", " ");
@@ -311,14 +312,14 @@ function formatSupportAction(value: string) {
 
 function renderList(items: string[] | undefined) {
   if (!items?.length) {
-    return "РќРµ Р·Р°РїРѕР»РЅРµРЅРѕ";
+    return "Не заполнено";
   }
 
   return items.join(", ");
 }
 
 function getUserLabel(user: UserReference | null, fallbackId?: string | null) {
-  return user?.full_name ?? user?.email ?? fallbackId ?? "РќРµС‚ РґР°РЅРЅС‹С…";
+  return user?.full_name ?? user?.email ?? fallbackId ?? "Нет данных";
 }
 
 function getPayloadString(payload: JsonRecord, key: string) {
@@ -390,6 +391,9 @@ export function AdminUserDetail({
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [reloadVersion, setReloadVersion] = useState(0);
+  const [activeSection, setActiveSection] = useState<
+    "profile" | "activity" | "operations" | "billing"
+  >("profile");
 
   useEffect(() => {
     let isActive = true;
@@ -407,7 +411,7 @@ export function AdminUserDetail({
 
         if (!response.ok) {
           if (isActive) {
-            setError(payload?.message ?? "РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РіСЂСѓР·РёС‚СЊ РєР°СЂС‚РѕС‡РєСѓ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ.");
+            setError(payload?.message ?? "Не удалось загрузить карточку пользователя.");
             setDetail(null);
           }
           return;
@@ -434,7 +438,7 @@ export function AdminUserDetail({
   if (isLoading) {
     return (
       <section className="card p-6">
-        <p className="text-sm text-muted">Р—Р°РіСЂСѓР¶Р°СЋ РєР°СЂС‚РѕС‡РєСѓ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ...</p>
+        <p className="text-sm text-muted">Загружаю карточку пользователя...</p>
       </section>
     );
   }
@@ -446,10 +450,10 @@ export function AdminUserDetail({
           className="mb-4 inline-flex rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:bg-white/70"
           href={"/admin/users" as Route}
         >
-          РќР°Р·Р°Рґ Рє РєР°С‚Р°Р»РѕРіСѓ
+          Назад к каталогу
         </Link>
         <p className="rounded-2xl border border-red-300/60 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error ?? "РљР°СЂС‚РѕС‡РєР° РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ РЅРµ РЅР°Р№РґРµРЅР°."}
+          {error ?? "Карточка пользователя не найдена."}
         </p>
       </section>
     );
@@ -461,36 +465,36 @@ export function AdminUserDetail({
         <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
-              РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ
+              Пользователь
             </p>
             <h2 className="mt-2 text-2xl font-semibold text-foreground">
-              {detail.profile?.full_name ?? "Р‘РµР· РёРјРµРЅРё"}
+              {detail.profile?.full_name ?? "Без имени"}
             </h2>
             <p className="mt-2 break-all text-sm text-muted">{detail.id}</p>
             <p className="mt-2 break-all text-sm text-muted">
-              {detail.authUser?.email ?? "Email РЅРµ РЅР°Р№РґРµРЅ"}
+              {detail.authUser?.email ?? "Email не найден"}
             </p>
           </div>
           <Link
             className="rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:bg-white/70"
             href={"/admin/users" as Route}
           >
-            РќР°Р·Р°Рґ Рє РєР°С‚Р°Р»РѕРіСѓ
+            Назад к каталогу
           </Link>
         </div>
 
         <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-6">
           {[
-            ["РЈРїСЂР°Р¶РЅРµРЅРёСЏ", String(detail.stats.workout.activeExercises)],
-            ["РџСЂРѕРіСЂР°РјРјС‹", String(detail.stats.workout.programs)],
-            ["РџСЂРёРµРјС‹ РїРёС‰Рё", String(detail.stats.nutrition.meals)],
-            ["AI-С‡Р°С‚С‹", String(detail.stats.ai.chatSessions)],
+            ["Упражнения", String(detail.stats.workout.activeExercises)],
+            ["Программы", String(detail.stats.workout.programs)],
+            ["Приемы пищи", String(detail.stats.nutrition.meals)],
+            ["AI-чаты", String(detail.stats.ai.chatSessions)],
             ["Подходы", String(detail.stats.workout.loggedSets)],
             [
-              "Р РѕР»СЊ РґРѕСЃС‚СѓРїР°",
+              "Роль доступа",
               adminRoleLabels[detail.adminRole?.role ?? "user"] ??
                 detail.adminRole?.role ??
-                "РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ",
+                "Пользователь",
             ],
           ].map(([label, value]) => (
             <article className="kpi p-4" key={label}>
@@ -502,53 +506,106 @@ export function AdminUserDetail({
 
         {!detail.superAdminPolicy.targetCanBeSuperAdmin ? (
           <p className="mt-4 rounded-2xl border border-sky-300/60 bg-sky-50 px-4 py-3 text-sm text-sky-800">
-            Р­С‚РѕС‚ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РЅРµ РјРѕР¶РµС‚ Р±С‹С‚СЊ `super_admin`. РљРѕСЂРЅРµРІРѕР№ super-admin Р·Р°РєСЂРµРїР»РµРЅ
-            С‚РѕР»СЊРєРѕ Р·Р° {detail.superAdminPolicy.primaryEmail}.
+            Этот пользователь не может быть `super_admin`. Корневой super-admin закреплен
+            только за {detail.superAdminPolicy.primaryEmail}.
           </p>
         ) : null}
 
         {detail.adminState?.is_suspended ? (
           <p className="mt-4 rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-            РђРєРєР°СѓРЅС‚ СЃРµР№С‡Р°СЃ РІ suspended state. Suspended at:{" "}
-            {formatDateTime(detail.adminState.suspended_at)}. РџСЂРёС‡РёРЅР°:{" "}
-            {detail.adminState.state_reason ?? "РЅРµ СѓРєР°Р·Р°РЅР°"}.
+            Аккаунт сейчас в suspended state. Suspended at:{" "}
+            {formatDateTime(detail.adminState.suspended_at)}. Причина:{" "}
+            {detail.adminState.state_reason ?? "не указана"}.
           </p>
         ) : null}
       </section>
 
+      <section className="card p-4 sm:p-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
+              Разделы карточки
+            </p>
+            <h2 className="mt-2 text-xl font-semibold text-foreground">
+              Открывай только нужный слой по пользователю
+            </h2>
+          </div>
+          <span className="pill">
+            {activeSection === "profile"
+              ? "Профиль"
+              : activeSection === "activity"
+                ? "Активность"
+                : activeSection === "operations"
+                  ? "Операции"
+                  : "Оплата и доступ"}
+          </span>
+        </div>
+
+        <div className="mt-4 grid gap-3 md:flex md:flex-wrap">
+          {[
+            ["profile", "Профиль", "Контекст, цели, роль и ручные действия."] as const,
+            ["activity", "Активность", "Тренировки, питание, AI и жизненный цикл."] as const,
+            ["operations", "Операции", "Очереди, выгрузки, удаление и аудит."] as const,
+            ["billing", "Оплата", "Подписка, доступы и история биллинга."] as const,
+          ].map(([key, label, description]) => {
+            const isActive = activeSection === key;
+
+            return (
+              <button
+                aria-pressed={isActive}
+                className={`w-full rounded-3xl border px-4 py-3 text-left transition md:w-auto md:min-w-[14rem] ${
+                  isActive
+                    ? "border-accent/30 bg-accent-soft text-foreground shadow-[0_18px_45px_-35px_rgba(20,97,75,0.45)]"
+                    : "border-border bg-white/72 text-foreground hover:bg-white"
+                }`}
+                key={key}
+                onClick={() => setActiveSection(key)}
+                type="button"
+              >
+                <span className="block text-sm font-semibold">{label}</span>
+                <span className="mt-1 block text-xs leading-5 text-muted">
+                  {description}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      {activeSection === "profile" ? (
       <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
         <section className="card p-6">
           <div className="mb-5">
             <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
-              РЎСЂРµР· РїСЂРѕС„РёР»СЏ
+              Срез профиля
             </p>
             <h2 className="mt-2 text-2xl font-semibold text-foreground">
-              Р‘Р°Р·РѕРІС‹Р№ РєРѕРЅС‚РµРєСЃС‚ Рё С†РµР»Рё
+              Базовый контекст и цели
             </h2>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
             <KeyValueCard
-              title="РџСЂРѕС„РёР»СЊ"
+              title="Профиль"
               rows={[
                 {
                   label: "Email",
-                  value: detail.authUser?.email ?? "РќРµС‚ РґР°РЅРЅС‹С…",
+                  value: detail.authUser?.email ?? "Нет данных",
                 },
                 {
-                  label: "РџРѕСЃР»РµРґРЅРёР№ РІС…РѕРґ",
+                  label: "Последний вход",
                   value: formatDateTime(detail.authUser?.last_sign_in_at),
                 },
                 {
-                  label: "РЎРѕР·РґР°РЅ",
+                  label: "Создан",
                   value: formatDateTime(detail.authUser?.created_at),
                 },
                 {
-                  label: "РџСЂРѕС„РёР»СЊ РѕР±РЅРѕРІР»РµРЅ",
+                  label: "Профиль обновлен",
                   value: formatDateTime(detail.profile?.updated_at),
                 },
                 {
-                  label: "РЎРѕСЃС‚РѕСЏРЅРёРµ Р°РєРєР°СѓРЅС‚Р°",
+                  label: "Состояние аккаунта",
                   value: detail.adminState?.is_suspended
                     ? "suspended"
                     : "active",
@@ -557,84 +614,84 @@ export function AdminUserDetail({
             />
 
             <KeyValueCard
-              title="Р¦РµР»Рё"
+              title="Цели"
               rows={[
                 {
-                  label: "РўРёРї С†РµР»Рё",
+                  label: "Тип цели",
                   value: detail.latestGoal?.goal_type
                     ? goalTypeLabels[detail.latestGoal.goal_type] ??
                       detail.latestGoal.goal_type
-                    : "РќРµ Р·Р°РїРѕР»РЅРµРЅРѕ",
+                    : "Не заполнено",
                 },
                 {
-                  label: "РўСЂРµРЅРёСЂРѕРІРѕРє РІ РЅРµРґРµР»СЋ",
+                  label: "Тренировок в неделю",
                   value: String(
-                    detail.latestGoal?.weekly_training_days ?? "РќРµ Р·Р°РїРѕР»РЅРµРЅРѕ",
+                    detail.latestGoal?.weekly_training_days ?? "Не заполнено",
                   ),
                 },
                 {
-                  label: "Р¦РµР»РµРІРѕР№ РІРµСЃ",
+                  label: "Целевой вес",
                   value:
                     detail.latestGoal?.target_weight_kg !== null &&
                     detail.latestGoal?.target_weight_kg !== undefined
-                      ? `${detail.latestGoal.target_weight_kg} РєРі`
-                      : "РќРµ Р·Р°РїРѕР»РЅРµРЅРѕ",
+                      ? `${detail.latestGoal.target_weight_kg} кг`
+                      : "Не заполнено",
                 },
               ]}
             />
 
             <KeyValueCard
-              title="РћРЅР±РѕСЂРґРёРЅРі"
+              title="Онбординг"
               rows={[
                 {
-                  label: "Р’РѕР·СЂР°СЃС‚",
-                  value: String(detail.onboarding?.age ?? "РќРµ Р·Р°РїРѕР»РЅРµРЅРѕ"),
+                  label: "Возраст",
+                  value: String(detail.onboarding?.age ?? "Не заполнено"),
                 },
                 {
-                  label: "РџРѕР»",
+                  label: "Пол",
                   value: detail.onboarding?.sex
                     ? sexLabels[detail.onboarding.sex] ?? detail.onboarding.sex
-                    : "РќРµ Р·Р°РїРѕР»РЅРµРЅРѕ",
+                    : "Не заполнено",
                 },
                 {
-                  label: "Р РѕСЃС‚",
+                  label: "Рост",
                   value:
                     detail.onboarding?.height_cm !== null &&
                     detail.onboarding?.height_cm !== undefined
-                      ? `${detail.onboarding.height_cm} СЃРј`
-                      : "РќРµ Р·Р°РїРѕР»РЅРµРЅРѕ",
+                      ? `${detail.onboarding.height_cm} см`
+                      : "Не заполнено",
                 },
                 {
-                  label: "Р’РµСЃ",
+                  label: "Вес",
                   value:
                     detail.onboarding?.weight_kg !== null &&
                     detail.onboarding?.weight_kg !== undefined
-                      ? `${detail.onboarding.weight_kg} РєРі`
-                      : "РќРµ Р·Р°РїРѕР»РЅРµРЅРѕ",
+                      ? `${detail.onboarding.weight_kg} кг`
+                      : "Не заполнено",
                 },
                 {
-                  label: "РЈСЂРѕРІРµРЅСЊ",
+                  label: "Уровень",
                   value: detail.onboarding?.fitness_level
                     ? fitnessLevelLabels[detail.onboarding.fitness_level] ??
                       detail.onboarding.fitness_level
-                    : "РќРµ Р·Р°РїРѕР»РЅРµРЅРѕ",
+                    : "Не заполнено",
                 },
               ]}
             />
 
             <KeyValueCard
-              title="РљРѕРЅС‚РµРєСЃС‚"
+              title="Контекст"
               rows={[
                 {
-                  label: "РћР±РѕСЂСѓРґРѕРІР°РЅРёРµ",
+                  label: "Оборудование",
                   value: renderList(detail.onboarding?.equipment),
                 },
                 {
-                  label: "РћРіСЂР°РЅРёС‡РµРЅРёСЏ",
+                  label: "Ограничения",
                   value: renderList(detail.onboarding?.injuries),
                 },
                 {
-                  label: "РџРёС‚Р°РЅРёРµ",
+                  label: "Питание",
                   value: renderList(detail.onboarding?.dietary_preferences),
                 },
               ]}
@@ -663,7 +720,10 @@ export function AdminUserDetail({
           />
         </div>
       </div>
+      ) : null}
 
+      {activeSection === "activity" ? (
+        <>
       <div className="grid gap-6 xl:grid-cols-2">
         <section className="card p-6">
           <div className="mb-5">
@@ -671,20 +731,20 @@ export function AdminUserDetail({
               Workout
             </p>
             <h2 className="mt-2 text-2xl font-semibold text-foreground">
-              РЎС‚Р°С‚РёСЃС‚РёРєР° С‚СЂРµРЅРёСЂРѕРІРѕРє
+              Статистика тренировок
             </h2>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
             {[
-              ["РђРєС‚РёРІРЅС‹Рµ СѓРїСЂР°Р¶РЅРµРЅРёСЏ", String(detail.stats.workout.activeExercises)],
-              ["РЁР°Р±Р»РѕРЅС‹", String(detail.stats.workout.templates)],
-              ["РџСЂРѕРіСЂР°РјРјС‹", String(detail.stats.workout.programs)],
-              ["РђРєС‚РёРІРЅС‹Рµ РЅРµРґРµР»Рё", String(detail.stats.workout.activePrograms)],
-              ["Р—Р°РІРµСЂС€РµРЅРЅС‹Рµ РґРЅРё", String(detail.stats.workout.completedDays)],
-              ["Р”РЅРё РІ РїСЂРѕС†РµСЃСЃРµ", String(detail.stats.workout.inProgressDays)],
-              ["РЎРѕС…СЂР°РЅРµРЅРЅС‹Рµ РїРѕРґС…РѕРґС‹", String(detail.stats.workout.loggedSets)],
-              ["РџРѕСЃР»РµРґРЅСЏСЏ Р°РєС‚РёРІРЅРѕСЃС‚СЊ", formatDateTime(detail.stats.workout.latestWorkoutAt)],
+              ["Активные упражнения", String(detail.stats.workout.activeExercises)],
+              ["Шаблоны", String(detail.stats.workout.templates)],
+              ["Программы", String(detail.stats.workout.programs)],
+              ["Активные недели", String(detail.stats.workout.activePrograms)],
+              ["Завершенные дни", String(detail.stats.workout.completedDays)],
+              ["Дни в процессе", String(detail.stats.workout.inProgressDays)],
+              ["Сохраненные подходы", String(detail.stats.workout.loggedSets)],
+              ["Последняя активность", formatDateTime(detail.stats.workout.latestWorkoutAt)],
             ].map(([label, value]) => (
               <MetricCard key={label} label={label} value={value} />
             ))}
@@ -697,19 +757,19 @@ export function AdminUserDetail({
               Nutrition
             </p>
             <h2 className="mt-2 text-2xl font-semibold text-foreground">
-              РЎС‚Р°С‚РёСЃС‚РёРєР° РїРёС‚Р°РЅРёСЏ
+              Статистика питания
             </h2>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
             {[
-              ["РџСЂРѕРґСѓРєС‚С‹", String(detail.stats.nutrition.foods)],
-              ["РџСЂРёРµРјС‹ РїРёС‰Рё", String(detail.stats.nutrition.meals)],
-              ["РџРѕР·РёС†РёРё РІ РїСЂРёРµРјР°С…", String(detail.stats.nutrition.mealItems)],
-              ["Р РµС†РµРїС‚С‹", String(detail.stats.nutrition.recipes)],
-              ["РЁР°Р±Р»РѕРЅС‹ РїРёС‚Р°РЅРёСЏ", String(detail.stats.nutrition.templates)],
+              ["Продукты", String(detail.stats.nutrition.foods)],
+              ["Приемы пищи", String(detail.stats.nutrition.meals)],
+              ["Позиции в приемах", String(detail.stats.nutrition.mealItems)],
+              ["Рецепты", String(detail.stats.nutrition.recipes)],
+              ["Шаблоны питания", String(detail.stats.nutrition.templates)],
               ["Nutrition days", String(detail.stats.nutrition.summaryDays)],
-              ["РџРѕСЃР»РµРґРЅРёР№ meal log", formatDateTime(detail.stats.nutrition.latestMealAt)],
+              ["Последний meal log", formatDateTime(detail.stats.nutrition.latestMealAt)],
             ].map(([label, value]) => (
               <MetricCard key={label} label={label} value={value} />
             ))}
@@ -736,7 +796,7 @@ export function AdminUserDetail({
               ["События безопасности", String(detail.stats.ai.safetyEvents)],
               ["Снимки контекста", String(detail.stats.ai.contextSnapshots)],
               ["Фрагменты базы", String(detail.stats.ai.knowledgeChunks)],
-              ["РџРѕСЃР»РµРґРЅРёР№ AI event", formatDateTime(detail.stats.ai.latestAiAt)],
+              ["Последний AI event", formatDateTime(detail.stats.ai.latestAiAt)],
             ].map(([label, value]) => (
               <MetricCard key={label} label={label} value={value} />
             ))}
@@ -749,7 +809,7 @@ export function AdminUserDetail({
               Lifecycle
             </p>
             <h2 className="mt-2 text-2xl font-semibold text-foreground">
-              Р”Р°РЅРЅС‹Рµ, Р±РёР»Р»РёРЅРі Рё Р¶РёР·РЅРµРЅРЅС‹Р№ С†РёРєР»
+              Данные, биллинг и жизненный цикл
             </h2>
           </div>
 
@@ -762,7 +822,7 @@ export function AdminUserDetail({
               ["Доступы", String(detail.stats.lifecycle.entitlements)],
               ["Счётчики использования", String(detail.stats.lifecycle.usageCounters)],
               [
-                "РџРѕСЃР»РµРґРЅРµРµ РѕР±РЅРѕРІР»РµРЅРёРµ РїСЂРѕС„РёР»СЏ",
+                "Последнее обновление профиля",
                 formatDateTime(detail.stats.lifecycle.latestProfileUpdateAt),
               ],
             ].map(([label, value]) => (
@@ -771,7 +831,11 @@ export function AdminUserDetail({
           </div>
         </section>
       </div>
+        </>
+      ) : null}
 
+      {activeSection === "operations" ? (
+        <>
       <section className="card p-6">
         <div className="mb-5">
           <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
@@ -788,23 +852,23 @@ export function AdminUserDetail({
               title="Текущая выгрузка"
               rows={[
                 {
-                  label: "РЎС‚Р°С‚СѓСЃ",
+                  label: "Статус",
                   value: formatStatus(detail.stats.lifecycle.latestExportJob?.status),
                 },
                 {
-                  label: "Р¤РѕСЂРјР°С‚",
+                  label: "Формат",
                   value:
-                    detail.stats.lifecycle.latestExportJob?.format ?? "РќРµС‚ РґР°РЅРЅС‹С…",
+                    detail.stats.lifecycle.latestExportJob?.format ?? "Нет данных",
                 },
                 {
-                  label: "РљС‚Рѕ Р·Р°РїСЂРѕСЃРёР»",
+                  label: "Кто запросил",
                   value: getUserLabel(
                     detail.stats.lifecycle.latestExportJob?.requested_by_user ?? null,
                     detail.stats.lifecycle.latestExportJob?.requested_by ?? null,
                   ),
                 },
                 {
-                  label: "РћР±РЅРѕРІР»РµРЅ",
+                  label: "Обновлен",
                   value: formatDateTime(
                     detail.stats.lifecycle.latestExportJob?.updated_at,
                   ),
@@ -816,7 +880,7 @@ export function AdminUserDetail({
               title="Текущий запрос на удаление"
               rows={[
                 {
-                  label: "РЎС‚Р°С‚СѓСЃ",
+                  label: "Статус",
                   value: formatStatus(detail.stats.lifecycle.deletionRequest?.status),
                 },
                 {
@@ -826,14 +890,14 @@ export function AdminUserDetail({
                   ),
                 },
                 {
-                  label: "РџРѕСЃР»РµРґРЅРёР№ РѕРїРµСЂР°С‚РѕСЂ",
+                  label: "Последний оператор",
                   value: getUserLabel(
                     detail.stats.lifecycle.deletionRequest?.requested_by_user ?? null,
                     detail.stats.lifecycle.deletionRequest?.requested_by ?? null,
                   ),
                 },
                 {
-                  label: "РћР±РЅРѕРІР»РµРЅ",
+                  label: "Обновлен",
                   value: formatDateTime(
                     detail.stats.lifecycle.deletionRequest?.updated_at,
                   ),
@@ -847,7 +911,7 @@ export function AdminUserDetail({
               <div>
                 <p className="font-semibold text-foreground">История выгрузок</p>
                 <p className="mt-1 text-xs text-muted">
-                  РџРѕСЃР»РµРґРЅРёРµ РІС‹РіСЂСѓР·РєРё Рё РёС… С‚РµРєСѓС‰РёР№ СЃС‚Р°С‚СѓСЃ
+                  Последние выгрузки и их текущий статус
                 </p>
               </div>
               <div className="pill">{detail.recentExportJobs.length}</div>
@@ -861,22 +925,22 @@ export function AdminUserDetail({
                     key={job.id}
                   >
                     <p className="font-medium text-foreground">
-                      {job.format} В· {formatStatus(job.status)}
+                      {job.format} · {formatStatus(job.status)}
                     </p>
                     <p className="mt-1 text-muted">
-                      Р—Р°РїСЂРѕСЃРёР»:{" "}
+                      Запросил:{" "}
                       <span className="text-foreground">
                         {getUserLabel(job.requested_by_user, job.requested_by)}
                       </span>
                     </p>
                     <p className="mt-1 text-muted">
-                      РЎРѕР·РґР°РЅ:{" "}
+                      Создан:{" "}
                       <span className="text-foreground">
                         {formatDateTime(job.created_at)}
                       </span>
                     </p>
                     <p className="mt-1 text-muted">
-                      РћР±РЅРѕРІР»РµРЅ:{" "}
+                      Обновлен:{" "}
                       <span className="text-foreground">
                         {formatDateTime(job.updated_at)}
                       </span>
@@ -890,7 +954,7 @@ export function AdminUserDetail({
                   </div>
                 ))
               ) : (
-                <EmptyState>Р­РєСЃРїРѕСЂС‚РѕРІ РїРѕ СЌС‚РѕРјСѓ РїРѕР»СЊР·РѕРІР°С‚РµР»СЋ РїРѕРєР° РЅРµ Р±С‹Р»Рѕ.</EmptyState>
+                <EmptyState>Экспортов по этому пользователю пока не было.</EmptyState>
               )}
             </div>
           </article>
@@ -924,20 +988,20 @@ export function AdminUserDetail({
                         {formatSupportAction(action.action)}
                       </p>
                       <p className="mt-1 text-muted">
-                        РЎС‚Р°С‚СѓСЃ:{" "}
+                        Статус:{" "}
                         <span className="text-foreground">
                           {formatStatus(action.status)}
                         </span>
                       </p>
                       <p className="mt-1 text-muted">
-                        РРЅРёС†РёР°С‚РѕСЂ:{" "}
+                        Инициатор:{" "}
                         <span className="text-foreground">
                           {getUserLabel(action.actor_user, action.actor_user_id)}
                         </span>
                       </p>
                       {action.resolved_by_user ? (
                         <p className="mt-1 text-muted">
-                          Р—Р°РєСЂС‹Р»:{" "}
+                          Закрыл:{" "}
                           <span className="text-foreground">
                             {getUserLabel(action.resolved_by_user)}
                           </span>
@@ -950,13 +1014,13 @@ export function AdminUserDetail({
                         </p>
                       ) : null}
                       <p className="mt-1 text-muted">
-                        РЎРѕР·РґР°РЅ:{" "}
+                        Создан:{" "}
                         <span className="text-foreground">
                           {formatDateTime(action.created_at)}
                         </span>
                       </p>
                       <p className="mt-1 text-muted">
-                        РћР±РЅРѕРІР»РµРЅ:{" "}
+                        Обновлен:{" "}
                         <span className="text-foreground">
                           {formatDateTime(action.updated_at)}
                         </span>
@@ -1011,28 +1075,28 @@ export function AdminUserDetail({
                     {formatAuditAction(entry.action)}
                   </p>
                   <p className="mt-1 text-muted">
-                    РћРїРµСЂР°С‚РѕСЂ:{" "}
+                    Оператор:{" "}
                     <span className="text-foreground">
                       {getUserLabel(entry.actor_user, entry.actor_user_id)}
                     </span>
                   </p>
                   <p className="mt-1 text-muted">
-                    РљРѕРіРґР°:{" "}
+                    Когда:{" "}
                     <span className="text-foreground">
                       {formatDateTime(entry.created_at)}
                     </span>
                   </p>
                   {fromStatus || toStatus ? (
                     <p className="mt-1 text-muted">
-                      РџРµСЂРµС…РѕРґ:{" "}
+                      Переход:{" "}
                       <span className="text-foreground">
-                        {formatStatus(fromStatus)} в†’ {formatStatus(toStatus)}
+                        {formatStatus(fromStatus)} → {formatStatus(toStatus)}
                       </span>
                     </p>
                   ) : null}
                   {format ? (
                     <p className="mt-1 text-muted">
-                      Р¤РѕСЂРјР°С‚: <span className="text-foreground">{format}</span>
+                      Формат: <span className="text-foreground">{format}</span>
                     </p>
                   ) : null}
                   {holdUntil ? (
@@ -1044,9 +1108,9 @@ export function AdminUserDetail({
                     </p>
                   ) : null}
                   <p className="mt-1 text-muted">
-                    РџСЂРёС‡РёРЅР°:{" "}
+                    Причина:{" "}
                     <span className="text-foreground">
-                      {entry.reason ?? "Р‘РµР· РїРѕСЏСЃРЅРµРЅРёСЏ"}
+                      {entry.reason ?? "Без пояснения"}
                     </span>
                   </p>
                   {note ? (
@@ -1064,7 +1128,10 @@ export function AdminUserDetail({
           )}
         </div>
       </section>
+        </>
+      ) : null}
 
+      {activeSection === "billing" ? (
       <section className="card p-6">
         <div className="mb-5">
           <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
@@ -1077,25 +1144,25 @@ export function AdminUserDetail({
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <KeyValueCard
-            title="РўРµРєСѓС‰Р°СЏ РїРѕРґРїРёСЃРєР°"
+            title="Текущая подписка"
             rows={[
               {
-                label: "РЎС‚Р°С‚СѓСЃ",
+                label: "Статус",
                 value: formatStatus(detail.stats.lifecycle.latestSubscription?.status),
               },
               {
-                label: "РџСЂРѕРІР°Р№РґРµСЂ",
+                label: "Провайдер",
                 value:
-                  detail.stats.lifecycle.latestSubscription?.provider ?? "РќРµС‚ РґР°РЅРЅС‹С…",
+                  detail.stats.lifecycle.latestSubscription?.provider ?? "Нет данных",
               },
               {
-                label: "РџРµСЂРёРѕРґ РґРѕ",
+                label: "Период до",
                 value: formatDateTime(
                   detail.stats.lifecycle.latestSubscription?.current_period_end,
                 ),
               },
               {
-                label: "РћР±РЅРѕРІР»РµРЅРѕ",
+                label: "Обновлено",
                 value: formatDateTime(
                   detail.stats.lifecycle.latestSubscription?.updated_at,
                 ),
@@ -1110,16 +1177,16 @@ export function AdminUserDetail({
                 label: "ID клиента",
                 value:
                   detail.stats.lifecycle.latestSubscription?.provider_customer_id ??
-                  "Р СњР ВµРЎвЂљ Р Т‘Р В°Р Р…Р Р…РЎвЂ№РЎвЂ¦",
+                  "Нет данных",
               },
               {
                 label: "ID подписки",
                 value:
                   detail.stats.lifecycle.latestSubscription?.provider_subscription_id ??
-                  "Р СњР ВµРЎвЂљ Р Т‘Р В°Р Р…Р Р…РЎвЂ№РЎвЂ¦",
+                  "Нет данных",
               },
               {
-                label: "Р СџР ВµРЎР‚Р С‘Р С•Р Т‘ РЎРѓ",
+                label: "Период с",
                 value: formatDateTime(
                   detail.stats.lifecycle.latestSubscription?.current_period_start,
                 ),
@@ -1130,7 +1197,7 @@ export function AdminUserDetail({
                   detail.stats.lifecycle.latestSubscription?.provider === "stripe"
                     ? "Stripe"
                     : detail.stats.lifecycle.latestSubscription?.provider ??
-                      "Р СњР ВµРЎвЂљ Р Т‘Р В°Р Р…Р Р…РЎвЂ№РЎвЂ¦",
+                      "Нет данных",
               },
             ]}
           />
@@ -1170,19 +1237,19 @@ export function AdminUserDetail({
                       {entitlement.feature_key}
                     </p>
                     <p className="mt-1 text-muted">
-                      РЎС‚Р°С‚СѓСЃ:{" "}
+                      Статус:{" "}
                       <span className="text-foreground">
                         {entitlement.is_enabled ? "включено" : "выключено"}
                       </span>
                     </p>
                     <p className="mt-1 text-muted">
-                      Р›РёРјРёС‚:{" "}
+                      Лимит:{" "}
                       <span className="text-foreground">
-                        {entitlement.limit_value ?? "Р±РµР· Р»РёРјРёС‚Р°"}
+                        {entitlement.limit_value ?? "без лимита"}
                       </span>
                     </p>
                     <p className="mt-1 text-muted">
-                      РћР±РЅРѕРІР»РµРЅРѕ:{" "}
+                      Обновлено:{" "}
                       <span className="text-foreground">
                         {formatDateTime(entitlement.updated_at)}
                       </span>
@@ -1310,7 +1377,9 @@ export function AdminUserDetail({
           </article>
         </div>
       </section>
+      ) : null}
 
+      {activeSection === "operations" ? (
       <section className="card p-6">
         <div className="mb-5 flex items-center justify-between gap-3">
           <div>
@@ -1335,19 +1404,19 @@ export function AdminUserDetail({
                   {formatAuditAction(entry.action)}
                 </p>
                 <p className="mt-1 text-muted">
-                  РћРїРµСЂР°С‚РѕСЂ:{" "}
+                  Оператор:{" "}
                   <span className="text-foreground">
                     {getUserLabel(entry.actor_user, entry.actor_user_id)}
                   </span>
                 </p>
                 <p className="mt-1 text-muted">
-                  РџСЂРёС‡РёРЅР°:{" "}
+                  Причина:{" "}
                   <span className="text-foreground">
-                    {entry.reason ?? "Р‘РµР· РїРѕСЏСЃРЅРµРЅРёСЏ"}
+                    {entry.reason ?? "Без пояснения"}
                   </span>
                 </p>
                 <p className="mt-1 text-muted">
-                  РљРѕРіРґР°:{" "}
+                  Когда:{" "}
                   <span className="text-foreground">
                     {formatDateTime(entry.created_at)}
                   </span>
@@ -1397,6 +1466,7 @@ export function AdminUserDetail({
           )}
         </div>
       </section>
+      ) : null}
     </div>
   );
 }

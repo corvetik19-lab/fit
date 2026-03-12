@@ -7,6 +7,7 @@ import { logger } from "@/lib/logger";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 
 const reindexSchema = z.object({
+  mode: z.enum(["embeddings", "full"]).optional(),
   targetUserId: z.string().uuid().optional(),
   reason: z.string().trim().max(300).optional(),
 });
@@ -18,8 +19,9 @@ export async function POST(request: Request) {
     const adminSupabase = createAdminSupabaseClient();
 
     const targetUserId = payload.targetUserId ?? user.id;
-
-    const result = await reindexUserKnowledgeBase(adminSupabase, targetUserId);
+    const result = await reindexUserKnowledgeBase(adminSupabase, targetUserId, {
+      mode: payload.mode ?? "full",
+    });
 
     const { data: supportAction, error: supportActionError } = await adminSupabase
       .from("support_actions")
@@ -29,7 +31,10 @@ export async function POST(request: Request) {
         action: "reindex_knowledge",
         status: "completed",
         payload: {
+          embeddingsIndexed: result.embeddingsIndexed,
           indexedChunks: result.indexedChunks,
+          mode: result.mode,
+          searchMode: result.searchMode,
         },
       })
       .select("id, action, status, created_at, payload")
@@ -39,28 +44,38 @@ export async function POST(request: Request) {
       throw supportActionError;
     }
 
-    const { error: auditError } = await adminSupabase
-      .from("admin_audit_logs")
-      .insert({
-        actor_user_id: user.id,
-        target_user_id: targetUserId,
-        action: "reindex_knowledge",
-        reason: payload.reason ?? "ручной reindex базы знаний",
-        payload: {
-          indexedChunks: result.indexedChunks,
-          supportActionId: supportAction.id,
-        },
-      });
+    const { error: auditError } = await adminSupabase.from("admin_audit_logs").insert({
+      actor_user_id: user.id,
+      target_user_id: targetUserId,
+      action: "reindex_knowledge",
+      reason:
+        payload.reason ??
+        (result.mode === "embeddings"
+          ? "ручное обновление embeddings базы знаний"
+          : "ручной reindex базы знаний"),
+      payload: {
+        embeddingsIndexed: result.embeddingsIndexed,
+        indexedChunks: result.indexedChunks,
+        mode: result.mode,
+        searchMode: result.searchMode,
+        supportActionId: supportAction.id,
+      },
+    });
 
     if (auditError) {
       throw auditError;
     }
 
+    const message =
+      result.mode === "embeddings"
+        ? `Эмбеддинги обновлены. Чанков в базе знаний: ${result.indexedChunks}, векторов пересобрано: ${result.embeddingsIndexed}.`
+        : `База знаний переиндексирована. Индексировано чанков: ${result.indexedChunks}.`;
+
     return Response.json({
       data: {
         ...supportAction,
         indexedChunks: result.indexedChunks,
-        message: `База знаний переиндексирована. Индексировано чанков: ${result.indexedChunks}.`,
+        message,
       },
     });
   } catch (error) {

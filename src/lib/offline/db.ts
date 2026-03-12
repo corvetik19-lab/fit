@@ -11,6 +11,19 @@ export type WorkoutDayStatusOfflineMutation = {
   createdAt: string;
 };
 
+export type WorkoutDayExecutionOfflineMutation = {
+  id: string;
+  entity: "workout_day_execution";
+  op: "update";
+  payload: {
+    dayId: string;
+    status: "planned" | "in_progress" | "done";
+    bodyWeightKg: number | null;
+    sessionNote: string | null;
+  };
+  createdAt: string;
+};
+
 export type WorkoutSetActualRepsOfflineMutation = {
   id: string;
   entity: "workout_set_actual_reps";
@@ -19,12 +32,17 @@ export type WorkoutSetActualRepsOfflineMutation = {
     dayId: string;
     setId: string;
     actualReps: number | null;
+    actualWeightKg: number | null;
+    actualRpe: number | null;
+    restSeconds: number | null;
+    setNote: string | null;
   };
   createdAt: string;
 };
 
 export type OfflineMutation =
   | WorkoutDayStatusOfflineMutation
+  | WorkoutDayExecutionOfflineMutation
   | WorkoutSetActualRepsOfflineMutation;
 
 export interface CacheSnapshot {

@@ -9,15 +9,20 @@ import {
   touchAiChatSession,
 } from "@/lib/ai/chat";
 import {
+  buildSportsDomainSystemPrompt,
+  detectAssistantGuardrail,
+} from "@/lib/ai/domain-policy";
+import { models } from "@/lib/ai/gateway";
+import { retrieveKnowledgeMatches } from "@/lib/ai/knowledge";
+import { getAiRuntimeContext } from "@/lib/ai/user-context";
+import { createApiErrorResponse } from "@/lib/api/error-response";
+import {
   BILLING_FEATURE_KEYS,
   createFeatureAccessDeniedResponse,
   incrementFeatureUsage,
   readUserBillingAccess,
 } from "@/lib/billing-access";
-import { models } from "@/lib/ai/gateway";
-import { retrieveKnowledgeMatches } from "@/lib/ai/knowledge";
-import { createApiErrorResponse } from "@/lib/api/error-response";
-import { hasAiGatewayEnv } from "@/lib/env";
+import { hasAiRuntimeEnv } from "@/lib/env";
 import { logger } from "@/lib/logger";
 import { hasRiskyIntent } from "@/lib/safety";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -31,48 +36,51 @@ const chatRequestSchema = z.object({
 
 function buildSafetyFallback() {
   return [
-    "Я не могу помогать с опасными или экстремальными рекомендациями.",
-    "Если вопрос касается сильного дефицита калорий, жёсткого ограничения питания или медицинских симптомов, лучше обратиться к врачу или спортивному специалисту.",
-    "Я могу помочь составить более безопасный и реалистичный план в рамках тренировок, питания и восстановления.",
+    "Я не помогаю с опасными или экстремальными рекомендациями.",
+    "Если вопрос касается сильного дефицита, обезвоживания, выраженной боли или медицинских симптомов, безопаснее получить очную консультацию врача.",
+    "Я могу помочь только с более безопасным и реалистичным планом по тренировкам, питанию и восстановлению.",
   ].join(" ");
 }
 
-function buildSystemPrompt(knowledge: Awaited<ReturnType<typeof retrieveKnowledgeMatches>>) {
-  const knowledgeText = knowledge.length
-    ? knowledge
-        .map(
-          (item, index) =>
-            `[${index + 1}] ${item.sourceType}: ${item.content}`,
-        )
-        .join("\n\n")
-    : "Контекст из knowledge base пока пустой. Отвечай аккуратно и явно отмечай нехватку данных.";
+function stringifyAiError(error: unknown) {
+  if (error instanceof Error) {
+    return `${error.name}: ${error.message}`;
+  }
 
-  return `Ты — AI-коуч внутри приложения fit. Отвечай только по-русски.
+  if (typeof error === "string") {
+    return error;
+  }
 
-Твои правила:
-- давай practical, calm и безопасные рекомендации по тренировкам, питанию и восстановлению;
-- не ставь медицинские диагнозы и не заменяй врача;
-- не предлагай экстремальные дефициты, обезвоживание, голодание, травмоопасные перегрузки;
-- если данных не хватает, честно скажи об этом;
-- опирайся только на пользовательский контекст и извлечённые знания ниже;
-- не упоминай чужие данные и не выдумывай показатели, которых нет.
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return String(error);
+  }
+}
 
-Извлечённый контекст:
-${knowledgeText}
+function buildProviderErrorMessage(error: unknown) {
+  const normalized = stringifyAiError(error).toLowerCase();
 
-В ответах:
-- сначала дай короткий вывод;
-- затем дай 2-5 конкретных шагов;
-- если уместно, предложи следующий безопасный шаг внутри приложения fit.`;
+  if (
+    normalized.includes("credit card") ||
+    normalized.includes("customer_verification_required") ||
+    normalized.includes("insufficient credits") ||
+    normalized.includes("payment required") ||
+    normalized.includes("quota")
+  ) {
+    return "AI-чат временно недоступен: внешний AI-провайдер еще не активирован для live-запросов. История и профиль пользователя сохранены, но ответ сейчас сгенерировать нельзя.";
+  }
+
+  return "Не удалось получить ответ AI-чата.";
 }
 
 export async function POST(request: Request) {
   try {
-    if (!hasAiGatewayEnv()) {
+    if (!hasAiRuntimeEnv()) {
       return createApiErrorResponse({
         status: 503,
-        code: "AI_GATEWAY_NOT_CONFIGURED",
-        message: "AI Gateway не настроен для AI-чата.",
+        code: "AI_RUNTIME_NOT_CONFIGURED",
+        message: "AI runtime не настроен для AI-чата.",
       });
     }
 
@@ -90,7 +98,9 @@ export async function POST(request: Request) {
       });
     }
 
-    const access = await readUserBillingAccess(supabase, user.id);
+    const access = await readUserBillingAccess(supabase, user.id, {
+      email: user.email,
+    });
     const feature = access.features[BILLING_FEATURE_KEYS.aiChat];
 
     if (!feature.allowed) {
@@ -116,7 +126,6 @@ export async function POST(request: Request) {
 
     if (hasRiskyIntent(body.message)) {
       const safeReply = buildSafetyFallback();
-
       const assistantMessage = await createAiChatMessage(supabase, {
         userId: user.id,
         sessionId: session.id,
@@ -146,13 +155,42 @@ export async function POST(request: Request) {
       });
     }
 
-    const retrievedKnowledge = await retrieveKnowledgeMatches(
-      supabase,
-      user.id,
-      body.message,
-      6,
-    );
+    const guardrail = detectAssistantGuardrail(body.message);
 
+    if (guardrail) {
+      const assistantMessage = await createAiChatMessage(supabase, {
+        userId: user.id,
+        sessionId: session.id,
+        role: "assistant",
+        content: guardrail.response,
+      });
+
+      await supabase.from("ai_safety_events").insert({
+        user_id: user.id,
+        route_key: "ai_chat",
+        action: guardrail.kind,
+        prompt_excerpt: body.message.slice(0, 300),
+        payload: {
+          sessionId: session.id,
+        },
+      });
+
+      return Response.json({
+        data: {
+          sessionId: session.id,
+          sessionTitle: session.title,
+          blocked: true,
+          userMessage,
+          assistantMessage,
+          sources: [],
+        },
+      });
+    }
+
+    const [retrievedKnowledge, userContext] = await Promise.all([
+      retrieveKnowledgeMatches(supabase, user.id, body.message, 6),
+      getAiRuntimeContext(supabase, user.id).then((result) => result.context),
+    ]);
     const recentMessages = await listAiChatMessages(
       supabase,
       user.id,
@@ -162,7 +200,11 @@ export async function POST(request: Request) {
 
     const result = await generateText({
       model: models.chat,
-      system: buildSystemPrompt(retrievedKnowledge),
+      system: buildSportsDomainSystemPrompt({
+        allowWebSearch: false,
+        context: userContext,
+        knowledge: retrievedKnowledge,
+      }),
       messages: toModelMessages(recentMessages),
     });
 
@@ -207,9 +249,9 @@ export async function POST(request: Request) {
     }
 
     return createApiErrorResponse({
-      status: 500,
+      status: 502,
       code: "AI_CHAT_FAILED",
-      message: "Не удалось получить ответ AI-чата.",
+      message: buildProviderErrorMessage(error),
     });
   }
 }

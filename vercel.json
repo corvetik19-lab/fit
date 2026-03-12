@@ -1,0 +1,25 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [
+    {
+      "path": "/api/internal/jobs/dashboard-warm",
+      "schedule": "15 2 * * *"
+    },
+    {
+      "path": "/api/internal/jobs/nutrition-summaries?days=3",
+      "schedule": "45 2 * * *"
+    },
+    {
+      "path": "/api/internal/jobs/knowledge-reindex?mode=embeddings&limit=20",
+      "schedule": "15 3 * * *"
+    },
+    {
+      "path": "/api/internal/jobs/billing-reconcile?limit=20",
+      "schedule": "15 4 * * *"
+    },
+    {
+      "path": "/api/internal/jobs/ai-evals-schedule?suite=tool_calls",
+      "schedule": "45 3 * * *"
+    }
+  ]
+}

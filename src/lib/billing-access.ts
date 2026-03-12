@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { isPrimarySuperAdminEmail } from "@/lib/admin-permissions";
 import { createApiErrorResponse } from "@/lib/api/error-response";
 
 export const BILLING_FEATURE_KEYS = {
@@ -24,11 +25,12 @@ type BillingFeatureConfigMap = Record<
 type BillingFeatureKey =
   (typeof BILLING_FEATURE_KEYS)[keyof typeof BILLING_FEATURE_KEYS];
 
-type AccessSource = "default" | "subscription" | "entitlement";
+type AccessSource = "default" | "subscription" | "entitlement" | "privileged";
 
 type SubscriptionSnapshot = {
   currentPeriodEnd: string | null;
   isActive: boolean;
+  isPrivilegedAccess: boolean;
   provider: string | null;
   status: string | null;
   updatedAt: string | null;
@@ -90,13 +92,13 @@ const FEATURE_CONFIG: BillingFeatureConfigMap = {
   },
   meal_plan: {
     label: "AI-план питания",
-    description: "Генерация meal plan proposals и применение их в продукт.",
+    description: "Сборка плана питания в черновик и применение его в приложение.",
     metricKey: "ai_meal_plan_generations",
     requiresSubscription: true,
   },
   workout_plan: {
     label: "AI-план тренировок",
-    description: "Генерация workout plan proposals и применение их в продукт.",
+    description: "Сборка тренировочной недели в черновик и применение её в приложение.",
     metricKey: "ai_workout_plan_generations",
     requiresSubscription: true,
   },
@@ -219,7 +221,7 @@ function buildFeatureAccess(
       description: config.description,
       allowed: false,
       reason:
-        "Нужен активный trial, подписка или явный entitlement от super-admin.",
+        "Нужен активный пробный доступ, подписка или ручное открытие функции супер-админом.",
       source: "default",
       usage,
     };
@@ -241,6 +243,9 @@ function buildFeatureAccess(
 export async function readUserBillingAccess(
   supabase: Pick<SupabaseClient, "from">,
   userId: string,
+  options?: {
+    email?: string | null;
+  },
 ): Promise<UserBillingAccessSnapshot> {
   const featureKeys = Object.values(BILLING_FEATURE_KEYS);
   const metricKeys = Object.values(FEATURE_CONFIG).map((feature) => feature.metricKey);
@@ -293,6 +298,44 @@ export async function readUserBillingAccess(
     ]),
   );
 
+  if (isPrimarySuperAdminEmail(options?.email)) {
+    const privilegedFeatures = Object.fromEntries(
+      featureKeys.map((featureKey) => {
+        const config = FEATURE_CONFIG[featureKey];
+        const usage = resolveUsageSnapshot(
+          config.metricKey,
+          null,
+          usageByMetric.get(config.metricKey),
+        );
+
+        return [
+          featureKey,
+          {
+            featureKey,
+            label: config.label,
+            description: config.description,
+            allowed: true,
+            reason: null,
+            source: "privileged",
+            usage,
+          } satisfies FeatureAccessSnapshot,
+        ];
+      }),
+    ) as Record<BillingFeatureKey, FeatureAccessSnapshot>;
+
+    return {
+      subscription: {
+        status: "root_access",
+        provider: "admin",
+        currentPeriodEnd: null,
+        updatedAt: null,
+        isActive: true,
+        isPrivilegedAccess: true,
+      },
+      features: privilegedFeatures,
+    };
+  }
+
   const features = Object.fromEntries(
     featureKeys.map((featureKey) => [
       featureKey,
@@ -312,6 +355,7 @@ export async function readUserBillingAccess(
       currentPeriodEnd: subscription?.current_period_end ?? null,
       updatedAt: subscription?.updated_at ?? null,
       isActive: isSubscriptionActive(subscription),
+      isPrivilegedAccess: false,
     },
     features,
   };

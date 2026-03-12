@@ -3,6 +3,11 @@
 import { useState } from "react";
 
 import {
+  AI_EVAL_SUITE_LABELS,
+  AI_EVAL_SUITES,
+  type AiEvalSuite,
+} from "@/lib/ai/eval-suites";
+import {
   getAdminRoleLabel,
   hasAdminCapability,
   type PlatformAdminRole,
@@ -16,6 +21,12 @@ type AdminAiEvalRun = {
   created_at: string;
   started_at: string | null;
   completed_at: string | null;
+  summary?: {
+    isScheduled?: boolean;
+    qualityGatePassed?: boolean;
+    suite?: string;
+    trigger?: string;
+  } | null;
 };
 
 const inputClassName =
@@ -35,7 +46,7 @@ function formatStatus(status: string) {
     case "running":
       return "в работе";
     case "completed":
-      return "завершено";
+      return "завершен";
     case "failed":
       return "ошибка";
     default:
@@ -51,6 +62,14 @@ function formatDateTime(value: string | null) {
   return dateFormatter.format(new Date(value));
 }
 
+function getSuiteLabel(value: string | null | undefined) {
+  if (!value) {
+    return AI_EVAL_SUITE_LABELS.all;
+  }
+
+  return AI_EVAL_SUITE_LABELS[value as AiEvalSuite] ?? value;
+}
+
 async function readJsonSafely(response: Response) {
   return (await response.json().catch(() => null)) as
     | {
@@ -61,19 +80,23 @@ async function readJsonSafely(response: Response) {
 }
 
 export function AdminAiEvalRuns({
+  canRunScheduledJobs = false,
   currentAdminRole,
   initialRuns,
 }: {
+  canRunScheduledJobs?: boolean;
   currentAdminRole: PlatformAdminRole;
   initialRuns: AdminAiEvalRun[];
 }) {
   const [runs, setRuns] = useState(initialRuns);
   const [label, setLabel] = useState("");
   const [modelId, setModelId] = useState("google/gemini-3.1-pro-preview");
+  const [suite, setSuite] = useState<AiEvalSuite>("all");
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isScheduling, setIsScheduling] = useState(false);
 
   const canQueueAiEvalRuns = hasAdminCapability(
     currentAdminRole,
@@ -119,6 +142,7 @@ export function AdminAiEvalRuns({
         body: JSON.stringify({
           label: label.trim() || undefined,
           modelId: modelId.trim() || undefined,
+          suite,
         }),
       });
 
@@ -137,11 +161,53 @@ export function AdminAiEvalRuns({
       }
 
       setNotice(
-        queuedRun?.message ?? "AI eval run поставлен в очередь и добавлен в список.",
+        queuedRun?.message ??
+          "AI eval run поставлен в очередь и добавлен в историю запусков.",
       );
       setLabel("");
     } finally {
       setIsSubmitting(false);
+    }
+  }
+
+  async function queueScheduledSmokeRun() {
+    if (isScheduling || !canRunScheduledJobs) {
+      return;
+    }
+
+    setIsScheduling(true);
+    setError(null);
+    setNotice(null);
+
+    try {
+      const response = await fetch(
+        "/api/internal/jobs/ai-evals-schedule?suite=tool_calls",
+        {
+          method: "POST",
+        },
+      );
+      const payload = await readJsonSafely(response);
+
+      if (!response.ok) {
+        setError(
+          payload?.message ?? "Не удалось поставить scheduled AI eval в очередь.",
+        );
+        return;
+      }
+
+      const queuedRun =
+        payload?.data && !Array.isArray(payload.data) ? payload.data : null;
+
+      if (queuedRun) {
+        setRuns((current) => {
+          const withoutDuplicate = current.filter((run) => run.id !== queuedRun.id);
+          return [queuedRun, ...withoutDuplicate].slice(0, 20);
+        });
+      }
+
+      setNotice(payload?.message ?? "Scheduled AI eval добавлен в очередь.");
+    } finally {
+      setIsScheduling(false);
     }
   }
 
@@ -153,7 +219,7 @@ export function AdminAiEvalRuns({
             AI-оценки
           </p>
           <h2 className="mt-2 text-2xl font-semibold text-foreground">
-            Живой контур AI eval runs
+            Ragas benchmark и история запусков
           </h2>
         </div>
         <button
@@ -169,25 +235,25 @@ export function AdminAiEvalRuns({
       <div className="grid gap-4">
         {!canQueueAiEvalRuns ? (
           <p className="rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            Роль {getAdminRoleLabel(currentAdminRole)} не может ставить eval runs в очередь.
-            Для этого нужен `super_admin` или `analyst`.
+            Роль {getAdminRoleLabel(currentAdminRole)} не может ставить AI eval runs
+            в очередь. Для запуска нужен `super_admin` или `analyst`.
           </p>
         ) : null}
 
-        <div className="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
+        <div className="grid gap-3 lg:grid-cols-[1fr_1fr_220px_auto]">
           <label className="grid gap-2 text-sm text-muted">
-            Label
+            Название запуска
             <input
               className={inputClassName}
               disabled={!canQueueAiEvalRuns || isSubmitting}
               onChange={(event) => setLabel(event.target.value)}
-              placeholder="Например: weekly admin benchmark"
+              placeholder="Например: weekly assistant regression"
               value={label}
             />
           </label>
 
           <label className="grid gap-2 text-sm text-muted">
-            Model
+            Модель
             <input
               className={inputClassName}
               disabled={!canQueueAiEvalRuns || isSubmitting}
@@ -196,9 +262,25 @@ export function AdminAiEvalRuns({
             />
           </label>
 
+          <label className="grid gap-2 text-sm text-muted">
+            Набор
+            <select
+              className={inputClassName}
+              disabled={!canQueueAiEvalRuns || isSubmitting}
+              onChange={(event) => setSuite(event.target.value as AiEvalSuite)}
+              value={suite}
+            >
+              {AI_EVAL_SUITES.map((option) => (
+                <option key={option} value={option}>
+                  {AI_EVAL_SUITE_LABELS[option]}
+                </option>
+              ))}
+            </select>
+          </label>
+
           <div className="flex items-end">
             <button
-              className="inline-flex w-full justify-center rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 md:w-auto"
+              className="inline-flex w-full justify-center rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 lg:w-auto"
               disabled={!canQueueAiEvalRuns || isSubmitting}
               onClick={() => void queueRun()}
               type="button"
@@ -207,6 +289,25 @@ export function AdminAiEvalRuns({
             </button>
           </div>
         </div>
+
+        {canRunScheduledJobs ? (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-white/60 px-4 py-4 text-sm">
+            <div className="space-y-1">
+              <p className="font-semibold text-foreground">Scheduled smoke-eval</p>
+              <p className="text-muted">
+                Root-only no-spend прогон `tool_calls`, который автоматически ставится в очередь по cron и может быть запущен вручную отсюда.
+              </p>
+            </div>
+            <button
+              className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={isScheduling}
+              onClick={() => void queueScheduledSmokeRun()}
+              type="button"
+            >
+              {isScheduling ? "Ставлю smoke-eval..." : "Поставить smoke-eval"}
+            </button>
+          </div>
+        ) : null}
 
         {error ? (
           <p className="rounded-2xl border border-red-300/60 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -228,16 +329,28 @@ export function AdminAiEvalRuns({
                 key={run.id}
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
+                  <div className="space-y-1">
                     <p className="font-semibold text-foreground">{run.label}</p>
-                    <p className="mt-1 break-all text-muted">{run.model_id}</p>
+                    <p className="break-all text-muted">{run.model_id}</p>
                   </div>
-                  <div className="pill">{formatStatus(run.status)}</div>
+                  <div className="flex flex-wrap gap-2">
+                    <span className="pill">{formatStatus(run.status)}</span>
+                    <span className="pill">{getSuiteLabel(run.summary?.suite)}</span>
+                    {run.summary?.isScheduled ? (
+                      <span className="pill bg-sky-100 text-sky-700">scheduled</span>
+                    ) : null}
+                    {run.summary?.qualityGatePassed === true ? (
+                      <span className="pill bg-emerald-100 text-emerald-700">порог пройден</span>
+                    ) : null}
+                    {run.summary?.qualityGatePassed === false ? (
+                      <span className="pill bg-red-100 text-red-700">порог не пройден</span>
+                    ) : null}
+                  </div>
                 </div>
                 <div className="mt-3 grid gap-1 text-muted">
                   <p>Создан: {formatDateTime(run.created_at)}</p>
                   <p>Старт: {formatDateTime(run.started_at)}</p>
-                  <p>Завершён: {formatDateTime(run.completed_at)}</p>
+                  <p>Завершен: {formatDateTime(run.completed_at)}</p>
                 </div>
               </article>
             ))

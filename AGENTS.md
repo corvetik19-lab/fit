@@ -32,7 +32,11 @@
 
 ## Tooling expectations
 - Use local shell for repo work, npm, testing, and git.
-- Use Supabase MCP or CLI for project/database operations when available.
+- For any Supabase-related work in this repository, prefer Supabase MCP first and treat it as the default path.
+- The canonical Supabase MCP target for this repo is `mcp__supabase-mcp-server__*` on project `nactzaxrjzsdkyfqwecf` (`https://nactzaxrjzsdkyfqwecf.supabase.co`).
+- The separate Supabase MCP server `mcp__supabase-finappka__*` is reserved for project `gwqvolspdzhcutvzsdbo` (`finappka`) and must not be used for `fit` tasks.
+- Before applying migrations or writing data through MCP, verify the active project with `get_project_url` if there is any doubt about server targeting.
+- Use Supabase CLI only as a fallback when MCP is unavailable or cannot complete the required action.
 - Use Vercel tooling for project/env/deploy setup when available.
 - Use Playwright for browser verification flows.
 

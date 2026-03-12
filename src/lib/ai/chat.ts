@@ -1,4 +1,4 @@
-import type { ModelMessage } from "ai";
+import type { ModelMessage, UIMessage } from "ai";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type AiChatSessionRow = {
@@ -48,6 +48,7 @@ export async function ensureAiChatSession(
   const { data, error } = await supabase
     .from("ai_chat_sessions")
     .insert({
+      ...(sessionId ? { id: sessionId } : {}),
       user_id: userId,
       title: buildSessionTitle(firstPrompt),
     })
@@ -138,19 +139,65 @@ export async function getLatestAiChatState(
   supabase: SupabaseClient,
   userId: string,
 ) {
+  return getAiChatState(supabase, userId, null);
+}
+
+export async function listAiChatSessions(
+  supabase: SupabaseClient,
+  userId: string,
+  limit = 8,
+) {
   const { data: sessionData, error: sessionError } = await supabase
     .from("ai_chat_sessions")
     .select("id, title, created_at, updated_at")
     .eq("user_id", userId)
     .order("updated_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .limit(limit);
 
   if (sessionError) {
     throw sessionError;
   }
 
-  const session = (sessionData as AiChatSessionRow | null) ?? null;
+  return (sessionData as AiChatSessionRow[] | null) ?? [];
+}
+
+export async function getAiChatState(
+  supabase: SupabaseClient,
+  userId: string,
+  sessionId: string | null,
+) {
+  let session: AiChatSessionRow | null = null;
+
+  if (sessionId) {
+    const { data: requestedSession, error: requestedSessionError } = await supabase
+      .from("ai_chat_sessions")
+      .select("id, title, created_at, updated_at")
+      .eq("user_id", userId)
+      .eq("id", sessionId)
+      .maybeSingle();
+
+    if (requestedSessionError) {
+      throw requestedSessionError;
+    }
+
+    session = (requestedSession as AiChatSessionRow | null) ?? null;
+  }
+
+  if (!session) {
+    const { data: latestSession, error: latestSessionError } = await supabase
+      .from("ai_chat_sessions")
+      .select("id, title, created_at, updated_at")
+      .eq("user_id", userId)
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (latestSessionError) {
+      throw latestSessionError;
+    }
+
+    session = (latestSession as AiChatSessionRow | null) ?? null;
+  }
 
   if (!session) {
     return {
@@ -177,4 +224,17 @@ export function toModelMessages(messages: AiChatMessageRow[]): ModelMessage[] {
       role: message.role,
       content: message.content,
     }));
+}
+
+export function toUiMessages(messages: AiChatMessageRow[]): UIMessage[] {
+  return messages.map((message) => ({
+    id: message.id,
+    role: message.role,
+    parts: [
+      {
+        type: "text",
+        text: message.content,
+      },
+    ],
+  }));
 }

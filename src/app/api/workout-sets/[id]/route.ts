@@ -7,6 +7,10 @@ import { updateWorkoutSetActualReps } from "@/lib/workout/execution";
 
 const workoutSetUpdateSchema = z.object({
   actualReps: z.number().int().min(0).max(500).nullable(),
+  actualWeightKg: z.number().min(0).max(1000).nullable(),
+  actualRpe: z.number().min(1).max(10).nullable(),
+  restSeconds: z.number().int().min(0).max(3600).nullable(),
+  setNote: z.string().max(1000).nullable(),
 });
 
 export async function PATCH(
@@ -35,6 +39,10 @@ export async function PATCH(
       user.id,
       id,
       payload.actualReps,
+      payload.actualWeightKg,
+      payload.actualRpe,
+      payload.restSeconds,
+      payload.setNote,
     );
 
     if (result.error) {
@@ -57,7 +65,7 @@ export async function PATCH(
     return createApiErrorResponse({
       status: 500,
       code: "WORKOUT_SET_UPDATE_FAILED",
-      message: "Unable to save actual reps.",
+      message: "Unable to save workout set performance.",
     });
   }
 }

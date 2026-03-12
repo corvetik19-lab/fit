@@ -3,8 +3,7 @@ import { isAdminAccessError, requireAdminRouteAccess } from "@/lib/admin-auth";
 import { logger } from "@/lib/logger";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import {
-  getStripeClient,
-  reconcileStripeSubscription,
+  reconcileStripeSubscriptionForUser,
 } from "@/lib/stripe-billing";
 
 export async function POST(
@@ -15,54 +14,17 @@ export async function POST(
     const currentAdmin = await requireAdminRouteAccess("manage_billing");
     const { id } = await params;
     const adminSupabase = createAdminSupabaseClient();
-    const stripe = getStripeClient();
-    const { data: subscriptionRow, error: subscriptionRowError } =
-      await adminSupabase
-        .from("subscriptions")
-        .select("provider_subscription_id, provider_customer_id")
-        .eq("user_id", id)
-        .eq("provider", "stripe")
-        .order("updated_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-    if (subscriptionRowError) {
-      throw subscriptionRowError;
-    }
-
-    let stripeSubscriptionId = subscriptionRow?.provider_subscription_id ?? null;
-
-    if (!stripeSubscriptionId && subscriptionRow?.provider_customer_id) {
-      const subscriptions = await stripe.subscriptions.list({
-        customer: subscriptionRow.provider_customer_id,
-        limit: 1,
-        status: "all",
-      });
-
-      stripeSubscriptionId = subscriptions.data[0]?.id ?? null;
-    }
-
-    if (!stripeSubscriptionId) {
-      return createApiErrorResponse({
-        status: 404,
-        code: "STRIPE_SUBSCRIPTION_NOT_LINKED",
-        message: "No linked Stripe subscription was found for this user.",
-      });
-    }
-
-    const stripeSubscription =
-      await stripe.subscriptions.retrieve(stripeSubscriptionId);
-    const reconciliation = await reconcileStripeSubscription(adminSupabase, {
-      event: null,
-      stripeSubscription,
-    });
+    const reconciliation = await reconcileStripeSubscriptionForUser(
+      adminSupabase,
+      id,
+    );
 
     if (!reconciliation) {
       return createApiErrorResponse({
         status: 404,
         code: "STRIPE_SUBSCRIPTION_RECONCILE_UNRESOLVED",
         message:
-          "Stripe subscription was found, but the user mapping could not be resolved.",
+          "No linked Stripe subscription was found for this user or the mapping could not be resolved.",
       });
     }
 
@@ -79,7 +41,10 @@ export async function POST(
             reconciliation.subscription.provider_customer_id ?? null,
           providerSubscriptionId:
             reconciliation.subscription.provider_subscription_id ?? null,
+          previousStatus: reconciliation.previousSubscription?.status ?? null,
+          source: reconciliation.source,
           status: reconciliation.subscription.status,
+          stripeSubscriptionId: reconciliation.stripeSubscriptionId,
           subscriptionId: reconciliation.subscription.id,
         },
       });

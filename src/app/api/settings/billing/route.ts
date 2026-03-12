@@ -63,10 +63,13 @@ async function writeAuditLog(
 async function loadBillingCenterData(
   supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
   userId: string,
+  userEmail?: string | null,
 ) {
   const [snapshot, access] = await Promise.all([
     loadSettingsDataSnapshot(supabase, userId),
-    readUserBillingAccess(supabase, userId),
+    readUserBillingAccess(supabase, userId, {
+      email: userEmail,
+    }),
   ]);
 
   return {
@@ -87,7 +90,11 @@ export async function GET() {
       });
     }
 
-    const data = await loadBillingCenterData(context.supabase, context.user.id);
+    const data = await loadBillingCenterData(
+      context.supabase,
+      context.user.id,
+      context.user.email,
+    );
 
     return Response.json({ data });
   } catch (error) {
@@ -166,7 +173,11 @@ export async function POST(request: Request) {
       requestedFeatures,
     });
 
-    const data = await loadBillingCenterData(context.supabase, context.user.id);
+    const data = await loadBillingCenterData(
+      context.supabase,
+      context.user.id,
+      context.user.email,
+    );
 
     return Response.json({ data });
   } catch (error) {

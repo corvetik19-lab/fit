@@ -13,6 +13,7 @@ export type AdminCapability =
   | "bulk_manage_users"
   | "queue_support_actions"
   | "run_knowledge_reindex"
+  | "run_admin_jobs"
   | "queue_ai_eval_runs";
 
 const CAPABILITY_MATRIX: Record<PlatformAdminRole, readonly AdminCapability[]> = {
@@ -27,6 +28,7 @@ const CAPABILITY_MATRIX: Record<PlatformAdminRole, readonly AdminCapability[]> =
     "bulk_manage_users",
     "queue_support_actions",
     "run_knowledge_reindex",
+    "run_admin_jobs",
     "queue_ai_eval_runs",
   ],
   support_admin: [
@@ -110,6 +112,8 @@ export function getAdminCapabilityErrorMessage(capability: AdminCapability) {
       return "This admin role cannot queue support actions.";
     case "run_knowledge_reindex":
       return "This admin role cannot run knowledge reindex.";
+    case "run_admin_jobs":
+      return "Only the primary super admin can run admin jobs.";
     case "queue_ai_eval_runs":
       return "This admin role cannot queue AI eval runs.";
     default:

@@ -1,7 +1,8 @@
 import { convertToModelMessages, streamText, type UIMessage } from "ai";
 
+import { models } from "@/lib/ai/gateway";
 import { createApiErrorResponse } from "@/lib/api/error-response";
-import { hasAiGatewayEnv } from "@/lib/env";
+import { hasAiRuntimeEnv } from "@/lib/env";
 import { logger } from "@/lib/logger";
 import { hasRiskyIntent } from "@/lib/safety";
 
@@ -11,11 +12,11 @@ export async function POST(request: Request) {
       messages?: Array<Omit<UIMessage, "id">>;
     };
 
-    if (!hasAiGatewayEnv()) {
+    if (!hasAiRuntimeEnv()) {
       return createApiErrorResponse({
         status: 503,
-        code: "AI_GATEWAY_NOT_CONFIGURED",
-        message: "AI Gateway env is missing.",
+        code: "AI_RUNTIME_NOT_CONFIGURED",
+        message: "AI runtime env is missing.",
       });
     }
 
@@ -44,7 +45,7 @@ export async function POST(request: Request) {
     }
 
     const result = streamText({
-      model: "google/gemini-3.1-pro-preview",
+      model: models.chat,
       system:
         "You are fit AI. Help with workouts and nutrition. Stay non-medical, cite tradeoffs, and propose rather than auto-commit.",
       messages: convertToModelMessages(messages),

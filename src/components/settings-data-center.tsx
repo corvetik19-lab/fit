@@ -109,7 +109,7 @@ function getActorLabel(
 }
 
 function getKindLabel(kind: SettingsDataSnapshot["privacyEvents"][number]["kind"]) {
-  return kind === "export" ? "Export" : "Deletion";
+  return kind === "export" ? "Выгрузка" : "Удаление";
 }
 
 function getHoldRemainingLabel(holdUntil: string | null | undefined) {
@@ -165,10 +165,10 @@ function getDeletionNextStep(snapshot: SettingsDataSnapshot) {
   }
 
   if (deletionRequest.status === "completed") {
-    return "Deletion workflow уже продвинулся дальше удержания. Детали смотри в timeline ниже.";
+    return "Процесс удаления уже продвинулся дальше периода удержания. Детали смотри в истории ниже.";
   }
 
-  return "Активный deletion workflow остановлен. При необходимости можно создать новый запрос.";
+  return "Активный процесс удаления остановлен. При необходимости можно создать новый запрос.";
 }
 
 async function readJsonSafely(response: Response) {
@@ -227,7 +227,7 @@ export function SettingsDataCenter({
         const payload = await readJsonSafely(response);
 
         if (!response.ok || !payload?.data) {
-          setError(payload?.message ?? "Не удалось обновить data center.");
+          setError(payload?.message ?? "Не удалось обновить статусы по данным.");
           return;
         }
 
@@ -248,7 +248,7 @@ export function SettingsDataCenter({
       <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
-            Data Center
+            Управление данными
           </p>
           <h2 className="mt-2 text-2xl font-semibold text-foreground">
             Выгрузка данных и удаление аккаунта
@@ -278,7 +278,7 @@ export function SettingsDataCenter({
               </p>
               <p className="mt-1 text-sm leading-6 text-muted">
                 Полный ZIP-архив с `export.json`, `summary.csv` и CSV-срезами
-                по тренировкам, питанию, AI и privacy-данным.
+                по тренировкам, питанию, AI и личным данным.
               </p>
             </div>
             <span
@@ -445,10 +445,10 @@ export function SettingsDataCenter({
       <div className="mt-5 rounded-[28px] border border-border bg-white/70 p-5">
         <div className="mb-4">
           <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
-            Privacy Timeline
+            История операций
           </p>
           <h3 className="mt-2 text-xl font-semibold text-foreground">
-            История export и deletion операций
+                История выгрузки и удаления
           </h3>
         </div>
 
@@ -485,7 +485,7 @@ export function SettingsDataCenter({
             ))
           ) : (
             <div className="rounded-2xl border border-dashed border-border bg-white/70 px-4 py-4 text-sm text-muted">
-              История privacy-операций пока пустая.
+              История операций с личными данными пока пуста.
             </div>
           )}
         </div>

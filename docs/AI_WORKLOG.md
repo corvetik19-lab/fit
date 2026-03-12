@@ -1,6 +1,288 @@
 # AI Worklog
 
+## 2026-03-12
+
+### Admin UI recovery and shell restore
+
+- Cleaned committed mojibake/garbled Russian copy in `src/app/admin/page.tsx`, `src/components/admin-users-directory.tsx`, `src/components/admin-user-detail.tsx`, and `src/app/admin/users/[id]/page.tsx`, so `/admin`, `/admin/users`, and the user detail card read like product UI again instead of broken encoding output.
+- Restored the richer shell layer in `src/components/app-shell.tsx`, `src/components/app-shell-frame.tsx`, and `src/components/app-shell-nav.tsx`: compact collapsed header, floating expand control, AI assistant widget mount, background workout sync monitor, and better mobile admin drawer routes.
+- Fixed remaining broken Russian snippets in `src/lib/ai/knowledge.ts`, so AI knowledge summaries no longer store corrupted text in the runtime context/retrieval layer.
+
+### Verification: admin recovery pass
+
+- `npx eslint src/components/app-shell.tsx src/components/app-shell-frame.tsx src/components/app-shell-nav.tsx src/app/admin/page.tsx src/components/admin-users-directory.tsx src/components/admin-user-detail.tsx src/app/admin/users/[id]/page.tsx src/lib/ai/knowledge.ts`
+- `npm run typecheck`
+- `npm run build` did not finish within the local timeout window in a temporary `NEXT_DIST_DIR`, but it did not produce a concrete compile error before timing out
+- Ran a project-wide mojibake sweep over `src/`; after the fixes, no remaining cp1251→utf8 recoverable corruption was left in the source tree
+## 2026-03-11
+
+### Mobile PWA section workspaces
+
+- Added a reusable `src/components/page-workspace.tsx` pattern for mobile-first section switching: compact hero, summary metrics, and one active section at a time instead of stacked long pages.
+- Rebuilt `src/app/workouts/page.tsx`, `src/app/nutrition/page.tsx`, and `src/app/settings/page.tsx` on top of this workspace so `workouts`, `nutrition`, and `settings` open as logical product menus on phones rather than long vertical walls of cards.
+- Rebuilt `src/app/ai/page.tsx` into the same mobile workspace model with explicit sections for `Чат`, `Предложения`, `Контекст`, and `Доступ`, while keeping the existing AI chat, proposals, and context components intact.
+- Reworked `src/components/admin-users-directory.tsx` and `src/components/admin-user-detail.tsx` into the same mobile-first section pattern, so admin user management now opens as logical sections instead of one long stack of admin blocks.
+- Simplified `src/app/admin/users/page.tsx` and `src/app/admin/users/[id]/page.tsx` so the admin user-management flow no longer wastes top-of-screen space on duplicate hero content.
+- Updated `src/components/dashboard-workspace.tsx` so the dashboard section menu also behaves like a mobile-friendly logical menu instead of a horizontal strip.
+- Fixed a real runtime loop in `src/components/settings-billing-center.tsx`: opening `/settings -> Данные` no longer triggers `Maximum update depth exceeded`.
+- Cleaned visible billing/data-center copy in `src/app/settings/page.tsx`, `src/components/settings-data-center.tsx`, `src/components/ai-workspace-sidebar.tsx`, and `src/lib/billing-access.ts` so mobile screens expose less mixed English/technical wording.
+
+### Verification: mobile section workspace pass
+
+- `npx eslint src/app/ai/page.tsx src/components/ai-workspace-sidebar.tsx src/components/dashboard-workspace.tsx src/components/page-workspace.tsx src/components/settings-billing-center.tsx src/components/settings-data-center.tsx src/app/settings/page.tsx src/lib/billing-access.ts`
+- `npm run typecheck`
+- Live Playwright browser pass on local `http://127.0.0.1:3022` for `/dashboard`, `/workouts`, `/nutrition`, `/settings`, and `/ai` at mobile viewport `390x844`
+- `$env:NEXT_DIST_DIR='.next_codex_mobile_workspace2'; npm run build`
+- `npx eslint src/components/admin-users-directory.tsx src/components/admin-user-detail.tsx src/app/admin/users/page.tsx src/app/admin/users/[id]/page.tsx`
+- `npm run typecheck`
+- `$env:NEXT_DIST_DIR='.next_codex_admin_mobile'; npm run build`
+- After the alternate-distDir build, `tsconfig.json` was normalized back to wildcard `.next*/types` includes so future temporary build directories do not keep expanding the file diff
+
+### CAG runtime snapshots and embeddings refresh
+
+- `src/lib/ai/user-context.ts` now has a dedicated AI runtime cache layer on top of `user_context_snapshots`. AI routes and plan generation can reuse a recent snapshot instead of rebuilding the full long-history context every time, while a lightweight freshness cursor checks recent workout, nutrition, goal, meal, and body-metric updates so the snapshot is automatically invalidated when the user has newer data.
+- `src/app/api/ai/assistant/route.ts`, `src/app/api/ai/chat/route.ts`, `src/lib/ai/plan-generation.ts`, and `src/app/ai/page.tsx` now use this runtime snapshot flow. `/ai` also reflects whether the workspace context came from a saved runtime snapshot or was rebuilt live.
+- `src/lib/ai/knowledge.ts` now separates full knowledge reindex from embeddings-only refresh. `reindexUserKnowledgeBase(...)` supports `mode: "full" | "embeddings"`, `ensureKnowledgeIndex(...)` can repair missing current-model embeddings automatically, and full reindex refreshes the runtime snapshot while rebuilding the corpus.
+- `src/app/api/ai/reindex/route.ts` and `src/components/admin-ai-operations.tsx` now expose the two modes operationally, so admin can run either a full rebuild or a lighter embeddings refresh from the UI instead of only one opaque reindex action.
+
+### Verification: runtime snapshot and embeddings refresh
+
+- `npx eslint src/lib/ai/user-context.ts src/lib/ai/knowledge.ts src/lib/ai/plan-generation.ts src/app/api/ai/assistant/route.ts src/app/api/ai/chat/route.ts src/app/ai/page.tsx src/app/api/ai/reindex/route.ts src/components/admin-ai-operations.tsx`
+- `npm run build`
+- `npm run typecheck`
+
+### Admin knowledge health dashboard
+
+- `src/app/api/admin/stats/route.ts` now reports a dedicated `knowledgeHealth` slice for `/admin`: runtime snapshot count, structured fact coverage, embeddings coverage ratio, recent reindex activity, and the latest runtime/reindex timestamps with the last reindex mode.
+- `src/components/admin-health-dashboard.tsx` now surfaces this operationally in two new cards, so super-admin can see whether the AI knowledge layer is fresh and complete instead of only seeing raw chunk/embedding counters.
+- This closes the "admin knowledge base management" visibility gap without introducing a new migration: the slice is built on top of `user_context_snapshots`, `knowledge_chunks`, `knowledge_embeddings`, and `support_actions`.
+
+### Verification: admin knowledge health
+
+- `npx eslint src/app/api/admin/stats/route.ts src/components/admin-health-dashboard.tsx`
+- `npm run build`
+- `npm run typecheck`
+
+### Dashboard runtime snapshots for faster charts
+
+- `src/lib/dashboard/metrics.ts` now has a dedicated runtime snapshot wrapper on top of `user_context_snapshots`. The dashboard can reuse a recent precomputed package of `snapshot`, `periodComparison`, `workoutCharts`, and `nutritionCharts` instead of rebuilding every heavy query on each page load.
+- Snapshot freshness is checked against the latest changes in weekly programs, workout history, templates, exercise library, AI sessions, nutrition summaries, goals, nutrition targets, meals, and body metrics. If the user has newer data, the dashboard falls back to live recomputation and stores a fresh snapshot automatically.
+- `src/app/dashboard/page.tsx` now reads from `getDashboardRuntimeMetrics(...)` and pairs it with `getAiRuntimeContext(...)`, so both dashboard analytics and AI-facing overview sections can reuse server snapshots. The page also exposes a simple user-facing "срез обновлён / пересчитан" badge instead of technical cache wording.
+
+### Verification: dashboard runtime snapshot layer
+
+- `npx eslint src/lib/dashboard/metrics.ts src/app/dashboard/page.tsx src/app/api/admin/stats/route.ts src/components/admin-health-dashboard.tsx`
+- `npm run build`
+- `npm run typecheck`
+
+### Dashboard precomputed aggregates
+
+- `src/lib/dashboard/metrics.ts` now has a dedicated aggregate bundle layer on top of `user_context_snapshots`. It precomputes daily bins for completed workouts, logged sets, tonnage, nutrition macros, nutrition tracking flags, and AI session counts over a 180-day lookback window.
+- `getDashboardPeriodComparison(...)` now reads from this aggregate bundle first, so `/api/dashboard/period-compare` can answer 7/30/90-day comparisons from precomputed daily facts instead of re-running raw historical queries every time.
+- The aggregate bundle reuses the same freshness guard as the dashboard runtime snapshot, so it automatically refreshes when workouts, nutrition, templates, goals, programs, AI sessions, meals, or body metrics have newer data.
+- No migration was required: aggregates are stored as a new snapshot reason in `user_context_snapshots`, which keeps the implementation job-friendly for later cron/background recompute work.
+
+### Verification: dashboard aggregate layer
+
+- `npx eslint src/lib/dashboard/metrics.ts src/app/dashboard/page.tsx src/app/api/dashboard/period-compare/route.ts`
+- `npm run build`
+- `npm run typecheck`
+
+### Scheduled dashboard warm job and Vercel Cron
+
+- Added `src/app/api/internal/jobs/dashboard-warm/route.ts` as a cron-ready internal job. It warms dashboard aggregate snapshots, dashboard runtime snapshots, and AI runtime context for a recent batch of users, using `SUPABASE_SERVICE_ROLE_KEY` and the same snapshot storage layer already built on `user_context_snapshots`.
+- The route supports both production cron auth via `CRON_SECRET` and manual execution from the root super-admin session, so the admin console can trigger the same warm-up flow without shell access.
+- `src/components/admin-health-dashboard.tsx` and `src/app/admin/page.tsx` now expose a root-only `Прогреть snapshots` action next to the existing refresh / Sentry controls, turning snapshot warm-up into an operational admin task rather than an internal-only endpoint.
+- Added `vercel.json` with a daily cron for `/api/internal/jobs/dashboard-warm` and set `maxDuration = 60` on the route so the nightly warm-up is already deploy-ready.
+
+### Verification: scheduled dashboard warm job
+
+- `npx eslint src/app/api/internal/jobs/dashboard-warm/route.ts src/lib/admin-auth.ts src/lib/admin-permissions.ts src/components/admin-health-dashboard.tsx src/app/admin/page.tsx src/lib/dashboard/metrics.ts src/lib/env.ts`
+- `npm run build`
+- `npm run typecheck`
+
+### Daily nutrition summaries job
+
+- Added `src/app/api/internal/jobs/nutrition-summaries/route.ts` as a cron-ready internal job for rebuilding `daily_nutrition_summaries` over the last few days for a recent batch of users. The job uses the shared internal-job auth model (`CRON_SECRET` or root admin session) and reuses `recalculateDailyNutritionSummary(...)` instead of duplicating nutrition math.
+- Added a manual root-only trigger to `src/components/admin-health-dashboard.tsx`, so super-admin can recalculate nutrition summaries from `/admin` without shell access.
+- Updated `vercel.json` with a scheduled nightly call to `/api/internal/jobs/nutrition-summaries?days=3`, which closes the background recompute gap for nutrition aggregates.
+
+### Verification: nutrition summaries job
+
+- `npx eslint src/app/api/internal/jobs/nutrition-summaries/route.ts src/components/admin-health-dashboard.tsx src/lib/nutrition/meal-logging.ts src/lib/admin-auth.ts src/lib/admin-permissions.ts src/lib/env.ts`
+- `npm run build`
+- `npm run typecheck`
+
+### Scheduled knowledge refresh / reindex job
+
+- Added `src/lib/internal-jobs.ts` as a shared helper for cron-secret validation, root-admin access checks, positive-int parsing, and target-user resolution for internal operational jobs. `dashboard-warm` and `nutrition-summaries` now reuse the same path instead of each carrying their own auth/selection copy.
+- Added `src/app/api/internal/jobs/knowledge-reindex/route.ts` as a batch job for recent-user AI knowledge refresh. By default it runs `mode=embeddings`, but it also supports full reindex and writes `support_actions` records with `source = cron | admin`, so the existing admin health dashboard keeps seeing fresh reindex activity.
+- Added a root-only manual trigger to `src/components/admin-health-dashboard.tsx` and wired a nightly Vercel cron for `/api/internal/jobs/knowledge-reindex?mode=embeddings&limit=20`, so embeddings refresh is no longer only a manual per-user action from the AI ops panel.
+
+### Verification: scheduled knowledge job
+
+- `npx eslint src/lib/internal-jobs.ts src/app/api/internal/jobs/dashboard-warm/route.ts src/app/api/internal/jobs/nutrition-summaries/route.ts src/app/api/internal/jobs/knowledge-reindex/route.ts src/components/admin-health-dashboard.tsx src/lib/ai/knowledge.ts`
+- `npm run build`
+- `npm run typecheck`
+
+### Stale offline mutation retry and cleanup
+
+- `src/lib/offline/workout-sync.ts` now has a proper stale-state maintenance layer: old queued mutations and old workout-day snapshots get TTL cleanup, and `flushOfflineMutations()` deduplicates concurrent flushes so the queue cannot be pushed twice in parallel from different screens.
+- Added `src/components/workout-sync-monitor.tsx` and mounted it from `src/components/app-shell-frame.tsx`. The monitor runs a silent sync pass on shell mount, on reconnect, on tab focus/visibility return, and on a 60-second interval while the app is visible, so offline workout mutations are retried even when the user is no longer on the workout-day screen.
+- `src/components/workout-day-session.tsx` now cleans stale local queue state before hydrating a day from Dexie and surfaces a user-facing notice when only stale local changes were cleaned up instead of being sent.
+
+### Verification: stale offline queue maintenance
+
+- `npx eslint src/lib/offline/workout-sync.ts src/components/workout-sync-monitor.tsx src/components/app-shell-frame.tsx src/components/workout-day-session.tsx`
+- `npm run build`
+- `npm run typecheck` (second pass after the known `.next/types` race)
+
+### Scheduled AI eval queue
+
+- Added `src/lib/ai/eval-runs.ts` as a shared queueing helper for `ai_eval_runs`, so manual admin queueing and scheduled queueing now use one insert/dedupe path instead of duplicating raw Supabase writes.
+- `src/app/api/admin/ai-evals/run/route.ts` now uses that helper for ordinary admin-triggered benchmark runs.
+- Added `src/app/api/internal/jobs/ai-evals-schedule/route.ts` as a cron-ready queueing route. It defaults to the no-spend `tool_calls` suite, supports root-admin manual execution or `CRON_SECRET`, and deduplicates scheduled runs inside a 24-hour window so the queue does not grow with duplicate smoke checks.
+- `src/components/admin-ai-eval-runs.tsx` and `src/app/admin/page.tsx` now expose a root-only `smoke-eval` action for the scheduled queue path, and scheduled runs are marked in the run history UI.
+- Updated `vercel.json` with a nightly cron for `/api/internal/jobs/ai-evals-schedule?suite=tool_calls`.
+
+### Verification: scheduled AI eval queue
+
+- `npx eslint src/lib/ai/eval-runs.ts src/app/api/admin/ai-evals/run/route.ts src/app/api/internal/jobs/ai-evals-schedule/route.ts src/components/admin-ai-eval-runs.tsx src/app/admin/page.tsx`
+- `npm run build`
+- `npm run typecheck`
+
+### Scheduled Stripe billing reconciliation job
+
+- `src/lib/stripe-billing.ts` now exposes a shared per-user Stripe reconciliation helper, so the manual `/admin/users/[id]/billing/reconcile` route and background billing reconciliation use the same lookup and sync logic instead of maintaining separate customer/subscription fetch paths.
+- Added `src/app/api/internal/jobs/billing-reconcile/route.ts` as a cron-ready billing normalization job. It targets recent Stripe-linked users, reconciles their latest Stripe subscription state, and records the outcome in `support_actions` as `reconcile_billing_state` with `source = admin | cron`.
+- `src/app/api/admin/stats/route.ts` and `src/components/admin-health-dashboard.tsx` now surface billing reconciliation health: recent reconcile count, failed reconcile count, latest reconcile timestamp, and a root-only manual trigger from `/admin`.
+- Updated `vercel.json` with a daily cron for `/api/internal/jobs/billing-reconcile?limit=20`, so billing state can be normalized even when a webhook or checkout-return path was missed.
+
+### Verification: billing reconciliation job
+
+- `npx eslint src/lib/stripe-billing.ts src/app/api/admin/users/[id]/billing/reconcile/route.ts src/app/api/internal/jobs/billing-reconcile/route.ts src/app/api/admin/stats/route.ts src/components/admin-health-dashboard.tsx src/components/admin-user-detail.tsx`
+- `npm run build`
+- `npm run typecheck`
+
+### Assistant proposal agent flow
+
+- `src/lib/ai/proposal-actions.ts` now holds one shared proposal lifecycle layer for listing, resolving, approving, and applying AI workout/meal proposals. Route handlers and assistant tools now reuse the same logic instead of diverging between chat flow and direct API actions.
+- `src/app/api/ai/assistant/route.ts` now exposes assistant tools for `listRecentProposals`, `approveProposal`, and `applyProposal`, so the assistant can move from “show me my latest draft” to “confirm it” and “apply it” in one guided flow when the user explicitly asks.
+- `src/components/ai-chat-panel.tsx` and `src/components/ai-assistant-widget.tsx` now render compact result cards for proposal history, confirmation, and apply actions, with direct buttons for confirm/apply when the next action is obvious. Tool results no longer disappear into plain text only; both `/ai` and the floating assistant now show a readable operational state for proposal actions.
+
+### Verification: assistant proposal agent flow
+
+- `npx eslint src/lib/ai/proposal-actions.ts src/app/api/ai/proposals/[id]/approve/route.ts src/app/api/ai/proposals/[id]/apply/route.ts src/lib/ai/domain-policy.ts src/app/api/ai/assistant/route.ts src/components/ai-chat-panel.tsx src/components/ai-assistant-widget.tsx`
+- `npm run build`
+- `npm run typecheck`
+
+### AI workspace with recent sessions and structured context
+
+- `src/lib/ai/chat.ts` now supports listing chat sessions and loading a specific session state by id, so the full AI page can work like a saved workspace instead of always reopening only the latest thread.
+- `src/components/ai-workspace-sidebar.tsx` adds a dedicated sidebar for `/ai`: recent chat sessions, workspace quick actions, and the top structured facts that the assistant is currently using.
+- `src/app/ai/page.tsx` now reads `?session=` from the URL, loads the selected conversation on the server, and presents the AI surface as a two-column workspace around chat, proposal work, and structured knowledge.
+- `src/components/ai-chat-panel.tsx` and `src/components/ai-proposal-studio.tsx` now connect chat output to proposal handling more cleanly: proposal tool cards link directly into the proposal studio anchor instead of leaving the user to hunt for drafts manually.
+
+### Verification: AI workspace flow
+
+- `npx eslint src/lib/ai/chat.ts src/components/ai-workspace-sidebar.tsx src/components/ai-chat-panel.tsx src/components/ai-proposal-studio.tsx src/app/ai/page.tsx`
+- `npm run build`
+- `npm run typecheck`
+
+### Structured knowledge facts for prompts and retrieval
+
+- `src/lib/ai/structured-knowledge.ts` adds a normalized knowledge-facts layer over user profile, workout load, recovery, nutrition adherence, meal patterns, and strategy priorities. Instead of relying only on raw history blocks, the AI stack now gets compact facts with topic, priority, evidence, and next-step guidance.
+- `src/lib/ai/user-context.ts` now stores the same structured knowledge snapshot inside `AiUserContext`, so assistant prompts and proposal generation use one canonical interpretation layer instead of rebuilding ad hoc summaries.
+- `src/lib/ai/domain-policy.ts` and `src/lib/ai/plan-generation.ts` now inject these normalized facts into assistant and meal/workout proposal prompts, while `src/lib/ai/knowledge.ts` writes `structured_fact_sheet` and `structured_fact` documents into the retrieval corpus for reindex/search.
+- No migration was required for this slice: the structured layer is stored as new knowledge document types on top of the existing AI/RAG schema.
+
+### Verification: structured knowledge layer
+
+- `npx eslint src/lib/ai/structured-knowledge.ts src/lib/ai/user-context.ts src/lib/ai/domain-policy.ts src/lib/ai/plan-generation.ts src/lib/ai/knowledge.ts`
+- `npm run build`
+- `npm run typecheck`
+
+### Nutrition strategy recommendations for dashboard and AI
+
+- `src/lib/nutrition/strategy-recommendations.ts` adds a shared strategy layer over nutrition coaching signals and meal-level patterns. Instead of only exposing raw analytics, the app now builds prioritized food-strategy actions such as stabilizing logging, shifting calories earlier, improving protein distribution, or creating repeatable food templates.
+- `src/lib/dashboard/metrics.ts` and `src/components/dashboard-nutrition-charts.tsx` now expose these recommendations directly on the dashboard as a dedicated “what to fix first” block, so the nutrition surface behaves more like a coach than a passive report.
+- `src/lib/ai/user-context.ts`, `src/lib/ai/domain-policy.ts`, and `src/lib/ai/plan-generation.ts` now feed the same strategy layer into assistant and proposal prompts, while `src/lib/ai/knowledge.ts` stores a dedicated `nutrition_strategy` retrieval document next to `nutrition_meal_patterns`.
+
+### Verification: nutrition strategy slice
+
+- `npx eslint src/lib/nutrition/strategy-recommendations.ts src/lib/dashboard/metrics.ts src/components/dashboard-nutrition-charts.tsx src/lib/ai/user-context.ts src/lib/ai/domain-policy.ts src/lib/ai/plan-generation.ts src/lib/ai/knowledge.ts`
+- `npm run typecheck`
+- `npm run build`
+
+### Dashboard workspace and collapsed-shell polish
+
+- Rebuilt `/dashboard` into a section-based workspace with `Сводка`, `Тренировки`, `Питание`, and `AI` views so the mobile PWA no longer opens as one very long analytics report.
+- Added a dedicated `DashboardWorkspace` client layer that keeps the hero shorter, moves section switching to a visible app-like control row, and keeps drilldown analytics behind the selected section instead of rendering everything at once.
+- Tightened the collapsed shell again so the fixed header becomes a compact floating control row (`menu + expand`) and gives more vertical space back to the content area.
+- Live browser verification on authenticated `http://127.0.0.1:3022/dashboard` confirmed section switching and the new collapsed-shell behavior.
+
+### Verification: dashboard workspace polish
+
+- `npx eslint src/app/dashboard/page.tsx src/components/dashboard-workspace.tsx src/components/app-shell-frame.tsx`
+- `npm run typecheck`
+- `$env:NEXT_DIST_DIR='.next_codex_dashboard'; npm run build`
+- Playwright live check on authenticated `http://127.0.0.1:3022/dashboard` at mobile viewport `390x844`
+
+### Meal-level nutrition patterns for dashboard, AI, and retrieval
+
+- `src/lib/nutrition/meal-patterns.ts` adds a dedicated nutrition pattern layer over real meals and meal items: average meals per tracked day, average calories and protein per meal, protein-dense meal share, evening calorie share, dominant meal window, and repeated-food anchors.
+- `src/lib/dashboard/metrics.ts` and `src/components/dashboard-nutrition-charts.tsx` now expose these meal-level patterns directly in dashboard analytics, so nutrition is no longer limited to daily macro totals and now explains how the user actually distributes meals, protein, and repeated foods across the day.
+- `src/lib/ai/user-context.ts`, `src/lib/ai/domain-policy.ts`, and `src/lib/ai/plan-generation.ts` now feed meal-pattern summaries into the coaching prompts, while `src/lib/ai/knowledge.ts` stores a dedicated `nutrition_meal_patterns` retrieval document alongside historical meal logs.
+- No migration was required for this slice: it reuses existing `meals` and `meal_items` history and turns it into higher-level coaching and retrieval signals.
+
+### Verification: meal pattern analytics
+
+- `npx eslint src/lib/nutrition/meal-patterns.ts src/lib/dashboard/metrics.ts src/components/dashboard-nutrition-charts.tsx src/lib/ai/user-context.ts src/lib/ai/domain-policy.ts src/lib/ai/plan-generation.ts src/lib/ai/knowledge.ts`
+- `npm run typecheck`
+- `npm run build`
+
+### Workout day context, RPE, and deeper strength drilldown
+
+- `src/components/workout-day-session.tsx` now supports full execution logging for each locked workout day: `actual_reps`, `actual_weight_kg`, `actual_rpe`, plus day-level `body_weight_kg` and `session_note`. The same screen keeps optimistic updates, offline queueing, and sync-push behavior for the full execution payload instead of reps-only logging.
+- `src/lib/workout/execution.ts`, `src/app/api/workout-days/[id]/route.ts`, `src/app/api/workout-sets/[id]/route.ts`, `src/lib/offline/db.ts`, `src/lib/offline/workout-sync.ts`, and `src/app/api/sync/push/route.ts` now share one server/offline contract for workout day context and set RPE, so online and offline execution stay consistent.
+- `src/lib/ai/user-context.ts`, `src/lib/ai/domain-policy.ts`, `src/lib/ai/plan-generation.ts`, and `src/lib/ai/knowledge.ts` now feed AI with historical `actual_rpe`, recent heavy-set share, workout-day body weight, and session notes. The assistant can rely on the user’s full archived training history instead of recent reps-only fragments.
+- `src/lib/dashboard/metrics.ts` and `src/components/dashboard-workout-charts.tsx` now expose `avgActualRpe`, heavy-set share, recent-day body weight, session notes, and RPE-aware drilldown in dashboard analytics.
+- Applied remote SQL migration `20260311121500_workout_day_context_and_set_rpe.sql` to the linked Supabase project via CLI fallback, because Supabase MCP is still pointing at `gwqvolspdzhcutvzsdbo` instead of `nactzaxrjzsdkyfqwecf`.
+
+### Weight-aware workout analytics and AI context
+
+- `src/components/workout-day-session.tsx` now logs `actual_weight_kg` together with `actual_reps`, keeps the same optimistic/offline queue flow, and surfaces saved set performance in the session UI.
+- `src/lib/dashboard/metrics.ts`, `src/components/dashboard-workout-charts.tsx`, and `src/app/dashboard/page.tsx` were extended with weight-aware strength analytics: tonnage, average working weight, best set weight, estimated 1RM, and recent-session drilldown by exercise.
+- `src/lib/ai/user-context.ts`, `src/lib/ai/plan-generation.ts`, and `src/lib/ai/knowledge.ts` now feed historical load signals into the AI layer, so workout recommendations can rely on working weight, tonnage, and best recorded sets instead of reps-only summaries.
+- Applied remote SQL migration `20260311103000_workout_set_actual_weight.sql` to Supabase project `nactzaxrjzsdkyfqwecf`; this also preserved locked-program protections while allowing `actual_reps` and `actual_weight_kg` updates on completed sets.
+
 ## 2026-03-10
+
+### AI proposal studio и workout drilldown
+
+- `src/components/ai-proposal-studio.tsx` переработан в полноценный proposal-first экран: у каждого AI-предложения теперь видны структура плана, исходный запрос, исторический сигнал, timeline `draft -> approved -> applied` и результат применения без технических ID-шумов.
+- `src/lib/dashboard/metrics.ts` расширен более глубокими workout-метриками: recovery signal, consistency ratio к целевому числу тренировок, сравнение упражнений по последним `4 недели vs 4 недели`, а также детальный exercise-level drilldown по последним сессиям.
+- `src/components/dashboard-workout-charts.tsx` теперь показывает не только weekly trend, но и coach-facing аналитику по ритму, восстановлению, прогрессии упражнений и выбранной сессии с разбивкой по упражнениям и диапазонам повторов.
+
+### Verification: proposal history and workout analytics
+
+- `npx eslint src/components/ai-proposal-studio.tsx src/components/dashboard-workout-charts.tsx src/lib/dashboard/metrics.ts`
+- `npm run build`
+- `npm run typecheck`
+
+### OpenRouter chat runtime and direct Voyage embeddings
+
+- Added provider abstraction in `src/lib/ai/gateway.ts`: chat can now run through OpenRouter via an OpenAI-compatible endpoint, while Vercel AI Gateway remains as a fallback.
+- Added direct Voyage embedding helpers in `src/lib/ai/embeddings.ts`, so retrieval/reindex no longer depends only on AI Gateway for embedding generation.
+- Updated `src/lib/env.ts` and `.env.example` with `OPENROUTER_*` and `VOYAGE_*` runtime keys.
+- Switched runtime-gated AI routes from `hasAiGatewayEnv()` to `hasAiRuntimeEnv()` for assistant/chat/workout-plan/meal-plan flows.
+- Expanded admin readiness diagnostics so `/api/admin/stats` and `AdminHealthDashboard` now show AI runtime, OpenRouter, Voyage, and embedding readiness separately from pure AI Gateway readiness.
+
+### Verification: OpenRouter and Voyage runtime slice
+
+- `npx eslint src/lib/env.ts src/lib/ai/gateway.ts src/lib/ai/embeddings.ts src/lib/ai/knowledge.ts src/app/api/ai/assistant/route.ts src/app/api/ai/chat/route.ts src/app/api/ai/meal-plan/route.ts src/app/api/ai/workout-plan/route.ts src/app/api/chat/route.ts src/app/api/admin/stats/route.ts src/components/admin-health-dashboard.tsx`
+- `npm run typecheck`
+- `npm run build`
 
 ### Stripe checkout return retry flow
 
@@ -801,3 +1083,106 @@
 - `npx eslint src/app/ai/page.tsx src/components/settings-billing-center.tsx src/components/workout-day-session.tsx src/components/admin-users-directory.tsx src/components/admin-user-detail.tsx`
 - `npm run build`
 - `npm run typecheck` (rerun after build because `.next/types` is still occasionally flaky on the first pass)
+
+### AI widget, privileged access, and dashboard drilldown
+
+- Added privileged billing/runtime access for the primary super-admin email `corvetik1@yandex.ru`: runtime billing access now reports `source = privileged`, all AI features stay open, and the AI/settings surfaces render product copy for root access instead of ordinary subscription wording.
+- Switched AI runtime defaults to `google/gemini-3.1-pro-preview` for chat and `voyage/voyage-3-large` for embeddings.
+- Enriched AI planning context with recent workout and nutrition signals, then extracted shared proposal-generation helpers so workout-plan and meal-plan routes, plus the new assistant route, all use the same context-aware generation path.
+- Added a new streaming assistant route at `/api/ai/assistant` with tool-based plan generation, optional internet lookup, knowledge retrieval, and one-click proposal apply support.
+- Mounted a floating AI widget into the app shell: it opens a modal chat, supports streaming responses, internet on/off, quick prompts, and direct proposal application back into the product.
+- Tightened the collapsible shell so the fixed header now collapses into a much smaller top control row, preserving more vertical space on phone-sized screens.
+- Rebuilt dashboard analytics into a more drillable product surface: clickable weekly workout bars, top exercises, recent workout sessions, clickable nutrition days, target deltas, body-weight signals, and an AI-readiness summary block that explains what the assistant is currently using.
+- Fixed `AuthForm` to use a real `<form>` so the password field is semantically contained and Enter submission works correctly.
+- Scoped Vercel Analytics and Speed Insights to actual Vercel runtime only, which removes local browser-console noise on self-hosted/local `next start` verification.
+
+### Verification: assistant and dashboard product slice
+
+- `npx eslint src/components/auth-form.tsx src/app/layout.tsx src/app/dashboard/page.tsx src/components/app-shell-frame.tsx src/components/ai-assistant-widget.tsx src/components/dashboard-workout-charts.tsx src/components/dashboard-nutrition-charts.tsx src/lib/dashboard/metrics.ts src/components/settings-billing-center.tsx`
+- `npm run typecheck`
+- `npm run build`
+- Playwright CLI browser-check on fresh local `next start` for `/`: page opened successfully, registration toggle still works, and console log is clean (`0 errors, 0 warnings`) on the refreshed build.
+
+### AI retrieval hardening, strict owner isolation, and live workspace check
+
+- Rebuilt AI retrieval into a hybrid path: vector search first, then database text search, then app-side text ranking as a final fallback. This keeps historical workout/nutrition context available even when embeddings are temporarily unavailable.
+- AI knowledge indexing now stores the full personal history across body metrics, nutrition summaries, meal logs, weekly programs, workout days, exercises, and sets. Reindex no longer hard-fails the whole feature when embeddings are unavailable; it can complete in text-only mode.
+- Added database function `search_knowledge_chunks_text(...)` and applied remote migration `20260310200000_ai_text_search_and_force_rls.sql`.
+- Tightened AI data isolation in Supabase: `knowledge_chunks`, `knowledge_embeddings`, `ai_chat_sessions`, `ai_chat_messages`, `ai_plan_proposals`, and `ai_safety_events` now all run with forced RLS, and knowledge select policies are owner-only.
+- The streaming assistant route now surfaces a user-facing chat message when the upstream AI provider is unavailable instead of collapsing into a generic app error.
+- Live browser verification on authenticated `/ai` confirmed the new behavior: `/api/ai/assistant` returns `200`, retrieval no longer crashes the route, and the chat now shows a clear “AI service temporarily unavailable” message when AI Gateway billing is not activated.
+
+### Verification: AI retrieval hardening
+
+- `npx eslint src/lib/ai/knowledge.ts src/app/api/ai/assistant/route.ts src/app/api/ai/reindex/route.ts`
+- `npm run typecheck`
+- Supabase MCP checks for AI-table RLS and policy state on project `nactzaxrjzsdkyfqwecf`
+- Playwright live check on authenticated `http://127.0.0.1:3021/ai`
+
+### Ragas benchmark workspace and admin suite routing
+
+- Added a dedicated Python `ai-evals` workspace for Ragas-based quality checks, including a reusable runner, OpenRouter/Voyage provider adapters, dataset loaders, Supabase result persistence, and a CLI entrypoint at `ai-evals/run_ragas_eval.py`.
+- Added first benchmark datasets for assistant QA, historical retrieval, meal plans, workout plans, safety red-team prompts, and tool-call accuracy under `ai-evals/datasets/`.
+- Wired `/api/admin/ai-evals/run` and `/api/admin/ai-evals` to carry a typed `suite` value inside `ai_eval_runs.summary`, so queued runs can target a single suite or the full benchmark pack.
+- Rebuilt the admin AI eval panel so root/analyst can choose a suite explicitly and see which suite each run belongs to, alongside quality-gate badges once the worker writes results back.
+- Stored the user-provided OpenRouter and Voyage keys in ignored local env so the direct runtime and the new eval workspace share the same provider configuration without checking secrets into git.
+
+### Verification: Ragas workspace foundation
+
+- `ai-evals\.venv\Scripts\python ai-evals\run_ragas_eval.py --suite tool_calls --no-supabase`
+- `npx eslint src/app/api/admin/ai-evals/run/route.ts src/app/api/admin/ai-evals/route.ts src/components/admin-ai-eval-runs.tsx src/lib/ai/eval-suites.ts`
+- `npm run typecheck`
+
+### OpenRouter/Voyage runtime completion without live spend
+
+- Moved `meal-photo` off the old hardcoded AI Gateway `responses` fetch and onto the shared multimodal runtime layer, so photo analysis is now prepared to use the same OpenRouter-powered provider path as the rest of the AI product surface.
+- Added a separate `vision` model slot to the runtime gateway config and exposed `OPENROUTER_VISION_MODEL` in env handling for future provider tuning without code changes.
+- Rebuilt the legacy `/api/ai/chat` route to use the same sports-only guardrails, confidentiality policy, owner-only historical context, and provider error handling as the newer streaming assistant route.
+- Kept all of this in a no-spend state: code paths, envs, and prompts are ready, but no live multimodal/provider calls were forced while credits are unavailable.
+
+### Verification: provider-neutral runtime hardening
+
+- `npx eslint src/app/api/ai/chat/route.ts src/app/api/ai/meal-photo/route.ts src/lib/ai/gateway.ts src/lib/env.ts`
+- `npm run typecheck`
+- `npm run build`
+
+### Workout execution enrichment: body weight, RPE, rest, and set notes
+
+- Extended workout execution capture so a completed day can now store `body_weight_kg` and `session_note`, while each set stores `actual_reps`, `actual_weight_kg`, `actual_rpe`, `rest_seconds`, and `set_note`.
+- Updated the locked-program mutation guard so execution-only edits on locked plans still permit `body_weight_kg`, `session_note`, `actual_reps`, `actual_weight_kg`, `actual_rpe`, `rest_seconds`, and `set_note` without allowing structural changes.
+- Rebuilt the workout day session UI to support all of the above with optimistic updates, offline queue persistence, and recovery of queued values after reconnect.
+- Expanded workout analytics with tonnage, estimated 1RM, average working weight, recovery signals, average rest time, recent execution notes, and richer recent-session drilldown lines.
+- Fed the new execution signals into AI context and knowledge retrieval so coaching answers and program generation can reason over historical load, intensity, rest behavior, body weight, and quality notes across the user's full archive.
+- Applied remote migrations `20260311103000_workout_set_actual_weight.sql`, `20260311121500_workout_day_context_and_set_rpe.sql`, and `20260311134500_workout_set_rest_and_notes.sql` to the linked fit database via CLI fallback because the active Supabase MCP server is currently pointed at a different project.
+
+### Verification: workout execution enrichment
+
+- `npx eslint src/components/workout-day-session.tsx src/lib/workout/execution.ts src/app/api/workout-days/[id]/route.ts src/app/api/workout-sets/[id]/route.ts src/lib/offline/db.ts src/lib/offline/workout-sync.ts src/app/api/sync/push/route.ts src/lib/workout/workout-sets.ts src/lib/workout/weekly-programs.ts src/lib/ai/user-context.ts src/lib/ai/domain-policy.ts src/lib/ai/plan-generation.ts src/lib/ai/knowledge.ts src/lib/dashboard/metrics.ts`
+- `npm run typecheck`
+- `npm run build`
+- `npx supabase db push`
+- `npx supabase migration list`
+
+### Коуч-сигналы по прогрессии и восстановлению
+
+- Добавлен общий слой `workout coaching signals`: теперь серверная аналитика считает не только сырые метрики, но и готовые сигналы по прогрессии нагрузки, восстановлению, регулярности и ключевому упражнению.
+- Эти сигналы выведены в дашборд как отдельный coaching-блок с коротким выводом и следующим действием, чтобы пользователь видел уже интерпретацию своей истории, а не только графики тоннажа и RPE.
+- AI-контекст пользователя и промпты генерации планов теперь получают те же коуч-сигналы, поэтому рекомендации и proposals могут опираться не только на набор чисел, но и на уже собранный вывод по темпу прогресса и риску перегруза.
+
+### Проверка: коуч-сигналы
+
+- `npx eslint src/lib/workout/coaching-signals.ts src/lib/dashboard/metrics.ts src/components/dashboard-workout-charts.tsx src/lib/ai/user-context.ts src/lib/ai/domain-policy.ts src/lib/ai/plan-generation.ts`
+- `npm run typecheck`
+- `npm run build`
+
+### Пищевые коуч-сигналы и nutrition analytics layer
+
+- Добавлен отдельный nutrition coaching layer: теперь серверная аналитика считает готовые сигналы по дисциплине логирования, попаданию в калории, попаданию в белок и движению веса тела, а не только отдаёт сырые КБЖУ.
+- Эти сигналы выведены в дашборде как отдельный actionable-блок по питанию, чтобы пользователь видел, что именно сейчас мешает прогрессу: редкие логи, системный перелёт по калориям, недобор белка или нейтральную/проблемную динамику веса.
+- AI-контекст и промпты генерации планов теперь получают и пищевые коуч-сигналы, поэтому assistant и meal/workout proposals опираются уже не только на средние значения, но и на интерпретацию adherence по рациону.
+
+### Проверка: nutrition coaching layer
+
+- `npx eslint src/lib/nutrition/coaching-signals.ts src/lib/dashboard/metrics.ts src/components/dashboard-nutrition-charts.tsx src/lib/ai/user-context.ts src/lib/ai/domain-policy.ts src/lib/ai/plan-generation.ts`
+- `npm run typecheck`
+- `npm run build`

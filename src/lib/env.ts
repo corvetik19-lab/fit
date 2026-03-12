@@ -19,6 +19,13 @@ const publicEnvSchema = z.object({
 const serverEnvSchema = z.object({
   AI_GATEWAY_API_KEY: z.string().min(1).optional(),
   ADMIN_BOOTSTRAP_TOKEN: z.string().min(1).optional(),
+  CRON_SECRET: z.string().min(1).optional(),
+  OPENROUTER_API_KEY: z.string().min(1).optional(),
+  OPENROUTER_APP_NAME: z.string().min(1).optional(),
+  OPENROUTER_BASE_URL: z.string().url().optional(),
+  OPENROUTER_CHAT_MODEL: z.string().min(1).optional(),
+  OPENROUTER_SITE_URL: z.string().url().optional(),
+  OPENROUTER_VISION_MODEL: z.string().min(1).optional(),
   SENTRY_ENVIRONMENT: z.string().min(1).optional(),
   SENTRY_ORG: z.string().min(1).optional(),
   SENTRY_PROJECT: z.string().min(1).optional(),
@@ -27,6 +34,8 @@ const serverEnvSchema = z.object({
   STRIPE_WEBHOOK_SECRET: z.string().min(1).optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
   SENTRY_AUTH_TOKEN: z.string().min(1).optional(),
+  VOYAGE_API_KEY: z.string().min(1).optional(),
+  VOYAGE_EMBEDDING_MODEL: z.string().min(1).optional(),
 });
 
 export const publicEnv = publicEnvSchema.parse({
@@ -43,6 +52,13 @@ export const publicEnv = publicEnvSchema.parse({
 export const serverEnv = serverEnvSchema.parse({
   AI_GATEWAY_API_KEY: normalizeEnv(process.env.AI_GATEWAY_API_KEY),
   ADMIN_BOOTSTRAP_TOKEN: normalizeEnv(process.env.ADMIN_BOOTSTRAP_TOKEN),
+  CRON_SECRET: normalizeEnv(process.env.CRON_SECRET),
+  OPENROUTER_API_KEY: normalizeEnv(process.env.OPENROUTER_API_KEY),
+  OPENROUTER_APP_NAME: normalizeEnv(process.env.OPENROUTER_APP_NAME),
+  OPENROUTER_BASE_URL: normalizeEnv(process.env.OPENROUTER_BASE_URL),
+  OPENROUTER_CHAT_MODEL: normalizeEnv(process.env.OPENROUTER_CHAT_MODEL),
+  OPENROUTER_SITE_URL: normalizeEnv(process.env.OPENROUTER_SITE_URL),
+  OPENROUTER_VISION_MODEL: normalizeEnv(process.env.OPENROUTER_VISION_MODEL),
   SENTRY_ENVIRONMENT: normalizeEnv(process.env.SENTRY_ENVIRONMENT),
   SENTRY_ORG: normalizeEnv(process.env.SENTRY_ORG),
   SENTRY_PROJECT: normalizeEnv(process.env.SENTRY_PROJECT),
@@ -55,6 +71,8 @@ export const serverEnv = serverEnvSchema.parse({
     process.env.SUPABASE_SERVICE_ROLE_KEY,
   ),
   SENTRY_AUTH_TOKEN: normalizeEnv(process.env.SENTRY_AUTH_TOKEN),
+  VOYAGE_API_KEY: normalizeEnv(process.env.VOYAGE_API_KEY),
+  VOYAGE_EMBEDDING_MODEL: normalizeEnv(process.env.VOYAGE_EMBEDDING_MODEL),
 });
 
 const SENTRY_RUNTIME_ENV_KEYS = ["NEXT_PUBLIC_SENTRY_DSN"] as const;
@@ -86,6 +104,22 @@ export function getSupabasePublicKey() {
 
 export function hasAiGatewayEnv() {
   return Boolean(serverEnv.AI_GATEWAY_API_KEY);
+}
+
+export function hasOpenRouterEnv() {
+  return Boolean(serverEnv.OPENROUTER_API_KEY);
+}
+
+export function hasVoyageEnv() {
+  return Boolean(serverEnv.VOYAGE_API_KEY);
+}
+
+export function hasAiRuntimeEnv() {
+  return hasOpenRouterEnv() || hasAiGatewayEnv();
+}
+
+export function hasAiEmbeddingEnv() {
+  return hasVoyageEnv() || hasAiGatewayEnv();
 }
 
 export function hasSentryRuntimeEnv() {

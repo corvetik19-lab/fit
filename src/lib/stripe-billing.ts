@@ -18,6 +18,27 @@ type SubscriptionRow = {
   user_id: string;
 };
 
+type StripeLinkedSubscriptionRow = Pick<
+  SubscriptionRow,
+  | "current_period_end"
+  | "current_period_start"
+  | "id"
+  | "provider"
+  | "provider_customer_id"
+  | "provider_subscription_id"
+  | "status"
+  | "updated_at"
+  | "user_id"
+>;
+
+export type StripeUserSubscriptionReconciliation = {
+  previousSubscription: StripeLinkedSubscriptionRow | null;
+  source: "provider_customer_id" | "provider_subscription_id";
+  stripeSubscriptionId: string;
+  subscription: SubscriptionRow;
+  userId: string;
+};
+
 let stripeClient: Stripe | null = null;
 
 function toIsoTimestamp(value: number | null | undefined) {
@@ -506,4 +527,70 @@ export async function reconcileStripeCheckoutSession(
   });
 
   return null;
+}
+
+export async function reconcileStripeSubscriptionForUser(
+  adminSupabase: AdminSupabaseClient,
+  userId: string,
+): Promise<StripeUserSubscriptionReconciliation | null> {
+  const { data: subscriptionRow, error: subscriptionRowError } = await adminSupabase
+    .from("subscriptions")
+    .select(
+      "id, user_id, provider, provider_subscription_id, provider_customer_id, status, current_period_start, current_period_end, updated_at",
+    )
+    .eq("user_id", userId)
+    .eq("provider", "stripe")
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (subscriptionRowError) {
+    throw subscriptionRowError;
+  }
+
+  if (!subscriptionRow) {
+    return null;
+  }
+
+  const previousSubscription = subscriptionRow as StripeLinkedSubscriptionRow;
+  const stripe = getStripeClient();
+  let source: StripeUserSubscriptionReconciliation["source"] | null = null;
+  let stripeSubscription: Stripe.Subscription | null = null;
+
+  if (subscriptionRow.provider_subscription_id) {
+    stripeSubscription = await stripe.subscriptions.retrieve(
+      subscriptionRow.provider_subscription_id,
+    );
+    source = "provider_subscription_id";
+  } else if (subscriptionRow.provider_customer_id) {
+    const subscriptions = await stripe.subscriptions.list({
+      customer: subscriptionRow.provider_customer_id,
+      limit: 1,
+      status: "all",
+    });
+
+    stripeSubscription = subscriptions.data[0] ?? null;
+    source = stripeSubscription ? "provider_customer_id" : null;
+  }
+
+  if (!stripeSubscription || !source) {
+    return null;
+  }
+
+  const reconciliation = await reconcileStripeSubscription(adminSupabase, {
+    event: null,
+    stripeSubscription,
+  });
+
+  if (!reconciliation) {
+    return null;
+  }
+
+  return {
+    previousSubscription,
+    source,
+    stripeSubscriptionId: stripeSubscription.id,
+    subscription: reconciliation.subscription,
+    userId: reconciliation.userId,
+  };
 }

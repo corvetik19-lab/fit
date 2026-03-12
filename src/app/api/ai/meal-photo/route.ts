@@ -1,14 +1,16 @@
+import { generateObject } from "ai";
 import { ZodError } from "zod";
 
+import { mealPhotoAnalysisSchema } from "@/lib/ai/schemas";
+import { createApiErrorResponse } from "@/lib/api/error-response";
 import {
   BILLING_FEATURE_KEYS,
   createFeatureAccessDeniedResponse,
   incrementFeatureUsage,
   readUserBillingAccess,
 } from "@/lib/billing-access";
-import { mealPhotoAnalysisSchema } from "@/lib/ai/schemas";
-import { createApiErrorResponse } from "@/lib/api/error-response";
-import { hasAiGatewayEnv, serverEnv } from "@/lib/env";
+import { models } from "@/lib/ai/gateway";
+import { hasAiRuntimeEnv } from "@/lib/env";
 import { logger } from "@/lib/logger";
 import { hasRiskyIntent } from "@/lib/safety";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -17,52 +19,42 @@ export const runtime = "nodejs";
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 
-function stripCodeFences(value: string) {
-  return value
-    .trim()
-    .replace(/^```(?:json)?/i, "")
-    .replace(/```$/i, "")
-    .trim();
+function buildVisionPrompt(notes: string | null) {
+  return [
+    "Ты анализируешь фото еды для фитнес-приложения fit.",
+    "Верни только структурированный объект анализа блюда.",
+    "Пиши summary и suggestions только по-русски.",
+    "Не давай медицинских советов и не выдумывай ингредиенты, если фото неясное.",
+    "Если уверенность низкая, честно укажи это и снизь confidence.",
+    `Дополнительный пользовательский контекст: ${notes ?? "без дополнительного контекста"}.`,
+  ].join(" ");
 }
 
-function extractOutputText(payload: unknown) {
-  if (!payload || typeof payload !== "object") {
-    return "";
+function buildProviderErrorMessage(error: unknown) {
+  const raw =
+    error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+  const normalized = raw.toLowerCase();
+
+  if (
+    normalized.includes("credit card") ||
+    normalized.includes("insufficient credits") ||
+    normalized.includes("payment required") ||
+    normalized.includes("quota") ||
+    normalized.includes("billing")
+  ) {
+    return "Внешний AI-провайдер сейчас недоступен для анализа фото. Код маршрута готов, но live-обработка изображения временно отключена до активации баланса.";
   }
 
-  if ("output_text" in payload && typeof payload.output_text === "string") {
-    return payload.output_text.trim();
-  }
-
-  if (!("output" in payload) || !Array.isArray(payload.output)) {
-    return "";
-  }
-
-  return payload.output
-    .flatMap((item) =>
-      item && typeof item === "object" && "content" in item && Array.isArray(item.content)
-        ? item.content
-        : [],
-    )
-    .flatMap((content) =>
-      content &&
-      typeof content === "object" &&
-      "text" in content &&
-      typeof content.text === "string"
-        ? [content.text]
-        : [],
-    )
-    .join("\n")
-    .trim();
+  return "Не удалось выполнить AI-анализ фото блюда.";
 }
 
 export async function POST(request: Request) {
   try {
-    if (!hasAiGatewayEnv() || !serverEnv.AI_GATEWAY_API_KEY) {
+    if (!hasAiRuntimeEnv()) {
       return createApiErrorResponse({
         status: 503,
-        code: "AI_GATEWAY_NOT_CONFIGURED",
-        message: "AI Gateway не настроен для анализа фото.",
+        code: "AI_RUNTIME_NOT_CONFIGURED",
+        message: "AI runtime не настроен для анализа фото.",
       });
     }
 
@@ -79,7 +71,9 @@ export async function POST(request: Request) {
       });
     }
 
-    const access = await readUserBillingAccess(supabase, user.id);
+    const access = await readUserBillingAccess(supabase, user.id, {
+      email: user.email,
+    });
     const feature = access.features[BILLING_FEATURE_KEYS.mealPhoto];
 
     if (!feature.allowed) {
@@ -122,125 +116,53 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 400,
         code: "AI_SAFETY_BLOCK",
-        message: "Дополнительный комментарий к фото вышел за текущий safety-контур приложения.",
+        message:
+          "Дополнительный комментарий к фото вышел за текущий safety-контур приложения.",
       });
     }
 
-    const imageBytes = Buffer.from(await image.arrayBuffer());
-    const imageDataUrl = `data:${image.type};base64,${imageBytes.toString("base64")}`;
-
-    const upstreamResponse = await fetch("https://ai-gateway.vercel.sh/v1/responses", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${serverEnv.AI_GATEWAY_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3.1-pro-preview",
-        input: [
-          {
-            role: "user",
-            content: [
-              {
-                type: "input_text",
-                text: `Ты анализируешь фото еды для fitness-приложения. Ответ должен быть только валидным JSON без markdown и пояснений.
-
-Верни объект строго такого вида:
-{
-  "title": string,
-  "summary": string,
-  "confidence": "low" | "medium" | "high",
-  "estimatedKcal": number,
-  "macros": {
-    "protein": number,
-    "fat": number,
-    "carbs": number
-  },
-  "items": [
-    {
-      "name": string,
-      "portion": string,
-      "confidence": "low" | "medium" | "high"
-    }
-  ],
-  "suggestions": string[]
-}
-
-Правила:
-- не выдумывай медицинские советы;
-- если фото неясное, снижай confidence и честно укажи неопределённость;
-- калории и макросы оценивай как целые числа;
-- suggestions должны содержать короткие практические подсказки для ручного логирования;
-- summary и suggestions пиши по-русски;
-- учитывай дополнительный контекст пользователя: ${notes ?? "без дополнительного контекста"}.`,
-              },
-              {
-                type: "input_image",
-                image_url: imageDataUrl,
-              },
-            ],
-          },
-        ],
-      }),
+    const imageBytes = new Uint8Array(await image.arrayBuffer());
+    const result = await generateObject({
+      model: models.vision,
+      schema: mealPhotoAnalysisSchema,
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: buildVisionPrompt(notes),
+            },
+            {
+              type: "image",
+              image: imageBytes,
+              mediaType: image.type,
+            },
+          ],
+        },
+      ],
     });
-
-    const upstreamPayload = (await upstreamResponse.json().catch(() => null)) as
-      | Record<string, unknown>
-      | null;
-
-    if (!upstreamResponse.ok) {
-      logger.error("meal photo upstream failed", {
-        status: upstreamResponse.status,
-        upstreamPayload,
-      });
-
-      return createApiErrorResponse({
-        status: 502,
-        code: "MEAL_PHOTO_UPSTREAM_FAILED",
-        message: "AI Gateway не смог обработать фото блюда.",
-      });
-    }
-
-    const outputText = extractOutputText(upstreamPayload);
-
-    if (!outputText) {
-      return createApiErrorResponse({
-        status: 502,
-        code: "MEAL_PHOTO_EMPTY_RESPONSE",
-        message: "AI вернул пустой ответ при анализе фото.",
-      });
-    }
-
-    const parsedJson = JSON.parse(stripCodeFences(outputText));
-    const analysis = mealPhotoAnalysisSchema.parse(parsedJson);
 
     await incrementFeatureUsage(supabase, user.id, BILLING_FEATURE_KEYS.mealPhoto);
 
-    return Response.json({ data: analysis });
+    return Response.json({ data: result.object });
   } catch (error) {
     logger.error("meal photo route failed", { error });
-
-    if (error instanceof SyntaxError) {
-      return createApiErrorResponse({
-        status: 502,
-        code: "MEAL_PHOTO_RESPONSE_INVALID",
-        message: "AI вернул ответ в неожиданном формате. Попробуй другое фото.",
-      });
-    }
 
     if (error instanceof ZodError) {
       return createApiErrorResponse({
         status: 502,
         code: "MEAL_PHOTO_RESPONSE_SCHEMA_INVALID",
-        message: "AI вернул неполный анализ фото. Попробуй другое фото.",
+        message:
+          "AI вернул неполный анализ фото. Попробуй другое фото блюда или более четкий ракурс.",
         details: error.flatten(),
       });
     }
 
     return createApiErrorResponse({
-      status: 500,
+      status: 502,
       code: "MEAL_PHOTO_FAILED",
-      message: "Не удалось выполнить AI-анализ фото блюда.",
+      message: buildProviderErrorMessage(error),
     });
   }
 }

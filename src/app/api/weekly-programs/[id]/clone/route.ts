@@ -184,9 +184,13 @@ export async function POST(
           set_number: sourceSet.set_number,
           planned_reps: sourceSet.planned_reps,
           planned_reps_min: sourceSet.planned_reps_min,
-          planned_reps_max: sourceSet.planned_reps_max,
-          actual_reps: null,
-        });
+            planned_reps_max: sourceSet.planned_reps_max,
+            actual_reps: null,
+            actual_weight_kg: null,
+            actual_rpe: null,
+            rest_seconds: null,
+            set_note: null,
+          });
     }
 
     return Response.json({
