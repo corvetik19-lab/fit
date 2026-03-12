@@ -238,7 +238,7 @@ const activityLabels: Record<ActivityBucket, string> = {
 const activitySourceLabels: Record<Exclude<ActivitySource, null>, string> = {
   workout: "тренировки",
   nutrition: "питание",
-  ai: "AI",
+  ai: "ИИ",
   auth: "авторизация",
   profile: "профиль",
 };
@@ -557,8 +557,8 @@ export function AdminUsersDirectory({
           <div className="flex flex-wrap gap-2">
             <span className="pill">Пользователи</span>
             <span className="pill">Каталог: {summary.total}</span>
-            <span className="pill">Роль: {roleLabels[currentAdminRole] ?? currentAdminRole}</span>
-            {canRunBulkActions ? <span className="pill">Полный root-доступ</span> : null}
+              <span className="pill">Роль: {roleLabels[currentAdminRole] ?? currentAdminRole}</span>
+              {canRunBulkActions ? <span className="pill">Главный доступ</span> : null}
           </div>
 
           <div className="space-y-3">
@@ -645,7 +645,7 @@ export function AdminUsersDirectory({
 
         <div className="mt-5 grid gap-3 lg:grid-cols-[minmax(0,1.25fr)_220px_220px_220px]">
         <label className="grid gap-2 text-sm text-muted lg:col-span-1">
-          Поиск по имени, email или UUID
+          Поиск по имени, email или ID
           <input
             className="w-full rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15"
             onChange={(event) => setSearchQuery(event.target.value)}
@@ -706,7 +706,7 @@ export function AdminUsersDirectory({
             <option value="activity_desc">По активности</option>
             <option value="sign_in_desc">По последнему входу</option>
             <option value="workout_desc">По тренировкам</option>
-            <option value="ai_desc">По AI-сигналам</option>
+            <option value="ai_desc">По сигналам ИИ</option>
             <option value="backlog_desc">По очереди и подписке</option>
           </select>
         </label>
@@ -736,22 +736,21 @@ export function AdminUsersDirectory({
       </div>
 
       <div className="mt-6 grid gap-4 2xl:grid-cols-[1.15fr_0.85fr]">
-        <article className="rounded-[30px] border border-sky-300/60 bg-sky-50/85 p-5 text-sm text-sky-900">
-          <p className="font-semibold text-foreground">
-            Политика главного администратора закреплена и в системе, и в базе.
-          </p>
-          <p className="mt-2 leading-7">
-            Единственный <code>super_admin</code> это{" "}
-            <strong>{PRIMARY_SUPER_ADMIN_EMAIL}</strong>. В каталоге можно
-            назначать только <code>support_admin</code> и <code>analyst</code> для остальных
-            пользователей, поэтому основной доступ не потеряется случайно.
-          </p>
-        </article>
+          <article className="rounded-[30px] border border-sky-300/60 bg-sky-50/85 p-5 text-sm text-sky-900">
+            <p className="font-semibold text-foreground">
+              Политика главного администратора закреплена и в системе, и в базе.
+            </p>
+            <p className="mt-2 leading-7">
+              Главный доступ закреплён за <strong>{PRIMARY_SUPER_ADMIN_EMAIL}</strong>.
+              Остальным пользователям можно выдавать только обычные административные
+              роли, поэтому главный доступ не потеряется случайно.
+            </p>
+          </article>
 
         <article className="rounded-[30px] border border-border bg-white/72 p-5 text-sm">
           <p className="font-semibold text-foreground">Что видно в одном экране</p>
           <p className="mt-2 leading-7 text-muted">
-            Активность по тренировкам, питанию и AI, очередь задач, выгрузка данных, удаление,
+            Активность по тренировкам, питанию и ИИ, очередь задач, выгрузка данных, удаление,
             состояние подписки и пользователи, которым нужна проверка в первую очередь.
           </p>
         </article>
@@ -1008,7 +1007,7 @@ export function AdminUsersDirectory({
             {[
               ["Без профиля", catalogSummary.hygiene.withoutProfile],
               ["Без входов", catalogSummary.hygiene.neverSignedIn],
-              ["Нарушения root-политики", catalogSummary.hygiene.rootPolicyViolations],
+              ["Нарушения главного доступа", catalogSummary.hygiene.rootPolicyViolations],
             ].map(([label, value]) => (
               <div
                 className="rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm"
@@ -1028,7 +1027,7 @@ export function AdminUsersDirectory({
                 Операции
               </p>
               <h3 className="mt-2 text-lg font-semibold text-foreground">
-                Приоритеты для super-admin
+                Главные приоритеты
               </h3>
             </div>
             <button
@@ -1348,14 +1347,14 @@ export function AdminUsersDirectory({
 
                   <article className="rounded-2xl border border-border bg-white/80 p-4">
                     <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted">
-                      AI
+                      ИИ
                     </p>
                     <p className="mt-2 text-xl font-semibold text-foreground">
                       {user.ai.messages}
                     </p>
-                    <p className="mt-1 text-sm text-muted">сообщений и AI-сигналов</p>
+                    <p className="mt-1 text-sm text-muted">сообщений и сигналов ИИ</p>
                     <p className="mt-2 text-xs text-muted">
-                      Последний AI-сигнал: {formatDateTime(user.ai.last_ai_at)}
+                      Последний сигнал ИИ: {formatDateTime(user.ai.last_ai_at)}
                     </p>
                   </article>
 
@@ -1402,7 +1401,7 @@ export function AdminUsersDirectory({
                     </span>
                     {user.billing.subscription_provider ? (
                       <span>
-                        Провайдер:{" "}
+                        Способ оплаты:{" "}
                         <strong className="text-foreground">
                           {user.billing.subscription_provider}
                         </strong>

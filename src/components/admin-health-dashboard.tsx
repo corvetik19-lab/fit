@@ -184,10 +184,18 @@ const dateFormatter = new Intl.DateTimeFormat("ru-RU", {
 
 function formatDateTime(value: string | null) {
   if (!value) {
-    return "нет данных";
+    return "Нет данных";
   }
 
   return dateFormatter.format(new Date(value));
+}
+
+function formatPercent(value: number | null) {
+  if (value === null) {
+    return "Нет данных";
+  }
+
+  return `${Math.round(value * 100)}%`;
 }
 
 function getStatusTone(active: boolean) {
@@ -196,40 +204,52 @@ function getStatusTone(active: boolean) {
     : "bg-amber-50 text-amber-700";
 }
 
-function formatMissingEnv(keys: string[]) {
-  return keys.length ? keys.join(", ") : "всё настроено";
-}
-
-function formatPercent(value: number | null) {
-  if (value === null) {
-    return "нет данных";
-  }
-
-  return `${Math.round(value * 100)}%`;
+function formatConfigState(missingKeys: string[]) {
+  return missingKeys.length ? `Требует настройки (${missingKeys.length})` : "Готово";
 }
 
 function formatReindexMode(value: "embeddings" | "full" | null) {
   if (value === "embeddings") {
-    return "только embeddings";
+    return "Быстрое обновление поиска";
   }
 
   if (value === "full") {
-    return "полный rebuild";
+    return "Полное обновление базы знаний";
   }
 
-  return "нет данных";
+  return "Нет данных";
 }
 
 function formatSearchMode(value: "text" | "vector" | null) {
   if (value === "text") {
-    return "text fallback";
+    return "Резервный поиск по тексту";
   }
 
   if (value === "vector") {
-    return "vector search";
+    return "Векторный поиск";
   }
 
-  return "нет данных";
+  return "Нет данных";
+}
+
+function formatEnvironment(value: string | null) {
+  if (!value) {
+    return "Не указано";
+  }
+
+  if (value === "production") {
+    return "Продакшн";
+  }
+
+  if (value === "preview") {
+    return "Предпросмотр";
+  }
+
+  if (value === "development") {
+    return "Разработка";
+  }
+
+  return value;
 }
 
 async function readStatsJson(response: Response) {
@@ -292,7 +312,7 @@ export function AdminHealthDashboard({
       const payload = await readStatsJson(response);
 
       if (!response.ok || !payload?.data) {
-        setError(payload?.message ?? "Не удалось загрузить system health dashboard.");
+        setError(payload?.message ?? "Не удалось загрузить сводку по состоянию платформы.");
         return;
       }
 
@@ -318,15 +338,15 @@ export function AdminHealthDashboard({
 
       if (!response.ok) {
         setSmokeTestMessage(
-          payload?.message ?? "Не удалось отправить тестовое событие в Sentry.",
+          payload?.message ?? "Не удалось отправить тестовое событие мониторинга.",
         );
         return;
       }
 
       setSmokeTestMessage(
         payload?.data?.eventId
-          ? `Тестовое событие отправлено. Event ID: ${payload.data.eventId}`
-          : "Тестовое событие отправлено.",
+          ? `Тестовая проверка отправлена. Код события: ${payload.data.eventId}.`
+          : "Тестовая проверка отправлена.",
       );
       await refreshStats();
     } finally {
@@ -346,15 +366,15 @@ export function AdminHealthDashboard({
 
       if (!response.ok) {
         setDashboardWarmMessage(
-          payload?.message ?? "Не удалось прогреть dashboard snapshots.",
+          payload?.message ?? "Не удалось обновить подготовленные сводки дашборда.",
         );
         return;
       }
 
       setDashboardWarmMessage(
         payload?.data
-          ? `Прогрев завершён: ${payload.data.successCount} из ${payload.data.processedUsers} пользователей обновлены.`
-          : "Прогрев snapshots завершён.",
+          ? `Сводки обновлены для ${payload.data.successCount} из ${payload.data.processedUsers} пользователей.`
+          : "Сводки дашборда обновлены.",
       );
       await refreshStats();
     } finally {
@@ -377,15 +397,15 @@ export function AdminHealthDashboard({
 
       if (!response.ok) {
         setNutritionSummariesMessage(
-          payload?.message ?? "Не удалось пересчитать nutrition summaries.",
+          payload?.message ?? "Не удалось пересчитать сводки по питанию.",
         );
         return;
       }
 
       setNutritionSummariesMessage(
         payload?.data
-          ? `Сводки пересчитаны: ${payload.data.successCount} из ${payload.data.processedUsers} пользователей за ${payload.data.days} дня.`
-          : "Nutrition summaries пересчитаны.",
+          ? `Сводки по питанию обновлены для ${payload.data.successCount} из ${payload.data.processedUsers} пользователей за ${payload.data.days} дня.`
+          : "Сводки по питанию обновлены.",
       );
       await refreshStats();
     } finally {
@@ -408,15 +428,15 @@ export function AdminHealthDashboard({
 
       if (!response.ok) {
         setKnowledgeReindexMessage(
-          payload?.message ?? "Не удалось обновить AI-базу знаний.",
+          payload?.message ?? "Не удалось обновить базу знаний ИИ.",
         );
         return;
       }
 
       setKnowledgeReindexMessage(
         payload?.data
-          ? `База знаний обновлена: ${payload.data.successCount} из ${payload.data.processedUsers} пользователей обработаны (${payload.data.mode === "full" ? "полный reindex" : "refresh embeddings"}).`
-          : "AI-база знаний обновлена.",
+          ? `База знаний обновлена для ${payload.data.successCount} из ${payload.data.processedUsers} пользователей. Режим: ${payload.data.mode === "full" ? "полный" : "быстрый"}.`
+          : "База знаний обновлена.",
       );
       await refreshStats();
     } finally {
@@ -429,25 +449,22 @@ export function AdminHealthDashboard({
     setBillingReconcileMessage(null);
 
     try {
-      const response = await fetch(
-        "/api/internal/jobs/billing-reconcile?limit=20",
-        {
-          method: "POST",
-        },
-      );
+      const response = await fetch("/api/internal/jobs/billing-reconcile?limit=20", {
+        method: "POST",
+      });
       const payload = await readBillingReconcileJobJson(response);
 
       if (!response.ok) {
         setBillingReconcileMessage(
-          payload?.message ?? "Не удалось синхронизировать billing-состояние.",
+          payload?.message ?? "Не удалось сверить состояние оплат.",
         );
         return;
       }
 
       setBillingReconcileMessage(
         payload?.data
-          ? `Billing-синхронизация завершена: ${payload.data.successCount} из ${payload.data.processedUsers} пользователей обновлены, пропущено ${payload.data.skippedCount}, ошибок ${payload.data.errorCount}.`
-          : "Billing-состояние синхронизировано.",
+          ? `Оплаты сверены: обновлено ${payload.data.successCount} из ${payload.data.processedUsers}, пропущено ${payload.data.skippedCount}, ошибок ${payload.data.errorCount}.`
+          : "Состояние оплат обновлено.",
       );
       await refreshStats();
     } finally {
@@ -482,245 +499,142 @@ export function AdminHealthDashboard({
     canTriggerSentrySmokeTest &&
     Boolean(readiness?.sentryRuntimeEnv) &&
     !isSendingSmokeTest;
-  const canRunDashboardWarm =
-    canRunAdminJobs &&
-    !isWarmingSnapshots;
+  const canRunDashboardWarm = canRunAdminJobs && !isWarmingSnapshots;
   const canRunNutritionSummaryRefresh =
-    canRunAdminJobs &&
-    !isRefreshingNutritionSummaries;
+    canRunAdminJobs && !isRefreshingNutritionSummaries;
   const canRunKnowledgeRefresh = canRunAdminJobs && !isRefreshingKnowledge;
   const canRunBillingReconcile = canRunAdminJobs && !isRefreshingBilling;
 
+  const readinessCards: Array<[string, boolean]> = [
+    [
+      "База данных",
+      Boolean(readiness?.supabasePublicEnv && readiness?.serviceRoleEnv),
+    ],
+    [
+      "Ответы ИИ",
+      Boolean(
+        readiness?.aiRuntimeEnv || readiness?.openRouterEnv || readiness?.aiGatewayEnv,
+      ),
+    ],
+    [
+      "Поиск ИИ",
+      Boolean(readiness?.aiEmbeddingEnv || readiness?.voyageEnv),
+    ],
+    ["Мониторинг", Boolean(readiness?.sentryRuntimeEnv)],
+    [
+      "Оплата",
+      Boolean(
+        readiness?.stripeCheckoutEnv &&
+          readiness?.stripePortalEnv &&
+          readiness?.stripeWebhookEnv,
+      ),
+    ],
+    ["Синхронизация", Boolean(readiness?.workoutSyncPullEnv)],
+    ["Развёртывание", Boolean(readiness?.vercelRuntimeEnv)],
+  ];
+
   return (
     <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
-      <PanelCard caption="System health" title="Состояние платформы и runtime">
+      <PanelCard caption="Контроль" title="Состояние платформы">
         <div className="grid gap-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm leading-7 text-muted">
-              Живой health snapshot для админ-панели. Здесь видно, готова ли
-              runtime-конфигурация и насколько свежий operational-контур.
+              Здесь собрана главная сводка по работе приложения: доступность сервисов,
+              свежесть данных, очереди обработки и ключевые обновления.
             </p>
             <div className="flex flex-wrap gap-2">
               {canRunAdminJobs ? (
-                <button
-                  className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={!canRunDashboardWarm}
-                  onClick={() => void runDashboardWarmJob()}
-                  type="button"
-                >
-                  {isWarmingSnapshots
-                    ? "Прогреваю snapshots..."
-                    : "Прогреть snapshots"}
+                <button className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60" disabled={!canRunDashboardWarm} onClick={() => void runDashboardWarmJob()} type="button">
+                  {isWarmingSnapshots ? "Обновляю дашборд..." : "Обновить дашборд"}
                 </button>
               ) : null}
               {canRunAdminJobs ? (
-                <button
-                  className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={!canRunNutritionSummaryRefresh}
-                  onClick={() => void runNutritionSummariesJob()}
-                  type="button"
-                >
-                  {isRefreshingNutritionSummaries
-                    ? "Собираю summaries..."
-                    : "Пересчитать summaries"}
+                <button className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60" disabled={!canRunNutritionSummaryRefresh} onClick={() => void runNutritionSummariesJob()} type="button">
+                  {isRefreshingNutritionSummaries ? "Обновляю питание..." : "Обновить питание"}
                 </button>
               ) : null}
               {canRunAdminJobs ? (
-                <button
-                  className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={!canRunKnowledgeRefresh}
-                  onClick={() => void runKnowledgeReindexJob()}
-                  type="button"
-                >
-                  {isRefreshingKnowledge
-                    ? "Обновляю базу знаний..."
-                    : "Обновить базу знаний"}
+                <button className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60" disabled={!canRunKnowledgeRefresh} onClick={() => void runKnowledgeReindexJob()} type="button">
+                  {isRefreshingKnowledge ? "Обновляю базу ИИ..." : "Обновить базу ИИ"}
                 </button>
               ) : null}
               {canRunAdminJobs ? (
-                <button
-                  className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={!canRunBillingReconcile}
-                  onClick={() => void runBillingReconcileJob()}
-                  type="button"
-                >
-                  {isRefreshingBilling
-                    ? "Синхронизирую billing..."
-                    : "Синхронизировать billing"}
+                <button className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60" disabled={!canRunBillingReconcile} onClick={() => void runBillingReconcileJob()} type="button">
+                  {isRefreshingBilling ? "Сверяю оплаты..." : "Сверить оплаты"}
                 </button>
               ) : null}
               {canTriggerSentrySmokeTest ? (
-                <button
-                  className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={!canSendSmokeTest}
-                  onClick={() => void sendSmokeTest()}
-                  type="button"
-                >
-                  {isSendingSmokeTest
-                    ? "Отправляю Sentry test..."
-                    : "Sentry smoke test"}
+                <button className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60" disabled={!canSendSmokeTest} onClick={() => void sendSmokeTest()} type="button">
+                  {isSendingSmokeTest ? "Проверяю мониторинг..." : "Проверить мониторинг"}
                 </button>
               ) : null}
-              <button
-                className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
-                disabled={isRefreshing}
-                onClick={() => void refreshStats()}
-                type="button"
-              >
+              <button className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60" disabled={isRefreshing} onClick={() => void refreshStats()} type="button">
                 {isRefreshing ? "Обновляю..." : "Обновить"}
               </button>
             </div>
           </div>
 
-          {error ? (
-            <p className="rounded-2xl border border-red-300/60 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {error}
-            </p>
-          ) : null}
-
-          {smokeTestMessage ? (
-            <p className="rounded-2xl border border-sky-300/60 bg-sky-50 px-4 py-3 text-sm text-sky-800">
-              {smokeTestMessage}
-            </p>
-          ) : null}
-
-          {dashboardWarmMessage ? (
-            <p className="rounded-2xl border border-sky-300/60 bg-sky-50 px-4 py-3 text-sm text-sky-800">
-              {dashboardWarmMessage}
-            </p>
-          ) : null}
-
-          {nutritionSummariesMessage ? (
-            <p className="rounded-2xl border border-sky-300/60 bg-sky-50 px-4 py-3 text-sm text-sky-800">
-              {nutritionSummariesMessage}
-            </p>
-          ) : null}
-
-          {knowledgeReindexMessage ? (
-            <p className="rounded-2xl border border-sky-300/60 bg-sky-50 px-4 py-3 text-sm text-sky-800">
-              {knowledgeReindexMessage}
-            </p>
-          ) : null}
-
-          {billingReconcileMessage ? (
-            <p className="rounded-2xl border border-sky-300/60 bg-sky-50 px-4 py-3 text-sm text-sky-800">
-              {billingReconcileMessage}
-            </p>
-          ) : null}
+          {error ? <p className="rounded-2xl border border-red-300/60 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p> : null}
+          {smokeTestMessage ? <p className="rounded-2xl border border-sky-300/60 bg-sky-50 px-4 py-3 text-sm text-sky-800">{smokeTestMessage}</p> : null}
+          {dashboardWarmMessage ? <p className="rounded-2xl border border-sky-300/60 bg-sky-50 px-4 py-3 text-sm text-sky-800">{dashboardWarmMessage}</p> : null}
+          {nutritionSummariesMessage ? <p className="rounded-2xl border border-sky-300/60 bg-sky-50 px-4 py-3 text-sm text-sky-800">{nutritionSummariesMessage}</p> : null}
+          {knowledgeReindexMessage ? <p className="rounded-2xl border border-sky-300/60 bg-sky-50 px-4 py-3 text-sm text-sky-800">{knowledgeReindexMessage}</p> : null}
+          {billingReconcileMessage ? <p className="rounded-2xl border border-sky-300/60 bg-sky-50 px-4 py-3 text-sm text-sky-800">{billingReconcileMessage}</p> : null}
 
           <div className="flex flex-wrap gap-2">
-            {[
-              ["Supabase public env", readiness?.supabasePublicEnv ?? false],
-              ["AI runtime", readiness?.aiRuntimeEnv ?? false],
-              ["AI Gateway env", readiness?.aiGatewayEnv ?? false],
-              ["AI embeddings", readiness?.aiEmbeddingEnv ?? false],
-              ["OpenRouter env", readiness?.openRouterEnv ?? false],
-              ["Voyage env", readiness?.voyageEnv ?? false],
-              ["Service role", readiness?.serviceRoleEnv ?? false],
-              ["Sentry runtime", readiness?.sentryRuntimeEnv ?? false],
-              ["Sentry build", readiness?.sentryBuildEnv ?? false],
-              ["Stripe checkout", readiness?.stripeCheckoutEnv ?? false],
-              ["Stripe portal", readiness?.stripePortalEnv ?? false],
-              ["Stripe webhook", readiness?.stripeWebhookEnv ?? false],
-              ["Vercel runtime", readiness?.vercelRuntimeEnv ?? false],
-              ["Workout sync pull", readiness?.workoutSyncPullEnv ?? false],
-            ].map(([label, ready]) => (
-              <span
-                className={`rounded-full px-3 py-2 text-sm font-medium ${getStatusTone(Boolean(ready))}`}
-                key={String(label)}
-              >
-                {label}: {ready ? "готово" : "не настроено"}
+            {readinessCards.map(([label, ready]) => (
+              <span className={`rounded-full px-3 py-2 text-sm font-medium ${getStatusTone(ready)}`} key={label}>
+                {label}: {ready ? "готово" : "требует настройки"}
               </span>
             ))}
           </div>
 
           <div className="grid gap-3 md:grid-cols-2">
             <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm">
-              <p className="font-semibold text-foreground">Sentry config</p>
+              <p className="font-semibold text-foreground">Мониторинг</p>
               <div className="mt-3 grid gap-1 text-muted">
-                <p>Org: {observability?.sentry.org ?? "не задан"}</p>
-                <p>Project: {observability?.sentry.project ?? "не задан"}</p>
+                <p>Сбор ошибок: {readiness?.sentryRuntimeEnv ? "включён" : "не готов"}</p>
+                <p>Настройка приложения: {formatConfigState(observability?.sentry.runtimeMissing ?? [])}</p>
+                <p>Настройка сборки: {formatConfigState(observability?.sentry.buildMissing ?? [])}</p>
+                <p>Среда: {formatEnvironment(observability?.sentry.environment ?? null)}</p>
                 <p>
-                  Environment:{" "}
-                  {observability?.sentry.environment ?? "не задан"}
-                </p>
-                <p>
-                  Runtime missing:{" "}
-                  {formatMissingEnv(observability?.sentry.runtimeMissing ?? [])}
-                </p>
-                <p>
-                  Build missing:{" "}
-                  {formatMissingEnv(observability?.sentry.buildMissing ?? [])}
-                </p>
-              </div>
-            </article>
-
-            <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm">
-              <p className="font-semibold text-foreground">AI providers</p>
-              <div className="mt-3 grid gap-1 text-muted">
-                <p>
-                  Runtime enabled:{" "}
-                  {observability?.ai.runtimeEnabled ? "да" : "нет"}
-                </p>
-                <p>
-                  Embeddings enabled:{" "}
-                  {observability?.ai.embeddingEnabled ? "да" : "нет"}
-                </p>
-                <p>
-                  OpenRouter: {observability?.ai.openRouterEnabled ? "да" : "нет"}
-                </p>
-                <p>
-                  OpenRouter model:{" "}
-                  {observability?.ai.openRouterModel ?? "не задан"}
-                </p>
-                <p>
-                  OpenRouter base URL:{" "}
-                  {observability?.ai.openRouterBaseUrl ?? "по умолчанию"}
-                </p>
-                <p>Voyage: {observability?.ai.voyageEnabled ? "да" : "нет"}</p>
-                <p>
-                  Voyage model: {observability?.ai.voyageModel ?? "не задан"}
-                </p>
-                <p>
-                  AI Gateway fallback:{" "}
-                  {observability?.ai.gatewayEnabled ? "да" : "нет"}
-                </p>
-              </div>
-            </article>
-
-            <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm">
-              <p className="font-semibold text-foreground">Stripe billing</p>
-              <div className="mt-3 grid gap-1 text-muted">
-                <p>Price ID: {observability?.stripe.priceId ?? "не задан"}</p>
-                <p>
-                  Checkout missing:{" "}
-                  {formatMissingEnv(observability?.stripe.checkoutMissing ?? [])}
-                </p>
-                <p>
-                  Portal missing:{" "}
-                  {formatMissingEnv(observability?.stripe.portalMissing ?? [])}
-                </p>
-                <p>
-                  Webhook missing:{" "}
-                  {formatMissingEnv(observability?.stripe.webhookMissing ?? [])}
-                </p>
-              </div>
-            </article>
-
-            <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm">
-              <p className="font-semibold text-foreground">Deployment runtime</p>
-              <div className="mt-3 grid gap-1 text-muted">
-                <p>
-                  Vercel env: {observability?.vercel.environment ?? "не задан"}
-                </p>
-                <p>
-                  Sentry smoke test:{" "}
+                  Проверка вручную:{" "}
                   {canTriggerSentrySmokeTest
                     ? readiness?.sentryRuntimeEnv
-                      ? "доступен"
-                      : "нужен NEXT_PUBLIC_SENTRY_DSN"
-                    : "только для основного super-admin"}
+                      ? "доступна"
+                      : "появится после настройки"
+                    : "доступна только основному администратору"}
                 </p>
+              </div>
+            </article>
+
+            <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm">
+              <p className="font-semibold text-foreground">Подключение ИИ</p>
+              <div className="mt-3 grid gap-1 text-muted">
+                <p>Ответы ИИ: {observability?.ai.runtimeEnabled ? "готовы" : "не готовы"}</p>
+                <p>Поиск по базе знаний: {observability?.ai.embeddingEnabled ? "готов" : "не готов"}</p>
+                <p>Основной канал ИИ: {observability?.ai.openRouterEnabled ? "подключён" : "не подключён"}</p>
+                <p>Провайдер поиска: {observability?.ai.voyageEnabled ? "подключён" : "не подключён"}</p>
+                <p>Резервный канал: {observability?.ai.gatewayEnabled ? "подключён" : "выключен"}</p>
+              </div>
+            </article>
+
+            <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm">
+              <p className="font-semibold text-foreground">Оплата и подписки</p>
+              <div className="mt-3 grid gap-1 text-muted">
+                <p>Оформление оплаты: {formatConfigState(observability?.stripe.checkoutMissing ?? [])}</p>
+                <p>Управление подпиской: {formatConfigState(observability?.stripe.portalMissing ?? [])}</p>
+                <p>Сверка платежей: {formatConfigState(observability?.stripe.webhookMissing ?? [])}</p>
+                <p>Премиум-тариф: {observability?.stripe.priceId ? "задан" : "не задан"}</p>
+              </div>
+            </article>
+
+            <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm">
+              <p className="font-semibold text-foreground">Развёртывание</p>
+              <div className="mt-3 grid gap-1 text-muted">
+                <p>Среда: {formatEnvironment(observability?.vercel.environment ?? null)}</p>
+                <p>Серверная часть: {readiness?.vercelRuntimeEnv ? "готова" : "не настроена"}</p>
+                <p>Синхронизация тренировок: {readiness?.workoutSyncPullEnv ? "готова" : "не настроена"}</p>
               </div>
             </article>
           </div>
@@ -729,233 +643,146 @@ export function AdminHealthDashboard({
             {[
               ["Пользователи", String(systemHealth?.users ?? 0)],
               ["Упражнения", String(systemHealth?.exercises ?? 0)],
-              ["Активные недели", String(systemHealth?.activePrograms ?? 0)],
-              ["Knowledge chunks", String(systemHealth?.knowledgeChunks ?? 0)],
-              [
-                "Knowledge embeddings",
-                String(systemHealth?.knowledgeEmbeddings ?? 0),
-              ],
+              ["Активные программы", String(systemHealth?.activePrograms ?? 0)],
+              ["Материалы ИИ", String(systemHealth?.knowledgeChunks ?? 0)],
+              ["Поисковые векторы", String(systemHealth?.knowledgeEmbeddings ?? 0)],
             ].map(([label, value]) => (
               <article className="kpi p-4" key={label}>
                 <p className="text-sm text-muted">{label}</p>
-                <p className="mt-2 text-xl font-semibold text-foreground">
-                  {value}
-                </p>
+                <p className="mt-2 text-xl font-semibold text-foreground">{value}</p>
               </article>
             ))}
           </div>
 
           <div className="grid gap-3 md:grid-cols-2">
             <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm">
-              <p className="font-semibold text-foreground">Последний профиль</p>
-              <p className="mt-2 text-muted">
-                {formatDateTime(systemHealth?.latestProfileAt ?? null)}
-              </p>
+              <p className="font-semibold text-foreground">Последнее обновление профиля</p>
+              <p className="mt-2 text-muted">{formatDateTime(systemHealth?.latestProfileAt ?? null)}</p>
             </article>
-
             <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm">
               <p className="font-semibold text-foreground">Последняя программа</p>
-              <p className="mt-2 text-muted">
-                {formatDateTime(systemHealth?.latestProgramAt ?? null)}
-              </p>
+              <p className="mt-2 text-muted">{formatDateTime(systemHealth?.latestProgramAt ?? null)}</p>
             </article>
           </div>
 
           <div className="grid gap-3 md:grid-cols-2">
             <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm">
-              <p className="font-semibold text-foreground">Knowledge runtime</p>
+              <p className="font-semibold text-foreground">Контекст ИИ</p>
               <div className="mt-3 grid gap-1 text-muted">
-                <p>Runtime snapshots: {knowledgeHealth?.runtimeSnapshots ?? 0}</p>
-                <p>
-                  Embeddings coverage:{" "}
-                  {formatPercent(knowledgeHealth?.embeddingCoverageRatio ?? null)}
-                </p>
-                <p>
-                  Structured fact sheets:{" "}
-                  {knowledgeHealth?.structuredFactSheets ?? 0}
-                </p>
-                <p>Structured facts: {knowledgeHealth?.structuredFacts ?? 0}</p>
-                <p>
-                  Latest runtime snapshot:{" "}
-                  {formatDateTime(knowledgeHealth?.latestRuntimeSnapshotAt ?? null)}
-                </p>
+                <p>Готовые снимки: {knowledgeHealth?.runtimeSnapshots ?? 0}</p>
+                <p>Покрытие базы знаний: {formatPercent(knowledgeHealth?.embeddingCoverageRatio ?? null)}</p>
+                <p>Карточки фактов: {knowledgeHealth?.structuredFactSheets ?? 0}</p>
+                <p>Факты: {knowledgeHealth?.structuredFacts ?? 0}</p>
+                <p>Последнее обновление: {formatDateTime(knowledgeHealth?.latestRuntimeSnapshotAt ?? null)}</p>
               </div>
             </article>
-
             <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm">
-              <p className="font-semibold text-foreground">Knowledge reindex</p>
+              <p className="font-semibold text-foreground">Обновление базы знаний</p>
               <div className="mt-3 grid gap-1 text-muted">
-                <p>Reindexes за 24ч: {knowledgeHealth?.recentReindexes24h ?? 0}</p>
-                <p>
-                  Latest mode:{" "}
-                  {formatReindexMode(knowledgeHealth?.latestReindexMode ?? null)}
-                </p>
-                <p>
-                  Latest search mode:{" "}
-                  {formatSearchMode(
-                    knowledgeHealth?.latestReindexSearchMode ?? null,
-                  )}
-                </p>
-                <p>
-                  Latest reindex:{" "}
-                  {formatDateTime(knowledgeHealth?.latestReindexAt ?? null)}
-                </p>
+                <p>Обновлений за сутки: {knowledgeHealth?.recentReindexes24h ?? 0}</p>
+                <p>Последний режим: {formatReindexMode(knowledgeHealth?.latestReindexMode ?? null)}</p>
+                <p>Последний тип поиска: {formatSearchMode(knowledgeHealth?.latestReindexSearchMode ?? null)}</p>
+                <p>Последнее обновление: {formatDateTime(knowledgeHealth?.latestReindexAt ?? null)}</p>
               </div>
             </article>
           </div>
         </div>
       </PanelCard>
 
-      <PanelCard caption="Ops health" title="Очереди, billing и workout sync">
+      <PanelCard caption="Операции" title="Очереди и действия">
         <div className="grid gap-4">
-          <p
-            className={`rounded-2xl border px-4 py-3 text-sm ${
-              hasSyncBacklog
-                ? "border-amber-300/60 bg-amber-50 text-amber-800"
-                : "border-emerald-300/60 bg-emerald-50 text-emerald-700"
-            }`}
-          >
+          <p className={`rounded-2xl border px-4 py-3 text-sm ${hasSyncBacklog ? "border-amber-300/60 bg-amber-50 text-amber-800" : "border-emerald-300/60 bg-emerald-50 text-emerald-700"}`}>
             {hasSyncBacklog
-              ? "Есть активные или проблемные очереди. Ниже видны support/export/deletion/eval backlog и последние точки активности."
-              : "Очереди сейчас чистые: критичных sync backlog по support/export/deletion и AI evals не видно."}
+              ? "Есть незавершённые операции. Ниже видно, где именно накопилась очередь."
+              : "Критичных очередей сейчас нет. Основные процессы проходят штатно."}
           </p>
-
-          <p
-            className={`rounded-2xl border px-4 py-3 text-sm ${
-              hasBillingAttention
-                ? "border-amber-300/60 bg-amber-50 text-amber-800"
-                : "border-emerald-300/60 bg-emerald-50 text-emerald-700"
-            }`}
-          >
+          <p className={`rounded-2xl border px-4 py-3 text-sm ${hasBillingAttention ? "border-amber-300/60 bg-amber-50 text-amber-800" : "border-emerald-300/60 bg-emerald-50 text-emerald-700"}`}>
             {hasBillingAttention
-              ? "В billing-контуре есть точки внимания: либо копятся self-service review, либо есть past_due Stripe-подписки."
-              : "Billing-контур выглядит спокойно: новых очередей review нет, past_due Stripe-подписок не видно."}
+              ? "В оплатах есть задачи, которым нужен контроль: просрочки, ручные проверки или ошибки сверки."
+              : "По оплатам всё спокойно: критичных просрочек и ручных хвостов не видно."}
           </p>
 
           <div className="grid gap-4 sm:grid-cols-3">
             {[
-              ["Workout in progress", String(syncHealth?.workoutDaysInProgress ?? 0)],
-              ["Workout done", String(syncHealth?.workoutDaysDone ?? 0)],
-              ["Logged sets", String(syncHealth?.loggedWorkoutSets ?? 0)],
+              ["Тренировки в процессе", String(syncHealth?.workoutDaysInProgress ?? 0)],
+              ["Завершённые тренировки", String(syncHealth?.workoutDaysDone ?? 0)],
+              ["Сохранённые подходы", String(syncHealth?.loggedWorkoutSets ?? 0)],
             ].map(([label, value]) => (
               <article className="kpi p-4" key={label}>
                 <p className="text-sm text-muted">{label}</p>
-                <p className="mt-2 text-xl font-semibold text-foreground">
-                  {value}
-                </p>
+                <p className="mt-2 text-xl font-semibold text-foreground">{value}</p>
               </article>
             ))}
           </div>
 
           <div className="grid gap-3 md:grid-cols-2">
             <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm">
-              <p className="font-semibold text-foreground">Support queue</p>
+              <p className="font-semibold text-foreground">Поддержка пользователей</p>
               <div className="mt-3 grid gap-1 text-muted">
-                <p>Queued: {syncHealth?.queuedSupportActions ?? 0}</p>
-                <p>Completed: {syncHealth?.completedSupportActions ?? 0}</p>
-                <p>Failed: {syncHealth?.failedSupportActions ?? 0}</p>
-                <p>
-                  Последняя активность:{" "}
-                  {formatDateTime(syncHealth?.latestSupportActionAt ?? null)}
-                </p>
+                <p>Ждут обработки: {syncHealth?.queuedSupportActions ?? 0}</p>
+                <p>Завершено: {syncHealth?.completedSupportActions ?? 0}</p>
+                <p>С ошибкой: {syncHealth?.failedSupportActions ?? 0}</p>
+                <p>Последняя активность: {formatDateTime(syncHealth?.latestSupportActionAt ?? null)}</p>
               </div>
             </article>
-
             <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm">
-              <p className="font-semibold text-foreground">AI eval queue</p>
+              <p className="font-semibold text-foreground">Проверка качества ИИ</p>
               <div className="mt-3 grid gap-1 text-muted">
-                <p>Queued: {syncHealth?.queuedAiEvalRuns ?? 0}</p>
-                <p>Running: {syncHealth?.runningAiEvalRuns ?? 0}</p>
-                <p>Failed: {syncHealth?.failedAiEvalRuns ?? 0}</p>
-                <p>
-                  Последняя активность:{" "}
-                  {formatDateTime(syncHealth?.latestAiEvalRunAt ?? null)}
-                </p>
+                <p>Ждут запуска: {syncHealth?.queuedAiEvalRuns ?? 0}</p>
+                <p>Выполняются: {syncHealth?.runningAiEvalRuns ?? 0}</p>
+                <p>С ошибкой: {syncHealth?.failedAiEvalRuns ?? 0}</p>
+                <p>Последняя активность: {formatDateTime(syncHealth?.latestAiEvalRunAt ?? null)}</p>
               </div>
             </article>
           </div>
 
           <div className="grid gap-3 md:grid-cols-2">
             <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm">
-              <p className="font-semibold text-foreground">Export queue</p>
+              <p className="font-semibold text-foreground">Выгрузка данных</p>
               <div className="mt-3 grid gap-1 text-muted">
-                <p>Queued or processing: {syncHealth?.queuedExportJobs ?? 0}</p>
-                <p>
-                  Latest export activity:{" "}
-                  {formatDateTime(syncHealth?.latestExportJobAt ?? null)}
-                </p>
+                <p>Ждут или обрабатываются: {syncHealth?.queuedExportJobs ?? 0}</p>
+                <p>Последняя активность: {formatDateTime(syncHealth?.latestExportJobAt ?? null)}</p>
               </div>
             </article>
-
             <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm">
-              <p className="font-semibold text-foreground">Deletion holds</p>
+              <p className="font-semibold text-foreground">Удаление данных</p>
               <div className="mt-3 grid gap-1 text-muted">
-                <p>Active holds: {syncHealth?.activeDeletionRequests ?? 0}</p>
-                <p>Due for purge release: {syncHealth?.dueDeletionRequests ?? 0}</p>
-                <p>
-                  Latest deletion activity:{" "}
-                  {formatDateTime(syncHealth?.latestDeletionRequestAt ?? null)}
-                </p>
+                <p>Активные удержания: {syncHealth?.activeDeletionRequests ?? 0}</p>
+                <p>Готовы к следующему шагу: {syncHealth?.dueDeletionRequests ?? 0}</p>
+                <p>Последняя активность: {formatDateTime(syncHealth?.latestDeletionRequestAt ?? null)}</p>
               </div>
             </article>
           </div>
 
           <div className="grid gap-3 md:grid-cols-2">
             <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm">
-              <p className="font-semibold text-foreground">Billing review queue</p>
+              <p className="font-semibold text-foreground">Проверка оплат</p>
               <div className="mt-3 grid gap-1 text-muted">
-                <p>Queued reviews: {billingHealth?.queuedBillingReviews ?? 0}</p>
-                <p>Completed reviews: {billingHealth?.completedBillingReviews ?? 0}</p>
-                <p>
-                  Billing reconciles за 24ч:{" "}
-                  {billingHealth?.recentBillingReconciles ?? 0}
-                </p>
-                <p>
-                  Failed reconciles: {billingHealth?.failedBillingReconciles ?? 0}
-                </p>
-                <p>
-                  Checkout return reconciles за 24ч:{" "}
-                  {billingHealth?.recentCheckoutReturnReconciles ?? 0}
-                </p>
-                <p>
-                  Latest review activity:{" "}
-                  {formatDateTime(billingHealth?.latestBillingReviewAt ?? null)}
-                </p>
-                <p>
-                  Latest billing reconcile:{" "}
-                  {formatDateTime(billingHealth?.latestBillingReconcileAt ?? null)}
-                </p>
-                <p>
-                  Latest checkout return:{" "}
-                  {formatDateTime(
-                    billingHealth?.latestCheckoutReturnReconcileAt ?? null,
-                  )}
-                </p>
+                <p>Ждут ручной проверки: {billingHealth?.queuedBillingReviews ?? 0}</p>
+                <p>Проверено: {billingHealth?.completedBillingReviews ?? 0}</p>
+                <p>Сверок за сутки: {billingHealth?.recentBillingReconciles ?? 0}</p>
+                <p>Ошибок сверки: {billingHealth?.failedBillingReconciles ?? 0}</p>
+                <p>Последняя ручная проверка: {formatDateTime(billingHealth?.latestBillingReviewAt ?? null)}</p>
+                <p>Последняя автоматическая сверка: {formatDateTime(billingHealth?.latestBillingReconcileAt ?? null)}</p>
               </div>
             </article>
-
             <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm">
-              <p className="font-semibold text-foreground">Stripe subscriptions</p>
+              <p className="font-semibold text-foreground">Подписки</p>
               <div className="mt-3 grid gap-1 text-muted">
-                <p>Total Stripe subscriptions: {billingHealth?.stripeSubscriptions ?? 0}</p>
-                <p>Active: {billingHealth?.stripeActiveSubscriptions ?? 0}</p>
-                <p>Trial: {billingHealth?.stripeTrialSubscriptions ?? 0}</p>
-                <p>Past due: {billingHealth?.stripePastDueSubscriptions ?? 0}</p>
-                <p>Linked customers: {billingHealth?.stripeLinkedCustomers ?? 0}</p>
-                <p>
-                  Latest provider event:{" "}
-                  {formatDateTime(billingHealth?.latestStripeEventAt ?? null)}
-                </p>
+                <p>Всего подписок: {billingHealth?.stripeSubscriptions ?? 0}</p>
+                <p>Активные: {billingHealth?.stripeActiveSubscriptions ?? 0}</p>
+                <p>Пробный период: {billingHealth?.stripeTrialSubscriptions ?? 0}</p>
+                <p>Нужна оплата: {billingHealth?.stripePastDueSubscriptions ?? 0}</p>
+                <p>Связанные клиенты: {billingHealth?.stripeLinkedCustomers ?? 0}</p>
+                <p>Последнее событие: {formatDateTime(billingHealth?.latestStripeEventAt ?? null)}</p>
               </div>
             </article>
           </div>
 
           <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm">
-            <p className="font-semibold text-foreground">Workout sync activity</p>
-            <p className="mt-2 text-muted">
-              Последнее сохранённое обновление `actual_reps`:{" "}
-              {formatDateTime(syncHealth?.latestWorkoutSetAt ?? null)}
-            </p>
+            <p className="font-semibold text-foreground">Синхронизация тренировок</p>
+            <p className="mt-2 text-muted">Последнее обновление подходов: {formatDateTime(syncHealth?.latestWorkoutSetAt ?? null)}</p>
+            <p className="mt-1 text-muted">Возврат из оплаты обработан: {formatDateTime(billingHealth?.latestCheckoutReturnReconcileAt ?? null)}</p>
           </article>
         </div>
       </PanelCard>

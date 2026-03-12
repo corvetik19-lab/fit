@@ -21,7 +21,7 @@ export function AdminAiOperations({
   const [mode, setMode] = useState<"embeddings" | "full">("full");
   const [targetUserId, setTargetUserId] = useState(defaultTargetUserId);
   const [reason, setReason] = useState(
-    "Обновление AI-контекста и retrieval после изменений в данных пользователя",
+    "Обновление контекста ИИ и поиска после изменений в данных пользователя",
   );
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -65,18 +65,18 @@ export function AdminAiOperations({
         | null;
 
       if (!response.ok) {
-        setError(payload?.message ?? "Не удалось запустить обновление базы знаний.");
+        setError(payload?.message ?? "Не удалось обновить базу знаний ИИ.");
         return;
       }
 
       setNotice(
         payload?.data?.message ??
           (mode === "embeddings"
-            ? `Эмбеддинги обновлены. Чанков в базе знаний: ${payload?.data?.indexedChunks ?? 0}.`
-            : `Переиндексация завершена. Индексировано чанков: ${payload?.data?.indexedChunks ?? 0}.`),
+            ? `Быстрое обновление завершено. Обработано материалов: ${payload?.data?.indexedChunks ?? 0}.`
+            : `Полное обновление завершено. Обработано материалов: ${payload?.data?.indexedChunks ?? 0}.`),
       );
     } catch {
-      setError("Не удалось запустить обновление базы знаний.");
+      setError("Не удалось обновить базу знаний ИИ.");
     } finally {
       setPending(false);
     }
@@ -98,9 +98,8 @@ export function AdminAiOperations({
 
       {!canRunReindex ? (
         <p className="rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          Роль {getAdminRoleLabel(currentAdminRole)} работает здесь в режиме только
-          чтения. Запуск reindex и refresh embeddings доступен только `super_admin` и
-          `support_admin`.
+          Роль {getAdminRoleLabel(currentAdminRole)} может только просматривать этот
+          раздел.
         </p>
       ) : null}
 
@@ -117,7 +116,7 @@ export function AdminAiOperations({
             onClick={() => setMode("full")}
             type="button"
           >
-            Полный reindex
+            Полное обновление
           </button>
           <button
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${
@@ -129,18 +128,18 @@ export function AdminAiOperations({
             onClick={() => setMode("embeddings")}
             type="button"
           >
-            Только embeddings
+            Быстрое обновление
           </button>
         </div>
       </label>
 
       <label className="grid gap-2 text-sm text-muted">
-        Пользователь для reindex
+        Идентификатор пользователя
         <input
           className={inputClassName}
           disabled={!canRunReindex}
           onChange={(event) => setTargetUserId(event.target.value)}
-          placeholder="UUID пользователя"
+          placeholder="Введите ID пользователя"
           value={targetUserId}
         />
       </label>
@@ -164,8 +163,8 @@ export function AdminAiOperations({
         {pending
           ? "Запускаю..."
           : mode === "embeddings"
-            ? "Обновить embeddings"
-            : "Переиндексировать базу знаний"}
+            ? "Обновить быстро"
+            : "Обновить полностью"}
       </button>
     </div>
   );

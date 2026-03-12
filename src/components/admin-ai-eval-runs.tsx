@@ -46,7 +46,7 @@ function formatStatus(status: string) {
     case "running":
       return "в работе";
     case "completed":
-      return "завершен";
+      return "завершено";
     case "failed":
       return "ошибка";
     default:
@@ -114,7 +114,7 @@ export function AdminAiEvalRuns({
       const payload = await readJsonSafely(response);
 
       if (!response.ok) {
-        setError(payload?.message ?? "Не удалось обновить список AI eval runs.");
+        setError(payload?.message ?? "Не удалось обновить список проверок ИИ.");
         return;
       }
 
@@ -149,7 +149,7 @@ export function AdminAiEvalRuns({
       const payload = await readJsonSafely(response);
 
       if (!response.ok) {
-        setError(payload?.message ?? "Не удалось поставить AI eval run в очередь.");
+        setError(payload?.message ?? "Не удалось поставить проверку ИИ в очередь.");
         return;
       }
 
@@ -162,7 +162,7 @@ export function AdminAiEvalRuns({
 
       setNotice(
         queuedRun?.message ??
-          "AI eval run поставлен в очередь и добавлен в историю запусков.",
+          "Проверка ИИ поставлена в очередь и добавлена в историю запусков.",
       );
       setLabel("");
     } finally {
@@ -190,7 +190,7 @@ export function AdminAiEvalRuns({
 
       if (!response.ok) {
         setError(
-          payload?.message ?? "Не удалось поставить scheduled AI eval в очередь.",
+          payload?.message ?? "Не удалось поставить плановую проверку ИИ в очередь.",
         );
         return;
       }
@@ -205,7 +205,7 @@ export function AdminAiEvalRuns({
         });
       }
 
-      setNotice(payload?.message ?? "Scheduled AI eval добавлен в очередь.");
+      setNotice(payload?.message ?? "Плановая проверка ИИ добавлена в очередь.");
     } finally {
       setIsScheduling(false);
     }
@@ -216,10 +216,10 @@ export function AdminAiEvalRuns({
       <div className="mb-5 flex items-center justify-between gap-3">
         <div>
           <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
-            AI-оценки
+            Качество ИИ
           </p>
           <h2 className="mt-2 text-2xl font-semibold text-foreground">
-            Ragas benchmark и история запусков
+            Проверки качества ИИ и история запусков
           </h2>
         </div>
         <button
@@ -235,25 +235,24 @@ export function AdminAiEvalRuns({
       <div className="grid gap-4">
         {!canQueueAiEvalRuns ? (
           <p className="rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            Роль {getAdminRoleLabel(currentAdminRole)} не может ставить AI eval runs
-            в очередь. Для запуска нужен `super_admin` или `analyst`.
+            Роль {getAdminRoleLabel(currentAdminRole)} не может запускать проверки ИИ.
           </p>
         ) : null}
 
         <div className="grid gap-3 lg:grid-cols-[1fr_1fr_220px_auto]">
           <label className="grid gap-2 text-sm text-muted">
-            Название запуска
+            Название проверки
             <input
               className={inputClassName}
               disabled={!canQueueAiEvalRuns || isSubmitting}
               onChange={(event) => setLabel(event.target.value)}
-              placeholder="Например: weekly assistant regression"
+              placeholder="Например: еженедельная проверка помощника"
               value={label}
             />
           </label>
 
           <label className="grid gap-2 text-sm text-muted">
-            Модель
+            Модель ИИ
             <input
               className={inputClassName}
               disabled={!canQueueAiEvalRuns || isSubmitting}
@@ -263,7 +262,7 @@ export function AdminAiEvalRuns({
           </label>
 
           <label className="grid gap-2 text-sm text-muted">
-            Набор
+            Набор проверок
             <select
               className={inputClassName}
               disabled={!canQueueAiEvalRuns || isSubmitting}
@@ -285,7 +284,7 @@ export function AdminAiEvalRuns({
               onClick={() => void queueRun()}
               type="button"
             >
-              {isSubmitting ? "Ставлю..." : "Запустить eval"}
+              {isSubmitting ? "Запускаю..." : "Запустить проверку"}
             </button>
           </div>
         </div>
@@ -293,9 +292,10 @@ export function AdminAiEvalRuns({
         {canRunScheduledJobs ? (
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-white/60 px-4 py-4 text-sm">
             <div className="space-y-1">
-              <p className="font-semibold text-foreground">Scheduled smoke-eval</p>
+              <p className="font-semibold text-foreground">Плановая быстрая проверка</p>
               <p className="text-muted">
-                Root-only no-spend прогон `tool_calls`, который автоматически ставится в очередь по cron и может быть запущен вручную отсюда.
+                Быстрый контроль ключевых функций ИИ, который можно запустить вручную
+                или по расписанию.
               </p>
             </div>
             <button
@@ -304,7 +304,7 @@ export function AdminAiEvalRuns({
               onClick={() => void queueScheduledSmokeRun()}
               type="button"
             >
-              {isScheduling ? "Ставлю smoke-eval..." : "Поставить smoke-eval"}
+              {isScheduling ? "Ставлю в очередь..." : "Запустить быстро"}
             </button>
           </div>
         ) : null}
@@ -331,32 +331,35 @@ export function AdminAiEvalRuns({
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="space-y-1">
                     <p className="font-semibold text-foreground">{run.label}</p>
-                    <p className="break-all text-muted">{run.model_id}</p>
+                    <p className="text-muted">Набор: {getSuiteLabel(run.summary?.suite)}</p>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <span className="pill">{formatStatus(run.status)}</span>
-                    <span className="pill">{getSuiteLabel(run.summary?.suite)}</span>
                     {run.summary?.isScheduled ? (
-                      <span className="pill bg-sky-100 text-sky-700">scheduled</span>
+                      <span className="pill bg-sky-100 text-sky-700">по расписанию</span>
                     ) : null}
                     {run.summary?.qualityGatePassed === true ? (
-                      <span className="pill bg-emerald-100 text-emerald-700">порог пройден</span>
+                      <span className="pill bg-emerald-100 text-emerald-700">
+                        порог пройден
+                      </span>
                     ) : null}
                     {run.summary?.qualityGatePassed === false ? (
-                      <span className="pill bg-red-100 text-red-700">порог не пройден</span>
+                      <span className="pill bg-red-100 text-red-700">
+                        нужен разбор
+                      </span>
                     ) : null}
                   </div>
                 </div>
                 <div className="mt-3 grid gap-1 text-muted">
-                  <p>Создан: {formatDateTime(run.created_at)}</p>
+                  <p>Создано: {formatDateTime(run.created_at)}</p>
                   <p>Старт: {formatDateTime(run.started_at)}</p>
-                  <p>Завершен: {formatDateTime(run.completed_at)}</p>
+                  <p>Завершено: {formatDateTime(run.completed_at)}</p>
                 </div>
               </article>
             ))
           ) : (
             <p className="text-sm leading-7 text-muted">
-              AI eval runs пока не запускались.
+              Проверки качества ИИ пока не запускались.
             </p>
           )}
         </div>

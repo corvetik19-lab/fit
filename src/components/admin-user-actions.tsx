@@ -73,7 +73,7 @@ export function AdminUserActions({
           | null;
 
         if (!response.ok) {
-          setError(payload?.message ?? "Не удалось выполнить admin-действие.");
+          setError(payload?.message ?? "Не удалось выполнить действие.");
           return;
         }
 
@@ -89,10 +89,10 @@ export function AdminUserActions({
     <section className="card p-6">
       <div className="mb-5">
         <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
-          Действия админа
+          Действия администратора
         </p>
         <h2 className="mt-2 text-2xl font-semibold text-foreground">
-          Support, billing и lifecycle операции
+          Поддержка, доступы и оплата
         </h2>
       </div>
 
@@ -101,8 +101,7 @@ export function AdminUserActions({
           {!canQueueSupportActions ? (
             <p className="rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800">
               Роль {getAdminRoleLabel(currentAdminRole)} не может менять состояние
-              пользователя. Для support actions нужен `support_admin` или
-              `super_admin`.
+              пользователя.
             </p>
           ) : null}
 
@@ -124,12 +123,12 @@ export function AdminUserActions({
                 submitJsonAction(
                   `/api/admin/users/${userId}/suspend`,
                   { reason },
-                  "Действие блокировки поставлено в очередь.",
+                  "Ограничение доступа поставлено в очередь.",
                 )
               }
               type="button"
             >
-              Заблокировать
+              Ограничить доступ
             </button>
 
             <button
@@ -139,12 +138,12 @@ export function AdminUserActions({
                 submitJsonAction(
                   `/api/admin/users/${userId}/restore`,
                   { reason },
-                  "Действие восстановления поставлено в очередь.",
+                  "Восстановление доступа поставлено в очередь.",
                 )
               }
               type="button"
             >
-              Восстановить
+              Восстановить доступ
             </button>
 
             <button
@@ -154,12 +153,12 @@ export function AdminUserActions({
                 submitJsonAction(
                   `/api/admin/users/${userId}/export`,
                   { format: exportFormat, reason },
-                  "Экспорт данных поставлен в очередь.",
+                  "Выгрузка данных поставлена в очередь.",
                 )
               }
               type="button"
             >
-              Поставить экспорт в очередь
+              Запросить выгрузку
             </button>
 
             <button
@@ -169,12 +168,12 @@ export function AdminUserActions({
                 submitJsonAction(
                   `/api/admin/users/${userId}/deletion`,
                   { reason },
-                  "Deletion request переведён в hold.",
+                  "Запрос на удаление переведён в удержание.",
                 )
               }
               type="button"
             >
-              Поставить deletion на hold
+              Поставить удаление на удержание
             </button>
 
             <button
@@ -184,13 +183,13 @@ export function AdminUserActions({
                 submitJsonAction(
                   `/api/admin/users/${userId}/deletion`,
                   { reason },
-                  "Deletion request отменён.",
+                  "Запрос на удаление отменён.",
                   "DELETE",
                 )
               }
               type="button"
             >
-              Отменить deletion request
+              Отменить удаление
             </button>
 
             <button
@@ -206,29 +205,29 @@ export function AdminUserActions({
                       source: "admin-user-actions",
                     },
                   },
-                  "Пересинхронизация поставлена в очередь.",
+                  "Пересборка данных пользователя поставлена в очередь.",
                 )
               }
               type="button"
             >
-              Поставить пересинхронизацию в очередь
+              Обновить данные пользователя
             </button>
           </div>
 
           <label className="grid gap-2 text-sm text-muted">
-            Формат экспорта
+            Формат выгрузки
             <select
               className={inputClassName}
               disabled={!canQueueSupportActions || isPending}
               onChange={(event) => setExportFormat(event.target.value)}
               value={exportFormat}
             >
-              <option value="json_csv_zip">json_csv_zip</option>
+              <option value="json_csv_zip">Архив с данными</option>
             </select>
           </label>
 
           <label className="grid gap-2 text-sm text-muted">
-            Кастомное действие поддержки
+            Дополнительное служебное действие
             <input
               className={inputClassName}
               disabled={!canQueueSupportActions || isPending}
@@ -252,29 +251,29 @@ export function AdminUserActions({
                     source: "admin-user-actions",
                   },
                 },
-                "Кастомное действие поддержки поставлено в очередь.",
+                "Служебное действие поставлено в очередь.",
               )
             }
             type="button"
           >
-            {isPending ? "Обработка..." : "Запустить кастомное действие"}
+            {isPending ? "Обрабатываю..." : "Запустить действие"}
           </button>
         </div>
 
         <div className="rounded-3xl border border-border bg-white/60 p-5">
           <div className="mb-4">
             <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted">
-              Billing access
+              Оплата и доступы
             </p>
             <h3 className="mt-2 text-lg font-semibold text-foreground">
-              Подписка и entitlements
+              Подписка и открытые функции
             </h3>
           </div>
 
           {!canManageBilling ? (
             <p className="rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-              Billing и entitlement действия доступны только root super-admin
-              `corvetik1@yandex.ru`.
+              Управлять оплатой и доступами может только главный администратор
+              {` `}corvetik1@yandex.ru.
             </p>
           ) : null}
 
@@ -288,15 +287,15 @@ export function AdminUserActions({
                   onChange={(event) => setSubscriptionAction(event.target.value)}
                   value={subscriptionAction}
                 >
-                  <option value="grant_trial">grant_trial</option>
-                  <option value="activate_subscription">activate_subscription</option>
-                  <option value="mark_past_due">mark_past_due</option>
-                  <option value="cancel_subscription">cancel_subscription</option>
+                  <option value="grant_trial">Выдать пробный период</option>
+                  <option value="activate_subscription">Включить подписку</option>
+                  <option value="mark_past_due">Отметить как неоплаченную</option>
+                  <option value="cancel_subscription">Отменить подписку</option>
                 </select>
               </label>
 
               <label className="grid gap-2 text-sm text-muted">
-                Провайдер
+                Источник
                 <input
                   className={inputClassName}
                   disabled={!canManageBilling || isPending}
@@ -331,7 +330,7 @@ export function AdminUserActions({
                       provider: provider.trim() || undefined,
                       reason,
                     },
-                    "Subscription state обновлён.",
+                    "Состояние подписки обновлено.",
                   )
                 }
                 type="button"
@@ -346,31 +345,31 @@ export function AdminUserActions({
                   submitJsonAction(
                     `/api/admin/users/${userId}/billing/reconcile`,
                     {},
-                    "Stripe subscription state synchronized.",
+                    "Состояние оплаты синхронизировано.",
                   )
                 }
                 type="button"
               >
-                Синхронизировать Stripe
+                Сверить оплату
               </button>
             </div>
 
             <div className="grid gap-3">
               <label className="grid gap-2 text-sm text-muted">
-                Действие с entitlement
+                Действие с доступом
                 <select
                   className={inputClassName}
                   disabled={!canManageBilling || isPending}
                   onChange={(event) => setEntitlementAction(event.target.value)}
                   value={entitlementAction}
                 >
-                  <option value="enable_entitlement">enable_entitlement</option>
-                  <option value="disable_entitlement">disable_entitlement</option>
+                  <option value="enable_entitlement">Открыть функцию</option>
+                  <option value="disable_entitlement">Закрыть функцию</option>
                 </select>
               </label>
 
               <label className="grid gap-2 text-sm text-muted">
-                Feature key
+                Код функции
                 <input
                   className={inputClassName}
                   disabled={!canManageBilling || isPending}
@@ -382,7 +381,7 @@ export function AdminUserActions({
               </label>
 
               <label className="grid gap-2 text-sm text-muted">
-                Limit value
+                Лимит
                 <input
                   className={inputClassName}
                   disabled={!canManageBilling || isPending}
@@ -406,12 +405,12 @@ export function AdminUserActions({
                         limitValue.trim() === "" ? null : Number(limitValue),
                       reason,
                     },
-                    "Entitlement state обновлён.",
+                    "Доступ к функции обновлён.",
                   )
                 }
                 type="button"
               >
-                Обновить entitlement
+                Обновить доступ
               </button>
             </div>
           </div>

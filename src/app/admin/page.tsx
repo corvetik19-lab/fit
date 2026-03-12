@@ -46,11 +46,11 @@ function formatAdminRole(value: string) {
 function formatSupportAction(value: string) {
   switch (value) {
     case "billing_access_review":
-      return "Проверка billing-доступа";
+      return "Проверка доступа к оплате";
     case "purge_user_data":
       return "Полная очистка данных";
     case "reindex_knowledge":
-      return "Переиндексация базы знаний";
+      return "Обновление базы знаний";
     case "resync_user_context":
       return "Пересинхронизация контекста";
     case "restore_user":
@@ -92,7 +92,7 @@ function formatStatus(value: string) {
 function formatRouteKey(value: string) {
   switch (value) {
     case "ai_chat":
-      return "AI-чат";
+      return "Чат ИИ";
     case "meal_plan":
       return "План питания";
     case "workout_plan":
@@ -107,15 +107,15 @@ function formatRouteKey(value: string) {
 function formatAuditAction(value: string) {
   switch (value) {
     case "admin_role_granted":
-      return "Выдача admin-доступа";
+      return "Выдача доступа";
     case "admin_role_updated":
-      return "Изменение admin-роли";
+      return "Изменение роли";
     case "admin_role_confirmed":
-      return "Подтверждение admin-роли";
+      return "Подтверждение роли";
     case "admin_role_revoked":
-      return "Отзыв admin-доступа";
+      return "Отзыв доступа";
     case "primary_super_admin_enforced":
-      return "Фиксация primary super-admin";
+      return "Закрепление главного администратора";
     default:
       return value;
   }
@@ -159,20 +159,20 @@ export default async function AdminPage() {
 
   if (!viewer.isPlatformAdmin) {
     return (
-      <AppShell eyebrow="Админ" title="Доступ к admin-панели">
-        <PanelCard caption="Доступ" title="Root-admin закреплён за одним аккаунтом">
+      <AppShell eyebrow="Админ" title="Доступ к панели управления">
+        <PanelCard caption="Доступ" title="Главный доступ закреплён за одним аккаунтом">
           <div className="grid gap-4 md:grid-cols-[1.1fr_0.9fr]">
             <article className="rounded-3xl border border-border bg-white/60 p-5 text-sm">
               <p className="font-semibold text-foreground">
-                Admin-панель предназначена для root-контура платформы.
+                Панель управления предназначена для главного административного контура платформы.
               </p>
               <p className="mt-3 leading-7 text-muted">
-                Primary super-admin жёстко закреплён за{" "}
+                Главный доступ жёстко закреплён за{" "}
                 <span className="font-semibold text-foreground">
                   {PRIMARY_SUPER_ADMIN_EMAIL}
                 </span>
-                . Если ты вошёл под этим email и всё ещё не видишь доступ, можно
-                выполнить bootstrap или просто обновить сессию после миграции.
+                . Если ты вошёл под этим email и всё ещё не видишь доступ, обнови
+                сессию или повторно зайди в приложение.
               </p>
             </article>
 
@@ -361,19 +361,19 @@ export default async function AdminPage() {
     {
       label: "Активные недели",
       value: String(activeProgramsCountResult.count ?? 0),
-      detail: "программы со статусом active",
+      detail: "программы, которые сейчас используются",
     },
     {
-      label: "AI сообщения",
+      label: "Сообщения ИИ",
       value: String(aiChatMessagesCountResult.count ?? 0),
       detail: "живой срез активности продукта",
     },
     {
-      label: "Контроль root-политики",
+      label: "Контроль главного доступа",
       value: String(superAdminPolicyViolations),
       detail: superAdminPolicyViolations
-        ? "в БД есть лишние super_admin"
-        : "root-политика в норме",
+        ? "в системе есть лишний главный доступ"
+        : "главный доступ закреплён верно",
       tone: superAdminPolicyViolations ? ("warning" as const) : ("success" as const),
     },
   ];
@@ -385,17 +385,17 @@ export default async function AdminPage() {
           <div className="space-y-5">
             <div className="flex flex-wrap gap-2">
               <span className="pill">{formatAdminRole(viewer.platformAdminRole ?? "analyst")}</span>
-              <span className="pill">Root: {PRIMARY_SUPER_ADMIN_EMAIL}</span>
-              {canUseSuperAdminConsole ? <span className="pill">Полный контур</span> : null}
+              <span className="pill">Главный доступ: {PRIMARY_SUPER_ADMIN_EMAIL}</span>
+              {canUseSuperAdminConsole ? <span className="pill">Главный контур</span> : null}
             </div>
 
             <div className="space-y-3">
               <h2 className="max-w-4xl text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-                Один рабочий центр управления для пользователей, операций и AI-контура.
+                Один рабочий центр управления для пользователей, операций и контура ИИ.
               </h2>
               <p className="max-w-3xl text-sm leading-7 text-muted sm:text-base">
-                Панель собрана под единый root-сценарий: быстрый переход в каталог
-                пользователей, контроль очередей, диагностика системы, аудит и AI-операции
+                Панель собрана под единый сценарий главного администратора: быстрый переход в каталог
+                пользователей, контроль очередей, диагностика системы, аудит и операции ИИ
                 без длинной стены одинаковых блоков.
               </p>
             </div>
@@ -411,7 +411,7 @@ export default async function AdminPage() {
                 className="rounded-full border border-border px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-white/70"
                 href={`/admin/users/${viewer.user.id}` as Route}
               >
-                Моя admin-карточка
+                Моя карточка
               </Link>
               <Link
                 className="rounded-full border border-border px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-white/70"
@@ -429,24 +429,24 @@ export default async function AdminPage() {
               detail={`Роль: ${formatAdminRole(viewer.platformAdminRole ?? "analyst")}`}
             />
             <StatTile
-              label="Главный супер-админ"
+              label="Главный администратор"
               value={rootAdminRecord?.email ?? PRIMARY_SUPER_ADMIN_EMAIL}
               detail={
                 rootAdminRecord
                   ? `Последний вход: ${formatDateTime(rootAdminRecord.lastSignInAt)}`
-                  : "Root-пользователь уже закреплён миграцией"
+                  : "Главный доступ уже закреплён"
               }
               tone={superAdminPolicyViolations ? "warning" : "success"}
             />
             <StatTile
               label="Команда админов"
               value={String(adminRoster.length)}
-              detail={`super_admin: ${adminRoster.filter((item) => item.role === "super_admin").length}`}
+              detail={`главный доступ: ${adminRoster.filter((item) => item.role === "super_admin").length}`}
             />
             <StatTile
-              label="База знаний"
+              label="База ИИ"
               value={String(knowledgeEmbeddingsCountResult.count ?? 0)}
-              detail={`chunks: ${knowledgeChunksCountResult.count ?? 0} · reindex jobs: ${reindexActionsCountResult.count ?? 0}`}
+              detail={`материалы: ${knowledgeChunksCountResult.count ?? 0} · обновления: ${reindexActionsCountResult.count ?? 0}`}
             />
           </div>
         </div>
@@ -462,17 +462,17 @@ export default async function AdminPage() {
               Быстрые переходы по панели
             </h2>
           </div>
-          <span className="pill">Мобильный control center</span>
+          <span className="pill">Удобно на телефоне</span>
         </div>
 
         <div className="mt-4 grid gap-3 md:flex md:flex-wrap">
           {[
-            ["#health", "Состояние", "Состояние runtime и интеграций."],
-            ["#operations", "Очереди", "Inbox, wave и операционные хвосты."],
+            ["#health", "Состояние", "Главная сводка по сервисам и данным."],
+            ["#operations", "Очереди", "Открытые операции и ручная обработка."],
             ["#users", "Пользователи", "Каталог, карточки и доступы."],
-            ["#ai-ops", "AI", "База знаний, reindex и eval runs."],
+            ["#ai-ops", "ИИ", "База знаний и проверки качества."],
             ...(canUseSuperAdminConsole
-              ? [["#root-policy", "Root", "Root-политика и главный доступ."]]
+              ? [["#root-policy", "Главный доступ", "Закрепление главной роли."]]
               : []),
           ].map(([href, label, description]) => (
             <a
@@ -516,9 +516,9 @@ export default async function AdminPage() {
         <PanelCard caption="Пользователи" title="Управление пользователями">
           <div className="grid gap-5">
             <p className="text-sm leading-7 text-muted">
-              Здесь начинается основной рабочий сценарий root-admin: перейти в
-              каталог, открыть детальную карточку, выдать доступ, проверить billing,
-              export, deletion и историю операций.
+              Здесь начинается основной рабочий сценарий главного администратора:
+              перейти в каталог, открыть детальную карточку, выдать доступ, проверить
+              оплаты, выгрузки, удаление данных и историю операций.
             </p>
 
             <div className="flex flex-wrap gap-3">
@@ -532,7 +532,7 @@ export default async function AdminPage() {
                 className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-white/70"
                 href={`/admin/users/${viewer.user.id}` as Route}
               >
-                Root-карточка
+                Моя карточка
               </Link>
             </div>
 
@@ -561,24 +561,17 @@ export default async function AdminPage() {
         </PanelCard>
 
         <div className="scroll-mt-28" id="ai-ops">
-          <PanelCard caption="AI" title="AI и база знаний">
+          <PanelCard caption="ИИ" title="ИИ и база знаний">
           <div className="grid gap-5">
             <div className="flex flex-wrap gap-2">
-              <span className="pill">
-                Служебные действия: {canQueueSupportActions ? "доступно" : "только просмотр"}
-              </span>
-              <span className="pill">
-                Переиндексация: {canRunKnowledgeReindex ? "доступно" : "только просмотр"}
-              </span>
-              <span className="pill">
-                AI-оценки: {canQueueAiEvalRuns ? "доступно" : "только просмотр"}
-              </span>
+              <span className="pill">Служебные действия: {canQueueSupportActions ? "доступно" : "только просмотр"}</span>
+              <span className="pill">Обновление базы знаний: {canRunKnowledgeReindex ? "доступно" : "только просмотр"}</span>
+              <span className="pill">Проверки ИИ: {canQueueAiEvalRuns ? "доступно" : "только просмотр"}</span>
             </div>
 
             <p className="text-sm leading-7 text-muted">
-              Отсюда запускаются ручные AI-операции и обслуживание базы знаний.
-              Блок вынесен отдельно, чтобы не смешивать пользовательский контур
-              и технические действия в одной колонке.
+              Отсюда запускаются проверки ИИ и обновление базы знаний. Блок вынесен
+              отдельно, чтобы не смешивать пользовательский контур и служебные действия.
             </p>
 
             <AdminAiOperations
@@ -609,7 +602,7 @@ export default async function AdminPage() {
                     <div className="text-right text-muted">
                       <p>{formatDateTime(admin.lastSignInAt)}</p>
                       {isPrimarySuperAdminEmail(admin.email) ? (
-                        <p className="mt-1 font-semibold text-foreground">основной root</p>
+                        <p className="mt-1 font-semibold text-foreground">главный доступ</p>
                       ) : null}
                     </div>
                   </div>
@@ -648,7 +641,7 @@ export default async function AdminPage() {
               ))
             ) : (
               <p className="text-sm text-muted">
-                Audit log по доступам пока пуст.
+                История изменений доступа пока пуста.
               </p>
             )}
           </div>
@@ -656,10 +649,10 @@ export default async function AdminPage() {
       </div>
 
       <div className="grid gap-6 2xl:grid-cols-[1.05fr_0.95fr]">
-        <PanelCard caption="Сигналы" title="Последние product-сигналы">
+        <PanelCard caption="Сигналы" title="Последние сигналы продукта">
           <div className="grid gap-5 lg:grid-cols-2">
             <div className="grid gap-3">
-              <p className="text-sm font-semibold text-foreground">Служебные действия</p>
+              <p className="text-sm font-semibold text-foreground">Действия поддержки</p>
               {supportActions.length ? (
                 supportActions.map((action) => (
                   <article
@@ -679,13 +672,13 @@ export default async function AdminPage() {
                 ))
               ) : (
                 <p className="text-sm text-muted">
-                  Support actions ещё не запускались.
+                  Действия поддержки ещё не запускались.
                 </p>
               )}
             </div>
 
             <div className="grid gap-3">
-              <p className="text-sm font-semibold text-foreground">События AI-безопасности</p>
+              <p className="text-sm font-semibold text-foreground">События безопасности ИИ</p>
               {aiSafetyEvents.length ? (
                 aiSafetyEvents.map((event) => (
                   <article
@@ -705,7 +698,7 @@ export default async function AdminPage() {
                 ))
               ) : (
                 <p className="text-sm text-muted">
-                  AI safety events пока не зафиксированы.
+                  События безопасности ИИ пока не зафиксированы.
                 </p>
               )}
             </div>
@@ -720,21 +713,20 @@ export default async function AdminPage() {
 
       {canUseSuperAdminConsole ? (
         <div className="scroll-mt-28" id="root-policy">
-        <PanelCard caption="Root policy" title="Главный super-admin закреплён">
+        <PanelCard caption="Главный доступ" title="Главный администратор закреплён">
           <div className="grid gap-4 md:grid-cols-[1.1fr_0.9fr]">
             <article className="rounded-3xl border border-emerald-200/70 bg-emerald-50/70 p-5 text-sm">
               <p className="font-semibold text-foreground">
-                Единственный super_admin: {PRIMARY_SUPER_ADMIN_EMAIL}
+                Главный администратор: {PRIMARY_SUPER_ADMIN_EMAIL}
               </p>
               <p className="mt-3 leading-7 text-muted">
-                База и runtime теперь синхронно закрепляют root-доступ только за
-                этим email. Другой пользователь не сможет стать `super_admin`
-                через UI или обычные admin routes.
+                Главный доступ закреплён только за этим email. Другой пользователь
+                не сможет получить эту роль через панель.
               </p>
             </article>
 
             <article className="rounded-3xl border border-border bg-white/60 p-5 text-sm">
-              <p className="font-semibold text-foreground">Срез root-контура</p>
+              <p className="font-semibold text-foreground">Сводка по главному доступу</p>
               <p className="mt-3 text-muted">
                 Пользователь:{" "}
                 <span className="font-semibold text-foreground">
@@ -742,13 +734,13 @@ export default async function AdminPage() {
                 </span>
               </p>
               <p className="mt-2 text-muted">
-                AI proposals:{" "}
+                Предложения ИИ:{" "}
                 <span className="text-foreground">
                   {aiPlanProposalsCountResult.count ?? 0}
                 </span>
               </p>
               <p className="mt-2 text-muted">
-                Safety events:{" "}
+                События безопасности ИИ:{" "}
                 <span className="text-foreground">
                   {aiSafetyEventsCountResult.count ?? 0}
                 </span>

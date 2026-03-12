@@ -1186,3 +1186,16 @@
 - `npx eslint src/lib/nutrition/coaching-signals.ts src/lib/dashboard/metrics.ts src/components/dashboard-nutrition-charts.tsx src/lib/ai/user-context.ts src/lib/ai/domain-policy.ts src/lib/ai/plan-generation.ts`
 - `npm run typecheck`
 - `npm run build`
+
+### 2026-03-12 11:31 - Русификация и упрощение админ-панели
+
+- Полностью вычистил битую кодировку и смешанный английский из основных admin-экранов: обзорной панели, очередей операций, проверок ИИ, базы знаний, ролей, карточки пользователя и служебных действий.
+- Заменил технические подписи на понятные управленческие формулировки: вместо сырых названий окружения, root/admin-жаргона и англоязычных очередей теперь используются простые русские названия разделов и состояний.
+- Упростил admin health dashboard: в интерфейсе больше не светятся сырые ключи окружения и низкоуровневые ярлыки, пользователю показываются готовность сервисов, состояние оплат, очередей и базы знаний в человеческом виде.
+- Вычистил верхний admin shell и каталог пользователей от смешанных ярлыков вроде `admin`, `root`, `UUID`, `billing` там, где это было видно в интерфейсе.
+
+### Проверка: русификация админ-панели
+
+- `npx eslint src/app/admin/page.tsx src/app/admin/users/page.tsx src/components/admin-health-dashboard.tsx src/components/admin-ai-eval-runs.tsx src/components/admin-ai-operations.tsx src/components/admin-operations-inbox.tsx src/components/admin-role-manager.tsx src/components/admin-user-actions.tsx src/components/admin-user-detail.tsx src/components/admin-users-directory.tsx src/components/app-shell-nav.tsx`
+- `npm run typecheck`
+- `npm run build`

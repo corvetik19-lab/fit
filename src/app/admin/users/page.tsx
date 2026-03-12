@@ -30,7 +30,7 @@ export default async function AdminUsersPage() {
             <div className="flex flex-wrap gap-2">
               <span className="pill">Пользователи</span>
               <span className="pill">Роль: {formatRole(viewer.platformAdminRole)}</span>
-              <span className="pill">Root: {PRIMARY_SUPER_ADMIN_EMAIL}</span>
+              <span className="pill">Главный доступ: {PRIMARY_SUPER_ADMIN_EMAIL}</span>
             </div>
 
             <div className="space-y-3">
@@ -38,7 +38,7 @@ export default async function AdminUsersPage() {
                 Просторный каталог для разбора пользователей, доступов и проблемных случаев.
               </h2>
               <p className="max-w-3xl text-sm leading-7 text-muted sm:text-base">
-                Здесь удобно искать пользователя по email или UUID, проверять активность,
+                Здесь удобно искать пользователя по email или ID, проверять активность,
                 подписку, очередь задач, доступы и сразу переходить в полную карточку без
                 ручного просмотра таблиц.
               </p>
@@ -64,11 +64,11 @@ export default async function AdminUsersPage() {
             {[
               [
                 "Поиск и фильтры",
-                "Email, UUID, роли, активность, подписка и служебные очереди.",
+                "Email, ID, роли, активность, подписка и служебные очереди.",
               ],
               [
                 "Массовые действия",
-                "Выгрузка, пересинхронизация, блокировка, триал и доступы для root.",
+                "Выгрузка, пересборка данных, ограничение доступа, пробный период и специальные доступы.",
               ],
               [
                 "Контроль риска",
@@ -76,7 +76,7 @@ export default async function AdminUsersPage() {
               ],
               [
                 "Карточка пользователя",
-                "Тренировки, питание, AI, оплата, аудит и служебная история в одном месте.",
+                "Тренировки, питание, ИИ, оплата, аудит и служебная история в одном месте.",
               ],
             ].map(([label, detail]) => (
               <article

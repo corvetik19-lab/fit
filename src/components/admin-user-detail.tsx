@@ -249,7 +249,7 @@ const statusLabels: Record<string, string> = {
 };
 
 const auditActionLabels: Record<string, string> = {
-  admin_reconcile_stripe_subscription: "Ручная синхронизация подписки Stripe",
+  admin_reconcile_stripe_subscription: "Ручная сверка подписки",
   cancel_deletion_request: "Отмена запроса на удаление",
   deletion_request_status_updated: "Изменение статуса запроса на удаление",
   export_job_status_updated: "Изменение статуса выгрузки данных",
@@ -264,7 +264,7 @@ const supportActionLabels: Record<string, string> = {
   enable_entitlement: "Открыть доступ к функции",
   grant_trial: "Выдать пробный доступ",
   purge_user_data: "Полная очистка данных",
-  reconcile_billing_state: "Синхронизация billing-состояния",
+  reconcile_billing_state: "Сверка оплаты",
   restore_user: "Восстановить пользователя",
   resync_user_context: "Пересинхронизировать контекст",
   suspend_user: "Заморозить пользователя",
@@ -296,7 +296,7 @@ function formatSnakeLabel(value: string | null | undefined) {
 
 function formatAuditAction(value: string) {
   if (value === "user_reconciled_stripe_checkout_return") {
-    return "Синхронизация возврата из Stripe";
+    return "Синхронизация возврата после оплаты";
   }
 
   if (value === "user_requested_billing_access_review") {
@@ -488,7 +488,7 @@ export function AdminUserDetail({
             ["Упражнения", String(detail.stats.workout.activeExercises)],
             ["Программы", String(detail.stats.workout.programs)],
             ["Приемы пищи", String(detail.stats.nutrition.meals)],
-            ["AI-чаты", String(detail.stats.ai.chatSessions)],
+            ["Чаты ИИ", String(detail.stats.ai.chatSessions)],
             ["Подходы", String(detail.stats.workout.loggedSets)],
             [
               "Роль доступа",
@@ -506,14 +506,14 @@ export function AdminUserDetail({
 
         {!detail.superAdminPolicy.targetCanBeSuperAdmin ? (
           <p className="mt-4 rounded-2xl border border-sky-300/60 bg-sky-50 px-4 py-3 text-sm text-sky-800">
-            Этот пользователь не может быть `super_admin`. Корневой super-admin закреплен
-            только за {detail.superAdminPolicy.primaryEmail}.
+            Главный доступ нельзя назначить этому пользователю. Он закреплён только
+            за {detail.superAdminPolicy.primaryEmail}.
           </p>
         ) : null}
 
         {detail.adminState?.is_suspended ? (
           <p className="mt-4 rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-            Аккаунт сейчас в suspended state. Suspended at:{" "}
+            Аккаунт сейчас ограничен. С какого момента:{" "}
             {formatDateTime(detail.adminState.suspended_at)}. Причина:{" "}
             {detail.adminState.state_reason ?? "не указана"}.
           </p>
@@ -544,9 +544,9 @@ export function AdminUserDetail({
         <div className="mt-4 grid gap-3 md:flex md:flex-wrap">
           {[
             ["profile", "Профиль", "Контекст, цели, роль и ручные действия."] as const,
-            ["activity", "Активность", "Тренировки, питание, AI и жизненный цикл."] as const,
+            ["activity", "Активность", "Тренировки, питание, ИИ и жизненный цикл."] as const,
             ["operations", "Операции", "Очереди, выгрузки, удаление и аудит."] as const,
-            ["billing", "Оплата", "Подписка, доступы и история биллинга."] as const,
+            ["billing", "Оплата", "Подписка, доступы и история оплаты."] as const,
           ].map(([key, label, description]) => {
             const isActive = activeSection === key;
 
@@ -781,10 +781,10 @@ export function AdminUserDetail({
         <section className="card p-6">
           <div className="mb-5">
             <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
-              AI
+              ИИ
             </p>
             <h2 className="mt-2 text-2xl font-semibold text-foreground">
-              AI и база знаний
+              ИИ и база знаний
             </h2>
           </div>
 
@@ -796,7 +796,7 @@ export function AdminUserDetail({
               ["События безопасности", String(detail.stats.ai.safetyEvents)],
               ["Снимки контекста", String(detail.stats.ai.contextSnapshots)],
               ["Фрагменты базы", String(detail.stats.ai.knowledgeChunks)],
-              ["Последний AI event", formatDateTime(detail.stats.ai.latestAiAt)],
+              ["Последняя активность ИИ", formatDateTime(detail.stats.ai.latestAiAt)],
             ].map(([label, value]) => (
               <MetricCard key={label} label={label} value={value} />
             ))}
@@ -806,10 +806,10 @@ export function AdminUserDetail({
         <section className="card p-6">
           <div className="mb-5">
             <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
-              Lifecycle
+              Жизненный цикл
             </p>
             <h2 className="mt-2 text-2xl font-semibold text-foreground">
-              Данные, биллинг и жизненный цикл
+              Данные, оплата и жизненный цикл
             </h2>
           </div>
 
@@ -1171,16 +1171,16 @@ export function AdminUserDetail({
           />
 
           <KeyValueCard
-            title="Данные Stripe"
+            title="Платёжный профиль"
             rows={[
               {
-                label: "ID клиента",
+                label: "Клиент",
                 value:
                   detail.stats.lifecycle.latestSubscription?.provider_customer_id ??
                   "Нет данных",
               },
               {
-                label: "ID подписки",
+                label: "Подписка",
                 value:
                   detail.stats.lifecycle.latestSubscription?.provider_subscription_id ??
                   "Нет данных",
@@ -1192,7 +1192,7 @@ export function AdminUserDetail({
                 ),
               },
               {
-                label: "Тип провайдера",
+                label: "Способ оплаты",
                 value:
                   detail.stats.lifecycle.latestSubscription?.provider === "stripe"
                     ? "Stripe"

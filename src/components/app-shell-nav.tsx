@@ -199,7 +199,7 @@ export function AppShellNav({
           ? [
               {
                 href: `/admin/users/${viewer.userId}` as Route,
-                label: "Моя admin-карточка",
+                label: "Моя карточка",
                 description: "Ваши доступы, аудит и операции.",
                 icon: Shield,
               },

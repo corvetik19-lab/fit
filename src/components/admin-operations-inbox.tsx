@@ -97,7 +97,7 @@ const dateFormatter = new Intl.DateTimeFormat("ru-RU", {
 
 function formatDateTime(value: string | null | undefined) {
   if (!value) {
-    return "нет данных";
+    return "Нет данных";
   }
 
   return dateFormatter.format(new Date(value));
@@ -142,11 +142,11 @@ function getStatusTone(value: string) {
 function formatKind(kind: AdminOperationItem["kind"]) {
   switch (kind) {
     case "support_action":
-      return "Support";
+      return "Поддержка";
     case "export_job":
-      return "Export";
+      return "Выгрузка";
     case "deletion_request":
-      return "Deletion";
+      return "Удаление";
     default:
       return kind;
   }
@@ -155,17 +155,17 @@ function formatKind(kind: AdminOperationItem["kind"]) {
 function formatSupportAction(action: string | null | undefined) {
   switch (action) {
     case "billing_access_review":
-      return "billing access review";
+      return "проверка доступа к оплате";
     case "purge_user_data":
-      return "purge user data";
+      return "очистка данных";
     case "resync_user_context":
-      return "resync user context";
+      return "обновление контекста пользователя";
     case "restore_user":
-      return "restore user";
+      return "восстановление доступа";
     case "suspend_user":
-      return "suspend user";
+      return "приостановка доступа";
     default:
-      return action ?? "support action";
+      return action ?? "операция поддержки";
   }
 }
 
@@ -175,9 +175,7 @@ function formatTitle(item: AdminOperationItem) {
   }
 
   if (item.kind === "export_job") {
-    return item.meta.format
-      ? `user data export (${item.meta.format})`
-      : item.title;
+    return item.meta.format ? `выгрузка данных (${item.meta.format})` : item.title;
   }
 
   return item.title;
@@ -186,13 +184,13 @@ function formatTitle(item: AdminOperationItem) {
 function formatActionLabel(action: AdminOperationAction) {
   switch (action) {
     case "mark_processing":
-      return "В работу";
+      return "Взять в работу";
     case "mark_completed":
       return "Завершить";
     case "mark_failed":
-      return "Ошибка";
+      return "Отметить ошибку";
     case "mark_holding":
-      return "Продлить hold";
+      return "Продлить удержание";
     case "mark_canceled":
       return "Отменить";
     default:
@@ -211,7 +209,7 @@ function getUserLabel(
     id: string;
   } | null,
 ) {
-  return user?.full_name ?? user?.email ?? user?.id ?? "не указан";
+  return user?.full_name ?? user?.email ?? user?.id ?? "Не указано";
 }
 
 async function readJsonSafely(response: Response) {
@@ -249,7 +247,7 @@ export function AdminOperationsInbox({
       const nextPayload = await readJsonSafely(response);
 
       if (!response.ok || !nextPayload?.data) {
-        setError(nextPayload?.message ?? "Не удалось загрузить operations inbox.");
+        setError(nextPayload?.message ?? "Не удалось загрузить очередь операций.");
         return;
       }
 
@@ -290,13 +288,13 @@ export function AdminOperationsInbox({
 
       if (!response.ok || !result?.data) {
         setError(
-          result?.message ?? "Не удалось прогнать queue processor по admin-очередям.",
+          result?.message ?? "Не удалось обработать очередь операций.",
         );
         return;
       }
 
       setNotice(
-        `Wave завершен: export completed ${result.data.exports.completed}, export failed ${result.data.exports.failed}, deletion normalized ${result.data.deletions.normalizedToHold}, released to purge ${result.data.deletions.releasedToPurge}, support completed ${result.data.support.completed}, support failed ${result.data.support.failed}.`,
+        `Обработка завершена: выгрузок завершено ${result.data.exports.completed}, ошибок ${result.data.exports.failed}; удалений подготовлено ${result.data.deletions.releasedToPurge}; операций поддержки завершено ${result.data.support.completed}, ошибок ${result.data.support.failed}.`,
       );
       await refreshInbox();
     } finally {
@@ -335,7 +333,7 @@ export function AdminOperationsInbox({
         return;
       }
 
-      setNotice(`Операция ${formatActionLabel(action).toLowerCase()} применена.`);
+      setNotice(`Действие «${formatActionLabel(action)}» применено.`);
       setNotes((current) => ({
         ...current,
         [itemKey]: "",
@@ -348,13 +346,12 @@ export function AdminOperationsInbox({
 
   return (
     <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
-      <PanelCard caption="Operations" title="Inbox очередей и ручные статусы">
+      <PanelCard caption="Операции" title="Очередь и ручная обработка">
         <div className="grid gap-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm leading-7 text-muted">
-              Единый inbox по support actions, export jobs и deletion requests.
-              Support-admin и super-admin могут вручную разбирать хвосты и запускать
-              queue wave без похода в SQL.
+              Здесь видны запросы на поддержку, выгрузку и удаление данных. Нужные
+              действия можно выполнить прямо из панели.
             </p>
             <div className="flex flex-wrap gap-2">
               {canManageOperations ? (
@@ -364,7 +361,7 @@ export function AdminOperationsInbox({
                   onClick={() => void processWave()}
                   type="button"
                 >
-                  {isProcessingWave ? "Прогоняю wave..." : "Прогнать wave"}
+                  {isProcessingWave ? "Обрабатываю..." : "Обработать очередь"}
                 </button>
               ) : null}
               <button
@@ -380,8 +377,8 @@ export function AdminOperationsInbox({
 
           {!canManageOperations ? (
             <p className="rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-              Роль {getAdminRoleLabel(currentAdminRole)} видит inbox только в режиме
-              просмотра.
+              Роль {getAdminRoleLabel(currentAdminRole)} видит этот раздел только в
+              режиме просмотра.
             </p>
           ) : null}
 
@@ -399,10 +396,10 @@ export function AdminOperationsInbox({
 
           <div className="grid gap-4 md:grid-cols-4">
             {[
-              ["Open queue", String(payload?.summary.pending.total ?? 0)],
-              ["Support", String(payload?.summary.pending.supportActions ?? 0)],
-              ["Exports", String(payload?.summary.pending.exportJobs ?? 0)],
-              ["Deletion", String(payload?.summary.pending.deletionRequests ?? 0)],
+              ["Всего ждёт", String(payload?.summary.pending.total ?? 0)],
+              ["Поддержка", String(payload?.summary.pending.supportActions ?? 0)],
+              ["Выгрузки", String(payload?.summary.pending.exportJobs ?? 0)],
+              ["Удаление", String(payload?.summary.pending.deletionRequests ?? 0)],
             ].map(([label, value]) => (
               <article className="kpi p-4" key={label}>
                 <p className="text-sm text-muted">{label}</p>
@@ -442,7 +439,7 @@ export function AdminOperationsInbox({
                           className="text-sm font-semibold text-accent transition hover:opacity-80"
                           href={`/admin/users/${item.target_user.id}`}
                         >
-                          Открыть пользователя
+                          Открыть профиль
                         </Link>
                       ) : null}
                     </div>
@@ -474,7 +471,7 @@ export function AdminOperationsInbox({
                       </p>
                       {item.meta.hold_until ? (
                         <p>
-                          Hold until:{" "}
+                          Удержание до:{" "}
                           <span className="text-foreground">
                             {formatDateTime(item.meta.hold_until)}
                           </span>
@@ -482,7 +479,7 @@ export function AdminOperationsInbox({
                       ) : null}
                       {item.detail ? (
                         <p>
-                          Деталь:{" "}
+                          Подробности:{" "}
                           <span className="text-foreground">{item.detail}</span>
                         </p>
                       ) : null}
@@ -491,7 +488,7 @@ export function AdminOperationsInbox({
                     {item.available_actions.length ? (
                       <div className="mt-4 grid gap-3">
                         <label className="grid gap-2 text-sm text-muted">
-                          Комментарий оператора
+                          Комментарий
                           <input
                             className={inputClassName}
                             disabled={!canManageOperations || isPending}
@@ -515,9 +512,7 @@ export function AdminOperationsInbox({
                               onClick={() => void updateItem(item, action)}
                               type="button"
                             >
-                              {isPending
-                                ? "Сохраняю..."
-                                : formatActionLabel(action)}
+                              {isPending ? "Сохраняю..." : formatActionLabel(action)}
                             </button>
                           ))}
                         </div>
@@ -535,13 +530,13 @@ export function AdminOperationsInbox({
         </div>
       </PanelCard>
 
-      <PanelCard caption="Recent" title="Последние разобранные операции">
+      <PanelCard caption="История" title="Последние завершённые операции">
         <div className="grid gap-4">
           <div className="grid gap-4 sm:grid-cols-3">
             {[
-              ["Completed", String(payload?.summary.recent.completed ?? 0)],
-              ["Failed", String(payload?.summary.recent.failed ?? 0)],
-              ["Canceled", String(payload?.summary.recent.canceled ?? 0)],
+              ["Завершено", String(payload?.summary.recent.completed ?? 0)],
+              ["С ошибкой", String(payload?.summary.recent.failed ?? 0)],
+              ["Отменено", String(payload?.summary.recent.canceled ?? 0)],
             ].map(([label, value]) => (
               <article className="kpi p-4" key={label}>
                 <p className="text-sm text-muted">{label}</p>
@@ -589,7 +584,7 @@ export function AdminOperationsInbox({
               ))
             ) : (
               <p className="text-sm leading-7 text-muted">
-                История ручных статусов пока не накопилась.
+                История завершённых действий пока не накопилась.
               </p>
             )}
           </div>

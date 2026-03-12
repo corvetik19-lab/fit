@@ -93,7 +93,7 @@ export function AdminRoleManager({
       const payload = await readJsonSafely(response);
 
       if (!response.ok) {
-        setError(payload?.message ?? "Не удалось обновить admin role.");
+        setError(payload?.message ?? "Не удалось обновить роль доступа.");
         return;
       }
 
@@ -128,7 +128,7 @@ export function AdminRoleManager({
       const payload = await readJsonSafely(response);
 
       if (!response.ok) {
-        setError(payload?.message ?? "Не удалось отозвать admin role.");
+        setError(payload?.message ?? "Не удалось отозвать роль доступа.");
         return;
       }
 
@@ -150,9 +150,7 @@ export function AdminRoleManager({
           Управление правами администратора
         </h2>
         <p className="mt-2 text-sm leading-7 text-muted">
-          Пользователь:
-          {" "}
-          <span className="text-foreground">{userEmail ?? userId}</span>
+          Пользователь: <span className="text-foreground">{userEmail ?? userId}</span>
         </p>
       </div>
 
@@ -171,10 +169,10 @@ export function AdminRoleManager({
           <p className="mt-2 text-lg font-semibold text-foreground">
             {currentAdminRole
               ? roleLabels[currentAdminRole] ?? currentAdminRole
-              : "Нет admin-доступа"}
+              : "Доступа нет"}
           </p>
           <p className="mt-2 text-muted">
-            Изменения ролей автоматически пишутся в audit log.
+            Все изменения ролей сохраняются в истории действий.
           </p>
         </article>
       </div>
@@ -202,7 +200,7 @@ export function AdminRoleManager({
 
         {!targetCanBeSuperAdmin ? (
           <p className="rounded-2xl border border-sky-300/60 bg-sky-50 px-4 py-3 text-sm text-sky-800">
-            Роль `super_admin` закреплена только за {PRIMARY_SUPER_ADMIN_EMAIL}.
+            Главная роль закреплена только за {PRIMARY_SUPER_ADMIN_EMAIL}.
           </p>
         ) : null}
 
@@ -212,7 +210,7 @@ export function AdminRoleManager({
             className={`${inputClassName} min-h-24 resize-y`}
             disabled={!canManageRoles || isPending}
             onChange={(event) => setReason(event.target.value)}
-            placeholder="Например: выдать доступ саппорту или расширить права аналитика"
+            placeholder="Например: дать доступ поддержке или расширить права аналитика"
             value={reason}
           />
         </label>
@@ -239,14 +237,14 @@ export function AdminRoleManager({
 
         {!canManageRoles ? (
           <p className="rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            Управлять ролями может только корневой super-admin {PRIMARY_SUPER_ADMIN_EMAIL}.
+            Управлять ролями может только главный администратор {PRIMARY_SUPER_ADMIN_EMAIL}.
           </p>
         ) : null}
 
         {isSelf ? (
           <p className="rounded-2xl border border-sky-300/60 bg-sky-50 px-4 py-3 text-sm text-sky-800">
-            Собственную super-admin роль приложение не даёт отозвать или
-            понизить, чтобы не потерять доступ к панели.
+            Собственную главную роль нельзя отозвать или понизить, чтобы не потерять
+            доступ к панели.
           </p>
         ) : null}
       </div>
