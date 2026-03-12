@@ -2,6 +2,20 @@
 
 ## 2026-03-12
 
+### AI prompt library and cleaner chat composer
+
+- Moved the built-in AI starter prompts out of the inline chat body and into a dedicated modal prompt library in `src/components/ai-prompt-library.tsx`, with search, local custom prompt storage, create/delete actions, and reusable behavior for both the full-page AI workspace and the floating widget.
+- Updated `src/components/ai-chat-panel.tsx` so the full-page chat now opens templates from a single `Шаблоны` action in the top bar, keeps the empty state clean, and inserts the chosen prompt directly into the composer instead of auto-sending it.
+- Updated `src/components/ai-assistant-widget.tsx` to match the same template-library flow: no more inline starter prompt wall inside the widget, just a dedicated icon action that opens the same modal without cluttering the chat surface.
+
+### Verification: AI prompt library
+
+- `npx eslint src/components/ai-prompt-library.tsx src/components/ai-chat-panel.tsx src/components/ai-assistant-widget.tsx`
+- `npm run build`
+- `npm run typecheck`
+- `npm run typecheck` (rerun after `build`, due the existing `.next/types` race in this repo)
+- Playwright mobile pass on local `http://127.0.0.1:3030/ai`: verified that inline starter prompts no longer render in the chat body and that the prompt library opens as a separate modal with search and built-in templates
+
 ### Admin copy cleanup and role visibility
 
 - Simplified admin copy in `src/app/admin/page.tsx`, `src/app/admin/users/page.tsx`, `src/components/admin-user-detail.tsx`, `src/components/admin-users-directory.tsx`, `src/components/admin-role-manager.tsx`, and `src/components/admin-user-actions.tsx`: removed overly internal wording, cleaned visible Russian text, and made the screens read like product UI instead of internal ops terminology.

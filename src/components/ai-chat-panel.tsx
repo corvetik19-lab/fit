@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 
 import { AssistantMarkdown } from "@/components/assistant-markdown";
+import { AiPromptLibrary } from "@/components/ai-prompt-library";
 import type { FeatureAccessSnapshot } from "@/lib/billing-access";
 import { toUiMessages } from "@/lib/ai/chat";
 
@@ -159,6 +160,8 @@ const quickPrompts = [
   "Составь план питания на день с упором на белок и восстановление.",
   "Собери тренировку без перегруза с учётом моей истории.",
 ];
+
+void quickPrompts;
 
 const timeFormatter = new Intl.DateTimeFormat("ru-RU", {
   day: "2-digit",
@@ -527,6 +530,7 @@ export function AiChatPanel({
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const scrollViewportRef = useRef<HTMLDivElement | null>(null);
+  const composerRef = useRef<HTMLTextAreaElement | null>(null);
 
   const [sessionId, setSessionId] = useState(initialSessionId);
   const [sessionTitle, setSessionTitle] = useState(initialSessionTitle);
@@ -537,6 +541,7 @@ export function AiChatPanel({
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
   const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
+  const [isPromptLibraryOpen, setIsPromptLibraryOpen] = useState(false);
   const [messageTimes, setMessageTimes] = useState(
     () => new Map(initialMessages.map((message) => [message.id, message.created_at])),
   );
@@ -617,6 +622,12 @@ export function AiChatPanel({
     setSessionId(nextSessionId);
     setSessionTitle((current) => current ?? titleSeed.trim().slice(0, 72));
     updateSessionUrl(nextSessionId);
+  }
+
+  function insertPromptTemplate(prompt: string) {
+    setDraft((current) => (current.trim() ? `${current.trimEnd()}\n\n${prompt}` : prompt));
+    setIsPromptLibraryOpen(false);
+    window.requestAnimationFrame(() => composerRef.current?.focus());
   }
 
   function submitText(nextText?: string) {
@@ -817,6 +828,15 @@ export function AiChatPanel({
           >
             <Globe size={18} strokeWidth={2.2} />
           </button>
+          <button
+            aria-label="Открыть шаблоны запросов"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-border bg-white/80 px-4 text-sm font-medium text-foreground transition hover:bg-white"
+            onClick={() => setIsPromptLibraryOpen(true)}
+            type="button"
+          >
+            <WandSparkles size={16} strokeWidth={2.1} />
+            <span className="hidden sm:inline">Шаблоны</span>
+          </button>
 
           <button
             aria-label="Выбрать фото еды"
@@ -1008,20 +1028,15 @@ export function AiChatPanel({
                 еды для разбора.
               </p>
 
-              <div className="grid gap-2 sm:grid-cols-3">
-                {quickPrompts.map((prompt) => (
-                  <button
-                    className="inline-flex items-center justify-between gap-3 rounded-2xl border border-border bg-white/80 px-4 py-3 text-left text-sm text-foreground transition hover:bg-white disabled:opacity-60"
-                    disabled={isComposerBusy || !access.allowed}
-                    key={prompt}
-                    onClick={() => submitText(prompt)}
-                    type="button"
-                  >
-                    <span className="line-clamp-2">{prompt}</span>
-                    <WandSparkles size={16} strokeWidth={2.1} />
-                  </button>
-                ))}
-              </div>
+              <button
+                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-border bg-white/85 px-4 py-3 text-sm font-medium text-foreground transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={isComposerBusy || !access.allowed}
+                onClick={() => setIsPromptLibraryOpen(true)}
+                type="button"
+              >
+                <WandSparkles size={16} strokeWidth={2.1} />
+                Открыть шаблоны запросов
+              </button>
             </div>
           )}
         </div>
@@ -1081,6 +1096,7 @@ export function AiChatPanel({
               ? "Например: это мой ужин после тренировки, оцени состав и подскажи, как улучшить."
               : "Напиши вопрос, задачу или попроси собрать программу."
           }
+          ref={composerRef}
           value={draft}
         />
 
@@ -1131,6 +1147,12 @@ export function AiChatPanel({
           </div>
         </div>
       </form>
+
+      <AiPromptLibrary
+        isOpen={isPromptLibraryOpen}
+        onClose={() => setIsPromptLibraryOpen(false)}
+        onSelect={insertPromptTemplate}
+      />
     </section>
   );
 }

@@ -4,7 +4,7 @@ import { DefaultChatTransport } from "ai";
 import { useChat } from "@ai-sdk/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Globe,
   LoaderCircle,
@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 
 import { AssistantMarkdown } from "@/components/assistant-markdown";
+import { AiPromptLibrary } from "@/components/ai-prompt-library";
 import { toUiMessages } from "@/lib/ai/chat";
 
 type AiAssistantWidgetProps = {
@@ -94,6 +95,8 @@ const quickPrompts = [
   "Составь тренировку без перегруза.",
 ];
 
+void quickPrompts;
+
 const timeFormatter = new Intl.DateTimeFormat("ru-RU", {
   day: "2-digit",
   month: "2-digit",
@@ -137,12 +140,14 @@ export function AiAssistantWidget({
   viewer,
 }: AiAssistantWidgetProps) {
   const router = useRouter();
+  const composerRef = useRef<HTMLTextAreaElement | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [draft, setDraft] = useState("");
   const [allowWebSearch, setAllowWebSearch] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [actionBusyKey, setActionBusyKey] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(initialSessionId);
+  const [isPromptLibraryOpen, setIsPromptLibraryOpen] = useState(false);
   const nowLabel = useMemo(() => timeFormatter.format(new Date()), []);
   const initialUiMessages = useMemo(() => toUiMessages(initialMessages), [initialMessages]);
 
@@ -196,6 +201,12 @@ export function AiAssistantWidget({
     );
 
     setDraft("");
+  }
+
+  function insertPromptTemplate(prompt: string) {
+    setDraft((current) => (current.trim() ? `${current.trimEnd()}\n\n${prompt}` : prompt));
+    setIsPromptLibraryOpen(false);
+    window.requestAnimationFrame(() => composerRef.current?.focus());
   }
 
   async function runProposalAction(
@@ -507,6 +518,15 @@ export function AiAssistantWidget({
                 </button>
 
                 <button
+                  aria-label="Открыть шаблоны запросов"
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border bg-white/80 text-foreground transition hover:bg-white"
+                  onClick={() => setIsPromptLibraryOpen(true)}
+                  type="button"
+                >
+                  <WandSparkles size={16} strokeWidth={2.1} />
+                </button>
+
+                <button
                   className="rounded-full border border-border bg-white/80 px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white"
                   onClick={resetChat}
                   type="button"
@@ -521,21 +541,6 @@ export function AiAssistantWidget({
               >
                 Полный экран
               </Link>
-            </div>
-
-            <div className="grid gap-2 border-b border-border px-5 py-3">
-              {quickPrompts.map((prompt) => (
-                <button
-                  className="inline-flex items-center justify-between gap-3 rounded-2xl border border-border bg-white/76 px-4 py-3 text-left text-sm text-foreground transition hover:bg-white disabled:opacity-60"
-                  disabled={isBusy}
-                  key={prompt}
-                  onClick={() => submitText(prompt)}
-                  type="button"
-                >
-                  <span className="line-clamp-2">{prompt}</span>
-                  <WandSparkles size={16} strokeWidth={2.1} />
-                </button>
-              ))}
             </div>
 
             <div className="flex-1 overflow-y-auto px-5 py-4">
@@ -597,6 +602,7 @@ export function AiAssistantWidget({
                     }
                   }}
                   placeholder="Напиши вопрос или задачу для AI."
+                  ref={composerRef}
                   value={draft}
                 />
 
@@ -637,6 +643,12 @@ export function AiAssistantWidget({
           </section>
         </div>
       ) : null}
+
+      <AiPromptLibrary
+        isOpen={isPromptLibraryOpen}
+        onClose={() => setIsPromptLibraryOpen(false)}
+        onSelect={insertPromptTemplate}
+      />
     </>
   );
 }
