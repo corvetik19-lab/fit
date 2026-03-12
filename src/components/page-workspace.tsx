@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
+import { Check, ChevronDown, ChevronUp } from "lucide-react";
 
 type PageWorkspaceMetric = {
   label: string;
@@ -39,16 +40,18 @@ function SectionButton({
   return (
     <button
       aria-pressed={active}
-      className={`min-w-[13rem] rounded-3xl border px-4 py-3 text-left transition ${
+      className={`w-full rounded-3xl border px-4 py-3 text-left transition md:min-w-[13rem] md:w-auto ${
         active
           ? "border-accent/30 bg-accent-soft text-foreground shadow-[0_18px_45px_-35px_rgba(20,97,75,0.45)]"
           : "border-border bg-white/72 text-foreground hover:bg-white"
-      } w-full md:min-w-[13rem] md:w-auto`}
+      }`}
       onClick={onClick}
       type="button"
     >
       <span className="block text-sm font-semibold">{label}</span>
-      <span className="mt-1 block text-xs leading-5 text-muted">{description}</span>
+      <span className="mt-1 block text-xs leading-5 text-muted">
+        {description}
+      </span>
     </button>
   );
 }
@@ -64,12 +67,20 @@ export function PageWorkspace({
   const [activeSectionKey, setActiveSectionKey] = useState(
     initialSectionKey ?? sections[0]?.key ?? "",
   );
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const activeSection = useMemo(
     () =>
-      sections.find((section) => section.key === activeSectionKey) ?? sections[0] ?? null,
+      sections.find((section) => section.key === activeSectionKey) ??
+      sections[0] ??
+      null,
     [activeSectionKey, sections],
   );
+
+  function handleSectionSelect(nextKey: string) {
+    setActiveSectionKey(nextKey);
+    setIsMobileMenuOpen(false);
+  }
 
   return (
     <div className="grid gap-6">
@@ -119,23 +130,89 @@ export function PageWorkspace({
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
-              Логические разделы
+              Разделы
             </p>
             <h2 className="mt-2 text-xl font-semibold text-foreground">
-              Открывай только нужный блок, а не всю страницу целиком
+              Открывай только нужный блок, а не всю страницу сразу
             </h2>
           </div>
           {activeSection ? <span className="pill">{activeSection.label}</span> : null}
         </div>
 
-        <div className="mt-4 grid gap-3 md:flex md:flex-wrap md:gap-3">
+        <div className="mt-4 md:hidden">
+          <button
+            aria-expanded={isMobileMenuOpen}
+            className="flex w-full items-center justify-between gap-3 rounded-3xl border border-border bg-white/82 px-4 py-3 text-left shadow-[0_18px_45px_-35px_rgba(20,97,75,0.25)] transition hover:bg-white"
+            onClick={() => setIsMobileMenuOpen((current) => !current)}
+            type="button"
+          >
+            <span className="min-w-0 flex-1">
+              <span className="block text-xs uppercase tracking-[0.18em] text-muted">
+                Текущий раздел
+              </span>
+              <span className="mt-1 block text-sm font-semibold text-foreground">
+                {activeSection?.label ?? "Выбери раздел"}
+              </span>
+              {activeSection ? (
+                <span className="mt-1 block text-xs leading-5 text-muted">
+                  {activeSection.description}
+                </span>
+              ) : null}
+            </span>
+            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-white/85 text-foreground">
+              {isMobileMenuOpen ? (
+                <ChevronUp size={18} strokeWidth={2.2} />
+              ) : (
+                <ChevronDown size={18} strokeWidth={2.2} />
+              )}
+            </span>
+          </button>
+
+          {isMobileMenuOpen ? (
+            <div className="mt-3 grid gap-2 rounded-3xl border border-border bg-[color-mix(in_srgb,var(--surface)_94%,white)] p-3">
+              {sections.map((section) => {
+                const isActive = activeSection?.key === section.key;
+
+                return (
+                  <button
+                    aria-pressed={isActive}
+                    className={`flex items-start justify-between gap-3 rounded-2xl border px-3 py-3 text-left transition ${
+                      isActive
+                        ? "border-accent/30 bg-accent-soft text-foreground"
+                        : "border-transparent bg-white/72 text-foreground hover:bg-white"
+                    }`}
+                    key={section.key}
+                    onClick={() => handleSectionSelect(section.key)}
+                    type="button"
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-semibold">
+                        {section.label}
+                      </span>
+                      <span className="mt-1 block text-xs leading-5 text-muted">
+                        {section.description}
+                      </span>
+                    </span>
+                    {isActive ? (
+                      <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent text-white">
+                        <Check size={16} strokeWidth={2.3} />
+                      </span>
+                    ) : null}
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+        </div>
+
+        <div className="mt-4 hidden gap-3 md:flex md:flex-wrap">
           {sections.map((section) => (
             <SectionButton
               active={activeSection?.key === section.key}
               description={section.description}
               key={section.key}
               label={section.label}
-              onClick={() => setActiveSectionKey(section.key)}
+              onClick={() => handleSectionSelect(section.key)}
             />
           ))}
         </div>

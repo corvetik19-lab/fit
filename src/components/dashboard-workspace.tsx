@@ -7,6 +7,9 @@ import {
   Activity,
   ArrowRight,
   BarChart3,
+  Check,
+  ChevronDown,
+  ChevronUp,
   Dumbbell,
   Sparkles,
 } from "lucide-react";
@@ -53,13 +56,13 @@ const sectionOptions = [
   {
     key: "workouts",
     label: "Тренировки",
-    description: "Силовая аналитика и drilldown по сессиям.",
+    description: "Силовая аналитика и детали по сессиям.",
     icon: Dumbbell,
   },
   {
     key: "nutrition",
     label: "Питание",
-    description: "Рацион, восстановление и meal-patterns.",
+    description: "Рацион, восстановление и пищевые привычки.",
     icon: Activity,
   },
   {
@@ -108,11 +111,11 @@ function SectionButton({
   return (
     <button
       aria-pressed={active}
-      className={`rounded-3xl border px-4 py-3 text-left transition ${
+      className={`w-full rounded-3xl border px-4 py-3 text-left transition md:min-w-[13rem] md:w-auto ${
         active
           ? "border-accent/30 bg-accent-soft text-foreground shadow-[0_18px_45px_-35px_rgba(20,97,75,0.45)]"
           : "border-border bg-white/72 text-foreground hover:bg-white"
-      } w-full md:min-w-[13rem] md:w-auto`}
+      }`}
       onClick={onClick}
       type="button"
     >
@@ -135,6 +138,26 @@ function SectionButton({
   );
 }
 
+function SummaryDetailCard({
+  title,
+  summary,
+  action,
+}: {
+  title: string;
+  summary: string;
+  action: string;
+}) {
+  return (
+    <div className="rounded-3xl border border-border bg-white/76 p-4">
+      <p className="text-sm font-semibold text-foreground">{title}</p>
+      <p className="mt-2 text-sm leading-6 text-muted">{summary}</p>
+      <p className="mt-3 text-sm font-medium text-foreground">
+        Следующий шаг: {action}
+      </p>
+    </div>
+  );
+}
+
 export function DashboardWorkspace({
   aiContext,
   dashboardSourceLabel,
@@ -148,6 +171,7 @@ export function DashboardWorkspace({
 }: DashboardWorkspaceProps) {
   const [activeSection, setActiveSection] =
     useState<DashboardSectionKey>("summary");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const metricCards = useMemo(
     () => [
@@ -181,6 +205,14 @@ export function DashboardWorkspace({
     aiContext.nutritionInsights.strategy[0] ??
     aiContext.nutritionInsights.coachingSignals[0] ??
     null;
+  const activeSectionMeta =
+    sectionOptions.find((section) => section.key === activeSection) ??
+    sectionOptions[0];
+
+  function handleSectionSelect(nextSection: DashboardSectionKey) {
+    setActiveSection(nextSection);
+    setIsMobileMenuOpen(false);
+  }
 
   return (
     <>
@@ -205,8 +237,8 @@ export function DashboardWorkspace({
               </h2>
               <p className="max-w-3xl text-sm leading-7 text-muted sm:text-base">
                 Здесь остаются только нужные секции: краткая сводка, силовая
-                аналитика, питание и AI-коуч. Переключайтесь между ними как в
-                полноценном приложении, а не листайте бесконечную ленту.
+                аналитика, питание и AI-коуч. На телефоне они открываются как
+                удобное меню разделов, а не как длинная лента блоков.
               </p>
             </div>
 
@@ -234,7 +266,12 @@ export function DashboardWorkspace({
                   {aiContext.nutritionInsights.daysTrackedLast7} дней логов за
                   неделю, средние калории{" "}
                   {formatNumber(aiContext.nutritionInsights.avgKcalLast7)} и
-                  белок {formatNumber(aiContext.nutritionInsights.avgProteinLast7, "г")}.
+                  белок{" "}
+                  {formatNumber(
+                    aiContext.nutritionInsights.avgProteinLast7,
+                    "г",
+                  )}
+                  .
                 </p>
                 <p className="mt-3 text-sm font-medium text-foreground">
                   AI уже использует эти данные в новых рекомендациях.
@@ -269,7 +306,7 @@ export function DashboardWorkspace({
               Разделы дашборда
             </p>
             <h2 className="mt-2 text-xl font-semibold text-foreground">
-              Открывайте только тот слой аналитики, который нужен сейчас
+              Открывай только тот слой аналитики, который нужен сейчас
             </h2>
           </div>
 
@@ -282,7 +319,83 @@ export function DashboardWorkspace({
           </Link>
         </div>
 
-        <div className="mt-4 grid gap-3 md:flex md:flex-wrap md:gap-3">
+        <div className="mt-4 md:hidden">
+          <button
+            aria-expanded={isMobileMenuOpen}
+            className="flex w-full items-center justify-between gap-3 rounded-3xl border border-border bg-white/82 px-4 py-3 text-left shadow-[0_18px_45px_-35px_rgba(20,97,75,0.25)] transition hover:bg-white"
+            onClick={() => setIsMobileMenuOpen((current) => !current)}
+            type="button"
+          >
+            <span className="min-w-0 flex-1">
+              <span className="block text-xs uppercase tracking-[0.18em] text-muted">
+                Раздел дашборда
+              </span>
+              <span className="mt-1 block text-sm font-semibold text-foreground">
+                {activeSectionMeta.label}
+              </span>
+              <span className="mt-1 block text-xs leading-5 text-muted">
+                {activeSectionMeta.description}
+              </span>
+            </span>
+            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-white/85 text-foreground">
+              {isMobileMenuOpen ? (
+                <ChevronUp size={18} strokeWidth={2.2} />
+              ) : (
+                <ChevronDown size={18} strokeWidth={2.2} />
+              )}
+            </span>
+          </button>
+
+          {isMobileMenuOpen ? (
+            <div className="mt-3 grid gap-2 rounded-3xl border border-border bg-[color-mix(in_srgb,var(--surface)_94%,white)] p-3">
+              {sectionOptions.map((section) => {
+                const isActive = activeSection === section.key;
+                const Icon = section.icon;
+
+                return (
+                  <button
+                    aria-pressed={isActive}
+                    className={`flex items-start justify-between gap-3 rounded-2xl border px-3 py-3 text-left transition ${
+                      isActive
+                        ? "border-accent/30 bg-accent-soft text-foreground"
+                        : "border-transparent bg-white/72 text-foreground hover:bg-white"
+                    }`}
+                    key={section.key}
+                    onClick={() => handleSectionSelect(section.key)}
+                    type="button"
+                  >
+                    <span className="flex min-w-0 flex-1 items-start gap-3">
+                      <span
+                        className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl ${
+                          isActive
+                            ? "bg-accent text-white"
+                            : "bg-accent/8 text-accent"
+                        }`}
+                      >
+                        <Icon size={17} strokeWidth={2.2} />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-semibold">
+                          {section.label}
+                        </span>
+                        <span className="mt-1 block text-xs leading-5 text-muted">
+                          {section.description}
+                        </span>
+                      </span>
+                    </span>
+                    {isActive ? (
+                      <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent text-white">
+                        <Check size={16} strokeWidth={2.3} />
+                      </span>
+                    ) : null}
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+        </div>
+
+        <div className="mt-4 hidden gap-3 md:flex md:flex-wrap">
           {sectionOptions.map((section) => (
             <SectionButton
               active={activeSection === section.key}
@@ -290,7 +403,7 @@ export function DashboardWorkspace({
               icon={section.icon}
               key={section.key}
               label={section.label}
-              onClick={() => setActiveSection(section.key)}
+              onClick={() => handleSectionSelect(section.key)}
             />
           ))}
         </div>
@@ -317,35 +430,28 @@ export function DashboardWorkspace({
               </div>
 
               <div className="mt-4 grid gap-3 md:grid-cols-2">
-                <div className="rounded-3xl border border-border bg-white/76 p-4">
-                  <p className="text-sm font-semibold text-foreground">
-                    По тренировкам
-                  </p>
-                  <p className="mt-2 text-sm leading-6 text-muted">
-                    {workoutPrioritySignal?.summary ??
-                      "После первых завершённых сессий здесь появится готовый сигнал по нагрузке и восстановлению."}
-                  </p>
-                  <p className="mt-3 text-sm font-medium text-foreground">
-                    Следующий шаг:{" "}
-                    {workoutPrioritySignal?.action ??
-                      "Продолжайте логировать тренировки и рабочие подходы."}
-                  </p>
-                </div>
-
-                <div className="rounded-3xl border border-border bg-white/76 p-4">
-                  <p className="text-sm font-semibold text-foreground">
-                    По питанию
-                  </p>
-                  <p className="mt-2 text-sm leading-6 text-muted">
-                    {nutritionPrioritySignal?.summary ??
-                      "Как только логов станет больше, здесь появится приоритетная рекомендация по рациону."}
-                  </p>
-                  <p className="mt-3 text-sm font-medium text-foreground">
-                    Следующий шаг:{" "}
-                    {nutritionPrioritySignal?.action ??
-                      "Стабилизируйте дневные логи и ключевые приёмы пищи."}
-                  </p>
-                </div>
+                <SummaryDetailCard
+                  action={
+                    workoutPrioritySignal?.action ??
+                    "Продолжай логировать тренировки и рабочие подходы."
+                  }
+                  summary={
+                    workoutPrioritySignal?.summary ??
+                    "После первых завершённых сессий здесь появится готовый сигнал по нагрузке и восстановлению."
+                  }
+                  title="По тренировкам"
+                />
+                <SummaryDetailCard
+                  action={
+                    nutritionPrioritySignal?.action ??
+                    "Стабилизируй дневные логи и ключевые приёмы пищи."
+                  }
+                  summary={
+                    nutritionPrioritySignal?.summary ??
+                    "Как только логов станет больше, здесь появится приоритетная рекомендация по рациону."
+                  }
+                  title="По питанию"
+                />
               </div>
             </article>
 
@@ -362,20 +468,20 @@ export function DashboardWorkspace({
                 <span className="pill">
                   {aiContext.latestBodyMetrics.weightKg === null
                     ? "без свежего веса"
-                    : `${formatNumber(aiContext.latestBodyMetrics.weightKg, "кг")}`}
+                    : formatNumber(aiContext.latestBodyMetrics.weightKg, "кг")}
                 </span>
               </div>
 
               <div className="mt-4 grid gap-3">
                 <div className="rounded-3xl border border-border bg-white/76 p-4 text-sm leading-6 text-muted">
-                  Частота и объём тренировок уже попадают в AI-контекст вместе
-                  с тоннажом, лучшими подходами, RPE, отдыхом и заметками по
+                  Частота и объём тренировок уже попадают в AI-контекст вместе с
+                  тоннажом, лучшими подходами, RPE, отдыхом и заметками по
                   сессиям.
                 </div>
                 <div className="rounded-3xl border border-border bg-white/76 p-4 text-sm leading-6 text-muted">
                   Питание тоже учитывается не только по КБЖУ, но и по частоте
-                  логов, meal-patterns, повторяющимся продуктам и стратегии,
-                  которую реально можно внедрить.
+                  логов, привычкам, повторяющимся продуктам и стратегии, которую
+                  реально можно внедрить.
                 </div>
                 <Link
                   className="inline-flex items-center justify-center gap-2 rounded-full border border-accent/25 bg-accent-soft px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-white"
@@ -428,7 +534,7 @@ export function DashboardWorkspace({
                 </p>
                 <ul className="mt-3 grid gap-2 text-sm leading-6 text-muted">
                   <li>Тоннаж, рабочие веса, RPE и сигналы по восстановлению.</li>
-                  <li>Калории, белок, meal-patterns и стратегию по рациону.</li>
+                  <li>Калории, белок, пищевые привычки и стратегию по рациону.</li>
                   <li>Цели, последние замеры тела и персональные ограничения.</li>
                 </ul>
               </article>
@@ -439,7 +545,7 @@ export function DashboardWorkspace({
                 </p>
                 <ul className="mt-3 grid gap-2 text-sm leading-6 text-muted">
                   <li>Собрать новую программу тренировок или питания.</li>
-                  <li>Попросить совет по прогрессии нагрузки и восстановлению.</li>
+                  <li>Запросить совет по прогрессии нагрузки и восстановлению.</li>
                   <li>Сразу применить готовое предложение в приложение.</li>
                 </ul>
               </article>
@@ -449,10 +555,10 @@ export function DashboardWorkspace({
           <article className="card p-5 sm:p-6">
             <div>
               <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
-                Следующий разумный шаг
+                Следующий шаг
               </p>
               <h2 className="mt-2 text-xl font-semibold text-foreground">
-                Идите в AI, если нужен новый план, совет или быстрый разбор
+                Открывай AI, если нужен новый план, совет или быстрый разбор
               </h2>
             </div>
 
@@ -463,8 +569,8 @@ export function DashboardWorkspace({
                 копирования данных.
               </div>
               <div className="rounded-3xl border border-border bg-white/78 p-4 text-sm leading-6 text-muted">
-                Если нужен точечный совет, AI уже видит, где держится ритм,
-                где питание попадает в цель и где сейчас узкое место.
+                Если нужен точечный совет, AI уже видит, где держится ритм, где
+                питание попадает в цель и где сейчас узкое место.
               </div>
               <Link
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90"

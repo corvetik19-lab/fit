@@ -7,6 +7,7 @@
 - Rebuilt `src/components/ai-prompt-library.tsx` so prompt persistence now happens only inside explicit create/delete actions instead of a `useEffect` sync loop. This removed the remaining `Maximum update depth exceeded` path and also cleaned the whole modal copy back to readable Russian.
 - Updated `src/components/ai-assistant-widget.tsx` so the floating AI widget always opens as a clean new quick chat instead of restoring the previous conversation into the small modal. Chat history remains available on the full `/ai` screen.
 - Cleaned `src/components/app-shell-frame.tsx` labels and tightened mobile shell spacing in `src/components/app-shell-nav.tsx` plus `src/app/globals.css`: narrower drawer width on phones, smaller bottom-nav spacing, and more stable menu button sizing on narrow PWA screens.
+- Rebuilt `src/components/page-workspace.tsx` and `src/components/dashboard-workspace.tsx` so mobile section navigation is now a compact expandable selector instead of a permanent wall of section cards. On phones the current section opens via a simple menu and closes immediately after selection; desktop still keeps the richer multi-card switcher.
 
 ### Verification: prompt library and mobile PWA hotfix
 
@@ -14,6 +15,9 @@
 - `npm run typecheck`
 - `npm run build`
 - Playwright mobile pass on local `http://127.0.0.1:3000/dashboard`: verified that the floating AI widget now opens with a clean empty chat, the prompt library modal opens without console errors, and the mobile drawer/bottom-nav layout remains stable at `390x844`
+- `npx eslint src/components/page-workspace.tsx src/components/dashboard-workspace.tsx`
+- `npm run typecheck` (rerun after `build`, due the existing `.next/types` race in this repo)
+- Playwright mobile pass on local `http://127.0.0.1:3000/dashboard` and `http://127.0.0.1:3000/workouts`: verified that section menus open as compact selectors, switch the active section, and collapse back correctly on tap
 
 ### AI chat history reset and session management
 
