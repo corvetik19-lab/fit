@@ -2,13 +2,12 @@
 
 import { DefaultChatTransport } from "ai";
 import { useChat } from "@ai-sdk/react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
-  Check,
   Globe,
   LoaderCircle,
-  Plus,
   Sparkles,
   Square,
   WandSparkles,
@@ -79,55 +78,20 @@ type AssistantProposalTarget = {
 };
 
 type AssistantToolPart =
-  | {
-      type: "text";
-      text: string;
-    }
-  | {
-      type: "tool-createWorkoutPlan";
-      output?: AssistantProposalOutput;
-      state: string;
-    }
-  | {
-      type: "tool-createMealPlan";
-      output?: AssistantProposalOutput;
-      state: string;
-    }
-  | {
-      type: "tool-searchWeb";
-      output?: AssistantSearchOutput;
-      state: string;
-    }
-  | {
-      type: "tool-listRecentProposals";
-      output?: AssistantProposalListOutput;
-      state: string;
-    }
-  | {
-      type: "tool-approveProposal";
-      output?: AssistantProposalActionOutput;
-      state: string;
-    }
-  | {
-      type: "tool-applyProposal";
-      output?: AssistantProposalActionOutput;
-      state: string;
-    }
-  | {
-      type: "tool-call";
-      toolName: string;
-    }
-  | {
-      type: "tool-result";
-    };
-
-const textareaClassName =
-  "min-h-24 w-full rounded-3xl border border-border bg-white/85 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15 disabled:cursor-not-allowed disabled:opacity-60";
+  | { type: "text"; text: string }
+  | { type: "tool-createWorkoutPlan"; output?: AssistantProposalOutput; state: string }
+  | { type: "tool-createMealPlan"; output?: AssistantProposalOutput; state: string }
+  | { type: "tool-searchWeb"; output?: AssistantSearchOutput; state: string }
+  | { type: "tool-listRecentProposals"; output?: AssistantProposalListOutput; state: string }
+  | { type: "tool-approveProposal"; output?: AssistantProposalActionOutput; state: string }
+  | { type: "tool-applyProposal"; output?: AssistantProposalActionOutput; state: string }
+  | { type: "tool-call"; toolName: string }
+  | { type: "tool-result" };
 
 const quickPrompts = [
-  "Составь мне план тренировок на 4 дня с акцентом на прогресс без перегруза.",
-  "Составь мне план питания на день с упором на белок и восстановление.",
-  "Разбери мой текущий прогресс и подскажи, что улучшить на этой неделе.",
+  "Разбери мой прогресс и скажи, что лучше улучшить.",
+  "Собери план питания на день с упором на белок.",
+  "Составь тренировку без перегруза.",
 ];
 
 const timeFormatter = new Intl.DateTimeFormat("ru-RU", {
@@ -137,115 +101,16 @@ const timeFormatter = new Intl.DateTimeFormat("ru-RU", {
   minute: "2-digit",
 });
 
-function ProposalToolCard({
-  busy,
-  onApply,
-  output,
-  state,
-}: {
-  busy: boolean;
-  onApply: (output: AssistantProposalOutput) => void;
-  output?: AssistantProposalOutput;
-  state: string;
-}) {
-  if (state === "input-streaming" || state === "input-available") {
-    return (
-      <div className="rounded-3xl border border-border bg-white/80 px-4 py-4 text-sm text-muted">
-        <div className="flex items-center gap-2">
-          <LoaderCircle className="animate-spin" size={16} />
-          Подготавливаю новый план...
-        </div>
-      </div>
-    );
+function formatProposalStatus(status: string) {
+  if (status === "applied") {
+    return "применено";
   }
 
-  if (!output) {
-    return null;
+  if (status === "approved") {
+    return "подтверждено";
   }
 
-  return (
-    <div className="rounded-3xl border border-border bg-white/90 p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-sm font-semibold text-foreground">{output.title}</p>
-          <p className="mt-1 text-sm leading-6 text-muted">{output.description}</p>
-        </div>
-        <span className="pill">
-          {output.proposalType === "workout_plan" ? "Тренировки" : "Питание"}
-        </span>
-      </div>
-
-      {output.highlights.length ? (
-        <ul className="mt-3 grid gap-2 text-sm leading-6 text-muted">
-          {output.highlights.slice(0, 4).map((item) => (
-            <li key={`${output.proposalId}-${item}`}>{item}</li>
-          ))}
-        </ul>
-      ) : null}
-
-      <div className="mt-4 flex flex-wrap gap-2">
-        <button
-          className="rounded-full bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-          disabled={busy}
-          onClick={() => onApply(output)}
-          type="button"
-        >
-          {output.applyLabel}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function SearchToolCard({
-  output,
-  state,
-}: {
-  output?: AssistantSearchOutput;
-  state: string;
-}) {
-  if (state === "input-streaming" || state === "input-available") {
-    return (
-      <div className="rounded-3xl border border-border bg-white/80 px-4 py-4 text-sm text-muted">
-        <div className="flex items-center gap-2">
-          <LoaderCircle className="animate-spin" size={16} />
-          Ищу свежую информацию в интернете...
-        </div>
-      </div>
-    );
-  }
-
-  if (!output) {
-    return null;
-  }
-
-  return (
-    <div className="rounded-3xl border border-border bg-white/90 p-4">
-      <p className="text-sm font-semibold text-foreground">
-        Интернет-поиск: {output.query}
-      </p>
-      <div className="mt-3 grid gap-3">
-        {output.results.length ? (
-          output.results.map((result) => (
-            <a
-              className="rounded-2xl border border-border bg-white/80 px-3 py-3 text-sm transition hover:border-accent/40 hover:bg-white"
-              href={result.url}
-              key={`${output.query}-${result.url}`}
-              rel="noreferrer"
-              target="_blank"
-            >
-              <p className="font-semibold text-foreground">{result.title}</p>
-              {result.snippet ? (
-                <p className="mt-1 leading-6 text-muted">{result.snippet}</p>
-              ) : null}
-            </a>
-          ))
-        ) : (
-          <p className="text-sm text-muted">Ничего полезного не нашлось.</p>
-        )}
-      </div>
-    </div>
-  );
+  return "черновик";
 }
 
 function ProposalStatusPill({
@@ -255,228 +120,15 @@ function ProposalStatusPill({
   proposalType: "meal_plan" | "workout_plan";
   status: string;
 }) {
-  const typeLabel = proposalType === "workout_plan" ? "Тренировки" : "Питание";
-  const statusLabel =
-    status === "applied"
-      ? "применено"
-      : status === "approved"
-        ? "подтверждено"
-        : "черновик";
-
-  return <span className="pill">{`${typeLabel} · ${statusLabel}`}</span>;
-}
-
-function ProposalListToolCard({
-  actionBusyKey,
-  onApply,
-  onApprove,
-  output,
-  state,
-}: {
-  actionBusyKey: string | null;
-  onApply: (target: AssistantProposalTarget) => void;
-  onApprove: (target: AssistantProposalTarget) => void;
-  output?: AssistantProposalListOutput;
-  state: string;
-}) {
-  if (state === "input-streaming" || state === "input-available") {
-    return (
-      <div className="rounded-3xl border border-border bg-white/80 px-4 py-4 text-sm text-muted">
-        <div className="flex items-center gap-2">
-          <LoaderCircle className="animate-spin" size={16} />
-          Собираю последние AI-предложения...
-        </div>
-      </div>
-    );
-  }
-
-  if (!output) {
-    return null;
-  }
-
   return (
-    <div className="rounded-3xl border border-border bg-white/90 p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="text-sm font-semibold text-foreground">
-            Последние AI-предложения
-          </p>
-          <p className="mt-1 text-sm leading-6 text-muted">
-            Найдено: {output.count}. Открой студию или полный экран, чтобы выбрать
-            нужный черновик.
-          </p>
-        </div>
-        <span className="pill">{output.count} шт.</span>
-      </div>
-
-      <div className="mt-3 grid gap-3">
-        {output.items.length ? (
-          output.items.slice(0, 3).map((item) => (
-            <div
-              className="rounded-2xl border border-border bg-white/80 px-3 py-3"
-              key={item.proposalId}
-            >
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-foreground">{item.title}</p>
-                  <p className="mt-1 text-sm leading-6 text-muted">{item.requestSummary}</p>
-                </div>
-                <ProposalStatusPill
-                  proposalType={item.proposalType}
-                  status={item.status}
-                />
-              </div>
-              <p className="mt-2 text-sm leading-6 text-muted">{item.timeline}</p>
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                {item.status === "draft" ? (
-                  <button
-                    className="rounded-full border border-border bg-white/80 px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
-                    disabled={actionBusyKey === `approve:${item.proposalId}`}
-                    onClick={() =>
-                      onApprove({
-                        proposalId: item.proposalId,
-                        proposalType: item.proposalType,
-                      })
-                    }
-                    type="button"
-                  >
-                    {actionBusyKey === `approve:${item.proposalId}`
-                      ? "Подтверждаю..."
-                      : "Подтвердить"}
-                  </button>
-                ) : null}
-                {item.status !== "applied" ? (
-                  <button
-                    className="rounded-full bg-accent px-3 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-                    disabled={actionBusyKey === `apply:${item.proposalId}`}
-                    onClick={() =>
-                      onApply({
-                        proposalId: item.proposalId,
-                        proposalType: item.proposalType,
-                      })
-                    }
-                    type="button"
-                  >
-                    {actionBusyKey === `apply:${item.proposalId}`
-                      ? "Применяю..."
-                      : "Применить"}
-                  </button>
-                ) : (
-                  <a
-                    className="rounded-full border border-border bg-white/80 px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white"
-                    href={item.proposalType === "workout_plan" ? "/workouts" : "/nutrition"}
-                  >
-                    Открыть раздел
-                  </a>
-                )}
-              </div>
-            </div>
-          ))
-        ) : (
-          <p className="text-sm text-muted">Сохранённых AI-предложений пока нет.</p>
-        )}
-      </div>
-
-      <div className="mt-4 flex flex-wrap items-center gap-3">
-        <a
-          className="rounded-full border border-border bg-white/80 px-4 py-2 text-sm font-medium text-foreground transition hover:bg-white"
-          href="/ai#proposal-studio"
-        >
-          Открыть студию
-        </a>
-      </div>
-    </div>
+    <span className="pill">
+      {proposalType === "workout_plan" ? "Тренировки" : "Питание"} · {formatProposalStatus(status)}
+    </span>
   );
 }
 
-function ProposalActionToolCard({
-  actionBusyKey,
-  onApply,
-  output,
-  state,
-  variant,
-}: {
-  actionBusyKey: string | null;
-  onApply: (target: AssistantProposalTarget) => void;
-  output?: AssistantProposalActionOutput;
-  state: string;
-  variant: "approve" | "apply";
-}) {
-  if (state === "input-streaming" || state === "input-available") {
-    return (
-      <div className="rounded-3xl border border-border bg-white/80 px-4 py-4 text-sm text-muted">
-        <div className="flex items-center gap-2">
-          <LoaderCircle className="animate-spin" size={16} />
-          {variant === "approve"
-            ? "Подтверждаю AI-предложение..."
-            : "Применяю AI-предложение..."}
-        </div>
-      </div>
-    );
-  }
-
-  if (!output) {
-    return null;
-  }
-
-  const primaryHref =
-    variant === "apply"
-      ? output.proposalType === "workout_plan"
-        ? "/workouts"
-        : "/nutrition"
-      : "/ai#proposal-studio";
-
-  const primaryLabel =
-    variant === "apply"
-      ? output.proposalType === "workout_plan"
-        ? "Открыть тренировки"
-        : "Открыть питание"
-      : "Открыть студию";
-
-  return (
-    <div className="rounded-3xl border border-border bg-white/90 p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="text-sm font-semibold text-foreground">{output.title}</p>
-          <p className="mt-1 text-sm leading-6 text-muted">{output.summary}</p>
-        </div>
-        <ProposalStatusPill
-          proposalType={output.proposalType}
-          status={output.status}
-        />
-      </div>
-
-      <div className="mt-4 flex flex-wrap items-center gap-3">
-        {output.status !== "applied" ? (
-          <button
-            className="rounded-full bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-            disabled={actionBusyKey === `apply:${output.proposalId}`}
-            onClick={() =>
-              onApply({
-                proposalId: output.proposalId,
-                proposalType: output.proposalType,
-              })
-            }
-            type="button"
-          >
-            {actionBusyKey === `apply:${output.proposalId}` ? "Применяю..." : "Применить"}
-          </button>
-        ) : null}
-        <a
-          className="rounded-full border border-border bg-white/80 px-4 py-2 text-sm font-medium text-foreground transition hover:bg-white"
-          href={primaryHref}
-        >
-          {primaryLabel}
-        </a>
-        <a
-          className="rounded-full border border-border bg-white/80 px-4 py-2 text-sm font-medium text-foreground transition hover:bg-white"
-          href="/ai#proposal-studio"
-        >
-          История AI-предложений
-        </a>
-      </div>
-    </div>
-  );
+function formatProposalType(proposalType: "meal_plan" | "workout_plan") {
+  return proposalType === "workout_plan" ? "тренировки" : "питание";
 }
 
 export function AiAssistantWidget({
@@ -489,14 +141,11 @@ export function AiAssistantWidget({
   const [draft, setDraft] = useState("");
   const [allowWebSearch, setAllowWebSearch] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
-  const [applyBusyId, setApplyBusyId] = useState<string | null>(null);
   const [actionBusyKey, setActionBusyKey] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(initialSessionId);
   const nowLabel = useMemo(() => timeFormatter.format(new Date()), []);
-  const initialUiMessages = useMemo(
-    () => toUiMessages(initialMessages),
-    [initialMessages],
-  );
+  const initialUiMessages = useMemo(() => toUiMessages(initialMessages), [initialMessages]);
+
   const { messages, sendMessage, status, error, stop, setMessages } = useChat({
     messages: initialUiMessages,
     transport: new DefaultChatTransport({
@@ -525,37 +174,28 @@ export function AiAssistantWidget({
     return lastAssistantMessage?.id ?? null;
   }, [messages]);
 
-  async function applyProposal(output: AssistantProposalOutput) {
-    setNotice(null);
-    setApplyBusyId(output.proposalId);
+  function submitText(nextText?: string) {
+    const trimmed = (nextText ?? draft).trim();
 
-    try {
-      const response = await fetch(`/api/ai/proposals/${output.proposalId}/apply`, {
-        method: "POST",
-      });
-      const payload = (await response.json().catch(() => null)) as
-        | { message?: string }
-        | null;
-
-      if (!response.ok) {
-        throw new Error(payload?.message ?? "Не удалось применить AI-предложение.");
-      }
-
-      setNotice(
-        output.proposalType === "workout_plan"
-          ? "Тренировочный план добавлен в приложение."
-          : "План питания добавлен в приложение.",
-      );
-      router.refresh();
-    } catch (applyError) {
-      setNotice(
-        applyError instanceof Error
-          ? applyError.message
-          : "Не удалось применить AI-предложение.",
-      );
-    } finally {
-      setApplyBusyId(null);
+    if (!trimmed || isBusy) {
+      return;
     }
+
+    const nextSessionId = sessionId ?? crypto.randomUUID();
+    setSessionId(nextSessionId);
+    setNotice(null);
+
+    sendMessage(
+      { text: trimmed },
+      {
+        body: {
+          allowWebSearch,
+          sessionId: nextSessionId,
+        },
+      },
+    );
+
+    setDraft("");
   }
 
   async function runProposalAction(
@@ -569,55 +209,25 @@ export function AiAssistantWidget({
       const response = await fetch(`/api/ai/proposals/${target.proposalId}/${action}`, {
         method: "POST",
       });
-      const payload = (await response.json().catch(() => null)) as
-        | { message?: string }
-        | null;
+      const payload = (await response.json().catch(() => null)) as { message?: string } | null;
 
       if (!response.ok) {
-        throw new Error(payload?.message ?? "Не удалось выполнить действие с AI-предложением.");
+        throw new Error(payload?.message ?? "Не удалось выполнить действие.");
       }
 
       setNotice(
         action === "approve"
-          ? "AI-предложение подтверждено и готово к применению."
+          ? "Предложение подтверждено."
           : target.proposalType === "workout_plan"
-            ? "Тренировочный план добавлен в приложение."
-            : "План питания добавлен в приложение.",
+            ? "План тренировок добавлен."
+            : "План питания добавлен.",
       );
       router.refresh();
-    } catch (proposalActionError) {
-      setNotice(
-        proposalActionError instanceof Error
-          ? proposalActionError.message
-          : "Не удалось выполнить действие с AI-предложением.",
-      );
+    } catch (actionError) {
+      setNotice(actionError instanceof Error ? actionError.message : "Не удалось выполнить действие.");
     } finally {
       setActionBusyKey(null);
     }
-  }
-
-  function submitText(text: string) {
-    const trimmed = text.trim();
-
-    if (!trimmed || isBusy) {
-      return;
-    }
-
-    const nextSessionId = sessionId ?? crypto.randomUUID();
-    setSessionId(nextSessionId);
-    setNotice(null);
-    sendMessage(
-      {
-        text: trimmed,
-      },
-      {
-        body: {
-          allowWebSearch,
-          sessionId: nextSessionId,
-        },
-      },
-    );
-    setDraft("");
   }
 
   function resetChat() {
@@ -625,6 +235,216 @@ export function AiAssistantWidget({
     setSessionId(null);
     setDraft("");
     setNotice(null);
+  }
+
+  function renderPart(part: AssistantToolPart, key: string) {
+    if (part.type === "text") {
+      return (
+        <AssistantMarkdown
+          isStreaming={status === "streaming" && key.startsWith(`${lastAssistantMessageId}`)}
+          key={key}
+          text={part.text}
+        />
+      );
+    }
+
+    if (
+      part.type === "tool-createWorkoutPlan" ||
+      part.type === "tool-createMealPlan"
+    ) {
+      if (part.state === "input-streaming" || part.state === "input-available") {
+        return (
+          <div className="rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-muted" key={key}>
+            <span className="inline-flex items-center gap-2">
+              <LoaderCircle className="animate-spin" size={16} />
+              Собираю новый план...
+            </span>
+          </div>
+        );
+      }
+
+      if (!part.output) {
+        return null;
+      }
+
+      const output = part.output;
+
+      return (
+        <div className="rounded-2xl border border-border bg-white/85 p-4" key={key}>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-foreground">{output.title}</p>
+              <p className="mt-1 text-sm leading-6 text-muted">{output.description}</p>
+            </div>
+            <ProposalStatusPill proposalType={output.proposalType} status="draft" />
+          </div>
+          {output.highlights.length ? (
+            <ul className="mt-3 grid gap-2 text-sm leading-6 text-muted">
+              {output.highlights.slice(0, 4).map((item) => (
+                <li key={`${output.proposalId}-${item}`}>{item}</li>
+              ))}
+            </ul>
+          ) : null}
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button
+              className="rounded-full bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
+              onClick={() =>
+                runProposalAction("apply", {
+                  proposalId: output.proposalId,
+                  proposalType: output.proposalType,
+                })
+              }
+              type="button"
+            >
+              {output.applyLabel}
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    if (part.type === "tool-searchWeb") {
+      if (part.state === "input-streaming" || part.state === "input-available") {
+        return (
+          <div className="rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-muted" key={key}>
+            <span className="inline-flex items-center gap-2">
+              <LoaderCircle className="animate-spin" size={16} />
+              Ищу свежую информацию...
+            </span>
+          </div>
+        );
+      }
+
+      if (!part.output) {
+        return null;
+      }
+
+      return (
+        <div className="rounded-2xl border border-border bg-white/85 p-4" key={key}>
+          <p className="text-sm font-semibold text-foreground">Поиск: {part.output.query}</p>
+          <div className="mt-3 grid gap-3">
+            {part.output.results.map((result) => (
+              <a
+                className="rounded-2xl border border-border bg-white/80 px-3 py-3 text-sm transition hover:bg-white"
+                href={result.url}
+                key={result.url}
+                rel="noreferrer"
+                target="_blank"
+              >
+                <p className="font-semibold text-foreground">{result.title}</p>
+                {result.snippet ? <p className="mt-1 leading-6 text-muted">{result.snippet}</p> : null}
+              </a>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    if (part.type === "tool-listRecentProposals") {
+      if (!part.output) {
+        return null;
+      }
+
+      return (
+        <div className="rounded-2xl border border-border bg-white/85 p-4" key={key}>
+          <p className="text-sm font-semibold text-foreground">Последние предложения</p>
+          <div className="mt-3 grid gap-3">
+            {part.output.items.slice(0, 3).map((item) => (
+              <div className="rounded-2xl border border-border bg-white/75 px-3 py-3" key={item.proposalId}>
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-foreground">{item.title}</p>
+                    <p className="mt-1 text-sm leading-6 text-muted">
+                      {`Сохранённый ${formatProposalType(item.proposalType)}-план.`}
+                    </p>
+                  </div>
+                  <ProposalStatusPill proposalType={item.proposalType} status={item.status} />
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {item.status === "draft" ? (
+                    <button
+                      className="rounded-full border border-border bg-white/80 px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white disabled:opacity-60"
+                      disabled={actionBusyKey === `approve:${item.proposalId}`}
+                      onClick={() =>
+                        runProposalAction("approve", {
+                          proposalId: item.proposalId,
+                          proposalType: item.proposalType,
+                        })
+                      }
+                      type="button"
+                    >
+                      Подтвердить
+                    </button>
+                  ) : null}
+                  {item.status !== "applied" ? (
+                    <button
+                      className="rounded-full bg-accent px-3 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
+                      disabled={actionBusyKey === `apply:${item.proposalId}`}
+                      onClick={() =>
+                        runProposalAction("apply", {
+                          proposalId: item.proposalId,
+                          proposalType: item.proposalType,
+                        })
+                      }
+                      type="button"
+                    >
+                      Применить
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    if (part.type === "tool-approveProposal" || part.type === "tool-applyProposal") {
+      if (!part.output) {
+        return null;
+      }
+
+      const output = part.output;
+
+      return (
+        <div className="rounded-2xl border border-border bg-white/85 p-4" key={key}>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-foreground">{output.title}</p>
+              <p className="mt-1 text-sm leading-6 text-muted">{output.summary}</p>
+            </div>
+            <ProposalStatusPill proposalType={output.proposalType} status={output.status} />
+          </div>
+          {output.status !== "applied" ? (
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button
+                className="rounded-full bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
+                disabled={actionBusyKey === `apply:${output.proposalId}`}
+                onClick={() =>
+                  runProposalAction("apply", {
+                    proposalId: output.proposalId,
+                    proposalType: output.proposalType,
+                  })
+                }
+                type="button"
+              >
+                Применить
+              </button>
+            </div>
+          ) : null}
+        </div>
+      );
+    }
+
+    if (part.type === "tool-call") {
+      return (
+        <div className="rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-muted" key={key}>
+          Выполняю действие: {part.toolName}
+        </div>
+      );
+    }
+
+    return null;
   }
 
   return (
@@ -651,19 +471,15 @@ export function AiAssistantWidget({
           <section className="relative flex h-[min(84dvh,52rem)] w-full max-w-[31rem] flex-col overflow-hidden rounded-[2rem] border border-border bg-[color-mix(in_srgb,var(--surface)_94%,white)] shadow-[0_28px_90px_-32px_rgba(24,22,19,0.42)]">
             <div className="flex items-start justify-between gap-3 border-b border-border px-5 pb-4 pt-[calc(1rem+env(safe-area-inset-top))]">
               <div className="min-w-0">
-                <p className="font-mono text-[0.68rem] uppercase tracking-[0.22em] text-muted">
-                  AI-ассистент
-                </p>
-                <h2 className="mt-2 text-xl font-semibold text-foreground">
-                  Чат, планы и быстрые действия
-                </h2>
+                <p className="font-mono text-[0.68rem] uppercase tracking-[0.22em] text-muted">AI</p>
+                <h2 className="mt-2 text-xl font-semibold text-foreground">AI-коуч</h2>
                 <p className="mt-2 truncate text-sm text-muted">
                   {viewer.fullName ?? viewer.email ?? "Аккаунт fit"}
                 </p>
               </div>
 
               <button
-                aria-label="Закрыть AI-ассистента"
+                aria-label="Закрыть AI"
                 className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border bg-white/75 text-foreground transition hover:bg-white"
                 onClick={() => setIsOpen(false)}
                 type="button"
@@ -673,47 +489,38 @@ export function AiAssistantWidget({
             </div>
 
             <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-3">
-              <label className="flex items-center gap-3 text-sm text-foreground">
-                <span
-                  className={`inline-flex h-6 w-11 items-center rounded-full border p-1 transition ${
-                    allowWebSearch
-                      ? "border-accent bg-accent/15"
-                      : "border-border bg-white/80"
-                  }`}
-                >
-                  <span
-                    className={`h-4 w-4 rounded-full transition ${
-                      allowWebSearch ? "translate-x-5 bg-accent" : "bg-muted"
-                    }`}
-                  />
-                </span>
-                <span className="inline-flex items-center gap-2">
-                  <Globe size={16} strokeWidth={2.2} />
-                  Интернет
-                </span>
-                <input
-                  checked={allowWebSearch}
-                  className="sr-only"
-                  onChange={(event) => setAllowWebSearch(event.target.checked)}
-                  type="checkbox"
-                />
-              </label>
-
               <div className="flex items-center gap-2">
                 <button
-                  className="rounded-full border border-border px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white/80"
+                  aria-label={
+                    allowWebSearch ? "Выключить поиск в интернете" : "Включить поиск в интернете"
+                  }
+                  aria-pressed={allowWebSearch}
+                  className={`inline-flex h-11 w-11 items-center justify-center rounded-full border transition ${
+                    allowWebSearch
+                      ? "border-accent/30 bg-accent/10 text-accent"
+                      : "border-border bg-white/80 text-muted hover:bg-white"
+                  }`}
+                  onClick={() => setAllowWebSearch((current) => !current)}
+                  type="button"
+                >
+                  <Globe size={18} strokeWidth={2.2} />
+                </button>
+
+                <button
+                  className="rounded-full border border-border bg-white/80 px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white"
                   onClick={resetChat}
                   type="button"
                 >
                   Новый чат
                 </button>
-                <a
-                  className="rounded-full border border-border px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white/80"
-                  href="/ai"
-                >
-                  Полный экран
-                </a>
               </div>
+
+              <Link
+                className="rounded-full border border-border bg-white/80 px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white"
+                href="/ai"
+              >
+                Полный экран
+              </Link>
             </div>
 
             <div className="grid gap-2 border-b border-border px-5 py-3">
@@ -745,121 +552,22 @@ export function AiAssistantWidget({
                     >
                       <div className="flex items-center justify-between gap-3">
                         <p className="text-sm font-semibold text-foreground">
-                          {message.role === "assistant" ? "AI" : "Ты"}
+                          {message.role === "assistant" ? "AI-коуч" : "Ты"}
                         </p>
                         <p className="text-xs text-muted">{nowLabel}</p>
                       </div>
 
                       <div className="mt-3 grid gap-3">
-                        {(message.parts as AssistantToolPart[]).map((part, index) => {
-                          if (part.type === "text") {
-                            return (
-                              <AssistantMarkdown
-                                isStreaming={
-                                  message.role === "assistant" &&
-                                  status === "streaming" &&
-                                  message.id === lastAssistantMessageId
-                                }
-                                key={`${message.id}-text-${index}`}
-                                text={part.text}
-                              />
-                            );
-                          }
-
-                          if (part.type === "tool-createWorkoutPlan") {
-                            return (
-                              <ProposalToolCard
-                                busy={applyBusyId === part.output?.proposalId}
-                                key={`${message.id}-workout-${index}`}
-                                onApply={applyProposal}
-                                output={part.output}
-                                state={part.state}
-                              />
-                            );
-                          }
-
-                          if (part.type === "tool-createMealPlan") {
-                            return (
-                              <ProposalToolCard
-                                busy={applyBusyId === part.output?.proposalId}
-                                key={`${message.id}-meal-${index}`}
-                                onApply={applyProposal}
-                                output={part.output}
-                                state={part.state}
-                              />
-                            );
-                          }
-
-                          if (part.type === "tool-searchWeb") {
-                            return (
-                              <SearchToolCard
-                                key={`${message.id}-web-${index}`}
-                                output={part.output}
-                                state={part.state}
-                              />
-                            );
-                          }
-
-                          if (part.type === "tool-listRecentProposals") {
-                            return (
-                              <ProposalListToolCard
-                                actionBusyKey={actionBusyKey}
-                                key={`${message.id}-proposal-list-${index}`}
-                                onApply={(target) => runProposalAction("apply", target)}
-                                onApprove={(target) => runProposalAction("approve", target)}
-                                output={part.output}
-                                state={part.state}
-                              />
-                            );
-                          }
-
-                          if (part.type === "tool-approveProposal") {
-                            return (
-                              <ProposalActionToolCard
-                                actionBusyKey={actionBusyKey}
-                                key={`${message.id}-proposal-approve-${index}`}
-                                onApply={(target) => runProposalAction("apply", target)}
-                                output={part.output}
-                                state={part.state}
-                                variant="approve"
-                              />
-                            );
-                          }
-
-                          if (part.type === "tool-applyProposal") {
-                            return (
-                              <ProposalActionToolCard
-                                actionBusyKey={actionBusyKey}
-                                key={`${message.id}-proposal-apply-${index}`}
-                                onApply={(target) => runProposalAction("apply", target)}
-                                output={part.output}
-                                state={part.state}
-                                variant="apply"
-                              />
-                            );
-                          }
-
-                          if (part.type === "tool-call") {
-                            return (
-                              <div
-                                className="rounded-2xl border border-border bg-white/70 px-4 py-3 text-sm text-muted"
-                                key={`${message.id}-toolcall-${index}`}
-                              >
-                                Выполняю действие: {part.toolName}
-                              </div>
-                            );
-                          }
-
-                          return null;
-                        })}
+                        {(message.parts as AssistantToolPart[]).map((part, index) =>
+                          renderPart(part, `${message.id}-${index}`),
+                        )}
                       </div>
                     </article>
                   ))
                 ) : (
                   <div className="rounded-3xl border border-dashed border-border bg-white/70 px-4 py-6 text-sm leading-7 text-muted">
-                    Здесь можно задать вопрос, попросить AI составить план питания
-                    или тренировок, а затем сразу добавить результат в приложение
-                    одним нажатием.
+                    Спроси про тренировку, питание, восстановление или открой полный экран для
+                    фото еды, истории и подробного контекста.
                   </div>
                 )}
               </div>
@@ -868,10 +576,7 @@ export function AiAssistantWidget({
             <div className="border-t border-border px-5 py-4">
               {notice ? (
                 <div className="mb-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                  <div className="flex items-center gap-2">
-                    <Check size={16} strokeWidth={2.2} />
-                    {notice}
-                  </div>
+                  {notice}
                 </div>
               ) : null}
 
@@ -883,16 +588,21 @@ export function AiAssistantWidget({
 
               <div className="grid gap-3">
                 <textarea
-                  className={textareaClassName}
+                  className="min-h-24 w-full rounded-3xl border border-border bg-white/85 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15 disabled:cursor-not-allowed disabled:opacity-60"
                   onChange={(event) => setDraft(event.target.value)}
-                  placeholder="Например: составь тренировку на 4 дня с учётом моего текущего прогресса."
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && !event.shiftKey) {
+                      event.preventDefault();
+                      submitText();
+                    }
+                  }}
+                  placeholder="Напиши вопрос или задачу для AI."
                   value={draft}
                 />
 
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <p className="text-sm text-muted">
-                    Ассистент может строить планы и предлагать следующий шаг прямо
-                    внутри fit.
+                    {allowWebSearch ? "Поиск в интернете включён." : "Поиск в интернете выключен."}
                   </p>
 
                   <div className="flex flex-wrap gap-2">
@@ -912,15 +622,11 @@ export function AiAssistantWidget({
                     <button
                       className="rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                       disabled={!draft.trim() || isBusy}
-                      onClick={() => submitText(draft)}
+                      onClick={() => submitText()}
                       type="button"
                     >
                       <span className="inline-flex items-center gap-2">
-                        {isBusy ? (
-                          <LoaderCircle className="animate-spin" size={16} />
-                        ) : (
-                          <Plus size={16} strokeWidth={2.2} />
-                        )}
+                        {isBusy ? <LoaderCircle className="animate-spin" size={16} /> : null}
                         {isBusy ? "Думаю..." : "Отправить"}
                       </span>
                     </button>

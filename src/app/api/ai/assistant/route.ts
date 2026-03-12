@@ -12,7 +12,10 @@ import {
   ensureAiChatSession,
   touchAiChatSession,
 } from "@/lib/ai/chat";
-import { buildSportsDomainSystemPrompt, detectAssistantGuardrail } from "@/lib/ai/domain-policy";
+import {
+  buildSportsDomainSystemPrompt,
+  detectAssistantGuardrail,
+} from "@/lib/ai/domain-policy";
 import { models } from "@/lib/ai/gateway";
 import { retrieveKnowledgeMatches } from "@/lib/ai/knowledge";
 import {
@@ -21,7 +24,10 @@ import {
   listAiPlanProposalPreviews,
   resolveAiPlanProposalTarget,
 } from "@/lib/ai/proposal-actions";
-import { generateMealPlanProposalForUser, generateWorkoutPlanProposalForUser } from "@/lib/ai/plan-generation";
+import {
+  generateMealPlanProposalForUser,
+  generateWorkoutPlanProposalForUser,
+} from "@/lib/ai/plan-generation";
 import { mealPlanSchema, workoutPlanSchema } from "@/lib/ai/schemas";
 import { getAiRuntimeContext } from "@/lib/ai/user-context";
 import { searchWebSnippets } from "@/lib/ai/web-search";
@@ -80,8 +86,8 @@ type AssistantProposalActionOutput = {
 function buildSafetyFallback() {
   return [
     "Я не помогаю с опасными или экстремальными схемами.",
-    "Если вопрос касается жёсткого дефицита, обезвоживания, резкого ухудшения самочувствия, боли или медицинских симптомов, лучше обратиться к врачу.",
-    "Я могу помочь составить более безопасный план по тренировкам, питанию и восстановлению.",
+    "Если вопрос касается жёсткого дефицита, обезвоживания, боли, резкого ухудшения самочувствия или других медицинских симптомов, лучше обратиться к врачу.",
+    "Я могу помочь собрать более безопасный план по тренировкам, питанию и восстановлению.",
   ].join(" ");
 }
 
@@ -111,7 +117,7 @@ function buildAssistantStreamErrorMessage(error: unknown) {
     normalized.includes("insufficient credits") ||
     normalized.includes("payment required")
   ) {
-    return "AI-сервис временно недоступен: внешний AI-провайдер ещё не активирован для live-запросов. Доступ к твоим данным не нарушен, но ответ сейчас сгенерировать нельзя.";
+    return "AI временно недоступен: внешний провайдер ещё не активирован для живых запросов. Доступ к твоим данным не нарушен, но ответ сейчас сгенерировать нельзя.";
   }
 
   return "Не удалось получить ответ AI-ассистента. Попробуй ещё раз немного позже.";
@@ -140,16 +146,12 @@ function flattenUiMessageText(message: UIMessage) {
 
       if (part.type === "tool-createWorkoutPlan" && part.output) {
         const output = part.output as AssistantProposalOutput;
-        return [
-          `${output.title}. ${output.description}. ${output.highlights.join(" | ")}`.trim(),
-        ];
+        return [`${output.title}. ${output.description}. ${output.highlights.join(" | ")}`.trim()];
       }
 
       if (part.type === "tool-createMealPlan" && part.output) {
         const output = part.output as AssistantProposalOutput;
-        return [
-          `${output.title}. ${output.description}. ${output.highlights.join(" | ")}`.trim(),
-        ];
+        return [`${output.title}. ${output.description}. ${output.highlights.join(" | ")}`.trim()];
       }
 
       if (part.type === "tool-searchWeb" && part.output) {
@@ -158,7 +160,7 @@ function flattenUiMessageText(message: UIMessage) {
           results: Array<{ title: string; url: string }>;
         };
         return [
-          `Интернет-поиск по запросу "${output.query}": ${output.results
+          `Поиск в интернете по запросу "${output.query}": ${output.results
             .slice(0, 4)
             .map((result) => `${result.title} (${result.url})`)
             .join("; ")}`,
@@ -170,26 +172,19 @@ function flattenUiMessageText(message: UIMessage) {
         return [
           `Найдено AI-предложений: ${output.count}. ${output.items
             .slice(0, 4)
-            .map(
-              (item) =>
-                `${item.title} [${item.proposalType}/${item.status}] ${item.timeline}`,
-            )
+            .map((item) => `${item.title} [${item.proposalType}/${item.status}]`)
             .join(" | ")}`,
         ];
       }
 
       if (part.type === "tool-approveProposal" && part.output) {
         const output = part.output as AssistantProposalActionOutput;
-        return [
-          `${output.title}. Статус: ${output.status}. ${output.summary}`,
-        ];
+        return [`${output.title}. Статус: ${output.status}. ${output.summary}`];
       }
 
       if (part.type === "tool-applyProposal" && part.output) {
         const output = part.output as AssistantProposalActionOutput;
-        return [
-          `${output.title}. Статус: ${output.status}. ${output.summary}`,
-        ];
+        return [`${output.title}. Статус: ${output.status}. ${output.summary}`];
       }
 
       return [];
@@ -221,7 +216,7 @@ function toMealProposalToolResult(proposal: {
   const parsed = mealPlanSchema.parse((proposal.payload as { proposal?: unknown }).proposal);
 
   return {
-    applyLabel: "Добавить в мои шаблоны питания",
+    applyLabel: "Добавить в питание",
     description: `Цель ${parsed.caloriesTarget} ккал, ${parsed.meals.length} приёмов пищи.`,
     highlights: parsed.meals.map((meal) => `${meal.name}: ${meal.kcal} ккал`),
     proposalId: proposal.id,
@@ -237,7 +232,7 @@ function toWorkoutProposalToolResult(proposal: {
   const parsed = workoutPlanSchema.parse((proposal.payload as { proposal?: unknown }).proposal);
 
   return {
-    applyLabel: "Добавить в мои тренировки",
+    applyLabel: "Добавить в тренировки",
     description: parsed.summary,
     highlights: parsed.days.map((day) => `${day.day}: ${day.focus}`),
     proposalId: proposal.id,
@@ -274,7 +269,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 503,
         code: "AI_RUNTIME_NOT_CONFIGURED",
-        message: "AI runtime не настроен для AI-ассистента.",
+        message: "AI runtime ещё не настроен для ассистента.",
       });
     }
 
@@ -307,16 +302,11 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 400,
         code: "AI_ASSISTANT_EMPTY_MESSAGE",
-        message: "Для AI-ассистента нужен текстовый запрос.",
+        message: "Для ответа нужен текстовый запрос.",
       });
     }
 
-    const session = await ensureAiChatSession(
-      supabase,
-      user.id,
-      body.sessionId,
-      lastUserText,
-    );
+    const session = await ensureAiChatSession(supabase, user.id, body.sessionId, lastUserText);
 
     await createAiChatMessage(supabase, {
       userId: user.id,
@@ -387,8 +377,7 @@ export async function POST(request: Request) {
             userId: user.id,
           });
         },
-        system:
-          "Повтори ответ кратко и безопасно на русском языке, не добавляй лишних деталей.",
+        system: "Повтори ответ кратко и безопасно на русском языке, без лишних деталей.",
         prompt: buildSafetyFallback(),
       });
 
@@ -424,8 +413,7 @@ export async function POST(request: Request) {
 
     const tools = {
       createWorkoutPlan: tool({
-        description:
-          "Создать черновик недельной программы тренировок прямо в приложении fit.",
+        description: "Создать черновик недельной программы тренировок внутри приложения.",
         inputSchema: z.object({
           daysPerWeek: z.number().int().min(2).max(7).optional(),
           focus: z.string().min(2).max(240).optional(),
@@ -436,33 +424,23 @@ export async function POST(request: Request) {
 
           if (!feature.allowed) {
             throw new Error(
-              feature.reason ??
-                "AI-план тренировок недоступен для текущего доступа.",
+              feature.reason ?? "План тренировок сейчас недоступен для текущего доступа.",
             );
           }
 
-          const proposal = await generateWorkoutPlanProposalForUser(
-            supabase,
-            user.id,
-            {
-              goal: goal ?? null,
-              daysPerWeek: daysPerWeek ?? null,
-              focus: focus ?? null,
-            },
-          );
+          const proposal = await generateWorkoutPlanProposalForUser(supabase, user.id, {
+            goal: goal ?? null,
+            daysPerWeek: daysPerWeek ?? null,
+            focus: focus ?? null,
+          });
 
-          await incrementFeatureUsage(
-            supabase,
-            user.id,
-            BILLING_FEATURE_KEYS.workoutPlan,
-          );
+          await incrementFeatureUsage(supabase, user.id, BILLING_FEATURE_KEYS.workoutPlan);
 
           return toWorkoutProposalToolResult(proposal);
         },
       }),
       createMealPlan: tool({
-        description:
-          "Создать черновик плана питания прямо в приложении fit.",
+        description: "Создать черновик плана питания внутри приложения.",
         inputSchema: z.object({
           dietaryNotes: z.string().min(2).max(280).optional(),
           goal: z.string().min(2).max(80).optional(),
@@ -474,33 +452,24 @@ export async function POST(request: Request) {
 
           if (!feature.allowed) {
             throw new Error(
-              feature.reason ?? "AI-план питания недоступен для текущего доступа.",
+              feature.reason ?? "План питания сейчас недоступен для текущего доступа.",
             );
           }
 
-          const proposal = await generateMealPlanProposalForUser(
-            supabase,
-            user.id,
-            {
-              goal: goal ?? null,
-              kcalTarget: kcalTarget ?? null,
-              dietaryNotes,
-              mealsPerDay: mealsPerDay ?? null,
-            },
-          );
+          const proposal = await generateMealPlanProposalForUser(supabase, user.id, {
+            goal: goal ?? null,
+            kcalTarget: kcalTarget ?? null,
+            dietaryNotes,
+            mealsPerDay: mealsPerDay ?? null,
+          });
 
-          await incrementFeatureUsage(
-            supabase,
-            user.id,
-            BILLING_FEATURE_KEYS.mealPlan,
-          );
+          await incrementFeatureUsage(supabase, user.id, BILLING_FEATURE_KEYS.mealPlan);
 
           return toMealProposalToolResult(proposal);
         },
       }),
       listRecentProposals: tool({
-        description:
-          "Показать последние AI-черновики и уже подтвержденные предложения пользователя, чтобы можно было выбрать, что подтверждать или применять.",
+        description: "Показать последние AI-черновики и уже подтверждённые предложения.",
         inputSchema: z.object({
           limit: z.number().int().min(1).max(8).optional(),
           proposalType: z.enum(["meal_plan", "workout_plan"]).optional(),
@@ -520,8 +489,7 @@ export async function POST(request: Request) {
         },
       }),
       approveProposal: tool({
-        description:
-          "Подтвердить уже созданное AI-предложение. Используй только если пользователь явно просит подтвердить конкретный или последний подходящий черновик.",
+        description: "Подтвердить уже созданное AI-предложение.",
         inputSchema: z.object({
           proposalId: z.string().uuid().optional(),
           proposalType: z.enum(["meal_plan", "workout_plan"]).optional(),
@@ -540,8 +508,7 @@ export async function POST(request: Request) {
 
           if (!feature.allowed) {
             throw new Error(
-              feature.reason ??
-                "Это AI-предложение сейчас недоступно для текущего доступа.",
+              feature.reason ?? "Это предложение сейчас недоступно для текущего доступа.",
             );
           }
 
@@ -554,14 +521,13 @@ export async function POST(request: Request) {
             proposalId: approved.proposal.id,
             proposalType: approved.proposal.proposal_type,
             status: approved.proposal.status,
-            summary: "Черновик подтвержден и готов к применению.",
+            summary: "Черновик подтверждён и готов к применению.",
             title: approved.preview.title,
           };
         },
       }),
       applyProposal: tool({
-        description:
-          "Применить уже созданное AI-предложение в приложение. Используй только если пользователь явно просит применить конкретный или последний подходящий план.",
+        description: "Применить уже созданное AI-предложение в приложение.",
         inputSchema: z.object({
           proposalId: z.string().uuid().optional(),
           proposalType: z.enum(["meal_plan", "workout_plan"]).optional(),
@@ -580,8 +546,7 @@ export async function POST(request: Request) {
 
           if (!feature.allowed) {
             throw new Error(
-              feature.reason ??
-                "Это AI-предложение сейчас недоступно для текущего доступа.",
+              feature.reason ?? "Это предложение сейчас недоступно для текущего доступа.",
             );
           }
 
@@ -591,8 +556,8 @@ export async function POST(request: Request) {
           });
           const summary =
             applied.proposal.proposal_type === "meal_plan"
-              ? "План применен: шаблоны питания уже добавлены в приложение."
-              : "План применен: создан новый недельный черновик тренировок.";
+              ? "План применён: шаблоны питания уже добавлены в приложение."
+              : "План применён: создан новый недельный черновик тренировок.";
 
           return {
             proposalId: applied.proposal.id,
@@ -673,7 +638,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 400,
         code: "AI_ASSISTANT_INVALID_PAYLOAD",
-        message: "Запрос к AI-ассистенту заполнен некорректно.",
+        message: "Запрос к ассистенту заполнен некорректно.",
         details: error.flatten(),
       });
     }

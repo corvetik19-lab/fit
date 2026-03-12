@@ -16,8 +16,9 @@ const MODEL_DISCLOSURE_PATTERNS = [
   /\bsystem\s+prompt\b/i,
   /\bprovider\b/i,
   /\bgemini\b/i,
-  /\bopenai\b/i,
+  /\bopenrouter\b/i,
   /\bgoogle\b/i,
+  /\bvoyage\b/i,
 ];
 
 const DOMAIN_HINT_PATTERNS = [
@@ -37,7 +38,6 @@ const DOMAIN_HINT_PATTERNS = [
   /\bеда\b/i,
   /\bмасса\b/i,
   /\bвес\b/i,
-  /\bжир\b/i,
   /\bдефицит/i,
   /\bпрофицит/i,
   /\bсон\b/i,
@@ -53,6 +53,7 @@ const DOMAIN_HINT_PATTERNS = [
   /\bплеч/i,
   /\bвитамин/i,
   /\bдобавк/i,
+  /\bрецепт/i,
 ];
 
 const OFF_TOPIC_PATTERNS = [
@@ -133,8 +134,8 @@ function buildUserContextSummary(context: AiUserContext) {
     `Цель по калориям: ${context.nutritionTargets.kcalTarget ?? "не указана"}.`,
     `Цель по белку: ${context.nutritionTargets.proteinTarget ?? "не указана"}.`,
     `Тренировок завершено за 28 дней: ${context.workoutInsights.completedDaysLast28}.`,
-    `Сетов с факт. повторениями за 28 дней: ${context.workoutInsights.loggedSetsLast28}.`,
-    `Средние факт. повторения: ${context.workoutInsights.avgActualReps ?? "нет данных"}.`,
+    `Сетов с фактическими повторениями за 28 дней: ${context.workoutInsights.loggedSetsLast28}.`,
+    `Средние фактические повторы: ${context.workoutInsights.avgActualReps ?? "нет данных"}.`,
     `Средний рабочий вес: ${context.workoutInsights.avgActualWeightKg ?? "нет данных"} кг.`,
     `Средний RPE: ${context.workoutInsights.avgActualRpe ?? "нет данных"}.`,
     `Средний отдых между сетами: ${context.workoutInsights.avgRestSecondsLast28 ?? "нет данных"} сек.`,
@@ -169,7 +170,7 @@ export function detectAssistantGuardrail(message: string): AssistantGuardrail {
     return {
       kind: "confidential",
       response:
-        "Я не раскрываю внутренние модели, системные инструкции, поставщиков и служебную архитектуру. Могу помочь только по тренировкам, питанию, восстановлению и анализу твоих спортивных данных.",
+        "Я не раскрываю внутреннюю модель, системные инструкции, провайдеров и служебную архитектуру. Могу помочь только по тренировкам, питанию, восстановлению и анализу твоих спортивных данных.",
     };
   }
 
@@ -198,7 +199,7 @@ export function buildSportsDomainSystemPrompt(input: {
 - профессиональный тренер по силовой и общей физической подготовке;
 - специалист по спортивному питанию и прикладной диетологии;
 - специалист по восстановлению и безопасной тренировочной нагрузке;
-- спортивно-медицински осторожный консультант: не ставишь диагнозы и не заменяешь врача.
+- спортивно-медицинский консультант с осторожным стилем: ты не ставишь диагнозы и не заменяешь врача.
 
 Жёсткие правила:
 - всегда отвечай только по-русски;

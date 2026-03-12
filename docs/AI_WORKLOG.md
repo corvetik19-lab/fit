@@ -12,6 +12,20 @@
 
 - `npx eslint src/app/dashboard/page.tsx src/app/admin/page.tsx src/app/admin/users/page.tsx src/components/app-shell-nav.tsx src/components/admin-role-manager.tsx src/components/admin-user-actions.tsx src/components/admin-user-detail.tsx src/components/admin-users-directory.tsx`
 - `npm run build`
+
+### 2026-03-12 17:55 - AI workspace: full-page chat, cleaner widget, and image-first nutrition flow
+
+- Rebuilt `/ai` into a chat-first workspace with compact shell chrome, section pills for `История / Контекст / Планы`, and a clean mobile layout where the chat remains the main surface instead of being buried under large headers.
+- Rewrote the full-page AI chat panel so it now has a minimal header, icon-only web-search toggle, persistent session URL handling, image upload for food analysis, streamed markdown answers, inline proposal cards, and a mobile-friendly composer.
+- Updated `/api/ai/assistant` so user-facing texts, tool descriptions, safety fallback, and provider error states are now clean Russian instead of broken technical strings.
+- Rebuilt the floating AI widget into a lighter quick-access modal with the same chat runtime, quick prompts, proposal actions, and a direct jump into the full-screen AI workspace.
+- Simplified recent proposal rendering inside the chat so the UI no longer depends on older preview strings with broken copy.
+
+### Verification: AI workspace refresh
+
+- `npx eslint src/components/ai-chat-panel.tsx src/components/ai-assistant-widget.tsx src/components/ai-workspace.tsx src/components/ai-workspace-sidebar.tsx src/app/ai/page.tsx src/app/api/ai/assistant/route.ts`
+- `npm run build`
+- `npm run typecheck`
 - `npm run typecheck` (after `build`, due the existing `.next/types` race in this repo)
 
 ### Admin UI recovery and shell restore

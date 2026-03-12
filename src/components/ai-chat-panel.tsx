@@ -2,14 +2,17 @@
 
 import { DefaultChatTransport, type UIMessage } from "ai";
 import { useChat } from "@ai-sdk/react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import {
   Globe,
+  ImagePlus,
   LoaderCircle,
   Square,
   WandSparkles,
+  X,
 } from "lucide-react";
 
 import { AssistantMarkdown } from "@/components/assistant-markdown";
@@ -22,6 +25,24 @@ type ChatMessage = {
   role: "user" | "assistant";
   content: string;
   created_at: string;
+};
+
+type MealPhotoAnalysis = {
+  title: string;
+  summary: string;
+  confidence: "low" | "medium" | "high";
+  estimatedKcal: number;
+  macros: {
+    protein: number;
+    fat: number;
+    carbs: number;
+  };
+  items: Array<{
+    name: string;
+    portion: string;
+    confidence: "low" | "medium" | "high";
+  }>;
+  suggestions: string[];
 };
 
 type AssistantProposalOutput = {
@@ -67,6 +88,19 @@ type AssistantProposalActionOutput = {
 type AssistantProposalTarget = {
   proposalId: string;
   proposalType: "meal_plan" | "workout_plan";
+};
+
+type MealPhotoResponse = {
+  data?: MealPhotoAnalysis;
+  message?: string;
+  messages?: {
+    assistant?: ChatMessage;
+    user?: ChatMessage;
+  };
+  session?: {
+    id: string;
+    title: string | null;
+  };
 };
 
 type AssistantToolPart =
@@ -117,14 +151,12 @@ type AiChatPanelProps = {
   initialSessionId: string | null;
   initialSessionTitle: string | null;
   initialMessages: ChatMessage[];
+  mealPhotoAccess: FeatureAccessSnapshot;
 };
 
-const textareaClassName =
-  "min-h-28 w-full rounded-3xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15 disabled:cursor-not-allowed disabled:opacity-60";
-
 const quickPrompts = [
-  "Разбери мой прогресс по тренировкам и подскажи, что скорректировать на этой неделе.",
-  "Составь новый план питания с акцентом на белок и восстановление.",
+  "Разбери мой прогресс за последние недели и скажи, что лучше поправить.",
+  "Составь план питания на день с упором на белок и восстановление.",
   "Собери тренировку без перегруза с учётом моей истории.",
 ];
 
@@ -135,6 +167,102 @@ const timeFormatter = new Intl.DateTimeFormat("ru-RU", {
   minute: "2-digit",
 });
 
+function formatConfidence(value: MealPhotoAnalysis["confidence"]) {
+  switch (value) {
+    case "high":
+      return "высокая";
+    case "medium":
+      return "средняя";
+    default:
+      return "низкая";
+  }
+}
+
+function formatProposalStatus(status: string) {
+  if (status === "applied") {
+    return "применено";
+  }
+
+  if (status === "approved") {
+    return "подтверждено";
+  }
+
+  return "черновик";
+}
+
+function toUiTextMessage(message: ChatMessage): UIMessage {
+  return {
+    id: message.id,
+    role: message.role,
+    parts: [
+      {
+        type: "text",
+        text: message.content,
+      },
+    ],
+  };
+}
+
+function buildMealPhotoMarkdown(result: MealPhotoAnalysis) {
+  const items =
+    result.items.length > 0
+      ? result.items
+          .map(
+            (item) =>
+              `- ${item.name} · ${item.portion} · уверенность ${formatConfidence(item.confidence)}`,
+          )
+          .join("\n")
+      : "- Точный состав определить не удалось.";
+
+  const suggestions =
+    result.suggestions.length > 0
+      ? result.suggestions.map((item) => `- ${item}`).join("\n")
+      : "- Можно уточнить рецепт, замену продуктов или попросить план питания.";
+
+  return [
+    `### ${result.title}`,
+    result.summary,
+    "",
+    `Оценка: **${result.estimatedKcal} ккал**`,
+    `Белки: **${result.macros.protein} г** · Жиры: **${result.macros.fat} г** · Углеводы: **${result.macros.carbs} г**`,
+    "",
+    "Что видно на фото:",
+    items,
+    "",
+    "Что можно сделать дальше:",
+    suggestions,
+  ].join("\n");
+}
+
+function ProposalStatusPill({
+  proposalType,
+  status,
+}: {
+  proposalType: "meal_plan" | "workout_plan";
+  status: string;
+}) {
+  return (
+    <span className="pill">
+      {proposalType === "workout_plan" ? "Тренировки" : "Питание"} · {formatProposalStatus(status)}
+    </span>
+  );
+}
+
+function formatProposalType(proposalType: "meal_plan" | "workout_plan") {
+  return proposalType === "workout_plan" ? "тренировки" : "питание";
+}
+
+function LoadingToolCard({ text }: { text: string }) {
+  return (
+    <div className="rounded-3xl border border-border bg-white/80 px-4 py-4 text-sm text-muted">
+      <div className="flex items-center gap-2">
+        <LoaderCircle className="animate-spin" size={16} />
+        {text}
+      </div>
+    </div>
+  );
+}
+
 function ProposalToolCard({
   output,
   state,
@@ -143,14 +271,7 @@ function ProposalToolCard({
   state: string;
 }) {
   if (state === "input-streaming" || state === "input-available") {
-    return (
-      <div className="rounded-3xl border border-border bg-white/80 px-4 py-4 text-sm text-muted">
-        <div className="flex items-center gap-2">
-          <LoaderCircle className="animate-spin" size={16} />
-          Готовлю новый план...
-        </div>
-      </div>
-    );
+    return <LoadingToolCard text="Собираю новый план..." />;
   }
 
   if (!output) {
@@ -159,8 +280,8 @@ function ProposalToolCard({
 
   return (
     <div className="rounded-3xl border border-border bg-white/90 p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-foreground">{output.title}</p>
           <p className="mt-1 text-sm leading-6 text-muted">{output.description}</p>
         </div>
@@ -168,6 +289,7 @@ function ProposalToolCard({
           {output.proposalType === "workout_plan" ? "Тренировки" : "Питание"}
         </span>
       </div>
+
       {output.highlights.length ? (
         <ul className="mt-3 grid gap-2 text-sm leading-6 text-muted">
           {output.highlights.slice(0, 4).map((item) => (
@@ -175,17 +297,10 @@ function ProposalToolCard({
           ))}
         </ul>
       ) : null}
-      <div className="mt-4 flex flex-wrap items-center gap-3">
-        <p className="text-sm text-muted">
-          Черновик уже создан в системе и доступен в студии предложений.
-        </p>
-        <Link
-          className="rounded-full border border-border bg-white/80 px-4 py-2 text-sm font-medium text-foreground transition hover:bg-white"
-          href="/ai#proposal-studio"
-        >
-          Открыть студию
-        </Link>
-      </div>
+
+      <p className="mt-4 text-sm leading-6 text-muted">
+        Черновик уже сохранён. Его можно подтвердить или применить прямо в этом чате.
+      </p>
     </div>
   );
 }
@@ -198,14 +313,7 @@ function SearchToolCard({
   state: string;
 }) {
   if (state === "input-streaming" || state === "input-available") {
-    return (
-      <div className="rounded-3xl border border-border bg-white/80 px-4 py-4 text-sm text-muted">
-        <div className="flex items-center gap-2">
-          <LoaderCircle className="animate-spin" size={16} />
-          Ищу свежую информацию...
-        </div>
-      </div>
-    );
+    return <LoadingToolCard text="Ищу свежую информацию..." />;
   }
 
   if (!output) {
@@ -214,9 +322,7 @@ function SearchToolCard({
 
   return (
     <div className="rounded-3xl border border-border bg-white/90 p-4">
-      <p className="text-sm font-semibold text-foreground">
-        Интернет-поиск: {output.query}
-      </p>
+      <p className="text-sm font-semibold text-foreground">Поиск в интернете: {output.query}</p>
       <div className="mt-3 grid gap-3">
         {output.results.length ? (
           output.results.map((result) => (
@@ -234,29 +340,11 @@ function SearchToolCard({
             </a>
           ))
         ) : (
-          <p className="text-sm text-muted">Ничего полезного не нашлось.</p>
+          <p className="text-sm text-muted">Подходящих результатов не нашлось.</p>
         )}
       </div>
     </div>
   );
-}
-
-function ProposalStatusPill({
-  proposalType,
-  status,
-}: {
-  proposalType: "meal_plan" | "workout_plan";
-  status: string;
-}) {
-  const typeLabel = proposalType === "workout_plan" ? "Тренировки" : "Питание";
-  const statusLabel =
-    status === "applied"
-      ? "применено"
-      : status === "approved"
-        ? "подтверждено"
-        : "черновик";
-
-  return <span className="pill">{`${typeLabel} · ${statusLabel}`}</span>;
 }
 
 function ProposalListToolCard({
@@ -273,14 +361,7 @@ function ProposalListToolCard({
   state: string;
 }) {
   if (state === "input-streaming" || state === "input-available") {
-    return (
-      <div className="rounded-3xl border border-border bg-white/80 px-4 py-4 text-sm text-muted">
-        <div className="flex items-center gap-2">
-          <LoaderCircle className="animate-spin" size={16} />
-          Собираю последние AI-предложения...
-        </div>
-      </div>
-    );
+    return <LoadingToolCard text="Поднимаю последние предложения..." />;
   }
 
   if (!output) {
@@ -291,15 +372,12 @@ function ProposalListToolCard({
     <div className="rounded-3xl border border-border bg-white/90 p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-sm font-semibold text-foreground">
-            Последние AI-предложения
-          </p>
+          <p className="text-sm font-semibold text-foreground">Последние предложения</p>
           <p className="mt-1 text-sm leading-6 text-muted">
-            Найдено: {output.count}. Можно открыть студию и выбрать, что подтверждать
-            или применять дальше.
+            Ниже можно быстро выбрать черновик и сразу применить его.
           </p>
         </div>
-        <span className="pill">{output.count} шт.</span>
+        <span className="pill">{output.count}</span>
       </div>
 
       <div className="mt-3 grid gap-3">
@@ -310,17 +388,23 @@ function ProposalListToolCard({
               key={item.proposalId}
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-foreground">{item.title}</p>
-                  <p className="mt-1 text-sm leading-6 text-muted">{item.requestSummary}</p>
+                  <p className="mt-1 text-sm leading-6 text-muted">
+                    {`Сохранённый ${formatProposalType(item.proposalType)}-план.`}
+                  </p>
                 </div>
-                <ProposalStatusPill
-                  proposalType={item.proposalType}
-                  status={item.status}
-                />
+                <ProposalStatusPill proposalType={item.proposalType} status={item.status} />
               </div>
-              <p className="mt-2 text-sm leading-6 text-muted">{item.timeline}</p>
-              <div className="mt-3 flex flex-wrap items-center gap-2">
+              <p className="mt-2 text-sm leading-6 text-muted">
+                {item.status === "applied"
+                  ? "Уже добавлен в приложение."
+                  : item.status === "approved"
+                    ? "Подтверждён и готов к применению."
+                    : "Черновик готов к проверке и применению."}
+              </p>
+
+              <div className="mt-3 flex flex-wrap gap-2">
                 {item.status === "draft" ? (
                   <button
                     className="rounded-full border border-border bg-white/80 px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
@@ -333,11 +417,10 @@ function ProposalListToolCard({
                     }
                     type="button"
                   >
-                    {actionBusyKey === `approve:${item.proposalId}`
-                      ? "Подтверждаю..."
-                      : "Подтвердить"}
+                    {actionBusyKey === `approve:${item.proposalId}` ? "Подтверждаю..." : "Подтвердить"}
                   </button>
                 ) : null}
+
                 {item.status !== "applied" ? (
                   <button
                     className="rounded-full bg-accent px-3 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
@@ -350,9 +433,7 @@ function ProposalListToolCard({
                     }
                     type="button"
                   >
-                    {actionBusyKey === `apply:${item.proposalId}`
-                      ? "Применяю..."
-                      : "Применить"}
+                    {actionBusyKey === `apply:${item.proposalId}` ? "Применяю..." : "Применить"}
                   </button>
                 ) : (
                   <Link
@@ -366,20 +447,8 @@ function ProposalListToolCard({
             </div>
           ))
         ) : (
-          <p className="text-sm text-muted">Сохранённых AI-предложений пока нет.</p>
+          <p className="text-sm text-muted">Сохранённых предложений пока нет.</p>
         )}
-      </div>
-
-      <div className="mt-4 flex flex-wrap items-center gap-3">
-        <p className="text-sm text-muted">
-          Полный список и все действия доступны в студии предложений.
-        </p>
-        <Link
-          className="rounded-full border border-border bg-white/80 px-4 py-2 text-sm font-medium text-foreground transition hover:bg-white"
-          href="/ai#proposal-studio"
-        >
-          Открыть студию
-        </Link>
       </div>
     </div>
   );
@@ -400,14 +469,9 @@ function ProposalActionToolCard({
 }) {
   if (state === "input-streaming" || state === "input-available") {
     return (
-      <div className="rounded-3xl border border-border bg-white/80 px-4 py-4 text-sm text-muted">
-        <div className="flex items-center gap-2">
-          <LoaderCircle className="animate-spin" size={16} />
-          {variant === "approve"
-            ? "Подтверждаю AI-предложение..."
-            : "Применяю AI-предложение..."}
-        </div>
-      </div>
+      <LoadingToolCard
+        text={variant === "approve" ? "Подтверждаю предложение..." : "Применяю предложение..."}
+      />
     );
   }
 
@@ -415,34 +479,17 @@ function ProposalActionToolCard({
     return null;
   }
 
-  const primaryHref =
-    variant === "apply"
-      ? output.proposalType === "workout_plan"
-        ? "/workouts"
-        : "/nutrition"
-      : "/ai#proposal-studio";
-
-  const primaryLabel =
-    variant === "apply"
-      ? output.proposalType === "workout_plan"
-        ? "Открыть тренировки"
-        : "Открыть питание"
-      : "Открыть студию";
-
   return (
     <div className="rounded-3xl border border-border bg-white/90 p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
+        <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-foreground">{output.title}</p>
           <p className="mt-1 text-sm leading-6 text-muted">{output.summary}</p>
         </div>
-        <ProposalStatusPill
-          proposalType={output.proposalType}
-          status={output.status}
-        />
+        <ProposalStatusPill proposalType={output.proposalType} status={output.status} />
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-3">
+      <div className="mt-4 flex flex-wrap gap-2">
         {output.status !== "applied" ? (
           <button
             className="rounded-full bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
@@ -458,17 +505,12 @@ function ProposalActionToolCard({
             {actionBusyKey === `apply:${output.proposalId}` ? "Применяю..." : "Применить"}
           </button>
         ) : null}
+
         <Link
           className="rounded-full border border-border bg-white/80 px-4 py-2 text-sm font-medium text-foreground transition hover:bg-white"
-          href={primaryHref}
+          href={output.proposalType === "workout_plan" ? "/workouts" : "/nutrition"}
         >
-          {primaryLabel}
-        </Link>
-        <Link
-          className="rounded-full border border-border bg-white/80 px-4 py-2 text-sm font-medium text-foreground transition hover:bg-white"
-          href="/ai#proposal-studio"
-        >
-          История AI-предложений
+          Открыть раздел
         </Link>
       </div>
     </div>
@@ -480,32 +522,37 @@ export function AiChatPanel({
   initialSessionId,
   initialSessionTitle,
   initialMessages,
+  mealPhotoAccess,
 }: AiChatPanelProps) {
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const scrollViewportRef = useRef<HTMLDivElement | null>(null);
+
   const [sessionId, setSessionId] = useState(initialSessionId);
   const [sessionTitle, setSessionTitle] = useState(initialSessionTitle);
   const [draft, setDraft] = useState("");
   const [allowWebSearch, setAllowWebSearch] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [actionBusyKey, setActionBusyKey] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
+  const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
+  const [messageTimes, setMessageTimes] = useState(
+    () => new Map(initialMessages.map((message) => [message.id, message.created_at])),
+  );
+
+  const initialUiMessages = useMemo(() => toUiMessages(initialMessages), [initialMessages]);
   const nowLabel = useMemo(() => timeFormatter.format(new Date()), []);
-  const initialUiMessages = useMemo(
-    () => toUiMessages(initialMessages),
-    [initialMessages],
-  );
-  const initialMessageTimes = useMemo(
-    () =>
-      new Map(initialMessages.map((message) => [message.id, message.created_at])),
-    [initialMessages],
-  );
+
   const { messages, sendMessage, status, error, stop, setMessages } = useChat({
-    messages: initialUiMessages as UIMessage[],
+    messages: initialUiMessages,
     transport: new DefaultChatTransport({
       api: "/api/ai/assistant",
     }),
   });
 
   const isBusy = status === "submitted" || status === "streaming";
+  const isComposerBusy = isBusy || isAnalyzingImage;
   const lastAssistantMessageId = useMemo(() => {
     const lastAssistantMessage = [...messages]
       .reverse()
@@ -513,23 +560,78 @@ export function AiChatPanel({
     return lastAssistantMessage?.id ?? null;
   }, [messages]);
 
-  function submitMessage(text?: string) {
-    const trimmed = (text ?? draft).trim();
+  useEffect(() => {
+    if (!selectedImage) {
+      setSelectedImageUrl((current) => {
+        if (current) {
+          URL.revokeObjectURL(current);
+        }
+        return null;
+      });
+      return;
+    }
 
-    if (!trimmed || isBusy || !access.allowed) {
+    const objectUrl = URL.createObjectURL(selectedImage);
+    setSelectedImageUrl((current) => {
+      if (current) {
+        URL.revokeObjectURL(current);
+      }
+      return objectUrl;
+    });
+
+    return () => {
+      URL.revokeObjectURL(objectUrl);
+    };
+  }, [selectedImage]);
+
+  useEffect(() => {
+    const viewport = scrollViewportRef.current;
+
+    if (!viewport) {
+      return;
+    }
+
+    viewport.scrollTo({
+      top: viewport.scrollHeight,
+      behavior: "smooth",
+    });
+  }, [messages, isBusy, notice]);
+
+  function updateSessionUrl(nextSessionId: string | null) {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const url = new URL(window.location.href);
+
+    if (nextSessionId) {
+      url.searchParams.set("session", nextSessionId);
+    } else {
+      url.searchParams.delete("session");
+    }
+
+    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+  }
+
+  function rememberLocalSession(nextSessionId: string, titleSeed: string) {
+    setSessionId(nextSessionId);
+    setSessionTitle((current) => current ?? titleSeed.trim().slice(0, 72));
+    updateSessionUrl(nextSessionId);
+  }
+
+  function submitText(nextText?: string) {
+    const trimmed = (nextText ?? draft).trim();
+
+    if (!trimmed || isComposerBusy || !access.allowed) {
       return;
     }
 
     const nextSessionId = sessionId ?? crypto.randomUUID();
-    setSessionId(nextSessionId);
-    if (!sessionTitle) {
-      setSessionTitle(trimmed.slice(0, 72));
-    }
+    rememberLocalSession(nextSessionId, trimmed);
+    setNotice(null);
 
     sendMessage(
-      {
-        text: trimmed,
-      },
+      { text: trimmed },
       {
         body: {
           allowWebSearch,
@@ -537,6 +639,7 @@ export function AiChatPanel({
         },
       },
     );
+
     setDraft("");
   }
 
@@ -551,30 +654,112 @@ export function AiChatPanel({
       const response = await fetch(`/api/ai/proposals/${target.proposalId}/${action}`, {
         method: "POST",
       });
-      const payload = (await response.json().catch(() => null)) as
-        | { message?: string }
-        | null;
+      const payload = (await response.json().catch(() => null)) as { message?: string } | null;
 
       if (!response.ok) {
-        throw new Error(payload?.message ?? "Не удалось выполнить действие с AI-предложением.");
+        throw new Error(payload?.message ?? "Не удалось выполнить действие с предложением.");
       }
 
       setNotice(
         action === "approve"
-          ? "AI-предложение подтверждено и готово к применению."
+          ? "Предложение подтверждено и готово к применению."
           : target.proposalType === "workout_plan"
-            ? "Тренировочный план применён и добавлен в приложение."
-            : "План питания применён и добавлен в приложение.",
+            ? "План тренировок уже добавлен в приложение."
+            : "План питания уже добавлен в приложение.",
       );
       router.refresh();
     } catch (proposalActionError) {
       setNotice(
         proposalActionError instanceof Error
           ? proposalActionError.message
-          : "Не удалось выполнить действие с AI-предложением.",
+          : "Не удалось выполнить действие с предложением.",
       );
     } finally {
       setActionBusyKey(null);
+    }
+  }
+
+  async function analyzeMealPhoto() {
+    if (!selectedImage || isComposerBusy) {
+      return;
+    }
+
+    if (!mealPhotoAccess.allowed) {
+      setNotice(mealPhotoAccess.reason ?? "Анализ фото еды сейчас недоступен.");
+      return;
+    }
+
+    const nextSessionId = sessionId ?? crypto.randomUUID();
+    const trimmedNotes = draft.trim();
+    const formData = new FormData();
+    formData.set("image", selectedImage);
+    formData.set("sessionId", nextSessionId);
+
+    if (trimmedNotes) {
+      formData.set("notes", trimmedNotes);
+    }
+
+    setIsAnalyzingImage(true);
+    setNotice(null);
+
+    try {
+      const response = await fetch("/api/ai/meal-photo", {
+        method: "POST",
+        body: formData,
+      });
+      const payload = (await response.json().catch(() => null)) as MealPhotoResponse | null;
+
+      if (!response.ok || !payload?.data) {
+        throw new Error(payload?.message ?? "Не удалось разобрать фото. Попробуй другой кадр.");
+      }
+
+      const resolvedSessionId = payload.session?.id ?? nextSessionId;
+      const nextTitle = payload.session?.title ?? trimmedNotes ?? "Разбор фото еды";
+      const userMessage =
+        payload.messages?.user ??
+        ({
+          id: crypto.randomUUID(),
+          session_id: resolvedSessionId,
+          role: "user",
+          content: trimmedNotes || "Загружено фото еды для анализа.",
+          created_at: new Date().toISOString(),
+        } satisfies ChatMessage);
+      const assistantMessage =
+        payload.messages?.assistant ??
+        ({
+          id: crypto.randomUUID(),
+          session_id: resolvedSessionId,
+          role: "assistant",
+          content: buildMealPhotoMarkdown(payload.data),
+          created_at: new Date().toISOString(),
+        } satisfies ChatMessage);
+
+      rememberLocalSession(resolvedSessionId, nextTitle);
+
+      setMessageTimes((current) => {
+        const next = new Map(current);
+        next.set(userMessage.id, userMessage.created_at);
+        next.set(assistantMessage.id, assistantMessage.created_at);
+        return next;
+      });
+
+      setMessages((current) => [
+        ...current,
+        toUiTextMessage(userMessage),
+        toUiTextMessage(assistantMessage),
+      ]);
+
+      setDraft("");
+      setSelectedImage(null);
+      setNotice("Фото разобрано. Теперь можно попросить рецепт, замену или план питания.");
+    } catch (mealPhotoError) {
+      setNotice(
+        mealPhotoError instanceof Error
+          ? mealPhotoError.message
+          : "Не удалось проанализировать фото.",
+      );
+    } finally {
+      setIsAnalyzingImage(false);
     }
   }
 
@@ -583,58 +768,72 @@ export function AiChatPanel({
     setSessionTitle(null);
     setMessages([]);
     setDraft("");
+    setSelectedImage(null);
     setNotice(null);
+    updateSessionUrl(null);
+  }
+
+  function handleComposerKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+
+      if (selectedImage) {
+        void analyzeMealPhoto();
+        return;
+      }
+
+      submitText();
+    }
   }
 
   return (
-    <div className="grid gap-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="text-sm text-muted">
-            {sessionTitle
-              ? `Текущий чат: ${sessionTitle}`
-              : "Новый AI-чат без сохранённого заголовка"}
+    <section className="card flex min-h-[72dvh] flex-col overflow-hidden p-4 sm:p-5 lg:min-h-[78dvh]">
+      <div className="flex items-center justify-between gap-3 border-b border-border pb-4">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold text-foreground">
+            {sessionTitle?.trim() || "Новый чат"}
           </p>
-          <p className="mt-1 text-sm text-muted">
-            Чат использует сохранённый профиль, полную историю тренировок,
-            питания и состава тела текущего пользователя.
-          </p>
-          <p className="mt-1 text-sm text-muted">
-            Использовано: {access.usage.count}
-            {typeof access.usage.limit === "number" ? ` / ${access.usage.limit}` : ""}
+          <p className="mt-1 text-xs text-muted">
+            История сохраняется автоматически. AI отвечает только по тренировкам, питанию,
+            восстановлению и форме.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <label className="flex items-center gap-3 rounded-full border border-border bg-white/80 px-4 py-2 text-sm text-foreground">
-            <span
-              className={`inline-flex h-6 w-11 items-center rounded-full border p-1 transition ${
-                allowWebSearch
-                  ? "border-accent bg-accent/15"
-                  : "border-border bg-white/80"
-              }`}
-            >
-              <span
-                className={`h-4 w-4 rounded-full transition ${
-                  allowWebSearch ? "translate-x-5 bg-accent" : "bg-muted"
-                }`}
-              />
-            </span>
-            <span className="inline-flex items-center gap-2">
-              <Globe size={16} strokeWidth={2.2} />
-              Интернет
-            </span>
-            <input
-              checked={allowWebSearch}
-              className="sr-only"
-              onChange={(event) => setAllowWebSearch(event.target.checked)}
-              type="checkbox"
-            />
-          </label>
+        <div className="flex items-center gap-2">
+          <button
+            aria-label={
+              allowWebSearch
+                ? "Выключить поиск в интернете"
+                : "Включить поиск в интернете"
+            }
+            aria-pressed={allowWebSearch}
+            className={`inline-flex h-11 w-11 items-center justify-center rounded-full border transition ${
+              allowWebSearch
+                ? "border-accent/30 bg-accent/10 text-accent"
+                : "border-border bg-white/80 text-muted hover:bg-white"
+            }`}
+            onClick={() => setAllowWebSearch((current) => !current)}
+            type="button"
+          >
+            <Globe size={18} strokeWidth={2.2} />
+          </button>
 
           <button
-            className="rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
-            disabled={!access.allowed}
+            aria-label="Выбрать фото еды"
+            className={`inline-flex h-11 w-11 items-center justify-center rounded-full border transition ${
+              selectedImage
+                ? "border-accent/30 bg-accent/10 text-accent"
+                : "border-border bg-white/80 text-muted hover:bg-white"
+            }`}
+            disabled={!mealPhotoAccess.allowed}
+            onClick={() => fileInputRef.current?.click()}
+            type="button"
+          >
+            <ImagePlus size={18} strokeWidth={2.2} />
+          </button>
+
+          <button
+            className="rounded-full border border-border bg-white/80 px-4 py-2 text-sm font-medium text-foreground transition hover:bg-white"
             onClick={resetChat}
             type="button"
           >
@@ -643,192 +842,257 @@ export function AiChatPanel({
         </div>
       </div>
 
+      <input
+        accept="image/*"
+        className="hidden"
+        onChange={(event) => setSelectedImage(event.target.files?.[0] ?? null)}
+        ref={fileInputRef}
+        type="file"
+      />
+
       {!access.allowed ? (
-        <div className="rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          {access.reason ?? "AI-чат сейчас недоступен для текущего плана."}
+        <div className="mt-4 rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          {access.reason ?? "AI-чат сейчас недоступен для текущего доступа."}
           <Link
             className="mt-3 inline-flex rounded-full border border-amber-400/70 bg-white/80 px-4 py-2 font-semibold text-foreground transition hover:bg-white"
             href="/settings#billing-center"
           >
-            Открыть billing center
+            Открыть доступ
           </Link>
         </div>
       ) : null}
 
       {error ? (
-        <p className="rounded-2xl border border-red-300/60 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <p className="mt-4 rounded-2xl border border-red-300/60 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error.message}
         </p>
       ) : null}
 
       {notice ? (
-        <p className="rounded-2xl border border-emerald-300/60 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+        <p className="mt-4 rounded-2xl border border-emerald-300/60 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
           {notice}
         </p>
       ) : null}
 
-      <div className="grid gap-2 md:grid-cols-3">
-        {quickPrompts.map((prompt) => (
-          <button
-            className="inline-flex items-center justify-between gap-3 rounded-2xl border border-border bg-white/76 px-4 py-3 text-left text-sm text-foreground transition hover:bg-white disabled:opacity-60"
-            disabled={isBusy || !access.allowed}
-            key={prompt}
-            onClick={() => submitMessage(prompt)}
-            type="button"
-          >
-            <span className="line-clamp-2">{prompt}</span>
-            <WandSparkles size={16} strokeWidth={2.1} />
-          </button>
-        ))}
+      <div
+        className="mt-4 flex-1 overflow-y-auto rounded-[1.75rem] border border-border bg-white/50 p-3 sm:p-4"
+        ref={scrollViewportRef}
+      >
+        <div className="grid gap-4">
+          {messages.length ? (
+            messages.map((message) => (
+              <article
+                className={`rounded-3xl border px-4 py-4 ${
+                  message.role === "assistant"
+                    ? "border-border bg-white/85"
+                    : "ml-auto border-accent/20 bg-accent/5"
+                }`}
+                key={message.id}
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-sm font-semibold text-foreground">
+                    {message.role === "assistant" ? "AI-коуч" : "Ты"}
+                  </p>
+                  <p className="text-xs text-muted">
+                    {messageTimes.has(message.id)
+                      ? timeFormatter.format(new Date(messageTimes.get(message.id) ?? ""))
+                      : nowLabel}
+                  </p>
+                </div>
+
+                <div className="mt-3 grid gap-3">
+                  {(message.parts as AssistantToolPart[]).map((part, index) => {
+                    if (part.type === "text") {
+                      return (
+                        <AssistantMarkdown
+                          isStreaming={
+                            message.role === "assistant" &&
+                            status === "streaming" &&
+                            message.id === lastAssistantMessageId
+                          }
+                          key={`${message.id}-text-${index}`}
+                          text={part.text}
+                        />
+                      );
+                    }
+
+                    if (part.type === "tool-createWorkoutPlan") {
+                      return (
+                        <ProposalToolCard
+                          key={`${message.id}-workout-${index}`}
+                          output={part.output}
+                          state={part.state}
+                        />
+                      );
+                    }
+
+                    if (part.type === "tool-createMealPlan") {
+                      return (
+                        <ProposalToolCard
+                          key={`${message.id}-meal-${index}`}
+                          output={part.output}
+                          state={part.state}
+                        />
+                      );
+                    }
+
+                    if (part.type === "tool-searchWeb") {
+                      return (
+                        <SearchToolCard
+                          key={`${message.id}-search-${index}`}
+                          output={part.output}
+                          state={part.state}
+                        />
+                      );
+                    }
+
+                    if (part.type === "tool-listRecentProposals") {
+                      return (
+                        <ProposalListToolCard
+                          actionBusyKey={actionBusyKey}
+                          key={`${message.id}-proposal-list-${index}`}
+                          onApply={(target) => runProposalAction("apply", target)}
+                          onApprove={(target) => runProposalAction("approve", target)}
+                          output={part.output}
+                          state={part.state}
+                        />
+                      );
+                    }
+
+                    if (part.type === "tool-approveProposal") {
+                      return (
+                        <ProposalActionToolCard
+                          actionBusyKey={actionBusyKey}
+                          key={`${message.id}-proposal-approve-${index}`}
+                          onApply={(target) => runProposalAction("apply", target)}
+                          output={part.output}
+                          state={part.state}
+                          variant="approve"
+                        />
+                      );
+                    }
+
+                    if (part.type === "tool-applyProposal") {
+                      return (
+                        <ProposalActionToolCard
+                          actionBusyKey={actionBusyKey}
+                          key={`${message.id}-proposal-apply-${index}`}
+                          onApply={(target) => runProposalAction("apply", target)}
+                          output={part.output}
+                          state={part.state}
+                          variant="apply"
+                        />
+                      );
+                    }
+
+                    if (part.type === "tool-call") {
+                      return (
+                        <div
+                          className="rounded-2xl border border-border bg-white/70 px-4 py-3 text-sm text-muted"
+                          key={`${message.id}-tool-call-${index}`}
+                        >
+                          Выполняю действие: {part.toolName}
+                        </div>
+                      );
+                    }
+
+                    return null;
+                  })}
+                </div>
+              </article>
+            ))
+          ) : (
+            <div className="grid gap-3 rounded-3xl border border-dashed border-border bg-white/70 px-4 py-6">
+              <p className="text-sm leading-6 text-muted">
+                Спроси про тренировку, питание, восстановление, анализ прогресса или загрузи фото
+                еды для разбора.
+              </p>
+
+              <div className="grid gap-2 sm:grid-cols-3">
+                {quickPrompts.map((prompt) => (
+                  <button
+                    className="inline-flex items-center justify-between gap-3 rounded-2xl border border-border bg-white/80 px-4 py-3 text-left text-sm text-foreground transition hover:bg-white disabled:opacity-60"
+                    disabled={isComposerBusy || !access.allowed}
+                    key={prompt}
+                    onClick={() => submitText(prompt)}
+                    type="button"
+                  >
+                    <span className="line-clamp-2">{prompt}</span>
+                    <WandSparkles size={16} strokeWidth={2.1} />
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className="grid max-h-[42rem] gap-4 overflow-y-auto rounded-3xl border border-border bg-white/50 p-4">
-        {messages.length ? (
-          messages.map((message) => (
-            <article
-              className={`rounded-3xl border px-4 py-4 ${
-                message.role === "assistant"
-                  ? "border-border bg-white/80"
-                  : "border-accent/20 bg-accent/5"
-              }`}
-              key={message.id}
+      <form
+        className="mt-4 rounded-[1.75rem] border border-border bg-white/85 p-3 sm:p-4"
+        onSubmit={(event) => {
+          event.preventDefault();
+
+          if (selectedImage) {
+            void analyzeMealPhoto();
+            return;
+          }
+
+          submitText();
+        }}
+      >
+        {selectedImage ? (
+          <div className="mb-3 flex items-center gap-3 rounded-2xl border border-border bg-white/90 p-3">
+            {selectedImageUrl ? (
+              <Image
+                alt="Выбранное фото еды"
+                className="h-16 w-16 rounded-2xl object-cover"
+                height={64}
+                src={selectedImageUrl}
+                unoptimized
+                width={64}
+              />
+            ) : null}
+
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-foreground">{selectedImage.name}</p>
+              <p className="mt-1 text-xs text-muted">
+                Сначала AI разберёт фото, потом можно попросить рецепт, замену или план питания.
+              </p>
+            </div>
+
+            <button
+              aria-label="Убрать фото"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-white/80 text-muted transition hover:bg-white"
+              onClick={() => setSelectedImage(null)}
+              type="button"
             >
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-sm font-semibold text-foreground">
-                  {message.role === "assistant" ? "AI-коуч" : "Ты"}
-                </p>
-                <p className="text-xs text-muted">
-                  {initialMessageTimes.has(message.id)
-                    ? timeFormatter.format(
-                        new Date(initialMessageTimes.get(message.id) ?? ""),
-                      )
-                    : nowLabel}
-                </p>
-              </div>
-
-              <div className="mt-3 grid gap-3">
-                {(message.parts as AssistantToolPart[]).map((part, index) => {
-                  if (part.type === "text") {
-                    return (
-                      <AssistantMarkdown
-                        isStreaming={
-                          message.role === "assistant" &&
-                          status === "streaming" &&
-                          message.id === lastAssistantMessageId
-                        }
-                        key={`${message.id}-text-${index}`}
-                        text={part.text}
-                      />
-                    );
-                  }
-
-                  if (part.type === "tool-createWorkoutPlan") {
-                    return (
-                      <ProposalToolCard
-                        key={`${message.id}-workout-${index}`}
-                        output={part.output}
-                        state={part.state}
-                      />
-                    );
-                  }
-
-                  if (part.type === "tool-createMealPlan") {
-                    return (
-                      <ProposalToolCard
-                        key={`${message.id}-meal-${index}`}
-                        output={part.output}
-                        state={part.state}
-                      />
-                    );
-                  }
-
-                  if (part.type === "tool-searchWeb") {
-                    return (
-                      <SearchToolCard
-                        key={`${message.id}-web-${index}`}
-                        output={part.output}
-                        state={part.state}
-                      />
-                    );
-                  }
-
-                  if (part.type === "tool-listRecentProposals") {
-                    return (
-                      <ProposalListToolCard
-                        actionBusyKey={actionBusyKey}
-                        key={`${message.id}-proposal-list-${index}`}
-                        onApply={(target) => runProposalAction("apply", target)}
-                        onApprove={(target) => runProposalAction("approve", target)}
-                        output={part.output}
-                        state={part.state}
-                      />
-                    );
-                  }
-
-                  if (part.type === "tool-approveProposal") {
-                    return (
-                      <ProposalActionToolCard
-                        actionBusyKey={actionBusyKey}
-                        key={`${message.id}-proposal-approve-${index}`}
-                        onApply={(target) => runProposalAction("apply", target)}
-                        output={part.output}
-                        state={part.state}
-                        variant="approve"
-                      />
-                    );
-                  }
-
-                  if (part.type === "tool-applyProposal") {
-                    return (
-                      <ProposalActionToolCard
-                        actionBusyKey={actionBusyKey}
-                        key={`${message.id}-proposal-apply-${index}`}
-                        onApply={(target) => runProposalAction("apply", target)}
-                        output={part.output}
-                        state={part.state}
-                        variant="apply"
-                      />
-                    );
-                  }
-
-                  if (part.type === "tool-call") {
-                    return (
-                      <div
-                        className="rounded-2xl border border-border bg-white/70 px-4 py-3 text-sm text-muted"
-                        key={`${message.id}-toolcall-${index}`}
-                      >
-                        Выполняю действие: {part.toolName}
-                      </div>
-                    );
-                  }
-
-                  return null;
-                })}
-              </div>
-            </article>
-          ))
-        ) : (
-          <div className="rounded-3xl border border-dashed border-border bg-white/60 px-4 py-6 text-sm leading-7 text-muted">
-            Здесь появится диалог с AI-коучем. Он опирается на профиль, цели,
-            тренировки, питание и исторические пользовательские данные текущего
-            аккаунта.
+              <X size={16} strokeWidth={2.2} />
+            </button>
           </div>
-        )}
-      </div>
+        ) : null}
 
-      <div className="grid gap-3">
         <textarea
-          className={textareaClassName}
+          className="min-h-28 w-full resize-none rounded-3xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15 disabled:cursor-not-allowed disabled:opacity-60"
           disabled={!access.allowed}
           onChange={(event) => setDraft(event.target.value)}
-          placeholder="Например: подскажи, как перестроить неделю тренировок без перегруза плеч."
+          onKeyDown={handleComposerKeyDown}
+          placeholder={
+            selectedImage
+              ? "Например: это мой ужин после тренировки, оцени состав и подскажи, как улучшить."
+              : "Напиши вопрос, задачу или попроси собрать программу."
+          }
           value={draft}
         />
-        <div className="flex flex-wrap justify-between gap-3">
+
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-muted">
-            AI не записывает ничего в тренировки или питание автоматически без
-            явного применения предложений.
+            {selectedImage
+              ? "Фото будет проанализировано и сохранено в историю этого чата."
+              : allowWebSearch
+                ? "Поиск в интернете включён."
+                : "Поиск в интернете выключен."}
           </p>
+
           <div className="flex flex-wrap gap-2">
             {isBusy ? (
               <button
@@ -845,15 +1109,28 @@ export function AiChatPanel({
 
             <button
               className="rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={isBusy || !draft.trim() || !access.allowed}
-              onClick={() => submitMessage()}
-              type="button"
+              disabled={
+                isComposerBusy ||
+                (!selectedImage && !draft.trim()) ||
+                (selectedImage && !mealPhotoAccess.allowed) ||
+                !access.allowed
+              }
+              type="submit"
             >
-              {isBusy ? "Думаю..." : "Отправить в AI-чат"}
+              <span className="inline-flex items-center gap-2">
+                {isComposerBusy ? <LoaderCircle className="animate-spin" size={16} /> : null}
+                {selectedImage
+                  ? isAnalyzingImage
+                    ? "Анализирую фото..."
+                    : "Разобрать фото"
+                  : isBusy
+                    ? "Отправляю..."
+                    : "Отправить"}
+              </span>
             </button>
           </div>
         </div>
-      </div>
-    </div>
+      </form>
+    </section>
   );
 }

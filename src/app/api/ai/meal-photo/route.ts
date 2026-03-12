@@ -1,6 +1,8 @@
 import { generateObject } from "ai";
 import { ZodError } from "zod";
 
+import { createAiChatMessage, ensureAiChatSession, touchAiChatSession } from "@/lib/ai/chat";
+import { models } from "@/lib/ai/gateway";
 import { mealPhotoAnalysisSchema } from "@/lib/ai/schemas";
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import {
@@ -9,7 +11,6 @@ import {
   incrementFeatureUsage,
   readUserBillingAccess,
 } from "@/lib/billing-access";
-import { models } from "@/lib/ai/gateway";
 import { hasAiRuntimeEnv } from "@/lib/env";
 import { logger } from "@/lib/logger";
 import { hasRiskyIntent } from "@/lib/safety";
@@ -42,10 +43,74 @@ function buildProviderErrorMessage(error: unknown) {
     normalized.includes("quota") ||
     normalized.includes("billing")
   ) {
-    return "Внешний AI-провайдер сейчас недоступен для анализа фото. Код маршрута готов, но live-обработка изображения временно отключена до активации баланса.";
+    return "Внешний AI-провайдер сейчас недоступен для анализа фото. Маршрут готов, но live-обработка изображений временно выключена до активации баланса.";
   }
 
   return "Не удалось выполнить AI-анализ фото блюда.";
+}
+
+function buildUserChatMessage(notes: string | null) {
+  return notes?.trim()
+    ? `Загрузил фото еды. Контекст: ${notes.trim()}`
+    : "Загрузил фото еды для анализа.";
+}
+
+function formatConfidence(value: "low" | "medium" | "high") {
+  switch (value) {
+    case "high":
+      return "высокая";
+    case "medium":
+      return "средняя";
+    default:
+      return "низкая";
+  }
+}
+
+function buildAssistantChatMessage(result: {
+  title: string;
+  summary: string;
+  confidence: "low" | "medium" | "high";
+  estimatedKcal: number;
+  macros: {
+    protein: number;
+    fat: number;
+    carbs: number;
+  };
+  items: Array<{
+    name: string;
+    portion: string;
+    confidence: "low" | "medium" | "high";
+  }>;
+  suggestions: string[];
+}) {
+  const items =
+    result.items.length > 0
+      ? result.items
+          .map(
+            (item) =>
+              `- ${item.name} • ${item.portion} • уверенность ${formatConfidence(item.confidence)}`,
+          )
+          .join("\n")
+      : "- Состав блюда определить точно не удалось.";
+  const suggestions =
+    result.suggestions.length > 0
+      ? result.suggestions.map((item) => `- ${item}`).join("\n")
+      : "- Можно продолжить вопросом про рецепт, замены или план питания.";
+
+  return [
+    `### ${result.title}`,
+    result.summary,
+    "",
+    `Оценка: **${result.estimatedKcal} ккал**`,
+    `Белки: **${result.macros.protein} г** • Жиры: **${result.macros.fat} г** • Углеводы: **${result.macros.carbs} г**`,
+    `Уверенность анализа: **${formatConfidence(result.confidence)}**`,
+    "",
+    "Что видно на фото:",
+    items,
+    "",
+    "Что можно сделать дальше:",
+    suggestions,
+  ].join("\n");
 }
 
 export async function POST(request: Request) {
@@ -83,9 +148,14 @@ export async function POST(request: Request) {
     const formData = await request.formData();
     const image = formData.get("image");
     const notesValue = formData.get("notes");
+    const sessionValue = formData.get("sessionId");
     const notes =
       typeof notesValue === "string" && notesValue.trim().length
         ? notesValue.trim()
+        : null;
+    const sessionId =
+      typeof sessionValue === "string" && sessionValue.trim().length
+        ? sessionValue.trim()
         : null;
 
     if (!(image instanceof File)) {
@@ -117,7 +187,7 @@ export async function POST(request: Request) {
         status: 400,
         code: "AI_SAFETY_BLOCK",
         message:
-          "Дополнительный комментарий к фото вышел за текущий safety-контур приложения.",
+          "Комментарий к фото вышел за безопасный контур приложения. Переформулируй запрос в рамках питания и фитнеса.",
       });
     }
 
@@ -143,9 +213,39 @@ export async function POST(request: Request) {
       ],
     });
 
+    const session = await ensureAiChatSession(
+      supabase,
+      user.id,
+      sessionId,
+      notes ?? "Разбор фото еды",
+    );
+    const userMessage = await createAiChatMessage(supabase, {
+      userId: user.id,
+      sessionId: session.id,
+      role: "user",
+      content: buildUserChatMessage(notes),
+    });
+    const assistantMessage = await createAiChatMessage(supabase, {
+      userId: user.id,
+      sessionId: session.id,
+      role: "assistant",
+      content: buildAssistantChatMessage(result.object),
+    });
+
+    await touchAiChatSession(supabase, user.id, session.id);
     await incrementFeatureUsage(supabase, user.id, BILLING_FEATURE_KEYS.mealPhoto);
 
-    return Response.json({ data: result.object });
+    return Response.json({
+      data: result.object,
+      messages: {
+        assistant: assistantMessage,
+        user: userMessage,
+      },
+      session: {
+        id: session.id,
+        title: session.title,
+      },
+    });
   } catch (error) {
     logger.error("meal photo route failed", { error });
 
@@ -154,7 +254,7 @@ export async function POST(request: Request) {
         status: 502,
         code: "MEAL_PHOTO_RESPONSE_SCHEMA_INVALID",
         message:
-          "AI вернул неполный анализ фото. Попробуй другое фото блюда или более четкий ракурс.",
+          "AI вернул неполный анализ фото. Попробуй другое фото блюда или более чёткий ракурс.",
         details: error.flatten(),
       });
     }

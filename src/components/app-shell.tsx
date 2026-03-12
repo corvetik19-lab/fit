@@ -1,4 +1,4 @@
-﻿import type { ReactNode } from "react";
+import type { ReactNode } from "react";
 
 import { AppShellFrame } from "@/components/app-shell-frame";
 import { getLatestAiChatState } from "@/lib/ai/chat";
@@ -9,10 +9,14 @@ export async function AppShell({
   title,
   eyebrow,
   children,
+  compactHeader = false,
+  hideAssistantWidget = false,
 }: {
   title: string;
   eyebrow: string;
   children: ReactNode;
+  compactHeader?: boolean;
+  hideAssistantWidget?: boolean;
 }) {
   const viewer = await getViewer();
   const supabase = viewer ? await createServerSupabaseClient() : null;
@@ -24,7 +28,9 @@ export async function AppShell({
   return (
     <AppShellFrame
       assistantState={assistantState}
+      compactHeader={compactHeader}
       eyebrow={eyebrow}
+      hideAssistantWidget={hideAssistantWidget}
       title={title}
       viewer={
         viewer
