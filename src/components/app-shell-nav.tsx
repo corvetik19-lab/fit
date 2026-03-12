@@ -3,7 +3,7 @@
 import type { Route } from "next";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import {
   Activity,
@@ -179,6 +179,11 @@ export function AppShellNav({
   viewer,
 }: AppShellNavProps) {
   const pathname = usePathname();
+  const isClientMounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const currentSectionLabel = getCurrentSectionLabel(pathname);
   const adminRoleLabel = formatAdminRole(viewer?.platformAdminRole ?? null);
@@ -225,7 +230,7 @@ export function AppShellNav({
     };
   }, [isDrawerOpen]);
 
-  const portalRoot = typeof document === "undefined" ? null : document.body;
+  const portalRoot = isClientMounted ? document.body : null;
 
   return (
     <>

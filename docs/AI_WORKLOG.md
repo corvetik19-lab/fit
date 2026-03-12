@@ -1347,3 +1347,14 @@
 - `npx eslint src/components/weekly-program-builder.tsx src/components/nutrition-tracker.tsx`
 - `npm run build`
 - `npm run typecheck`
+
+### 2026-03-12 13:02 - Исправление гидрации мобильного меню
+
+- Убрал hydration mismatch в [app-shell-nav.tsx](/C:/fit/src/components/app-shell-nav.tsx): mobile drawer через `portal` теперь подключается только после client mount через `useSyncExternalStore`, а не меняет дерево уже на первой гидрации.
+- Это убирает recoverable error на страницах вроде `/admin/users`, где сервер не рендерил drawer-portal, а клиент пытался добавить его сразу.
+
+### Проверка: гидрация mobile drawer
+
+- `npx eslint src/components/app-shell-nav.tsx`
+- `npm run build`
+- `npm run typecheck`
