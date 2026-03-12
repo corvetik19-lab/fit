@@ -68,6 +68,79 @@ const snapshotTimeFormatter = new Intl.DateTimeFormat("ru-RU", {
   minute: "2-digit",
 });
 
+const WORKOUT_TIMER_MAX_SECONDS = 2 * 60 * 60;
+const WORKOUT_TIMER_STORAGE_KEY_PREFIX = "fit-workout-timer:";
+
+type PersistedWorkoutTimer = {
+  baseSeconds: number;
+  startedAt: number;
+};
+
+function getWorkoutTimerStorageKey(dayId: string) {
+  return `${WORKOUT_TIMER_STORAGE_KEY_PREFIX}${dayId}`;
+}
+
+function loadPersistedWorkoutTimer(dayId: string): PersistedWorkoutTimer | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const rawValue = window.localStorage.getItem(getWorkoutTimerStorageKey(dayId));
+
+    if (!rawValue) {
+      return null;
+    }
+
+    const value = JSON.parse(rawValue) as Partial<PersistedWorkoutTimer>;
+
+    if (
+      typeof value.baseSeconds !== "number" ||
+      !Number.isFinite(value.baseSeconds) ||
+      typeof value.startedAt !== "number" ||
+      !Number.isFinite(value.startedAt)
+    ) {
+      window.localStorage.removeItem(getWorkoutTimerStorageKey(dayId));
+      return null;
+    }
+
+    return {
+      baseSeconds: Math.max(0, Math.floor(value.baseSeconds)),
+      startedAt: value.startedAt,
+    };
+  } catch {
+    window.localStorage.removeItem(getWorkoutTimerStorageKey(dayId));
+    return null;
+  }
+}
+
+function persistWorkoutTimer(dayId: string, timer: PersistedWorkoutTimer) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.setItem(
+    getWorkoutTimerStorageKey(dayId),
+    JSON.stringify(timer),
+  );
+}
+
+function clearPersistedWorkoutTimer(dayId: string) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.removeItem(getWorkoutTimerStorageKey(dayId));
+}
+
+function getRunningTimerSeconds(baseSeconds: number, startedAt: number) {
+  return baseSeconds + Math.max(0, Math.floor((Date.now() - startedAt) / 1000));
+}
+
+function hasRunningTimerExpired(baseSeconds: number, startedAt: number) {
+  return getRunningTimerSeconds(baseSeconds, startedAt) >= WORKOUT_TIMER_MAX_SECONDS;
+}
+
 function formatWeekRange(day: WorkoutDayDetail) {
   const startDate = dateFormatter.format(
     new Date(`${day.week_start_date}T00:00:00`),
@@ -370,6 +443,9 @@ export function WorkoutDaySession({
     () => initialDay.session_duration_seconds ?? 0,
   );
   const [timerStartedAt, setTimerStartedAt] = useState<number | null>(null);
+  const [shouldPersistExpiredTimerReset, setShouldPersistExpiredTimerReset] =
+    useState(false);
+  const expiredTimerResetDayIdRef = useRef<string | null>(null);
   const [activeExerciseIndex, setActiveExerciseIndex] = useState(() => {
     const nextIndex = getFirstIncompleteExerciseIndex(initialDay.exercises);
     return nextIndex === -1 ? 0 : nextIndex;
@@ -425,6 +501,44 @@ export function WorkoutDaySession({
   const currentSessionDurationSeconds = isTimerRunning
     ? timerLiveSeconds
     : timerBaseSeconds;
+
+  const applyTimerStateForDay = useCallback((nextDay: WorkoutDayDetail) => {
+    const persistedTimer = loadPersistedWorkoutTimer(nextDay.id);
+
+    if (!persistedTimer) {
+      if (expiredTimerResetDayIdRef.current === nextDay.id) {
+        setTimerStartedAt(null);
+        setTimerBaseSeconds(0);
+        setTimerLiveSeconds(0);
+        return;
+      }
+
+      const nextSeconds = nextDay.session_duration_seconds ?? 0;
+      setTimerStartedAt(null);
+      setTimerBaseSeconds(nextSeconds);
+      setTimerLiveSeconds(nextSeconds);
+      return;
+    }
+
+    if (hasRunningTimerExpired(persistedTimer.baseSeconds, persistedTimer.startedAt)) {
+      clearPersistedWorkoutTimer(nextDay.id);
+      expiredTimerResetDayIdRef.current = nextDay.id;
+      setTimerStartedAt(null);
+      setTimerBaseSeconds(0);
+      setTimerLiveSeconds(0);
+      setShouldPersistExpiredTimerReset(true);
+      return;
+    }
+
+    const nextSeconds = getRunningTimerSeconds(
+      persistedTimer.baseSeconds,
+      persistedTimer.startedAt,
+    );
+
+    setTimerStartedAt(persistedTimer.startedAt);
+    setTimerBaseSeconds(persistedTimer.baseSeconds);
+    setTimerLiveSeconds(nextSeconds);
+  }, []);
 
   const completedSetsCount = useMemo(
     () =>
@@ -545,14 +659,12 @@ export function WorkoutDaySession({
           : "",
       );
       setDaySessionNoteValue(nextDay.session_note ?? "");
-      setTimerStartedAt(null);
-      setTimerBaseSeconds(nextDay.session_duration_seconds ?? 0);
-      setTimerLiveSeconds(nextDay.session_duration_seconds ?? 0);
+      applyTimerStateForDay(nextDay);
       const nextExerciseIndex = getFirstIncompleteExerciseIndex(nextDay.exercises);
       setActiveExerciseIndex(nextExerciseIndex === -1 ? 0 : nextExerciseIndex);
       await persistWorkoutDay(nextDay);
     },
-    [persistWorkoutDay],
+    [applyTimerStateForDay, persistWorkoutDay],
   );
 
   const refreshPendingMutationCount = useCallback(async () => {
@@ -582,15 +694,13 @@ export function WorkoutDaySession({
         : "",
     );
     setDaySessionNoteValue(hydratedDay.session_note ?? "");
-    setTimerStartedAt(null);
-    setTimerBaseSeconds(hydratedDay.session_duration_seconds ?? 0);
-    setTimerLiveSeconds(hydratedDay.session_duration_seconds ?? 0);
+    applyTimerStateForDay(hydratedDay);
     const nextExerciseIndex = getFirstIncompleteExerciseIndex(hydratedDay.exercises);
     setActiveExerciseIndex(nextExerciseIndex === -1 ? 0 : nextExerciseIndex);
     setLastSnapshotAt(cachedSnapshot.updatedAt);
     await persistWorkoutDay(hydratedDay);
     await refreshPendingMutationCount();
-  }, [initialDay, persistWorkoutDay, refreshPendingMutationCount]);
+  }, [applyTimerStateForDay, initialDay, persistWorkoutDay, refreshPendingMutationCount]);
 
   const pullLatestDaySnapshot = useCallback(
     async (options?: { force?: boolean }) => {
@@ -699,15 +809,13 @@ export function WorkoutDaySession({
         : "",
     );
     setDaySessionNoteValue(initialDay.session_note ?? "");
-    setTimerStartedAt(null);
-    setTimerBaseSeconds(initialDay.session_duration_seconds ?? 0);
-    setTimerLiveSeconds(initialDay.session_duration_seconds ?? 0);
+    applyTimerStateForDay(initialDay);
     const nextExerciseIndex = getFirstIncompleteExerciseIndex(initialDay.exercises);
     setActiveExerciseIndex(nextExerciseIndex === -1 ? 0 : nextExerciseIndex);
     pullCursorRef.current = null;
 
     void hydrateLocalDay();
-  }, [hydrateLocalDay, initialDay]);
+  }, [applyTimerStateForDay, hydrateLocalDay, initialDay]);
 
   useEffect(() => {
     if (timerStartedAt === null) {
@@ -716,16 +824,24 @@ export function WorkoutDaySession({
     }
 
     const syncTimer = () => {
-      setTimerLiveSeconds(
-        timerBaseSeconds + Math.max(0, Math.floor((Date.now() - timerStartedAt) / 1000)),
-      );
+      if (hasRunningTimerExpired(timerBaseSeconds, timerStartedAt)) {
+        clearPersistedWorkoutTimer(day.id);
+        expiredTimerResetDayIdRef.current = day.id;
+        setTimerStartedAt(null);
+        setTimerBaseSeconds(0);
+        setTimerLiveSeconds(0);
+        setShouldPersistExpiredTimerReset(true);
+        return;
+      }
+
+      setTimerLiveSeconds(getRunningTimerSeconds(timerBaseSeconds, timerStartedAt));
     };
 
     syncTimer();
     const intervalId = window.setInterval(syncTimer, 1000);
 
     return () => window.clearInterval(intervalId);
-  }, [timerBaseSeconds, timerStartedAt]);
+  }, [day.id, timerBaseSeconds, timerStartedAt]);
 
   useEffect(() => {
     if (!isMobileFocusMode || !day.exercises.length) {
@@ -781,11 +897,11 @@ export function WorkoutDaySession({
     };
   }, [flushQueuedMutations, pullLatestDaySnapshot]);
 
-  async function persistDayExecution(
+  const persistDayExecution = useCallback(async (
     nextDay: WorkoutDayDetail,
     noticeMessage: string | null,
     offlineNoticeMessage: string | null,
-  ) {
+  ) => {
     await persistWorkoutDay(nextDay);
 
     if (!navigator.onLine) {
@@ -830,13 +946,13 @@ export function WorkoutDaySession({
       setNotice(noticeMessage);
     }
     await pullLatestDaySnapshot({ force: true }).catch(() => null);
-  }
+  }, [persistWorkoutDay, pullLatestDaySnapshot, refreshPendingMutationCount]);
 
-  async function saveSessionDuration(
+  const saveSessionDuration = useCallback(async (
     nextSeconds: number,
     noticeMessage: string | null,
     offlineNoticeMessage: string | null,
-  ) {
+  ) => {
     setError(null);
     if (noticeMessage) {
       setNotice(null);
@@ -869,7 +985,26 @@ export function WorkoutDaySession({
     } finally {
       setIsPending(false);
     }
-  }
+  }, [day, persistDayExecution, persistWorkoutDay]);
+
+  useEffect(() => {
+    if (!shouldPersistExpiredTimerReset) {
+      return;
+    }
+
+    setShouldPersistExpiredTimerReset(false);
+    setNotice("Таймер автоматически сброшен через 2 часа.");
+
+    void saveSessionDuration(
+      0,
+      null,
+      "Таймер автоматически сброшен на устройстве и отправится позже.",
+    )
+      .catch(() => null)
+      .finally(() => {
+        expiredTimerResetDayIdRef.current = null;
+      });
+  }, [saveSessionDuration, shouldPersistExpiredTimerReset]);
 
   function updateDayStatus(nextStatus: "planned" | "in_progress" | "done") {
     setError(null);
@@ -1173,7 +1308,25 @@ export function WorkoutDaySession({
 
     setError(null);
     setNotice(null);
-    setTimerStartedAt(Date.now());
+    const startedAt = Date.now();
+    expiredTimerResetDayIdRef.current = null;
+    persistWorkoutTimer(day.id, {
+      baseSeconds: timerBaseSeconds,
+      startedAt,
+    });
+    setTimerStartedAt(startedAt);
+  }
+
+  function getResolvedCurrentSessionDurationSeconds() {
+    if (timerStartedAt === null) {
+      return timerBaseSeconds;
+    }
+
+    if (hasRunningTimerExpired(timerBaseSeconds, timerStartedAt)) {
+      return 0;
+    }
+
+    return getRunningTimerSeconds(timerBaseSeconds, timerStartedAt);
   }
 
   async function pauseSessionTimer(options?: { silent?: boolean }) {
@@ -1182,8 +1335,12 @@ export function WorkoutDaySession({
     }
 
     const nextSeconds =
-      timerBaseSeconds + Math.max(0, Math.floor((Date.now() - timerStartedAt) / 1000));
+      hasRunningTimerExpired(timerBaseSeconds, timerStartedAt)
+        ? 0
+        : getRunningTimerSeconds(timerBaseSeconds, timerStartedAt);
 
+    clearPersistedWorkoutTimer(day.id);
+    expiredTimerResetDayIdRef.current = null;
     setTimerStartedAt(null);
 
     await saveSessionDuration(
@@ -1194,12 +1351,85 @@ export function WorkoutDaySession({
   }
 
   async function resetSessionTimer() {
+    clearPersistedWorkoutTimer(day.id);
+    expiredTimerResetDayIdRef.current = null;
     setTimerStartedAt(null);
     await saveSessionDuration(
       0,
       "Таймер тренировки сброшен.",
       "Сброс таймера сохранён на устройстве и отправится позже.",
     );
+  }
+
+  function completeWorkout() {
+    setError(null);
+    setNotice(null);
+    setIsPending(true);
+
+    const previousDay = day;
+    const previousTimerStartedAt = timerStartedAt;
+    const previousTimerBaseSeconds = timerBaseSeconds;
+    const previousTimerLiveSeconds = timerLiveSeconds;
+    const shouldAskAboutTimer =
+      timerStartedAt !== null || currentSessionDurationSeconds > 0;
+    const shouldSaveTimer = shouldAskAboutTimer
+      ? window.confirm("Сохранить время тренировки перед завершением?")
+      : true;
+    const nextSessionDurationSeconds = shouldSaveTimer
+      ? getResolvedCurrentSessionDurationSeconds()
+      : 0;
+
+    clearPersistedWorkoutTimer(day.id);
+    expiredTimerResetDayIdRef.current = null;
+    setTimerStartedAt(null);
+    setTimerBaseSeconds(nextSessionDurationSeconds);
+    setTimerLiveSeconds(nextSessionDurationSeconds);
+
+    const optimisticDay = applyWorkoutDayExecution(day, {
+      status: "done",
+      sessionDurationSeconds: nextSessionDurationSeconds,
+    });
+
+    setDay(optimisticDay);
+
+    startTransition(async () => {
+      try {
+        await persistDayExecution(
+          optimisticDay,
+          shouldAskAboutTimer
+            ? shouldSaveTimer
+              ? "Тренировка завершена, время сохранено."
+              : "Тренировка завершена без сохранения времени."
+            : "Тренировка завершена.",
+          shouldAskAboutTimer
+            ? shouldSaveTimer
+              ? "Тренировка завершена. Время сохранено на устройстве и отправится позже."
+              : "Тренировка завершена без сохранения времени. Изменение отправится позже."
+            : "Тренировка завершена на устройстве и отправится позже.",
+        );
+      } catch (error) {
+        setDay(previousDay);
+        await persistWorkoutDay(previousDay);
+        setTimerStartedAt(previousTimerStartedAt);
+        setTimerBaseSeconds(previousTimerBaseSeconds);
+        setTimerLiveSeconds(previousTimerLiveSeconds);
+
+        if (previousTimerStartedAt !== null) {
+          persistWorkoutTimer(day.id, {
+            baseSeconds: previousTimerBaseSeconds,
+            startedAt: previousTimerStartedAt,
+          });
+        }
+
+        setError(
+          error instanceof Error
+            ? error.message
+            : "Не удалось завершить тренировку.",
+        );
+      } finally {
+        setIsPending(false);
+      }
+    });
   }
 
   async function returnToRegularMode() {
@@ -1244,7 +1474,7 @@ export function WorkoutDaySession({
             <button
               className={primaryButtonClassName}
               disabled={isPending || isSyncing}
-              onClick={() => updateDayStatus("done")}
+              onClick={() => completeWorkout()}
               type="button"
               >
               Завершить
