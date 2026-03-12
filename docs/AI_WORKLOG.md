@@ -1335,3 +1335,15 @@
 - `npx eslint src/components/ai-chat-panel.tsx src/components/ai-assistant-widget.tsx`
 - `npm run typecheck`
 - `npm run build`
+
+### 2026-03-12 12:42 - Внутренние меню для тренировок и питания
+
+- Внутри [страницы тренировок](/C:/fit/src/components/weekly-program-builder.tsx) конструктор теперь разбит на собственные вкладки: `Конструктор`, `Активная неделя`, `Шаблоны`, `История`. Это убрало длинную смешанную ленту внутри одного раздела.
+- Внутри [страницы питания](/C:/fit/src/components/nutrition-tracker.tsx) журнал теперь тоже работает через внутреннее меню: `Баланс`, `Продукты`, `Лог дня`, `История`.
+- Для мобильной PWA-версии обе страницы теперь открывают только один логический блок за раз, а переключение идёт через горизонтальное меню секций.
+
+### Проверка: внутренние меню разделов
+
+- `npx eslint src/components/weekly-program-builder.tsx src/components/nutrition-tracker.tsx`
+- `npm run build`
+- `npm run typecheck`

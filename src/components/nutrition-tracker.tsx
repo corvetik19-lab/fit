@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useRouter } from "next/navigation";
 import { startTransition, useMemo, useState } from "react";
@@ -22,6 +22,8 @@ type MealDraftItem = {
   foodId: string;
   servings: string;
 };
+
+type NutritionTrackerPanelKey = "targets" | "foods" | "log" | "history";
 
 function formatMacro(value: number) {
   return value.toLocaleString("ru-RU", {
@@ -110,6 +112,8 @@ export function NutritionTracker({
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
+  const [activePanelKey, setActivePanelKey] =
+    useState<NutritionTrackerPanelKey>("targets");
 
   const foodsById = useMemo(
     () => new Map(initialFoods.map((food) => [food.id, food])),
@@ -152,14 +156,14 @@ export function NutritionTracker({
 
   const nutritionCards = [
     {
-      label: "Калории",
-      value: `${summary.kcal.toLocaleString("ru-RU")} ккал`,
+      label: "РљР°Р»РѕСЂРёРё",
+      value: `${summary.kcal.toLocaleString("ru-RU")} РєРєР°Р»`,
       target: nutritionTargets?.kcal_target ?? null,
       progress: calculateProgress(summary.kcal, nutritionTargets?.kcal_target ?? null),
     },
     {
-      label: "Белки",
-      value: `${formatMacro(Number(summary.protein))} г`,
+      label: "Р‘РµР»РєРё",
+      value: `${formatMacro(Number(summary.protein))} Рі`,
       target: nutritionTargets?.protein_target ?? null,
       progress: calculateProgress(
         Number(summary.protein),
@@ -167,14 +171,14 @@ export function NutritionTracker({
       ),
     },
     {
-      label: "Жиры",
-      value: `${formatMacro(Number(summary.fat))} г`,
+      label: "Р–РёСЂС‹",
+      value: `${formatMacro(Number(summary.fat))} Рі`,
       target: nutritionTargets?.fat_target ?? null,
       progress: calculateProgress(Number(summary.fat), nutritionTargets?.fat_target ?? null),
     },
     {
-      label: "Углеводы",
-      value: `${formatMacro(Number(summary.carbs))} г`,
+      label: "РЈРіР»РµРІРѕРґС‹",
+      value: `${formatMacro(Number(summary.carbs))} Рі`,
       target: nutritionTargets?.carbs_target ?? null,
       progress: calculateProgress(
         Number(summary.carbs),
@@ -243,11 +247,11 @@ export function NutritionTracker({
         | null;
 
       if (!response.ok) {
-        setError(payload?.message ?? "Не удалось сохранить продукт.");
+        setError(payload?.message ?? "РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕС…СЂР°РЅРёС‚СЊ РїСЂРѕРґСѓРєС‚.");
         return;
       }
 
-      setNotice(editingFoodId ? "Продукт обновлён." : "Продукт добавлен.");
+      setNotice(editingFoodId ? "РџСЂРѕРґСѓРєС‚ РѕР±РЅРѕРІР»С‘РЅ." : "РџСЂРѕРґСѓРєС‚ РґРѕР±Р°РІР»РµРЅ.");
       resetFoodForm();
       router.refresh();
     });
@@ -264,7 +268,7 @@ export function NutritionTracker({
         | null;
 
       if (!response.ok) {
-        setError(payload?.message ?? "Не удалось удалить продукт.");
+        setError(payload?.message ?? "РќРµ СѓРґР°Р»РѕСЃСЊ СѓРґР°Р»РёС‚СЊ РїСЂРѕРґСѓРєС‚.");
         return;
       }
 
@@ -272,7 +276,7 @@ export function NutritionTracker({
         resetFoodForm();
       }
 
-      setNotice("Продукт удалён.");
+      setNotice("РџСЂРѕРґСѓРєС‚ СѓРґР°Р»С‘РЅ.");
       router.refresh();
     });
   }
@@ -304,11 +308,11 @@ export function NutritionTracker({
         | null;
 
       if (!response.ok) {
-        setError(payload?.message ?? "Не удалось сохранить приём пищи.");
+        setError(payload?.message ?? "РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕС…СЂР°РЅРёС‚СЊ РїСЂРёС‘Рј РїРёС‰Рё.");
         return;
       }
 
-      setNotice("Приём пищи сохранён, дневная сводка пересчитана.");
+      setNotice("РџСЂРёС‘Рј РїРёС‰Рё СЃРѕС…СЂР°РЅС‘РЅ, РґРЅРµРІРЅР°СЏ СЃРІРѕРґРєР° РїРµСЂРµСЃС‡РёС‚Р°РЅР°.");
       setMealDateTime(getDefaultMealDateTime());
       setMealItems([createMealDraftItem(initialFoods[0]?.id ?? "")]);
       router.refresh();
@@ -336,11 +340,11 @@ export function NutritionTracker({
         | null;
 
       if (!response.ok) {
-        setError(payload?.message ?? "Не удалось удалить приём пищи.");
+        setError(payload?.message ?? "РќРµ СѓРґР°Р»РѕСЃСЊ СѓРґР°Р»РёС‚СЊ РїСЂРёС‘Рј РїРёС‰Рё.");
         return;
       }
 
-      setNotice("Приём пищи удалён, дневная сводка обновлена.");
+      setNotice("РџСЂРёС‘Рј РїРёС‰Рё СѓРґР°Р»С‘РЅ, РґРЅРµРІРЅР°СЏ СЃРІРѕРґРєР° РѕР±РЅРѕРІР»РµРЅР°.");
       router.refresh();
     });
   }
@@ -365,11 +369,11 @@ export function NutritionTracker({
         | null;
 
       if (!response.ok) {
-        setError(payload?.message ?? "Не удалось сохранить цели по питанию.");
+        setError(payload?.message ?? "РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕС…СЂР°РЅРёС‚СЊ С†РµР»Рё РїРѕ РїРёС‚Р°РЅРёСЋ.");
         return;
       }
 
-      setNotice("Цели по питанию обновлены.");
+      setNotice("Р¦РµР»Рё РїРѕ РїРёС‚Р°РЅРёСЋ РѕР±РЅРѕРІР»РµРЅС‹.");
       router.refresh();
     });
   }
@@ -451,7 +455,7 @@ export function NutritionTracker({
         foodId: item.food_id,
         servings: Number(item.servings),
       })),
-      `Рецепт «${recipe.title}» загружен в текущий приём пищи.`,
+      `Р РµС†РµРїС‚ В«${recipe.title}В» Р·Р°РіСЂСѓР¶РµРЅ РІ С‚РµРєСѓС‰РёР№ РїСЂРёС‘Рј РїРёС‰Рё.`,
     );
   }
 
@@ -461,7 +465,7 @@ export function NutritionTracker({
         foodId: item.foodId,
         servings: Number(item.servings),
       })),
-      `Шаблон «${template.title}» загружен в текущий приём пищи.`,
+      `РЁР°Р±Р»РѕРЅ В«${template.title}В» Р·Р°РіСЂСѓР¶РµРЅ РІ С‚РµРєСѓС‰РёР№ РїСЂРёС‘Рј РїРёС‰Рё.`,
     );
   }
 
@@ -469,7 +473,7 @@ export function NutritionTracker({
     const normalizedBarcode = mealBarcode.trim();
 
     if (!normalizedBarcode) {
-      setError("Введи штрихкод, чтобы найти продукт в своей базе.");
+      setError("Р’РІРµРґРё С€С‚СЂРёС…РєРѕРґ, С‡С‚РѕР±С‹ РЅР°Р№С‚Рё РїСЂРѕРґСѓРєС‚ РІ СЃРІРѕРµР№ Р±Р°Р·Рµ.");
       setNotice(null);
       return;
     }
@@ -480,7 +484,7 @@ export function NutritionTracker({
 
     if (!matchedFood) {
       setError(
-        "Продукт с таким штрихкодом не найден в твоей базе. Сначала добавь его в справочник продуктов.",
+        "РџСЂРѕРґСѓРєС‚ СЃ С‚Р°РєРёРј С€С‚СЂРёС…РєРѕРґРѕРј РЅРµ РЅР°Р№РґРµРЅ РІ С‚РІРѕРµР№ Р±Р°Р·Рµ. РЎРЅР°С‡Р°Р»Р° РґРѕР±Р°РІСЊ РµРіРѕ РІ СЃРїСЂР°РІРѕС‡РЅРёРє РїСЂРѕРґСѓРєС‚РѕРІ.",
       );
       setNotice(null);
       return;
@@ -489,54 +493,125 @@ export function NutritionTracker({
     addFoodToCurrentMeal(matchedFood.id);
     setMealBarcode("");
     setError(null);
-    setNotice(`Продукт «${matchedFood.name}» добавлен в текущий приём пищи по штрихкоду.`);
+    setNotice(`РџСЂРѕРґСѓРєС‚ В«${matchedFood.name}В» РґРѕР±Р°РІР»РµРЅ РІ С‚РµРєСѓС‰РёР№ РїСЂРёС‘Рј РїРёС‰Рё РїРѕ С€С‚СЂРёС…РєРѕРґСѓ.`);
   }
+
+  const trackerPanels: Array<{
+    description: string;
+    key: NutritionTrackerPanelKey;
+    label: string;
+  }> = [
+    {
+      key: "targets",
+      label: "Баланс",
+      description: "КБЖУ и цели на день",
+    },
+    {
+      key: "foods",
+      label: "Продукты",
+      description: "Своя база и рецепты",
+    },
+    {
+      key: "log",
+      label: "Лог дня",
+      description: "Добавление текущего приёма пищи",
+    },
+    {
+      key: "history",
+      label: "История",
+      description: "Последние приёмы и шаблоны",
+    },
+  ];
 
   return (
     <div className="grid gap-6">
-      {error ? (
-        <p className="rounded-2xl border border-red-300/60 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
-        </p>
-      ) : null}
-
-      {notice ? (
-        <p className="rounded-2xl border border-emerald-300/60 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-          {notice}
-        </p>
-      ) : null}
-
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {nutritionCards.map((card) => (
-          <article className="kpi p-5" key={card.label}>
-            <p className="text-sm text-muted">{card.label}</p>
-            <p className="mt-2 text-2xl font-semibold text-foreground">{card.value}</p>
-            <p className="mt-2 text-xs text-muted">
-              {card.target ? `Цель: ${card.target}` : "Цель не задана"}
+      <section className="card p-4 sm:p-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
+              Меню питания
             </p>
-            <div className="mt-3 h-2 rounded-full bg-white/70">
-              <div
-                className="h-full rounded-full bg-accent transition-[width] duration-300"
-                style={{ width: `${card.progress ?? 0}%` }}
-              />
-            </div>
-          </article>
-        ))}
+            <h2 className="mt-2 text-xl font-semibold text-foreground">
+              Переключай только нужный блок
+            </h2>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">
+              Баланс, база продуктов, текущий лог и история открываются по отдельности, чтобы на телефоне экран оставался чистым и удобным.
+            </p>
+          </div>
+          <span className="pill">
+            {trackerPanels.find((panel) => panel.key === activePanelKey)?.label ?? "Питание"}
+          </span>
+        </div>
+
+        <div className="mt-4 -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+          {trackerPanels.map((panel) => {
+            const isActive = panel.key === activePanelKey;
+
+            return (
+              <button
+                aria-pressed={isActive}
+                className={`min-w-[13rem] shrink-0 rounded-3xl border px-4 py-3 text-left transition ${
+                  isActive
+                    ? "border-accent/30 bg-accent-soft text-foreground shadow-[0_18px_45px_-35px_rgba(20,97,75,0.35)]"
+                    : "border-border bg-white/80 text-foreground hover:bg-white"
+                }`}
+                key={panel.key}
+                onClick={() => setActivePanelKey(panel.key)}
+                type="button"
+              >
+                <span className="block text-sm font-semibold">{panel.label}</span>
+                <span className="mt-1 block text-xs leading-5 text-muted">
+                  {panel.description}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {error ? (
+          <p className="mt-4 rounded-2xl border border-red-300/60 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {error}
+          </p>
+        ) : null}
+
+        {notice ? (
+          <p className="mt-4 rounded-2xl border border-emerald-300/60 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+            {notice}
+          </p>
+        ) : null}
       </section>
 
-      <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-        <div className="grid gap-6">
+      {activePanelKey === "targets" ? (
+        <section className="grid gap-6">
+          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {nutritionCards.map((card) => (
+              <article className="card p-5" key={card.label}>
+                <p className="text-xs uppercase tracking-[0.18em] text-muted">{card.label}</p>
+                <p className="mt-3 text-2xl font-semibold text-foreground">{card.value}</p>
+                <p className="mt-2 text-sm text-muted">
+                  {card.target ? `Цель: ${card.target}` : "Цель не задана"}
+                </p>
+                <div className="mt-4 h-2 overflow-hidden rounded-full bg-border/70">
+                  <div
+                    className="h-full rounded-full bg-accent transition-[width] duration-300"
+                    style={{ width: `${Math.min(card.progress ?? 0, 100)}%` }}
+                  />
+                </div>
+              </article>
+            ))}
+          </section>
+
           <section className="card p-6">
             <div className="mb-5">
               <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
                 Цели
               </p>
               <h2 className="mt-2 text-2xl font-semibold text-foreground">
-                Дневные цели по КБЖУ
+                Дневные ориентиры по КБЖУ
               </h2>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               <label className="grid gap-2 text-sm text-muted">
                 Калории
                 <input className={inputClassName} inputMode="numeric" onChange={(event) => setKcalTarget(event.target.value)} placeholder="2200" type="number" value={kcalTarget} />
@@ -559,7 +634,11 @@ export function NutritionTracker({
               {isPending ? "Сохраняю..." : "Сохранить цели"}
             </button>
           </section>
+        </section>
+      ) : null}
 
+      {activePanelKey === "foods" ? (
+        <section className="grid gap-6">
           <section className="card p-6">
             <div className="mb-5">
               <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
@@ -644,105 +723,108 @@ export function NutritionTracker({
             onApplyRecipe={applyRecipe}
             recipes={initialRecipes}
           />
-        </div>
+        </section>
+      ) : null}
 
-        <div className="grid gap-6">
-          <section className="card p-6">
-            <div className="mb-5">
-              <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
-                Логирование
-              </p>
-              <h2 className="mt-2 text-2xl font-semibold text-foreground">
-                Ручной ввод приёма пищи
-              </h2>
-            </div>
+      {activePanelKey === "log" ? (
+        <section className="card p-6">
+          <div className="mb-5">
+            <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
+              Логирование
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold text-foreground">
+              Текущий приём пищи
+            </h2>
+          </div>
 
-            <div className="mb-5 rounded-3xl border border-border bg-white/60 p-4">
-              <p className="text-sm font-semibold text-foreground">
-                Быстрое добавление по штрихкоду
-              </p>
-              <p className="mt-2 text-sm leading-7 text-muted">
-                Поиск идёт по твоей собственной базе продуктов. Если продукт уже
-                сохранён со штрихкодом, его можно сразу добавить в текущий приём пищи.
-              </p>
-              <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]">
-                <input
-                  className={inputClassName}
-                  onChange={(event) => setMealBarcode(event.target.value)}
-                  placeholder="Например, 4601234567890"
-                  type="text"
-                  value={mealBarcode}
-                />
-                <button
-                  className="rounded-full border border-border px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-white/70"
-                  onClick={addMealItemByBarcode}
-                  type="button"
-                >
-                  Найти и добавить
-                </button>
-              </div>
-            </div>
-
-            <label className="grid gap-2 text-sm text-muted">
-              Дата и время
-              <input className={inputClassName} onChange={(event) => setMealDateTime(event.target.value)} type="datetime-local" value={mealDateTime} />
-            </label>
-
-            <div className="mt-5 grid gap-3">
-              {mealItems.map((item, index) => (
-                <div className="rounded-2xl border border-border bg-white/60 p-4" key={item.localId}>
-                  <div className="mb-3 flex items-center justify-between gap-3">
-                    <p className="text-sm font-semibold text-foreground">Позиция {index + 1}</p>
-                    {mealItems.length > 1 ? (
-                      <button className="rounded-full border border-border px-3 py-2 text-xs font-medium text-foreground transition hover:bg-white/70" onClick={() => removeMealItem(item.localId)} type="button">
-                        Удалить позицию
-                      </button>
-                    ) : null}
-                  </div>
-
-                  <div className="grid gap-3 sm:grid-cols-[1fr_160px]">
-                    <label className="grid gap-2 text-sm text-muted">
-                      Продукт
-                      <select className={inputClassName} onChange={(event) => updateMealItem(item.localId, "foodId", event.target.value)} value={item.foodId}>
-                        <option value="">Выбери продукт</option>
-                        {initialFoods.map((food) => (
-                          <option key={food.id} value={food.id}>
-                            {food.name}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-
-                    <label className="grid gap-2 text-sm text-muted">
-                      Порции
-                      <input className={inputClassName} inputMode="decimal" min="0.1" onChange={(event) => updateMealItem(item.localId, "servings", event.target.value)} step="0.1" type="number" value={item.servings} />
-                    </label>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-4 flex flex-wrap gap-3">
-              <button className="rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:bg-white/70" onClick={appendMealItem} type="button">
-                Добавить ещё продукт
+          <div className="mb-5 rounded-3xl border border-border bg-white/60 p-4">
+            <p className="text-sm font-semibold text-foreground">
+              Быстрое добавление по штрихкоду
+            </p>
+            <p className="mt-2 text-sm leading-7 text-muted">
+              Поиск идёт по твоей собственной базе продуктов. Если продукт уже сохранён со штрихкодом, его можно сразу добавить в текущий приём пищи.
+            </p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]">
+              <input
+                className={inputClassName}
+                onChange={(event) => setMealBarcode(event.target.value)}
+                placeholder="Например, 4601234567890"
+                type="text"
+                value={mealBarcode}
+              />
+              <button
+                className="rounded-full border border-border px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-white/70"
+                onClick={addMealItemByBarcode}
+                type="button"
+              >
+                Найти и добавить
               </button>
             </div>
+          </div>
 
-            <div className="mt-6 rounded-3xl border border-border bg-white/55 p-5">
-              <p className="text-sm font-medium text-foreground">Предварительный расчёт</p>
-              <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <p className="text-sm text-muted">Калории: <span className="font-semibold text-foreground">{Math.round(mealPreview.kcal)}</span></p>
-                <p className="text-sm text-muted">Белки: <span className="font-semibold text-foreground">{formatMacro(mealPreview.protein)} г</span></p>
-                <p className="text-sm text-muted">Жиры: <span className="font-semibold text-foreground">{formatMacro(mealPreview.fat)} г</span></p>
-                <p className="text-sm text-muted">Углеводы: <span className="font-semibold text-foreground">{formatMacro(mealPreview.carbs)} г</span></p>
+          <label className="grid gap-2 text-sm text-muted">
+            Дата и время
+            <input className={inputClassName} onChange={(event) => setMealDateTime(event.target.value)} type="datetime-local" value={mealDateTime} />
+          </label>
+
+          <div className="mt-5 grid gap-3">
+            {mealItems.map((item, index) => (
+              <div className="rounded-2xl border border-border bg-white/60 p-4" key={item.localId}>
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-foreground">Позиция {index + 1}</p>
+                  {mealItems.length > 1 ? (
+                    <button className="rounded-full border border-border px-3 py-2 text-xs font-medium text-foreground transition hover:bg-white/70" onClick={() => removeMealItem(item.localId)} type="button">
+                      Удалить позицию
+                    </button>
+                  ) : null}
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-[1fr_160px]">
+                  <label className="grid gap-2 text-sm text-muted">
+                    Продукт
+                    <select className={inputClassName} onChange={(event) => updateMealItem(item.localId, "foodId", event.target.value)} value={item.foodId}>
+                      <option value="">Выбери продукт</option>
+                      {initialFoods.map((food) => (
+                        <option key={food.id} value={food.id}>
+                          {food.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label className="grid gap-2 text-sm text-muted">
+                    Порции
+                    <input className={inputClassName} inputMode="decimal" min="0.1" onChange={(event) => updateMealItem(item.localId, "servings", event.target.value)} step="0.1" type="number" value={item.servings} />
+                  </label>
+                </div>
               </div>
-            </div>
+            ))}
+          </div>
 
-            <button className="mt-6 rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60" disabled={isPending || !mealItems.some((item) => item.foodId && Number(item.servings) > 0)} onClick={submitMeal} type="button">
-              {isPending ? "Сохраняю..." : "Сохранить приём пищи"}
+          <div className="mt-4 flex flex-wrap gap-3">
+            <button className="rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:bg-white/70" onClick={appendMealItem} type="button">
+              Добавить ещё продукт
             </button>
-          </section>
+          </div>
 
+          <div className="mt-6 rounded-3xl border border-border bg-white/55 p-5">
+            <p className="text-sm font-medium text-foreground">Предварительный расчёт</p>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <p className="text-sm text-muted">Калории: <span className="font-semibold text-foreground">{Math.round(mealPreview.kcal)}</span></p>
+              <p className="text-sm text-muted">Белки: <span className="font-semibold text-foreground">{formatMacro(mealPreview.protein)} г</span></p>
+              <p className="text-sm text-muted">Жиры: <span className="font-semibold text-foreground">{formatMacro(mealPreview.fat)} г</span></p>
+              <p className="text-sm text-muted">Углеводы: <span className="font-semibold text-foreground">{formatMacro(mealPreview.carbs)} г</span></p>
+            </div>
+          </div>
+
+          <button className="mt-6 rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60" disabled={isPending || !mealItems.some((item) => item.foodId && Number(item.servings) > 0)} onClick={submitMeal} type="button">
+            {isPending ? "Сохраняю..." : "Сохранить приём пищи"}
+          </button>
+        </section>
+      ) : null}
+
+      {activePanelKey === "history" ? (
+        <section className="grid gap-6">
           <section className="card p-6">
             <div className="mb-5 flex items-center justify-between gap-3">
               <div>
@@ -797,8 +879,8 @@ export function NutritionTracker({
             onApplyTemplate={applyMealTemplate}
             templates={initialMealTemplates}
           />
-        </div>
-      </div>
+        </section>
+      ) : null}
     </div>
   );
 }
