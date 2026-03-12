@@ -16,6 +16,7 @@ type AppShellFrameProps = {
   children: ReactNode;
   compactHeader?: boolean;
   hideAssistantWidget?: boolean;
+  immersive?: boolean;
   assistantState: {
     session: {
       id: string;
@@ -62,13 +63,10 @@ export function AppShellFrame({
   children,
   compactHeader = false,
   hideAssistantWidget = false,
+  immersive = false,
   viewer,
 }: AppShellFrameProps) {
-  const isCollapsed = useSyncExternalStore(
-    subscribe,
-    getSnapshot,
-    getServerSnapshot,
-  );
+  const isCollapsed = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   function toggleCollapsed() {
     const nextValue = !isCollapsed;
@@ -76,12 +74,12 @@ export function AppShellFrame({
     window.dispatchEvent(new StorageEvent("storage", { key: collapseStorageKey }));
   }
 
-  const shouldUseCompactHeader = compactHeader || isCollapsed;
+  const shouldUseCompactHeader = !immersive && (compactHeader || isCollapsed);
   const showAssistantWidget = Boolean(viewer) && !hideAssistantWidget;
 
   return (
     <div className="min-h-dvh">
-      {!shouldUseCompactHeader ? (
+      {!immersive && !shouldUseCompactHeader ? (
         <header className="fixed inset-x-0 top-0 z-30 px-4 pt-[calc(0.65rem+env(safe-area-inset-top))] sm:px-6 lg:px-10">
           <div className="mx-auto max-w-[1500px]">
             <div className="card border-white/60 bg-[color-mix(in_srgb,var(--surface)_90%,white)] p-4 backdrop-blur-xl sm:p-5">
@@ -109,11 +107,9 @@ export function AppShellFrame({
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                  <span className="pill">
-                    {viewer?.fullName ?? viewer?.email ?? "Аккаунт fit"}
-                  </span>
+                  <span className="pill">{viewer?.fullName ?? viewer?.email ?? "Аккаунт fit"}</span>
                   {viewer?.isPlatformAdmin ? (
-                    <span className="pill">Админ-доступ активен</span>
+                    <span className="pill">Доступ администратора активен</span>
                   ) : null}
                 </div>
 
@@ -122,7 +118,9 @@ export function AppShellFrame({
             </div>
           </div>
         </header>
-      ) : (
+      ) : null}
+
+      {!immersive && shouldUseCompactHeader ? (
         <div className="fixed inset-x-0 top-[calc(0.35rem+env(safe-area-inset-top))] z-30 px-4 sm:px-6 lg:px-10">
           <div className="mx-auto flex max-w-[1500px] items-center justify-between gap-3 rounded-full border border-border bg-white/90 px-3 py-2 shadow-[0_16px_40px_-28px_rgba(24,22,19,0.5)] backdrop-blur-xl">
             <AppShellNav minimal viewer={viewer} />
@@ -145,13 +143,15 @@ export function AppShellFrame({
             ) : null}
           </div>
         </div>
-      )}
+      ) : null}
 
       <main
         className={`mx-auto grid max-w-[1500px] gap-6 px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-10 lg:pb-8 ${
-          shouldUseCompactHeader
-            ? "pt-[calc(3.3rem+env(safe-area-inset-top))] sm:pt-[3.4rem] lg:pt-[3.6rem]"
-            : "pt-[calc(10.8rem+env(safe-area-inset-top))] sm:pt-[12.5rem] lg:pt-[12.8rem]"
+          immersive
+            ? "pt-[calc(0.8rem+env(safe-area-inset-top))] sm:pt-4 lg:pt-5"
+            : shouldUseCompactHeader
+              ? "pt-[calc(3.3rem+env(safe-area-inset-top))] sm:pt-[3.4rem] lg:pt-[3.6rem]"
+              : "pt-[calc(10.8rem+env(safe-area-inset-top))] sm:pt-[12.5rem] lg:pt-[12.8rem]"
         }`}
       >
         {children}

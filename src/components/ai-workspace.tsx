@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Brain, ClipboardList, History, Sparkles } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Brain, ChevronLeft, ClipboardList, History, Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { AiChatPanel } from "@/components/ai-chat-panel";
@@ -190,6 +191,7 @@ export function AiWorkspace({
   recentSessions,
   structuredKnowledge,
 }: AiWorkspaceProps) {
+  const router = useRouter();
   const [activeSection, setActiveSection] = useState<WorkspaceSectionKey>("history");
 
   const sectionContent = useMemo(() => {
@@ -209,8 +211,35 @@ export function AiWorkspace({
 
   const activeMeta = sectionMeta.find((item) => item.key === activeSection) ?? sectionMeta[0];
 
+  function returnToApp() {
+    if (window.history.length > 1) {
+      router.back();
+      return;
+    }
+
+    router.push("/dashboard");
+  }
+
   return (
     <div className="grid gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="rounded-full border border-border bg-white/85 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-muted">
+            AI
+          </span>
+          <p className="text-sm text-muted">Полноэкранный чат и управление планами</p>
+        </div>
+
+        <button
+          className="inline-flex items-center gap-2 rounded-full border border-border bg-white/85 px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-white"
+          onClick={returnToApp}
+          type="button"
+        >
+          <ChevronLeft size={16} strokeWidth={2.2} />
+          Свернуть чат
+        </button>
+      </div>
+
       <div className="grid gap-3">
         <div className="flex items-center gap-2 overflow-x-auto pb-1">
           {sectionMeta.map((section) => {

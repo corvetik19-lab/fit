@@ -11,12 +11,14 @@ export async function AppShell({
   children,
   compactHeader = false,
   hideAssistantWidget = false,
+  immersive = false,
 }: {
   title: string;
   eyebrow: string;
   children: ReactNode;
   compactHeader?: boolean;
   hideAssistantWidget?: boolean;
+  immersive?: boolean;
 }) {
   const viewer = await getViewer();
   const supabase = viewer ? await createServerSupabaseClient() : null;
@@ -31,6 +33,7 @@ export async function AppShell({
       compactHeader={compactHeader}
       eyebrow={eyebrow}
       hideAssistantWidget={hideAssistantWidget}
+      immersive={immersive}
       title={title}
       viewer={
         viewer

@@ -26,6 +26,18 @@
 - `npx eslint src/components/ai-chat-panel.tsx src/components/ai-assistant-widget.tsx src/components/ai-workspace.tsx src/components/ai-workspace-sidebar.tsx src/app/ai/page.tsx src/app/api/ai/assistant/route.ts`
 - `npm run build`
 - `npm run typecheck`
+
+### 2026-03-12 18:20 - Immersive AI mode and collapse back to app
+
+- Switched `/ai` to an immersive shell mode so the compact floating shell header no longer sits on top of the full-page chat.
+- Added an explicit `Свернуть чат` action inside the AI workspace that returns the user back into the regular application flow via browser history with `/dashboard` fallback.
+- Cleaned the shell frame labels in the same pass so the collapse/expand actions and account chip no longer show broken copy.
+
+### Verification: immersive AI mode
+
+- `npx eslint src/components/app-shell.tsx src/components/app-shell-frame.tsx src/components/ai-workspace.tsx src/app/ai/page.tsx`
+- `npm run build`
+- `npm run typecheck`
 - `npm run typecheck` (after `build`, due the existing `.next/types` race in this repo)
 
 ### Admin UI recovery and shell restore
