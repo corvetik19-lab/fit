@@ -15,6 +15,17 @@
 - `npm run typecheck`
 - Playwright local pass on `http://127.0.0.1:3030/ai`: verified that `/ai` opens with an empty new chat, the old starter chat stays only in history, and single-session deletion clears it from the sidebar
 
+### AI sidebar hydration hotfix
+
+- Replaced `next/link` navigation inside `src/components/ai-workspace-sidebar.tsx` with explicit `router.push(...)` buttons for `Новый чат` and `Открыть`.
+- This removes the header/history navigation nodes that were hydrating inconsistently between server HTML and client render in the AI sidebar.
+
+### Verification: AI sidebar hydration hotfix
+
+- `npx eslint src/components/ai-workspace-sidebar.tsx src/components/ai-workspace.tsx src/app/ai/page.tsx`
+- `npm run build`
+- `npm run typecheck`
+
 ### AI prompt library and cleaner chat composer
 
 - Moved the built-in AI starter prompts out of the inline chat body and into a dedicated modal prompt library in `src/components/ai-prompt-library.tsx`, with search, local custom prompt storage, create/delete actions, and reusable behavior for both the full-page AI workspace and the floating widget.

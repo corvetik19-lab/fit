@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { LoaderCircle, Trash2 } from "lucide-react";
 
 import type { AiChatSessionRow } from "@/lib/ai/chat";
@@ -49,6 +49,8 @@ export function AiWorkspaceSidebar({
   section,
   structuredKnowledge,
 }: AiWorkspaceSidebarProps) {
+  const router = useRouter();
+
   if (section === "context") {
     return (
       <section className="card p-6">
@@ -102,12 +104,13 @@ export function AiWorkspaceSidebar({
         </div>
 
         <div className="flex flex-wrap gap-2">
-          <Link
+          <button
             className="rounded-full border border-border bg-white/80 px-4 py-2 text-sm font-medium text-foreground transition hover:bg-white"
-            href="/ai"
+            onClick={() => router.push("/ai")}
+            type="button"
           >
             Новый чат
-          </Link>
+          </button>
 
           {recentSessions.length && onClearSessions ? (
             <button
@@ -156,12 +159,13 @@ export function AiWorkspaceSidebar({
                 </div>
 
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <Link
+                  <button
                     className="rounded-full border border-border bg-white/90 px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white"
-                    href={`/ai?session=${session.id}`}
+                    onClick={() => router.push(`/ai?session=${session.id}`)}
+                    type="button"
                   >
                     Открыть
-                  </Link>
+                  </button>
 
                   {onDeleteSession ? (
                     <button
