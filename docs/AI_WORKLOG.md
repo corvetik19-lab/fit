@@ -1370,3 +1370,16 @@
 - `npx eslint src/components/page-workspace.tsx src/app/workouts/page.tsx src/app/nutrition/page.tsx src/components/weekly-program-builder.tsx src/components/nutrition-tracker.tsx`
 - `npm run build`
 - `npm run typecheck`
+
+### 2026-03-12 18:32 - Desktop-меню и мобильная укладка экранов
+
+- Перестроил [app-shell-frame.tsx](/C:/fit/src/components/app-shell-frame.tsx), чтобы компактная desktop-шапка больше не прятала меню целиком. Теперь даже в свернутом состоянии остаются название страницы, полное меню и кнопка разворота.
+- Обновил [app-shell-nav.tsx](/C:/fit/src/components/app-shell-nav.tsx): для супер-админа в desktop-навигации теперь видны и `Админ`, и `Пользователи`, а не только часть маршрутов.
+- Поджал [page-workspace.tsx](/C:/fit/src/components/page-workspace.tsx) и [globals.css](/C:/fit/src/app/globals.css): бейджи не ломаются внутри строки, карточки не вылезают по ширине, а на мобильной версии разделы остаются в пределах экрана.
+- Живую проверку прогнал через Playwright на `/workouts` и `/nutrition`: в desktop-режиме меню отображается полностью, а на ширине `390px` горизонтального вылеза страницы нет.
+
+### Проверка: desktop-меню и мобильный layout
+
+- `npx eslint src/components/app-shell-nav.tsx src/components/app-shell-frame.tsx src/components/page-workspace.tsx`
+- `npm run build`
+- `npm run typecheck`

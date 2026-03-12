@@ -144,27 +144,37 @@ export function AppShellFrame({
       ) : null}
 
       {!immersive && shouldUseCompactHeader ? (
-        <div className="fixed right-4 top-[calc(0.35rem+env(safe-area-inset-top))] z-30 flex items-center gap-2 sm:right-6 lg:right-10">
-          <div className="rounded-full border border-border bg-white/90 p-1.5 shadow-[0_16px_40px_-28px_rgba(24,22,19,0.5)] backdrop-blur-xl">
-            <AppShellNav minimal viewer={viewer} />
-          </div>
+        <header className="fixed inset-x-0 top-0 z-30 hidden px-4 pt-[calc(0.5rem+env(safe-area-inset-top))] sm:px-6 lg:block lg:px-10">
+          <div className="mx-auto max-w-[1500px]">
+            <div className="rounded-[1.6rem] border border-white/60 bg-[color-mix(in_srgb,var(--surface)_94%,white)] px-4 py-3 shadow-[0_18px_45px_rgba(24,22,19,0.08)] backdrop-blur-xl">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate font-mono text-[0.64rem] uppercase tracking-[0.22em] text-muted">
+                    {eyebrow}
+                  </p>
+                  <p className="mt-1 truncate text-sm font-semibold text-foreground">
+                    {title}
+                  </p>
+                </div>
 
-          {!compactHeader ? (
-            <button
-              aria-expanded={false}
-              aria-label="Развернуть верхнюю панель"
-              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border bg-white/92 text-foreground shadow-[0_16px_40px_-28px_rgba(24,22,19,0.5)] backdrop-blur-xl transition hover:bg-white"
-              onClick={toggleCollapsed}
-              type="button"
-            >
-              <ChevronDown size={18} strokeWidth={2.2} />
-            </button>
-          ) : (
-            <div className="hidden items-center rounded-full border border-border bg-white/92 px-3 py-2 text-xs font-medium text-muted shadow-[0_16px_40px_-28px_rgba(24,22,19,0.5)] backdrop-blur-xl sm:flex">
-              Панель скрыта
+                <div className="flex items-center gap-2">
+                  <AppShellNav viewer={viewer} />
+                  {!compactHeader ? (
+                    <button
+                      aria-expanded={false}
+                      aria-label="Развернуть верхнюю панель"
+                      className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border bg-white/92 text-foreground shadow-[0_16px_40px_-28px_rgba(24,22,19,0.5)] backdrop-blur-xl transition hover:bg-white"
+                      onClick={toggleCollapsed}
+                      type="button"
+                    >
+                      <ChevronDown size={18} strokeWidth={2.2} />
+                    </button>
+                  ) : null}
+                </div>
+              </div>
             </div>
-          )}
-        </div>
+          </div>
+        </header>
       ) : null}
 
       <main
@@ -174,7 +184,7 @@ export function AppShellFrame({
             : showMobileHeader
               ? "pt-[calc(5.4rem+env(safe-area-inset-top))]"
               : shouldUseCompactHeader
-                ? "pt-[calc(0.9rem+env(safe-area-inset-top))] sm:pt-[1.15rem] lg:pt-[1.3rem]"
+                ? "pt-[calc(6.6rem+env(safe-area-inset-top))] sm:pt-[6.9rem] lg:pt-[7.2rem]"
                 : "pt-[calc(10.8rem+env(safe-area-inset-top))] sm:pt-[12.5rem] lg:pt-[12.8rem]"
         }`}
       >

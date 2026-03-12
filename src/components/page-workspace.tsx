@@ -88,9 +88,9 @@ export function PageWorkspace({
         <div className="grid gap-5 xl:grid-cols-[1.06fr_0.94fr]">
           <div className="space-y-4">
             {badges.length ? (
-              <div className="flex flex-wrap gap-2">
+              <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
                 {badges.map((badge) => (
-                  <span className="pill" key={badge}>
+                  <span className="pill" key={badge} title={badge}>
                     {badge}
                   </span>
                 ))}
@@ -110,13 +110,13 @@ export function PageWorkspace({
           <div className="grid grid-cols-2 gap-3">
             {metrics.map((metric) => (
               <article
-                className="rounded-3xl border border-border bg-white/80 p-4 shadow-[0_18px_48px_-40px_rgba(15,23,42,0.28)]"
+                className="min-w-0 rounded-3xl border border-border bg-white/80 p-4 shadow-[0_18px_48px_-40px_rgba(15,23,42,0.28)]"
                 key={metric.label}
               >
-                <p className="text-xs uppercase tracking-[0.18em] text-muted">
+                <p className="truncate text-xs uppercase tracking-[0.18em] text-muted">
                   {metric.label}
                 </p>
-                <p className="mt-3 text-3xl font-semibold text-foreground">
+                <p className="mt-3 truncate text-3xl font-semibold text-foreground">
                   {metric.value}
                 </p>
                 <p className="mt-2 text-sm text-muted">{metric.note}</p>
@@ -136,7 +136,11 @@ export function PageWorkspace({
               Открывай только нужный раздел
             </h2>
           </div>
-          {activeSection ? <span className="pill">{activeSection.label}</span> : null}
+          {activeSection ? (
+            <span className="pill" title={activeSection.label}>
+              {activeSection.label}
+            </span>
+          ) : null}
         </div>
 
         <div className="mt-4 md:hidden">
@@ -150,7 +154,7 @@ export function PageWorkspace({
               <span className="block text-xs uppercase tracking-[0.18em] text-muted">
                 Текущий раздел
               </span>
-              <span className="mt-1 block text-sm font-semibold text-foreground">
+              <span className="mt-1 block truncate text-sm font-semibold text-foreground">
                 {activeSection?.label ?? "Выбери раздел"}
               </span>
               {activeSection ? (

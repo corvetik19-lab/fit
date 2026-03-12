@@ -108,7 +108,16 @@ const adminUsersRoute: AppRouteDefinition = {
 
 const coreRoutes = [dashboardRoute, workoutsRoute, nutritionRoute, aiRoute];
 const utilityRoutes = [historyRoute, settingsRoute];
-const desktopRoutes = [...coreRoutes, ...utilityRoutes, adminRoute];
+const sectionRoutes = [
+  dashboardRoute,
+  workoutsRoute,
+  nutritionRoute,
+  aiRoute,
+  historyRoute,
+  settingsRoute,
+  adminRoute,
+  adminUsersRoute,
+];
 
 function formatAdminRole(value: PlatformAdminRole) {
   switch (value) {
@@ -137,7 +146,7 @@ function getCurrentSectionLabel(pathname: string) {
   }
 
   const currentRoute =
-    desktopRoutes.find((route) => isRouteActive(pathname, route.href)) ??
+    sectionRoutes.find((route) => isRouteActive(pathname, route.href)) ??
     dashboardRoute;
 
   return currentRoute.label;
@@ -191,6 +200,9 @@ export function AppShellNav({
     viewer?.platformAdminRole ?? null,
     viewer?.email ?? null,
   );
+  const desktopRoutes: AppRouteDefinition[] = viewer?.isPlatformAdmin
+    ? [...coreRoutes, ...utilityRoutes, adminRoute, adminUsersRoute]
+    : [...coreRoutes, ...utilityRoutes];
   const adminDrawerRoutes: AppRouteDefinition[] = viewer?.isPlatformAdmin
     ? [
         adminControlRoute,
@@ -237,9 +249,7 @@ export function AppShellNav({
       {!minimal ? (
         <>
           <nav className="hidden flex-wrap gap-2 lg:flex">
-            {desktopRoutes
-              .filter((route) => viewer?.isPlatformAdmin || route.href !== "/admin")
-              .map((route) => {
+            {desktopRoutes.map((route) => {
                 const isActive = isRouteActive(pathname, route.href);
 
                 return (
