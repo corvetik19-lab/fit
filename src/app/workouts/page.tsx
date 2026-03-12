@@ -43,9 +43,11 @@ export default async function WorkoutsPage() {
       <PageWorkspace
         badges={[
           viewer.profile?.full_name ?? viewer.user.email ?? "fit",
-          lastUpdatedAt ? `Обновлено ${lastUpdatedAt}` : "Библиотека ещё пустая",
+          lastUpdatedAt
+            ? `Обновлено ${lastUpdatedAt}`
+            : "Библиотека ещё пустая",
         ]}
-        description="Здесь собраны только два логических слоя: рабочий план недели и личная библиотека упражнений. На телефоне это открывается через меню разделов, а не превращается в одну длинную ленту."
+        description="Здесь собраны план недели и библиотека упражнений. На телефоне всё открывается по разделам, а не одной длинной лентой."
         metrics={[
           {
             label: "Активные",
@@ -72,7 +74,7 @@ export default async function WorkoutsPage() {
           {
             key: "plan",
             label: "План недели",
-            description: "Программа, дни и шаблоны.",
+            description: "Программа, дни и шаблоны",
             content: (
               <WeeklyProgramBuilder
                 activeExercises={activeExercises}
@@ -84,7 +86,7 @@ export default async function WorkoutsPage() {
           {
             key: "library",
             label: "Упражнения",
-            description: "Своя база, архив и быстрые правки.",
+            description: "Своя база и быстрые правки",
             content: <ExerciseLibraryManager initialExercises={exercises} />,
           },
         ]}

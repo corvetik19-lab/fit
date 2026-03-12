@@ -40,26 +40,26 @@ const inputClassName =
   "w-full rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15";
 
 const dayLabels: Record<number, string> = {
-  1: "РџРѕРЅРµРґРµР»СЊРЅРёРє",
-  2: "Р’С‚РѕСЂРЅРёРє",
-  3: "РЎСЂРµРґР°",
-  4: "Р§РµС‚РІРµСЂРі",
-  5: "РџСЏС‚РЅРёС†Р°",
-  6: "РЎСѓР±Р±РѕС‚Р°",
-  7: "Р’РѕСЃРєСЂРµСЃРµРЅСЊРµ",
+  1: "Понедельник",
+  2: "Вторник",
+  3: "Среда",
+  4: "Четверг",
+  5: "Пятница",
+  6: "Суббота",
+  7: "Воскресенье",
 };
 
 const statusLabels: Record<string, string> = {
-  draft: "Р§РµСЂРЅРѕРІРёРє",
-  active: "РђРєС‚РёРІРЅР°",
-  completed: "Р—Р°РІРµСЂС€РµРЅР°",
-  archived: "РђСЂС…РёРІ",
+  draft: "Черновик",
+  active: "Активна",
+  completed: "Завершена",
+  archived: "Архив",
 };
 
 const dayStatusLabels: Record<string, string> = {
-  planned: "Р—Р°РїР»Р°РЅРёСЂРѕРІР°РЅ",
-  in_progress: "Р’ РїСЂРѕС†РµСЃСЃРµ",
-  done: "Р—Р°РІРµСЂС€С‘РЅ",
+  planned: "Запланирован",
+  in_progress: "В процессе",
+  done: "Завершён",
 };
 
 const dateFormatter = new Intl.DateTimeFormat("ru-RU", {
@@ -129,7 +129,7 @@ export function WeeklyProgramBuilder({
   initialTemplates: WorkoutTemplateSummary[];
 }) {
   const router = useRouter();
-  const [title, setTitle] = useState("РњРѕСЏ РЅРѕРІР°СЏ РЅРµРґРµР»СЏ");
+  const [title, setTitle] = useState("Моя новая неделя");
   const [weekStartDate, setWeekStartDate] = useState(getCurrentWeekStartDate());
   const [days, setDays] = useState<BuilderDay[]>([createDayEntry()]);
   const [error, setError] = useState<string | null>(null);
@@ -141,7 +141,7 @@ export function WeeklyProgramBuilder({
     initialPrograms.find((program) => program.status === "active") ?? null;
 
   function resetBuilder() {
-    setTitle("РњРѕСЏ РЅРѕРІР°СЏ РЅРµРґРµР»СЏ");
+    setTitle("Моя новая неделя");
     setWeekStartDate(getCurrentWeekStartDate());
     setDays([createDayEntry()]);
   }
@@ -220,7 +220,7 @@ export function WeeklyProgramBuilder({
     setNotice(null);
 
     if (!activeExercises.length) {
-      setError("РЎРЅР°С‡Р°Р»Р° РґРѕР±Р°РІСЊ С…РѕС‚СЏ Р±С‹ РѕРґРЅРѕ Р°РєС‚РёРІРЅРѕРµ СѓРїСЂР°Р¶РЅРµРЅРёРµ РІ Р±РёР±Р»РёРѕС‚РµРєСѓ.");
+      setError("Сначала добавь хотя бы одно активное упражнение в библиотеку.");
       return;
     }
 
@@ -242,19 +242,19 @@ export function WeeklyProgramBuilder({
         nextDayOfWeek < 1 ||
         nextDayOfWeek > 7
       ) {
-        setError("Р”Р»СЏ РєР°Р¶РґРѕРіРѕ РґРЅСЏ РЅСѓР¶РЅРѕ РІС‹Р±СЂР°С‚СЊ РґРµРЅСЊ РЅРµРґРµР»Рё.");
+        setError("Для каждого дня нужно выбрать день недели.");
         return;
       }
 
       if (usedDays.has(nextDayOfWeek)) {
-        setError("РћРґРёРЅ Рё С‚РѕС‚ Р¶Рµ РґРµРЅСЊ РЅРµРґРµР»Рё РЅРµР»СЊР·СЏ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ РґРІР°Р¶РґС‹.");
+        setError("Один и тот же день недели нельзя использовать дважды.");
         return;
       }
 
       usedDays.add(nextDayOfWeek);
 
       if (!day.exercises.length) {
-        setError("Р’ РєР°Р¶РґРѕРј С‚СЂРµРЅРёСЂРѕРІРѕС‡РЅРѕРј РґРЅРµ РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ С…РѕС‚СЏ Р±С‹ РѕРґРЅРѕ СѓРїСЂР°Р¶РЅРµРЅРёРµ.");
+        setError("В каждом тренировочном дне должно быть хотя бы одно упражнение.");
         return;
       }
 
@@ -264,12 +264,12 @@ export function WeeklyProgramBuilder({
         const setsCount = Number(exercise.setsCount);
 
         if (!exercise.exerciseLibraryId) {
-          setError("Р’С‹Р±РµСЂРё СѓРїСЂР°Р¶РЅРµРЅРёРµ РґР»СЏ РєР°Р¶РґРѕРіРѕ СЃР»РѕС‚Р° РІРЅСѓС‚СЂРё РґРЅСЏ.");
+          setError("Выбери упражнение для каждого слота внутри дня.");
           return;
         }
 
         if (!Number.isInteger(setsCount) || setsCount < 1) {
-          setError("РљРѕР»РёС‡РµСЃС‚РІРѕ РїРѕРґС…РѕРґРѕРІ РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ РїРѕР»РѕР¶РёС‚РµР»СЊРЅС‹Рј С†РµР»С‹Рј С‡РёСЃР»РѕРј.");
+          setError("Количество подходов должно быть положительным целым числом.");
           return;
         }
 
@@ -307,11 +307,11 @@ export function WeeklyProgramBuilder({
           | null;
 
         if (!response.ok) {
-          setError(payload?.message ?? "РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕС…СЂР°РЅРёС‚СЊ РЅРµРґРµР»СЊРЅСѓСЋ РїСЂРѕРіСЂР°РјРјСѓ.");
+          setError(payload?.message ?? "Не удалось сохранить недельную программу.");
           return;
         }
 
-        setNotice("Р§РµСЂРЅРѕРІРёРє РїСЂРѕРіСЂР°РјРјС‹ СЃРѕС…СЂР°РЅС‘РЅ.");
+        setNotice("Черновик программы сохранён.");
         resetBuilder();
         router.refresh();
       } finally {
@@ -336,11 +336,11 @@ export function WeeklyProgramBuilder({
           | null;
 
         if (!response.ok) {
-          setError(payload?.message ?? "РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°С„РёРєСЃРёСЂРѕРІР°С‚СЊ РЅРµРґРµР»СЊРЅСѓСЋ РїСЂРѕРіСЂР°РјРјСѓ.");
+          setError(payload?.message ?? "Не удалось зафиксировать недельную программу.");
           return;
         }
 
-        setNotice("РџСЂРѕРіСЂР°РјРјР° Р·Р°С„РёРєСЃРёСЂРѕРІР°РЅР° Рё РїРµСЂРµРІРµРґРµРЅР° РІ Р°РєС‚РёРІРЅСѓСЋ.");
+        setNotice("Программа зафиксирована и переведена в активную.");
         router.refresh();
       } finally {
         setIsPending(false);
@@ -370,11 +370,11 @@ export function WeeklyProgramBuilder({
           | null;
 
         if (!response.ok) {
-          setError(payload?.message ?? "РќРµ СѓРґР°Р»РѕСЃСЊ РєР»РѕРЅРёСЂРѕРІР°С‚СЊ РЅРµРґРµР»СЊРЅСѓСЋ РїСЂРѕРіСЂР°РјРјСѓ.");
+          setError(payload?.message ?? "Не удалось клонировать недельную программу.");
           return;
         }
 
-        setNotice("РџСЂРѕРіСЂР°РјРјР° РєР»РѕРЅРёСЂРѕРІР°РЅР° РєР°Рє РЅРѕРІС‹Р№ С‡РµСЂРЅРѕРІРёРє РЅР° СЃР»РµРґСѓСЋС‰СѓСЋ РЅРµРґРµР»СЋ.");
+        setNotice("Программа клонирована как новый черновик на следующую неделю.");
         router.refresh();
       } finally {
         setIsPending(false);
@@ -404,11 +404,11 @@ export function WeeklyProgramBuilder({
           | null;
 
         if (!response.ok) {
-          setError(payload?.message ?? "РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕС…СЂР°РЅРёС‚СЊ С€Р°Р±Р»РѕРЅ С‚СЂРµРЅРёСЂРѕРІРєРё.");
+          setError(payload?.message ?? "Не удалось сохранить шаблон тренировки.");
           return;
         }
 
-        setNotice("РЁР°Р±Р»РѕРЅ С‚СЂРµРЅРёСЂРѕРІРєРё СЃРѕС…СЂР°РЅС‘РЅ.");
+        setNotice("Шаблон тренировки сохранён.");
         router.refresh();
       } finally {
         setIsPending(false);
@@ -431,7 +431,7 @@ export function WeeklyProgramBuilder({
     setDays(nextDays.length ? nextDays : [createDayEntry()]);
     setTitle(template.title);
     setError(null);
-    setNotice("РЁР°Р±Р»РѕРЅ Р·Р°РіСЂСѓР¶РµРЅ РІ РєРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ. РџСЂРѕРІРµСЂСЊ РЅРµРґРµР»СЋ Рё СЃРѕС…СЂР°РЅРё С‡РµСЂРЅРѕРІРёРє.");
+    setNotice("Шаблон загружен в конструктор. Проверь неделю и сохрани черновик.");
   }
 
   const builderPanels: Array<{
@@ -441,23 +441,23 @@ export function WeeklyProgramBuilder({
   }> = [
     {
       key: "builder",
-      label: "РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ",
-      description: "РќРµРґРµР»СЏ, РґРЅРё Рё СѓРїСЂР°Р¶РЅРµРЅРёСЏ",
+      label: "Конструктор",
+      description: "Неделя, дни и упражнения",
     },
     {
       key: "active",
-      label: "РђРєС‚РёРІРЅР°СЏ РЅРµРґРµР»СЏ",
-      description: "РўРµРєСѓС‰РёР№ РїР»Р°РЅ Рё Р·Р°РїСѓСЃРє С‚СЂРµРЅРёСЂРѕРІРєРё",
+      label: "Активная неделя",
+      description: "Текущий план и запуск тренировки",
     },
     {
       key: "templates",
-      label: "РЁР°Р±Р»РѕРЅС‹",
-      description: "Р“РѕС‚РѕРІС‹Рµ СЃС…РµРјС‹ РґР»СЏ Р±С‹СЃС‚СЂРѕРіРѕ СЃС‚Р°СЂС‚Р°",
+      label: "Шаблоны",
+      description: "Готовые схемы для быстрого старта",
     },
     {
       key: "history",
-      label: "РСЃС‚РѕСЂРёСЏ",
-      description: "РџСЂРѕС€Р»С‹Рµ РїСЂРѕРіСЂР°РјРјС‹ Рё С‡РµСЂРЅРѕРІРёРєРё",
+      label: "История",
+      description: "Прошлые программы и черновики",
     },
   ];
 
@@ -470,10 +470,10 @@ export function WeeklyProgramBuilder({
               Меню тренировок
             </p>
             <h2 className="mt-2 text-xl font-semibold text-foreground">
-              Открывай только нужный блок
+              Выбери раздел
             </h2>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">
-              Переключайся между конструктором, текущей неделей, шаблонами и историей программ, чтобы экран не превращался в длинную ленту.
+              Конструктор, активная неделя, шаблоны и история открываются по отдельности.
             </p>
           </div>
           <span className="pill">
@@ -488,7 +488,7 @@ export function WeeklyProgramBuilder({
             return (
               <button
                 aria-pressed={isActive}
-                className={`min-w-[13.5rem] shrink-0 rounded-3xl border px-4 py-3 text-left transition ${
+                className={`min-w-[11.5rem] shrink-0 rounded-3xl border px-4 py-3 text-left transition sm:min-w-[13.5rem] ${
                   isActive
                     ? "border-accent/30 bg-accent-soft text-foreground shadow-[0_18px_45px_-35px_rgba(20,97,75,0.35)]"
                     : "border-border bg-white/80 text-foreground hover:bg-white"

@@ -50,7 +50,7 @@ export default async function NutritionPage() {
           viewer.profile?.full_name ?? viewer.user.email ?? "fit",
           `Сегодня: ${todaySummaryDate}`,
         ]}
-        description="Экран питания теперь разбит по логике: баланс дня, AI-анализ фото и сам журнал. На телефоне это открывается через меню разделов, а не сплошной вертикальной колонкой."
+        description="Экран питания разбит по разделам: баланс дня, AI-анализ фото и журнал. На телефоне это открывается по меню, а не сплошной колонкой."
         metrics={[
           {
             label: "Продукты",
@@ -77,7 +77,7 @@ export default async function NutritionPage() {
           {
             key: "balance",
             label: "Баланс дня",
-            description: "КБЖУ, цели и недельный тренд.",
+            description: "КБЖУ, цели и недельный тренд",
             content: (
               <NutritionGoalAdherence
                 summary={
@@ -97,13 +97,13 @@ export default async function NutritionPage() {
           {
             key: "photo",
             label: "AI-фото",
-            description: "Фоторазбор блюда и быстрый AI-срез.",
+            description: "Разбор блюда по фото",
             content: <NutritionPhotoAnalysis access={access.features.meal_photo} />,
           },
           {
             key: "log",
             label: "Журнал",
-            description: "Продукты, рецепты, шаблоны и ручной лог.",
+            description: "Продукты, рецепты и ручной лог",
             content: (
               <NutritionTracker
                 initialFoods={foods}
@@ -117,7 +117,7 @@ export default async function NutritionPage() {
             ),
           },
         ]}
-        title="Рацион, AI-анализ фото и журнал питания в одном рабочем экране"
+        title="Рацион, AI-анализ фото и журнал питания в одном экране"
       />
     </AppShell>
   );

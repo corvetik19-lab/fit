@@ -133,7 +133,7 @@ export function PageWorkspace({
               Разделы
             </p>
             <h2 className="mt-2 text-xl font-semibold text-foreground">
-              Открывай только нужный блок, а не всю страницу сразу
+              Открывай только нужный раздел
             </h2>
           </div>
           {activeSection ? <span className="pill">{activeSection.label}</span> : null}

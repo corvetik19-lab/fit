@@ -1358,3 +1358,15 @@
 - `npx eslint src/components/app-shell-nav.tsx`
 - `npm run build`
 - `npm run typecheck`
+
+### 2026-03-12 13:34 - Чистые разделы в тренировках и питании
+
+- Исправил битую кириллицу в общих разделах страниц и в экранах [тренировок](/C:/fit/src/app/workouts/page.tsx), [питания](/C:/fit/src/app/nutrition/page.tsx), [конструктора недели](/C:/fit/src/components/weekly-program-builder.tsx), [журнала питания](/C:/fit/src/components/nutrition-tracker.tsx) и [общего workspace](/C:/fit/src/components/page-workspace.tsx).
+- Сократил верхние подписи разделов, чтобы на мобильной PWA сразу было видно активный блок, а не длинное пояснение.
+- Для внутренних меню уменьшил ширину карточек на узких экранах, чтобы переключение между блоками выглядело аккуратнее.
+
+### Проверка: русские разделы и мобильное меню
+
+- `npx eslint src/components/page-workspace.tsx src/app/workouts/page.tsx src/app/nutrition/page.tsx src/components/weekly-program-builder.tsx src/components/nutrition-tracker.tsx`
+- `npm run build`
+- `npm run typecheck`

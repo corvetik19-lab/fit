@@ -156,14 +156,14 @@ export function NutritionTracker({
 
   const nutritionCards = [
     {
-      label: "РљР°Р»РѕСЂРёРё",
-      value: `${summary.kcal.toLocaleString("ru-RU")} РєРєР°Р»`,
+      label: "Калории",
+      value: `${summary.kcal.toLocaleString("ru-RU")} ккал`,
       target: nutritionTargets?.kcal_target ?? null,
       progress: calculateProgress(summary.kcal, nutritionTargets?.kcal_target ?? null),
     },
     {
-      label: "Р‘РµР»РєРё",
-      value: `${formatMacro(Number(summary.protein))} Рі`,
+      label: "Белки",
+      value: `${formatMacro(Number(summary.protein))} г`,
       target: nutritionTargets?.protein_target ?? null,
       progress: calculateProgress(
         Number(summary.protein),
@@ -171,14 +171,14 @@ export function NutritionTracker({
       ),
     },
     {
-      label: "Р–РёСЂС‹",
-      value: `${formatMacro(Number(summary.fat))} Рі`,
+      label: "Жиры",
+      value: `${formatMacro(Number(summary.fat))} г`,
       target: nutritionTargets?.fat_target ?? null,
       progress: calculateProgress(Number(summary.fat), nutritionTargets?.fat_target ?? null),
     },
     {
-      label: "РЈРіР»РµРІРѕРґС‹",
-      value: `${formatMacro(Number(summary.carbs))} Рі`,
+      label: "Углеводы",
+      value: `${formatMacro(Number(summary.carbs))} г`,
       target: nutritionTargets?.carbs_target ?? null,
       progress: calculateProgress(
         Number(summary.carbs),
@@ -247,11 +247,11 @@ export function NutritionTracker({
         | null;
 
       if (!response.ok) {
-        setError(payload?.message ?? "РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕС…СЂР°РЅРёС‚СЊ РїСЂРѕРґСѓРєС‚.");
+        setError(payload?.message ?? "Не удалось сохранить продукт.");
         return;
       }
 
-      setNotice(editingFoodId ? "РџСЂРѕРґСѓРєС‚ РѕР±РЅРѕРІР»С‘РЅ." : "РџСЂРѕРґСѓРєС‚ РґРѕР±Р°РІР»РµРЅ.");
+      setNotice(editingFoodId ? "Продукт обновлён." : "Продукт добавлен.");
       resetFoodForm();
       router.refresh();
     });
@@ -268,7 +268,7 @@ export function NutritionTracker({
         | null;
 
       if (!response.ok) {
-        setError(payload?.message ?? "РќРµ СѓРґР°Р»РѕСЃСЊ СѓРґР°Р»РёС‚СЊ РїСЂРѕРґСѓРєС‚.");
+        setError(payload?.message ?? "Не удалось удалить продукт.");
         return;
       }
 
@@ -276,7 +276,7 @@ export function NutritionTracker({
         resetFoodForm();
       }
 
-      setNotice("РџСЂРѕРґСѓРєС‚ СѓРґР°Р»С‘РЅ.");
+      setNotice("Продукт удалён.");
       router.refresh();
     });
   }
@@ -308,11 +308,11 @@ export function NutritionTracker({
         | null;
 
       if (!response.ok) {
-        setError(payload?.message ?? "РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕС…СЂР°РЅРёС‚СЊ РїСЂРёС‘Рј РїРёС‰Рё.");
+        setError(payload?.message ?? "Не удалось сохранить приём пищи.");
         return;
       }
 
-      setNotice("РџСЂРёС‘Рј РїРёС‰Рё СЃРѕС…СЂР°РЅС‘РЅ, РґРЅРµРІРЅР°СЏ СЃРІРѕРґРєР° РїРµСЂРµСЃС‡РёС‚Р°РЅР°.");
+      setNotice("Приём пищи сохранён, дневная сводка пересчитана.");
       setMealDateTime(getDefaultMealDateTime());
       setMealItems([createMealDraftItem(initialFoods[0]?.id ?? "")]);
       router.refresh();
@@ -340,11 +340,11 @@ export function NutritionTracker({
         | null;
 
       if (!response.ok) {
-        setError(payload?.message ?? "РќРµ СѓРґР°Р»РѕСЃСЊ СѓРґР°Р»РёС‚СЊ РїСЂРёС‘Рј РїРёС‰Рё.");
+        setError(payload?.message ?? "Не удалось удалить приём пищи.");
         return;
       }
 
-      setNotice("РџСЂРёС‘Рј РїРёС‰Рё СѓРґР°Р»С‘РЅ, РґРЅРµРІРЅР°СЏ СЃРІРѕРґРєР° РѕР±РЅРѕРІР»РµРЅР°.");
+      setNotice("Приём пищи удалён, дневная сводка обновлена.");
       router.refresh();
     });
   }
@@ -369,11 +369,11 @@ export function NutritionTracker({
         | null;
 
       if (!response.ok) {
-        setError(payload?.message ?? "РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕС…СЂР°РЅРёС‚СЊ С†РµР»Рё РїРѕ РїРёС‚Р°РЅРёСЋ.");
+        setError(payload?.message ?? "Не удалось сохранить цели по питанию.");
         return;
       }
 
-      setNotice("Р¦РµР»Рё РїРѕ РїРёС‚Р°РЅРёСЋ РѕР±РЅРѕРІР»РµРЅС‹.");
+      setNotice("Цели по питанию обновлены.");
       router.refresh();
     });
   }
@@ -455,7 +455,7 @@ export function NutritionTracker({
         foodId: item.food_id,
         servings: Number(item.servings),
       })),
-      `Р РµС†РµРїС‚ В«${recipe.title}В» Р·Р°РіСЂСѓР¶РµРЅ РІ С‚РµРєСѓС‰РёР№ РїСЂРёС‘Рј РїРёС‰Рё.`,
+      `Рецепт «${recipe.title}» загружен в текущий приём пищи.`,
     );
   }
 
@@ -465,7 +465,7 @@ export function NutritionTracker({
         foodId: item.foodId,
         servings: Number(item.servings),
       })),
-      `РЁР°Р±Р»РѕРЅ В«${template.title}В» Р·Р°РіСЂСѓР¶РµРЅ РІ С‚РµРєСѓС‰РёР№ РїСЂРёС‘Рј РїРёС‰Рё.`,
+      `Шаблон «${template.title}» загружен в текущий приём пищи.`,
     );
   }
 
@@ -473,7 +473,7 @@ export function NutritionTracker({
     const normalizedBarcode = mealBarcode.trim();
 
     if (!normalizedBarcode) {
-      setError("Р’РІРµРґРё С€С‚СЂРёС…РєРѕРґ, С‡С‚РѕР±С‹ РЅР°Р№С‚Рё РїСЂРѕРґСѓРєС‚ РІ СЃРІРѕРµР№ Р±Р°Р·Рµ.");
+      setError("Введи штрихкод, чтобы найти продукт в своей базе.");
       setNotice(null);
       return;
     }
@@ -484,7 +484,7 @@ export function NutritionTracker({
 
     if (!matchedFood) {
       setError(
-        "РџСЂРѕРґСѓРєС‚ СЃ С‚Р°РєРёРј С€С‚СЂРёС…РєРѕРґРѕРј РЅРµ РЅР°Р№РґРµРЅ РІ С‚РІРѕРµР№ Р±Р°Р·Рµ. РЎРЅР°С‡Р°Р»Р° РґРѕР±Р°РІСЊ РµРіРѕ РІ СЃРїСЂР°РІРѕС‡РЅРёРє РїСЂРѕРґСѓРєС‚РѕРІ.",
+        "Продукт с таким штрихкодом не найден в твоей базе. Сначала добавь его в справочник продуктов.",
       );
       setNotice(null);
       return;
@@ -493,7 +493,7 @@ export function NutritionTracker({
     addFoodToCurrentMeal(matchedFood.id);
     setMealBarcode("");
     setError(null);
-    setNotice(`РџСЂРѕРґСѓРєС‚ В«${matchedFood.name}В» РґРѕР±Р°РІР»РµРЅ РІ С‚РµРєСѓС‰РёР№ РїСЂРёС‘Рј РїРёС‰Рё РїРѕ С€С‚СЂРёС…РєРѕРґСѓ.`);
+    setNotice(`Продукт «${matchedFood.name}» добавлен в текущий приём пищи по штрихкоду.`);
   }
 
   const trackerPanels: Array<{
@@ -532,10 +532,10 @@ export function NutritionTracker({
               Меню питания
             </p>
             <h2 className="mt-2 text-xl font-semibold text-foreground">
-              Переключай только нужный блок
+              Выбери раздел
             </h2>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">
-              Баланс, база продуктов, текущий лог и история открываются по отдельности, чтобы на телефоне экран оставался чистым и удобным.
+              Баланс, продукты, текущий лог и история открываются по отдельности.
             </p>
           </div>
           <span className="pill">
@@ -550,7 +550,7 @@ export function NutritionTracker({
             return (
               <button
                 aria-pressed={isActive}
-                className={`min-w-[13rem] shrink-0 rounded-3xl border px-4 py-3 text-left transition ${
+                className={`min-w-[11rem] shrink-0 rounded-3xl border px-4 py-3 text-left transition sm:min-w-[13rem] ${
                   isActive
                     ? "border-accent/30 bg-accent-soft text-foreground shadow-[0_18px_45px_-35px_rgba(20,97,75,0.35)]"
                     : "border-border bg-white/80 text-foreground hover:bg-white"
