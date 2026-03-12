@@ -344,6 +344,7 @@ export function AdminUsersDirectory({
     currentAdminRole,
     currentUserEmail,
   );
+  const canViewRoleDetails = canRunBulkActions;
 
   useEffect(() => {
     let isActive = true;
@@ -447,7 +448,9 @@ export function AdminUsersDirectory({
     visibleUserIds.every((id) => selectedUserIds.includes(id));
   const activeFilterSummary = [
     searchQuery.trim() ? `Поиск: ${searchQuery.trim()}` : null,
-    roleFilter !== "all" ? `Роль: ${roleLabels[roleFilter] ?? roleFilter}` : null,
+    canViewRoleDetails && roleFilter !== "all"
+      ? `Роль: ${roleLabels[roleFilter] ?? roleFilter}`
+      : null,
     activityFilter !== "all"
       ? `Активность: ${activityFilter.replaceAll("_", " ")}`
       : null,
@@ -535,7 +538,7 @@ export function AdminUsersDirectory({
   if (isLoading) {
     return (
       <section className="card p-6">
-        <p className="text-sm text-muted">Загружаю операционную панель пользователей...</p>
+        <p className="text-sm text-muted">Загружаю каталог пользователей...</p>
       </section>
     );
   }
@@ -557,8 +560,9 @@ export function AdminUsersDirectory({
           <div className="flex flex-wrap gap-2">
             <span className="pill">Пользователи</span>
             <span className="pill">Каталог: {summary.total}</span>
-              <span className="pill">Роль: {roleLabels[currentAdminRole] ?? currentAdminRole}</span>
-              {canRunBulkActions ? <span className="pill">Главный доступ</span> : null}
+            {canViewRoleDetails ? (
+              <span className="pill">Роли и доступы видны только вам</span>
+            ) : null}
           </div>
 
           <div className="space-y-3">
@@ -567,7 +571,7 @@ export function AdminUsersDirectory({
             </h2>
             <p className="max-w-3xl text-sm leading-7 text-muted sm:text-base">
               Здесь удобно искать пользователя, смотреть его активность, состояние подписки,
-              очередь задач и сразу переходить в подробную карточку без служебного шума и лишних экранов.
+              очередь задач и сразу переходить в подробную карточку без лишнего служебного шума.
             </p>
           </div>
 
@@ -608,9 +612,13 @@ export function AdminUsersDirectory({
             value={String(summary.backlog)}
           />
           <DirectoryMetricCard
-            detail="роль закреплена только за corvetik1@yandex.ru"
-            label="Главный администратор"
-            value={String(summary.superAdmins)}
+            detail={
+              canViewRoleDetails
+                ? "главный доступ закреплён только за corvetik1@yandex.ru"
+                : "пользователи с последней активностью за 7 дней"
+            }
+            label={canViewRoleDetails ? "Главный администратор" : "Активны за неделю"}
+            value={String(canViewRoleDetails ? summary.superAdmins : summary.active7d)}
           />
           <DirectoryMetricCard
             detail="пользователи с активной подпиской или пробным доступом"
@@ -627,7 +635,7 @@ export function AdminUsersDirectory({
               Фильтры
             </p>
             <h3 className="mt-2 text-xl font-semibold text-foreground">
-              Быстрый отбор по роли, активности и риску
+              Быстрый отбор по активности и важным случаям
             </h3>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -655,29 +663,31 @@ export function AdminUsersDirectory({
           />
         </label>
 
-        <label className="grid gap-2 text-sm text-muted">
-          Роль
-          <select
-            className="w-full rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15"
-            onChange={(event) =>
-              setRoleFilter(
-                event.target.value as
-                  | "all"
-                  | "super_admin"
-                  | "support_admin"
-                  | "analyst"
-                  | "user",
-              )
-            }
-            value={roleFilter}
-          >
-            <option value="all">Все роли</option>
-            <option value="super_admin">Супер-админ</option>
-            <option value="support_admin">Поддержка</option>
-            <option value="analyst">Аналитик</option>
-            <option value="user">Пользователь</option>
-          </select>
-        </label>
+        {canViewRoleDetails ? (
+          <label className="grid gap-2 text-sm text-muted">
+            Роль
+            <select
+              className="w-full rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15"
+              onChange={(event) =>
+                setRoleFilter(
+                  event.target.value as
+                    | "all"
+                    | "super_admin"
+                    | "support_admin"
+                    | "analyst"
+                    | "user",
+                )
+              }
+              value={roleFilter}
+            >
+              <option value="all">Все роли</option>
+              <option value="super_admin">Супер-админ</option>
+              <option value="support_admin">Поддержка</option>
+              <option value="analyst">Аналитик</option>
+              <option value="user">Пользователь</option>
+            </select>
+          </label>
+        ) : null}
 
         <label className="grid gap-2 text-sm text-muted">
           Активность
@@ -714,7 +724,7 @@ export function AdminUsersDirectory({
 
       <div className="mt-5 grid gap-3 sm:grid-cols-2 2xl:grid-cols-6">
         {[
-          ["Найдено", String(summary.total), "пользователей по текущему срезу"],
+          ["Найдено", String(summary.total), "пользователей в текущем списке"],
           ["Активны 7 дней", String(summary.active7d), "живая пользовательская активность"],
           ["С очередью", String(summary.backlog), "поддержка, выгрузка и удаление"],
           ["Без входов", String(summary.neverSignedIn), "аккаунты без авторизации"],
@@ -722,7 +732,7 @@ export function AdminUsersDirectory({
           [
             "Админ-аккаунты",
             String(summary.superAdmins + summary.supportAdmins + summary.analysts),
-            "операционный контур доступа",
+            "аккаунты с административным доступом",
           ],
         ].map(([label, value, detail]) => (
           <DirectoryMetricCard
@@ -736,16 +746,27 @@ export function AdminUsersDirectory({
       </div>
 
       <div className="mt-6 grid gap-4 2xl:grid-cols-[1.15fr_0.85fr]">
+        {canViewRoleDetails ? (
           <article className="rounded-[30px] border border-sky-300/60 bg-sky-50/85 p-5 text-sm text-sky-900">
             <p className="font-semibold text-foreground">
-              Политика главного администратора закреплена и в системе, и в базе.
+              Главный доступ закреплён отдельно и защищён от случайных изменений.
             </p>
             <p className="mt-2 leading-7">
-              Главный доступ закреплён за <strong>{PRIMARY_SUPER_ADMIN_EMAIL}</strong>.
-              Остальным пользователям можно выдавать только обычные административные
-              роли, поэтому главный доступ не потеряется случайно.
+              Этот уровень доступа закреплён за <strong>{PRIMARY_SUPER_ADMIN_EMAIL}</strong>.
+              Остальным пользователям можно назначать только обычные административные роли.
             </p>
           </article>
+        ) : (
+          <article className="rounded-[30px] border border-border bg-white/72 p-5 text-sm">
+            <p className="font-semibold text-foreground">
+              Каталог показывает только рабочие данные по пользователям.
+            </p>
+            <p className="mt-2 leading-7 text-muted">
+              Здесь можно искать пользователя, смотреть активность, подписку и очередь задач
+              без лишних системных деталей.
+            </p>
+          </article>
+        )}
 
         <article className="rounded-[30px] border border-border bg-white/72 p-5 text-sm">
           <p className="font-semibold text-foreground">Что видно в одном экране</p>
@@ -1090,12 +1111,20 @@ export function AdminUsersDirectory({
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold text-foreground">
-                        {roleLabels[user.admin_role] ?? user.admin_role}
-                      </p>
-                      <p className="mt-1 text-muted">
-                        В очереди: {user.pending_support_actions}
-                      </p>
+                      {canViewRoleDetails ? (
+                        <p className="font-semibold text-foreground">
+                          {roleLabels[user.admin_role] ?? user.admin_role}
+                        </p>
+                      ) : (
+                        <p className="font-semibold text-foreground">
+                          Задач в очереди: {user.pending_support_actions}
+                        </p>
+                      )}
+                      {canViewRoleDetails ? (
+                        <p className="mt-1 text-muted">
+                          В очереди: {user.pending_support_actions}
+                        </p>
+                      ) : null}
                     </div>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2">
@@ -1270,7 +1299,6 @@ export function AdminUsersDirectory({
                   </div>
 
                   <div className="text-left text-sm text-muted sm:text-right">
-                    <p className="font-medium text-foreground">{roleLabel}</p>
                     <p className="mt-2">Создан</p>
                     <p className="mt-1 font-medium text-foreground">
                       {formatDate(user.created_at)}
@@ -1283,7 +1311,7 @@ export function AdminUsersDirectory({
                 </div>
 
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <span className="pill">{roleLabel}</span>
+                  {canViewRoleDetails ? <span className="pill">{roleLabel}</span> : null}
                   <span
                     className={`rounded-full border px-3 py-1 text-xs font-semibold ${activityToneClasses[user.activity.bucket]}`}
                   >

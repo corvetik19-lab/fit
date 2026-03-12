@@ -57,7 +57,7 @@ export function AdminRoleManager({
     ? "Выдать доступ"
     : targetAdminRole === selectedRole
       ? "Подтвердить роль"
-      : "Обновить роль";
+      : "Сохранить роль";
 
   useEffect(() => {
     setSelectedRole(targetAdminRole ?? "support_admin");
@@ -93,11 +93,11 @@ export function AdminRoleManager({
       const payload = await readJsonSafely(response);
 
       if (!response.ok) {
-        setError(payload?.message ?? "Не удалось обновить роль доступа.");
+        setError(payload?.message ?? "Не удалось обновить роль.");
         return;
       }
 
-      setNotice("Роль доступа обновлена.");
+      setNotice("Роль сохранена.");
       setReason("");
       onUpdated();
     } finally {
@@ -128,11 +128,11 @@ export function AdminRoleManager({
       const payload = await readJsonSafely(response);
 
       if (!response.ok) {
-        setError(payload?.message ?? "Не удалось отозвать роль доступа.");
+        setError(payload?.message ?? "Не удалось убрать права администратора.");
         return;
       }
 
-      setNotice("Доступ администратора отозван.");
+      setNotice("Права администратора убраны.");
       setReason("");
       onUpdated();
     } finally {
@@ -144,10 +144,10 @@ export function AdminRoleManager({
     <section className="card p-6">
       <div className="mb-5">
         <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
-          Роли доступа
+          Доступ
         </p>
         <h2 className="mt-2 text-2xl font-semibold text-foreground">
-          Управление правами администратора
+          Роль администратора
         </h2>
         <p className="mt-2 text-sm leading-7 text-muted">
           Пользователь: <span className="text-foreground">{userEmail ?? userId}</span>
@@ -169,10 +169,10 @@ export function AdminRoleManager({
           <p className="mt-2 text-lg font-semibold text-foreground">
             {currentAdminRole
               ? roleLabels[currentAdminRole] ?? currentAdminRole
-              : "Доступа нет"}
+              : "Нет доступа"}
           </p>
           <p className="mt-2 text-muted">
-            Все изменения ролей сохраняются в истории действий.
+            Все изменения сохраняются в истории действий.
           </p>
         </article>
       </div>
@@ -200,17 +200,17 @@ export function AdminRoleManager({
 
         {!targetCanBeSuperAdmin ? (
           <p className="rounded-2xl border border-sky-300/60 bg-sky-50 px-4 py-3 text-sm text-sky-800">
-            Главная роль закреплена только за {PRIMARY_SUPER_ADMIN_EMAIL}.
+            Главный доступ закреплён только за {PRIMARY_SUPER_ADMIN_EMAIL}.
           </p>
         ) : null}
 
         <label className="grid gap-2 text-sm text-muted">
-          Причина изменения
+          Комментарий
           <textarea
             className={`${inputClassName} min-h-24 resize-y`}
             disabled={!canManageRoles || isPending}
             onChange={(event) => setReason(event.target.value)}
-            placeholder="Например: дать доступ поддержке или расширить права аналитика"
+            placeholder="Например: дать доступ сотруднику поддержки"
             value={reason}
           />
         </label>
@@ -231,20 +231,19 @@ export function AdminRoleManager({
             onClick={() => void revokeRole()}
             type="button"
           >
-            Отозвать доступ
+            Убрать доступ
           </button>
         </div>
 
         {!canManageRoles ? (
           <p className="rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            Управлять ролями может только главный администратор {PRIMARY_SUPER_ADMIN_EMAIL}.
+            Роли может менять только главный супер-админ {PRIMARY_SUPER_ADMIN_EMAIL}.
           </p>
         ) : null}
 
         {isSelf ? (
           <p className="rounded-2xl border border-sky-300/60 bg-sky-50 px-4 py-3 text-sm text-sky-800">
-            Собственную главную роль нельзя отозвать или понизить, чтобы не потерять
-            доступ к панели.
+            Главный супер-админ не может убрать свой собственный доступ.
           </p>
         ) : null}
       </div>

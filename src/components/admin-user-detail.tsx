@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 
 import { AdminRoleManager } from "@/components/admin-role-manager";
 import { AdminUserActions } from "@/components/admin-user-actions";
+import { canUseRootAdminControls } from "@/lib/admin-permissions";
 
 type PlatformAdminRole = "super_admin" | "support_admin" | "analyst";
 type JsonRecord = Record<string, unknown> | null;
@@ -266,7 +267,7 @@ const supportActionLabels: Record<string, string> = {
   purge_user_data: "Полная очистка данных",
   reconcile_billing_state: "Сверка оплаты",
   restore_user: "Восстановить пользователя",
-  resync_user_context: "Пересинхронизировать контекст",
+  resync_user_context: "Обновить данные пользователя",
   suspend_user: "Заморозить пользователя",
 };
 
@@ -394,6 +395,10 @@ export function AdminUserDetail({
   const [activeSection, setActiveSection] = useState<
     "profile" | "activity" | "operations" | "billing"
   >("profile");
+  const canViewRoleDetails = canUseRootAdminControls(
+    currentUserRole,
+    currentUserEmail,
+  );
 
   useEffect(() => {
     let isActive = true;
@@ -490,12 +495,17 @@ export function AdminUserDetail({
             ["Приемы пищи", String(detail.stats.nutrition.meals)],
             ["Чаты ИИ", String(detail.stats.ai.chatSessions)],
             ["Подходы", String(detail.stats.workout.loggedSets)],
-            [
-              "Роль доступа",
-              adminRoleLabels[detail.adminRole?.role ?? "user"] ??
-                detail.adminRole?.role ??
-                "Пользователь",
-            ],
+            canViewRoleDetails
+              ? [
+                  "Роль",
+                  adminRoleLabels[detail.adminRole?.role ?? "user"] ??
+                    detail.adminRole?.role ??
+                    "Пользователь",
+                ]
+              : [
+                  "Статус аккаунта",
+                  detail.adminState?.is_suspended ? "Ограничен" : "Активен",
+                ],
           ].map(([label, value]) => (
             <article className="kpi p-4" key={label}>
               <p className="text-sm text-muted">{label}</p>
@@ -504,7 +514,7 @@ export function AdminUserDetail({
           ))}
         </div>
 
-        {!detail.superAdminPolicy.targetCanBeSuperAdmin ? (
+        {canViewRoleDetails && !detail.superAdminPolicy.targetCanBeSuperAdmin ? (
           <p className="mt-4 rounded-2xl border border-sky-300/60 bg-sky-50 px-4 py-3 text-sm text-sky-800">
             Главный доступ нельзя назначить этому пользователю. Он закреплён только
             за {detail.superAdminPolicy.primaryEmail}.
@@ -527,7 +537,7 @@ export function AdminUserDetail({
               Разделы карточки
             </p>
             <h2 className="mt-2 text-xl font-semibold text-foreground">
-              Открывай только нужный слой по пользователю
+              Открывайте только нужный раздел
             </h2>
           </div>
           <span className="pill">
@@ -543,7 +553,7 @@ export function AdminUserDetail({
 
         <div className="mt-4 grid gap-3 md:flex md:flex-wrap">
           {[
-            ["profile", "Профиль", "Контекст, цели, роль и ручные действия."] as const,
+            ["profile", "Профиль", "Основные данные, цели и действия."] as const,
             ["activity", "Активность", "Тренировки, питание, ИИ и жизненный цикл."] as const,
             ["operations", "Операции", "Очереди, выгрузки, удаление и аудит."] as const,
             ["billing", "Оплата", "Подписка, доступы и история оплаты."] as const,
@@ -577,10 +587,10 @@ export function AdminUserDetail({
         <section className="card p-6">
           <div className="mb-5">
             <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
-              Срез профиля
+              Профиль
             </p>
             <h2 className="mt-2 text-2xl font-semibold text-foreground">
-              Базовый контекст и цели
+              Основные данные и цели
             </h2>
           </div>
 
@@ -607,8 +617,8 @@ export function AdminUserDetail({
                 {
                   label: "Состояние аккаунта",
                   value: detail.adminState?.is_suspended
-                    ? "suspended"
-                    : "active",
+                    ? "Ограничен"
+                    : "Активен",
                 },
               ]}
             />
@@ -680,7 +690,7 @@ export function AdminUserDetail({
             />
 
             <KeyValueCard
-              title="Контекст"
+              title="Дополнительно"
               rows={[
                 {
                   label: "Оборудование",
@@ -700,17 +710,19 @@ export function AdminUserDetail({
         </section>
 
         <div className="grid gap-6">
-          <AdminRoleManager
-            currentAdminRole={currentUserRole}
-            currentUserEmail={currentUserEmail}
-            isSelf={currentUserId === userId}
-            onUpdated={() => setReloadVersion((current) => current + 1)}
-            targetAdminRole={
-              detail.adminRole?.role as PlatformAdminRole | null
-            }
-            userEmail={detail.authUser?.email ?? null}
-            userId={userId}
-          />
+          {canViewRoleDetails ? (
+            <AdminRoleManager
+              currentAdminRole={currentUserRole}
+              currentUserEmail={currentUserEmail}
+              isSelf={currentUserId === userId}
+              onUpdated={() => setReloadVersion((current) => current + 1)}
+              targetAdminRole={
+                detail.adminRole?.role as PlatformAdminRole | null
+              }
+              userEmail={detail.authUser?.email ?? null}
+              userId={userId}
+            />
+          ) : null}
 
           <AdminUserActions
             currentAdminRole={currentUserRole}
@@ -728,7 +740,7 @@ export function AdminUserDetail({
         <section className="card p-6">
           <div className="mb-5">
             <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
-              Workout
+              Тренировки
             </p>
             <h2 className="mt-2 text-2xl font-semibold text-foreground">
               Статистика тренировок
@@ -754,7 +766,7 @@ export function AdminUserDetail({
         <section className="card p-6">
           <div className="mb-5">
             <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
-              Nutrition
+              Питание
             </p>
             <h2 className="mt-2 text-2xl font-semibold text-foreground">
               Статистика питания
@@ -768,8 +780,8 @@ export function AdminUserDetail({
               ["Позиции в приемах", String(detail.stats.nutrition.mealItems)],
               ["Рецепты", String(detail.stats.nutrition.recipes)],
               ["Шаблоны питания", String(detail.stats.nutrition.templates)],
-              ["Nutrition days", String(detail.stats.nutrition.summaryDays)],
-              ["Последний meal log", formatDateTime(detail.stats.nutrition.latestMealAt)],
+              ["Сводки по дням", String(detail.stats.nutrition.summaryDays)],
+              ["Последний приём пищи", formatDateTime(detail.stats.nutrition.latestMealAt)],
             ].map(([label, value]) => (
               <MetricCard key={label} label={label} value={value} />
             ))}
@@ -794,7 +806,7 @@ export function AdminUserDetail({
               ["Сообщения", String(detail.stats.ai.chatMessages)],
               ["Планы", String(detail.stats.ai.proposals)],
               ["События безопасности", String(detail.stats.ai.safetyEvents)],
-              ["Снимки контекста", String(detail.stats.ai.contextSnapshots)],
+              ["Сохранённые сводки", String(detail.stats.ai.contextSnapshots)],
               ["Фрагменты базы", String(detail.stats.ai.knowledgeChunks)],
               ["Последняя активность ИИ", formatDateTime(detail.stats.ai.latestAiAt)],
             ].map(([label, value]) => (

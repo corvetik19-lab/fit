@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 
 import { SignOutButton } from "@/components/sign-out-button";
+import { canUseRootAdminControls } from "@/lib/admin-permissions";
 
 type AppRouteDefinition = {
   href: Route;
@@ -65,7 +66,7 @@ const nutritionRoute: AppRouteDefinition = {
 const historyRoute: AppRouteDefinition = {
   href: "/history",
   label: "История",
-  description: "Прошлые недели и срезы.",
+  description: "Прошлые недели и результаты.",
   icon: History,
 };
 
@@ -191,6 +192,10 @@ export function AppShellNav({
   const bottomNavRoutes = getBottomNavRoutes(pathname);
   const currentSectionLabel = getCurrentSectionLabel(pathname);
   const adminRoleLabel = formatAdminRole(viewer?.platformAdminRole ?? null);
+  const showAdminRole = canUseRootAdminControls(
+    viewer?.platformAdminRole ?? null,
+    viewer?.email ?? null,
+  );
   const adminDrawerRoutes: AppRouteDefinition[] = viewer?.isPlatformAdmin
     ? [
         adminControlRoute,
@@ -342,9 +347,11 @@ export function AppShellNav({
               <p className="text-sm font-semibold text-foreground">
                 {viewer?.email ?? "Аккаунт fit"}
               </p>
-              <p className="mt-2 text-sm text-muted">
-                Роль: <span className="text-foreground">{adminRoleLabel ?? "Пользователь"}</span>
-              </p>
+              {showAdminRole ? (
+                <p className="mt-2 text-sm text-muted">
+                  Роль: <span className="text-foreground">{adminRoleLabel}</span>
+                </p>
+              ) : null}
             </section>
 
             <section className="grid gap-3">

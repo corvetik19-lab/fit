@@ -2,6 +2,18 @@
 
 ## 2026-03-12
 
+### Admin copy cleanup and role visibility
+
+- Simplified admin copy in `src/app/admin/page.tsx`, `src/app/admin/users/page.tsx`, `src/components/admin-user-detail.tsx`, `src/components/admin-users-directory.tsx`, `src/components/admin-role-manager.tsx`, and `src/components/admin-user-actions.tsx`: removed overly internal wording, cleaned visible Russian text, and made the screens read like product UI instead of internal ops terminology.
+- Restricted role visibility to the primary super-admin flow: ordinary admins no longer see role labels in the drawer account card, the admin users hero, or the user detail header. Root-only role controls remain available only to `corvetik1@yandex.ru`.
+- Normalized dashboard entry copy in `src/app/dashboard/page.tsx`, so the top-level dashboard badge and page title no longer show broken text.
+
+### Verification: admin copy and role visibility
+
+- `npx eslint src/app/dashboard/page.tsx src/app/admin/page.tsx src/app/admin/users/page.tsx src/components/app-shell-nav.tsx src/components/admin-role-manager.tsx src/components/admin-user-actions.tsx src/components/admin-user-detail.tsx src/components/admin-users-directory.tsx`
+- `npm run build`
+- `npm run typecheck` (after `build`, due the existing `.next/types` race in this repo)
+
 ### Admin UI recovery and shell restore
 
 - Cleaned committed mojibake/garbled Russian copy in `src/app/admin/page.tsx`, `src/components/admin-users-directory.tsx`, `src/components/admin-user-detail.tsx`, and `src/app/admin/users/[id]/page.tsx`, so `/admin`, `/admin/users`, and the user detail card read like product UI again instead of broken encoding output.

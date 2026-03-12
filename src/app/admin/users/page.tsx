@@ -3,24 +3,18 @@ import Link from "next/link";
 
 import { AdminUsersDirectory } from "@/components/admin-users-directory";
 import { AppShell } from "@/components/app-shell";
-import { PRIMARY_SUPER_ADMIN_EMAIL } from "@/lib/admin-permissions";
+import {
+  PRIMARY_SUPER_ADMIN_EMAIL,
+  canUseRootAdminControls,
+} from "@/lib/admin-permissions";
 import { requirePlatformAdminViewer } from "@/lib/viewer";
-
-function formatRole(value: string | null | undefined) {
-  switch (value) {
-    case "super_admin":
-      return "Супер-админ";
-    case "support_admin":
-      return "Поддержка";
-    case "analyst":
-      return "Аналитик";
-    default:
-      return "Администратор";
-  }
-}
 
 export default async function AdminUsersPage() {
   const viewer = await requirePlatformAdminViewer();
+  const showAdminRoles = canUseRootAdminControls(
+    viewer.platformAdminRole,
+    viewer.user.email ?? null,
+  );
 
   return (
     <AppShell eyebrow="Админ" title="Пользователи и управление доступом">
@@ -29,18 +23,22 @@ export default async function AdminUsersPage() {
           <div className="space-y-5">
             <div className="flex flex-wrap gap-2">
               <span className="pill">Пользователи</span>
-              <span className="pill">Роль: {formatRole(viewer.platformAdminRole)}</span>
-              <span className="pill">Главный доступ: {PRIMARY_SUPER_ADMIN_EMAIL}</span>
+              {showAdminRoles ? (
+                <>
+                  <span className="pill">Главный доступ: {PRIMARY_SUPER_ADMIN_EMAIL}</span>
+                  <span className="pill">Роли видны только вам</span>
+                </>
+              ) : null}
             </div>
 
             <div className="space-y-3">
               <h2 className="max-w-4xl text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-                Просторный каталог для разбора пользователей, доступов и проблемных случаев.
+                Удобный каталог для поиска пользователей, доступа и важных случаев.
               </h2>
               <p className="max-w-3xl text-sm leading-7 text-muted sm:text-base">
                 Здесь удобно искать пользователя по email или ID, проверять активность,
-                подписку, очередь задач, доступы и сразу переходить в полную карточку без
-                ручного просмотра таблиц.
+                подписку, очередь задач и сразу переходить в полную карточку без
+                лишних экранов и служебных подписей.
               </p>
             </div>
 
@@ -64,7 +62,7 @@ export default async function AdminUsersPage() {
             {[
               [
                 "Поиск и фильтры",
-                "Email, ID, роли, активность, подписка и служебные очереди.",
+                "Email, ID, активность, подписка и очередь задач.",
               ],
               [
                 "Массовые действия",
@@ -76,7 +74,7 @@ export default async function AdminUsersPage() {
               ],
               [
                 "Карточка пользователя",
-                "Тренировки, питание, ИИ, оплата, аудит и служебная история в одном месте.",
+                "Тренировки, питание, ИИ, оплата и история действий в одном месте.",
               ],
             ].map(([label, detail]) => (
               <article

@@ -89,10 +89,10 @@ export function AdminUserActions({
     <section className="card p-6">
       <div className="mb-5">
         <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
-          Действия администратора
+          Действия
         </p>
         <h2 className="mt-2 text-2xl font-semibold text-foreground">
-          Поддержка, доступы и оплата
+          Поддержка, данные и доступы
         </h2>
       </div>
 
@@ -106,11 +106,11 @@ export function AdminUserActions({
           ) : null}
 
           <label className="grid gap-2 text-sm text-muted">
-            Причина или комментарий
+            Комментарий
             <textarea
               className={`${inputClassName} min-h-24 resize-y`}
               onChange={(event) => setReason(event.target.value)}
-              placeholder="Например: ручная проверка профиля или запрос пользователя"
+              placeholder="Например: запрос пользователя или ручная проверка"
               value={reason}
             />
           </label>
@@ -168,12 +168,12 @@ export function AdminUserActions({
                 submitJsonAction(
                   `/api/admin/users/${userId}/deletion`,
                   { reason },
-                  "Запрос на удаление переведён в удержание.",
+                  "Запрос на удаление переведён на удержание.",
                 )
               }
               type="button"
             >
-              Поставить удаление на удержание
+              Запросить удаление
             </button>
 
             <button
@@ -205,7 +205,7 @@ export function AdminUserActions({
                       source: "admin-user-actions",
                     },
                   },
-                  "Пересборка данных пользователя поставлена в очередь.",
+                  "Данные пользователя поставлены на обновление.",
                 )
               }
               type="button"
@@ -226,44 +226,48 @@ export function AdminUserActions({
             </select>
           </label>
 
-          <label className="grid gap-2 text-sm text-muted">
-            Дополнительное служебное действие
-            <input
-              className={inputClassName}
-              disabled={!canQueueSupportActions || isPending}
-              onChange={(event) => setCustomAction(event.target.value)}
-              placeholder="Например: recompute_nutrition_summaries"
-              type="text"
-              value={customAction}
-            />
-          </label>
+          {canManageBilling ? (
+            <>
+              <label className="grid gap-2 text-sm text-muted">
+                Дополнительная команда
+                <input
+                  className={inputClassName}
+                  disabled={isPending}
+                  onChange={(event) => setCustomAction(event.target.value)}
+                  placeholder="Например: recompute_nutrition_summaries"
+                  type="text"
+                  value={customAction}
+                />
+              </label>
 
-          <button
-            className="rounded-full border border-border px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
-            disabled={!canQueueSupportActions || isPending || !customAction.trim()}
-            onClick={() =>
-              submitJsonAction(
-                `/api/admin/users/${userId}/support-action`,
-                {
-                  action: customAction.trim(),
-                  reason,
-                  payload: {
-                    source: "admin-user-actions",
-                  },
-                },
-                "Служебное действие поставлено в очередь.",
-              )
-            }
-            type="button"
-          >
-            {isPending ? "Обрабатываю..." : "Запустить действие"}
-          </button>
+              <button
+                className="rounded-full border border-border px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={isPending || !customAction.trim()}
+                onClick={() =>
+                  submitJsonAction(
+                    `/api/admin/users/${userId}/support-action`,
+                    {
+                      action: customAction.trim(),
+                      reason,
+                      payload: {
+                        source: "admin-user-actions",
+                      },
+                    },
+                    "Дополнительная команда поставлена в очередь.",
+                  )
+                }
+                type="button"
+              >
+                {isPending ? "Обрабатываю..." : "Запустить команду"}
+              </button>
+            </>
+          ) : null}
         </div>
 
         <div className="rounded-3xl border border-border bg-white/60 p-5">
           <div className="mb-4">
             <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted">
-              Оплата и доступы
+              Оплата и доступ
             </p>
             <h3 className="mt-2 text-lg font-semibold text-foreground">
               Подписка и открытые функции
@@ -272,8 +276,8 @@ export function AdminUserActions({
 
           {!canManageBilling ? (
             <p className="rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-              Управлять оплатой и доступами может только главный администратор
-              {` `}corvetik1@yandex.ru.
+              Управлять оплатой и доступами может только главный супер-админ
+              {" "}corvetik1@yandex.ru.
             </p>
           ) : null}
 
@@ -335,7 +339,7 @@ export function AdminUserActions({
                 }
                 type="button"
               >
-                Обновить подписку
+                Сохранить подписку
               </button>
 
               <button
@@ -410,7 +414,7 @@ export function AdminUserActions({
                 }
                 type="button"
               >
-                Обновить доступ
+                Сохранить доступ
               </button>
             </div>
           </div>

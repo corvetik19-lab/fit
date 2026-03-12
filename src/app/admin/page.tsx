@@ -164,7 +164,7 @@ export default async function AdminPage() {
           <div className="grid gap-4 md:grid-cols-[1.1fr_0.9fr]">
             <article className="rounded-3xl border border-border bg-white/60 p-5 text-sm">
               <p className="font-semibold text-foreground">
-                Панель управления предназначена для главного административного контура платформы.
+                Панель управления доступна только администраторам платформы.
               </p>
               <p className="mt-3 leading-7 text-muted">
                 Главный доступ жёстко закреплён за{" "}
@@ -366,7 +366,7 @@ export default async function AdminPage() {
     {
       label: "Сообщения ИИ",
       value: String(aiChatMessagesCountResult.count ?? 0),
-      detail: "живой срез активности продукта",
+      detail: "последняя активность в AI",
     },
     {
       label: "Контроль главного доступа",
@@ -384,14 +384,17 @@ export default async function AdminPage() {
         <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
           <div className="space-y-5">
             <div className="flex flex-wrap gap-2">
-              <span className="pill">{formatAdminRole(viewer.platformAdminRole ?? "analyst")}</span>
               <span className="pill">Главный доступ: {PRIMARY_SUPER_ADMIN_EMAIL}</span>
-              {canUseSuperAdminConsole ? <span className="pill">Главный контур</span> : null}
+              {canUseSuperAdminConsole ? (
+                <span className="pill">
+                  Ваша роль: {formatAdminRole(viewer.platformAdminRole ?? "analyst")}
+                </span>
+              ) : null}
             </div>
 
             <div className="space-y-3">
               <h2 className="max-w-4xl text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-                Один рабочий центр управления для пользователей, операций и контура ИИ.
+                Один центр управления для пользователей, задач и AI.
               </h2>
               <p className="max-w-3xl text-sm leading-7 text-muted sm:text-base">
                 Панель собрана под единый сценарий главного администратора: быстрый переход в каталог
@@ -426,7 +429,11 @@ export default async function AdminPage() {
             <StatTile
               label="Текущий оператор"
               value={viewer.user.email ?? "email не найден"}
-              detail={`Роль: ${formatAdminRole(viewer.platformAdminRole ?? "analyst")}`}
+              detail={
+                canUseSuperAdminConsole
+                  ? `Роль: ${formatAdminRole(viewer.platformAdminRole ?? "analyst")}`
+                  : "Доступ администратора подтверждён"
+              }
             />
             <StatTile
               label="Главный администратор"
@@ -571,7 +578,7 @@ export default async function AdminPage() {
 
             <p className="text-sm leading-7 text-muted">
               Отсюда запускаются проверки ИИ и обновление базы знаний. Блок вынесен
-              отдельно, чтобы не смешивать пользовательский контур и служебные действия.
+              отдельно, чтобы не смешивать работу с пользователями и системные задачи.
             </p>
 
             <AdminAiOperations

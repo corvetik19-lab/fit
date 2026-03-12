@@ -22,8 +22,8 @@ export default async function DashboardPage() {
     null;
   const dashboardSourceLabel =
     dashboardRuntime.cache.source === "snapshot"
-      ? "Срез обновлён"
-      : "Срез пересчитан";
+      ? "Сводка обновлена"
+      : "Сводка пересчитана";
 
   return (
     <AppShell eyebrow="Обзор" title="Ваш прогресс">

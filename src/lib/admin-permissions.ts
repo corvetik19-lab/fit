@@ -103,20 +103,20 @@ export function getAdminRoleLabel(role: PlatformAdminRole | null | undefined) {
 export function getAdminCapabilityErrorMessage(capability: AdminCapability) {
   switch (capability) {
     case "manage_admin_roles":
-      return "Only super admins can manage admin roles.";
+      return "Управлять ролями может только главный супер-админ.";
     case "manage_billing":
-      return "Only the primary super admin can manage billing and entitlements.";
+      return "Управлять оплатой и доступами может только главный супер-админ.";
     case "bulk_manage_users":
-      return "Only the primary super admin can run bulk user actions.";
+      return "Массовые действия по пользователям доступны только главному супер-админу.";
     case "queue_support_actions":
-      return "This admin role cannot queue support actions.";
+      return "Для этой роли недоступны действия по поддержке.";
     case "run_knowledge_reindex":
-      return "This admin role cannot run knowledge reindex.";
+      return "Для этой роли недоступно обновление базы знаний.";
     case "run_admin_jobs":
-      return "Only the primary super admin can run admin jobs.";
+      return "Внутренние задачи может запускать только главный супер-админ.";
     case "queue_ai_eval_runs":
-      return "This admin role cannot queue AI eval runs.";
+      return "Для этой роли недоступен запуск проверок ИИ.";
     default:
-      return "This admin role cannot access the requested admin resource.";
+      return "Для этой роли этот раздел недоступен.";
   }
 }
