@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
+import { AiAssistantWidget } from "@/components/ai-assistant-widget";
 import { AppShellNav } from "@/components/app-shell-nav";
 import { WorkoutSyncMonitor } from "@/components/workout-sync-monitor";
 
@@ -14,6 +15,7 @@ type AppShellFrameProps = {
   eyebrow: string;
   children: ReactNode;
   compactHeader?: boolean;
+  hideAssistantWidget?: boolean;
   immersive?: boolean;
   viewer: {
     userId: string;
@@ -44,6 +46,7 @@ export function AppShellFrame({
   eyebrow,
   children,
   compactHeader = false,
+  hideAssistantWidget = false,
   immersive = false,
   viewer,
 }: AppShellFrameProps) {
@@ -75,6 +78,7 @@ export function AppShellFrame({
   const shouldUseCompactHeader =
     !immersive && !isMobile && (compactHeader || isCollapsed);
   const showMobileHeader = !immersive && isMobile;
+  const showAssistantWidget = Boolean(viewer) && !hideAssistantWidget;
 
   return (
     <div className="min-h-dvh">
@@ -178,6 +182,17 @@ export function AppShellFrame({
       </main>
 
       {viewer ? <WorkoutSyncMonitor /> : null}
+
+      {showAssistantWidget ? (
+        <AiAssistantWidget
+          initialMessages={[]}
+          initialSessionId={null}
+          viewer={{
+            email: viewer?.email ?? null,
+            fullName: viewer?.fullName ?? null,
+          }}
+        />
+      ) : null}
     </div>
   );
 }

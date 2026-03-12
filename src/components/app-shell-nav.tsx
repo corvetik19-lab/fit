@@ -4,6 +4,7 @@ import type { Route } from "next";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   Activity,
   ArrowRight,
@@ -224,6 +225,8 @@ export function AppShellNav({
     };
   }, [isDrawerOpen]);
 
+  const portalRoot = typeof document === "undefined" ? null : document.body;
+
   return (
     <>
       {!minimal ? (
@@ -294,131 +297,137 @@ export function AppShellNav({
         </button>
       )}
 
-      <div
-        aria-hidden={!isDrawerOpen}
-        className={`app-drawer-backdrop ${isDrawerOpen ? "app-drawer-backdrop--visible" : ""}`}
-        onClick={() => setIsDrawerOpen(false)}
-      />
+      {portalRoot
+        ? createPortal(
+            <>
+              <div
+                aria-hidden={!isDrawerOpen}
+                className={`app-drawer-backdrop ${isDrawerOpen ? "app-drawer-backdrop--visible" : ""}`}
+                onClick={() => setIsDrawerOpen(false)}
+              />
 
-      <aside
-        aria-hidden={!isDrawerOpen}
-        className={`app-drawer ${isDrawerOpen ? "app-drawer--open" : ""}`}
-        id="app-mobile-drawer"
-      >
-        <div className="app-drawer__surface">
-          <div className="flex items-start justify-between gap-3 border-b border-border px-5 pb-4 pt-[calc(1.1rem+env(safe-area-inset-top))]">
-            <div className="min-w-0">
-              <p className="font-mono text-[0.68rem] uppercase tracking-[0.22em] text-muted">
-                Меню
-              </p>
-              <h2 className="mt-2 text-xl font-semibold text-foreground">
-                Разделы приложения
-              </h2>
-              <p className="mt-2 truncate text-sm text-muted">
-                {viewer?.fullName ?? viewer?.email ?? "Аккаунт fit"}
-              </p>
-            </div>
+              <aside
+                aria-hidden={!isDrawerOpen}
+                className={`app-drawer ${isDrawerOpen ? "app-drawer--open" : ""}`}
+                id="app-mobile-drawer"
+              >
+                <div className="app-drawer__surface">
+                  <div className="flex items-start justify-between gap-3 border-b border-border px-5 pb-4 pt-[calc(1.1rem+env(safe-area-inset-top))]">
+                    <div className="min-w-0">
+                      <p className="font-mono text-[0.68rem] uppercase tracking-[0.22em] text-muted">
+                        Меню
+                      </p>
+                      <h2 className="mt-2 text-xl font-semibold text-foreground">
+                        Разделы приложения
+                      </h2>
+                      <p className="mt-2 truncate text-sm text-muted">
+                        {viewer?.fullName ?? viewer?.email ?? "Аккаунт fit"}
+                      </p>
+                    </div>
 
-            <button
-              aria-label="Закрыть меню"
-              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border bg-white/75 text-foreground transition hover:bg-white"
-              onClick={() => setIsDrawerOpen(false)}
-              type="button"
-            >
-              <X size={18} strokeWidth={2.2} />
-            </button>
-          </div>
+                    <button
+                      aria-label="Закрыть меню"
+                      className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border bg-white/75 text-foreground transition hover:bg-white"
+                      onClick={() => setIsDrawerOpen(false)}
+                      type="button"
+                    >
+                      <X size={18} strokeWidth={2.2} />
+                    </button>
+                  </div>
 
-          <div className="grid gap-5 overflow-y-auto px-5 py-5">
-            <section className="rounded-3xl border border-border bg-white/70 p-4">
-              <p className="text-sm font-semibold text-foreground">
-                {viewer?.email ?? "Аккаунт fit"}
-              </p>
-              {showAdminRole ? (
-                <p className="mt-2 text-sm text-muted">
-                  Роль: <span className="text-foreground">{adminRoleLabel}</span>
-                </p>
-              ) : null}
-            </section>
+                  <div className="grid min-h-0 flex-1 gap-5 overflow-y-auto px-5 py-5">
+                    <section className="rounded-3xl border border-border bg-white/70 p-4">
+                      <p className="text-sm font-semibold text-foreground">
+                        {viewer?.email ?? "Аккаунт fit"}
+                      </p>
+                      {showAdminRole ? (
+                        <p className="mt-2 text-sm text-muted">
+                          Роль: <span className="text-foreground">{adminRoleLabel}</span>
+                        </p>
+                      ) : null}
+                    </section>
 
-            <section className="grid gap-3">
-              <div>
-                <p className="font-mono text-[0.68rem] uppercase tracking-[0.22em] text-muted">
-                  Основное
-                </p>
-                <h3 className="mt-2 text-lg font-semibold text-foreground">
-                  Ежедневная работа
-                </h3>
-              </div>
+                    <section className="grid gap-3">
+                      <div>
+                        <p className="font-mono text-[0.68rem] uppercase tracking-[0.22em] text-muted">
+                          Основное
+                        </p>
+                        <h3 className="mt-2 text-lg font-semibold text-foreground">
+                          Ежедневная работа
+                        </h3>
+                      </div>
 
-              <div className="grid gap-2">
-                {coreRoutes.map((route) => (
-                  <DrawerRouteLink
-                    {...route}
-                    isActive={isRouteActive(pathname, route.href)}
-                    key={route.href}
-                    onNavigate={() => setIsDrawerOpen(false)}
-                  />
-                ))}
-              </div>
-            </section>
+                      <div className="grid gap-2">
+                        {coreRoutes.map((route) => (
+                          <DrawerRouteLink
+                            {...route}
+                            isActive={isRouteActive(pathname, route.href)}
+                            key={route.href}
+                            onNavigate={() => setIsDrawerOpen(false)}
+                          />
+                        ))}
+                      </div>
+                    </section>
 
-            <section className="grid gap-3">
-              <div>
-                <p className="font-mono text-[0.68rem] uppercase tracking-[0.22em] text-muted">
-                  Личное
-                </p>
-                <h3 className="mt-2 text-lg font-semibold text-foreground">
-                  История и настройки
-                </h3>
-              </div>
+                    <section className="grid gap-3">
+                      <div>
+                        <p className="font-mono text-[0.68rem] uppercase tracking-[0.22em] text-muted">
+                          Личное
+                        </p>
+                        <h3 className="mt-2 text-lg font-semibold text-foreground">
+                          История и настройки
+                        </h3>
+                      </div>
 
-              <div className="grid gap-2">
-                {utilityRoutes.map((route) => (
-                  <DrawerRouteLink
-                    {...route}
-                    isActive={isRouteActive(pathname, route.href)}
-                    key={route.href}
-                    onNavigate={() => setIsDrawerOpen(false)}
-                  />
-                ))}
+                      <div className="grid gap-2">
+                        {utilityRoutes.map((route) => (
+                          <DrawerRouteLink
+                            {...route}
+                            isActive={isRouteActive(pathname, route.href)}
+                            key={route.href}
+                            onNavigate={() => setIsDrawerOpen(false)}
+                          />
+                        ))}
+                      </div>
+                    </section>
 
-              </div>
-            </section>
+                    {viewer?.isPlatformAdmin ? (
+                      <section className="grid gap-3">
+                        <div>
+                          <p className="font-mono text-[0.68rem] uppercase tracking-[0.22em] text-muted">
+                            Управление
+                          </p>
+                          <h3 className="mt-2 text-lg font-semibold text-foreground">
+                            Платформа и пользователи
+                          </h3>
+                        </div>
 
-            {viewer?.isPlatformAdmin ? (
-              <section className="grid gap-3">
-                <div>
-                  <p className="font-mono text-[0.68rem] uppercase tracking-[0.22em] text-muted">
-                    Управление
-                  </p>
-                  <h3 className="mt-2 text-lg font-semibold text-foreground">
-                    Платформа и пользователи
-                  </h3>
+                        <div className="grid gap-2">
+                          {adminDrawerRoutes.map((route) => (
+                            <DrawerRouteLink
+                              {...route}
+                              isActive={isRouteActive(pathname, route.href)}
+                              key={route.href}
+                              onNavigate={() => setIsDrawerOpen(false)}
+                            />
+                          ))}
+                        </div>
+                      </section>
+                    ) : null}
+
+                    <section className="rounded-3xl border border-border bg-[color-mix(in_srgb,var(--surface)_92%,white)] p-4">
+                      <p className="font-semibold text-foreground">Аккаунт</p>
+                      <div className="mt-4">
+                        <SignOutButton className="w-full justify-center bg-white/75" />
+                      </div>
+                    </section>
+                  </div>
                 </div>
-
-                <div className="grid gap-2">
-                  {adminDrawerRoutes.map((route) => (
-                    <DrawerRouteLink
-                      {...route}
-                      isActive={isRouteActive(pathname, route.href)}
-                      key={route.href}
-                      onNavigate={() => setIsDrawerOpen(false)}
-                    />
-                  ))}
-                </div>
-              </section>
-            ) : null}
-
-            <section className="rounded-3xl border border-border bg-[color-mix(in_srgb,var(--surface)_92%,white)] p-4">
-              <p className="font-semibold text-foreground">Аккаунт</p>
-              <div className="mt-4">
-                <SignOutButton className="w-full justify-center bg-white/75" />
-              </div>
-            </section>
-          </div>
-        </div>
-      </aside>
+              </aside>
+            </>,
+            portalRoot,
+          )
+        : null}
     </>
   );
 }

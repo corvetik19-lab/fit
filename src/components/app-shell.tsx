@@ -8,7 +8,7 @@ export async function AppShell({
   eyebrow,
   children,
   compactHeader = false,
-  hideAssistantWidget: _hideAssistantWidget = false,
+  hideAssistantWidget = false,
   immersive = false,
 }: {
   title: string;
@@ -19,12 +19,12 @@ export async function AppShell({
   immersive?: boolean;
 }) {
   const viewer = await getViewer();
-  void _hideAssistantWidget;
 
   return (
     <AppShellFrame
       compactHeader={compactHeader}
       eyebrow={eyebrow}
+      hideAssistantWidget={hideAssistantWidget}
       immersive={immersive}
       title={title}
       viewer={
