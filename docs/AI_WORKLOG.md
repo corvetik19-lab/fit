@@ -16,6 +16,17 @@
 - `npm run typecheck` (rerun after `build`, due the existing `.next/types` race in this repo)
 - Playwright mobile pass on local `http://127.0.0.1:3030/ai`: verified that inline starter prompts no longer render in the chat body and that the prompt library opens as a separate modal with search and built-in templates
 
+### AI prompt library hotfix
+
+- Removed the local custom sync event from `src/components/ai-prompt-library.tsx`. The same-window event loop was causing `Maximum update depth exceeded` by reloading local prompt state immediately after each save.
+- Kept prompt persistence via `localStorage`, but stopped the component from re-triggering its own `setCustomPrompts(...)` cycle on every update.
+
+### Verification: AI prompt library hotfix
+
+- `npx eslint src/components/ai-prompt-library.tsx src/components/ai-chat-panel.tsx src/components/ai-assistant-widget.tsx`
+- `npm run build`
+- `npm run typecheck`
+
 ### Admin copy cleanup and role visibility
 
 - Simplified admin copy in `src/app/admin/page.tsx`, `src/app/admin/users/page.tsx`, `src/components/admin-user-detail.tsx`, `src/components/admin-users-directory.tsx`, `src/components/admin-role-manager.tsx`, and `src/components/admin-user-actions.tsx`: removed overly internal wording, cleaned visible Russian text, and made the screens read like product UI instead of internal ops terminology.

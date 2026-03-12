@@ -24,8 +24,6 @@ type AiPromptLibraryProps = {
 };
 
 const STORAGE_KEY = "fit.ai.prompt-library";
-const STORAGE_EVENT = "fit-ai-prompt-library-updated";
-
 const BUILT_IN_PROMPTS: BuiltInPromptTemplate[] = [
   {
     id: "progress-review",
@@ -95,7 +93,6 @@ function saveCustomPromptTemplates(items: CustomPromptTemplate[]) {
   }
 
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-  window.dispatchEvent(new Event(STORAGE_EVENT));
 }
 
 function matchesSearch(value: string, query: string) {
@@ -128,20 +125,6 @@ export function AiPromptLibrary({
     resetCreateForm();
     onClose();
   }, [onClose]);
-
-  useEffect(() => {
-    const syncPrompts = () => {
-      setCustomPrompts(loadCustomPromptTemplates());
-    };
-
-    window.addEventListener(STORAGE_EVENT, syncPrompts);
-    window.addEventListener("storage", syncPrompts);
-
-    return () => {
-      window.removeEventListener(STORAGE_EVENT, syncPrompts);
-      window.removeEventListener("storage", syncPrompts);
-    };
-  }, []);
 
   useEffect(() => {
     if (!isOpen) {
