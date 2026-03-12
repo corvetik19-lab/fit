@@ -1,5 +1,5 @@
-const SHELL_CACHE = "fit-shell-v1";
-const STATIC_CACHE = "fit-static-v1";
+const SHELL_CACHE = "fit-shell-v2";
+const STATIC_CACHE = "fit-static-v2";
 const OFFLINE_FALLBACK_URL = "/offline.html";
 const PRECACHE_URLS = [OFFLINE_FALLBACK_URL, "/manifest.webmanifest", "/icon.svg"];
 

@@ -8,6 +8,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { ChevronDown, ChevronUp, Pause, Play, RotateCcw } from "lucide-react";
@@ -355,11 +356,12 @@ export function WorkoutDaySession({
   const [isPending, setIsPending] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [pendingMutationCount, setPendingMutationCount] = useState(0);
-  const [isOnline, setIsOnline] = useState(
-    () => (typeof navigator === "undefined" ? true : navigator.onLine),
-  );
-  const [pullCursor, setPullCursor] = useState<string | null>(null);
+  const [isOnline, setIsOnline] = useState(true);
   const [lastSnapshotAt, setLastSnapshotAt] = useState<string | null>(null);
+  const pullCursorRef = useRef<string | null>(null);
+  const pullPromiseRef = useRef<Promise<WorkoutDayDetail | null> | null>(null);
+  const lastPullStartedAtRef = useRef(0);
+  const hasBootstrappedSyncRef = useRef(false);
   const [isFocusHeaderCollapsed, setIsFocusHeaderCollapsed] = useState(false);
   const [timerBaseSeconds, setTimerBaseSeconds] = useState(
     () => initialDay.session_duration_seconds ?? 0,
@@ -590,23 +592,53 @@ export function WorkoutDaySession({
     await refreshPendingMutationCount();
   }, [initialDay, persistWorkoutDay, refreshPendingMutationCount]);
 
-  const pullLatestDaySnapshot = useCallback(async () => {
-    if (typeof navigator !== "undefined" && !navigator.onLine) {
-      setIsOnline(false);
-      return null;
-    }
+  const pullLatestDaySnapshot = useCallback(
+    async (options?: { force?: boolean }) => {
+      if (pullPromiseRef.current) {
+        return pullPromiseRef.current;
+      }
 
-    const result = await pullWorkoutDaySnapshot(initialDay.id, pullCursor);
+      const shouldThrottle = !options?.force;
+      const now = Date.now();
 
-    if (result.snapshot) {
-      await applyDaySnapshot(result.snapshot);
-    }
+      if (shouldThrottle && now - lastPullStartedAtRef.current < 10000) {
+        return null;
+      }
 
-    setPullCursor(result.nextCursor ?? null);
-    setIsOnline(true);
+      lastPullStartedAtRef.current = now;
 
-    return result.snapshot;
-  }, [applyDaySnapshot, initialDay.id, pullCursor]);
+      const runPull = async () => {
+        if (typeof navigator !== "undefined" && !navigator.onLine) {
+          setIsOnline(false);
+          return null;
+        }
+
+        const result = await pullWorkoutDaySnapshot(
+          initialDay.id,
+          pullCursorRef.current,
+        );
+
+        if (result.snapshot) {
+          await applyDaySnapshot(result.snapshot);
+        }
+
+        pullCursorRef.current = result.nextCursor ?? null;
+        setIsOnline(true);
+
+        return result.snapshot;
+      };
+
+      const request = runPull();
+      pullPromiseRef.current = request;
+
+      try {
+        return await request;
+      } finally {
+        pullPromiseRef.current = null;
+      }
+    },
+    [applyDaySnapshot, initialDay.id],
+  );
 
   const flushQueuedMutations = useCallback(async () => {
     if (typeof navigator !== "undefined" && !navigator.onLine) {
@@ -645,7 +677,7 @@ export function WorkoutDaySession({
       }
 
       if (result.applied > 0 || rejectedMutations.length > 0) {
-        await pullLatestDaySnapshot().catch(() => null);
+        await pullLatestDaySnapshot({ force: true }).catch(() => null);
       }
     } catch {
       await refreshPendingMutationCount();
@@ -672,7 +704,7 @@ export function WorkoutDaySession({
     setTimerLiveSeconds(initialDay.session_duration_seconds ?? 0);
     const nextExerciseIndex = getFirstIncompleteExerciseIndex(initialDay.exercises);
     setActiveExerciseIndex(nextExerciseIndex === -1 ? 0 : nextExerciseIndex);
-    setPullCursor(null);
+    pullCursorRef.current = null;
 
     void hydrateLocalDay();
   }, [hydrateLocalDay, initialDay]);
@@ -725,7 +757,7 @@ export function WorkoutDaySession({
     function handleOnline() {
       setIsOnline(true);
       void flushQueuedMutations();
-      void pullLatestDaySnapshot().catch(() => null);
+      void pullLatestDaySnapshot({ force: true }).catch(() => null);
     }
 
     function handleOffline() {
@@ -735,7 +767,10 @@ export function WorkoutDaySession({
     window.addEventListener("online", handleOnline);
     window.addEventListener("offline", handleOffline);
 
-    if (navigator.onLine) {
+    setIsOnline(navigator.onLine);
+
+    if (!hasBootstrappedSyncRef.current && navigator.onLine) {
+      hasBootstrappedSyncRef.current = true;
       void flushQueuedMutations();
       void pullLatestDaySnapshot().catch(() => null);
     }
@@ -794,7 +829,7 @@ export function WorkoutDaySession({
     if (noticeMessage) {
       setNotice(noticeMessage);
     }
-    await pullLatestDaySnapshot().catch(() => null);
+    await pullLatestDaySnapshot({ force: true }).catch(() => null);
   }
 
   async function saveSessionDuration(
@@ -1088,7 +1123,7 @@ export function WorkoutDaySession({
         } else {
           setIsOnline(true);
           setNotice("Показатели подхода сохранены.");
-          await pullLatestDaySnapshot().catch(() => null);
+          await pullLatestDaySnapshot({ force: true }).catch(() => null);
         }
       } catch (error) {
         setDay(previousDay);

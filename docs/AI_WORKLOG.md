@@ -15,6 +15,7 @@
 - `npm run typecheck`
 - `npm run build`
 - Playwright mobile pass on local `http://127.0.0.1:3060/workouts`, `http://127.0.0.1:3060/nutrition`, and `http://127.0.0.1:3060/workouts/day/609c0fce-af84-4701-a08d-2d5152a5177c?focus=1`: verified dropdown section menus on phones, readable Russian labels, sticky workout focus header with timer controls, and one-exercise-at-a-time rendering in focus mode.
+- Added a follow-up PWA cache-bust in `public/sw.js` by bumping the shell/static cache names. This forces installed clients to drop stale cached JS bundles after the next deploy, which protects the workout screen from old `visibleExercises` references lingering in service worker cache.
 
 ### Mobile app shell cleanup for PWA
 
@@ -1410,3 +1411,17 @@
 - `npx eslint src/components/page-workspace.tsx src/app/workouts/page.tsx src/app/nutrition/page.tsx src/app/workouts/day/[dayId]/page.tsx src/components/workout-day-session.tsx`
 - `npm run build`
 - `npm run typecheck`
+
+### 2026-03-12 20:55 - Sync pull hotfix и сохранение таймера в locked day
+
+- В [workout-day-session.tsx](/C:/fit/src/components/workout-day-session.tsx) убрал цикл автосинхронизации: `sync/pull` больше не привязан к меняющемуся cursor-state, добавлены bootstrap-guard, in-flight dedupe и throttling для фонового pull.
+- На стороне БД добавил миграции [20260312211000_allow_locked_day_session_duration.sql](/C:/fit/supabase/migrations/20260312211000_allow_locked_day_session_duration.sql) и [20260312211500_lock_guard_search_path.sql](/C:/fit/supabase/migrations/20260312211500_lock_guard_search_path.sql), чтобы locked day разрешал обновлять `session_duration_seconds`, а trigger был с фиксированным `search_path`.
+- Обновил [sw.js](/C:/fit/public/sw.js) до новой версии кеша, чтобы установленная PWA не держала старый бандл с уже исправленными workout-ошибками.
+- Живая проверка через Playwright на `http://127.0.0.1:3062/workouts/day/609c0fce-af84-4701-a08d-2d5152a5177c?focus=1` показала один `GET /api/sync/pull` после открытия экрана без бесконечного повторения.
+
+### Проверка: hotfix sync pull и locked timer
+
+- `npx eslint src/components/workout-day-session.tsx public/sw.js`
+- `npm run build`
+- `npm run typecheck`
+- `Playwright browser network requests`
