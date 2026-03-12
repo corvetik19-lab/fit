@@ -6,6 +6,7 @@ export type WorkoutDayExecutionInput = {
   status?: WorkoutDayStatus;
   bodyWeightKg?: number | null;
   sessionNote?: string | null;
+  sessionDurationSeconds?: number | null;
 };
 
 export async function updateWorkoutDayExecution(
@@ -17,7 +18,8 @@ export async function updateWorkoutDayExecution(
   if (
     input.status === undefined &&
     input.bodyWeightKg === undefined &&
-    input.sessionNote === undefined
+    input.sessionNote === undefined &&
+    input.sessionDurationSeconds === undefined
   ) {
     return {
       error: {
@@ -31,7 +33,9 @@ export async function updateWorkoutDayExecution(
 
   const { data: dayRow, error: dayError } = await supabase
     .from("workout_days")
-    .select("id, weekly_program_id, status, body_weight_kg, session_note")
+    .select(
+      "id, weekly_program_id, status, body_weight_kg, session_note, session_duration_seconds",
+    )
     .eq("id", dayId)
     .eq("user_id", userId)
     .maybeSingle();
@@ -83,10 +87,15 @@ export async function updateWorkoutDayExecution(
       ...(input.sessionNote !== undefined
         ? { session_note: input.sessionNote }
         : {}),
+      ...(input.sessionDurationSeconds !== undefined
+        ? { session_duration_seconds: input.sessionDurationSeconds }
+        : {}),
     })
     .eq("id", dayId)
     .eq("user_id", userId)
-    .select("id, status, body_weight_kg, session_note")
+    .select(
+      "id, status, body_weight_kg, session_note, session_duration_seconds",
+    )
     .single();
 
   if (error) {

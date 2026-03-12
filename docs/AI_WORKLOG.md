@@ -2,6 +2,20 @@
 
 ## 2026-03-12
 
+### Workout focus mode, timer persistence, and mobile section menus
+
+- Added `session_duration_seconds` end-to-end for workout execution: local migration `supabase/migrations/20260312193000_workout_day_session_duration.sql`, remote apply on the fit Supabase project, route support in `src/app/api/workout-days/[id]/route.ts` and `src/app/api/sync/push/route.ts`, server persistence in `src/lib/workout/execution.ts`, data loading in `src/lib/workout/weekly-programs.ts`, and offline queue support in `src/lib/offline/db.ts` plus `src/lib/offline/workout-sync.ts`.
+- Reworked `src/components/workout-day-session.tsx` for the mobile fullscreen workout flow. The sticky focus header now has collapse/expand behavior, live workout timer controls, progress pills, step-by-step exercise switching for only the unlocked exercises, and a single-exercise surface instead of dumping the entire workout onto one screen.
+- Tightened the mobile workout card layout so inputs and saved stats stay inside the screen width: smaller card padding, full-width save buttons on narrow screens, less aggressive grid breakpoints, and no leftover mojibake in the focus header copy.
+- Rebuilt the inner workout and nutrition section switchers in `src/components/weekly-program-builder.tsx` and `src/components/nutrition-tracker.tsx`. Phones now get a clean dropdown-style section picker instead of horizontally overflowing cards, while desktop keeps the full segmented menu.
+
+### Verification: workout focus mode and mobile section menus
+
+- `npx eslint src/components/workout-day-session.tsx src/components/weekly-program-builder.tsx src/components/nutrition-tracker.tsx src/components/page-workspace.tsx src/app/workouts/page.tsx src/app/nutrition/page.tsx`
+- `npm run typecheck`
+- `npm run build`
+- Playwright mobile pass on local `http://127.0.0.1:3060/workouts`, `http://127.0.0.1:3060/nutrition`, and `http://127.0.0.1:3060/workouts/day/609c0fce-af84-4701-a08d-2d5152a5177c?focus=1`: verified dropdown section menus on phones, readable Russian labels, sticky workout focus header with timer controls, and one-exercise-at-a-time rendering in focus mode.
+
 ### Mobile app shell cleanup for PWA
 
 - Reworked `src/components/app-shell-frame.tsx` so phones now use one compact top bar with a burger button and page title instead of the previous floating compact-shell trigger. The full-width mobile bottom navigation is removed, and the app no longer keeps a second mobile navigation layer on top of the drawer.

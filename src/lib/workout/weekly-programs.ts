@@ -48,6 +48,7 @@ export type WorkoutDayDetail = {
   status: string;
   body_weight_kg: number | null;
   session_note: string | null;
+  session_duration_seconds: number | null;
   program_title: string;
   week_start_date: string;
   week_end_date: string;
@@ -65,6 +66,7 @@ type WorkoutDayRow = {
   status: string;
   body_weight_kg?: number | null;
   session_note?: string | null;
+  session_duration_seconds?: number | null;
 };
 
 type WorkoutExerciseRow = Omit<WeeklyProgramExerciseSummary, "sets"> & {
@@ -218,7 +220,9 @@ export async function getWorkoutDayDetail(
 ) {
   const { data: dayRow, error: dayError } = await supabase
     .from("workout_days")
-    .select("id, weekly_program_id, day_of_week, status, body_weight_kg, session_note")
+    .select(
+      "id, weekly_program_id, day_of_week, status, body_weight_kg, session_note, session_duration_seconds",
+    )
     .eq("id", dayId)
     .eq("user_id", userId)
     .maybeSingle();
@@ -271,6 +275,7 @@ export async function getWorkoutDayDetail(
       status: dayRow.status,
       body_weight_kg: dayRow.body_weight_kg ?? null,
       session_note: dayRow.session_note ?? null,
+      session_duration_seconds: dayRow.session_duration_seconds ?? null,
       program_title: programRow.title,
       week_start_date: programRow.week_start_date,
       week_end_date: programRow.week_end_date,
@@ -312,6 +317,7 @@ export async function getWorkoutDayDetail(
     status: dayRow.status,
     body_weight_kg: dayRow.body_weight_kg ?? null,
     session_note: dayRow.session_note ?? null,
+    session_duration_seconds: dayRow.session_duration_seconds ?? null,
     program_title: programRow.title,
     week_start_date: programRow.week_start_date,
     week_end_date: programRow.week_end_date,

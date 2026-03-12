@@ -60,6 +60,7 @@ export async function queueWorkoutDayStatusMutation(
     status: payload.status,
     bodyWeightKg: null,
     sessionNote: null,
+    sessionDurationSeconds: null,
   });
 }
 

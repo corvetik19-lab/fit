@@ -20,6 +20,7 @@ export type WorkoutDayExecutionOfflineMutation = {
     status: "planned" | "in_progress" | "done";
     bodyWeightKg: number | null;
     sessionNote: string | null;
+    sessionDurationSeconds: number | null;
   };
   createdAt: string;
 };

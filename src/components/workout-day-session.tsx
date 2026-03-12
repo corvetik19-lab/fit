@@ -2,6 +2,7 @@
 
 import type { Route } from "next";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   startTransition,
   useCallback,
@@ -9,6 +10,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { ChevronDown, ChevronUp, Pause, Play, RotateCcw } from "lucide-react";
 
 import {
   cacheWorkoutDaySnapshot,
@@ -26,7 +28,11 @@ import {
   formatPlannedRepTarget,
   getActualRepOptions,
 } from "@/lib/workout/rep-ranges";
-import type { WorkoutDayDetail } from "@/lib/workout/weekly-programs";
+import type {
+  WeeklyProgramExerciseSummary,
+  WeeklyProgramSetSummary,
+  WorkoutDayDetail,
+} from "@/lib/workout/weekly-programs";
 
 const inputClassName =
   "w-full rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15";
@@ -113,6 +119,37 @@ function formatOptionalRestSeconds(value: number | null) {
   return seconds > 0 ? `${minutes} мин ${seconds} сек` : `${minutes} мин`;
 }
 
+function formatDurationSeconds(value: number) {
+  const safeValue = Math.max(0, value);
+  const hours = Math.floor(safeValue / 3600);
+  const minutes = Math.floor((safeValue % 3600) / 60);
+  const seconds = safeValue % 60;
+
+  if (hours > 0) {
+    return [hours, minutes, seconds]
+      .map((part) => part.toString().padStart(2, "0"))
+      .join(":");
+  }
+
+  return [minutes, seconds]
+    .map((part) => part.toString().padStart(2, "0"))
+    .join(":");
+}
+
+function isCompletedWorkoutSet(set: WeeklyProgramSetSummary) {
+  return typeof set.actual_reps === "number";
+}
+
+function isCompletedWorkoutExercise(exercise: WeeklyProgramExerciseSummary) {
+  return exercise.sets.length > 0 && exercise.sets.every(isCompletedWorkoutSet);
+}
+
+function getFirstIncompleteExerciseIndex(
+  exercises: WeeklyProgramExerciseSummary[],
+) {
+  return exercises.findIndex((exercise) => !isCompletedWorkoutExercise(exercise));
+}
+
 function getInitialActualRepsMap(day: WorkoutDayDetail) {
   const nextState: Record<string, string> = {};
 
@@ -186,6 +223,7 @@ function applyWorkoutDayExecution(
     status?: WorkoutDayDetail["status"];
     bodyWeightKg?: number | null;
     sessionNote?: string | null;
+    sessionDurationSeconds?: number | null;
   },
 ) {
   return {
@@ -195,6 +233,9 @@ function applyWorkoutDayExecution(
       ? { body_weight_kg: input.bodyWeightKg }
       : {}),
     ...(input.sessionNote !== undefined ? { session_note: input.sessionNote } : {}),
+    ...(input.sessionDurationSeconds !== undefined
+      ? { session_duration_seconds: input.sessionDurationSeconds }
+      : {}),
   };
 }
 
@@ -260,6 +301,7 @@ function applyQueuedMutations(day: WorkoutDayDetail, mutations: OfflineMutation[
         status: mutation.payload.status,
         bodyWeightKg: mutation.payload.bodyWeightKg,
         sessionNote: mutation.payload.sessionNote,
+        sessionDurationSeconds: mutation.payload.sessionDurationSeconds,
       });
     }
 
@@ -282,6 +324,7 @@ export function WorkoutDaySession({
   initialDay: WorkoutDayDetail;
   isFocusMode?: boolean;
 }) {
+  const router = useRouter();
   const [day, setDay] = useState(initialDay);
   const [actualRepsBySetId, setActualRepsBySetId] = useState<Record<string, string>>(
     () => getInitialActualRepsMap(initialDay),
@@ -317,6 +360,18 @@ export function WorkoutDaySession({
   );
   const [pullCursor, setPullCursor] = useState<string | null>(null);
   const [lastSnapshotAt, setLastSnapshotAt] = useState<string | null>(null);
+  const [isFocusHeaderCollapsed, setIsFocusHeaderCollapsed] = useState(false);
+  const [timerBaseSeconds, setTimerBaseSeconds] = useState(
+    () => initialDay.session_duration_seconds ?? 0,
+  );
+  const [timerLiveSeconds, setTimerLiveSeconds] = useState(
+    () => initialDay.session_duration_seconds ?? 0,
+  );
+  const [timerStartedAt, setTimerStartedAt] = useState<number | null>(null);
+  const [activeExerciseIndex, setActiveExerciseIndex] = useState(() => {
+    const nextIndex = getFirstIncompleteExerciseIndex(initialDay.exercises);
+    return nextIndex === -1 ? 0 : nextIndex;
+  });
 
   const workoutSets = useMemo(
     () => day.exercises.flatMap((exercise) => exercise.sets),
@@ -324,6 +379,50 @@ export function WorkoutDaySession({
   );
   const isMobileFocusMode = isFocusMode;
   const workoutDayHref = `/workouts/day/${day.id}` as Route;
+  const isTimerRunning = timerStartedAt !== null;
+  const firstIncompleteExerciseIndex = useMemo(
+    () => getFirstIncompleteExerciseIndex(day.exercises),
+    [day.exercises],
+  );
+  const unlockedExerciseCount = useMemo(() => {
+    if (!day.exercises.length) {
+      return 0;
+    }
+
+    return firstIncompleteExerciseIndex === -1
+      ? day.exercises.length
+      : firstIncompleteExerciseIndex + 1;
+  }, [day.exercises.length, firstIncompleteExerciseIndex]);
+  const safeActiveExerciseIndex = useMemo(() => {
+    if (!day.exercises.length) {
+      return 0;
+    }
+
+    return Math.min(
+      activeExerciseIndex,
+      Math.max(0, unlockedExerciseCount - 1),
+    );
+  }, [activeExerciseIndex, day.exercises.length, unlockedExerciseCount]);
+  const activeExercise =
+    isMobileFocusMode && day.exercises.length
+      ? day.exercises[safeActiveExerciseIndex] ?? null
+      : null;
+  const unlockedExercises = useMemo(
+    () => day.exercises.slice(0, unlockedExerciseCount),
+    [day.exercises, unlockedExerciseCount],
+  );
+  const visibleExerciseEntries = useMemo(
+    () =>
+      isMobileFocusMode
+        ? activeExercise
+          ? [{ exercise: activeExercise, index: safeActiveExerciseIndex }]
+          : []
+        : day.exercises.map((exercise, index) => ({ exercise, index })),
+    [activeExercise, day.exercises, isMobileFocusMode, safeActiveExerciseIndex],
+  );
+  const currentSessionDurationSeconds = isTimerRunning
+    ? timerLiveSeconds
+    : timerBaseSeconds;
 
   const completedSetsCount = useMemo(
     () =>
@@ -379,6 +478,17 @@ export function WorkoutDaySession({
     );
   }, [workoutSets]);
 
+  const completedExercisesCount = useMemo(
+    () =>
+      day.exercises.filter((exercise) => isCompletedWorkoutExercise(exercise))
+        .length,
+    [day.exercises],
+  );
+
+  const currentExerciseIsComplete = activeExercise
+    ? isCompletedWorkoutExercise(activeExercise)
+    : false;
+
   function setActualRepsValue(setId: string, value: string) {
     setActualRepsBySetId((current) => ({
       ...current,
@@ -433,6 +543,11 @@ export function WorkoutDaySession({
           : "",
       );
       setDaySessionNoteValue(nextDay.session_note ?? "");
+      setTimerStartedAt(null);
+      setTimerBaseSeconds(nextDay.session_duration_seconds ?? 0);
+      setTimerLiveSeconds(nextDay.session_duration_seconds ?? 0);
+      const nextExerciseIndex = getFirstIncompleteExerciseIndex(nextDay.exercises);
+      setActiveExerciseIndex(nextExerciseIndex === -1 ? 0 : nextExerciseIndex);
       await persistWorkoutDay(nextDay);
     },
     [persistWorkoutDay],
@@ -465,6 +580,11 @@ export function WorkoutDaySession({
         : "",
     );
     setDaySessionNoteValue(hydratedDay.session_note ?? "");
+    setTimerStartedAt(null);
+    setTimerBaseSeconds(hydratedDay.session_duration_seconds ?? 0);
+    setTimerLiveSeconds(hydratedDay.session_duration_seconds ?? 0);
+    const nextExerciseIndex = getFirstIncompleteExerciseIndex(hydratedDay.exercises);
+    setActiveExerciseIndex(nextExerciseIndex === -1 ? 0 : nextExerciseIndex);
     setLastSnapshotAt(cachedSnapshot.updatedAt);
     await persistWorkoutDay(hydratedDay);
     await refreshPendingMutationCount();
@@ -547,10 +667,59 @@ export function WorkoutDaySession({
         : "",
     );
     setDaySessionNoteValue(initialDay.session_note ?? "");
+    setTimerStartedAt(null);
+    setTimerBaseSeconds(initialDay.session_duration_seconds ?? 0);
+    setTimerLiveSeconds(initialDay.session_duration_seconds ?? 0);
+    const nextExerciseIndex = getFirstIncompleteExerciseIndex(initialDay.exercises);
+    setActiveExerciseIndex(nextExerciseIndex === -1 ? 0 : nextExerciseIndex);
     setPullCursor(null);
 
     void hydrateLocalDay();
   }, [hydrateLocalDay, initialDay]);
+
+  useEffect(() => {
+    if (timerStartedAt === null) {
+      setTimerLiveSeconds(timerBaseSeconds);
+      return;
+    }
+
+    const syncTimer = () => {
+      setTimerLiveSeconds(
+        timerBaseSeconds + Math.max(0, Math.floor((Date.now() - timerStartedAt) / 1000)),
+      );
+    };
+
+    syncTimer();
+    const intervalId = window.setInterval(syncTimer, 1000);
+
+    return () => window.clearInterval(intervalId);
+  }, [timerBaseSeconds, timerStartedAt]);
+
+  useEffect(() => {
+    if (!isMobileFocusMode || !day.exercises.length) {
+      return;
+    }
+
+    setActiveExerciseIndex((currentIndex) => {
+      const maxUnlockedIndex = Math.max(0, unlockedExerciseCount - 1);
+      const safeIndex = Math.min(currentIndex, maxUnlockedIndex);
+      const currentExercise = day.exercises[safeIndex];
+
+      if (
+        currentExercise &&
+        isCompletedWorkoutExercise(currentExercise) &&
+        safeIndex < maxUnlockedIndex
+      ) {
+        return safeIndex + 1;
+      }
+
+      if (safeIndex < 0) {
+        return 0;
+      }
+
+      return safeIndex;
+    });
+  }, [day.exercises, isMobileFocusMode, unlockedExerciseCount]);
 
   useEffect(() => {
     function handleOnline() {
@@ -579,8 +748,8 @@ export function WorkoutDaySession({
 
   async function persistDayExecution(
     nextDay: WorkoutDayDetail,
-    noticeMessage: string,
-    offlineNoticeMessage: string,
+    noticeMessage: string | null,
+    offlineNoticeMessage: string | null,
   ) {
     await persistWorkoutDay(nextDay);
 
@@ -590,10 +759,13 @@ export function WorkoutDaySession({
         status: nextDay.status as "planned" | "in_progress" | "done",
         bodyWeightKg: nextDay.body_weight_kg,
         sessionNote: nextDay.session_note,
+        sessionDurationSeconds: nextDay.session_duration_seconds,
       });
       await refreshPendingMutationCount();
       setIsOnline(false);
-      setNotice(offlineNoticeMessage);
+      if (offlineNoticeMessage) {
+        setNotice(offlineNoticeMessage);
+      }
       return;
     }
 
@@ -606,6 +778,7 @@ export function WorkoutDaySession({
         status: nextDay.status,
         bodyWeightKg: nextDay.body_weight_kg,
         sessionNote: nextDay.session_note,
+        sessionDurationSeconds: nextDay.session_duration_seconds,
       }),
     });
 
@@ -618,8 +791,49 @@ export function WorkoutDaySession({
     }
 
     setIsOnline(true);
-    setNotice(noticeMessage);
+    if (noticeMessage) {
+      setNotice(noticeMessage);
+    }
     await pullLatestDaySnapshot().catch(() => null);
+  }
+
+  async function saveSessionDuration(
+    nextSeconds: number,
+    noticeMessage: string | null,
+    offlineNoticeMessage: string | null,
+  ) {
+    setError(null);
+    if (noticeMessage) {
+      setNotice(null);
+    }
+    setIsPending(true);
+
+    const previousDay = day;
+    const previousDuration = day.session_duration_seconds ?? 0;
+    const optimisticDay = applyWorkoutDayExecution(day, {
+      sessionDurationSeconds: nextSeconds,
+    });
+
+    setDay(optimisticDay);
+    setTimerBaseSeconds(nextSeconds);
+    setTimerLiveSeconds(nextSeconds);
+
+    try {
+      await persistDayExecution(optimisticDay, noticeMessage, offlineNoticeMessage);
+    } catch (error) {
+      setDay(previousDay);
+      await persistWorkoutDay(previousDay);
+      setTimerBaseSeconds(previousDuration);
+      setTimerLiveSeconds(previousDuration);
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Не удалось сохранить таймер тренировки.",
+      );
+      throw error;
+    } finally {
+      setIsPending(false);
+    }
   }
 
   function updateDayStatus(nextStatus: "planned" | "in_progress" | "done") {
@@ -812,6 +1026,7 @@ export function WorkoutDaySession({
               status: "in_progress",
               bodyWeightKg: optimisticDay.body_weight_kg,
               sessionNote: optimisticDay.session_note,
+              sessionDurationSeconds: optimisticDay.session_duration_seconds,
             });
           }
 
@@ -862,6 +1077,7 @@ export function WorkoutDaySession({
               status: "in_progress",
               bodyWeightKg: optimisticDay.body_weight_kg,
               sessionNote: optimisticDay.session_note,
+              sessionDurationSeconds: optimisticDay.session_duration_seconds,
             });
             await refreshPendingMutationCount();
             setNotice(
@@ -915,6 +1131,54 @@ export function WorkoutDaySession({
     });
   }
 
+  function startSessionTimer() {
+    if (isTimerRunning) {
+      return;
+    }
+
+    setError(null);
+    setNotice(null);
+    setTimerStartedAt(Date.now());
+  }
+
+  async function pauseSessionTimer(options?: { silent?: boolean }) {
+    if (timerStartedAt === null) {
+      return;
+    }
+
+    const nextSeconds =
+      timerBaseSeconds + Math.max(0, Math.floor((Date.now() - timerStartedAt) / 1000));
+
+    setTimerStartedAt(null);
+
+    await saveSessionDuration(
+      nextSeconds,
+      options?.silent ? null : "Таймер тренировки сохранён.",
+      options?.silent ? null : "Таймер сохранён на устройстве и отправится позже.",
+    );
+  }
+
+  async function resetSessionTimer() {
+    setTimerStartedAt(null);
+    await saveSessionDuration(
+      0,
+      "Таймер тренировки сброшен.",
+      "Сброс таймера сохранён на устройстве и отправится позже.",
+    );
+  }
+
+  async function returnToRegularMode() {
+    if (isTimerRunning) {
+      try {
+        await pauseSessionTimer({ silent: true });
+      } catch {
+        return;
+      }
+    }
+
+    router.push(workoutDayHref);
+  }
+
   function renderStatusActions({
     compact = false,
   }: {
@@ -947,7 +1211,7 @@ export function WorkoutDaySession({
               disabled={isPending || isSyncing}
               onClick={() => updateDayStatus("done")}
               type="button"
-            >
+              >
               Завершить
             </button>
             <button
@@ -1032,36 +1296,153 @@ export function WorkoutDaySession({
   return (
     <div className="grid gap-6">
       {isMobileFocusMode ? (
-        <section className="card sticky top-[calc(0.75rem+env(safe-area-inset-top))] z-20 p-4 sm:p-5">
-          <div className="flex items-start justify-between gap-3">
+        <section className="card sticky top-[calc(0.75rem+env(safe-area-inset-top))] z-20 overflow-hidden p-4 sm:p-5">
+          <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
               <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
                 Текущая тренировка
               </p>
-              <h2 className="mt-2 text-xl font-semibold text-foreground">
+              <h2 className="mt-2 truncate text-xl font-semibold text-foreground">
                 {dayLabels[day.day_of_week] ?? `День ${day.day_of_week}`}
               </h2>
-              <p className="mt-2 text-sm leading-6 text-muted">{day.program_title}</p>
             </div>
 
-            <Link
-              className="rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:bg-white/70"
-              href={workoutDayHref}
-            >
-              Обычный вид
-            </Link>
+            <div className="flex items-center gap-2">
+              <button
+                aria-expanded={!isFocusHeaderCollapsed}
+                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border bg-white/80 text-foreground transition hover:bg-white"
+                onClick={() => setIsFocusHeaderCollapsed((current) => !current)}
+                type="button"
+              >
+                {isFocusHeaderCollapsed ? (
+                  <ChevronDown size={18} strokeWidth={2.2} />
+                ) : (
+                  <ChevronUp size={18} strokeWidth={2.2} />
+                )}
+              </button>
+              <button
+                className="rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:bg-white/70"
+                onClick={() => {
+                  void returnToRegularMode();
+                }}
+                type="button"
+              >
+                Обычный вид
+              </button>
+            </div>
           </div>
 
-          <div className="mt-4 flex flex-wrap gap-2">
-            <span className="pill">{dayStatusLabels[day.status] ?? day.status}</span>
-            <span className="pill">{`${completedSetsCount}/${totalSetsCount} подходов`}</span>
+          {activeExercise ? (
+            <p className="mt-3 text-sm text-muted">
+              {currentExerciseIsComplete
+                ? `${activeExercise.exercise_title_snapshot} · можно переходить дальше`
+                : `${activeExercise.exercise_title_snapshot} · шаг ${safeActiveExerciseIndex + 1} из ${day.exercises.length}`}
+            </p>
+          ) : null}
+
+          <div className="mt-4 flex items-center justify-between gap-3 rounded-3xl border border-border bg-white/70 px-4 py-3">
+            <div className="min-w-0">
+              <p className="text-xs uppercase tracking-[0.18em] text-muted">
+                Таймер
+              </p>
+              <p className="mt-1 text-2xl font-semibold text-foreground">
+                {formatDurationSeconds(currentSessionDurationSeconds)}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border bg-white/85 text-foreground transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={!day.is_locked || isPending || isSyncing}
+                onClick={() => {
+                  if (isTimerRunning) {
+                    void pauseSessionTimer();
+                    return;
+                  }
+
+                  startSessionTimer();
+                }}
+                type="button"
+              >
+                {isTimerRunning ? (
+                  <Pause size={18} strokeWidth={2.3} />
+                ) : (
+                  <Play size={18} strokeWidth={2.3} />
+                )}
+              </button>
+              <button
+                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border bg-white/85 text-foreground transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={
+                  !day.is_locked ||
+                  isPending ||
+                  isSyncing ||
+                  currentSessionDurationSeconds === 0
+                }
+                onClick={() => {
+                  void resetSessionTimer();
+                }}
+                type="button"
+              >
+                <RotateCcw size={18} strokeWidth={2.1} />
+              </button>
+            </div>
           </div>
 
-          <div className="mt-4 flex flex-wrap gap-2">
-            {renderStatusActions({ compact: true })}
-          </div>
+          {!isFocusHeaderCollapsed ? (
+            <>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <span className="pill">
+                  {dayStatusLabels[day.status] ?? day.status}
+                </span>
+                <span className="pill">{`${completedSetsCount}/${totalSetsCount} подходов`}</span>
+                <span className="pill">{`Готово ${completedExercisesCount}/${day.exercises.length} упражнений`}</span>
+              </div>
 
-          {renderDayNotices()}
+              {unlockedExercises.length ? (
+                <div className="mt-4">
+                  <p className="text-xs uppercase tracking-[0.18em] text-muted">
+                    Шаги тренировки
+                  </p>
+                  <div className="-mx-1 mt-2 flex gap-2 overflow-x-auto px-1 pb-1">
+                    {unlockedExercises.map((exercise, index) => {
+                      const isActive = index === safeActiveExerciseIndex;
+                      const isComplete = isCompletedWorkoutExercise(exercise);
+
+                      return (
+                        <button
+                          aria-pressed={isActive}
+                          className={`min-w-[7.5rem] shrink-0 rounded-2xl border px-3 py-2 text-left transition ${
+                            isActive
+                              ? "border-accent/30 bg-accent-soft text-foreground shadow-[0_16px_36px_-30px_rgba(20,97,75,0.45)]"
+                              : "border-border bg-white/80 text-foreground hover:bg-white"
+                          }`}
+                          key={exercise.id}
+                          onClick={() => setActiveExerciseIndex(index)}
+                          type="button"
+                        >
+                          <span className="block text-xs uppercase tracking-[0.18em] text-muted">
+                            {`Упражнение ${index + 1}`}
+                          </span>
+                          <span className="mt-1 block truncate text-sm font-semibold">
+                            {exercise.exercise_title_snapshot}
+                          </span>
+                          <span className="mt-1 block text-xs text-muted">
+                            {isComplete ? "завершено" : isActive ? "текущий шаг" : "доступно"}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : null}
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                {renderStatusActions({ compact: true })}
+              </div>
+
+              {!isFocusHeaderCollapsed ? renderDayNotices() : null}
+            </>
+          ) : null}
         </section>
       ) : null}
 
@@ -1090,7 +1471,7 @@ export function WorkoutDaySession({
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-5">
+        <div className="grid gap-4 md:grid-cols-6">
           {[
             ["Упражнений", String(day.exercises.length)],
             ["Подходов", String(totalSetsCount)],
@@ -1102,6 +1483,7 @@ export function WorkoutDaySession({
                 : "нет данных",
             ],
             ["Средний RPE", avgActualRpe !== null ? formatOptionalRpe(avgActualRpe) : "нет данных"],
+            ["Таймер", formatDurationSeconds(day.session_duration_seconds ?? 0)],
           ].map(([label, value]) => (
             <article className="kpi p-4" key={label}>
               <p className="text-sm text-muted">{label}</p>
@@ -1278,19 +1660,29 @@ export function WorkoutDaySession({
       ) : null}
 
       <section className="grid gap-4">
-        {day.exercises.length ? (
-          day.exercises.map((exercise) => (
-            <article className="card p-6" key={exercise.id}>
-              <div className="mb-4">
-                <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
-                  Упражнение
-                </p>
-                <h3 className="mt-2 text-2xl font-semibold text-foreground">
-                  {exercise.exercise_title_snapshot}
-                </h3>
-                <p className="mt-2 text-sm text-muted">
-                  Запланировано подходов: {exercise.sets_count}
-                </p>
+        {visibleExerciseEntries.length ? (
+          visibleExerciseEntries.map(({ exercise, index }) => (
+            <article className="card p-4 sm:p-6" key={exercise.id}>
+              <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
+                    {isMobileFocusMode
+                      ? `Упражнение ${index + 1} из ${day.exercises.length}`
+                      : "Упражнение"}
+                  </p>
+                  <h3 className="mt-2 break-words text-xl font-semibold text-foreground sm:text-2xl">
+                    {exercise.exercise_title_snapshot}
+                  </h3>
+                  <p className="mt-2 text-sm text-muted">
+                    Запланировано подходов: {exercise.sets_count}
+                  </p>
+                </div>
+
+                {isMobileFocusMode ? (
+                  <span className="pill" title={currentExerciseIsComplete ? "Упражнение завершено" : "Текущий шаг"}>
+                    {currentExerciseIsComplete ? "Готово" : "Текущий шаг"}
+                  </span>
+                ) : null}
               </div>
 
               <div className="grid gap-3">
@@ -1299,8 +1691,8 @@ export function WorkoutDaySession({
                     className="rounded-2xl border border-border bg-white/60 p-4"
                     key={set.id}
                   >
-                    <div className="grid gap-3 xl:grid-cols-[0.8fr_0.9fr_0.9fr_0.8fr_0.8fr_auto] xl:items-end">
-                      <div>
+                    <div className="grid gap-3 lg:grid-cols-[0.8fr_0.9fr_0.9fr_0.8fr_0.8fr_auto] lg:items-end">
+                      <div className="min-w-0">
                         <p className="text-sm font-semibold text-foreground">
                           Подход {set.set_number}
                         </p>
@@ -1379,7 +1771,7 @@ export function WorkoutDaySession({
                       </label>
 
                       <button
-                        className="rounded-full border border-border px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="w-full rounded-full border border-border px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60 lg:w-auto"
                         disabled={!day.is_locked || isPending || isSyncing}
                         onClick={() => saveSet(set.id)}
                         type="button"
@@ -1401,7 +1793,7 @@ export function WorkoutDaySession({
                       />
                     </label>
 
-                    <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+                    <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
                       <div className="rounded-2xl border border-border/70 bg-white/70 px-4 py-3 text-sm text-muted">
                         Последние повторы:{" "}
                         <span className="font-semibold text-foreground">
@@ -1426,7 +1818,7 @@ export function WorkoutDaySession({
                           {formatOptionalRestSeconds(set.rest_seconds)}
                         </span>
                       </div>
-                      <div className="rounded-2xl border border-border/70 bg-white/70 px-4 py-3 text-sm text-muted md:col-span-2 xl:col-span-2">
+                      <div className="rounded-2xl border border-border/70 bg-white/70 px-4 py-3 text-sm text-muted sm:col-span-2 xl:col-span-2">
                         <p className="font-medium text-foreground">Последняя заметка</p>
                         <p className="mt-2 leading-6">
                           {set.set_note?.trim() || "Заметка к подходу пока не сохранена."}

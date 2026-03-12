@@ -29,6 +29,7 @@ const workoutDayExecutionMutationSchema = z.object({
     status: z.enum(["planned", "in_progress", "done"]),
     bodyWeightKg: z.number().min(0).max(500).nullable(),
     sessionNote: z.string().max(4000).nullable(),
+    sessionDurationSeconds: z.number().int().min(0).max(43200).nullable(),
   }),
   createdAt: z.string().min(1),
 });
@@ -128,6 +129,7 @@ export async function POST(request: Request) {
             {
               bodyWeightKg: mutation.payload.bodyWeightKg,
               sessionNote: mutation.payload.sessionNote,
+              sessionDurationSeconds: mutation.payload.sessionDurationSeconds,
             },
           );
 

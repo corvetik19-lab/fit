@@ -3,6 +3,7 @@
 import type { Route } from "next";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Check, ChevronDown, ChevronUp } from "lucide-react";
 import { startTransition, useState } from "react";
 
 import type { WeeklyProgramSummary } from "@/lib/workout/weekly-programs";
@@ -67,24 +68,24 @@ const dateFormatter = new Intl.DateTimeFormat("ru-RU", {
   month: "long",
 });
 
-function createLocalId() {
-  return crypto.randomUUID();
+function createLocalId(prefix: string, stableKey?: string) {
+  return stableKey ? `${prefix}-${stableKey}` : crypto.randomUUID();
 }
 
-function createExerciseEntry(): BuilderExercise {
+function createExerciseEntry(stableKey?: string): BuilderExercise {
   return {
-    localId: createLocalId(),
+    localId: createLocalId("exercise", stableKey),
     exerciseLibraryId: "",
     setsCount: "4",
     repRangeKey: defaultRepRangePresetKey,
   };
 }
 
-function createDayEntry(): BuilderDay {
+function createDayEntry(stableKey?: string): BuilderDay {
   return {
-    localId: createLocalId(),
+    localId: createLocalId("day", stableKey),
     dayOfWeek: "",
-    exercises: [createExerciseEntry()],
+    exercises: [createExerciseEntry(stableKey ? `${stableKey}-1` : undefined)],
   };
 }
 
@@ -131,19 +132,20 @@ export function WeeklyProgramBuilder({
   const router = useRouter();
   const [title, setTitle] = useState("Моя новая неделя");
   const [weekStartDate, setWeekStartDate] = useState(getCurrentWeekStartDate());
-  const [days, setDays] = useState<BuilderDay[]>([createDayEntry()]);
+  const [days, setDays] = useState<BuilderDay[]>([createDayEntry("1")]);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
   const [activePanelKey, setActivePanelKey] =
     useState<BuilderPanelKey>("builder");
+  const [isMobilePanelMenuOpen, setIsMobilePanelMenuOpen] = useState(false);
   const activeProgram =
     initialPrograms.find((program) => program.status === "active") ?? null;
 
   function resetBuilder() {
     setTitle("Моя новая неделя");
     setWeekStartDate(getCurrentWeekStartDate());
-    setDays([createDayEntry()]);
+    setDays([createDayEntry("1")]);
   }
 
   function updateDayField(dayId: string, nextDayOfWeek: string) {
@@ -418,10 +420,10 @@ export function WeeklyProgramBuilder({
 
   function applyTemplate(template: WorkoutTemplateSummary) {
     const nextDays = template.payload.days.map((day) => ({
-      localId: createLocalId(),
+      localId: createLocalId("day"),
       dayOfWeek: day.dayOfWeek.toString(),
       exercises: day.exercises.map((exercise) => ({
-        localId: createLocalId(),
+        localId: createLocalId("exercise"),
         exerciseLibraryId: exercise.exerciseLibraryId ?? "",
         setsCount: exercise.setsCount.toString(),
         repRangeKey: resolveRepRangePreset(exercise).key,
@@ -461,6 +463,11 @@ export function WeeklyProgramBuilder({
     },
   ];
 
+  function selectPanel(panelKey: BuilderPanelKey) {
+    setActivePanelKey(panelKey);
+    setIsMobilePanelMenuOpen(false);
+  }
+
   return (
     <div className="grid gap-6">
       <section className="card p-4 sm:p-5">
@@ -481,20 +488,84 @@ export function WeeklyProgramBuilder({
           </span>
         </div>
 
-        <div className="mt-4 -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+        <div className="mt-4 md:hidden">
+          <button
+            aria-expanded={isMobilePanelMenuOpen}
+            className="flex w-full items-center justify-between gap-3 rounded-3xl border border-border bg-white/82 px-4 py-3 text-left shadow-[0_18px_45px_-35px_rgba(20,97,75,0.25)] transition hover:bg-white"
+            onClick={() => setIsMobilePanelMenuOpen((current) => !current)}
+            type="button"
+          >
+            <span className="min-w-0 flex-1">
+              <span className="block text-xs uppercase tracking-[0.18em] text-muted">
+                Текущий раздел
+              </span>
+              <span className="mt-1 block truncate text-sm font-semibold text-foreground">
+                {builderPanels.find((panel) => panel.key === activePanelKey)?.label ?? "Выбери раздел"}
+              </span>
+              <span className="mt-1 block text-xs leading-5 text-muted">
+                {builderPanels.find((panel) => panel.key === activePanelKey)?.description ?? "Выбери нужный блок"}
+              </span>
+            </span>
+            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-white/85 text-foreground">
+              {isMobilePanelMenuOpen ? (
+                <ChevronUp size={18} strokeWidth={2.2} />
+              ) : (
+                <ChevronDown size={18} strokeWidth={2.2} />
+              )}
+            </span>
+          </button>
+
+          {isMobilePanelMenuOpen ? (
+            <div className="mt-3 grid gap-2 rounded-3xl border border-border bg-[color-mix(in_srgb,var(--surface)_94%,white)] p-3">
+              {builderPanels.map((panel) => {
+                const isActive = panel.key === activePanelKey;
+
+                return (
+                  <button
+                    aria-pressed={isActive}
+                    className={`flex items-start justify-between gap-3 rounded-2xl border px-3 py-3 text-left transition ${
+                      isActive
+                        ? "border-accent/30 bg-accent-soft text-foreground"
+                        : "border-transparent bg-white/72 text-foreground hover:bg-white"
+                    }`}
+                    key={panel.key}
+                    onClick={() => selectPanel(panel.key)}
+                    type="button"
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-semibold">
+                        {panel.label}
+                      </span>
+                      <span className="mt-1 block text-xs leading-5 text-muted">
+                        {panel.description}
+                      </span>
+                    </span>
+                    {isActive ? (
+                      <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent text-white">
+                        <Check size={16} strokeWidth={2.3} />
+                      </span>
+                    ) : null}
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+        </div>
+
+        <div className="mt-4 hidden gap-3 md:flex md:flex-wrap">
           {builderPanels.map((panel) => {
             const isActive = panel.key === activePanelKey;
 
             return (
               <button
                 aria-pressed={isActive}
-                className={`min-w-[11.5rem] shrink-0 rounded-3xl border px-4 py-3 text-left transition sm:min-w-[13.5rem] ${
+                className={`min-w-[12rem] rounded-3xl border px-4 py-3 text-left transition ${
                   isActive
                     ? "border-accent/30 bg-accent-soft text-foreground shadow-[0_18px_45px_-35px_rgba(20,97,75,0.35)]"
                     : "border-border bg-white/80 text-foreground hover:bg-white"
                 }`}
                 key={panel.key}
-                onClick={() => setActivePanelKey(panel.key)}
+                onClick={() => selectPanel(panel.key)}
                 type="button"
               >
                 <span className="block text-sm font-semibold">{panel.label}</span>

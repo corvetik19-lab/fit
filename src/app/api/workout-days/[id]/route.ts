@@ -10,12 +10,14 @@ const workoutDayUpdateSchema = z
     status: z.enum(["planned", "in_progress", "done"]).optional(),
     bodyWeightKg: z.number().min(0).max(500).nullable().optional(),
     sessionNote: z.string().max(4000).nullable().optional(),
+    sessionDurationSeconds: z.number().int().min(0).max(43200).nullable().optional(),
   })
   .refine(
     (value) =>
       value.status !== undefined ||
       value.bodyWeightKg !== undefined ||
-      value.sessionNote !== undefined,
+      value.sessionNote !== undefined ||
+      value.sessionDurationSeconds !== undefined,
     {
       message: "At least one workout day field is required.",
       path: ["status"],
@@ -51,6 +53,7 @@ export async function PATCH(
         status: payload.status,
         bodyWeightKg: payload.bodyWeightKg,
         sessionNote: payload.sessionNote,
+        sessionDurationSeconds: payload.sessionDurationSeconds,
       },
     );
 
