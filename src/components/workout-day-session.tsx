@@ -1,5 +1,7 @@
 "use client";
 
+import type { Route } from "next";
+import Link from "next/link";
 import {
   startTransition,
   useCallback,
@@ -273,7 +275,13 @@ function applyQueuedMutations(day: WorkoutDayDetail, mutations: OfflineMutation[
   }, day);
 }
 
-export function WorkoutDaySession({ initialDay }: { initialDay: WorkoutDayDetail }) {
+export function WorkoutDaySession({
+  initialDay,
+  isFocusMode = false,
+}: {
+  initialDay: WorkoutDayDetail;
+  isFocusMode?: boolean;
+}) {
   const [day, setDay] = useState(initialDay);
   const [actualRepsBySetId, setActualRepsBySetId] = useState<Record<string, string>>(
     () => getInitialActualRepsMap(initialDay),
@@ -314,6 +322,8 @@ export function WorkoutDaySession({ initialDay }: { initialDay: WorkoutDayDetail
     () => day.exercises.flatMap((exercise) => exercise.sets),
     [day.exercises],
   );
+  const isMobileFocusMode = isFocusMode;
+  const workoutDayHref = `/workouts/day/${day.id}` as Route;
 
   const completedSetsCount = useMemo(
     () =>
@@ -905,8 +915,157 @@ export function WorkoutDaySession({ initialDay }: { initialDay: WorkoutDayDetail
     });
   }
 
+  function renderStatusActions({
+    compact = false,
+  }: {
+    compact?: boolean;
+  }) {
+    const primaryButtonClassName = compact
+      ? "rounded-full bg-accent px-4 py-2.5 text-xs font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+      : "rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60";
+    const secondaryButtonClassName = compact
+      ? "rounded-full border border-border px-4 py-2.5 text-xs font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
+      : "rounded-full border border-border px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60";
+
+    return (
+      <>
+        {day.status === "planned" ? (
+          <button
+            className={primaryButtonClassName}
+            disabled={isPending || isSyncing || !day.is_locked}
+            onClick={() => updateDayStatus("in_progress")}
+            type="button"
+          >
+            Начать тренировку
+          </button>
+        ) : null}
+
+        {day.status === "in_progress" ? (
+          <>
+            <button
+              className={primaryButtonClassName}
+              disabled={isPending || isSyncing}
+              onClick={() => updateDayStatus("done")}
+              type="button"
+            >
+              Завершить
+            </button>
+            <button
+              className={secondaryButtonClassName}
+              disabled={isPending || isSyncing}
+              onClick={() => updateDayStatus("planned")}
+              type="button"
+            >
+              Вернуть в план
+            </button>
+          </>
+        ) : null}
+
+        {day.status === "done" ? (
+          <button
+            className={secondaryButtonClassName}
+            disabled={isPending || isSyncing}
+            onClick={() => updateDayStatus("in_progress")}
+            type="button"
+          >
+            Вернуть в процесс
+          </button>
+        ) : null}
+
+        {pendingMutationCount > 0 && isOnline ? (
+          <button
+            className={secondaryButtonClassName}
+            disabled={isPending || isSyncing}
+            onClick={() => {
+              void flushQueuedMutations();
+            }}
+            type="button"
+          >
+            {isSyncing
+              ? "Отправляю..."
+              : compact
+                ? `Синхр. (${pendingMutationCount})`
+                : `Отправить изменения (${pendingMutationCount})`}
+          </button>
+        ) : null}
+      </>
+    );
+  }
+
+  function renderDayNotices() {
+    return (
+      <>
+        {!day.is_locked ? (
+          <p className="mt-4 rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Отмечать выполнение можно после фиксации недели.
+          </p>
+        ) : null}
+
+        {!isOnline ? (
+          <p className="mt-4 rounded-2xl border border-sky-300/60 bg-sky-50 px-4 py-3 text-sm text-sky-800">
+            Нет связи. Изменения по этой тренировке сохраняются на устройстве и
+            отправятся автоматически, когда интернет вернётся.
+          </p>
+        ) : null}
+
+        {pendingMutationCount > 0 ? (
+          <p className="mt-4 rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Ждут отправки с этого устройства: {pendingMutationCount}.
+          </p>
+        ) : null}
+
+        {error ? (
+          <p className="mt-4 rounded-2xl border border-red-300/60 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {error}
+          </p>
+        ) : null}
+
+        {notice ? (
+          <p className="mt-4 rounded-2xl border border-emerald-300/60 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+            {notice}
+          </p>
+        ) : null}
+      </>
+    );
+  }
+
   return (
     <div className="grid gap-6">
+      {isMobileFocusMode ? (
+        <section className="card sticky top-[calc(0.75rem+env(safe-area-inset-top))] z-20 p-4 sm:p-5">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
+                Текущая тренировка
+              </p>
+              <h2 className="mt-2 text-xl font-semibold text-foreground">
+                {dayLabels[day.day_of_week] ?? `День ${day.day_of_week}`}
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-muted">{day.program_title}</p>
+            </div>
+
+            <Link
+              className="rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:bg-white/70"
+              href={workoutDayHref}
+            >
+              Обычный вид
+            </Link>
+          </div>
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            <span className="pill">{dayStatusLabels[day.status] ?? day.status}</span>
+            <span className="pill">{`${completedSetsCount}/${totalSetsCount} подходов`}</span>
+          </div>
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            {renderStatusActions({ compact: true })}
+          </div>
+
+          {renderDayNotices()}
+        </section>
+      ) : null}
+
+      {!isMobileFocusMode ? (
       <section className="card p-6">
         <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
           <div>
@@ -956,6 +1115,13 @@ export function WorkoutDaySession({ initialDay }: { initialDay: WorkoutDayDetail
         </p>
 
         <div className="mt-6 flex flex-wrap gap-3">
+          <Link
+            className="rounded-full border border-border px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-white/70 lg:hidden"
+            href={`${workoutDayHref}?focus=1`}
+          >
+            Развернуть на весь экран
+          </Link>
+
           {day.status === "planned" ? (
             <button
               className="rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
@@ -1046,7 +1212,9 @@ export function WorkoutDaySession({ initialDay }: { initialDay: WorkoutDayDetail
           </p>
         ) : null}
       </section>
+      ) : null}
 
+      {!isMobileFocusMode ? (
       <section className="card p-6">
         <div className="mb-4">
           <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
@@ -1107,6 +1275,7 @@ export function WorkoutDaySession({ initialDay }: { initialDay: WorkoutDayDetail
           </div>
         </div>
       </section>
+      ) : null}
 
       <section className="grid gap-4">
         {day.exercises.length ? (

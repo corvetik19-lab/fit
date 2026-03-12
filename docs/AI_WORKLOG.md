@@ -1383,3 +1383,16 @@
 - `npx eslint src/components/app-shell-nav.tsx src/components/app-shell-frame.tsx src/components/page-workspace.tsx`
 - `npm run build`
 - `npm run typecheck`
+
+### 2026-03-12 19:20 - Скрытие блоков и полноэкранная тренировка в PWA
+
+- Переписал [page-workspace.tsx](/C:/fit/src/components/page-workspace.tsx) на нормальный русский и добавил запоминаемое скрытие верхних блоков `Обзор` и `Меню`. Это уже работает для [Тренировок](/C:/fit/src/app/workouts/page.tsx) и [Питания](/C:/fit/src/app/nutrition/page.tsx).
+- На [странице дня тренировки](/C:/fit/src/app/workouts/day/[dayId]/page.tsx) добавил `focus=1` режим: shell становится immersive, AI-виджет скрывается, а [workout-day-session.tsx](/C:/fit/src/components/workout-day-session.tsx) показывает только компактную шапку тренировки и сами упражнения.
+- В обычном мобильном режиме у текущей тренировки появилась кнопка `Развернуть на весь экран`, а в focus-режиме — `Обычный вид`, чтобы быстро возвращаться обратно в приложение.
+- Живую проверку прогнал на мобильной ширине через Playwright: `/workouts` и `/nutrition` показывают новые controls для скрытия блоков, а `/workouts/day/[dayId]?focus=1` открывает уже компактный экран без лишнего контекста.
+
+### Проверка: скрытие блоков и workout focus mode
+
+- `npx eslint src/components/page-workspace.tsx src/app/workouts/page.tsx src/app/nutrition/page.tsx src/app/workouts/day/[dayId]/page.tsx src/components/workout-day-session.tsx`
+- `npm run build`
+- `npm run typecheck`

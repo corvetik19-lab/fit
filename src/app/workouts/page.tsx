@@ -45,9 +45,9 @@ export default async function WorkoutsPage() {
           viewer.profile?.full_name ?? viewer.user.email ?? "fit",
           lastUpdatedAt
             ? `Обновлено ${lastUpdatedAt}`
-            : "Библиотека ещё пустая",
+            : "Библиотека пока пустая",
         ]}
-        description="Здесь собраны план недели и библиотека упражнений. На телефоне всё открывается по разделам, а не одной длинной лентой."
+        description="Здесь собраны недельный план, текущая программа и библиотека упражнений. На телефоне разделы открываются по очереди, без длинной ленты из блоков."
         metrics={[
           {
             label: "Активные",
@@ -57,7 +57,7 @@ export default async function WorkoutsPage() {
           {
             label: "В архиве",
             value: String(archivedExercises.length),
-            note: "убрано из текущей базы",
+            note: "временно убрано из базы",
           },
           {
             label: "Черновики",
@@ -74,7 +74,7 @@ export default async function WorkoutsPage() {
           {
             key: "plan",
             label: "План недели",
-            description: "Программа, дни и шаблоны",
+            description: "Конструктор, текущая неделя и шаблоны",
             content: (
               <WeeklyProgramBuilder
                 activeExercises={activeExercises}
@@ -90,6 +90,7 @@ export default async function WorkoutsPage() {
             content: <ExerciseLibraryManager initialExercises={exercises} />,
           },
         ]}
+        storageKey="workouts-page"
         title="Рабочая зона для недельного плана и библиотеки упражнений"
       />
     </AppShell>

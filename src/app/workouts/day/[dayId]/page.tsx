@@ -10,11 +10,14 @@ import { getWorkoutDayDetail } from "@/lib/workout/weekly-programs";
 
 export default async function WorkoutDayPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ dayId: string }>;
+  searchParams: Promise<{ focus?: string }>;
 }) {
   const viewer = await requireReadyViewer();
   const { dayId } = await params;
+  const { focus } = await searchParams;
   const supabase = await createServerSupabaseClient();
   const workoutDay = await getWorkoutDayDetail(supabase, viewer.user.id, dayId);
 
@@ -22,18 +25,28 @@ export default async function WorkoutDayPage({
     notFound();
   }
 
-  return (
-    <AppShell eyebrow="Тренировка" title="День тренировки">
-      <div className="flex flex-wrap gap-3">
-        <Link
-          className="rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:bg-white/70"
-          href={"/workouts" as Route}
-        >
-          Назад к неделям
-        </Link>
-      </div>
+  const isFocusMode = focus === "1";
 
-      <WorkoutDaySession initialDay={workoutDay} />
+  return (
+    <AppShell
+      compactHeader={isFocusMode}
+      eyebrow="Тренировка"
+      hideAssistantWidget={isFocusMode}
+      immersive={isFocusMode}
+      title="День тренировки"
+    >
+      {!isFocusMode ? (
+        <div className="flex flex-wrap gap-3">
+          <Link
+            className="rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:bg-white/70"
+            href={"/workouts" as Route}
+          >
+            Назад к неделям
+          </Link>
+        </div>
+      ) : null}
+
+      <WorkoutDaySession initialDay={workoutDay} isFocusMode={isFocusMode} />
     </AppShell>
   );
 }
