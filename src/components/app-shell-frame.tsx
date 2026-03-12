@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { useSyncExternalStore } from "react";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, PanelTopClose } from "lucide-react";
 
 import { AiAssistantWidget } from "@/components/ai-assistant-widget";
 import { AppShellNav } from "@/components/app-shell-nav";
@@ -129,29 +129,27 @@ export function AppShellFrame({
       ) : null}
 
       {!immersive && shouldUseCompactHeader ? (
-        <div className="fixed inset-x-0 top-[calc(0.35rem+env(safe-area-inset-top))] z-30 px-4 sm:px-6 lg:px-10">
-          <div className="mx-auto flex max-w-[1500px] items-center justify-between gap-3 rounded-full border border-border bg-white/90 px-3 py-2 shadow-[0_16px_40px_-28px_rgba(24,22,19,0.5)] backdrop-blur-xl">
+        <div className="fixed right-4 top-[calc(0.35rem+env(safe-area-inset-top))] z-30 flex items-center gap-2 sm:right-6 lg:right-10">
+          <div className="rounded-full border border-border bg-white/90 p-1.5 shadow-[0_16px_40px_-28px_rgba(24,22,19,0.5)] backdrop-blur-xl">
             <AppShellNav minimal viewer={viewer} />
-            <div className="hidden min-w-0 items-center gap-2 sm:flex">
-              <span className="rounded-full border border-border bg-white/80 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-muted">
-                {eyebrow}
-              </span>
-              <p className="truncate text-sm font-medium text-foreground">
-                {title}
-              </p>
-            </div>
-            {!compactHeader ? (
-              <button
-                aria-expanded={false}
-                className="inline-flex h-10 items-center gap-2 rounded-full border border-border bg-white/88 px-4 text-sm font-semibold text-foreground transition hover:bg-white"
-                onClick={toggleCollapsed}
-                type="button"
-              >
-                <ChevronDown size={18} strokeWidth={2.2} />
-                Развернуть
-              </button>
-            ) : null}
           </div>
+
+          {!compactHeader ? (
+            <button
+              aria-expanded={false}
+              aria-label="Развернуть верхнюю панель"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border bg-white/92 text-foreground shadow-[0_16px_40px_-28px_rgba(24,22,19,0.5)] backdrop-blur-xl transition hover:bg-white"
+              onClick={toggleCollapsed}
+              type="button"
+            >
+              <ChevronDown size={18} strokeWidth={2.2} />
+            </button>
+          ) : (
+            <div className="hidden items-center gap-2 rounded-full border border-border bg-white/92 px-3 py-2 text-xs font-medium text-muted shadow-[0_16px_40px_-28px_rgba(24,22,19,0.5)] backdrop-blur-xl sm:flex">
+              <PanelTopClose size={15} strokeWidth={2.2} />
+              Панель скрыта
+            </div>
+          )}
         </div>
       ) : null}
 
@@ -160,7 +158,7 @@ export function AppShellFrame({
           immersive
             ? "pt-[calc(0.8rem+env(safe-area-inset-top))] sm:pt-4 lg:pt-5"
             : shouldUseCompactHeader
-              ? "pt-[calc(3.3rem+env(safe-area-inset-top))] sm:pt-[3.4rem] lg:pt-[3.6rem]"
+              ? "pt-[calc(0.9rem+env(safe-area-inset-top))] sm:pt-[1.15rem] lg:pt-[1.3rem]"
               : "pt-[calc(10.8rem+env(safe-area-inset-top))] sm:pt-[12.5rem] lg:pt-[12.8rem]"
         }`}
       >

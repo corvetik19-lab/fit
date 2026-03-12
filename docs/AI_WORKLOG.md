@@ -19,6 +19,18 @@
 - `npm run typecheck` (rerun after `build`, due the existing `.next/types` race in this repo)
 - Playwright mobile pass on local `http://127.0.0.1:3000/dashboard` and `http://127.0.0.1:3000/workouts`: verified that section menus open as compact selectors, switch the active section, and collapse back correctly on tap
 
+### Collapsed shell trigger instead of full-width fixed bar
+
+- Reworked `src/components/app-shell-frame.tsx` so the collapsed app shell no longer leaves a full-width fixed header strip over the page. In compact mode it now shows only a small floating control in the corner: one button opens navigation, the other restores the full header.
+- Reduced compact-mode top padding accordingly, so section menus inside `/dashboard`, `/workouts`, and similar screens can expand without fighting a wide fixed bar across the top.
+
+### Verification: collapsed shell trigger
+
+- `npx eslint src/components/app-shell-frame.tsx`
+- `npm run build`
+- `npm run typecheck`
+- Playwright mobile pass on local `http://127.0.0.1:3000/dashboard`: after collapsing the header, only the small floating control remains and the page content/menu selectors are no longer covered by a full-width fixed shell bar
+
 ### AI chat history reset and session management
 
 - Changed `src/app/ai/page.tsx` and `src/lib/ai/chat.ts` so `/ai` now opens as a clean new chat by default instead of automatically loading the latest saved session into the main conversation area.
