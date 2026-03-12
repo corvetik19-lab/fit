@@ -66,12 +66,18 @@ export function AppShellFrame({
   immersive = false,
   viewer,
 }: AppShellFrameProps) {
-  const isCollapsed = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const isCollapsed = useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot,
+  );
 
   function toggleCollapsed() {
     const nextValue = !isCollapsed;
     window.localStorage.setItem(collapseStorageKey, String(nextValue));
-    window.dispatchEvent(new StorageEvent("storage", { key: collapseStorageKey }));
+    window.dispatchEvent(
+      new StorageEvent("storage", { key: collapseStorageKey }),
+    );
   }
 
   const shouldUseCompactHeader = !immersive && (compactHeader || isCollapsed);
@@ -107,7 +113,9 @@ export function AppShellFrame({
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                  <span className="pill">{viewer?.fullName ?? viewer?.email ?? "Аккаунт fit"}</span>
+                  <span className="pill">
+                    {viewer?.fullName ?? viewer?.email ?? "Аккаунт fit"}
+                  </span>
                   {viewer?.isPlatformAdmin ? (
                     <span className="pill">Доступ администратора активен</span>
                   ) : null}
@@ -128,7 +136,9 @@ export function AppShellFrame({
               <span className="rounded-full border border-border bg-white/80 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-muted">
                 {eyebrow}
               </span>
-              <p className="truncate text-sm font-medium text-foreground">{title}</p>
+              <p className="truncate text-sm font-medium text-foreground">
+                {title}
+              </p>
             </div>
             {!compactHeader ? (
               <button

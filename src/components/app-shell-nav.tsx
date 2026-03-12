@@ -263,8 +263,8 @@ export function AppShellNav({
           </nav>
 
           <div className="grid gap-2 lg:hidden">
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 max-w-[55vw]">
                 {!compact ? (
                   <p className="font-mono text-[0.68rem] uppercase tracking-[0.22em] text-muted">
                     Навигация
@@ -282,7 +282,7 @@ export function AppShellNav({
               <button
                 aria-controls="app-mobile-drawer"
                 aria-expanded={isDrawerOpen}
-                className="inline-flex items-center gap-2 rounded-full border border-border bg-white/75 px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-white"
+                className="inline-flex shrink-0 items-center gap-2 rounded-full border border-border bg-white/80 px-3.5 py-2.5 text-sm font-semibold text-foreground shadow-[0_14px_34px_-26px_rgba(24,22,19,0.45)] transition hover:bg-white"
                 onClick={() => setIsDrawerOpen(true)}
                 type="button"
               >

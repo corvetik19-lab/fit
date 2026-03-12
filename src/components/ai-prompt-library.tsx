@@ -24,6 +24,7 @@ type AiPromptLibraryProps = {
 };
 
 const STORAGE_KEY = "fit.ai.prompt-library";
+
 const BUILT_IN_PROMPTS: BuiltInPromptTemplate[] = [
   {
     id: "progress-review",
@@ -51,22 +52,22 @@ const BUILT_IN_PROMPTS: BuiltInPromptTemplate[] = [
   },
 ];
 
-function loadCustomPromptTemplates() {
+function loadCustomPromptTemplates(): CustomPromptTemplate[] {
   if (typeof window === "undefined") {
-    return [] as CustomPromptTemplate[];
+    return [];
   }
 
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
 
     if (!raw) {
-      return [] as CustomPromptTemplate[];
+      return [];
     }
 
     const parsed = JSON.parse(raw) as unknown;
 
     if (!Array.isArray(parsed)) {
-      return [] as CustomPromptTemplate[];
+      return [];
     }
 
     return parsed.filter((item): item is CustomPromptTemplate => {
@@ -83,7 +84,7 @@ function loadCustomPromptTemplates() {
       );
     });
   } catch {
-    return [] as CustomPromptTemplate[];
+    return [];
   }
 }
 
@@ -99,13 +100,21 @@ function matchesSearch(value: string, query: string) {
   return value.toLocaleLowerCase("ru-RU").includes(query);
 }
 
+function formatPromptDate(value: string) {
+  return new Intl.DateTimeFormat("ru-RU", {
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
+}
+
 export function AiPromptLibrary({
   isOpen,
   onClose,
   onSelect,
 }: AiPromptLibraryProps) {
   const searchInputRef = useRef<HTMLInputElement | null>(null);
-
   const [search, setSearch] = useState("");
   const [customPrompts, setCustomPrompts] = useState<CustomPromptTemplate[]>(() =>
     loadCustomPromptTemplates(),
@@ -114,17 +123,17 @@ export function AiPromptLibrary({
   const [newTitle, setNewTitle] = useState("");
   const [newPrompt, setNewPrompt] = useState("");
 
-  function resetCreateForm() {
+  const resetCreateForm = useCallback(() => {
     setIsCreating(false);
     setNewTitle("");
     setNewPrompt("");
-  }
+  }, []);
 
   const handleClose = useCallback(() => {
     setSearch("");
     resetCreateForm();
     onClose();
-  }, [onClose]);
+  }, [onClose, resetCreateForm]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -153,10 +162,6 @@ export function AiPromptLibrary({
     };
   }, [handleClose, isOpen]);
 
-  useEffect(() => {
-    saveCustomPromptTemplates(customPrompts);
-  }, [customPrompts]);
-
   const normalizedSearch = search.trim().toLocaleLowerCase("ru-RU");
 
   const filteredBuiltInPrompts = useMemo(() => {
@@ -179,7 +184,10 @@ export function AiPromptLibrary({
     }
 
     return customPrompts.filter((item) => {
-      return matchesSearch(item.title, normalizedSearch) || matchesSearch(item.prompt, normalizedSearch);
+      return (
+        matchesSearch(item.title, normalizedSearch) ||
+        matchesSearch(item.prompt, normalizedSearch)
+      );
     });
   }, [customPrompts, normalizedSearch]);
 
@@ -191,21 +199,30 @@ export function AiPromptLibrary({
       return;
     }
 
-    setCustomPrompts((current) => [
-      {
-        id: crypto.randomUUID(),
-        title,
-        prompt,
-        createdAt: new Date().toISOString(),
-      },
-      ...current,
-    ]);
+    setCustomPrompts((current) => {
+      const nextItems = [
+        {
+          id: crypto.randomUUID(),
+          title,
+          prompt,
+          createdAt: new Date().toISOString(),
+        },
+        ...current,
+      ];
+
+      saveCustomPromptTemplates(nextItems);
+      return nextItems;
+    });
 
     resetCreateForm();
   }
 
   function handleDeletePrompt(id: string) {
-    setCustomPrompts((current) => current.filter((item) => item.id !== id));
+    setCustomPrompts((current) => {
+      const nextItems = current.filter((item) => item.id !== id);
+      saveCustomPromptTemplates(nextItems);
+      return nextItems;
+    });
   }
 
   function handleSelectPrompt(prompt: string) {
@@ -231,8 +248,8 @@ export function AiPromptLibrary({
           <div className="min-w-0">
             <p className="text-sm font-semibold text-foreground">Шаблоны запросов</p>
             <p className="mt-1 text-sm leading-6 text-muted">
-              Готовые варианты и твои собственные запросы. Шаблон вставляется в поле ввода и не
-              мешает переписке.
+              Готовые варианты и твои собственные запросы. Шаблон просто
+              вставляется в поле ввода и не засоряет переписку.
             </p>
           </div>
 
@@ -248,7 +265,10 @@ export function AiPromptLibrary({
 
         <div className="flex flex-col gap-4 border-b border-border px-5 py-4 sm:flex-row sm:items-center sm:px-6">
           <label className="relative min-w-0 flex-1">
-            <Search className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted" size={16} />
+            <Search
+              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted"
+              size={16}
+            />
             <input
               className="h-12 w-full rounded-full border border-border bg-white/85 pl-11 pr-4 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15"
               onChange={(event) => setSearch(event.target.value)}
@@ -305,7 +325,9 @@ export function AiPromptLibrary({
         <div className="grid flex-1 gap-5 overflow-y-auto px-5 py-5 sm:px-6">
           <div className="grid gap-3">
             <div className="flex items-center justify-between gap-3">
-              <p className="text-sm font-semibold text-foreground">Готовые шаблоны</p>
+              <p className="text-sm font-semibold text-foreground">
+                Готовые шаблоны
+              </p>
               <span className="pill">{filteredBuiltInPrompts.length}</span>
             </div>
 
@@ -318,8 +340,12 @@ export function AiPromptLibrary({
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="text-sm font-semibold text-foreground">{item.title}</p>
-                        <p className="mt-1 text-sm leading-6 text-muted">{item.subtitle}</p>
+                        <p className="text-sm font-semibold text-foreground">
+                          {item.title}
+                        </p>
+                        <p className="mt-1 text-sm leading-6 text-muted">
+                          {item.subtitle}
+                        </p>
                       </div>
                       <span className="pill">Готово</span>
                     </div>
@@ -343,7 +369,7 @@ export function AiPromptLibrary({
               </div>
             ) : (
               <div className="rounded-3xl border border-dashed border-border bg-white/70 px-4 py-5 text-sm leading-6 text-muted">
-                По текущему запросу готовые шаблоны не найдены.
+                По текущему поиску готовые шаблоны не найдены.
               </div>
             )}
           </div>
@@ -363,14 +389,11 @@ export function AiPromptLibrary({
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="text-sm font-semibold text-foreground">{item.title}</p>
+                        <p className="text-sm font-semibold text-foreground">
+                          {item.title}
+                        </p>
                         <p className="mt-1 text-xs text-muted">
-                          Сохранён {new Intl.DateTimeFormat("ru-RU", {
-                            day: "2-digit",
-                            month: "2-digit",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          }).format(new Date(item.createdAt))}
+                          Сохранён {formatPromptDate(item.createdAt)}
                         </p>
                       </div>
                       <span className="pill">Моё</span>
@@ -403,8 +426,8 @@ export function AiPromptLibrary({
               </div>
             ) : (
               <div className="rounded-3xl border border-dashed border-border bg-white/70 px-4 py-5 text-sm leading-6 text-muted">
-                Здесь будут твои шаблоны. Можно сохранить часто используемые запросы для чата,
-                разбора прогресса, питания и тренировок.
+                Здесь будут твои шаблоны. Можно сохранять часто используемые
+                запросы для чата, разбора прогресса, питания и тренировок.
               </div>
             )}
           </div>

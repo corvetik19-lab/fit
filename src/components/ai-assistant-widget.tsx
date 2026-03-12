@@ -16,7 +16,6 @@ import {
 
 import { AssistantMarkdown } from "@/components/assistant-markdown";
 import { AiPromptLibrary } from "@/components/ai-prompt-library";
-import { toUiMessages } from "@/lib/ai/chat";
 
 type AiAssistantWidgetProps = {
   initialMessages: Array<{
@@ -134,11 +133,8 @@ function formatProposalType(proposalType: "meal_plan" | "workout_plan") {
   return proposalType === "workout_plan" ? "тренировки" : "питание";
 }
 
-export function AiAssistantWidget({
-  initialMessages,
-  initialSessionId,
-  viewer,
-}: AiAssistantWidgetProps) {
+export function AiAssistantWidget(props: AiAssistantWidgetProps) {
+  const { viewer } = props;
   const router = useRouter();
   const composerRef = useRef<HTMLTextAreaElement | null>(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -146,13 +142,12 @@ export function AiAssistantWidget({
   const [allowWebSearch, setAllowWebSearch] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [actionBusyKey, setActionBusyKey] = useState<string | null>(null);
-  const [sessionId, setSessionId] = useState<string | null>(initialSessionId);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [isPromptLibraryOpen, setIsPromptLibraryOpen] = useState(false);
   const nowLabel = useMemo(() => timeFormatter.format(new Date()), []);
-  const initialUiMessages = useMemo(() => toUiMessages(initialMessages), [initialMessages]);
 
   const { messages, sendMessage, status, error, stop, setMessages } = useChat({
-    messages: initialUiMessages,
+    messages: [],
     transport: new DefaultChatTransport({
       api: "/api/ai/assistant",
     }),
