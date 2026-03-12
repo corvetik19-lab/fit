@@ -1,8 +1,6 @@
 import type { ReactNode } from "react";
 
 import { AppShellFrame } from "@/components/app-shell-frame";
-import { getLatestAiChatState } from "@/lib/ai/chat";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getViewer } from "@/lib/viewer";
 
 export async function AppShell({
@@ -10,7 +8,7 @@ export async function AppShell({
   eyebrow,
   children,
   compactHeader = false,
-  hideAssistantWidget = false,
+  hideAssistantWidget: _hideAssistantWidget = false,
   immersive = false,
 }: {
   title: string;
@@ -21,18 +19,12 @@ export async function AppShell({
   immersive?: boolean;
 }) {
   const viewer = await getViewer();
-  const supabase = viewer ? await createServerSupabaseClient() : null;
-  const assistantState =
-    viewer && supabase
-      ? await getLatestAiChatState(supabase, viewer.user.id)
-      : { session: null, messages: [] };
+  void _hideAssistantWidget;
 
   return (
     <AppShellFrame
-      assistantState={assistantState}
       compactHeader={compactHeader}
       eyebrow={eyebrow}
-      hideAssistantWidget={hideAssistantWidget}
       immersive={immersive}
       title={title}
       viewer={

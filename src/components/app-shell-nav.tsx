@@ -130,16 +130,6 @@ function isRouteActive(pathname: string, href: Route) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-function getBottomNavRoutes(pathname: string) {
-  const contextualRoute = isRouteActive(pathname, adminRoute.href)
-    ? adminRoute
-    : isRouteActive(pathname, historyRoute.href)
-      ? historyRoute
-      : settingsRoute;
-
-  return [...coreRoutes, contextualRoute];
-}
-
 function getCurrentSectionLabel(pathname: string) {
   if (pathname.startsWith("/admin/users")) {
     return "Пользователи";
@@ -189,7 +179,6 @@ export function AppShellNav({
 }: AppShellNavProps) {
   const pathname = usePathname();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const bottomNavRoutes = getBottomNavRoutes(pathname);
   const currentSectionLabel = getCurrentSectionLabel(pathname);
   const adminRoleLabel = formatAdminRole(viewer?.platformAdminRole ?? null);
   const showAdminRole = canUseRootAdminControls(
@@ -293,18 +282,16 @@ export function AppShellNav({
           </div>
         </>
       ) : (
-        <div className="flex justify-end lg:hidden">
-          <button
-            aria-controls="app-mobile-drawer"
-            aria-expanded={isDrawerOpen}
-            aria-label="Открыть меню"
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border bg-white/82 text-foreground shadow-[0_16px_40px_-28px_rgba(24,22,19,0.5)] transition hover:bg-white"
-            onClick={() => setIsDrawerOpen(true)}
-            type="button"
-          >
-            <Menu size={18} strokeWidth={2.2} />
-          </button>
-        </div>
+        <button
+          aria-controls="app-mobile-drawer"
+          aria-expanded={isDrawerOpen}
+          aria-label="Открыть меню"
+          className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border bg-white/82 text-foreground shadow-[0_16px_40px_-28px_rgba(24,22,19,0.5)] transition hover:bg-white lg:hidden"
+          onClick={() => setIsDrawerOpen(true)}
+          type="button"
+        >
+          <Menu size={18} strokeWidth={2.2} />
+        </button>
       )}
 
       <div
@@ -432,27 +419,6 @@ export function AppShellNav({
           </div>
         </div>
       </aside>
-
-      <nav className="app-bottom-nav lg:hidden">
-        <div className="app-bottom-nav__inner">
-          {bottomNavRoutes.map((route) => {
-            const isActive = isRouteActive(pathname, route.href);
-            const Icon = route.icon;
-
-            return (
-              <Link
-                aria-current={isActive ? "page" : undefined}
-                className={`app-bottom-nav__item ${isActive ? "app-bottom-nav__item--active" : ""}`}
-                href={route.href}
-                key={`${route.href}-bottom`}
-              >
-                <Icon size={18} strokeWidth={2.25} />
-                <span>{route.label}</span>
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
     </>
   );
 }

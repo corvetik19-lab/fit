@@ -2,6 +2,13 @@
 
 ## 2026-03-12
 
+### Mobile app shell cleanup for PWA
+
+- Reworked `src/components/app-shell-frame.tsx` so phones now use one compact top bar with a burger button and page title instead of the previous floating compact-shell trigger. The full-width mobile bottom navigation is removed, and the app no longer keeps a second mobile navigation layer on top of the drawer.
+- Simplified `src/components/app-shell-nav.tsx` into a single drawer-first mobile navigation model. On phones the user now opens sections only through the side menu, which makes the layout closer to a real PWA app shell instead of stacked floating controls.
+- Removed the floating AI widget from the shared shell and stopped loading its server state in `src/components/app-shell.tsx`. AI remains available through the normal `/ai` route and no longer steals space on phone screens.
+- Playwright mobile verification on local `/dashboard` confirmed the new burger button, visible drawer sections, and the absence of the old floating AI button over the content area.
+
 ### AI prompt library stability and mobile shell polish
 
 - Rebuilt `src/components/ai-prompt-library.tsx` so prompt persistence now happens only inside explicit create/delete actions instead of a `useEffect` sync loop. This removed the remaining `Maximum update depth exceeded` path and also cleaned the whole modal copy back to readable Russian.

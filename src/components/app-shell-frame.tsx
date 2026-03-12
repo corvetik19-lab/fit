@@ -1,10 +1,9 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useSyncExternalStore } from "react";
-import { ChevronDown, ChevronUp, PanelTopClose } from "lucide-react";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
-import { AiAssistantWidget } from "@/components/ai-assistant-widget";
 import { AppShellNav } from "@/components/app-shell-nav";
 import { WorkoutSyncMonitor } from "@/components/workout-sync-monitor";
 
@@ -15,23 +14,7 @@ type AppShellFrameProps = {
   eyebrow: string;
   children: ReactNode;
   compactHeader?: boolean;
-  hideAssistantWidget?: boolean;
   immersive?: boolean;
-  assistantState: {
-    session: {
-      id: string;
-      title: string | null;
-      created_at: string;
-      updated_at: string;
-    } | null;
-    messages: Array<{
-      id: string;
-      session_id: string;
-      role: "user" | "assistant";
-      content: string;
-      created_at: string;
-    }>;
-  };
   viewer: {
     userId: string;
     email: string | null;
@@ -43,12 +26,12 @@ type AppShellFrameProps = {
 
 const collapseStorageKey = "fit-app-shell-collapsed";
 
-function subscribe(onStoreChange: () => void) {
+function subscribeToStorage(onStoreChange: () => void) {
   window.addEventListener("storage", onStoreChange);
   return () => window.removeEventListener("storage", onStoreChange);
 }
 
-function getSnapshot() {
+function getCollapseSnapshot() {
   return window.localStorage.getItem(collapseStorageKey) === "true";
 }
 
@@ -59,18 +42,27 @@ function getServerSnapshot() {
 export function AppShellFrame({
   title,
   eyebrow,
-  assistantState,
   children,
   compactHeader = false,
-  hideAssistantWidget = false,
   immersive = false,
   viewer,
 }: AppShellFrameProps) {
   const isCollapsed = useSyncExternalStore(
-    subscribe,
-    getSnapshot,
+    subscribeToStorage,
+    getCollapseSnapshot,
     getServerSnapshot,
   );
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 1023px)");
+    const syncViewport = () => setIsMobile(mediaQuery.matches);
+
+    syncViewport();
+    mediaQuery.addEventListener("change", syncViewport);
+
+    return () => mediaQuery.removeEventListener("change", syncViewport);
+  }, []);
 
   function toggleCollapsed() {
     const nextValue = !isCollapsed;
@@ -80,13 +72,32 @@ export function AppShellFrame({
     );
   }
 
-  const shouldUseCompactHeader = !immersive && (compactHeader || isCollapsed);
-  const showAssistantWidget = Boolean(viewer) && !hideAssistantWidget;
+  const shouldUseCompactHeader =
+    !immersive && !isMobile && (compactHeader || isCollapsed);
+  const showMobileHeader = !immersive && isMobile;
 
   return (
     <div className="min-h-dvh">
+      {showMobileHeader ? (
+        <header className="fixed inset-x-0 top-0 z-30 px-4 pt-[calc(0.65rem+env(safe-area-inset-top))] sm:px-6 lg:hidden">
+          <div className="mx-auto max-w-[1500px]">
+            <div className="flex items-center gap-3 rounded-[1.5rem] border border-white/60 bg-[color-mix(in_srgb,var(--surface)_94%,white)] px-3 py-3 shadow-[0_18px_45px_rgba(24,22,19,0.08)] backdrop-blur-xl">
+              <AppShellNav minimal viewer={viewer} />
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-mono text-[0.64rem] uppercase tracking-[0.22em] text-muted">
+                  {eyebrow}
+                </p>
+                <p className="mt-1 truncate text-sm font-semibold text-foreground">
+                  {title}
+                </p>
+              </div>
+            </div>
+          </div>
+        </header>
+      ) : null}
+
       {!immersive && !shouldUseCompactHeader ? (
-        <header className="fixed inset-x-0 top-0 z-30 px-4 pt-[calc(0.65rem+env(safe-area-inset-top))] sm:px-6 lg:px-10">
+        <header className="fixed inset-x-0 top-0 z-30 hidden px-4 pt-[calc(0.65rem+env(safe-area-inset-top))] sm:px-6 lg:block lg:px-10">
           <div className="mx-auto max-w-[1500px]">
             <div className="card border-white/60 bg-[color-mix(in_srgb,var(--surface)_90%,white)] p-4 backdrop-blur-xl sm:p-5">
               <div className="flex flex-col gap-4">
@@ -145,8 +156,7 @@ export function AppShellFrame({
               <ChevronDown size={18} strokeWidth={2.2} />
             </button>
           ) : (
-            <div className="hidden items-center gap-2 rounded-full border border-border bg-white/92 px-3 py-2 text-xs font-medium text-muted shadow-[0_16px_40px_-28px_rgba(24,22,19,0.5)] backdrop-blur-xl sm:flex">
-              <PanelTopClose size={15} strokeWidth={2.2} />
+            <div className="hidden items-center rounded-full border border-border bg-white/92 px-3 py-2 text-xs font-medium text-muted shadow-[0_16px_40px_-28px_rgba(24,22,19,0.5)] backdrop-blur-xl sm:flex">
               Панель скрыта
             </div>
           )}
@@ -154,29 +164,20 @@ export function AppShellFrame({
       ) : null}
 
       <main
-        className={`mx-auto grid max-w-[1500px] gap-6 px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-10 lg:pb-8 ${
+        className={`mx-auto grid max-w-[1500px] gap-6 px-4 pb-[calc(2rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-10 lg:pb-8 ${
           immersive
             ? "pt-[calc(0.8rem+env(safe-area-inset-top))] sm:pt-4 lg:pt-5"
-            : shouldUseCompactHeader
-              ? "pt-[calc(0.9rem+env(safe-area-inset-top))] sm:pt-[1.15rem] lg:pt-[1.3rem]"
-              : "pt-[calc(10.8rem+env(safe-area-inset-top))] sm:pt-[12.5rem] lg:pt-[12.8rem]"
+            : showMobileHeader
+              ? "pt-[calc(5.4rem+env(safe-area-inset-top))]"
+              : shouldUseCompactHeader
+                ? "pt-[calc(0.9rem+env(safe-area-inset-top))] sm:pt-[1.15rem] lg:pt-[1.3rem]"
+                : "pt-[calc(10.8rem+env(safe-area-inset-top))] sm:pt-[12.5rem] lg:pt-[12.8rem]"
         }`}
       >
         {children}
       </main>
 
       {viewer ? <WorkoutSyncMonitor /> : null}
-
-      {showAssistantWidget ? (
-        <AiAssistantWidget
-          initialMessages={assistantState.messages}
-          initialSessionId={assistantState.session?.id ?? null}
-          viewer={{
-            email: viewer?.email ?? null,
-            fullName: viewer?.fullName ?? null,
-          }}
-        />
-      ) : null}
     </div>
   );
 }
