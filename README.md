@@ -73,6 +73,7 @@ npm run typecheck
 Основная проектная документация лежит в `docs/`:
 
 - `docs/README.md`
+- `docs/USER_GUIDE.md`
 - `docs/AI_WORKLOG.md`
 - `docs/MASTER_PLAN.md`
 - `docs/FRONTEND.md`
