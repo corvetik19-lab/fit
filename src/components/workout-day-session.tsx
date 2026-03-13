@@ -11,7 +11,14 @@ import {
   useRef,
   useState,
 } from "react";
-import { ChevronDown, ChevronUp, Pause, Play, RotateCcw } from "lucide-react";
+import {
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  Pause,
+  Play,
+  RotateCcw,
+} from "lucide-react";
 
 import {
   cacheWorkoutDaySnapshot,
@@ -197,7 +204,11 @@ function formatDurationSeconds(value: number) {
 }
 
 function isCompletedWorkoutSet(set: WeeklyProgramSetSummary) {
-  return typeof set.actual_reps === "number";
+  return (
+    typeof set.actual_reps === "number" &&
+    typeof set.actual_weight_kg === "number" &&
+    typeof set.actual_rpe === "number"
+  );
 }
 
 function isCompletedWorkoutExercise(exercise: WeeklyProgramExerciseSummary) {
@@ -338,6 +349,40 @@ function areExerciseDraftValuesSaved(
           : "") &&
       rpe ===
         (typeof set.actual_rpe === "number" ? set.actual_rpe.toString() : "")
+    );
+  });
+}
+
+function isExerciseDraftReadyToSave(
+  exercise: WeeklyProgramExerciseSummary,
+  actualRepsBySetId: Record<string, string>,
+  actualWeightBySetId: Record<string, string>,
+  actualRpeBySetId: Record<string, string>,
+) {
+  return exercise.sets.every((set) => {
+    const repsRaw = actualRepsBySetId[set.id]?.trim() ?? "";
+    const weightRaw = actualWeightBySetId[set.id]?.trim() ?? "";
+    const rpeRaw = actualRpeBySetId[set.id]?.trim() ?? "";
+
+    if (!repsRaw.length || !weightRaw.length || !rpeRaw.length) {
+      return false;
+    }
+
+    const reps = Number(repsRaw);
+    const weight = parseOptionalWeight(weightRaw);
+    const rpe = parseOptionalRpe(rpeRaw);
+
+    return (
+      Number.isInteger(reps) &&
+      reps >= 0 &&
+      typeof weight === "number" &&
+      Number.isFinite(weight) &&
+      weight >= 0 &&
+      weight <= 1000 &&
+      typeof rpe === "number" &&
+      Number.isFinite(rpe) &&
+      rpe >= 1 &&
+      rpe <= 10
     );
   });
 }
@@ -523,7 +568,7 @@ export function WorkoutDaySession({
   }, []);
 
   const completedSetsCount = useMemo(
-    () => workoutSets.filter((set) => typeof set.actual_reps === "number").length,
+    () => workoutSets.filter((set) => isCompletedWorkoutSet(set)).length,
     [workoutSets],
   );
 
@@ -1056,6 +1101,17 @@ export function WorkoutDaySession({
     let drafts: ExerciseDraft[];
 
     try {
+      if (
+        !isExerciseDraftReadyToSave(
+          exercise,
+          actualRepsBySetId,
+          actualWeightBySetId,
+          actualRpeBySetId,
+        )
+      ) {
+        throw new Error("Заполни повторы, вес и RPE во всех подходах упражнения.");
+      }
+
       drafts = exercise.sets.map((set) => {
         const actualRepsRaw = actualRepsBySetId[set.id]?.trim() ?? "";
         const actualWeightRaw = actualWeightBySetId[set.id]?.trim() ?? "";
@@ -1499,7 +1555,7 @@ export function WorkoutDaySession({
           {activeExercise ? (
             <p className="mt-3 text-sm text-muted">
               {currentExerciseIsComplete
-                ? `${activeExercise.exercise_title_snapshot} · можно переходить дальше`
+                ? `${activeExercise.exercise_title_snapshot} · шаг сохранён`
                 : `${activeExercise.exercise_title_snapshot} · шаг ${safeActiveExerciseIndex + 1} из ${day.exercises.length}`}
             </p>
           ) : null}
@@ -1558,8 +1614,8 @@ export function WorkoutDaySession({
                 <span className="pill">
                   {dayStatusLabels[day.status] ?? day.status}
                 </span>
-                <span className="pill">{`${completedSetsCount}/${totalSetsCount} подходов`}</span>
-                <span className="pill">{`Готово ${completedExercisesCount}/${day.exercises.length} упражнений`}</span>
+                <span className="pill">{`Заполнено подходов: ${completedSetsCount} из ${totalSetsCount}`}</span>
+                <span className="pill">{`Сохранено упражнений: ${completedExercisesCount} из ${day.exercises.length}`}</span>
               </div>
 
               {unlockedExercises.length ? (
@@ -1584,26 +1640,37 @@ export function WorkoutDaySession({
                           onClick={() => setActiveExerciseIndex(index)}
                           type="button"
                         >
-                          <span className="block text-xs uppercase tracking-[0.18em] text-muted">
-                            {`Шаг ${index + 1}`}
-                          </span>
-                          <span className="mt-1 block truncate text-sm font-semibold">
-                            {exercise.exercise_title_snapshot}
-                          </span>
-                          <span className="mt-1 block text-xs text-muted">
-                            {isExerciseStepComplete
-                              ? "завершено"
-                              : isActive
-                                ? "текущий шаг"
-                                : "доступно"}
-                          </span>
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <span className="block text-xs uppercase tracking-[0.18em] text-muted">
+                                {`Шаг ${index + 1}`}
+                              </span>
+                              <span className="mt-1 block truncate text-sm font-semibold">
+                                {exercise.exercise_title_snapshot}
+                              </span>
+                              <span className="mt-1 block text-xs text-muted">
+                                {isExerciseStepComplete
+                                  ? "Сохранено"
+                                  : isActive
+                                    ? "Текущий шаг"
+                                    : "Откроется после сохранения"}
+                              </span>
+                            </div>
+
+                            {isExerciseStepComplete ? (
+                              <CheckCircle2
+                                className="shrink-0 text-emerald-600"
+                                size={18}
+                                strokeWidth={2.2}
+                              />
+                            ) : null}
+                          </div>
                         </button>
                       );
                     })}
                   </div>
                 </div>
               ) : null}
-
               <div className="mt-4 flex flex-wrap gap-2">
                 {renderStatusActions({ compact: true })}
               </div>
@@ -1732,6 +1799,12 @@ export function WorkoutDaySession({
             const isExerciseComplete = isCompletedWorkoutExercise(exercise);
             const isExerciseEditable =
               !isExerciseComplete || editableExerciseIds[exercise.id] === true;
+            const isExerciseReadyToSave = isExerciseDraftReadyToSave(
+              exercise,
+              actualRepsBySetId,
+              actualWeightBySetId,
+              actualRpeBySetId,
+            );
             const isExerciseDirty = !areExerciseDraftValuesSaved(
               exercise,
               actualRepsBySetId,
@@ -1775,7 +1848,12 @@ export function WorkoutDaySession({
                     {isExerciseEditable ? (
                       <button
                         className="rounded-full bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-                        disabled={!day.is_locked || isPending || isSyncing}
+                        disabled={
+                          !day.is_locked ||
+                          isPending ||
+                          isSyncing ||
+                          !isExerciseReadyToSave
+                        }
                         onClick={() => saveExercise(exercise)}
                         type="button"
                       >
@@ -1894,7 +1972,7 @@ export function WorkoutDaySession({
                   {isExerciseComplete && !isExerciseDirty ? (
                     <span>Упражнение завершено и сохранено.</span>
                   ) : (
-                    <span>Сначала заполни все подходы и сохрани упражнение.</span>
+                    <span>Сначала заполни повторы, вес и RPE во всех подходах, затем сохрани упражнение.</span>
                   )}
                 </div>
               </article>
