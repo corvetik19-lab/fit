@@ -2,6 +2,17 @@
 
 ## 2026-03-13
 
+### Production hardening: базовый документационный каркас
+
+- Полностью заменил старый повреждённый `docs/MASTER_PLAN.md` на новый production-hardening backlog с понятными чекбоксами и этапами.
+- Пересобрал `docs/README.md`, чтобы у папки `docs/` снова был один нормальный вход: где план, где ворклог, где пользовательская и техническая документация.
+- Зафиксировал первую волну работ как docs-first этап: сначала engineering hygiene, release gates, UX hardening, backend/AI verification, billing rollout и только потом Android wrapper.
+
+### Проверка: документационный baseline
+
+- Перед переписыванием плана сверил текущее состояние репозитория через `git status`, `package.json`, `tsconfig.json`, `eslint.config.mjs`, `vercel.json` и ключевые документы в `docs/`.
+- Зафиксировал в новом плане реальные факты: `build` проходит, `typecheck` нестабилен, `lint` ещё не доведён до CI-уровня, автотестов почти нет, а документация требует отдельной санации.
+
 ### 30-second workout motion demo
 
 - Rebuilt `public/fit-demo-motion.svg` as a longer 30-second looping promo focused on the workout journey instead of a short generic product tour.
