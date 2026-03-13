@@ -2,7 +2,14 @@
 
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
-import { Check, ChevronDown, ChevronUp, Eye, EyeOff, LayoutPanelTop } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Eye,
+  EyeOff,
+  LayoutPanelTop,
+} from "lucide-react";
 
 type PageWorkspaceMetric = {
   label: string;
@@ -19,7 +26,8 @@ type PageWorkspaceSection = {
 
 type HiddenBlocksState = {
   hero: boolean;
-  sections: boolean;
+  menu: boolean;
+  section: boolean;
 };
 
 type PageWorkspaceProps = {
@@ -34,7 +42,8 @@ type PageWorkspaceProps = {
 
 const defaultHiddenBlocks: HiddenBlocksState = {
   hero: false,
-  sections: false,
+  menu: false,
+  section: false,
 };
 
 function getVisibilityStorageKey(storageKey?: string) {
@@ -128,10 +137,14 @@ export function PageWorkspace({
     }
 
     try {
-      const parsedState = JSON.parse(savedState) as Partial<HiddenBlocksState>;
+      const parsedState = JSON.parse(savedState) as
+        | (Partial<HiddenBlocksState> & { sections?: boolean })
+        | null;
+
       return {
-        hero: parsedState.hero === true,
-        sections: parsedState.sections === true,
+        hero: parsedState?.hero === true,
+        menu: parsedState?.menu === true || parsedState?.sections === true,
+        section: parsedState?.section === true,
       };
     } catch {
       window.localStorage.removeItem(visibilityStorageKey);
@@ -191,10 +204,16 @@ export function PageWorkspace({
               onClick={() => toggleBlockVisibility("hero")}
             />
             <VisibilityButton
-              active={!hiddenBlocks.sections}
-              icon={hiddenBlocks.sections ? LayoutPanelTop : EyeOff}
-              label={hiddenBlocks.sections ? "Показать меню" : "Скрыть меню"}
-              onClick={() => toggleBlockVisibility("sections")}
+              active={!hiddenBlocks.menu}
+              icon={hiddenBlocks.menu ? LayoutPanelTop : EyeOff}
+              label={hiddenBlocks.menu ? "Показать меню" : "Скрыть меню"}
+              onClick={() => toggleBlockVisibility("menu")}
+            />
+            <VisibilityButton
+              active={!hiddenBlocks.section}
+              icon={hiddenBlocks.section ? Eye : EyeOff}
+              label={hiddenBlocks.section ? "Показать раздел" : "Скрыть раздел"}
+              onClick={() => toggleBlockVisibility("section")}
             />
           </div>
         </div>
@@ -244,7 +263,7 @@ export function PageWorkspace({
         </section>
       ) : null}
 
-      {!hiddenBlocks.sections ? (
+      {!hiddenBlocks.menu ? (
         <section className="card p-4 sm:p-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
@@ -342,7 +361,7 @@ export function PageWorkspace({
         </section>
       ) : null}
 
-      {activeSection?.content}
+      {!hiddenBlocks.section ? activeSection?.content : null}
     </div>
   );
 }
