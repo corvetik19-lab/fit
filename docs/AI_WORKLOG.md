@@ -1499,3 +1499,14 @@
 - `npx eslint src/components/page-workspace.tsx src/app/workouts/page.tsx src/app/nutrition/page.tsx`
 - `npm run build`
 - `npm run typecheck`
+
+### 2026-03-13 09:48 - Осветлил выделение активных разделов и табов
+
+- В [page-workspace.tsx](/C:/fit/src/components/page-workspace.tsx), [dashboard-workspace.tsx](/C:/fit/src/components/dashboard-workspace.tsx), [weekly-program-builder.tsx](/C:/fit/src/components/weekly-program-builder.tsx) и [nutrition-tracker.tsx](/C:/fit/src/components/nutrition-tracker.tsx) сделал активные состояния заметными, но светлее: мягкий фон, спокойная тень и без тёмных плашек с белым текстом.
+- Для выбранных пунктов меню и табов заменил тёмные иконки и чек-маркеры на светлые акцентные/зелёные варианты, чтобы текст читался лучше и на мобильной PWA, и на десктопе.
+
+### Проверка: светлые active-состояния
+
+- `npx eslint src/components/page-workspace.tsx src/components/dashboard-workspace.tsx src/components/weekly-program-builder.tsx src/components/nutrition-tracker.tsx`
+- `npm run build`
+- `npm run typecheck`

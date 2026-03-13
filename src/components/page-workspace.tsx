@@ -66,7 +66,7 @@ function SectionButton({
       aria-pressed={active}
       className={`w-full rounded-3xl border px-4 py-3 text-left transition md:min-w-[13rem] md:w-auto ${
         active
-          ? "border-accent/30 bg-accent-soft text-foreground shadow-[0_18px_45px_-35px_rgba(20,97,75,0.45)]"
+          ? "border-accent/20 bg-[color-mix(in_srgb,var(--accent-soft)_78%,white)] text-foreground shadow-[0_16px_38px_-34px_rgba(20,97,75,0.22)]"
           : "border-border bg-white/72 text-foreground hover:bg-white"
       }`}
       onClick={onClick}
@@ -96,7 +96,7 @@ function VisibilityButton({
       aria-pressed={active}
       className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition ${
         active
-          ? "border-accent/20 bg-accent-soft text-foreground"
+          ? "border-accent/15 bg-[color-mix(in_srgb,var(--accent-soft)_68%,white)] text-foreground"
           : "border-border bg-white/80 text-foreground hover:bg-white"
       }`}
       onClick={onClick}
@@ -317,12 +317,12 @@ export function PageWorkspace({
 
                   return (
                     <button
-                      aria-pressed={isActive}
-                      className={`flex items-start justify-between gap-3 rounded-2xl border px-3 py-3 text-left transition ${
-                        isActive
-                          ? "border-accent/30 bg-accent-soft text-foreground"
-                          : "border-transparent bg-white/72 text-foreground hover:bg-white"
-                      }`}
+                    aria-pressed={isActive}
+                    className={`flex items-start justify-between gap-3 rounded-2xl border px-3 py-3 text-left transition ${
+                      isActive
+                        ? "border-accent/20 bg-[color-mix(in_srgb,var(--accent-soft)_72%,white)] text-foreground"
+                        : "border-transparent bg-white/72 text-foreground hover:bg-white"
+                    }`}
                       key={section.key}
                       onClick={() => handleSectionSelect(section.key)}
                       type="button"
@@ -336,7 +336,7 @@ export function PageWorkspace({
                         </span>
                       </span>
                       {isActive ? (
-                        <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent text-white">
+                        <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 text-emerald-600">
                           <Check size={16} strokeWidth={2.3} />
                         </span>
                       ) : null}
