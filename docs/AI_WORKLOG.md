@@ -2,6 +2,22 @@
 
 ## 2026-03-13
 
+### Production hardening: первый tranche декомпозиции `metrics.ts`
+
+- Вынес из [metrics.ts](/C:/fit/src/lib/dashboard/metrics.ts) два независимых слоя в [dashboard-utils.ts](/C:/fit/src/lib/dashboard/dashboard-utils.ts) и [dashboard-snapshot.ts](/C:/fit/src/lib/dashboard/dashboard-snapshot.ts).
+- В `dashboard-utils` теперь живут date/math/trend helper’ы для аналитики: UTC-даты, безопасное числовое приведение, тоннаж, estimate 1RM, momentum и related utilities.
+- В `dashboard-snapshot` вынес create/parse helpers для runtime и aggregate snapshot payload’ов, чтобы snapshot-контур не был размазан по главному analytics-модулю.
+- Сам [metrics.ts](/C:/fit/src/lib/dashboard/metrics.ts) стал компактнее и ближе к orchestrator-роли: там осталось меньше локальных утилит и больше фокуса на сборке конкретных dashboard metrics.
+- Полную декомпозицию модуля ещё не считаю завершённой: workout/nutrition aggregates, snapshot persistence flow и server-side bundles ещё пойдут отдельными tranche'ами.
+
+### Проверка: dashboard metrics decomposition
+
+- `npx eslint src/lib/dashboard/metrics.ts src/lib/dashboard/dashboard-utils.ts src/lib/dashboard/dashboard-snapshot.ts`
+- `npx tsc -p tsconfig.json --noEmit --incremental false`
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
+
 ### Production hardening: первый tranche декомпозиции `workout-day-session`
 
 - Вынес из [workout-day-session.tsx](/C:/fit/src/components/workout-day-session.tsx) крупный слой чистой логики в новые модули [session-utils.ts](/C:/fit/src/components/workout-session/session-utils.ts) и [derived-state.ts](/C:/fit/src/components/workout-session/derived-state.ts).

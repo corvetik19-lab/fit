@@ -1,6 +1,32 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import {
+  createDashboardAggregateSnapshotPayload,
+  createDashboardRuntimeSnapshotPayload,
+  parseDashboardAggregateSnapshotPayload,
+  parseDashboardRuntimeSnapshotPayload,
+  type DashboardAggregateSnapshotPayload,
+  type DashboardRuntimeSnapshotConfig,
+  type DashboardRuntimeSnapshotPayload,
+} from "@/lib/dashboard/dashboard-snapshot";
+import {
+  addUtcDays,
+  getDateDaysAgo,
+  getDaysBetween,
+  getDaysSince,
+  getEstimatedOneRmKg,
+  getIsoTimestampDaysAgo,
+  getMomentum,
+  getSetTonnageKg,
+  getTomorrowDateString,
+  getUtcDateStringFromTimestamp,
+  getUtcWeekStart,
+  roundToSingleDecimal,
+  toOptionalNumber,
+  toSafeNumber,
+  toUtcDateString,
+} from "@/lib/dashboard/dashboard-utils";
+import {
   buildNutritionCoachingSignals,
   type NutritionCoachingSignal,
 } from "@/lib/nutrition/coaching-signals";
@@ -253,37 +279,21 @@ export type DashboardAggregateBundleResult = {
   bundle: DashboardAggregateBundle;
 };
 
-type DashboardRuntimeSnapshotPayload = {
-  config: {
-    baselineDays: number;
-    days: number;
-    periodDays: number;
-    weeks: number;
-  };
-  generatedAt: string;
-  kind: "dashboard_runtime";
-  metrics: DashboardRuntimeMetrics;
-  version: 1;
-};
-
-type DashboardAggregateSnapshotPayload = {
-  bundle: DashboardAggregateBundle;
-  generatedAt: string;
-  kind: "dashboard_aggregate";
-  version: 1;
-};
-
 type DashboardRuntimeSnapshotRow = {
   created_at: string;
   id: string;
-  payload: DashboardRuntimeSnapshotPayload | Record<string, unknown>;
+  payload:
+    | DashboardRuntimeSnapshotPayload<DashboardRuntimeMetrics>
+    | Record<string, unknown>;
   snapshot_reason: string;
 };
 
 type DashboardAggregateSnapshotRow = {
   created_at: string;
   id: string;
-  payload: DashboardAggregateSnapshotPayload | Record<string, unknown>;
+  payload:
+    | DashboardAggregateSnapshotPayload<DashboardAggregateBundle>
+    | Record<string, unknown>;
   snapshot_reason: string;
 };
 
@@ -400,120 +410,6 @@ const dayLabelFormatter = new Intl.DateTimeFormat("ru-RU", {
   month: "short",
   timeZone: "UTC",
 });
-
-function toUtcDateString(date: Date) {
-  return date.toISOString().slice(0, 10);
-}
-
-function getDateDaysAgo(daysAgo: number) {
-  const nextDate = new Date();
-  nextDate.setUTCDate(nextDate.getUTCDate() - daysAgo);
-  return nextDate;
-}
-
-function getIsoTimestampDaysAgo(daysAgo: number) {
-  return getDateDaysAgo(daysAgo).toISOString();
-}
-
-function getTomorrowDateString() {
-  const nextDate = new Date();
-  nextDate.setUTCDate(nextDate.getUTCDate() + 1);
-  return toUtcDateString(nextDate);
-}
-
-function getUtcDateStringFromTimestamp(timestamp: string) {
-  return new Date(timestamp).toISOString().slice(0, 10);
-}
-
-function getUtcWeekStart(date: Date) {
-  const nextDate = new Date(date);
-  const offset = (nextDate.getUTCDay() + 6) % 7;
-  nextDate.setUTCHours(0, 0, 0, 0);
-  nextDate.setUTCDate(nextDate.getUTCDate() - offset);
-  return nextDate;
-}
-
-function addUtcDays(date: Date, days: number) {
-  const nextDate = new Date(date);
-  nextDate.setUTCDate(nextDate.getUTCDate() + days);
-  return nextDate;
-}
-
-function toSafeNumber(value: number | string | null | undefined) {
-  const parsed = Number(value ?? 0);
-  return Number.isFinite(parsed) ? parsed : 0;
-}
-
-function toOptionalNumber(value: number | string | null | undefined) {
-  if (value === null || value === undefined || value === "") {
-    return null;
-  }
-
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function roundToSingleDecimal(value: number) {
-  return Number(value.toFixed(1));
-}
-
-function getSetTonnageKg(actualReps: number | null, actualWeightKg: number | null) {
-  if (actualReps === null || actualWeightKg === null) {
-    return 0;
-  }
-
-  return actualReps * actualWeightKg;
-}
-
-function getEstimatedOneRmKg(
-  actualReps: number | null,
-  actualWeightKg: number | null,
-) {
-  if (actualReps === null || actualWeightKg === null || actualReps <= 0) {
-    return null;
-  }
-
-  return actualWeightKg * (1 + actualReps / 30);
-}
-
-function getDaysBetween(later: string, earlier: string) {
-  const diff = new Date(later).getTime() - new Date(earlier).getTime();
-  return Math.max(0, Math.round(diff / (24 * 60 * 60 * 1000)));
-}
-
-function getDaysSince(value: string | null) {
-  if (!value) {
-    return null;
-  }
-
-  return getDaysBetween(new Date().toISOString(), value);
-}
-
-function getMomentum(
-  recentCompletedSets: number,
-  previousCompletedSets: number,
-  repsDelta: number | null,
-): "up" | "stable" | "down" {
-  if (
-    recentCompletedSets > previousCompletedSets ||
-    (repsDelta !== null && repsDelta >= 0.6)
-  ) {
-    return "up";
-  }
-
-  if (
-    recentCompletedSets < previousCompletedSets &&
-    (repsDelta === null || repsDelta <= -0.6)
-  ) {
-    return "down";
-  }
-
-  return "stable";
-}
 
 function buildRecoverySummary(input: {
   consistencyRatio: number | null;
@@ -1899,103 +1795,6 @@ export async function getDashboardPeriodComparison(
   };
 }
 
-function createDashboardRuntimeSnapshotPayload(
-  metrics: DashboardRuntimeMetrics,
-  config: DashboardRuntimeSnapshotPayload["config"],
-): DashboardRuntimeSnapshotPayload {
-  return {
-    config,
-    generatedAt: new Date().toISOString(),
-    kind: "dashboard_runtime",
-    metrics,
-    version: 1,
-  };
-}
-
-function parseDashboardRuntimeSnapshotPayload(value: unknown) {
-  if (!isRecord(value)) {
-    return null;
-  }
-
-  if (value.kind !== "dashboard_runtime" || value.version !== 1) {
-    return null;
-  }
-
-  if (typeof value.generatedAt !== "string") {
-    return null;
-  }
-
-  if (!isRecord(value.config) || !isRecord(value.metrics)) {
-    return null;
-  }
-
-  const config = value.config;
-
-  if (
-    typeof config.weeks !== "number" ||
-    typeof config.days !== "number" ||
-    typeof config.periodDays !== "number" ||
-    typeof config.baselineDays !== "number"
-  ) {
-    return null;
-  }
-
-  return {
-    config: {
-      weeks: config.weeks,
-      days: config.days,
-      periodDays: config.periodDays,
-      baselineDays: config.baselineDays,
-    },
-    generatedAt: value.generatedAt,
-    kind: "dashboard_runtime" as const,
-    metrics: value.metrics as DashboardRuntimeMetrics,
-    version: 1 as const,
-  };
-}
-
-function createDashboardAggregateSnapshotPayload(
-  bundle: DashboardAggregateBundle,
-): DashboardAggregateSnapshotPayload {
-  return {
-    bundle,
-    generatedAt: new Date().toISOString(),
-    kind: "dashboard_aggregate",
-    version: 1,
-  };
-}
-
-function parseDashboardAggregateSnapshotPayload(value: unknown) {
-  if (!isRecord(value)) {
-    return null;
-  }
-
-  if (value.kind !== "dashboard_aggregate" || value.version !== 1) {
-    return null;
-  }
-
-  if (typeof value.generatedAt !== "string" || !isRecord(value.bundle)) {
-    return null;
-  }
-
-  const bundle = value.bundle;
-
-  if (
-    typeof bundle.lookbackDays !== "number" ||
-    !Array.isArray(bundle.days) ||
-    !bundle.days.every((day) => isRecord(day) && typeof day.date === "string")
-  ) {
-    return null;
-  }
-
-  return {
-    bundle: bundle as DashboardAggregateBundle,
-    generatedAt: value.generatedAt,
-    kind: "dashboard_aggregate" as const,
-    version: 1 as const,
-  };
-}
-
 async function getDashboardRuntimeFreshnessCursor(
   supabase: SupabaseClient,
   userId: string,
@@ -2308,9 +2107,10 @@ export async function getDashboardAggregateBundle(
       .maybeSingle();
 
     if (!error && data) {
-      const parsed = parseDashboardAggregateSnapshotPayload(
+      const parsed =
+        parseDashboardAggregateSnapshotPayload<DashboardAggregateBundle>(
         (data as DashboardAggregateSnapshotRow).payload,
-      );
+        );
       const ageMs = Date.now() - new Date(data.created_at).getTime();
       let hasNewerUserData = false;
 
@@ -2389,7 +2189,7 @@ export async function persistDashboardRuntimeSnapshot(
   supabase: SupabaseClient,
   userId: string,
   metrics: DashboardRuntimeMetrics,
-  config: DashboardRuntimeSnapshotPayload["config"],
+  config: DashboardRuntimeSnapshotConfig,
   snapshotReason = DASHBOARD_RUNTIME_SNAPSHOT_REASON,
 ) {
   const payload = createDashboardRuntimeSnapshotPayload(metrics, config);
@@ -2451,9 +2251,10 @@ export async function getDashboardRuntimeMetrics(
       .maybeSingle();
 
     if (!error && data) {
-      const parsed = parseDashboardRuntimeSnapshotPayload(
+      const parsed =
+        parseDashboardRuntimeSnapshotPayload<DashboardRuntimeMetrics>(
         (data as DashboardRuntimeSnapshotRow).payload,
-      );
+        );
       const ageMs = Date.now() - new Date(data.created_at).getTime();
       let hasNewerUserData = false;
 

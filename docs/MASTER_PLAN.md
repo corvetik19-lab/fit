@@ -73,6 +73,7 @@
 ### Крупные монолиты
 
 - [x] Вынести из `src/components/workout-day-session.tsx` первый tranche чистой логики в отдельные `session-utils` и `derived-state` модули.
+- [x] Вынести из `src/lib/dashboard/metrics.ts` первый tranche независимых helper’ов в `dashboard-utils` и `dashboard-snapshot`.
 - [ ] Разбить `src/components/workout-day-session.tsx` на UI-композицию, timer/focus hooks, step/save logic и sync helpers.
 - [ ] Разбить `src/lib/dashboard/metrics.ts` на агрегаты, coaching signals, nutrition analytics и snapshot helpers.
 - [ ] Разбить `src/components/admin-users-directory.tsx` на каталог, сегменты, bulk actions и selection state.
@@ -84,6 +85,7 @@
 
 - [ ] Derived state вынесен из JSX в отдельные helpers/hooks.
 - [x] Для `workout-day-session.tsx` уже есть референсный паттерн: derive-логика и локальные workout helpers вынесены из основного client-компонента.
+- [x] Для `metrics.ts` уже есть референсный паттерн: общие analytics/snapshot helper’ы вынесены из главного server-side orchestrator модуля.
 - [ ] Async/data orchestration не смешана с визуальной разметкой.
 - [ ] Доменные правила не дублируются между route handlers и `lib`.
 - [ ] Новые модули пригодны для unit/integration тестов без браузера.
