@@ -1458,3 +1458,16 @@
 - `npx eslint src/components/workout-day-session.tsx`
 - `npm run build`
 - `npm run typecheck`
+
+### 2026-03-13 01:32 - Все шаги тренировки видны сразу и текущий день сброшен
+
+- В [workout-day-session.tsx](/C:/fit/src/components/workout-day-session.tsx) шаговая лента в focus-режиме теперь показывает все упражнения сразу. Будущие шаги видны заранее, но закрыты до сохранения предыдущего упражнения.
+- Закрытые шаги помечаются отдельным статусом и замком, а завершённые — зелёной галочкой.
+- Через Supabase MCP обнулил текущий день тренировки `609c0fce-af84-4701-a08d-2d5152a5177c`: статус возвращён в `planned`, таймер сброшен в `0`, заполненные подходы очищены до `0 из 8`.
+
+### Проверка: видимость всех шагов и сброс текущего дня
+
+- `npx eslint src/components/workout-day-session.tsx`
+- `npm run build`
+- `npm run typecheck`
+- `Supabase MCP execute_sql: confirm workout day reset to 0 filled sets`

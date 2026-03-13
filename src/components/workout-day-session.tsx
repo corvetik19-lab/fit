@@ -15,6 +15,7 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronUp,
+  Lock,
   Pause,
   Play,
   RotateCcw,
@@ -512,10 +513,6 @@ export function WorkoutDaySession({
     isMobileFocusMode && day.exercises.length
       ? day.exercises[safeActiveExerciseIndex] ?? null
       : null;
-  const unlockedExercises = useMemo(
-    () => day.exercises.slice(0, unlockedExerciseCount),
-    [day.exercises, unlockedExerciseCount],
-  );
   const visibleExerciseEntries = useMemo(
     () =>
       isMobileFocusMode
@@ -1618,26 +1615,35 @@ export function WorkoutDaySession({
                 <span className="pill">{`Сохранено упражнений: ${completedExercisesCount} из ${day.exercises.length}`}</span>
               </div>
 
-              {unlockedExercises.length ? (
+              {day.exercises.length ? (
                 <div className="mt-4">
                   <p className="text-xs uppercase tracking-[0.18em] text-muted">
                     Шаги тренировки
                   </p>
                   <div className="-mx-1 mt-2 flex gap-2 overflow-x-auto px-1 pb-1">
-                    {unlockedExercises.map((exercise, index) => {
-                      const isActive = index === safeActiveExerciseIndex;
+                    {day.exercises.map((exercise, index) => {
+                      const isStepUnlocked = index < unlockedExerciseCount;
+                      const isActive =
+                        isStepUnlocked && index === safeActiveExerciseIndex;
                       const isExerciseStepComplete =
                         isCompletedWorkoutExercise(exercise);
                       return (
                         <button
                           aria-pressed={isActive}
+                          disabled={!isStepUnlocked}
                           className={`min-w-[7.75rem] shrink-0 rounded-2xl border px-3 py-2 text-left transition ${
                             isActive
                               ? "border-accent/30 bg-accent-soft text-foreground shadow-[0_16px_36px_-30px_rgba(20,97,75,0.45)]"
-                              : "border-border bg-white/80 text-foreground hover:bg-white"
+                              : isStepUnlocked
+                                ? "border-border bg-white/80 text-foreground hover:bg-white"
+                                : "border-border/80 bg-slate-100/90 text-slate-400 opacity-90"
                           }`}
                           key={exercise.id}
-                          onClick={() => setActiveExerciseIndex(index)}
+                          onClick={() => {
+                            if (isStepUnlocked) {
+                              setActiveExerciseIndex(index);
+                            }
+                          }}
                           type="button"
                         >
                           <div className="flex items-start justify-between gap-2">
@@ -1653,7 +1659,9 @@ export function WorkoutDaySession({
                                   ? "Сохранено"
                                   : isActive
                                     ? "Текущий шаг"
-                                    : "Откроется после сохранения"}
+                                    : isStepUnlocked
+                                      ? "Доступно"
+                                      : "Закрыто"}
                               </span>
                             </div>
 
@@ -1661,6 +1669,12 @@ export function WorkoutDaySession({
                               <CheckCircle2
                                 className="shrink-0 text-emerald-600"
                                 size={18}
+                                strokeWidth={2.2}
+                              />
+                            ) : !isStepUnlocked ? (
+                              <Lock
+                                className="shrink-0 text-slate-400"
+                                size={16}
                                 strokeWidth={2.2}
                               />
                             ) : null}
