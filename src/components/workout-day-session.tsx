@@ -33,395 +33,49 @@ import {
   queueWorkoutDayExecutionMutation,
   queueWorkoutSetActualRepsMutation,
 } from "@/lib/offline/workout-sync";
-import type { OfflineMutation } from "@/lib/offline/db";
 import {
   formatPlannedRepTarget,
   getActualRepOptions,
 } from "@/lib/workout/rep-ranges";
 import type {
   WeeklyProgramExerciseSummary,
-  WeeklyProgramSetSummary,
   WorkoutDayDetail,
 } from "@/lib/workout/weekly-programs";
+import { buildWorkoutDayDerivedState } from "@/components/workout-session/derived-state";
+import {
+  applyQueuedMutations,
+  applyWorkoutDayExecution,
+  applyWorkoutSetPerformance,
+  areExerciseDraftValuesSaved,
+  clearPersistedWorkoutTimer,
+  dayLabels,
+  dayStatusLabels,
+  type ExerciseDraft,
+  formatDurationSeconds,
+  formatOptionalRpe,
+  formatOptionalWeight,
+  formatSnapshotTime,
+  formatWeekRange,
+  getFirstIncompleteExerciseIndex,
+  getInitialActualRepsMap,
+  getInitialActualRpeMap,
+  getInitialActualWeightMap,
+  getRpeOptions,
+  getRunningTimerSeconds,
+  hasRunningTimerExpired,
+  isCompletedWorkoutExercise,
+  isExerciseDraftReadyToSave,
+  loadPersistedWorkoutTimer,
+  parseOptionalRpe,
+  parseOptionalWeight,
+  persistWorkoutTimer,
+} from "@/components/workout-session/session-utils";
 
 const inputClassName =
   "w-full rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15";
 
 const textAreaClassName = `${inputClassName} min-h-28 resize-y`;
 
-const dayLabels: Record<number, string> = {
-  1: "Понедельник",
-  2: "Вторник",
-  3: "Среда",
-  4: "Четверг",
-  5: "Пятница",
-  6: "Суббота",
-  7: "Воскресенье",
-};
-
-const dayStatusLabels: Record<string, string> = {
-  planned: "Запланирована",
-  in_progress: "В процессе",
-  done: "Завершена",
-};
-
-const dateFormatter = new Intl.DateTimeFormat("ru-RU", {
-  day: "2-digit",
-  month: "long",
-});
-
-const snapshotTimeFormatter = new Intl.DateTimeFormat("ru-RU", {
-  day: "2-digit",
-  month: "2-digit",
-  hour: "2-digit",
-  minute: "2-digit",
-});
-
-const WORKOUT_TIMER_MAX_SECONDS = 2 * 60 * 60;
-const WORKOUT_TIMER_STORAGE_KEY_PREFIX = "fit-workout-timer:";
-
-type PersistedWorkoutTimer = {
-  baseSeconds: number;
-  startedAt: number;
-};
-
-function getWorkoutTimerStorageKey(dayId: string) {
-  return `${WORKOUT_TIMER_STORAGE_KEY_PREFIX}${dayId}`;
-}
-
-function loadPersistedWorkoutTimer(dayId: string): PersistedWorkoutTimer | null {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  try {
-    const rawValue = window.localStorage.getItem(getWorkoutTimerStorageKey(dayId));
-
-    if (!rawValue) {
-      return null;
-    }
-
-    const value = JSON.parse(rawValue) as Partial<PersistedWorkoutTimer>;
-
-    if (
-      typeof value.baseSeconds !== "number" ||
-      !Number.isFinite(value.baseSeconds) ||
-      typeof value.startedAt !== "number" ||
-      !Number.isFinite(value.startedAt)
-    ) {
-      window.localStorage.removeItem(getWorkoutTimerStorageKey(dayId));
-      return null;
-    }
-
-    return {
-      baseSeconds: Math.max(0, Math.floor(value.baseSeconds)),
-      startedAt: value.startedAt,
-    };
-  } catch {
-    window.localStorage.removeItem(getWorkoutTimerStorageKey(dayId));
-    return null;
-  }
-}
-
-function persistWorkoutTimer(dayId: string, timer: PersistedWorkoutTimer) {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  window.localStorage.setItem(
-    getWorkoutTimerStorageKey(dayId),
-    JSON.stringify(timer),
-  );
-}
-
-function clearPersistedWorkoutTimer(dayId: string) {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  window.localStorage.removeItem(getWorkoutTimerStorageKey(dayId));
-}
-
-function getRunningTimerSeconds(baseSeconds: number, startedAt: number) {
-  return baseSeconds + Math.max(0, Math.floor((Date.now() - startedAt) / 1000));
-}
-
-function hasRunningTimerExpired(baseSeconds: number, startedAt: number) {
-  return getRunningTimerSeconds(baseSeconds, startedAt) >= WORKOUT_TIMER_MAX_SECONDS;
-}
-
-function formatWeekRange(day: WorkoutDayDetail) {
-  const startDate = dateFormatter.format(
-    new Date(`${day.week_start_date}T00:00:00`),
-  );
-  const endDate = dateFormatter.format(new Date(`${day.week_end_date}T00:00:00`));
-  return `${startDate} - ${endDate}`;
-}
-
-function formatSnapshotTime(value: string | null) {
-  if (!value) {
-    return "локальная копия ещё не сохранена";
-  }
-
-  return snapshotTimeFormatter.format(new Date(value));
-}
-
-function formatOptionalWeight(value: number | null) {
-  if (value === null) {
-    return "нет данных";
-  }
-
-  return `${value.toLocaleString("ru-RU", {
-    minimumFractionDigits: value % 1 === 0 ? 0 : 1,
-    maximumFractionDigits: 1,
-  })} кг`;
-}
-
-function formatOptionalRpe(value: number | null) {
-  if (value === null) {
-    return "нет данных";
-  }
-
-  return value.toLocaleString("ru-RU", {
-    minimumFractionDigits: value % 1 === 0 ? 0 : 1,
-    maximumFractionDigits: 1,
-  });
-}
-
-function formatDurationSeconds(value: number) {
-  const safeValue = Math.max(0, value);
-  const hours = Math.floor(safeValue / 3600);
-  const minutes = Math.floor((safeValue % 3600) / 60);
-  const seconds = safeValue % 60;
-
-  if (hours > 0) {
-    return [hours, minutes, seconds]
-      .map((part) => part.toString().padStart(2, "0"))
-      .join(":");
-  }
-
-  return [minutes, seconds]
-    .map((part) => part.toString().padStart(2, "0"))
-    .join(":");
-}
-
-function isCompletedWorkoutSet(set: WeeklyProgramSetSummary) {
-  return (
-    typeof set.actual_reps === "number" &&
-    typeof set.actual_weight_kg === "number" &&
-    typeof set.actual_rpe === "number"
-  );
-}
-
-function isCompletedWorkoutExercise(exercise: WeeklyProgramExerciseSummary) {
-  return exercise.sets.length > 0 && exercise.sets.every(isCompletedWorkoutSet);
-}
-
-function getFirstIncompleteExerciseIndex(
-  exercises: WeeklyProgramExerciseSummary[],
-) {
-  return exercises.findIndex((exercise) => !isCompletedWorkoutExercise(exercise));
-}
-
-function getInitialActualRepsMap(day: WorkoutDayDetail) {
-  const nextState: Record<string, string> = {};
-
-  for (const exercise of day.exercises) {
-    for (const set of exercise.sets) {
-      nextState[set.id] = set.actual_reps?.toString() ?? "";
-    }
-  }
-
-  return nextState;
-}
-
-function getInitialActualWeightMap(day: WorkoutDayDetail) {
-  const nextState: Record<string, string> = {};
-
-  for (const exercise of day.exercises) {
-    for (const set of exercise.sets) {
-      nextState[set.id] =
-        typeof set.actual_weight_kg === "number" ? set.actual_weight_kg.toString() : "";
-    }
-  }
-
-  return nextState;
-}
-
-function getInitialActualRpeMap(day: WorkoutDayDetail) {
-  const nextState: Record<string, string> = {};
-
-  for (const exercise of day.exercises) {
-    for (const set of exercise.sets) {
-      nextState[set.id] =
-        typeof set.actual_rpe === "number" ? set.actual_rpe.toString() : "";
-    }
-  }
-
-  return nextState;
-}
-
-function getRpeOptions() {
-  return Array.from({ length: 11 }, (_, index) => 5 + index * 0.5);
-}
-
-function applyWorkoutDayExecution(
-  day: WorkoutDayDetail,
-  input: {
-    status?: WorkoutDayDetail["status"];
-    bodyWeightKg?: number | null;
-    sessionNote?: string | null;
-    sessionDurationSeconds?: number | null;
-  },
-) {
-  return {
-    ...day,
-    ...(input.status !== undefined ? { status: input.status } : {}),
-    ...(input.bodyWeightKg !== undefined
-      ? { body_weight_kg: input.bodyWeightKg }
-      : {}),
-    ...(input.sessionNote !== undefined ? { session_note: input.sessionNote } : {}),
-    ...(input.sessionDurationSeconds !== undefined
-      ? { session_duration_seconds: input.sessionDurationSeconds }
-      : {}),
-  };
-}
-
-function applyWorkoutSetPerformance(
-  day: WorkoutDayDetail,
-  setId: string,
-  actualReps: number | null,
-  actualWeightKg: number | null,
-  actualRpe: number | null,
-) {
-  return {
-    ...day,
-    exercises: day.exercises.map((exercise) => ({
-      ...exercise,
-      sets: exercise.sets.map((set) =>
-        set.id === setId
-          ? {
-              ...set,
-              actual_reps: actualReps,
-              actual_weight_kg: actualWeightKg,
-              actual_rpe: actualRpe,
-            }
-          : set,
-      ),
-    })),
-  };
-}
-
-function parseOptionalWeight(value: string) {
-  const normalized = value.trim().replace(",", ".");
-  if (!normalized.length) {
-    return null;
-  }
-
-  const parsed = Number(normalized);
-  return Number.isFinite(parsed) ? parsed : Number.NaN;
-}
-
-function parseOptionalRpe(value: string) {
-  const normalized = value.trim().replace(",", ".");
-  if (!normalized.length) {
-    return null;
-  }
-
-  const parsed = Number(normalized);
-  return Number.isFinite(parsed) ? parsed : Number.NaN;
-}
-
-function areExerciseDraftValuesSaved(
-  exercise: WeeklyProgramExerciseSummary,
-  actualRepsBySetId: Record<string, string>,
-  actualWeightBySetId: Record<string, string>,
-  actualRpeBySetId: Record<string, string>,
-) {
-  return exercise.sets.every((set) => {
-    const reps = actualRepsBySetId[set.id]?.trim() ?? "";
-    const weight = actualWeightBySetId[set.id]?.trim() ?? "";
-    const rpe = actualRpeBySetId[set.id]?.trim() ?? "";
-
-    return (
-      reps === (set.actual_reps?.toString() ?? "") &&
-      weight ===
-        (typeof set.actual_weight_kg === "number"
-          ? set.actual_weight_kg.toString()
-          : "") &&
-      rpe ===
-        (typeof set.actual_rpe === "number" ? set.actual_rpe.toString() : "")
-    );
-  });
-}
-
-function isExerciseDraftReadyToSave(
-  exercise: WeeklyProgramExerciseSummary,
-  actualRepsBySetId: Record<string, string>,
-  actualWeightBySetId: Record<string, string>,
-  actualRpeBySetId: Record<string, string>,
-) {
-  return exercise.sets.every((set) => {
-    const repsRaw = actualRepsBySetId[set.id]?.trim() ?? "";
-    const weightRaw = actualWeightBySetId[set.id]?.trim() ?? "";
-    const rpeRaw = actualRpeBySetId[set.id]?.trim() ?? "";
-
-    if (!repsRaw.length || !weightRaw.length || !rpeRaw.length) {
-      return false;
-    }
-
-    const reps = Number(repsRaw);
-    const weight = parseOptionalWeight(weightRaw);
-    const rpe = parseOptionalRpe(rpeRaw);
-
-    return (
-      Number.isInteger(reps) &&
-      reps >= 0 &&
-      typeof weight === "number" &&
-      Number.isFinite(weight) &&
-      weight >= 0 &&
-      weight <= 1000 &&
-      typeof rpe === "number" &&
-      Number.isFinite(rpe) &&
-      rpe >= 1 &&
-      rpe <= 10
-    );
-  });
-}
-
-type ExerciseDraft = {
-  setId: string;
-  actualReps: number;
-  actualWeightKg: number | null;
-  actualRpe: number | null;
-};
-
-function applyQueuedMutations(day: WorkoutDayDetail, mutations: OfflineMutation[]) {
-  return mutations.reduce((currentDay, mutation) => {
-    if (mutation.entity === "workout_day_status") {
-      return applyWorkoutDayExecution(currentDay, {
-        status: mutation.payload.status,
-      });
-    }
-
-    if (mutation.entity === "workout_day_execution") {
-      return applyWorkoutDayExecution(currentDay, {
-        status: mutation.payload.status,
-        bodyWeightKg: mutation.payload.bodyWeightKg,
-        sessionNote: mutation.payload.sessionNote,
-        sessionDurationSeconds: mutation.payload.sessionDurationSeconds,
-      });
-    }
-
-    return applyWorkoutSetPerformance(
-      currentDay,
-      mutation.payload.setId,
-      mutation.payload.actualReps,
-      mutation.payload.actualWeightKg,
-      mutation.payload.actualRpe,
-    );
-  }, day);
-}
 
 export function WorkoutDaySession({
   initialDay,
@@ -480,49 +134,9 @@ export function WorkoutDaySession({
     return nextIndex === -1 ? 0 : nextIndex;
   });
 
-  const workoutSets = useMemo(
-    () => day.exercises.flatMap((exercise) => exercise.sets),
-    [day.exercises],
-  );
   const isMobileFocusMode = isFocusMode;
   const workoutDayHref = `/workouts/day/${day.id}` as Route;
   const isTimerRunning = timerStartedAt !== null;
-  const firstIncompleteExerciseIndex = useMemo(
-    () => getFirstIncompleteExerciseIndex(day.exercises),
-    [day.exercises],
-  );
-  const unlockedExerciseCount = useMemo(() => {
-    if (!day.exercises.length) {
-      return 0;
-    }
-
-    return firstIncompleteExerciseIndex === -1
-      ? day.exercises.length
-      : firstIncompleteExerciseIndex + 1;
-  }, [day.exercises.length, firstIncompleteExerciseIndex]);
-  const safeActiveExerciseIndex = useMemo(() => {
-    if (!day.exercises.length) {
-      return 0;
-    }
-
-    return Math.min(
-      activeExerciseIndex,
-      Math.max(0, unlockedExerciseCount - 1),
-    );
-  }, [activeExerciseIndex, day.exercises.length, unlockedExerciseCount]);
-  const activeExercise =
-    isMobileFocusMode && day.exercises.length
-      ? day.exercises[safeActiveExerciseIndex] ?? null
-      : null;
-  const visibleExerciseEntries = useMemo(
-    () =>
-      isMobileFocusMode
-        ? activeExercise
-          ? [{ exercise: activeExercise, index: safeActiveExerciseIndex }]
-          : []
-        : day.exercises.map((exercise, index) => ({ exercise, index })),
-    [activeExercise, day.exercises, isMobileFocusMode, safeActiveExerciseIndex],
-  );
   const currentSessionDurationSeconds = isTimerRunning
     ? timerLiveSeconds
     : timerBaseSeconds;
@@ -565,78 +179,40 @@ export function WorkoutDaySession({
     setTimerLiveSeconds(nextSeconds);
   }, []);
 
-  const completedSetsCount = useMemo(
-    () => workoutSets.filter((set) => isCompletedWorkoutSet(set)).length,
-    [workoutSets],
-  );
-
-  const totalSetsCount = workoutSets.length;
-
-  const totalTonnageKg = useMemo(
+  const {
+    unlockedExerciseCount,
+    safeActiveExerciseIndex,
+    activeExercise,
+    visibleExerciseEntries,
+    completedSetsCount,
+    totalSetsCount,
+    totalTonnageKg,
+    avgActualRpe,
+    completedExercisesCount,
+    currentExerciseIsComplete,
+    canFinishWorkout,
+    canResetWorkoutDay,
+  } = useMemo(
     () =>
-      workoutSets.reduce((sum, set) => {
-        const reps = typeof set.actual_reps === "number" ? set.actual_reps : null;
-        const weight =
-          typeof set.actual_weight_kg === "number" ? set.actual_weight_kg : null;
-
-        if (reps === null || weight === null) {
-          return sum;
-        }
-
-        return sum + reps * weight;
-      }, 0),
-    [workoutSets],
+      buildWorkoutDayDerivedState({
+        day,
+        activeExerciseIndex,
+        actualRepsBySetId,
+        actualWeightBySetId,
+        actualRpeBySetId,
+        isMobileFocusMode,
+        currentSessionDurationSeconds,
+      }),
+    [
+      activeExerciseIndex,
+      actualRepsBySetId,
+      actualRpeBySetId,
+      actualWeightBySetId,
+      currentSessionDurationSeconds,
+      day,
+      isMobileFocusMode,
+    ],
   );
-
-  const avgActualRpe = useMemo(() => {
-    const rpeValues = workoutSets.flatMap((set) =>
-      typeof set.actual_rpe === "number" ? [set.actual_rpe] : [],
-    );
-
-    if (!rpeValues.length) {
-      return null;
-    }
-
-    return Number(
-      (
-        rpeValues.reduce((sum, value) => sum + value, 0) / rpeValues.length
-      ).toFixed(1),
-    );
-  }, [workoutSets]);
-
-  const completedExercisesCount = useMemo(
-    () =>
-      day.exercises.filter((exercise) => isCompletedWorkoutExercise(exercise))
-        .length,
-    [day.exercises],
-  );
-
-  const currentExerciseIsComplete = activeExercise
-    ? isCompletedWorkoutExercise(activeExercise)
-    : false;
-  const allExercisesCompleted =
-    day.exercises.length > 0 && completedExercisesCount === day.exercises.length;
-  const hasUnsavedExerciseChanges = useMemo(
-    () =>
-      day.exercises.some((exercise) =>
-        !areExerciseDraftValuesSaved(
-          exercise,
-          actualRepsBySetId,
-          actualWeightBySetId,
-          actualRpeBySetId,
-        ),
-      ),
-    [actualRepsBySetId, actualRpeBySetId, actualWeightBySetId, day.exercises],
-  );
-  const canFinishWorkout = allExercisesCompleted && !hasUnsavedExerciseChanges;
-  const canResetWorkoutDay =
-    day.is_locked &&
-    (day.status !== "planned" ||
-      completedSetsCount > 0 ||
-      completedExercisesCount > 0 ||
-      currentSessionDurationSeconds > 0 ||
-      (typeof day.body_weight_kg === "number" && day.body_weight_kg > 0) ||
-      Boolean(day.session_note?.trim()));
 
   const persistWorkoutDay = useCallback(async (nextDay: WorkoutDayDetail) => {
     const updatedAt = await cacheWorkoutDaySnapshot(nextDay);

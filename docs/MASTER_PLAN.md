@@ -18,8 +18,8 @@
 - [x] Есть Supabase schema, migrations, RLS, admin-модель, cron routes и offline workout sync.
 - [x] Есть AI runtime слой, retrieval, structured knowledge, proposals и eval workspace.
 - [x] `npm run build` проходит.
-- [ ] `npm run typecheck` пока не является стабильным gate и ломается на загрязнённом `.next/types`.
-- [ ] `npm run lint` пока не годится как надёжный CI gate в текущем виде.
+- [x] `npm run typecheck` проходит как стабильный gate через `next typegen + tsc`.
+- [x] `npm run lint` приведён к воспроизводимому CI-формату и линкует только поддерживаемые исходники.
 - [ ] В репозитории почти нет реального автотестового покрытия.
 - [ ] Ключевая документация и часть UI/docs-поверхности содержат mojibake и требуют санации.
 - [ ] Первый production milestone ещё не достигнут.
@@ -72,6 +72,7 @@
 
 ### Крупные монолиты
 
+- [x] Вынести из `src/components/workout-day-session.tsx` первый tranche чистой логики в отдельные `session-utils` и `derived-state` модули.
 - [ ] Разбить `src/components/workout-day-session.tsx` на UI-композицию, timer/focus hooks, step/save logic и sync helpers.
 - [ ] Разбить `src/lib/dashboard/metrics.ts` на агрегаты, coaching signals, nutrition analytics и snapshot helpers.
 - [ ] Разбить `src/components/admin-users-directory.tsx` на каталог, сегменты, bulk actions и selection state.
@@ -82,6 +83,7 @@
 ### Общий стандарт для крупных модулей
 
 - [ ] Derived state вынесен из JSX в отдельные helpers/hooks.
+- [x] Для `workout-day-session.tsx` уже есть референсный паттерн: derive-логика и локальные workout helpers вынесены из основного client-компонента.
 - [ ] Async/data orchestration не смешана с визуальной разметкой.
 - [ ] Доменные правила не дублируются между route handlers и `lib`.
 - [ ] Новые модули пригодны для unit/integration тестов без браузера.

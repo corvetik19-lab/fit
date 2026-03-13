@@ -2,6 +2,21 @@
 
 ## 2026-03-13
 
+### Production hardening: первый tranche декомпозиции `workout-day-session`
+
+- Вынес из [workout-day-session.tsx](/C:/fit/src/components/workout-day-session.tsx) крупный слой чистой логики в новые модули [session-utils.ts](/C:/fit/src/components/workout-session/session-utils.ts) и [derived-state.ts](/C:/fit/src/components/workout-session/derived-state.ts).
+- В `session-utils` теперь живут timer/persistence helpers, форматтеры, parsing/validation, optimistic apply helpers и hydration утилиты для workout day.
+- В `derived-state` собран единый `buildWorkoutDayDerivedState(...)`, который вычисляет шаги, доступность упражнений, completed/progress метрики, тоннаж, средний RPE и флаги завершения/сброса.
+- Сам [workout-day-session.tsx](/C:/fit/src/components/workout-day-session.tsx) стал заметно тоньше: JSX и orchestration остались в компоненте, а доменные вычисления и локальные утилиты больше не размазаны по файлу.
+- Полную декомпозицию модуля ещё не считаю завершённой: timer/focus hooks и sync orchestration пока остаются в основном orchestrator-компоненте и пойдут в следующие tranche'и.
+
+### Проверка: workout session decomposition
+
+- `npx eslint src/components/workout-day-session.tsx src/components/workout-session/session-utils.ts src/components/workout-session/derived-state.ts`
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
+
 ### Production hardening: release checklist и smoke baseline
 
 - Добавил [RELEASE_CHECKLIST.md](/C:/fit/docs/RELEASE_CHECKLIST.md) как единый чеклист для merge, deploy и post-deploy smoke.
