@@ -1471,3 +1471,15 @@
 - `npm run build`
 - `npm run typecheck`
 - `Supabase MCP execute_sql: confirm workout day reset to 0 filled sets`
+
+### 2026-03-13 09:12 - Кнопка полного сброса тренировки
+
+- В [workout-day-session.tsx](/C:/fit/src/components/workout-day-session.tsx) добавил кнопку `Обнулить тренировку`: она очищает повторы, вес, RPE, статус дня, таймер, вес тела и заметку, после чего шаги снова начинаются с первого упражнения.
+- Для reset-flow очистил локальную offline-очередь по дню через [workout-sync.ts](/C:/fit/src/lib/offline/workout-sync.ts), чтобы старые локальные изменения не возвращались поверх уже обнулённой тренировки.
+- Добавил серверный reset endpoint [route.ts](/C:/fit/src/app/api/workout-days/[id]/reset/route.ts) и helper [execution.ts](/C:/fit/src/lib/workout/execution.ts), который сбрасывает `workout_sets.actual_*` и `workout_days` обратно в исходное состояние `planned`.
+
+### Проверка: полный сброс тренировки
+
+- `npx eslint src/components/workout-day-session.tsx src/lib/workout/execution.ts src/lib/offline/workout-sync.ts "src/app/api/workout-days/[id]/reset/route.ts"`
+- `npm run build`
+- `npm run typecheck`

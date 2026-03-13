@@ -113,6 +113,19 @@ export async function listQueuedWorkoutMutationsForDay(dayId: string) {
   return mutations.filter((mutation) => mutation.payload.dayId === dayId);
 }
 
+export async function clearQueuedWorkoutMutationsForDay(dayId: string) {
+  const mutations = await offlineDb.mutationQueue.toArray();
+  const mutationIds = mutations
+    .filter((mutation) => mutation.payload.dayId === dayId)
+    .map((mutation) => mutation.id);
+
+  if (mutationIds.length) {
+    await offlineDb.mutationQueue.bulkDelete(mutationIds);
+  }
+
+  return mutationIds.length;
+}
+
 export async function getPendingOfflineMutationCount() {
   return offlineDb.mutationQueue.count();
 }

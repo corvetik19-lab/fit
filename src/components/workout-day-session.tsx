@@ -23,6 +23,7 @@ import {
 
 import {
   cacheWorkoutDaySnapshot,
+  clearQueuedWorkoutMutationsForDay,
   cleanupStaleOfflineState,
   flushOfflineMutations,
   getCachedWorkoutDaySnapshot,
@@ -628,6 +629,14 @@ export function WorkoutDaySession({
     [actualRepsBySetId, actualRpeBySetId, actualWeightBySetId, day.exercises],
   );
   const canFinishWorkout = allExercisesCompleted && !hasUnsavedExerciseChanges;
+  const canResetWorkoutDay =
+    day.is_locked &&
+    (day.status !== "planned" ||
+      completedSetsCount > 0 ||
+      completedExercisesCount > 0 ||
+      currentSessionDurationSeconds > 0 ||
+      (typeof day.body_weight_kg === "number" && day.body_weight_kg > 0) ||
+      Boolean(day.session_note?.trim()));
 
   const persistWorkoutDay = useCallback(async (nextDay: WorkoutDayDetail) => {
     const updatedAt = await cacheWorkoutDaySnapshot(nextDay);
@@ -1394,6 +1403,70 @@ export function WorkoutDaySession({
       }
     });
   }
+
+  function resetWorkoutDay() {
+    if (isPending || isSyncing) {
+      return;
+    }
+
+    if (!navigator.onLine) {
+      setError("Для полного обнуления тренировки нужна связь с интернетом.");
+      return;
+    }
+
+    const shouldReset = window.confirm(
+      "Обнулить тренировку и начать заново? Все сохранённые повторы, вес, RPE, время и заметки по этому дню будут очищены.",
+    );
+
+    if (!shouldReset) {
+      return;
+    }
+
+    setError(null);
+    setNotice(null);
+    setIsPending(true);
+
+    startTransition(async () => {
+      try {
+        const response = await fetch(`/api/workout-days/${day.id}/reset`, {
+          method: "POST",
+          cache: "no-store",
+        });
+
+        const payload = (await response.json().catch(() => null)) as
+          | {
+              data?: WorkoutDayDetail;
+              message?: string;
+            }
+          | null;
+
+        if (!response.ok || !payload?.data) {
+          throw new Error(
+            payload?.message ?? "Не удалось обнулить тренировку.",
+          );
+        }
+
+        clearPersistedWorkoutTimer(day.id);
+        expiredTimerResetDayIdRef.current = null;
+        setShouldPersistExpiredTimerReset(false);
+        setTimerStartedAt(null);
+        await clearQueuedWorkoutMutationsForDay(day.id);
+        await refreshPendingMutationCount();
+        await applyDaySnapshot(payload.data);
+        pullCursorRef.current = null;
+        setNotice("Тренировка обнулена. Можно начать заново.");
+      } catch (resetError) {
+        setError(
+          resetError instanceof Error
+            ? resetError.message
+            : "Не удалось обнулить тренировку.",
+        );
+      } finally {
+        setIsPending(false);
+      }
+    });
+  }
+
   async function returnToRegularMode() {
     if (isTimerRunning) {
       try {
@@ -1469,6 +1542,15 @@ export function WorkoutDaySession({
                 : `Отправить изменения (${pendingMutationCount})`}
           </button>
         ) : null}
+
+        <button
+          className={secondaryButtonClassName}
+          disabled={!canResetWorkoutDay || isPending || isSyncing}
+          onClick={() => resetWorkoutDay()}
+          type="button"
+        >
+          {compact ? "Обнулить" : "Обнулить тренировку"}
+        </button>
       </>
     );
   }

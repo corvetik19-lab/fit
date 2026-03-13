@@ -1,5 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { getWorkoutDayDetail } from "@/lib/workout/weekly-programs";
+
 export type WorkoutDayStatus = "planned" | "in_progress" | "done";
 
 export type WorkoutDayExecutionInput = {
@@ -117,6 +119,117 @@ export async function updateWorkoutDayStatus(
   return updateWorkoutDayExecution(supabase, userId, dayId, {
     status: nextStatus,
   });
+}
+
+export async function resetWorkoutDayExecution(
+  supabase: SupabaseClient,
+  userId: string,
+  dayId: string,
+) {
+  const { data: dayRow, error: dayError } = await supabase
+    .from("workout_days")
+    .select("id, weekly_program_id")
+    .eq("id", dayId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (dayError) {
+    throw dayError;
+  }
+
+  if (!dayRow) {
+    return {
+      error: {
+        status: 404,
+        code: "WORKOUT_DAY_NOT_FOUND",
+        message: "Workout day was not found.",
+      },
+      data: null,
+    } as const;
+  }
+
+  const { data: programRow, error: programError } = await supabase
+    .from("weekly_programs")
+    .select("id, is_locked")
+    .eq("id", dayRow.weekly_program_id)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (programError) {
+    throw programError;
+  }
+
+  if (!programRow?.is_locked) {
+    return {
+      error: {
+        status: 400,
+        code: "WORKOUT_DAY_REQUIRES_LOCKED_PROGRAM",
+        message: "Workout day reset is available only for locked weeks.",
+      },
+      data: null,
+    } as const;
+  }
+
+  const { data: exerciseRows, error: exerciseError } = await supabase
+    .from("workout_exercises")
+    .select("id")
+    .eq("workout_day_id", dayId)
+    .eq("user_id", userId);
+
+  if (exerciseError) {
+    throw exerciseError;
+  }
+
+  const exerciseIds = (exerciseRows ?? []).map((exercise) => exercise.id);
+
+  if (exerciseIds.length) {
+    const { error: resetSetsError } = await supabase
+      .from("workout_sets")
+      .update({
+        actual_reps: null,
+        actual_weight_kg: null,
+        actual_rpe: null,
+      })
+      .eq("user_id", userId)
+      .in("workout_exercise_id", exerciseIds);
+
+    if (resetSetsError) {
+      throw resetSetsError;
+    }
+  }
+
+  const { error: resetDayError } = await supabase
+    .from("workout_days")
+    .update({
+      status: "planned",
+      body_weight_kg: null,
+      session_note: null,
+      session_duration_seconds: 0,
+    })
+    .eq("id", dayId)
+    .eq("user_id", userId);
+
+  if (resetDayError) {
+    throw resetDayError;
+  }
+
+  const resetDay = await getWorkoutDayDetail(supabase, userId, dayId);
+
+  if (!resetDay) {
+    return {
+      error: {
+        status: 404,
+        code: "WORKOUT_DAY_NOT_FOUND",
+        message: "Workout day was not found.",
+      },
+      data: null,
+    } as const;
+  }
+
+  return {
+    error: null,
+    data: resetDay,
+  } as const;
 }
 
 export async function updateWorkoutSetActualReps(
