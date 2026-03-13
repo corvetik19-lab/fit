@@ -1,5 +1,18 @@
 # AI Worklog
 
+## 2026-03-13
+
+### 30-second workout motion demo
+
+- Rebuilt `public/fit-demo-motion.svg` as a longer 30-second looping promo focused on the workout journey instead of a short generic product tour.
+- The animation now walks through six scenes in order: opening the current workout, entering focus mode, running the live timer, completing step-by-step exercises, confirming save at finish, and showing the saved history plus AI coaching summary.
+- The SVG was designed to stay self-contained for voice-over use: soft branded background, phone mockup, animated timeline, timer states, exercise-step progression, finish modal, history cards, and final AI recommendation.
+
+### Verification: 30-second workout motion demo
+
+- Parsed `public/fit-demo-motion.svg` as XML to confirm the file is valid SVG markup.
+- Kept the asset in `public/` as a standalone demo file ready for browser playback or export workflows.
+
 ## 2026-03-12
 
 ### Workout focus mode, timer persistence, and mobile section menus

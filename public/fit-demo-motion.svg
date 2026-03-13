@@ -1,358 +1,669 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" fill="none" role="img" aria-labelledby="title desc">
-  <title id="title">fit demo motion</title>
-  <desc id="desc">Анимированный SVG-ролик с демонстрацией экранов fit: обзор, тренировки, питание и AI-коуч.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" fill="none" role="img" aria-labelledby="title desc">
+  <title id="title">fit workout motion demo</title>
+  <desc id="desc">30-second looping motion demo of a workout flow in the fit app.</desc>
   <defs>
-    <linearGradient id="bgGradient" x1="220" y1="60" x2="1380" y2="840" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#fbfaf4"/>
-      <stop offset="1" stop-color="#f1efe5"/>
+    <linearGradient id="bgGradient" x1="180" y1="120" x2="1420" y2="820" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#fffdf7"/>
+      <stop offset="1" stop-color="#eef4f0"/>
     </linearGradient>
-    <radialGradient id="mintGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1230 220) rotate(90) scale(320 460)">
-      <stop stop-color="#d7efe7"/>
-      <stop offset="1" stop-color="#d7efe7" stop-opacity="0"/>
-    </radialGradient>
-    <radialGradient id="goldGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(310 720) rotate(90) scale(240 320)">
-      <stop stop-color="#f0d8a9"/>
-      <stop offset="1" stop-color="#f0d8a9" stop-opacity="0"/>
-    </radialGradient>
-    <linearGradient id="screenGradient" x1="530" y1="162" x2="1088" y2="742" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#fffef9"/>
-      <stop offset="1" stop-color="#f8f5ed"/>
+    <linearGradient id="accentGradient" x1="475" y1="162" x2="1125" y2="738" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ecf8f2"/>
+      <stop offset="1" stop-color="#d7efe7"/>
     </linearGradient>
-    <filter id="shadow" x="0" y="0" width="1600" height="900" filterUnits="userSpaceOnUse">
-      <feDropShadow dx="0" dy="40" stdDeviation="40" flood-color="#3a3028" flood-opacity="0.16"/>
+    <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
+      <stop stop-color="#14614b"/>
+      <stop offset="1" stop-color="#2f8f6e"/>
+    </linearGradient>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="18" stdDeviation="24" flood-color="#10261e" flood-opacity="0.14"/>
     </filter>
-    <filter id="softShadow" x="-80" y="-80" width="320" height="220" filterUnits="userSpaceOnUse">
-      <feDropShadow dx="0" dy="20" stdDeviation="20" flood-color="#2d453c" flood-opacity="0.18"/>
+    <filter id="cardShadow" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#10261e" flood-opacity="0.08"/>
     </filter>
     <clipPath id="phoneClip">
-      <rect x="534" y="140" width="532" height="640" rx="48"/>
+      <rect x="475" y="162" width="650" height="576" rx="42"/>
     </clipPath>
-    <style>
-      .title {
-        font: 700 64px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        letter-spacing: -0.04em;
-        fill: #181613;
-      }
-
-      .subtitle {
-        font: 500 22px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        fill: #6f675b;
-      }
-
-      .label {
-        font: 700 14px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        letter-spacing: 0.18em;
-        text-transform: uppercase;
-        fill: #7c756b;
-      }
-
-      .kpiLabel {
-        font: 600 15px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        fill: #6f675b;
-      }
-
-      .kpiValue {
-        font: 700 38px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        fill: #181613;
-      }
-
-      .screenTitle {
-        font: 700 26px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        fill: #181613;
-      }
-
-      .screenText {
-        font: 500 16px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        fill: #6f675b;
-      }
-
-      .smallText {
-        font: 600 13px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        fill: #6f675b;
-      }
-
-      .accentText {
-        fill: #14614b;
-      }
-
-      .pillText {
-        font: 700 15px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        fill: #14614b;
-      }
-
-      .whiteText {
-        fill: #fffef9;
-      }
-
-      .scene {
-        opacity: 0;
-        transform-origin: 800px 460px;
-      }
-
-      .scene-dashboard {
-        animation: sceneDashboard 20s infinite ease-in-out;
-      }
-
-      .scene-workouts {
-        animation: sceneWorkouts 20s infinite ease-in-out;
-      }
-
-      .scene-nutrition {
-        animation: sceneNutrition 20s infinite ease-in-out;
-      }
-
-      .scene-ai {
-        animation: sceneAi 20s infinite ease-in-out;
-      }
-
-      .float-card {
-        animation: floatCard 5.5s infinite ease-in-out;
-      }
-
-      .float-card.delay-1 {
-        animation-delay: 1.2s;
-      }
-
-      .float-card.delay-2 {
-        animation-delay: 2.1s;
-      }
-
-      .scan-line {
-        animation: scan 4s infinite ease-in-out;
-      }
-
-      .pulse {
-        animation: pulse 2.8s infinite ease-in-out;
-      }
-
-      .dot-1 { animation: dotTimeline 20s infinite ease-in-out; }
-      .dot-2 { animation: dotTimeline2 20s infinite ease-in-out; }
-      .dot-3 { animation: dotTimeline3 20s infinite ease-in-out; }
-      .dot-4 { animation: dotTimeline4 20s infinite ease-in-out; }
-
-      @keyframes sceneDashboard {
-        0%, 20% { opacity: 1; }
-        24%, 100% { opacity: 0; }
-      }
-
-      @keyframes sceneWorkouts {
-        0%, 24% { opacity: 0; }
-        28%, 46% { opacity: 1; }
-        50%, 100% { opacity: 0; }
-      }
-
-      @keyframes sceneNutrition {
-        0%, 50% { opacity: 0; }
-        54%, 72% { opacity: 1; }
-        76%, 100% { opacity: 0; }
-      }
-
-      @keyframes sceneAi {
-        0%, 76% { opacity: 0; }
-        80%, 97% { opacity: 1; }
-        100% { opacity: 0; }
-      }
-
-      @keyframes floatCard {
-        0%, 100% { transform: translateY(0px); }
-        50% { transform: translateY(-8px); }
-      }
-
-      @keyframes pulse {
-        0%, 100% { opacity: 0.78; transform: scale(1); }
-        50% { opacity: 1; transform: scale(1.04); }
-      }
-
-      @keyframes scan {
-        0% { transform: translateY(0px); opacity: 0; }
-        20% { opacity: 0.7; }
-        80% { opacity: 0.7; }
-        100% { transform: translateY(138px); opacity: 0; }
-      }
-
-      @keyframes dotTimeline {
-        0%, 23% { fill: #14614b; }
-        24%, 100% { fill: #d7efe7; }
-      }
-
-      @keyframes dotTimeline2 {
-        0%, 24% { fill: #d7efe7; }
-        25%, 49% { fill: #14614b; }
-        50%, 100% { fill: #d7efe7; }
-      }
-
-      @keyframes dotTimeline3 {
-        0%, 50% { fill: #d7efe7; }
-        51%, 75% { fill: #14614b; }
-        76%, 100% { fill: #d7efe7; }
-      }
-
-      @keyframes dotTimeline4 {
-        0%, 76% { fill: #d7efe7; }
-        77%, 100% { fill: #14614b; }
-      }
-    </style>
   </defs>
+  <style>
+    :root {
+      --bg: #f5f4ee;
+      --surface: #fffdf7;
+      --surface-soft: #f3f6f2;
+      --stroke: #ddd7ca;
+      --foreground: #181613;
+      --muted: #6f675b;
+      --accent: #14614b;
+      --accent-strong: #0f4f3e;
+      --accent-soft: #d7efe7;
+      --success: #1f8f62;
+      --warning: #d88a2c;
+      --danger: #cd5858;
+    }
+
+    text {
+      font-family: "Inter", "Segoe UI", sans-serif;
+      fill: var(--foreground);
+    }
+
+    .mono {
+      font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    .hero-kicker {
+      font-size: 18px;
+      fill: var(--muted);
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+    }
+
+    .hero-title {
+      font-size: 52px;
+      font-weight: 700;
+    }
+
+    .hero-subtitle {
+      font-size: 22px;
+      fill: var(--muted);
+    }
+
+    .caption {
+      font-size: 16px;
+      fill: var(--muted);
+    }
+
+    .phone-label {
+      font-size: 14px;
+      fill: var(--muted);
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    .phone-title {
+      font-size: 26px;
+      font-weight: 700;
+    }
+
+    .small {
+      font-size: 13px;
+      fill: var(--muted);
+    }
+
+    .body {
+      font-size: 18px;
+      fill: var(--foreground);
+    }
+
+    .value {
+      font-size: 30px;
+      font-weight: 700;
+    }
+
+    .badge {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .timer {
+      font-size: 58px;
+      font-weight: 700;
+      fill: var(--accent-strong);
+      letter-spacing: 0.02em;
+    }
+
+    .step-title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .step-subtitle {
+      font-size: 13px;
+      fill: var(--muted);
+    }
+
+    .chart-label {
+      font-size: 12px;
+      fill: var(--muted);
+    }
+
+    .ghost {
+      fill: #ffffff;
+      stroke: var(--stroke);
+      stroke-width: 1.5;
+    }
+
+    .surface {
+      fill: var(--surface);
+      stroke: rgba(24, 22, 19, 0.08);
+      stroke-width: 1;
+    }
+
+    .surface-soft {
+      fill: var(--surface-soft);
+      stroke: rgba(24, 22, 19, 0.06);
+      stroke-width: 1;
+    }
+
+    .pill {
+      fill: var(--accent-soft);
+    }
+
+    .pill-active {
+      fill: #eaf8f1;
+      stroke: rgba(20, 97, 75, 0.18);
+      stroke-width: 1;
+    }
+
+    .pill-dark {
+      fill: var(--accent);
+    }
+
+    .timeline-line {
+      stroke: rgba(20, 97, 75, 0.22);
+      stroke-width: 2;
+    }
+
+    .scene {
+      opacity: 0;
+      animation-duration: 30s;
+      animation-iteration-count: infinite;
+      animation-timing-function: linear;
+    }
+
+    .scene-open {
+      animation-name: sceneOpen;
+    }
+
+    .scene-focus {
+      animation-name: sceneFocus;
+    }
+
+    .scene-steps {
+      animation-name: sceneSteps;
+    }
+
+    .scene-finish {
+      animation-name: sceneFinish;
+    }
+
+    .scene-history {
+      animation-name: sceneHistory;
+    }
+
+    .scene-ai {
+      animation-name: sceneAi;
+    }
+
+    .scene-fade-up {
+      animation: fadeUp 30s infinite;
+    }
+
+    .scene-fade-up-delay {
+      animation: fadeUpDelay 30s infinite;
+    }
+
+    .scene-fade-up-delay-2 {
+      animation: fadeUpDelayTwo 30s infinite;
+    }
+
+    .scene-fade-up-delay-3 {
+      animation: fadeUpDelayThree 30s infinite;
+    }
+
+    .timer-state-a {
+      animation: timerA 30s infinite;
+    }
+
+    .timer-state-b {
+      animation: timerB 30s infinite;
+    }
+
+    .timer-state-c {
+      animation: timerC 30s infinite;
+    }
+
+    .pulse-ring {
+      transform-origin: 1000px 340px;
+      animation: pulseRing 30s infinite;
+    }
+
+    .progress-fill {
+      transform-origin: 0 0;
+      animation: progressFill 30s infinite;
+    }
+
+    .cursor-dot {
+      animation: cursorMove 30s infinite;
+    }
+
+    .timeline-dot-1 { animation: dotOne 30s infinite; }
+    .timeline-dot-2 { animation: dotTwo 30s infinite; }
+    .timeline-dot-3 { animation: dotThree 30s infinite; }
+    .timeline-dot-4 { animation: dotFour 30s infinite; }
+    .timeline-dot-5 { animation: dotFive 30s infinite; }
+    .timeline-dot-6 { animation: dotSix 30s infinite; }
+
+    @keyframes sceneOpen {
+      0%, 15% { opacity: 1; }
+      18%, 100% { opacity: 0; }
+    }
+
+    @keyframes sceneFocus {
+      0%, 15% { opacity: 0; }
+      18%, 32% { opacity: 1; }
+      35%, 100% { opacity: 0; }
+    }
+
+    @keyframes sceneSteps {
+      0%, 31% { opacity: 0; }
+      34%, 50% { opacity: 1; }
+      53%, 100% { opacity: 0; }
+    }
+
+    @keyframes sceneFinish {
+      0%, 49% { opacity: 0; }
+      52%, 67% { opacity: 1; }
+      70%, 100% { opacity: 0; }
+    }
+
+    @keyframes sceneHistory {
+      0%, 66% { opacity: 0; }
+      69%, 84% { opacity: 1; }
+      87%, 100% { opacity: 0; }
+    }
+
+    @keyframes sceneAi {
+      0%, 83% { opacity: 0; }
+      86%, 100% { opacity: 1; }
+    }
+
+    @keyframes fadeUp {
+      0%, 2% { opacity: 0; transform: translateY(18px); }
+      5%, 100% { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeUpDelay {
+      0%, 6% { opacity: 0; transform: translateY(18px); }
+      9%, 100% { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeUpDelayTwo {
+      0%, 10% { opacity: 0; transform: translateY(18px); }
+      13%, 100% { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeUpDelayThree {
+      0%, 14% { opacity: 0; transform: translateY(18px); }
+      17%, 100% { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes timerA {
+      0%, 16% { opacity: 1; }
+      18%, 100% { opacity: 0; }
+    }
+
+    @keyframes timerB {
+      0%, 16% { opacity: 0; }
+      18%, 49% { opacity: 1; }
+      52%, 100% { opacity: 0; }
+    }
+
+    @keyframes timerC {
+      0%, 48% { opacity: 0; }
+      51%, 100% { opacity: 1; }
+    }
+
+    @keyframes pulseRing {
+      0%, 18% { opacity: 0; transform: scale(0.92); }
+      21%, 30% { opacity: 1; transform: scale(1); }
+      33%, 100% { opacity: 0; transform: scale(1.08); }
+    }
+
+    @keyframes progressFill {
+      0%, 32% { transform: scaleX(0.08); }
+      39% { transform: scaleX(0.28); }
+      45% { transform: scaleX(0.58); }
+      51% { transform: scaleX(1); }
+      100% { transform: scaleX(1); }
+    }
+
+    @keyframes cursorMove {
+      0%, 17% { opacity: 0; transform: translate(0, 0); }
+      21% { opacity: 1; transform: translate(0, 0); }
+      29% { opacity: 1; transform: translate(0, 134px); }
+      38% { opacity: 1; transform: translate(0, 268px); }
+      48% { opacity: 1; transform: translate(0, 402px); }
+      53%, 100% { opacity: 0; transform: translate(0, 402px); }
+    }
+
+    @keyframes dotOne {
+      0%, 100% { fill: var(--accent); stroke: rgba(20,97,75,0.2); }
+    }
+
+    @keyframes dotTwo {
+      0%, 15% { fill: #ffffff; stroke: rgba(20,97,75,0.22); }
+      18%, 100% { fill: var(--accent); stroke: rgba(20,97,75,0.2); }
+    }
+
+    @keyframes dotThree {
+      0%, 31% { fill: #ffffff; stroke: rgba(20,97,75,0.22); }
+      34%, 100% { fill: var(--accent); stroke: rgba(20,97,75,0.2); }
+    }
+
+    @keyframes dotFour {
+      0%, 49% { fill: #ffffff; stroke: rgba(20,97,75,0.22); }
+      52%, 100% { fill: var(--accent); stroke: rgba(20,97,75,0.2); }
+    }
+
+    @keyframes dotFive {
+      0%, 66% { fill: #ffffff; stroke: rgba(20,97,75,0.22); }
+      69%, 100% { fill: var(--accent); stroke: rgba(20,97,75,0.2); }
+    }
+
+    @keyframes dotSix {
+      0%, 83% { fill: #ffffff; stroke: rgba(20,97,75,0.22); }
+      86%, 100% { fill: var(--accent); stroke: rgba(20,97,75,0.2); }
+    }
+  </style>
 
   <rect width="1600" height="900" fill="url(#bgGradient)"/>
-  <circle cx="1230" cy="220" r="310" fill="url(#mintGlow)"/>
-  <circle cx="310" cy="720" r="240" fill="url(#goldGlow)"/>
+  <circle cx="132" cy="106" r="172" fill="#e6f1eb"/>
+  <circle cx="1462" cy="776" r="218" fill="#dbeee6"/>
+  <path d="M144 740C286 616 450 600 560 664C670 728 840 734 962 642C1084 550 1252 516 1458 620" stroke="rgba(20,97,75,0.09)" stroke-width="92" stroke-linecap="round"/>
 
-  <g filter="url(#softShadow)" opacity="0.95">
-    <rect x="110" y="132" width="256" height="136" rx="30" fill="#fffdf7"/>
-    <text class="label" x="142" y="176">PWA fit platform</text>
-    <text class="title" x="138" y="242" font-size="42">fit</text>
-    <text class="subtitle" x="142" y="268" font-size="18">тренировки, питание, AI и аналитика</text>
+  <g class="scene-fade-up">
+    <text class="hero-kicker" x="120" y="124">FIT PWA DEMO</text>
+    <text class="hero-title" x="120" y="184">От старта тренировки до сохранённой истории</text>
+    <text class="hero-subtitle" x="120" y="228">Динамический 30-секундный ролик для озвучки: фокус-режим, таймер, шаги упражнений, завершение и AI-разбор.</text>
   </g>
 
-  <g class="float-card" filter="url(#softShadow)">
-    <rect x="1160" y="140" width="260" height="160" rx="30" fill="#fffdf7"/>
-    <text class="label" x="1192" y="178">результат</text>
-    <text class="kpiValue" x="1190" y="228">+4 недели</text>
-    <text class="screenText" x="1192" y="258">истории для AI-анализа</text>
-    <rect x="1192" y="275" width="176" height="12" rx="6" fill="#d7efe7"/>
-    <rect x="1192" y="275" width="126" height="12" rx="6" fill="#14614b" fill-opacity="0.9"/>
+  <g class="scene-fade-up-delay">
+    <rect x="120" y="286" width="272" height="108" rx="28" class="surface" filter="url(#cardShadow)"/>
+    <text class="phone-label" x="152" y="326">СЦЕНА 01</text>
+    <text class="phone-title" x="152" y="362">Старт тренировки</text>
+    <text class="caption" x="152" y="389">Пользователь открывает текущий день и запускает режим тренировки.</text>
   </g>
 
-  <g class="float-card delay-1" filter="url(#softShadow)">
-    <rect x="150" y="620" width="280" height="158" rx="30" fill="#fffdf7"/>
-    <text class="label" x="182" y="660">ритм</text>
-    <text class="kpiValue" x="180" y="714">3 / 4</text>
-    <text class="screenText" x="182" y="744">тренировки в целевом темпе</text>
+  <g class="scene-fade-up-delay-2">
+    <rect x="120" y="418" width="272" height="108" rx="28" class="surface" filter="url(#cardShadow)"/>
+    <text class="phone-label" x="152" y="458">СЦЕНА 02</text>
+    <text class="phone-title" x="152" y="494">Фокус и таймер</text>
+    <text class="caption" x="152" y="521">На телефоне остаётся только тренировка: шаги, таймер и сохранение.</text>
   </g>
 
-  <g class="float-card delay-2" filter="url(#softShadow)">
-    <rect x="1160" y="620" width="282" height="158" rx="30" fill="#fffdf7"/>
-    <text class="label" x="1192" y="660">AI</text>
-    <text class="kpiValue" x="1190" y="714">proposal-first</text>
-    <text class="screenText" x="1192" y="744">планы создаются и применяются под контролем</text>
+  <g class="scene-fade-up-delay-3">
+    <rect x="120" y="550" width="272" height="152" rx="28" class="surface" filter="url(#cardShadow)"/>
+    <text class="phone-label" x="152" y="590">СЦЕНА 03</text>
+    <text class="phone-title" x="152" y="626">История и AI</text>
+    <text class="caption" x="152" y="653">После завершения время и нагрузка попадают в историю, а AI даёт вывод по восстановлению и следующей неделе.</text>
   </g>
 
-  <g filter="url(#shadow)">
-    <rect x="500" y="106" width="600" height="688" rx="62" fill="#151311"/>
-    <rect x="534" y="140" width="532" height="640" rx="48" fill="url(#screenGradient)"/>
-    <rect x="700" y="122" width="166" height="18" rx="9" fill="#2a251f"/>
-    <rect x="536" y="140" width="532" height="70" rx="48" fill="#fffdf7"/>
-    <circle cx="580" cy="176" r="18" fill="#d7efe7"/>
-    <rect x="612" y="160" width="188" height="14" rx="7" fill="#ece6d7"/>
-    <rect x="612" y="182" width="132" height="10" rx="5" fill="#f2ede1"/>
-    <rect x="930" y="158" width="98" height="34" rx="17" fill="#e8f4ef"/>
-    <text class="pillText" x="959" y="179">онлайн</text>
+  <g class="scene-fade-up" transform="translate(0 0)">
+    <rect x="475" y="162" width="650" height="576" rx="54" fill="url(#accentGradient)" filter="url(#softShadow)"/>
+    <rect x="498" y="186" width="604" height="528" rx="42" class="surface"/>
+    <rect x="737" y="176" width="126" height="12" rx="6" fill="#d6ded9"/>
+    <text class="phone-label" x="532" y="229">FIT / ТРЕНИРОВКА</text>
   </g>
 
   <g clip-path="url(#phoneClip)">
-    <g class="scene scene-dashboard">
-      <rect x="560" y="232" width="474" height="108" rx="30" fill="#fffdf7"/>
-      <text class="label" x="596" y="272">обзор</text>
-      <text class="screenTitle" x="594" y="312">Весь прогресс под рукой</text>
-      <text class="screenText" x="596" y="338">без длинной прокрутки и перегруженных экранов</text>
+    <rect x="475" y="162" width="650" height="576" fill="#fffdf7"/>
 
-      <rect x="560" y="366" width="228" height="148" rx="28" fill="#fffdf7"/>
-      <text class="kpiLabel" x="590" y="410">Тренировки</text>
-      <text class="kpiValue" x="590" y="460">12</text>
-      <text class="screenText" x="590" y="490">сессий за 28 дней</text>
-
-      <rect x="806" y="366" width="228" height="148" rx="28" fill="#fffdf7"/>
-      <text class="kpiLabel" x="836" y="410">Питание</text>
-      <text class="kpiValue" x="836" y="460">93%</text>
-      <text class="screenText" x="836" y="490">попадание в цели</text>
-
-      <rect x="560" y="540" width="474" height="178" rx="30" fill="#fffdf7"/>
-      <text class="kpiLabel" x="596" y="584">Приоритет на неделю</text>
-      <rect x="596" y="610" width="402" height="14" rx="7" fill="#ece6d7"/>
-      <rect x="596" y="610" width="292" height="14" rx="7" fill="#14614b" fill-opacity="0.85"/>
-      <text class="screenText" x="596" y="652">Стабилизировать нагрузку и держать белок</text>
-      <text class="screenText" x="596" y="680">AI уже видит тренировки, питание и замеры тела</text>
-    </g>
-
-    <g class="scene scene-workouts">
-      <rect x="560" y="232" width="474" height="98" rx="30" fill="#fffdf7"/>
-      <text class="label" x="596" y="270">тренировка</text>
-      <text class="screenTitle" x="594" y="306">Пошаговое выполнение дня</text>
-
-      <g>
-        <rect x="560" y="356" width="474" height="88" rx="26" fill="#eaf5f0"/>
-        <circle cx="604" cy="400" r="16" fill="#2ba36c"/>
-        <path d="M596 400.5l5 5 10-11" stroke="#fffef9" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-        <text class="screenTitle" x="636" y="396" font-size="22">Жим лёжа</text>
-        <text class="screenText" x="636" y="420">сохранено, шаг завершён</text>
+    <g class="scene scene-open">
+      <rect x="514" y="248" width="572" height="132" rx="28" class="surface-soft"/>
+      <text class="phone-title" x="546" y="293">Сегодня: спина и тяга</text>
+      <text class="body" x="546" y="332">4 упражнения • 8 подходов • цель — силовой объём</text>
+      <rect x="546" y="350" width="140" height="14" rx="7" fill="#dce8e2"/>
+      <rect x="700" y="350" width="96" height="14" rx="7" fill="#dce8e2"/>
+      <rect x="514" y="406" width="274" height="242" rx="28" class="surface" filter="url(#cardShadow)"/>
+      <text class="phone-label" x="546" y="446">ШАГИ</text>
+      <g transform="translate(546 474)">
+        <rect width="206" height="42" rx="21" class="pill-active"/>
+        <circle cx="25" cy="21" r="11" fill="#14614b"/>
+        <text class="badge" x="21" y="27" fill="#fffdf7">1</text>
+        <text class="step-title" x="52" y="27">Тяга верхнего блока</text>
       </g>
-
-      <g class="pulse">
-        <rect x="560" y="462" width="474" height="128" rx="30" fill="#fffdf7" stroke="#14614b" stroke-opacity="0.25" stroke-width="2"/>
-        <text class="screenTitle" x="594" y="508" font-size="22">Тяга блока</text>
-        <text class="screenText" x="594" y="536">Подход 1: 12 повторов · 45 кг · RPE 8</text>
-        <text class="screenText" x="594" y="562">Подход 2: 10 повторов · 47.5 кг · RPE 8.5</text>
+      <g transform="translate(546 530)">
+        <rect width="206" height="42" rx="21" class="ghost"/>
+        <circle cx="25" cy="21" r="11" fill="#ffffff" stroke="#c7d8cf"/>
+        <text class="badge" x="21" y="27" fill="#6f675b">2</text>
+        <text class="step-title" x="52" y="27">Тяга штанги</text>
       </g>
-
-      <g opacity="0.72">
-        <rect x="560" y="608" width="474" height="88" rx="26" fill="#f5f1e7"/>
-        <circle cx="604" cy="652" r="16" fill="#ece6d7"/>
-        <path d="M599 652h10" stroke="#6f675b" stroke-width="3" stroke-linecap="round"/>
-        <text class="screenTitle" x="636" y="648" font-size="22">Приседания</text>
-        <text class="screenText" x="636" y="672">откроются после сохранения текущего шага</text>
+      <g transform="translate(546 586)">
+        <rect width="206" height="42" rx="21" class="ghost"/>
+        <circle cx="25" cy="21" r="11" fill="#ffffff" stroke="#c7d8cf"/>
+        <text class="badge" x="21" y="27" fill="#6f675b">3</text>
+        <text class="step-title" x="52" y="27">Гребля сидя</text>
+      </g>
+      <g transform="translate(824 406)">
+        <rect width="262" height="242" rx="28" class="surface" filter="url(#cardShadow)"/>
+        <text class="phone-label" x="30" y="40">КАРТОЧКА ДНЯ</text>
+        <text class="value" x="30" y="90">00:00:00</text>
+        <text class="small" x="30" y="120">Таймер ещё не запущен</text>
+        <rect x="30" y="150" width="202" height="48" rx="24" class="pill-dark"/>
+        <text class="badge" x="83" y="181" fill="#fffdf7">Начать тренировку</text>
       </g>
     </g>
 
-    <g class="scene scene-nutrition">
-      <rect x="560" y="232" width="474" height="98" rx="30" fill="#fffdf7"/>
-      <text class="label" x="596" y="270">питание</text>
-      <text class="screenTitle" x="594" y="306">Баланс дня и AI-разбор еды</text>
+    <g class="scene scene-focus">
+      <rect x="500" y="206" width="600" height="64" rx="28" class="surface"/>
+      <text class="phone-title" x="536" y="247">Фокус-режим</text>
+      <rect x="954" y="221" width="112" height="34" rx="17" class="pill"/>
+      <text class="badge" x="980" y="243" fill="#14614b">Шаг 1 / 4</text>
 
-      <rect x="560" y="356" width="228" height="166" rx="30" fill="#fffdf7"/>
-      <text class="kpiLabel" x="592" y="396">Калории</text>
-      <text class="kpiValue" x="592" y="448">2140</text>
-      <rect x="592" y="468" width="160" height="10" rx="5" fill="#ece6d7"/>
-      <rect x="592" y="468" width="132" height="10" rx="5" fill="#14614b" fill-opacity="0.88"/>
-      <text class="screenText" x="592" y="500">цель удерживается</text>
+      <rect x="514" y="290" width="572" height="214" rx="38" class="surface-soft"/>
+      <text class="phone-label" x="546" y="332">ТАЙМЕР ТРЕНИРОВКИ</text>
+      <g class="timer-state-a">
+        <text class="timer" x="546" y="414">00:00:00</text>
+      </g>
+      <g class="timer-state-b">
+        <text class="timer" x="546" y="414">00:18:42</text>
+      </g>
+      <g class="timer-state-c">
+        <text class="timer" x="546" y="414">01:12:08</text>
+      </g>
+      <text class="body" x="546" y="452">Текущий шаг: тяга верхнего блока</text>
+      <rect x="546" y="470" width="142" height="18" rx="9" fill="#d8e8e1"/>
+      <rect x="698" y="470" width="98" height="18" rx="9" fill="#d8e8e1"/>
 
-      <rect x="806" y="356" width="228" height="166" rx="30" fill="#fffdf7"/>
-      <text class="kpiLabel" x="838" y="396">Белок</text>
-      <text class="kpiValue" x="838" y="448">152 г</text>
-      <rect x="838" y="468" width="160" height="10" rx="5" fill="#ece6d7"/>
-      <rect x="838" y="468" width="118" height="10" rx="5" fill="#2f7c62" fill-opacity="0.88"/>
-      <text class="screenText" x="838" y="500">не хватает чуть-чуть до цели</text>
+      <circle class="pulse-ring" cx="1000" cy="340" r="62" fill="none" stroke="rgba(20,97,75,0.15)" stroke-width="24"/>
+      <circle cx="1000" cy="340" r="42" fill="#ffffff" stroke="#cfe3da"/>
+      <path d="M994 324L1018 340L994 356V324Z" fill="#14614b"/>
 
-      <rect x="560" y="548" width="474" height="170" rx="30" fill="#fffdf7"/>
-      <text class="kpiLabel" x="594" y="590">Фото еды</text>
-      <rect x="596" y="612" width="150" height="84" rx="22" fill="#ece6d7"/>
-      <rect class="scan-line" x="596" y="612" width="150" height="8" rx="4" fill="#14614b" fill-opacity="0.4"/>
-      <text class="screenText" x="772" y="636">Распознано блюдо</text>
-      <text class="screenText" x="772" y="664">примерно 620 ккал</text>
-      <text class="screenText" x="772" y="692">можно вписать в план питания</text>
+      <rect x="514" y="530" width="572" height="124" rx="32" class="surface" filter="url(#cardShadow)"/>
+      <text class="phone-label" x="546" y="570">СЕЙЧАС НА ЭКРАНЕ</text>
+      <text class="body" x="546" y="608">Повторы, вес и RPE по текущему упражнению. Следующие шаги ещё закрыты, пока упражнение не сохранено.</text>
+    </g>
+
+    <g class="scene scene-steps">
+      <rect x="500" y="200" width="224" height="502" rx="32" class="surface-soft"/>
+      <text class="phone-label" x="532" y="244">ШАГИ ТРЕНИРОВКИ</text>
+      <rect x="532" y="270" width="160" height="422" rx="28" fill="#f4f7f4"/>
+
+      <g transform="translate(548 292)">
+        <rect width="128" height="104" rx="24" class="pill-active"/>
+        <circle cx="24" cy="24" r="12" fill="#1f8f62"/>
+        <path d="M19 24L23 28L30 19" stroke="#fffdf7" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        <text class="step-title" x="20" y="58">Тяга</text>
+        <text class="step-subtitle" x="20" y="82">Сохранено</text>
+      </g>
+
+      <g transform="translate(548 410)">
+        <rect width="128" height="104" rx="24" class="pill-active"/>
+        <circle cx="24" cy="24" r="12" fill="#1f8f62"/>
+        <path d="M19 24L23 28L30 19" stroke="#fffdf7" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        <text class="step-title" x="20" y="58">Штанга</text>
+        <text class="step-subtitle" x="20" y="82">Сохранено</text>
+      </g>
+
+      <g transform="translate(548 528)">
+        <rect width="128" height="104" rx="24" class="pill-active"/>
+        <circle cx="24" cy="24" r="12" fill="#14614b"/>
+        <text class="badge" x="20" y="29" fill="#fffdf7">3</text>
+        <text class="step-title" x="20" y="58">Гребля</text>
+        <text class="step-subtitle" x="20" y="82">Текущий шаг</text>
+      </g>
+
+      <g transform="translate(532 292)">
+        <circle class="cursor-dot" cx="168" cy="52" r="12" fill="#14614b"/>
+      </g>
+
+      <rect x="752" y="220" width="334" height="292" rx="32" class="surface" filter="url(#cardShadow)"/>
+      <text class="phone-title" x="788" y="270">Гребля сидя</text>
+      <text class="small" x="788" y="302">3 подхода — каждую строку нужно заполнить полностью</text>
+
+      <g transform="translate(788 328)">
+        <rect width="262" height="48" rx="24" class="ghost"/>
+        <text class="badge" x="22" y="30" fill="#14614b">Подход 1</text>
+        <text class="step-subtitle" x="120" y="30">12 повторов</text>
+        <text class="step-subtitle" x="200" y="30">40 кг / RPE 7</text>
+      </g>
+      <g transform="translate(788 388)">
+        <rect width="262" height="48" rx="24" class="ghost"/>
+        <text class="badge" x="22" y="30" fill="#14614b">Подход 2</text>
+        <text class="step-subtitle" x="120" y="30">10 повторов</text>
+        <text class="step-subtitle" x="200" y="30">45 кг / RPE 8</text>
+      </g>
+      <g transform="translate(788 448)">
+        <rect width="262" height="48" rx="24" class="pill-active"/>
+        <text class="badge" x="22" y="30" fill="#14614b">Подход 3</text>
+        <text class="step-subtitle" x="120" y="30">8 повторов</text>
+        <text class="step-subtitle" x="196" y="30">50 кг / RPE 9</text>
+      </g>
+
+      <rect x="752" y="540" width="334" height="132" rx="32" class="surface-soft"/>
+      <text class="phone-label" x="788" y="582">ПРОГРЕСС ПО ДНЮ</text>
+      <rect x="788" y="608" width="262" height="18" rx="9" fill="#d7e7df"/>
+      <rect x="788" y="608" width="262" height="18" rx="9" fill="url(#lineGradient)" class="progress-fill"/>
+      <text class="body" x="788" y="658">Сохранено 3 из 4 упражнений</text>
+    </g>
+
+    <g class="scene scene-finish">
+      <rect x="514" y="214" width="572" height="480" rx="36" class="surface-soft"/>
+      <text class="phone-label" x="546" y="258">ФИНИШ</text>
+      <text class="phone-title" x="546" y="305">Все шаги пройдены</text>
+      <text class="body" x="546" y="344">Кнопка завершения становится активной только после сохранения всех упражнений.</text>
+
+      <g transform="translate(546 388)">
+        <rect width="494" height="140" rx="28" class="surface"/>
+        <text class="phone-label" x="28" y="40">ИТОГ ТРЕНИРОВКИ</text>
+        <text class="value" x="28" y="92">01:12:08</text>
+        <text class="small" x="218" y="89">Время прикрепится к тренировке</text>
+        <rect x="28" y="102" width="148" height="16" rx="8" fill="#d8e9e2"/>
+        <rect x="190" y="102" width="112" height="16" rx="8" fill="#d8e9e2"/>
+        <rect x="316" y="102" width="84" height="16" rx="8" fill="#d8e9e2"/>
+      </g>
+
+      <g transform="translate(612 560)">
+        <rect width="376" height="108" rx="28" class="surface" filter="url(#cardShadow)"/>
+        <text class="phone-title" x="34" y="42">Сохранить время?</text>
+        <text class="small" x="34" y="68">Если да — таймер попадёт в историю этой тренировки.</text>
+        <rect x="34" y="74" width="132" height="24" rx="12" class="ghost"/>
+        <text class="badge" x="86" y="91" fill="#6f675b">Нет</text>
+        <rect x="208" y="74" width="134" height="24" rx="12" class="pill-dark"/>
+        <text class="badge" x="247" y="91" fill="#fffdf7">Сохранить</text>
+      </g>
+    </g>
+
+    <g class="scene scene-history">
+      <rect x="514" y="214" width="572" height="128" rx="32" class="surface-soft"/>
+      <text class="phone-label" x="546" y="256">ИСТОРИЯ</text>
+      <text class="phone-title" x="546" y="302">Тренировка сохранена</text>
+      <text class="body" x="546" y="328">Время, тоннаж и ощущение нагрузки сразу попали в аналитику.</text>
+
+      <g transform="translate(514 370)">
+        <rect width="172" height="138" rx="28" class="surface"/>
+        <text class="phone-label" x="28" y="40">ВРЕМЯ</text>
+        <text class="value" x="28" y="88">72 мин</text>
+        <text class="small" x="28" y="114">Сегодня</text>
+      </g>
+      <g transform="translate(707 370)">
+        <rect width="172" height="138" rx="28" class="surface"/>
+        <text class="phone-label" x="28" y="40">ТОННАЖ</text>
+        <text class="value" x="28" y="88">6.4 т</text>
+        <text class="small" x="28" y="114">Выше прошлой недели</text>
+      </g>
+      <g transform="translate(900 370)">
+        <rect width="186" height="138" rx="28" class="surface"/>
+        <text class="phone-label" x="28" y="40">СРЕДНИЙ RPE</text>
+        <text class="value" x="28" y="88">8.1</text>
+        <text class="small" x="28" y="114">Нормальная тяжесть</text>
+      </g>
+
+      <rect x="514" y="536" width="572" height="142" rx="32" class="surface"/>
+      <text class="phone-label" x="546" y="576">ДИНАМИКА</text>
+      <path d="M560 640L642 612L724 620L806 582L888 594L970 558L1042 570" stroke="url(#lineGradient)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="560" cy="640" r="8" fill="#14614b"/>
+      <circle cx="642" cy="612" r="8" fill="#14614b"/>
+      <circle cx="724" cy="620" r="8" fill="#14614b"/>
+      <circle cx="806" cy="582" r="8" fill="#14614b"/>
+      <circle cx="888" cy="594" r="8" fill="#14614b"/>
+      <circle cx="970" cy="558" r="8" fill="#14614b"/>
+      <circle cx="1042" cy="570" r="8" fill="#14614b"/>
+      <text class="chart-label" x="552" y="664">Нед 1</text>
+      <text class="chart-label" x="788" y="664">Нед 4</text>
+      <text class="chart-label" x="1014" y="664">Сейчас</text>
     </g>
 
     <g class="scene scene-ai">
-      <rect x="560" y="232" width="474" height="98" rx="30" fill="#fffdf7"/>
-      <text class="label" x="596" y="270">AI-коуч</text>
-      <text class="screenTitle" x="594" y="306">Чат, анализ истории и новые планы</text>
+      <rect x="514" y="214" width="572" height="112" rx="32" class="surface-soft"/>
+      <text class="phone-label" x="546" y="256">AI-КОУЧ</text>
+      <text class="phone-title" x="546" y="297">Разбор после тренировки</text>
 
-      <rect x="590" y="366" width="288" height="88" rx="26" fill="#f1eee4"/>
-      <text class="screenText" x="620" y="404">Почему усталость растёт к пятнице?</text>
-      <text class="smallText" x="620" y="432">учти тренировки, питание и восстановление</text>
+      <g transform="translate(514 352)">
+        <rect width="572" height="138" rx="32" class="surface"/>
+        <text class="body" x="32" y="50">Сегодня ты закончил силовой день за 72 минуты и удержал средний RPE на уровне 8.1.</text>
+        <text class="body" x="32" y="86">Тоннаж вырос, но перегруза пока нет. На следующей неделе можно добавить вес только в тяге штанги.</text>
+        <rect x="32" y="100" width="174" height="22" rx="11" class="pill"/>
+        <text class="badge" x="66" y="116" fill="#14614b">План уже готов</text>
+      </g>
 
-      <rect x="706" y="478" width="294" height="132" rx="28" fill="#e8f4ef"/>
-      <text class="screenText accentText" x="736" y="518">AI видит всю историю пользователя</text>
-      <text class="screenText accentText" x="736" y="546">и предлагает мягче распределить</text>
-      <text class="screenText accentText" x="736" y="574">объём по неделе без перегруза</text>
-
-      <rect x="590" y="636" width="176" height="46" rx="23" fill="#dff2ea"/>
-      <text class="pillText" x="620" y="665">Подтвердить план</text>
-      <rect x="782" y="636" width="188" height="46" rx="23" fill="#dff2ea"/>
-      <text class="pillText" x="816" y="665">Применить в fit</text>
+      <g transform="translate(514 520)">
+        <rect width="572" height="158" rx="32" class="surface"/>
+        <text class="phone-label" x="32" y="42">СЛЕДУЮЩИЕ ДЕЙСТВИЯ</text>
+        <g transform="translate(32 62)">
+          <rect width="162" height="58" rx="22" class="pill-active"/>
+          <text class="step-title" x="22" y="34">Обновить неделю</text>
+        </g>
+        <g transform="translate(210 62)">
+          <rect width="154" height="58" rx="22" class="ghost"/>
+          <text class="step-title" x="22" y="34">План питания</text>
+        </g>
+        <g transform="translate(380 62)">
+          <rect width="160" height="58" rx="22" class="ghost"/>
+          <text class="step-title" x="22" y="34">Спросить AI</text>
+        </g>
+        <text class="small" x="32" y="144">AI продолжает диалог уже на основе этой завершённой тренировки.</text>
+      </g>
     </g>
   </g>
 
-  <g>
-    <text class="label" x="598" y="836">сценарий демонстрации</text>
-    <line x1="598" y1="858" x2="1002" y2="858" stroke="#d9d2c2" stroke-width="4" stroke-linecap="round"/>
-    <circle class="dot-1" cx="632" cy="858" r="10" fill="#14614b"/>
-    <circle class="dot-2" cx="742" cy="858" r="10" fill="#d7efe7"/>
-    <circle class="dot-3" cx="852" cy="858" r="10" fill="#d7efe7"/>
-    <circle class="dot-4" cx="962" cy="858" r="10" fill="#d7efe7"/>
-    <text class="smallText" x="606" y="884">Обзор</text>
-    <text class="smallText" x="706" y="884">Тренировки</text>
-    <text class="smallText" x="832" y="884">Питание</text>
-    <text class="smallText" x="948" y="884">AI</text>
+  <g class="scene-fade-up-delay">
+    <text class="phone-label" x="120" y="790">ХРОНОЛОГИЯ</text>
+    <line x1="120" y1="824" x2="1480" y2="824" class="timeline-line"/>
+    <g>
+      <circle class="timeline-dot-1" cx="180" cy="824" r="14" fill="#14614b" stroke="rgba(20,97,75,0.2)" stroke-width="6"/>
+      <text class="caption" x="152" y="858">Старт</text>
+    </g>
+    <g>
+      <circle class="timeline-dot-2" cx="410" cy="824" r="14" fill="#fffdf7" stroke="rgba(20,97,75,0.22)" stroke-width="6"/>
+      <text class="caption" x="381" y="858">Фокус</text>
+    </g>
+    <g>
+      <circle class="timeline-dot-3" cx="640" cy="824" r="14" fill="#fffdf7" stroke="rgba(20,97,75,0.22)" stroke-width="6"/>
+      <text class="caption" x="616" y="858">Шаги</text>
+    </g>
+    <g>
+      <circle class="timeline-dot-4" cx="870" cy="824" r="14" fill="#fffdf7" stroke="rgba(20,97,75,0.22)" stroke-width="6"/>
+      <text class="caption" x="841" y="858">Финиш</text>
+    </g>
+    <g>
+      <circle class="timeline-dot-5" cx="1100" cy="824" r="14" fill="#fffdf7" stroke="rgba(20,97,75,0.22)" stroke-width="6"/>
+      <text class="caption" x="1068" y="858">История</text>
+    </g>
+    <g>
+      <circle class="timeline-dot-6" cx="1330" cy="824" r="14" fill="#fffdf7" stroke="rgba(20,97,75,0.22)" stroke-width="6"/>
+      <text class="caption" x="1315" y="858">AI</text>
+    </g>
   </g>
 </svg>
