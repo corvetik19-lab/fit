@@ -2,6 +2,21 @@
 
 ## 2026-03-13
 
+### Production hardening: первый tranche декомпозиции `admin-users-directory.tsx`
+
+- Вынес из [admin-users-directory.tsx](/C:/fit/src/components/admin-users-directory.tsx) model/helper слой в [admin-users-directory-model.ts](/C:/fit/src/components/admin-users-directory-model.ts).
+- В новом модуле теперь живут типы каталога пользователей, сегментов и bulk-wave истории, статические словари ролей/активности, format helpers и derive helpers для summary/filter pills.
+- Сам [admin-users-directory.tsx](/C:/fit/src/components/admin-users-directory.tsx) стал ближе к orchestrator-компоненту: fetch/state/UI остались внутри, а data-model и presentation-independent logic больше не дублируются прямо в файле.
+- Полную декомпозицию каталога ещё не считаю завершённой: selection state, bulk action orchestration и крупные UI-секции ещё пойдут отдельными tranche'ами.
+
+### Проверка: admin users directory decomposition
+
+- `npx eslint src/components/admin-users-directory.tsx src/components/admin-users-directory-model.ts`
+- `npx tsc -p tsconfig.json --noEmit --incremental false`
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
+
 ### Production hardening: первый tranche декомпозиции `metrics.ts`
 
 - Вынес из [metrics.ts](/C:/fit/src/lib/dashboard/metrics.ts) два независимых слоя в [dashboard-utils.ts](/C:/fit/src/lib/dashboard/dashboard-utils.ts) и [dashboard-snapshot.ts](/C:/fit/src/lib/dashboard/dashboard-snapshot.ts).

@@ -9,288 +9,29 @@ import {
   canUseRootAdminControls,
   type PlatformAdminRole,
 } from "@/lib/admin-permissions";
-
-type AdminRole = "super_admin" | "support_admin" | "analyst" | null;
-type ActivityBucket = "today" | "seven_days" | "thirty_days" | "stale" | "never";
-type ActivitySource = "workout" | "nutrition" | "ai" | "auth" | "profile" | null;
-type ActivityFilter =
-  | "all"
-  | "active_7d"
-  | "idle_30d"
-  | "never_signed_in"
-  | "backlog"
-  | "paid";
-type AdminUsersSortKey =
-  | "created_desc"
-  | "activity_desc"
-  | "sign_in_desc"
-  | "workout_desc"
-  | "ai_desc"
-  | "backlog_desc";
-type BulkAction =
-  | "queue_export"
-  | "queue_resync"
-  | "queue_suspend"
-  | "grant_trial"
-  | "enable_entitlement";
-
-type AdminUserRow = {
-  user_id: string;
-  email: string | null;
-  full_name: string | null;
-  created_at: string;
-  updated_at: string;
-  last_sign_in_at: string | null;
-  admin_role: AdminRole;
-  activity: {
-    bucket: ActivityBucket;
-    last_activity_at: string | null;
-    source: ActivitySource;
-  };
-  workout: {
-    active_programs: number;
-    completed_days: number;
-    in_progress_days: number;
-    logged_sets: number;
-    last_workout_at: string | null;
-  };
-  nutrition: {
-    meals: number;
-    last_meal_at: string | null;
-  };
-  ai: {
-    messages: number;
-    last_ai_at: string | null;
-  };
-  operations: {
-    pending_support_actions: number;
-    export_status: string | null;
-    export_updated_at: string | null;
-    deletion_status: string | null;
-    deletion_hold_until: string | null;
-    deletion_updated_at: string | null;
-    has_backlog: boolean;
-  };
-  billing: {
-    subscription_status: string | null;
-    subscription_provider: string | null;
-    current_period_end: string | null;
-    is_active: boolean;
-  };
-  flags: {
-    has_profile: boolean;
-    never_signed_in: boolean;
-    is_primary_super_admin: boolean;
-  };
-};
-
-type AdminUsersSummary = {
-  totalUsers: number;
-  filteredUsers: number;
-  adminCounts: {
-    superAdmins: number;
-    supportAdmins: number;
-    analysts: number;
-  };
-  activityBuckets: {
-    today: number;
-    sevenDays: number;
-    thirtyDays: number;
-    stale: number;
-    never: number;
-  };
-  operations: {
-    usersWithBacklog: number;
-    pendingSupportActions: number;
-    queuedExports: number;
-    activeDeletionHolds: number;
-  };
-  billing: {
-    activeSubscriptions: number;
-    paidButStale: number;
-  };
-  hygiene: {
-    neverSignedIn: number;
-    withoutProfile: number;
-    rootPolicyViolations: number;
-  };
-};
-
-type AdminUsersSegments = {
-  priorityQueue: Array<{
-    user_id: string;
-    display_name: string;
-    email: string | null;
-    admin_role: NonNullable<AdminRole> | "user";
-    activity_bucket: ActivityBucket;
-    pending_support_actions: number;
-    export_status: string | null;
-    deletion_status: string | null;
-    subscription_status: string | null;
-  }>;
-  inactivePaid: Array<{
-    user_id: string;
-    display_name: string;
-    email: string | null;
-    activity_bucket: ActivityBucket;
-    last_activity_at: string | null;
-    subscription_status: string | null;
-    current_period_end: string | null;
-  }>;
-  newestUsers: Array<{
-    user_id: string;
-    display_name: string;
-    email: string | null;
-    created_at: string;
-    never_signed_in: boolean;
-    has_profile: boolean;
-  }>;
-  topWorkoutUsers: Array<{
-    user_id: string;
-    display_name: string;
-    email: string | null;
-    logged_sets: number;
-    completed_days: number;
-    active_programs: number;
-  }>;
-};
-
-type RecentBulkWave = {
-  action: string;
-  actor_user_id: string | null;
-  batch_id: string | null;
-  created_at: string;
-  failed: number;
-  id: string;
-  processed: number;
-  reason: string | null;
-  succeeded: number;
-  user_count: number;
-};
-
-const emptySummary: AdminUsersSummary = {
-  totalUsers: 0,
-  filteredUsers: 0,
-  adminCounts: {
-    superAdmins: 0,
-    supportAdmins: 0,
-    analysts: 0,
-  },
-  activityBuckets: {
-    today: 0,
-    sevenDays: 0,
-    thirtyDays: 0,
-    stale: 0,
-    never: 0,
-  },
-  operations: {
-    usersWithBacklog: 0,
-    pendingSupportActions: 0,
-    queuedExports: 0,
-    activeDeletionHolds: 0,
-  },
-  billing: {
-    activeSubscriptions: 0,
-    paidButStale: 0,
-  },
-  hygiene: {
-    neverSignedIn: 0,
-    withoutProfile: 0,
-    rootPolicyViolations: 0,
-  },
-};
-
-const emptySegments: AdminUsersSegments = {
-  priorityQueue: [],
-  inactivePaid: [],
-  newestUsers: [],
-  topWorkoutUsers: [],
-};
-
-const createdAtFormatter = new Intl.DateTimeFormat("ru-RU", {
-  day: "2-digit",
-  month: "long",
-  year: "numeric",
-});
-
-const dateTimeFormatter = new Intl.DateTimeFormat("ru-RU", {
-  day: "2-digit",
-  month: "short",
-  hour: "2-digit",
-  minute: "2-digit",
-});
-
-const roleLabels: Record<NonNullable<AdminRole> | "user", string> = {
-  super_admin: "Супер-админ",
-  support_admin: "Поддержка",
-  analyst: "Аналитик",
-  user: "Пользователь",
-};
-
-const activityLabels: Record<ActivityBucket, string> = {
-  today: "Активен сегодня",
-  seven_days: "Активен 7 дней",
-  thirty_days: "Активен 30 дней",
-  stale: "Тишина 30+ дней",
-  never: "Нет сигналов",
-};
-
-const activitySourceLabels: Record<Exclude<ActivitySource, null>, string> = {
-  workout: "тренировки",
-  nutrition: "питание",
-  ai: "ИИ",
-  auth: "авторизация",
-  profile: "профиль",
-};
-
-const activityToneClasses: Record<ActivityBucket, string> = {
-  today: "border-emerald-300/70 bg-emerald-50 text-emerald-800",
-  seven_days: "border-sky-300/70 bg-sky-50 text-sky-800",
-  thirty_days: "border-amber-300/70 bg-amber-50 text-amber-800",
-  stale: "border-rose-300/70 bg-rose-50 text-rose-800",
-  never: "border-slate-300/70 bg-slate-100 text-slate-700",
-};
-
-function formatDate(value: string | null) {
-  if (!value) {
-    return "Нет данных";
-  }
-
-  return createdAtFormatter.format(new Date(value));
-}
-
-function formatDateTime(value: string | null) {
-  if (!value) {
-    return "Нет данных";
-  }
-
-  return dateTimeFormatter.format(new Date(value));
-}
-
-function formatStatus(value: string | null) {
-  if (!value) {
-    return "нет";
-  }
-
-  return value.replaceAll("_", " ");
-}
-
-function formatBulkAction(value: string) {
-  switch (value) {
-    case "queue_export":
-      return "Поставить выгрузку";
-    case "queue_resync":
-      return "Пересобрать контекст";
-    case "queue_suspend":
-      return "Ограничить аккаунт";
-    case "grant_trial":
-      return "Выдать пробный доступ";
-    case "enable_entitlement":
-      return "Открыть доступ к функции";
-    default:
-      return value.replaceAll("_", " ");
-  }
-}
+import {
+  activityLabels,
+  activitySourceLabels,
+  activityToneClasses,
+  buildActiveFilterSummary,
+  buildVisibleUsersSummary,
+  emptySegments,
+  emptySummary,
+  formatBulkAction,
+  formatDate,
+  formatDateTime,
+  formatStatus,
+  roleLabels,
+  type ActivityBucket,
+  type ActivityFilter,
+  type AdminRoleFilter,
+  type AdminUserRow,
+  type AdminUsersSegments,
+  type AdminUsersSortKey,
+  type AdminUsersSummary,
+  type BulkAction,
+  type RecentBulkWave,
+} from "@/components/admin-users-directory-model";
 
 function DirectoryMetricCard({
   label,
@@ -325,9 +66,7 @@ export function AdminUsersDirectory({
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [roleFilter, setRoleFilter] = useState<
-    "all" | "super_admin" | "support_admin" | "analyst" | "user"
-  >("all");
+  const [roleFilter, setRoleFilter] = useState<AdminRoleFilter>("all");
   const [activityFilter, setActivityFilter] = useState<ActivityFilter>("all");
   const [sortKey, setSortKey] = useState<AdminUsersSortKey>("created_desc");
   const [reloadToken, setReloadToken] = useState(0);
@@ -425,20 +164,10 @@ export function AdminUsersDirectory({
     };
   }, [activityFilter, deferredSearchQuery, reloadToken, roleFilter, sortKey]);
 
-  const summary = useMemo(() => {
-    return {
-      total: users.length,
-      superAdmins: catalogSummary.adminCounts.superAdmins,
-      supportAdmins: catalogSummary.adminCounts.supportAdmins,
-      analysts: catalogSummary.adminCounts.analysts,
-      active7d: users.filter((user) =>
-        user.activity.bucket === "today" || user.activity.bucket === "seven_days",
-      ).length,
-      backlog: users.filter((user) => user.operations.has_backlog).length,
-      neverSignedIn: users.filter((user) => user.flags.never_signed_in).length,
-      paid: users.filter((user) => user.billing.is_active).length,
-    };
-  }, [catalogSummary.adminCounts, users]);
+  const summary = useMemo(
+    () => buildVisibleUsersSummary(users, catalogSummary),
+    [catalogSummary, users],
+  );
 
   const isFiltered =
     Boolean(searchQuery.trim()) || roleFilter !== "all" || activityFilter !== "all";
@@ -446,16 +175,17 @@ export function AdminUsersDirectory({
   const allVisibleSelected =
     visibleUserIds.length > 0 &&
     visibleUserIds.every((id) => selectedUserIds.includes(id));
-  const activeFilterSummary = [
-    searchQuery.trim() ? `Поиск: ${searchQuery.trim()}` : null,
-    canViewRoleDetails && roleFilter !== "all"
-      ? `Роль: ${roleLabels[roleFilter] ?? roleFilter}`
-      : null,
-    activityFilter !== "all"
-      ? `Активность: ${activityFilter.replaceAll("_", " ")}`
-      : null,
-    sortKey !== "created_desc" ? `Сортировка: ${sortKey.replaceAll("_", " ")}` : null,
-  ].filter((item): item is string => Boolean(item));
+  const activeFilterSummary = useMemo(
+    () =>
+      buildActiveFilterSummary({
+        searchQuery,
+        canViewRoleDetails,
+        roleFilter,
+        activityFilter,
+        sortKey,
+      }),
+    [activityFilter, canViewRoleDetails, roleFilter, searchQuery, sortKey],
+  );
 
   function toggleUserSelection(userId: string) {
     setSelectedUserIds((current) =>
