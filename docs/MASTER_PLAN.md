@@ -76,6 +76,7 @@
 - [x] Вынести из `src/lib/dashboard/metrics.ts` первый tranche независимых helper’ов в `dashboard-utils` и `dashboard-snapshot`.
 - [x] Вынести из `src/components/admin-users-directory.tsx` первый tranche model/helper слоя в отдельный модуль.
 - [x] Вынести из `src/components/admin-user-detail.tsx` первый tranche model/helper слоя в отдельный модуль.
+- [x] Вынести из `src/lib/ai/knowledge.ts` первый tranche model/search helper слоя в отдельный модуль.
 - [ ] Разбить `src/components/workout-day-session.tsx` на UI-композицию, timer/focus hooks, step/save logic и sync helpers.
 - [ ] Разбить `src/lib/dashboard/metrics.ts` на агрегаты, coaching signals, nutrition analytics и snapshot helpers.
 - [ ] Разбить `src/components/admin-users-directory.tsx` на каталог, сегменты, bulk actions и selection state.
@@ -90,6 +91,7 @@
 - [x] Для `metrics.ts` уже есть референсный паттерн: общие analytics/snapshot helper’ы вынесены из главного server-side orchestrator модуля.
 - [x] Для `admin-users-directory.tsx` уже есть референсный паттерн: data model, formatters и summary/filter helpers вынесены из основного client-компонента.
 - [x] Для `admin-user-detail.tsx` уже есть референсный паттерн: типы карточки, словари ролей/статусов и payload/format helpers вынесены из основного client-компонента.
+- [x] Для `knowledge.ts` уже есть референсный паттерн: row/document types и pure retrieval/search helpers вынесены из основного AI knowledge orchestrator модуля.
 - [ ] Async/data orchestration не смешана с визуальной разметкой.
 - [ ] Доменные правила не дублируются между route handlers и `lib`.
 - [ ] Новые модули пригодны для unit/integration тестов без браузера.

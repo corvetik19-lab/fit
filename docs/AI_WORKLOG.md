@@ -2,6 +2,22 @@
 
 ## 2026-03-14
 
+### Production hardening: первый tranche декомпозиции `knowledge.ts`
+
+- Вынес из [knowledge.ts](/C:/fit/src/lib/ai/knowledge.ts) типы строк и pure helper-слой в новый [knowledge-model.ts](/C:/fit/src/lib/ai/knowledge-model.ts).
+- В новый модуль ушли row/document types, retrieval result contracts, форматтеры целей и дней недели, JSON/vector/search helpers, safe number utilities и summary builder для meal items.
+- Сам [knowledge.ts](/C:/fit/src/lib/ai/knowledge.ts) стал ближе к orchestrator-роли: там осталось меньше локального model/search шума и больше фокуса на indexing, retrieval и knowledge document assembly.
+- Сохранил внешний контракт модуля через re-export `RetrievedKnowledgeItem` и `KnowledgeReindexResult`, чтобы helper-рефакторинг не ломал текущие импорты из других AI-модулей.
+- Заодно подтвердил важное правило baseline: прямой `tsc` без `next typegen` по-прежнему шумит на `.next/types`, поэтому правильная воспроизводимая последовательность для gate-проверок — `next typegen -> tsc -> build`.
+
+### Проверка: knowledge decomposition
+
+- `npx eslint src/lib/ai/knowledge.ts src/lib/ai/knowledge-model.ts`
+- `npx next typegen`
+- `npx tsc -p tsconfig.json --noEmit --incremental false`
+- `npm run lint`
+- `npm run build`
+
 ### Production hardening: первый tranche декомпозиции `admin-user-detail.tsx`
 
 - Вынес из [admin-user-detail.tsx](/C:/fit/src/components/admin-user-detail.tsx) model/helper слой в новый [admin-user-detail-model.ts](/C:/fit/src/components/admin-user-detail-model.ts).
