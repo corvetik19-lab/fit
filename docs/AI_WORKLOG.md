@@ -1,5 +1,23 @@
 # AI Worklog
 
+## 2026-03-14
+
+### Production hardening: первый tranche декомпозиции `admin-user-detail.tsx`
+
+- Вынес из [admin-user-detail.tsx](/C:/fit/src/components/admin-user-detail.tsx) model/helper слой в новый [admin-user-detail-model.ts](/C:/fit/src/components/admin-user-detail-model.ts).
+- В новом модуле теперь живут типы карточки пользователя, словари ролей/статусов/действий, форматтеры дат и статусов, а также payload helpers для audit/support/billing timeline.
+- Сам [admin-user-detail.tsx](/C:/fit/src/components/admin-user-detail.tsx) стал ближе к orchestrator-компоненту: визуальная композиция, fetch и section state остались в UI, а presentation-independent model logic больше не размазана по файлу.
+- Заодно санацировал новый model-модуль до нормального UTF-8, чтобы этот tranche одновременно снижал размер монолита и убирал часть mojibake из admin-поверхности.
+- Полную декомпозицию карточки пользователя ещё не считаю завершённой: профиль, активность, операции и billing/timeline блоки всё ещё живут в одном компоненте и пойдут отдельными tranche'ами.
+
+### Проверка: admin user detail decomposition
+
+- `npx eslint src/components/admin-user-detail.tsx src/components/admin-user-detail-model.ts`
+- `npx tsc -p tsconfig.json --noEmit --incremental false`
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
+
 ## 2026-03-13
 
 ### Production hardening: первый tranche декомпозиции `admin-users-directory.tsx`
