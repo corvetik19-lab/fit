@@ -1510,3 +1510,15 @@
 - `npx eslint src/components/page-workspace.tsx src/components/dashboard-workspace.tsx src/components/weekly-program-builder.tsx src/components/nutrition-tracker.tsx`
 - `npm run build`
 - `npm run typecheck`
+
+### 2026-03-13 10:02 - Осветлил ещё и desktop-активные состояния
+
+- В [app-shell-nav.tsx](/C:/fit/src/components/app-shell-nav.tsx) убрал тёмную заливку у активного пункта верхнего desktop-меню и перевёл его на светлое акцентное состояние.
+- В [admin-ai-operations.tsx](/C:/fit/src/components/admin-ai-operations.tsx) осветлил toggle-кнопки режимов обновления.
+- В [admin-user-detail.tsx](/C:/fit/src/components/admin-user-detail.tsx) сделал светлее активные табы карточки пользователя, чтобы десктопный интерфейс выглядел так же мягко, как обновлённые workspace-разделы.
+
+### Проверка: desktop active-state hotfix
+
+- `npx eslint src/components/app-shell-nav.tsx src/components/admin-ai-operations.tsx src/components/admin-user-detail.tsx`
+- `npm run build`
+- `npm run typecheck`

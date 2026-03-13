@@ -109,7 +109,7 @@ export function AdminAiOperations({
           <button
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${
               mode === "full"
-                ? "bg-accent text-white"
+                ? "border border-accent/15 bg-[color-mix(in_srgb,var(--accent-soft)_72%,white)] text-accent"
                 : "border border-border bg-white/80 text-foreground hover:bg-white"
             }`}
             disabled={!canRunReindex}
@@ -121,7 +121,7 @@ export function AdminAiOperations({
           <button
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${
               mode === "embeddings"
-                ? "bg-accent text-white"
+                ? "border border-accent/15 bg-[color-mix(in_srgb,var(--accent-soft)_72%,white)] text-accent"
                 : "border border-border bg-white/80 text-foreground hover:bg-white"
             }`}
             disabled={!canRunReindex}

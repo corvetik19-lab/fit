@@ -565,7 +565,7 @@ export function AdminUserDetail({
                 aria-pressed={isActive}
                 className={`w-full rounded-3xl border px-4 py-3 text-left transition md:w-auto md:min-w-[14rem] ${
                   isActive
-                    ? "border-accent/30 bg-accent-soft text-foreground shadow-[0_18px_45px_-35px_rgba(20,97,75,0.45)]"
+                    ? "border-accent/20 bg-[color-mix(in_srgb,var(--accent-soft)_78%,white)] text-foreground shadow-[0_16px_38px_-34px_rgba(20,97,75,0.22)]"
                     : "border-border bg-white/72 text-foreground hover:bg-white"
                 }`}
                 key={key}

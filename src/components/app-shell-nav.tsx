@@ -257,7 +257,7 @@ export function AppShellNav({
                     aria-current={isActive ? "page" : undefined}
                     className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
                       isActive
-                        ? "border-accent bg-accent text-white"
+                        ? "border-accent/20 bg-[color-mix(in_srgb,var(--accent-soft)_76%,white)] text-foreground shadow-[0_14px_34px_-28px_rgba(20,97,75,0.2)]"
                         : "border-border text-foreground hover:bg-white/70"
                     }`}
                     href={route.href}
