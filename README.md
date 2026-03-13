@@ -74,6 +74,7 @@ npm run typecheck
 
 - `docs/README.md`
 - `docs/USER_GUIDE.md`
+- `docs/AI_EXPLAINED.md`
 - `docs/AI_WORKLOG.md`
 - `docs/MASTER_PLAN.md`
 - `docs/FRONTEND.md`

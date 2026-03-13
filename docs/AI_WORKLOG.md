@@ -1553,3 +1553,13 @@
 
 - Проверена актуальность маршрутов и разделов по текущим страницам `src/app`
 - Проверен охват пользовательских сценариев по текущим компонентам `PageWorkspace`, `WorkoutDaySession`, `AiWorkspace`, `SettingsBillingCenter`
+
+### 2026-03-13 13:41 - Добавил подробное техническое объяснение AI-слоя
+
+- Создан новый файл [AI_EXPLAINED.md](/C:/fit/docs/AI_EXPLAINED.md) с подробным объяснением `RAG`, `CAG`, `KAG` и `Ragas`, а также полного пути AI-запроса внутри `fit`.
+- В [README.md](/C:/fit/README.md) добавлена ссылка на новый AI-гайд, чтобы его можно было быстро открыть из корня репозитория.
+
+### Проверка: AI-документация
+
+- Сверены текущие runtime-файлы: `assistant/route.ts`, `domain-policy.ts`, `user-context.ts`, `knowledge.ts`, `gateway.ts`, `chat.ts`, `structured-knowledge.ts`, `proposal-actions.ts`
+- Сверен eval-контур по `ai-evals/README.md` и `ai-evals/fit_eval/runner.py`
