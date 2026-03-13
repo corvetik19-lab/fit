@@ -59,6 +59,7 @@
 
 - [x] Убрать из активного dev-потока `.next_codex_*`, `.next_stale_*` и другие временные build-папки.
 - [x] Расширить `.gitignore`, чтобы build-мусор и generated artifacts не попадали в рабочий цикл.
+- [x] Зафиксировать line-ending policy через `.gitattributes`, чтобы уменьшить ложный workspace шум на Windows.
 - [ ] Убедиться, что quality gates не оставляют repo-tracked шум вроде изменений в `tsconfig.json`.
 
 ### Docs и entrypoints

@@ -18,6 +18,12 @@
 - `npm run lint`
 - `npm run build`
 
+### Production hardening: line ending policy для release hygiene
+
+- Добавил [/.gitattributes](/C:/fit/.gitattributes), чтобы закрепить LF policy для исходников, docs, config и SQL-файлов.
+- Это не переписывает пользовательские локальные правки, но уменьшает ложный line-ending шум в `git status` и stabilizes workspace hygiene для Windows-разработки и CI.
+- После этого baseline по-прежнему нужно оценивать через `git diff --name-only`, а не только по предупреждениям из working tree, потому что пользовательские локальные файлы всё ещё могут оставаться изменёнными отдельно от quality-gate шума.
+
 ### Production hardening: первый tranche декомпозиции `admin-user-detail.tsx`
 
 - Вынес из [admin-user-detail.tsx](/C:/fit/src/components/admin-user-detail.tsx) model/helper слой в новый [admin-user-detail-model.ts](/C:/fit/src/components/admin-user-detail-model.ts).
