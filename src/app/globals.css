@@ -87,6 +87,26 @@ textarea {
   white-space: nowrap;
 }
 
+:where(a, button, span)[class*="bg-accent"][class*="text-white"] {
+  background: color-mix(in srgb, var(--accent-soft) 72%, white) !important;
+  color: var(--accent) !important;
+  border: 1px solid color-mix(in srgb, var(--accent) 14%, transparent) !important;
+  box-shadow: 0 16px 36px -30px rgba(20, 97, 75, 0.22);
+}
+
+:where(a, button)[class*="bg-accent"][class*="text-white"]:hover {
+  background: white !important;
+  opacity: 1 !important;
+}
+
+:where(a, button)[class*="bg-accent"][class*="text-white"]:disabled,
+:where(a, button)[class*="bg-accent"][class*="text-white"][aria-disabled="true"] {
+  background: color-mix(in srgb, var(--accent-soft) 64%, white) !important;
+  color: color-mix(in srgb, var(--accent) 72%, white) !important;
+  border-color: color-mix(in srgb, var(--accent) 10%, transparent) !important;
+  box-shadow: none;
+}
+
 .kpi {
   border: 1px solid var(--border);
   border-radius: 20px;

@@ -313,7 +313,7 @@ export function DashboardWorkspace({
           </div>
 
           <Link
-            className="inline-flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
+            className="inline-flex items-center gap-2 rounded-full border border-accent/15 bg-[color-mix(in_srgb,var(--accent-soft)_72%,white)] px-4 py-2 text-sm font-semibold text-accent transition hover:bg-white"
             href={"/ai" as Route}
           >
             Открыть AI

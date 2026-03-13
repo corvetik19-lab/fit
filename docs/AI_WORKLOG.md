@@ -1522,3 +1522,24 @@
 - `npx eslint src/components/app-shell-nav.tsx src/components/admin-ai-operations.tsx src/components/admin-user-detail.tsx`
 - `npm run build`
 - `npm run typecheck`
+
+### 2026-03-13 10:12 - Убрал последние тёмные action-кнопки
+
+- В [dashboard-workspace.tsx](/C:/fit/src/components/dashboard-workspace.tsx) осветлил кнопку `Открыть AI` в блоке разделов дашборда, чтобы она соответствовала общему светлому стилю интерфейса.
+- В [auth-form.tsx](/C:/fit/src/components/auth-form.tsx) осветлил активный переключатель `Вход / Регистрация`, чтобы в видимых пользовательских сценариях больше не оставалось тёмных капсул с белым текстом.
+
+### Проверка: последние тёмные кнопки
+
+- `npx eslint src/components/dashboard-workspace.tsx src/components/auth-form.tsx`
+- `npm run build`
+- `npm run typecheck`
+
+### 2026-03-13 10:28 - Осветлил все primary-pill кнопки глобально
+
+- В [globals.css](/C:/fit/src/app/globals.css) добавил глобальный светлый стиль для action-кнопок и ссылок с `bg-accent + text-white`, чтобы тёмные капсулы больше не оставались на дашборде, в AI, админке и остальных экранах.
+- Локальные точечные осветления в [dashboard-workspace.tsx](/C:/fit/src/components/dashboard-workspace.tsx) и [auth-form.tsx](/C:/fit/src/components/auth-form.tsx) сохранены, но теперь визуальный результат закреплён на уровне общего UI-слоя.
+
+### Проверка: глобальный светлый стиль кнопок
+
+- `npm run build`
+- `npm run typecheck`

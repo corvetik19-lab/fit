@@ -88,7 +88,7 @@ export function AuthForm() {
             <button
               className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
                 mode === nextMode
-                  ? "bg-accent text-white"
+                  ? "border border-accent/15 bg-[color-mix(in_srgb,var(--accent-soft)_72%,white)] text-accent"
                   : "border border-border text-foreground hover:bg-white/70"
               }`}
               key={nextMode}
