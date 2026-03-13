@@ -1,0 +1,358 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" fill="none" role="img" aria-labelledby="title desc">
+  <title id="title">fit demo motion</title>
+  <desc id="desc">Анимированный SVG-ролик с демонстрацией экранов fit: обзор, тренировки, питание и AI-коуч.</desc>
+  <defs>
+    <linearGradient id="bgGradient" x1="220" y1="60" x2="1380" y2="840" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fbfaf4"/>
+      <stop offset="1" stop-color="#f1efe5"/>
+    </linearGradient>
+    <radialGradient id="mintGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1230 220) rotate(90) scale(320 460)">
+      <stop stop-color="#d7efe7"/>
+      <stop offset="1" stop-color="#d7efe7" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="goldGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(310 720) rotate(90) scale(240 320)">
+      <stop stop-color="#f0d8a9"/>
+      <stop offset="1" stop-color="#f0d8a9" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="screenGradient" x1="530" y1="162" x2="1088" y2="742" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#fffef9"/>
+      <stop offset="1" stop-color="#f8f5ed"/>
+    </linearGradient>
+    <filter id="shadow" x="0" y="0" width="1600" height="900" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="40" stdDeviation="40" flood-color="#3a3028" flood-opacity="0.16"/>
+    </filter>
+    <filter id="softShadow" x="-80" y="-80" width="320" height="220" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="20" stdDeviation="20" flood-color="#2d453c" flood-opacity="0.18"/>
+    </filter>
+    <clipPath id="phoneClip">
+      <rect x="534" y="140" width="532" height="640" rx="48"/>
+    </clipPath>
+    <style>
+      .title {
+        font: 700 64px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        letter-spacing: -0.04em;
+        fill: #181613;
+      }
+
+      .subtitle {
+        font: 500 22px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        fill: #6f675b;
+      }
+
+      .label {
+        font: 700 14px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        fill: #7c756b;
+      }
+
+      .kpiLabel {
+        font: 600 15px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        fill: #6f675b;
+      }
+
+      .kpiValue {
+        font: 700 38px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        fill: #181613;
+      }
+
+      .screenTitle {
+        font: 700 26px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        fill: #181613;
+      }
+
+      .screenText {
+        font: 500 16px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        fill: #6f675b;
+      }
+
+      .smallText {
+        font: 600 13px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        fill: #6f675b;
+      }
+
+      .accentText {
+        fill: #14614b;
+      }
+
+      .pillText {
+        font: 700 15px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        fill: #14614b;
+      }
+
+      .whiteText {
+        fill: #fffef9;
+      }
+
+      .scene {
+        opacity: 0;
+        transform-origin: 800px 460px;
+      }
+
+      .scene-dashboard {
+        animation: sceneDashboard 20s infinite ease-in-out;
+      }
+
+      .scene-workouts {
+        animation: sceneWorkouts 20s infinite ease-in-out;
+      }
+
+      .scene-nutrition {
+        animation: sceneNutrition 20s infinite ease-in-out;
+      }
+
+      .scene-ai {
+        animation: sceneAi 20s infinite ease-in-out;
+      }
+
+      .float-card {
+        animation: floatCard 5.5s infinite ease-in-out;
+      }
+
+      .float-card.delay-1 {
+        animation-delay: 1.2s;
+      }
+
+      .float-card.delay-2 {
+        animation-delay: 2.1s;
+      }
+
+      .scan-line {
+        animation: scan 4s infinite ease-in-out;
+      }
+
+      .pulse {
+        animation: pulse 2.8s infinite ease-in-out;
+      }
+
+      .dot-1 { animation: dotTimeline 20s infinite ease-in-out; }
+      .dot-2 { animation: dotTimeline2 20s infinite ease-in-out; }
+      .dot-3 { animation: dotTimeline3 20s infinite ease-in-out; }
+      .dot-4 { animation: dotTimeline4 20s infinite ease-in-out; }
+
+      @keyframes sceneDashboard {
+        0%, 20% { opacity: 1; }
+        24%, 100% { opacity: 0; }
+      }
+
+      @keyframes sceneWorkouts {
+        0%, 24% { opacity: 0; }
+        28%, 46% { opacity: 1; }
+        50%, 100% { opacity: 0; }
+      }
+
+      @keyframes sceneNutrition {
+        0%, 50% { opacity: 0; }
+        54%, 72% { opacity: 1; }
+        76%, 100% { opacity: 0; }
+      }
+
+      @keyframes sceneAi {
+        0%, 76% { opacity: 0; }
+        80%, 97% { opacity: 1; }
+        100% { opacity: 0; }
+      }
+
+      @keyframes floatCard {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-8px); }
+      }
+
+      @keyframes pulse {
+        0%, 100% { opacity: 0.78; transform: scale(1); }
+        50% { opacity: 1; transform: scale(1.04); }
+      }
+
+      @keyframes scan {
+        0% { transform: translateY(0px); opacity: 0; }
+        20% { opacity: 0.7; }
+        80% { opacity: 0.7; }
+        100% { transform: translateY(138px); opacity: 0; }
+      }
+
+      @keyframes dotTimeline {
+        0%, 23% { fill: #14614b; }
+        24%, 100% { fill: #d7efe7; }
+      }
+
+      @keyframes dotTimeline2 {
+        0%, 24% { fill: #d7efe7; }
+        25%, 49% { fill: #14614b; }
+        50%, 100% { fill: #d7efe7; }
+      }
+
+      @keyframes dotTimeline3 {
+        0%, 50% { fill: #d7efe7; }
+        51%, 75% { fill: #14614b; }
+        76%, 100% { fill: #d7efe7; }
+      }
+
+      @keyframes dotTimeline4 {
+        0%, 76% { fill: #d7efe7; }
+        77%, 100% { fill: #14614b; }
+      }
+    </style>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#bgGradient)"/>
+  <circle cx="1230" cy="220" r="310" fill="url(#mintGlow)"/>
+  <circle cx="310" cy="720" r="240" fill="url(#goldGlow)"/>
+
+  <g filter="url(#softShadow)" opacity="0.95">
+    <rect x="110" y="132" width="256" height="136" rx="30" fill="#fffdf7"/>
+    <text class="label" x="142" y="176">PWA fit platform</text>
+    <text class="title" x="138" y="242" font-size="42">fit</text>
+    <text class="subtitle" x="142" y="268" font-size="18">тренировки, питание, AI и аналитика</text>
+  </g>
+
+  <g class="float-card" filter="url(#softShadow)">
+    <rect x="1160" y="140" width="260" height="160" rx="30" fill="#fffdf7"/>
+    <text class="label" x="1192" y="178">результат</text>
+    <text class="kpiValue" x="1190" y="228">+4 недели</text>
+    <text class="screenText" x="1192" y="258">истории для AI-анализа</text>
+    <rect x="1192" y="275" width="176" height="12" rx="6" fill="#d7efe7"/>
+    <rect x="1192" y="275" width="126" height="12" rx="6" fill="#14614b" fill-opacity="0.9"/>
+  </g>
+
+  <g class="float-card delay-1" filter="url(#softShadow)">
+    <rect x="150" y="620" width="280" height="158" rx="30" fill="#fffdf7"/>
+    <text class="label" x="182" y="660">ритм</text>
+    <text class="kpiValue" x="180" y="714">3 / 4</text>
+    <text class="screenText" x="182" y="744">тренировки в целевом темпе</text>
+  </g>
+
+  <g class="float-card delay-2" filter="url(#softShadow)">
+    <rect x="1160" y="620" width="282" height="158" rx="30" fill="#fffdf7"/>
+    <text class="label" x="1192" y="660">AI</text>
+    <text class="kpiValue" x="1190" y="714">proposal-first</text>
+    <text class="screenText" x="1192" y="744">планы создаются и применяются под контролем</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="500" y="106" width="600" height="688" rx="62" fill="#151311"/>
+    <rect x="534" y="140" width="532" height="640" rx="48" fill="url(#screenGradient)"/>
+    <rect x="700" y="122" width="166" height="18" rx="9" fill="#2a251f"/>
+    <rect x="536" y="140" width="532" height="70" rx="48" fill="#fffdf7"/>
+    <circle cx="580" cy="176" r="18" fill="#d7efe7"/>
+    <rect x="612" y="160" width="188" height="14" rx="7" fill="#ece6d7"/>
+    <rect x="612" y="182" width="132" height="10" rx="5" fill="#f2ede1"/>
+    <rect x="930" y="158" width="98" height="34" rx="17" fill="#e8f4ef"/>
+    <text class="pillText" x="959" y="179">онлайн</text>
+  </g>
+
+  <g clip-path="url(#phoneClip)">
+    <g class="scene scene-dashboard">
+      <rect x="560" y="232" width="474" height="108" rx="30" fill="#fffdf7"/>
+      <text class="label" x="596" y="272">обзор</text>
+      <text class="screenTitle" x="594" y="312">Весь прогресс под рукой</text>
+      <text class="screenText" x="596" y="338">без длинной прокрутки и перегруженных экранов</text>
+
+      <rect x="560" y="366" width="228" height="148" rx="28" fill="#fffdf7"/>
+      <text class="kpiLabel" x="590" y="410">Тренировки</text>
+      <text class="kpiValue" x="590" y="460">12</text>
+      <text class="screenText" x="590" y="490">сессий за 28 дней</text>
+
+      <rect x="806" y="366" width="228" height="148" rx="28" fill="#fffdf7"/>
+      <text class="kpiLabel" x="836" y="410">Питание</text>
+      <text class="kpiValue" x="836" y="460">93%</text>
+      <text class="screenText" x="836" y="490">попадание в цели</text>
+
+      <rect x="560" y="540" width="474" height="178" rx="30" fill="#fffdf7"/>
+      <text class="kpiLabel" x="596" y="584">Приоритет на неделю</text>
+      <rect x="596" y="610" width="402" height="14" rx="7" fill="#ece6d7"/>
+      <rect x="596" y="610" width="292" height="14" rx="7" fill="#14614b" fill-opacity="0.85"/>
+      <text class="screenText" x="596" y="652">Стабилизировать нагрузку и держать белок</text>
+      <text class="screenText" x="596" y="680">AI уже видит тренировки, питание и замеры тела</text>
+    </g>
+
+    <g class="scene scene-workouts">
+      <rect x="560" y="232" width="474" height="98" rx="30" fill="#fffdf7"/>
+      <text class="label" x="596" y="270">тренировка</text>
+      <text class="screenTitle" x="594" y="306">Пошаговое выполнение дня</text>
+
+      <g>
+        <rect x="560" y="356" width="474" height="88" rx="26" fill="#eaf5f0"/>
+        <circle cx="604" cy="400" r="16" fill="#2ba36c"/>
+        <path d="M596 400.5l5 5 10-11" stroke="#fffef9" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <text class="screenTitle" x="636" y="396" font-size="22">Жим лёжа</text>
+        <text class="screenText" x="636" y="420">сохранено, шаг завершён</text>
+      </g>
+
+      <g class="pulse">
+        <rect x="560" y="462" width="474" height="128" rx="30" fill="#fffdf7" stroke="#14614b" stroke-opacity="0.25" stroke-width="2"/>
+        <text class="screenTitle" x="594" y="508" font-size="22">Тяга блока</text>
+        <text class="screenText" x="594" y="536">Подход 1: 12 повторов · 45 кг · RPE 8</text>
+        <text class="screenText" x="594" y="562">Подход 2: 10 повторов · 47.5 кг · RPE 8.5</text>
+      </g>
+
+      <g opacity="0.72">
+        <rect x="560" y="608" width="474" height="88" rx="26" fill="#f5f1e7"/>
+        <circle cx="604" cy="652" r="16" fill="#ece6d7"/>
+        <path d="M599 652h10" stroke="#6f675b" stroke-width="3" stroke-linecap="round"/>
+        <text class="screenTitle" x="636" y="648" font-size="22">Приседания</text>
+        <text class="screenText" x="636" y="672">откроются после сохранения текущего шага</text>
+      </g>
+    </g>
+
+    <g class="scene scene-nutrition">
+      <rect x="560" y="232" width="474" height="98" rx="30" fill="#fffdf7"/>
+      <text class="label" x="596" y="270">питание</text>
+      <text class="screenTitle" x="594" y="306">Баланс дня и AI-разбор еды</text>
+
+      <rect x="560" y="356" width="228" height="166" rx="30" fill="#fffdf7"/>
+      <text class="kpiLabel" x="592" y="396">Калории</text>
+      <text class="kpiValue" x="592" y="448">2140</text>
+      <rect x="592" y="468" width="160" height="10" rx="5" fill="#ece6d7"/>
+      <rect x="592" y="468" width="132" height="10" rx="5" fill="#14614b" fill-opacity="0.88"/>
+      <text class="screenText" x="592" y="500">цель удерживается</text>
+
+      <rect x="806" y="356" width="228" height="166" rx="30" fill="#fffdf7"/>
+      <text class="kpiLabel" x="838" y="396">Белок</text>
+      <text class="kpiValue" x="838" y="448">152 г</text>
+      <rect x="838" y="468" width="160" height="10" rx="5" fill="#ece6d7"/>
+      <rect x="838" y="468" width="118" height="10" rx="5" fill="#2f7c62" fill-opacity="0.88"/>
+      <text class="screenText" x="838" y="500">не хватает чуть-чуть до цели</text>
+
+      <rect x="560" y="548" width="474" height="170" rx="30" fill="#fffdf7"/>
+      <text class="kpiLabel" x="594" y="590">Фото еды</text>
+      <rect x="596" y="612" width="150" height="84" rx="22" fill="#ece6d7"/>
+      <rect class="scan-line" x="596" y="612" width="150" height="8" rx="4" fill="#14614b" fill-opacity="0.4"/>
+      <text class="screenText" x="772" y="636">Распознано блюдо</text>
+      <text class="screenText" x="772" y="664">примерно 620 ккал</text>
+      <text class="screenText" x="772" y="692">можно вписать в план питания</text>
+    </g>
+
+    <g class="scene scene-ai">
+      <rect x="560" y="232" width="474" height="98" rx="30" fill="#fffdf7"/>
+      <text class="label" x="596" y="270">AI-коуч</text>
+      <text class="screenTitle" x="594" y="306">Чат, анализ истории и новые планы</text>
+
+      <rect x="590" y="366" width="288" height="88" rx="26" fill="#f1eee4"/>
+      <text class="screenText" x="620" y="404">Почему усталость растёт к пятнице?</text>
+      <text class="smallText" x="620" y="432">учти тренировки, питание и восстановление</text>
+
+      <rect x="706" y="478" width="294" height="132" rx="28" fill="#e8f4ef"/>
+      <text class="screenText accentText" x="736" y="518">AI видит всю историю пользователя</text>
+      <text class="screenText accentText" x="736" y="546">и предлагает мягче распределить</text>
+      <text class="screenText accentText" x="736" y="574">объём по неделе без перегруза</text>
+
+      <rect x="590" y="636" width="176" height="46" rx="23" fill="#dff2ea"/>
+      <text class="pillText" x="620" y="665">Подтвердить план</text>
+      <rect x="782" y="636" width="188" height="46" rx="23" fill="#dff2ea"/>
+      <text class="pillText" x="816" y="665">Применить в fit</text>
+    </g>
+  </g>
+
+  <g>
+    <text class="label" x="598" y="836">сценарий демонстрации</text>
+    <line x1="598" y1="858" x2="1002" y2="858" stroke="#d9d2c2" stroke-width="4" stroke-linecap="round"/>
+    <circle class="dot-1" cx="632" cy="858" r="10" fill="#14614b"/>
+    <circle class="dot-2" cx="742" cy="858" r="10" fill="#d7efe7"/>
+    <circle class="dot-3" cx="852" cy="858" r="10" fill="#d7efe7"/>
+    <circle class="dot-4" cx="962" cy="858" r="10" fill="#d7efe7"/>
+    <text class="smallText" x="606" y="884">Обзор</text>
+    <text class="smallText" x="706" y="884">Тренировки</text>
+    <text class="smallText" x="832" y="884">Питание</text>
+    <text class="smallText" x="948" y="884">AI</text>
+  </g>
+</svg>

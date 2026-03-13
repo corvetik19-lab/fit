@@ -1563,3 +1563,14 @@
 
 - Сверены текущие runtime-файлы: `assistant/route.ts`, `domain-policy.ts`, `user-context.ts`, `knowledge.ts`, `gateway.ts`, `chat.ts`, `structured-knowledge.ts`, `proposal-actions.ts`
 - Сверен eval-контур по `ai-evals/README.md` и `ai-evals/fit_eval/runner.py`
+
+### 2026-03-13 14:03 - Добавил SVG motion demo для презентации приложения
+
+- Создан файл [fit-demo-motion.svg](/C:/fit/public/fit-demo-motion.svg) как зацикленный демонстрационный ролик по приложению `fit`.
+- Внутри анимированы 4 логических сцены: `Обзор`, `Тренировки`, `Питание`, `AI`.
+- SVG сделан как самодостаточный промо-ролик под озвучку: мягкий фон, phone mockup, KPI-карточки, пошаговая тренировка, AI-разбор питания и AI-коуч.
+
+### Проверка: SVG demo
+
+- Проверен XML-парсинг SVG-файла
+- Проверен доступ к файлу в `public/` как standalone demo asset
