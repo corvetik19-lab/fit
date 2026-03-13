@@ -39,6 +39,7 @@ npm run build
 - `npm run lint`
 - `npm run typecheck`
 - `npm run build`
+- `npm run test:smoke`
 
 Цель проекта — чтобы все три команды проходили стабильно за один запуск и были готовы для CI.
 
@@ -88,6 +89,7 @@ npm run build
 - [docs/FRONTEND.md](/C:/fit/docs/FRONTEND.md)
 - [docs/BACKEND.md](/C:/fit/docs/BACKEND.md)
 - [docs/AI_STACK.md](/C:/fit/docs/AI_STACK.md)
+- [docs/RELEASE_CHECKLIST.md](/C:/fit/docs/RELEASE_CHECKLIST.md)
 
 ## Правила разработки
 

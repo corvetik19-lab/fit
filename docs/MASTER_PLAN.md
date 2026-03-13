@@ -57,7 +57,7 @@
 
 ### Workspace cleanup
 
-- [ ] Убрать из активного dev-потока `.next_codex_*`, `.next_stale_*` и другие временные build-папки.
+- [x] Убрать из активного dev-потока `.next_codex_*`, `.next_stale_*` и другие временные build-папки.
 - [x] Расширить `.gitignore`, чтобы build-мусор и generated artifacts не попадали в рабочий цикл.
 - [ ] Убедиться, что quality gates не оставляют repo-tracked шум вроде изменений в `tsconfig.json`.
 
@@ -66,7 +66,7 @@
 - [x] Переписать `README.md` в нормальном UTF-8 и синхронизировать его с реальным состоянием проекта.
 - [x] Переписать `docs/MASTER_PLAN.md` как production-hardening backlog.
 - [ ] Санировать `docs/README.md`, `docs/AI_WORKLOG.md`, `docs/FRONTEND.md`, `docs/BACKEND.md`, `docs/AI_STACK.md`, `docs/USER_GUIDE.md`, `docs/AI_EXPLAINED.md` от mojibake.
-- [ ] Зафиксировать release checklist для production web/PWA.
+- [x] Зафиксировать release checklist для production web/PWA.
 
 ## Волна 1. Архитектурная декомпозиция рискованных модулей
 
@@ -186,12 +186,12 @@
 ### CI
 
 - [x] Добавить обязательный CI workflow для `lint`, `typecheck`, `build`.
-- [ ] Добавить smoke/e2e subset как merge gate.
+- [x] Добавить smoke/e2e subset как merge gate.
 - [ ] При наличии DB-изменений добавить migration/advisor verification.
 
 ### Release process
 
-- [ ] Формализовать release checklist для web/PWA.
+- [x] Формализовать release checklist для web/PWA.
 - [ ] Ввести staging-like verification для Stripe и AI runtime.
 - [ ] Зафиксировать критерий `prod-ready`: не локальная сборка, а полный automated + manual acceptance набор.
 

@@ -2,6 +2,22 @@
 
 ## 2026-03-13
 
+### Production hardening: release checklist и smoke baseline
+
+- Добавил [RELEASE_CHECKLIST.md](/C:/fit/docs/RELEASE_CHECKLIST.md) как единый чеклист для merge, deploy и post-deploy smoke.
+- Поднял минимальный smoke-контур без логина и без живого Supabase: [src/app/smoke/page.tsx](/C:/fit/src/app/smoke/page.tsx) и [src/app/api/health/route.ts](/C:/fit/src/app/api/health/route.ts).
+- Добавил Playwright baseline: [playwright.config.ts](/C:/fit/playwright.config.ts), [tests/smoke/app-smoke.spec.ts](/C:/fit/tests/smoke/app-smoke.spec.ts), новые npm-скрипты `test:e2e` и `test:smoke`.
+- Расширил CI в [quality.yml](/C:/fit/.github/workflows/quality.yml): теперь кроме `lint`, `typecheck`, `build` есть и отдельный smoke job.
+- Почистил рабочее дерево от устаревших временных каталогов `.next_codex_*` и `.next_stale_*`, чтобы они больше не мешали локальной разработке и release-гейтам.
+
+### Проверка: smoke baseline
+
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
+- `npm run test:smoke`
+- `npm run test:smoke` проходит по `smoke page`, `health api` и `PWA assets`; в логах сервера возможен не-блокирующий шум от отсутствующей тестовой Supabase-сессии
+
 ### Production hardening: инженерный baseline и CI
 
 - Перевёл `package.json` на стабильные quality-gates: `lint` теперь проверяет только поддерживаемые исходники, а `typecheck` использует `npx next typegen && npx tsc -p tsconfig.json --noEmit --incremental false`, чтобы проходить без ручных повторов.

@@ -6,8 +6,12 @@
     "dev": "next dev",
     "build": "next build --webpack",
     "start": "next start",
+    "start:test": "next start --hostname 127.0.0.1 --port 3000",
+    "smoke:server": "next start --hostname 127.0.0.1 --port 3000",
     "lint": "eslint src next.config.ts eslint.config.mjs postcss.config.mjs",
-    "typecheck": "npx next typegen && npx tsc -p tsconfig.json --noEmit --incremental false"
+    "typecheck": "npx next typegen && npx tsc -p tsconfig.json --noEmit --incremental false",
+    "test:e2e": "playwright test",
+    "test:smoke": "npm run build && playwright test tests/smoke"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^1.0.34",
@@ -29,6 +33,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@playwright/test": "^1.55.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
