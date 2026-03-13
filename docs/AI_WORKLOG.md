@@ -1483,3 +1483,7 @@
 - `npx eslint src/components/workout-day-session.tsx src/lib/workout/execution.ts src/lib/offline/workout-sync.ts "src/app/api/workout-days/[id]/reset/route.ts"`
 - `npm run build`
 - `npm run typecheck`
+
+### 2026-03-13 09:18 - Упрощён текст предупреждения при сбросе тренировки
+
+- В [workout-day-session.tsx](/C:/fit/src/components/workout-day-session.tsx) из confirm-окна для `Обнулить тренировку` убрал слово `заметки`, потому что на экране тренировки этого поля больше нет.
