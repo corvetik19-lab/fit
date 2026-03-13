@@ -1,82 +1,97 @@
 # fit
 
-`fit` - это web-first фитнес-платформа на базе Vercel, которая сейчас находится в активной стадии bootstrap и локальной разработки.
+`fit` — это web-first fitness platform в формате PWA. Приложение объединяет тренировки, питание, аналитику, AI-коучинг и операторскую админ-панель в одном продукте.
 
-## Текущий срез репозитория
+## Текущее состояние
 
-- Next.js 16 App Router foundation
-- responsive PWA shell
-- offline queue contract на Dexie
-- Supabase client contracts и migrations
-- Vercel AI Gateway route scaffolding
-- admin route scaffolding + bootstrap первого `super_admin`
-- Ragas evaluation workspace bootstrap
-- локальный auth и onboarding flow
-- рабочий exercise library CRUD в `/workouts`
-- draft weekly program builder в `/workouts`
-- lock flow и `My Week` в `/workouts`
-- Workout Day execution и `actual_reps` в `/workouts/day/[dayId]`
-- history cloning через клонирование недели на `+7` дней в `/workouts`
-- workout templates через сохранение шаблона и секцию шаблонов тренировок
-- dashboard с реальными summary-метриками и period comparison UI
-- workout charts на dashboard по завершённым дням и логам подходов
-- nutrition charts на dashboard по дневным калориям и средним КБЖУ
-- рабочий nutrition tracker в `/nutrition` с ручным вводом приёмов пищи
-- CRUD пользовательской базы продуктов в `/nutrition`
-- recipes и recipe items UI в `/nutrition`
-- meal templates UI в `/nutrition`
-- быстрый barcode flow в `/nutrition` по собственной базе продуктов
-- AI-анализ фото блюда в `/nutrition` с proposal-оценкой калорий и КБЖУ
-- автоматический пересчёт дневной КБЖУ-сводки после логирования питания
-- цели по КБЖУ и прогресс по ним в nutrition-срезе
-- nutrition goal adherence block с 7-дневным трендом выполнения целей
-- русскоязычная пользовательская поверхность для основных экранов
-- базовый admin user management UI в `/admin/users`
-- рабочий AI proposal-центр в `/ai` с meal/workout plan generation
-- сохранение AI-предложений в `ai_plan_proposals`
-- controlled confirmation/apply flow для AI-предложений
-- AI-чат с базовым RAG по пользовательским данным и ручным reindex базы знаний
+Сейчас репозиторий находится в фазе production hardening:
 
-## Скрипты
+- уже есть рабочие пользовательские поверхности `Dashboard`, `Workouts`, `Nutrition`, `AI`, `History`, `Settings`;
+- уже есть `Admin`-контур с управлением пользователями, операциями и health dashboard;
+- уже есть Supabase schema, migrations, RLS, offline sync для тренировок и AI retrieval stack;
+- уже есть Stripe foundation, Sentry foundation и Vercel cron jobs;
+- при этом проект ещё доводится до production-ready baseline по quality gates, UX, тестам и release process.
+
+Источник правды по текущему статусу: [docs/MASTER_PLAN.md](/C:/fit/docs/MASTER_PLAN.md)
+
+## Стек
+
+- Next.js 16 + App Router
+- React 19
+- TypeScript strict
+- Supabase Auth + Postgres + pgvector + RLS
+- OpenRouter / AI Gateway + Voyage embeddings
+- Stripe
+- Sentry
+- Vercel
+
+## Основные команды
 
 ```bash
 npm run dev
-npm run build
 npm run lint
 npm run typecheck
+npm run build
 ```
 
-Сейчас `npm run typecheck` сначала вызывает `next typegen`, а `npm run build` использует webpack-сборщик для более стабильной локальной верификации.
+### Что считается baseline quality gate
+
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
+
+Цель проекта — чтобы все три команды проходили стабильно за один запуск и были готовы для CI.
 
 ## Переменные окружения
 
-Скопируй `.env.example` в `.env.local` и заполни:
+Скопируй `.env.example` в `.env.local` и заполни нужные значения.
+
+Основные переменные:
 
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` или `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
-- `AI_GATEWAY_API_KEY`
+- `OPENROUTER_API_KEY`
+- `VOYAGE_API_KEY`
 - `ADMIN_BOOTSTRAP_TOKEN`
+- `CRON_SECRET`
+- `NEXT_PUBLIC_SENTRY_DSN`
+- `SENTRY_ORG`
+- `SENTRY_PROJECT`
 - `SENTRY_AUTH_TOKEN`
+- `STRIPE_SECRET_KEY`
+- `STRIPE_WEBHOOK_SECRET`
+- `STRIPE_PREMIUM_MONTHLY_PRICE_ID`
 
-## Основные директории
+Полный шаблон лежит в [`.env.example`](/C:/fit/.env.example).
 
-- `src/app` - routes и API handlers
-- `src/lib` - env, logging, safety, Supabase, AI и offline contracts
-- `src/components` - UI-компоненты
-- `supabase/migrations` - SQL schema и RLS
-- `ai-evals` - workspace для внутренних AI-оценок
-- `docs` - worklog, plan tracker и документация по frontend/backend/AI
+## Ключевые директории
+
+- `src/app` — страницы и route handlers
+- `src/components` — UI-компоненты
+- `src/lib` — доменная логика, Supabase, AI, offline, billing, observability
+- `supabase/migrations` — SQL migrations и schema evolution
+- `public` — PWA assets, SVG demos, offline page
+- `ai-evals` — AI eval workspace и датасеты
+- `docs` — пользовательская и техническая документация
 
 ## Документация
 
-Основная проектная документация лежит в `docs/`:
+Вся проектная документация лежит в [docs/README.md](/C:/fit/docs/README.md).
 
-- `docs/README.md`
-- `docs/USER_GUIDE.md`
-- `docs/AI_EXPLAINED.md`
-- `docs/AI_WORKLOG.md`
-- `docs/MASTER_PLAN.md`
-- `docs/FRONTEND.md`
-- `docs/BACKEND.md`
-- `docs/AI_STACK.md`
+Главные документы:
+
+- [docs/MASTER_PLAN.md](/C:/fit/docs/MASTER_PLAN.md)
+- [docs/AI_WORKLOG.md](/C:/fit/docs/AI_WORKLOG.md)
+- [docs/USER_GUIDE.md](/C:/fit/docs/USER_GUIDE.md)
+- [docs/AI_EXPLAINED.md](/C:/fit/docs/AI_EXPLAINED.md)
+- [docs/FRONTEND.md](/C:/fit/docs/FRONTEND.md)
+- [docs/BACKEND.md](/C:/fit/docs/BACKEND.md)
+- [docs/AI_STACK.md](/C:/fit/docs/AI_STACK.md)
+
+## Правила разработки
+
+- Все существенные изменения фиксируются в `docs/AI_WORKLOG.md`.
+- Прогресс по production hardening отмечается в `docs/MASTER_PLAN.md`.
+- Изменения схемы БД вносятся только через migrations.
+- Для Supabase-задач по этому репозиторию основным инструментом считается MCP для проекта `fit`.

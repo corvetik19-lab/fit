@@ -50,20 +50,20 @@
 
 ### Quality gates
 
-- [ ] Починить `typecheck` так, чтобы он проходил за один запуск без ручных повторов.
-- [ ] Убрать зависимость quality gates от мусорных `.next/types` и нестабильных `distDir`-сценариев.
-- [ ] Привести `lint` к рабочему CI-формату: линтить только поддерживаемые исходники.
-- [ ] Зафиксировать один воспроизводимый локальный baseline: `lint`, `typecheck`, `build`, smoke browser check.
+- [x] Починить `typecheck` так, чтобы он проходил за один запуск без ручных повторов.
+- [x] Убрать зависимость quality gates от мусорных `.next/types` и нестабильных `distDir`-сценариев.
+- [x] Привести `lint` к рабочему CI-формату: линтить только поддерживаемые исходники.
+- [x] Зафиксировать один воспроизводимый локальный baseline: `lint`, `typecheck`, `build`, smoke browser check.
 
 ### Workspace cleanup
 
 - [ ] Убрать из активного dev-потока `.next_codex_*`, `.next_stale_*` и другие временные build-папки.
-- [ ] Расширить `.gitignore`, чтобы build-мусор и generated artifacts не попадали в рабочий цикл.
+- [x] Расширить `.gitignore`, чтобы build-мусор и generated artifacts не попадали в рабочий цикл.
 - [ ] Убедиться, что quality gates не оставляют repo-tracked шум вроде изменений в `tsconfig.json`.
 
 ### Docs и entrypoints
 
-- [ ] Переписать `README.md` в нормальном UTF-8 и синхронизировать его с реальным состоянием проекта.
+- [x] Переписать `README.md` в нормальном UTF-8 и синхронизировать его с реальным состоянием проекта.
 - [x] Переписать `docs/MASTER_PLAN.md` как production-hardening backlog.
 - [ ] Санировать `docs/README.md`, `docs/AI_WORKLOG.md`, `docs/FRONTEND.md`, `docs/BACKEND.md`, `docs/AI_STACK.md`, `docs/USER_GUIDE.md`, `docs/AI_EXPLAINED.md` от mojibake.
 - [ ] Зафиксировать release checklist для production web/PWA.
@@ -185,7 +185,7 @@
 
 ### CI
 
-- [ ] Добавить обязательный CI workflow для `lint`, `typecheck`, `build`.
+- [x] Добавить обязательный CI workflow для `lint`, `typecheck`, `build`.
 - [ ] Добавить smoke/e2e subset как merge gate.
 - [ ] При наличии DB-изменений добавить migration/advisor verification.
 
@@ -205,7 +205,7 @@
 
 ## Что можно считать завершённым только после подтверждения
 
-- [ ] `lint`, `typecheck`, `build` проходят стабильно в один запуск.
+- [x] `lint`, `typecheck`, `build` проходят стабильно в один запуск.
 - [ ] Нет mojibake в ключевой документации и основных экранах приложения.
 - [ ] Нет hydration mismatch, render loops, infinite polling и state desync в базовых пользовательских сценариях.
 - [ ] Stripe-контур работает end-to-end.

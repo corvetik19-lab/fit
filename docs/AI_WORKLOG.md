@@ -2,6 +2,20 @@
 
 ## 2026-03-13
 
+### Production hardening: инженерный baseline и CI
+
+- Перевёл `package.json` на стабильные quality-gates: `lint` теперь проверяет только поддерживаемые исходники, а `typecheck` использует `npx next typegen && npx tsc -p tsconfig.json --noEmit --incremental false`, чтобы проходить без ручных повторов.
+- Обновил `eslint.config.mjs` и `.gitignore` под production-hardening: меньше build-мусора в рабочем цикле, меньше ложных целей для линта, отдельная защита от временных `.next*` артефактов.
+- Добавил GitHub Actions workflow [quality.yml](/C:/fit/.github/workflows/quality.yml) с обязательными шагами `lint`, `typecheck`, `build`.
+- Переписал корневой [README.md](/C:/fit/README.md) в нормальный UTF-8 и синхронизировал его с текущим состоянием проекта, env и документацией.
+
+### Проверка: engineering baseline
+
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
+- Подтверждено, что все три quality-gate команды проходят подряд без ручного второго запуска.
+
 ### Production hardening: базовый документационный каркас
 
 - Полностью заменил старый повреждённый `docs/MASTER_PLAN.md` на новый production-hardening backlog с понятными чекбоксами и этапами.

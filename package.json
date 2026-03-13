@@ -6,8 +6,8 @@
     "dev": "next dev",
     "build": "next build --webpack",
     "start": "next start",
-    "lint": "eslint .",
-    "typecheck": "next typegen && tsc --noEmit"
+    "lint": "eslint src next.config.ts eslint.config.mjs postcss.config.mjs",
+    "typecheck": "npx next typegen && npx tsc -p tsconfig.json --noEmit --incremental false"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^1.0.34",
