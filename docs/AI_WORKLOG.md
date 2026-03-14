@@ -2,6 +2,14 @@
 
 ## 2026-03-14
 
+### Production hardening: третий tranche декомпозиции `admin-users-directory.tsx`
+
+- Вынес из [admin-users-directory.tsx](/C:/fit/src/components/admin-users-directory.tsx) bulk actions/history UI в новый модуль [admin-users-bulk-actions.tsx](/C:/fit/src/components/admin-users-bulk-actions.tsx).
+- После этого основной каталог пользователей ещё сильнее приблизился к orchestrator-роли: fetch/filter/selection state остаются в нём, а bulk panel и история wave-операций живут отдельно и могут развиваться без раздувания основного JSX-файла.
+- Этот tranche логически продолжает уже вынесенные model/helper слои каталога и закрывает ещё один крупный кусок `Wave 1` без рискованного полного переписывания страницы.
+
+## 2026-03-14
+
 ### Production hardening: второй tranche декомпозиции `knowledge.ts`
 
 - Вынес из [knowledge.ts](/C:/fit/src/lib/ai/knowledge.ts) retrieval pipeline в новый модуль [knowledge-retrieval.ts](/C:/fit/src/lib/ai/knowledge-retrieval.ts).

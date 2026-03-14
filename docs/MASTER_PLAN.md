@@ -80,6 +80,7 @@
 - [x] Вынести из `src/lib/dashboard/metrics.ts` первый tranche независимых helper’ов в `dashboard-utils` и `dashboard-snapshot`.
 - [x] Вынести из `src/components/admin-users-directory.tsx` первый tranche model/helper слоя в отдельный модуль.
 - [x] Вынести из `src/components/admin-users-directory.tsx` второй tranche filter/selection/bulk request helper-слоя в общий model-модуль.
+- [x] Вынести из `src/components/admin-users-directory.tsx` третий tranche bulk actions/history UI в отдельный модуль.
 - [x] Вынести из `src/components/admin-user-detail.tsx` первый tranche model/helper слоя в отдельный модуль.
 - [x] Вынести из `src/components/admin-user-detail.tsx` второй tranche fetch/state и section-config слоя в отдельный hook-модуль.
 - [x] Вынести из `src/components/admin-user-detail.tsx` третий tranche секционных `profile/activity/operations/billing` блоков в отдельный UI-модуль.
