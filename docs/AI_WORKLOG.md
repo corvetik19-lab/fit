@@ -2,6 +2,12 @@
 
 ## 2026-03-14
 
+### Production hardening: четвертый tranche декомпозиции `ai-chat-panel.tsx`
+
+- Вынес из [ai-chat-panel.tsx](/C:/fit/src/components/ai-chat-panel.tsx) панели доступа, ошибок и локальных notice-сообщений в новый модуль [ai-chat-notices.tsx](/C:/fit/src/components/ai-chat-notices.tsx).
+- После этого в основном chat-orchestrator компоненте стало меньше смешения control state и статических feedback-panels: toolbar, transcript, composer и notices уже живут отдельными surface-модулями.
+- Это упрощает следующий tranche по AI-чату: теперь можно отдельно выносить session/history helper-слой и локальную session URL orchestration, не таская за собой большие JSX-блоки.
+
 ### Production hardening: третий tranche декомпозиции `ai-chat-panel.tsx`
 
 - Вынес из [ai-chat-panel.tsx](/C:/fit/src/components/ai-chat-panel.tsx) верхний chat toolbar в новый модуль [ai-chat-toolbar.tsx](/C:/fit/src/components/ai-chat-toolbar.tsx).

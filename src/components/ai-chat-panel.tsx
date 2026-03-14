@@ -2,11 +2,11 @@
 
 import { DefaultChatTransport } from "ai";
 import { useChat } from "@ai-sdk/react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 
 import { AiChatComposer } from "@/components/ai-chat-composer";
+import { AiChatNotices } from "@/components/ai-chat-notices";
 import { AiPromptLibrary } from "@/components/ai-prompt-library";
 import { AiChatTranscript } from "@/components/ai-chat-transcript";
 import { AiChatToolbar } from "@/components/ai-chat-toolbar";
@@ -346,29 +346,12 @@ export function AiChatPanel({
         type="file"
       />
 
-      {!access.allowed ? (
-        <div className="mt-4 rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          {access.reason ?? "AI-чат сейчас недоступен для текущего доступа."}
-          <Link
-            className="mt-3 inline-flex rounded-full border border-amber-400/70 bg-white/80 px-4 py-2 font-semibold text-foreground transition hover:bg-white"
-            href="/settings#billing-center"
-          >
-            Открыть доступ
-          </Link>
-        </div>
-      ) : null}
-
-      {error ? (
-        <p className="mt-4 rounded-2xl border border-red-300/60 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error.message}
-        </p>
-      ) : null}
-
-      {notice ? (
-        <p className="mt-4 rounded-2xl border border-emerald-300/60 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-          {notice}
-        </p>
-      ) : null}
+      <AiChatNotices
+        accessAllowed={access.allowed}
+        accessReason={access.reason ?? null}
+        errorMessage={error?.message ?? null}
+        notice={notice}
+      />
 
       <AiChatTranscript
         actionBusyKey={actionBusyKey}
