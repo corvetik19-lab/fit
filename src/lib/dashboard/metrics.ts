@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   getDashboardAggregateBundle,
 } from "@/lib/dashboard/dashboard-aggregate";
+import { buildLiveDashboardRuntimeMetrics } from "@/lib/dashboard/dashboard-runtime-assembly";
 import {
   getCachedDashboardRuntimeMetrics,
   persistDashboardRuntimeSnapshot,
@@ -1528,25 +1529,18 @@ export async function getDashboardRuntimeMetrics(
     }
   }
 
-  const [snapshot, periodComparison, workoutCharts, nutritionCharts] =
-    await Promise.all([
-      getDashboardSnapshot(supabase, userId),
+  const metrics = await buildLiveDashboardRuntimeMetrics({
+    nutritionCharts: () => getDashboardNutritionCharts(supabase, userId, config.days),
+    periodComparison: () =>
       getDashboardPeriodComparison(
         supabase,
         userId,
         config.periodDays,
         config.baselineDays,
       ),
-      getDashboardWorkoutCharts(supabase, userId, config.weeks),
-      getDashboardNutritionCharts(supabase, userId, config.days),
-    ]);
-
-  const metrics = {
-    snapshot,
-    periodComparison,
-    workoutCharts,
-    nutritionCharts,
-  };
+    snapshot: () => getDashboardSnapshot(supabase, userId),
+    workoutCharts: () => getDashboardWorkoutCharts(supabase, userId, config.weeks),
+  });
 
   if (options?.persistSnapshot !== false) {
     try {

@@ -1911,3 +1911,9 @@
 - В новый слой ушли чтение runtime snapshot, freshness-проверка через dashboard cursor и сохранение runtime snapshot, а сам [metrics.ts](/C:/fit/src/lib/dashboard/metrics.ts) стал ближе к orchestration-роли вокруг live-сборки workout/nutrition/overview metrics.
 - Следующий tranche по dashboard analytics: вынести live runtime assembly для `getDashboardRuntimeMetrics(...)` или nutrition-specific analytics helper-слой.
 
+### 2026-03-14 18:40 - Шестой tranche декомпозиции metrics.ts
+
+- Вынес live runtime assembly из [metrics.ts](/C:/fit/src/lib/dashboard/metrics.ts) в [dashboard-runtime-assembly.ts](/C:/fit/src/lib/dashboard/dashboard-runtime-assembly.ts).
+- В новый модуль ушла оркестрация `snapshot + periodComparison + workoutCharts + nutritionCharts`, а сам [metrics.ts](/C:/fit/src/lib/dashboard/metrics.ts) ещё сильнее свёлся к верхнеуровневому server-side coordinator слою.
+- Следующий tranche по dashboard analytics: вынос nutrition-specific helper-слоя или отдельного runtime result/fail-open formatter слоя.
+
