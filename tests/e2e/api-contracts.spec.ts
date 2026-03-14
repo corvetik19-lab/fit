@@ -1,7 +1,12 @@
 import { expect, test } from "@playwright/test";
 
-import { hasAuthE2ECredentials, signInAndFinishOnboarding } from "./helpers/auth";
+import { hasAuthE2ECredentials } from "./helpers/auth";
+import { USER_STORAGE_STATE_PATH } from "./helpers/auth-state";
 import { fetchJson } from "./helpers/http";
+
+test.use({
+  storageState: USER_STORAGE_STATE_PATH,
+});
 
 test.describe("api contracts", () => {
   test.skip(
@@ -10,7 +15,9 @@ test.describe("api contracts", () => {
   );
 
   test("authenticated invalid route params return explicit 400s", async ({ page }) => {
-    await signInAndFinishOnboarding(page);
+    await page.goto("/dashboard");
+    await expect(page).toHaveURL(/\/dashboard$/);
+    await page.waitForLoadState("networkidle");
 
     const [dayUpdate, dayReset, setUpdate, invalidAiSession] = await Promise.all([
       fetchJson(page, {
@@ -57,26 +64,21 @@ test.describe("api contracts", () => {
   test("owner-scoped AI session delete returns 404 for unknown valid session id", async ({
     page,
   }) => {
-    await signInAndFinishOnboarding(page);
+    await page.goto("/dashboard");
+    await expect(page).toHaveURL(/\/dashboard$/);
+    await page.waitForLoadState("networkidle");
 
-    const unknownSessionResult = await page.evaluate(async () => {
-      const randomId = crypto.randomUUID();
-      const response = await fetch(`/api/ai/sessions/${randomId}`, {
-        method: "DELETE",
-      });
-
-      return {
-        sessionId: randomId,
-        status: response.status,
-        body: await response.json().catch(() => null),
-      };
+    const randomId = crypto.randomUUID();
+    const unknownSessionResult = await fetchJson(page, {
+      method: "DELETE",
+      url: `/api/ai/sessions/${randomId}`,
     });
 
     expect(unknownSessionResult.status).toBe(404);
     expect(
       (unknownSessionResult.body as { code?: string } | null)?.code,
     ).toBe("AI_CHAT_SESSION_NOT_FOUND");
-    expect(unknownSessionResult.sessionId).toMatch(
+    expect(randomId).toMatch(
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
     );
   });

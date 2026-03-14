@@ -1,8 +1,13 @@
 import { expect, test } from "@playwright/test";
 
-import { hasAuthE2ECredentials, signInAndFinishOnboarding } from "./helpers/auth";
+import { hasAuthE2ECredentials } from "./helpers/auth";
+import { USER_STORAGE_STATE_PATH } from "./helpers/auth-state";
 import { fetchJson } from "./helpers/http";
 import { createLockedWorkoutDay } from "./helpers/workouts";
+
+test.use({
+  storageState: USER_STORAGE_STATE_PATH,
+});
 
 function createMutationId() {
   return crypto.randomUUID();
@@ -21,7 +26,9 @@ test.describe("workout sync contracts", () => {
   test("sync push rejects invalid workout mutations and applies the valid sequence", async ({
     page,
   }) => {
-    await signInAndFinishOnboarding(page);
+    await page.goto("/dashboard");
+    await expect(page).toHaveURL(/\/dashboard$/);
+    await page.waitForLoadState("networkidle");
 
     const seededDay = await createLockedWorkoutDay(page, "sync");
     const duplicateMutationId = createMutationId();

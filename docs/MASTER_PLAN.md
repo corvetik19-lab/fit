@@ -281,3 +281,10 @@
 
 - [x] Расширен user-owned isolation baseline: root-admin не видит чужой weekly program в /api/weekly-programs и не может вызвать lock или clone на чужом programId; оба route-контракта возвращают owner-scoped 404 WEEKLY_PROGRAM_NOT_FOUND.
 - [ ] Следующий тестовый tranche: расширить user-owned isolation beyond workout/program flows до остальных RLS-контуров и вынести auth storage state, чтобы e2e можно было снова безопасно распараллелить.
+
+## 2026-03-15 e2e infra addendum
+
+- [x] Playwright переведён на auth storage state для обычного пользователя и root-admin; повторный UI-логин больше не нужен в каждом e2e тесте.
+- [x] typecheck, build и тестовый webServer переведены на отдельный NEXT_DIST_DIR=.next_build, чтобы quality gates и e2e не конфликтовали с локальным .next.
+- [x] Playwright переведён на выделенный порт 3100, поэтому тесты больше не зависят от случайного локального сервера на 3000.
+- [x] npm run test:e2e:auth подтверждён на --workers=2: 7 passed.

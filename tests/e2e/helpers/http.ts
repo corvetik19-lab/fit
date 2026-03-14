@@ -13,19 +13,37 @@ export async function fetchJson<T = unknown>(
     url: string;
   },
 ) {
-  return page.evaluate(
-    async ({ body, method, url }) => {
-      const response = await fetch(url, {
-        method,
-        headers: body ? { "Content-Type": "application/json" } : undefined,
-        body: body ? JSON.stringify(body) : undefined,
-      });
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    await page.waitForLoadState("networkidle").catch(() => undefined);
 
-      return {
-        status: response.status,
-        body: await response.json().catch(() => null),
-      } satisfies FetchResult;
-    },
-    input,
-  ) as Promise<FetchResult<T>>;
+    try {
+      return (await page.evaluate(
+        async ({ body, method, url }) => {
+          const response = await fetch(url, {
+            method,
+            headers: body ? { "Content-Type": "application/json" } : undefined,
+            body: body ? JSON.stringify(body) : undefined,
+          });
+
+          return {
+            status: response.status,
+            body: await response.json().catch(() => null),
+          } satisfies FetchResult;
+        },
+        input,
+      )) as FetchResult<T>;
+    } catch (error) {
+      if (
+        attempt < 2 &&
+        error instanceof Error &&
+        error.message.includes("Execution context was destroyed")
+      ) {
+        continue;
+      }
+
+      throw error;
+    }
+  }
+
+  throw new Error("Request did not complete.");
 }

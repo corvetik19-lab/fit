@@ -171,3 +171,11 @@
 - Обновил `tests/e2e/ownership-isolation.spec.ts`: после seed locked workout day root-admin теперь дополнительно проверяется на owner-isolation в weekly-programs.
 - Подтвердил три контракта: чужая программа не попадает в GET /api/weekly-programs, а POST /api/weekly-programs/{id}/lock и POST /api/weekly-programs/{id}/clone на чужом programId возвращают 404 WEEKLY_PROGRAM_NOT_FOUND.
 - Перепрогнал полный auth/e2e набор через штатный Playwright webServer на 3000: 7 passed; диагностические server logs от invalid UUID и unknown AI session остались ожидаемыми для contract tests.
+
+## 2026-03-15 12:05 - Перевёл e2e на storage state и изолированный build dir
+
+- Добавил tests/e2e/global-auth-setup.ts и tests/e2e/helpers/auth-state.ts: Playwright теперь заранее готовит storage state для обычного пользователя и root-admin, а сами тесты больше не тратят время на повторный UI-логин.
+- Перевёл typecheck, build и start:test на NEXT_DIST_DIR=.next_build через scripts/run-next-with-dist-dir.mjs, чтобы quality gates и тестовый сервер не конфликтовали с локальным .next.
+- Перевёл Playwright на выделенный порт 3100 и обновил package.json/playwright.config.ts, чтобы e2e больше не упирались в случайные процессы на 3000.
+- Ужесточил e2e helper'ы: fetchJson(...) теперь переживает navigation race, а auth/admin/workout/api scenarios стабилизированы под --workers=2.
+- Подтвердил tranche полным прогоном: npm run lint, npm run typecheck, npm run build, npx eslint tests/e2e tests/e2e/helpers, npm run test:e2e:auth -> 7 passed.

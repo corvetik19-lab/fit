@@ -1,10 +1,12 @@
 import { expect, test } from "@playwright/test";
 
 import {
+  ADMIN_STORAGE_STATE_PATH,
+  USER_STORAGE_STATE_PATH,
+} from "./helpers/auth-state";
+import {
   hasAdminE2ECredentials,
   hasAuthE2ECredentials,
-  signInAndFinishOnboarding,
-  signInAsAdmin,
 } from "./helpers/auth";
 import { fetchJson } from "./helpers/http";
 import { createLockedWorkoutDay } from "./helpers/workouts";
@@ -24,15 +26,23 @@ test.describe("user-owned isolation", () => {
   test("root admin cannot read or mutate another user's workout day", async ({
     browser,
   }) => {
-    const userContext = await browser.newContext();
+    const userContext = await browser.newContext({
+      storageState: USER_STORAGE_STATE_PATH,
+    });
     const userPage = await userContext.newPage();
-    await signInAndFinishOnboarding(userPage);
+    await userPage.goto("/dashboard");
+    await expect(userPage).toHaveURL(/\/dashboard$/);
+    await userPage.waitForLoadState("networkidle");
 
     const seededDay = await createLockedWorkoutDay(userPage, "isolation");
 
-    const adminContext = await browser.newContext();
+    const adminContext = await browser.newContext({
+      storageState: ADMIN_STORAGE_STATE_PATH,
+    });
     const adminPage = await adminContext.newPage();
-    await signInAsAdmin(adminPage);
+    await adminPage.goto("/admin");
+    await expect(adminPage).toHaveURL(/\/admin$/);
+    await adminPage.waitForLoadState("networkidle");
 
     const [
       pullResult,
