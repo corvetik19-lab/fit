@@ -165,3 +165,9 @@
 - Добавил `tests/e2e/ownership-isolation.spec.ts`: root-admin не может читать, сбрасывать или мутировать чужой `workout day` и чужой `workout set`, routes возвращают owner-scoped `404`, а не ложный успех.
 - Стабилизировал e2e baseline в `package.json`: `test:e2e` и `test:e2e:auth` пока сериализованы через `--workers=1`, чтобы auth/UI hydration не давали флак при параллельном запуске.
 - Подтвердил tranche полным прогоном: `npm run lint`, `npm run typecheck`, `npm run build`, `npx eslint tests/e2e tests/e2e/helpers`, `npm run test:e2e:auth`.
+
+## 2026-03-15 10:10 - Расширил user-owned isolation до weekly program ownership
+
+- Обновил `tests/e2e/ownership-isolation.spec.ts`: после seed locked workout day root-admin теперь дополнительно проверяется на owner-isolation в weekly-programs.
+- Подтвердил три контракта: чужая программа не попадает в GET /api/weekly-programs, а POST /api/weekly-programs/{id}/lock и POST /api/weekly-programs/{id}/clone на чужом programId возвращают 404 WEEKLY_PROGRAM_NOT_FOUND.
+- Перепрогнал полный auth/e2e набор через штатный Playwright webServer на 3000: 7 passed; диагностические server logs от invalid UUID и unknown AI session остались ожидаемыми для contract tests.

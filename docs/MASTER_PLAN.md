@@ -276,3 +276,8 @@
 - [x] Добавлены route contract tests без платного AI runtime: явные `400` для invalid UUID и owner-scoped `404` для неизвестной AI session.
 - [x] Добавлен offline/sync regression baseline: seeded locked workout day, `sync/push` с duplicate/incomplete mutations и контроль итогового `sync/pull` snapshot.
 - [ ] Следующий тестовый tranche: расширить user-owned isolation tests до RLS-контуров beyond workout day и вынести auth storage state, чтобы e2e снова можно было безопасно распараллелить.
+
+## 2026-03-15 isolation addendum
+
+- [x] Расширен user-owned isolation baseline: root-admin не видит чужой weekly program в /api/weekly-programs и не может вызвать lock или clone на чужом programId; оба route-контракта возвращают owner-scoped 404 WEEKLY_PROGRAM_NOT_FOUND.
+- [ ] Следующий тестовый tranche: расширить user-owned isolation beyond workout/program flows до остальных RLS-контуров и вынести auth storage state, чтобы e2e можно было снова безопасно распараллелить.

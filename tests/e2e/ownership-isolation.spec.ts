@@ -9,6 +9,12 @@ import {
 import { fetchJson } from "./helpers/http";
 import { createLockedWorkoutDay } from "./helpers/workouts";
 
+function buildFutureCloneDate() {
+  return new Date(Date.now() + 900 * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .slice(0, 10);
+}
+
 test.describe("user-owned isolation", () => {
   test.skip(
     !hasAuthE2ECredentials() || !hasAdminE2ECredentials(),
@@ -28,7 +34,15 @@ test.describe("user-owned isolation", () => {
     const adminPage = await adminContext.newPage();
     await signInAsAdmin(adminPage);
 
-    const [pullResult, patchDayResult, resetDayResult, patchSetResult] =
+    const [
+      pullResult,
+      patchDayResult,
+      resetDayResult,
+      patchSetResult,
+      weeklyProgramsResult,
+      weeklyProgramLockResult,
+      weeklyProgramCloneResult,
+    ] =
       await Promise.all([
         fetchJson<{ code?: string }>(adminPage, {
           method: "GET",
@@ -54,6 +68,21 @@ test.describe("user-owned isolation", () => {
             actualRpe: 8,
           },
         }),
+        fetchJson<{ data?: Array<{ id: string }> }>(adminPage, {
+          method: "GET",
+          url: "/api/weekly-programs",
+        }),
+        fetchJson<{ code?: string }>(adminPage, {
+          method: "POST",
+          url: `/api/weekly-programs/${seededDay.programId}/lock`,
+        }),
+        fetchJson<{ code?: string }>(adminPage, {
+          method: "POST",
+          url: `/api/weekly-programs/${seededDay.programId}/clone`,
+          body: {
+            weekStartDate: buildFutureCloneDate(),
+          },
+        }),
       ]);
 
     expect(pullResult.status).toBe(404);
@@ -67,6 +96,19 @@ test.describe("user-owned isolation", () => {
 
     expect(patchSetResult.status).toBe(404);
     expect(patchSetResult.body?.code).toBe("WORKOUT_SET_NOT_FOUND");
+
+    expect(weeklyProgramsResult.status).toBe(200);
+    expect(
+      (weeklyProgramsResult.body?.data ?? []).some(
+        (program) => program.id === seededDay.programId,
+      ),
+    ).toBe(false);
+
+    expect(weeklyProgramLockResult.status).toBe(404);
+    expect(weeklyProgramLockResult.body?.code).toBe("WEEKLY_PROGRAM_NOT_FOUND");
+
+    expect(weeklyProgramCloneResult.status).toBe(404);
+    expect(weeklyProgramCloneResult.body?.code).toBe("WEEKLY_PROGRAM_NOT_FOUND");
 
     await adminContext.close();
     await userContext.close();
