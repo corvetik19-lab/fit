@@ -79,6 +79,7 @@
 - [x] Вынести из `src/components/admin-users-directory.tsx` первый tranche model/helper слоя в отдельный модуль.
 - [x] Вынести из `src/components/admin-users-directory.tsx` второй tranche filter/selection/bulk request helper-слоя в общий model-модуль.
 - [x] Вынести из `src/components/admin-user-detail.tsx` первый tranche model/helper слоя в отдельный модуль.
+- [x] Вынести из `src/components/admin-user-detail.tsx` второй tranche fetch/state и section-config слоя в отдельный hook-модуль.
 - [x] Вынести из `src/lib/ai/knowledge.ts` первый tranche model/search helper слоя в отдельный модуль.
 - [x] Вынести из `src/components/ai-chat-panel.tsx` первый tranche model/helper и tool-card слоя в отдельные модули.
 - [ ] Разбить `src/components/workout-day-session.tsx` на UI-композицию, timer/focus hooks, step/save logic и sync helpers.

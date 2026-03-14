@@ -2,9 +2,14 @@
 
 import type { Route } from "next";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import type { ReactNode } from "react";
 
 import { AdminRoleManager } from "@/components/admin-role-manager";
+import {
+  adminUserDetailSections,
+  renderList,
+  useAdminUserDetailState,
+} from "@/components/admin-user-detail-state";
 import { AdminUserActions } from "@/components/admin-user-actions";
 import {
   adminRoleLabels,
@@ -20,18 +25,9 @@ import {
   goalTypeLabels,
   sexLabels,
   fitnessLevelLabels,
-  type AdminUserDetailData,
   type PlatformAdminRole,
 } from "@/components/admin-user-detail-model";
 import { canUseRootAdminControls } from "@/lib/admin-permissions";
-
-function renderList(items: string[] | undefined) {
-  if (!items?.length) {
-    return "Не заполнено";
-  }
-
-  return items.join(", ");
-}
 
 function MetricCard({ label, value }: { label: string; value: string }) {
   return (
@@ -63,7 +59,7 @@ function KeyValueCard({
   );
 }
 
-function EmptyState({ children }: { children: React.ReactNode }) {
+function EmptyState({ children }: { children: ReactNode }) {
   return <p className="text-sm leading-7 text-muted">{children}</p>;
 }
 
@@ -78,57 +74,18 @@ export function AdminUserDetail({
   currentUserRole: PlatformAdminRole;
   userId: string;
 }) {
-  const [detail, setDetail] = useState<AdminUserDetailData | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [reloadVersion, setReloadVersion] = useState(0);
-  const [activeSection, setActiveSection] = useState<
-    "profile" | "activity" | "operations" | "billing"
-  >("profile");
+  const {
+    activeSection,
+    detail,
+    error,
+    isLoading,
+    reload,
+    setActiveSection,
+  } = useAdminUserDetailState(userId);
   const canViewRoleDetails = canUseRootAdminControls(
     currentUserRole,
     currentUserEmail,
   );
-
-  useEffect(() => {
-    let isActive = true;
-
-    async function loadDetail() {
-      setIsLoading(true);
-
-      try {
-        const response = await fetch(`/api/admin/users/${userId}`, {
-          cache: "no-store",
-        });
-        const payload = (await response.json().catch(() => null)) as
-          | { data?: AdminUserDetailData; message?: string }
-          | null;
-
-        if (!response.ok) {
-          if (isActive) {
-            setError(payload?.message ?? "Не удалось загрузить карточку пользователя.");
-            setDetail(null);
-          }
-          return;
-        }
-
-        if (isActive) {
-          setDetail(payload?.data ?? null);
-          setError(null);
-        }
-      } finally {
-        if (isActive) {
-          setIsLoading(false);
-        }
-      }
-    }
-
-    void loadDetail();
-
-    return () => {
-      isActive = false;
-    };
-  }, [reloadVersion, userId]);
 
   if (isLoading) {
     return (
@@ -242,12 +199,7 @@ export function AdminUserDetail({
         </div>
 
         <div className="mt-4 grid gap-3 md:flex md:flex-wrap">
-          {[
-            ["profile", "Профиль", "Основные данные, цели и действия."] as const,
-            ["activity", "Активность", "Тренировки, питание, ИИ и жизненный цикл."] as const,
-            ["operations", "Операции", "Очереди, выгрузки, удаление и аудит."] as const,
-            ["billing", "Оплата", "Подписка, доступы и история оплаты."] as const,
-          ].map(([key, label, description]) => {
+          {adminUserDetailSections.map(({ key, label, description }) => {
             const isActive = activeSection === key;
 
             return (
@@ -405,7 +357,7 @@ export function AdminUserDetail({
               currentAdminRole={currentUserRole}
               currentUserEmail={currentUserEmail}
               isSelf={currentUserId === userId}
-              onUpdated={() => setReloadVersion((current) => current + 1)}
+              onUpdated={reload}
               targetAdminRole={
                 detail.adminRole?.role as PlatformAdminRole | null
               }
@@ -417,7 +369,7 @@ export function AdminUserDetail({
           <AdminUserActions
             currentAdminRole={currentUserRole}
             currentUserEmail={currentUserEmail}
-            onUpdated={() => setReloadVersion((current) => current + 1)}
+            onUpdated={reload}
             userId={userId}
           />
         </div>

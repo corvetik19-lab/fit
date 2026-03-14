@@ -2,6 +2,13 @@
 
 ## 2026-03-14
 
+### Production hardening: второй tranche декомпозиции `admin-user-detail.tsx`
+
+- Продолжил раскладывать [admin-user-detail.tsx](/C:/fit/src/components/admin-user-detail.tsx) и вынес fetch/state слой в новый [admin-user-detail-state.ts](/C:/fit/src/components/admin-user-detail-state.ts).
+- В новый hook-модуль ушли загрузка карточки пользователя, `reload`-механика, локальный section state и конфиг разделов `profile / activity / operations / billing`.
+- Это упростило основной компонент: в нём осталась в основном визуальная композиция, а route-fetch orchestration и section plumbing больше не смешаны с JSX-разметкой.
+- Полную декомпозицию карточки пользователя всё ещё не считаю завершённой: сами крупные секционные блоки пока остаются в одном UI-модуле и пойдут отдельным tranche'ом.
+
 ### Production hardening: закрыт repo-tracked шум вокруг `tsconfig.json`
 
 - Проверил оставшийся `Wave 0` hygiene-долг: `tsconfig.json` не содержал реального текстового diff относительно `HEAD`, но индекс продолжал держать stale `needs update` state после старых запусков quality gates.
