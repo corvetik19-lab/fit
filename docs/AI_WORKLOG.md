@@ -2,6 +2,13 @@
 
 ## 2026-03-14
 
+### Production hardening: четвертый tranche декомпозиции `knowledge.ts`
+
+- Вынес из [knowledge.ts](/C:/fit/src/lib/ai/knowledge.ts) indexing/embeddings refresh слой в новый модуль [knowledge-indexing.ts](/C:/fit/src/lib/ai/knowledge-indexing.ts).
+- В новый модуль ушли refresh embeddings, проверка готовности knowledge index и fallback-поведение, когда vector-слой ещё не собран или embeddings временно недоступны.
+- После этого [knowledge.ts](/C:/fit/src/lib/ai/knowledge.ts) ещё ближе к orchestrator-роли: retrieval вынесен отдельно, source data вынесена отдельно, indexing тоже живёт отдельно, а основной модуль всё больше сводится к document assembly и верхнеуровневой orchestration-логике.
+- Следующий логичный tranche по этому модулю: вынести document builders и structured summary surface из основного AI knowledge orchestrator.
+
 ### Production hardening: третий tranche декомпозиции `knowledge.ts`
 
 - Вынес из [knowledge.ts](/C:/fit/src/lib/ai/knowledge.ts) слой загрузки и подготовки исходных данных в новый модуль [knowledge-source-data.ts](/C:/fit/src/lib/ai/knowledge-source-data.ts).

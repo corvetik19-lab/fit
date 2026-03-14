@@ -1,6 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { embedDocumentTexts } from "@/lib/ai/embeddings";
 import { aiProviders, defaultModels } from "@/lib/ai/gateway";
 import {
   average,
@@ -9,7 +8,6 @@ import {
   formatDayOfWeek,
   formatGoal,
   normalizeJsonArray,
-  toVectorLiteral,
   toSafeNumber,
   type KnowledgeChunkRow,
   type KnowledgeDocument,
@@ -21,6 +19,10 @@ import {
   type WorkoutSetRow,
 } from "@/lib/ai/knowledge-model";
 import {
+  ensureKnowledgeIndexState,
+  refreshKnowledgeEmbeddings as refreshKnowledgeEmbeddingsWithIndexing,
+} from "@/lib/ai/knowledge-indexing";
+import {
   listKnowledgeChunkInputs,
   loadKnowledgeSourceData,
 } from "@/lib/ai/knowledge-source-data";
@@ -29,7 +31,6 @@ import {
   buildStructuredKnowledgeSignature,
   formatStructuredKnowledgeForDocument,
 } from "@/lib/ai/structured-knowledge";
-import { logger } from "@/lib/logger";
 import { buildNutritionMealPatternStats } from "@/lib/nutrition/meal-patterns";
 import { buildNutritionStrategyRecommendations } from "@/lib/nutrition/strategy-recommendations";
 import { formatPlannedRepTarget } from "@/lib/workout/rep-ranges";
@@ -575,69 +576,6 @@ async function buildKnowledgeDocuments(
   return documents;
 }
 
-async function refreshKnowledgeEmbeddings(
-  supabase: SupabaseClient,
-  userId: string,
-): Promise<KnowledgeReindexResult> {
-  const chunks = await listKnowledgeChunkInputs(supabase, userId);
-
-  if (!chunks.length) {
-    return {
-      indexedChunks: 0,
-      embeddingsIndexed: 0,
-      mode: "embeddings",
-      searchMode: "text",
-    };
-  }
-
-  const { error: deleteError } = await supabase
-    .from("knowledge_embeddings")
-    .delete()
-    .eq("user_id", userId);
-
-  if (deleteError) {
-    throw deleteError;
-  }
-
-  try {
-    const embeddings = await embedDocumentTexts(chunks.map((chunk) => chunk.content));
-
-    const { error: embeddingInsertError } = await supabase
-      .from("knowledge_embeddings")
-      .insert(
-        embeddings.map((embedding, index) => ({
-          user_id: userId,
-          chunk_id: chunks[index]?.id,
-          embedding: toVectorLiteral(embedding),
-          model: KNOWLEDGE_EMBEDDING_MODEL,
-        })),
-      );
-
-    if (embeddingInsertError) {
-      throw embeddingInsertError;
-    }
-  } catch (error) {
-    logger.warn("knowledge embeddings unavailable; text retrieval only", {
-      error,
-      userId,
-    });
-
-    return {
-      indexedChunks: chunks.length,
-      embeddingsIndexed: 0,
-      mode: "embeddings",
-      searchMode: "text",
-    };
-  }
-
-  return {
-    indexedChunks: chunks.length,
-    embeddingsIndexed: chunks.length,
-    mode: "embeddings",
-    searchMode: "vector",
-  };
-}
-
 export async function reindexUserKnowledgeBase(
   supabase: SupabaseClient,
   userId: string,
@@ -656,7 +594,12 @@ export async function reindexUserKnowledgeBase(
       });
     }
 
-    return refreshKnowledgeEmbeddings(supabase, userId);
+    return refreshKnowledgeEmbeddingsWithIndexing({
+      embeddingModel: KNOWLEDGE_EMBEDDING_MODEL,
+      listKnowledgeChunkInputs,
+      supabase,
+      userId,
+    });
   }
 
   const documents = await buildKnowledgeDocuments(supabase, userId);
@@ -698,7 +641,12 @@ export async function reindexUserKnowledgeBase(
     };
   }
 
-  const embeddingsResult = await refreshKnowledgeEmbeddings(supabase, userId);
+  const embeddingsResult = await refreshKnowledgeEmbeddingsWithIndexing({
+    embeddingModel: KNOWLEDGE_EMBEDDING_MODEL,
+    listKnowledgeChunkInputs,
+    supabase,
+    userId,
+  });
 
   return {
     embeddingsIndexed: embeddingsResult.embeddingsIndexed,
@@ -712,40 +660,21 @@ async function ensureKnowledgeIndex(
   supabase: SupabaseClient,
   userId: string,
 ) {
-  const { count, error } = await supabase
-    .from("knowledge_chunks")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", userId);
-
-  if (error) {
-    throw error;
-  }
-
-  if (!count) {
-    await reindexUserKnowledgeBase(supabase, userId);
-    return;
-  }
-
-  const { count: embeddingCount, error: embeddingCountError } = await supabase
-    .from("knowledge_embeddings")
-    .select("chunk_id", { count: "exact", head: true })
-    .eq("user_id", userId)
-    .eq("model", KNOWLEDGE_EMBEDDING_MODEL);
-
-  if (embeddingCountError) {
-    throw embeddingCountError;
-  }
-
-  if (!embeddingCount) {
-    try {
-      await refreshKnowledgeEmbeddings(supabase, userId);
-    } catch (error) {
-      logger.warn("knowledge embeddings refresh failed during ensure", {
-        error,
-        userId,
-      });
-    }
-  }
+  await ensureKnowledgeIndexState({
+    embeddingModel: KNOWLEDGE_EMBEDDING_MODEL,
+    reindexKnowledgeBase: async (innerSupabase, innerUserId) => {
+      await reindexUserKnowledgeBase(innerSupabase, innerUserId);
+    },
+    refreshKnowledgeEmbeddings: async (innerSupabase, innerUserId) =>
+      await refreshKnowledgeEmbeddingsWithIndexing({
+        embeddingModel: KNOWLEDGE_EMBEDDING_MODEL,
+        listKnowledgeChunkInputs,
+        supabase: innerSupabase,
+        userId: innerUserId,
+      }),
+    supabase,
+    userId,
+  });
 }
 
 export async function retrieveKnowledgeMatches(
