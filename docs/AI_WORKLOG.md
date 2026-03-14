@@ -2,6 +2,12 @@
 
 ## 2026-03-14
 
+### Production hardening: закрыт repo-tracked шум вокруг `tsconfig.json`
+
+- Проверил оставшийся `Wave 0` hygiene-долг: `tsconfig.json` не содержал реального текстового diff относительно `HEAD`, но индекс продолжал держать stale `needs update` state после старых запусков quality gates.
+- После refresh индекса и повторного `next typegen` рабочее дерево перестало получать ложный repo-tracked шум, а baseline снова подтверждён без реального изменения `tsconfig.json`.
+- Этот пункт плана считаю закрытым: текущие quality gates больше не оставляют искусственный tracked-noise в `tsconfig.json`.
+
 ### Production hardening: второй tranche декомпозиции `admin-users-directory.tsx`
 
 - Продолжил раскладывать [admin-users-directory.tsx](/C:/fit/src/components/admin-users-directory.tsx) и вынес второй слой чистой логики в [admin-users-directory-model.ts](/C:/fit/src/components/admin-users-directory-model.ts).
