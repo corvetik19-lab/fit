@@ -77,6 +77,7 @@
 - [x] Вынести из `src/components/workout-day-session.tsx` первый tranche чистой логики в отдельные `session-utils` и `derived-state` модули.
 - [x] Вынести из `src/components/workout-day-session.tsx` второй tranche timer/focus-header state в отдельный hook-модуль.
 - [x] Вынести из `src/components/workout-day-session.tsx` третий tranche sync/hydration/offline orchestration в отдельный hook-модуль.
+- [x] Вынести из `src/components/workout-day-session.tsx` четвертый tranche save/status/reset action-слоя в отдельный hook-модуль.
 - [x] Вынести из `src/lib/dashboard/metrics.ts` первый tranche независимых helper’ов в `dashboard-utils` и `dashboard-snapshot`.
 - [x] Вынести из `src/components/admin-users-directory.tsx` первый tranche model/helper слоя в отдельный модуль.
 - [x] Вынести из `src/components/admin-users-directory.tsx` второй tranche filter/selection/bulk request helper-слоя в общий model-модуль.

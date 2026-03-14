@@ -2,6 +2,13 @@
 
 ## 2026-03-14
 
+### Production hardening: четвертый tranche декомпозиции `workout-day-session.tsx`
+
+- Вынес из [workout-day-session.tsx](/C:/fit/src/components/workout-day-session.tsx) action-слой `save/status/finish/reset` в новый hook [use-workout-session-actions.ts](/C:/fit/src/components/workout-session/use-workout-session-actions.ts).
+- В новый hook ушли сохранение контекста тренировки, сохранение упражнения, перевод статуса дня, завершение тренировки, сброс тренировки, а также сохранение и сброс таймера с offline/server orchestration.
+- После этого [workout-day-session.tsx](/C:/fit/src/components/workout-day-session.tsx) ещё сильнее приблизился к orchestrator-роли: derive state, timer, sync и action-поток теперь живут в отдельных модулях, а сам экран больше сосредоточен на step-based UX и разметке.
+- Полную декомпозицию execution-экрана ещё не считаю завершённой: следующим логичным tranche остаётся вынос крупных exercise/day surface-блоков в отдельные UI-модули.
+
 ### Production hardening: третий tranche декомпозиции `admin-users-directory.tsx`
 
 - Вынес из [admin-users-directory.tsx](/C:/fit/src/components/admin-users-directory.tsx) bulk actions/history UI в новый модуль [admin-users-bulk-actions.tsx](/C:/fit/src/components/admin-users-bulk-actions.tsx).

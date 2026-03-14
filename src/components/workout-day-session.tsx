@@ -4,7 +4,6 @@ import type { Route } from "next";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  startTransition,
   useCallback,
   useEffect,
   useMemo,
@@ -21,26 +20,17 @@ import {
 } from "lucide-react";
 
 import {
-  clearQueuedWorkoutMutationsForDay,
-  queueWorkoutDayExecutionMutation,
-  queueWorkoutSetActualRepsMutation,
-} from "@/lib/offline/workout-sync";
-import {
   formatPlannedRepTarget,
   getActualRepOptions,
 } from "@/lib/workout/rep-ranges";
 import type {
-  WeeklyProgramExerciseSummary,
   WorkoutDayDetail,
 } from "@/lib/workout/weekly-programs";
 import { buildWorkoutDayDerivedState } from "@/components/workout-session/derived-state";
 import {
-  applyWorkoutDayExecution,
-  applyWorkoutSetPerformance,
   areExerciseDraftValuesSaved,
   dayLabels,
   dayStatusLabels,
-  type ExerciseDraft,
   formatDurationSeconds,
   formatOptionalRpe,
   formatOptionalWeight,
@@ -53,9 +43,8 @@ import {
   getRpeOptions,
   isCompletedWorkoutExercise,
   isExerciseDraftReadyToSave,
-  parseOptionalRpe,
-  parseOptionalWeight,
 } from "@/components/workout-session/session-utils";
+import { useWorkoutSessionActions } from "@/components/workout-session/use-workout-session-actions";
 import { useWorkoutDaySync } from "@/components/workout-session/use-workout-day-sync";
 import { useWorkoutSessionTimer } from "@/components/workout-session/use-workout-session-timer";
 
@@ -206,6 +195,8 @@ export function WorkoutDaySession({
   );
 
   useEffect(() => {
+    // Local execution state must be rehydrated whenever the canonical day snapshot changes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     hydrateDayState(initialDay);
     resetPullCursor();
     void hydrateLocalDay();
@@ -216,6 +207,8 @@ export function WorkoutDaySession({
       return;
     }
 
+    // Focus mode keeps one active step and clamps it when the unlocked range changes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setActiveExerciseIndex((currentIndex) => {
       const maxUnlockedIndex = Math.max(0, unlockedExerciseCount - 1);
       const safeIndex = Math.min(currentIndex, maxUnlockedIndex);
@@ -237,558 +230,53 @@ export function WorkoutDaySession({
     });
   }, [day.exercises, isMobileFocusMode, unlockedExerciseCount]);
 
-  const persistDayExecution = useCallback(async (
-    nextDay: WorkoutDayDetail,
-    noticeMessage: string | null,
-    offlineNoticeMessage: string | null,
-  ) => {
-    await persistWorkoutDay(nextDay);
-
-    if (!navigator.onLine) {
-      await queueWorkoutDayExecutionMutation({
-        dayId: nextDay.id,
-        status: nextDay.status as "planned" | "in_progress" | "done",
-        bodyWeightKg: nextDay.body_weight_kg,
-        sessionNote: nextDay.session_note,
-        sessionDurationSeconds: nextDay.session_duration_seconds,
-      });
-      await refreshPendingMutationCount();
-      markOffline();
-      if (offlineNoticeMessage) {
-        setNotice(offlineNoticeMessage);
-      }
-      return;
-    }
-
-    const response = await fetch(`/api/workout-days/${nextDay.id}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        status: nextDay.status,
-        bodyWeightKg: nextDay.body_weight_kg,
-        sessionNote: nextDay.session_note,
-        sessionDurationSeconds: nextDay.session_duration_seconds,
-      }),
-    });
-
-    const payload = (await response.json().catch(() => null)) as
-      | { message?: string }
-      | null;
-
-    if (!response.ok) {
-      throw new Error(payload?.message ?? "Не удалось сохранить день тренировки.");
-    }
-
-    markOnline();
-    if (noticeMessage) {
-      setNotice(noticeMessage);
-    }
-    await pullLatestDaySnapshot({ force: true }).catch(() => null);
-  }, [
+  const {
+    completeWorkout,
+    pauseSessionTimer,
+    resetSessionTimer,
+    resetWorkoutDay,
+    saveDayContext,
+    saveExercise,
+    setExerciseEditing,
+    updateDayStatus,
+  } = useWorkoutSessionActions({
+    actualRepsBySetId,
+    actualRpeBySetId,
+    actualWeightBySetId,
+    applyDaySnapshot,
+    canFinishWorkout,
+    clearActiveTimer,
+    currentSessionDurationSeconds,
+    day,
+    dayBodyWeightValue,
+    daySessionNoteValue,
+    editableExerciseIds,
+    expiredTimerResetDayIdRef,
+    getResolvedCurrentSessionDurationSeconds,
+    isSyncing,
     markOffline,
     markOnline,
     persistWorkoutDay,
     pullLatestDaySnapshot,
     refreshPendingMutationCount,
-  ]);
-
-  const saveSessionDuration = useCallback(async (
-    nextSeconds: number,
-    noticeMessage: string | null,
-    offlineNoticeMessage: string | null,
-  ) => {
-    setError(null);
-    if (noticeMessage) {
-      setNotice(null);
-    }
-    setIsPending(true);
-
-    const previousDay = day;
-    const previousDuration = day.session_duration_seconds ?? 0;
-    const optimisticDay = applyWorkoutDayExecution(day, {
-      sessionDurationSeconds: nextSeconds,
-    });
-
-    setDay(optimisticDay);
-    setTimerBaseSeconds(nextSeconds);
-    setTimerLiveSeconds(nextSeconds);
-
-    try {
-      await persistDayExecution(optimisticDay, noticeMessage, offlineNoticeMessage);
-    } catch (error) {
-      setDay(previousDay);
-      await persistWorkoutDay(previousDay);
-      setTimerBaseSeconds(previousDuration);
-      setTimerLiveSeconds(previousDuration);
-      setError(
-        error instanceof Error
-          ? error.message
-          : "Не удалось сохранить таймер тренировки.",
-      );
-      throw error;
-    } finally {
-      setIsPending(false);
-    }
-  }, [
-    day,
-    persistDayExecution,
-    persistWorkoutDay,
+    resetPullCursor,
+    restoreRunningTimer,
+    setDay,
+    setDayBodyWeightValue,
+    setDaySessionNoteValue,
+    setEditableExerciseIds,
+    setError,
+    setIsPending,
+    setNotice,
+    setShouldPersistExpiredTimerReset,
     setTimerBaseSeconds,
     setTimerLiveSeconds,
-  ]);
-
-  useEffect(() => {
-    if (!shouldPersistExpiredTimerReset) {
-      return;
-    }
-
-    setShouldPersistExpiredTimerReset(false);
-    setNotice("Таймер автоматически сброшен через 2 часа.");
-
-    void saveSessionDuration(
-      0,
-      null,
-      "Таймер автоматически сброшен на устройстве и отправится позже.",
-    )
-      .catch(() => null)
-      .finally(() => {
-        expiredTimerResetDayIdRef.current = null;
-      });
-  }, [
-    expiredTimerResetDayIdRef,
-    saveSessionDuration,
-    setShouldPersistExpiredTimerReset,
+    setTimerStartedAt,
     shouldPersistExpiredTimerReset,
-  ]);
-
-  function updateDayStatus(nextStatus: "planned" | "in_progress" | "done") {
-    setError(null);
-    setNotice(null);
-    setIsPending(true);
-
-    const previousDay = day;
-    const optimisticDay = applyWorkoutDayExecution(day, {
-      status: nextStatus,
-    });
-    setDay(optimisticDay);
-
-    startTransition(async () => {
-      try {
-        await persistDayExecution(
-          optimisticDay,
-          "Статус дня обновлён.",
-          "Статус сохранён на устройстве и отправится, когда связь вернётся.",
-        );
-      } catch (error) {
-        setDay(previousDay);
-        await persistWorkoutDay(previousDay);
-        setError(
-          error instanceof Error
-            ? error.message
-            : "Не удалось обновить статус дня.",
-        );
-      } finally {
-        setIsPending(false);
-      }
-    });
-  }
-
-  function saveDayContext() {
-    setError(null);
-    setNotice(null);
-    setIsPending(true);
-
-    const parsedBodyWeight = parseOptionalWeight(dayBodyWeightValue);
-    if (
-      parsedBodyWeight !== null &&
-      (!Number.isFinite(parsedBodyWeight) || parsedBodyWeight < 0 || parsedBodyWeight > 500)
-    ) {
-      setError("Вес тела должен быть числом от 0 до 500 кг.");
-      setIsPending(false);
-      return;
-    }
-
-    const trimmedSessionNote = daySessionNoteValue.trim();
-    if (trimmedSessionNote.length > 4000) {
-      setError("Заметка о тренировке должна быть не длиннее 4000 символов.");
-      setIsPending(false);
-      return;
-    }
-
-    const previousDay = day;
-    const optimisticDay = applyWorkoutDayExecution(day, {
-      bodyWeightKg: parsedBodyWeight,
-      sessionNote: trimmedSessionNote || null,
-    });
-    setDay(optimisticDay);
-
-    startTransition(async () => {
-      try {
-        await persistDayExecution(
-          optimisticDay,
-          "Контекст тренировки сохранён.",
-          "Контекст тренировки сохранён на устройстве и отправится позже.",
-        );
-      } catch (error) {
-        setDay(previousDay);
-        await persistWorkoutDay(previousDay);
-        setDayBodyWeightValue(
-          typeof previousDay.body_weight_kg === "number"
-            ? previousDay.body_weight_kg.toString()
-            : "",
-        );
-        setDaySessionNoteValue(previousDay.session_note ?? "");
-        setError(
-          error instanceof Error
-            ? error.message
-            : "Не удалось сохранить контекст тренировки.",
-        );
-      } finally {
-        setIsPending(false);
-      }
-    });
-  }
-
-  function setExerciseEditing(exerciseId: string, isEditing: boolean) {
-    setEditableExerciseIds((current) => ({
-      ...current,
-      [exerciseId]: isEditing,
-    }));
-  }
-
-  function saveExercise(exercise: WeeklyProgramExerciseSummary) {
-    setError(null);
-    setNotice(null);
-    setIsPending(true);
-
-    const previousDay = day;
-    const previousEditableExerciseIds = editableExerciseIds;
-
-    let drafts: ExerciseDraft[];
-
-    try {
-      if (
-        !isExerciseDraftReadyToSave(
-          exercise,
-          actualRepsBySetId,
-          actualWeightBySetId,
-          actualRpeBySetId,
-        )
-      ) {
-        throw new Error("Заполни повторы, вес и RPE во всех подходах упражнения.");
-      }
-
-      drafts = exercise.sets.map((set) => {
-        const actualRepsRaw = actualRepsBySetId[set.id]?.trim() ?? "";
-        const actualWeightRaw = actualWeightBySetId[set.id]?.trim() ?? "";
-        const actualRpeRaw = actualRpeBySetId[set.id]?.trim() ?? "";
-        const actualReps = actualRepsRaw.length ? Number(actualRepsRaw) : null;
-        const actualWeightKg = parseOptionalWeight(actualWeightRaw);
-        const actualRpe = parseOptionalRpe(actualRpeRaw);
-
-        if (actualReps === null) {
-          throw new Error("Укажи повторы во всех подходах упражнения.");
-        }
-
-        if (!Number.isInteger(actualReps) || actualReps < 0) {
-          throw new Error("Повторы должны быть целым числом 0 или больше.");
-        }
-
-        if (
-          actualWeightKg !== null &&
-          (!Number.isFinite(actualWeightKg) || actualWeightKg < 0 || actualWeightKg > 1000)
-        ) {
-          throw new Error("Вес должен быть числом от 0 до 1000 кг.");
-        }
-
-        if (
-          actualRpe !== null &&
-          (!Number.isFinite(actualRpe) || actualRpe < 1 || actualRpe > 10)
-        ) {
-          throw new Error("RPE должен быть числом от 1 до 10.");
-        }
-
-        return {
-          setId: set.id,
-          actualReps,
-          actualWeightKg,
-          actualRpe,
-        };
-      });
-    } catch (validationError) {
-      setError(
-        validationError instanceof Error
-          ? validationError.message
-          : "Проверь значения по упражнению и попробуй ещё раз.",
-      );
-      setIsPending(false);
-      return;
-    }
-
-    const shouldPromoteDayStatus = day.status === "planned";
-    let optimisticDay = day;
-
-    for (const draft of drafts) {
-      optimisticDay = applyWorkoutSetPerformance(
-        optimisticDay,
-        draft.setId,
-        draft.actualReps,
-        draft.actualWeightKg,
-        draft.actualRpe,
-      );
-    }
-
-    if (shouldPromoteDayStatus) {
-      optimisticDay = applyWorkoutDayExecution(optimisticDay, {
-        status: "in_progress",
-      });
-    }
-
-    setDay(optimisticDay);
-    setEditableExerciseIds((current) => ({
-      ...current,
-      [exercise.id]: false,
-    }));
-
-    startTransition(async () => {
-      try {
-        await persistWorkoutDay(optimisticDay);
-
-        if (!navigator.onLine) {
-          for (const draft of drafts) {
-            await queueWorkoutSetActualRepsMutation({
-              dayId: day.id,
-              setId: draft.setId,
-              actualReps: draft.actualReps,
-              actualWeightKg: draft.actualWeightKg,
-              actualRpe: draft.actualRpe,
-            });
-          }
-
-          if (shouldPromoteDayStatus) {
-            await queueWorkoutDayExecutionMutation({
-              dayId: day.id,
-              status: "in_progress",
-              bodyWeightKg: optimisticDay.body_weight_kg,
-              sessionNote: optimisticDay.session_note,
-              sessionDurationSeconds: optimisticDay.session_duration_seconds,
-            });
-          }
-
-          await refreshPendingMutationCount();
-          markOffline();
-          setNotice("Упражнение сохранено на устройстве и отправится позже.");
-          return;
-        }
-
-        for (const draft of drafts) {
-          const response = await fetch(`/api/workout-sets/${draft.setId}`, {
-            method: "PATCH",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              actualReps: draft.actualReps,
-              actualWeightKg: draft.actualWeightKg,
-              actualRpe: draft.actualRpe,
-            }),
-          });
-
-          const payload = (await response.json().catch(() => null)) as
-            | { message?: string }
-            | null;
-
-          if (!response.ok) {
-            throw new Error(payload?.message ?? "Не удалось сохранить упражнение.");
-          }
-        }
-
-        if (shouldPromoteDayStatus) {
-          await persistDayExecution(
-            optimisticDay,
-            "Упражнение сохранено. Тренировка переведена в работу.",
-            "Упражнение сохранено локально. Статус тренировки отправится позже.",
-          );
-        } else {
-          markOnline();
-          setNotice("Упражнение сохранено.");
-          await pullLatestDaySnapshot({ force: true }).catch(() => null);
-        }
-      } catch (saveError) {
-        setDay(previousDay);
-        setEditableExerciseIds(previousEditableExerciseIds);
-        await persistWorkoutDay(previousDay);
-        setError(
-          saveError instanceof Error
-            ? saveError.message
-            : "Не удалось сохранить упражнение.",
-        );
-      } finally {
-        setIsPending(false);
-      }
-    });
-  }
-  async function pauseSessionTimer(options?: { silent?: boolean }) {
-    if (timerStartedAt === null) {
-      return;
-    }
-
-    const nextSeconds = getResolvedCurrentSessionDurationSeconds();
-
-    clearActiveTimer();
-
-    await saveSessionDuration(
-      nextSeconds,
-      options?.silent ? null : "Таймер тренировки сохранён.",
-      options?.silent ? null : "Таймер сохранён на устройстве и отправится позже.",
-    );
-  }
-
-  async function resetSessionTimer() {
-    clearActiveTimer();
-    await saveSessionDuration(
-      0,
-      "Таймер тренировки сброшен.",
-      "Сброс таймера сохранён на устройстве и отправится позже.",
-    );
-  }
-
-  function completeWorkout() {
-    if (!canFinishWorkout) {
-      setError("Сначала сохрани все упражнения. Кнопка завершения откроется после этого.");
-      return;
-    }
-
-    setError(null);
-    setNotice(null);
-    setIsPending(true);
-
-    const previousDay = day;
-    const previousTimerStartedAt = timerStartedAt;
-    const previousTimerBaseSeconds = timerBaseSeconds;
-    const previousTimerLiveSeconds = timerLiveSeconds;
-    const shouldAskAboutTimer =
-      timerStartedAt !== null || currentSessionDurationSeconds > 0;
-    const shouldSaveTimer = shouldAskAboutTimer
-      ? window.confirm("Сохранить время тренировки перед завершением?")
-      : true;
-    const nextSessionDurationSeconds = shouldSaveTimer
-      ? getResolvedCurrentSessionDurationSeconds()
-      : 0;
-
-    clearActiveTimer();
-    setTimerBaseSeconds(nextSessionDurationSeconds);
-    setTimerLiveSeconds(nextSessionDurationSeconds);
-
-    const optimisticDay = applyWorkoutDayExecution(day, {
-      status: "done",
-      sessionDurationSeconds: nextSessionDurationSeconds,
-    });
-
-    setDay(optimisticDay);
-
-    startTransition(async () => {
-      try {
-        await persistDayExecution(
-          optimisticDay,
-          shouldAskAboutTimer
-            ? shouldSaveTimer
-              ? "Тренировка завершена, время сохранено."
-              : "Тренировка завершена без сохранения времени."
-            : "Тренировка завершена.",
-          shouldAskAboutTimer
-            ? shouldSaveTimer
-              ? "Тренировка завершена. Время сохранено локально и отправится позже."
-              : "Тренировка завершена без сохранения времени. Изменение отправится позже."
-            : "Тренировка завершена локально и отправится позже.",
-        );
-      } catch (error) {
-        setDay(previousDay);
-        await persistWorkoutDay(previousDay);
-        setTimerStartedAt(previousTimerStartedAt);
-        setTimerBaseSeconds(previousTimerBaseSeconds);
-        setTimerLiveSeconds(previousTimerLiveSeconds);
-
-        if (previousTimerStartedAt !== null) {
-          restoreRunningTimer({
-            baseSeconds: previousTimerBaseSeconds,
-            startedAt: previousTimerStartedAt,
-          });
-        }
-
-        setError(
-          error instanceof Error
-            ? error.message
-            : "Не удалось завершить тренировку.",
-        );
-      } finally {
-        setIsPending(false);
-      }
-    });
-  }
-
-  function resetWorkoutDay() {
-    if (isPending || isSyncing) {
-      return;
-    }
-
-    if (!navigator.onLine) {
-      setError("Для полного обнуления тренировки нужна связь с интернетом.");
-      return;
-    }
-
-    const shouldReset = window.confirm(
-      "Обнулить тренировку и начать заново? Все сохранённые повторы, вес, RPE и время по этому дню будут очищены.",
-    );
-
-    if (!shouldReset) {
-      return;
-    }
-
-    setError(null);
-    setNotice(null);
-    setIsPending(true);
-
-    startTransition(async () => {
-      try {
-        const response = await fetch(`/api/workout-days/${day.id}/reset`, {
-          method: "POST",
-          cache: "no-store",
-        });
-
-        const payload = (await response.json().catch(() => null)) as
-          | {
-              data?: WorkoutDayDetail;
-              message?: string;
-            }
-          | null;
-
-        if (!response.ok || !payload?.data) {
-          throw new Error(
-            payload?.message ?? "Не удалось обнулить тренировку.",
-          );
-        }
-
-        clearActiveTimer();
-        setShouldPersistExpiredTimerReset(false);
-        await clearQueuedWorkoutMutationsForDay(day.id);
-        await refreshPendingMutationCount();
-        await applyDaySnapshot(payload.data);
-        resetPullCursor();
-        setNotice("Тренировка обнулена. Можно начать заново.");
-      } catch (resetError) {
-        setError(
-          resetError instanceof Error
-            ? resetError.message
-            : "Не удалось обнулить тренировку.",
-        );
-      } finally {
-        setIsPending(false);
-      }
-    });
-  }
+    timerBaseSeconds,
+    timerLiveSeconds,
+    timerStartedAt,
+  });
 
   async function returnToRegularMode() {
     if (isTimerRunning) {
