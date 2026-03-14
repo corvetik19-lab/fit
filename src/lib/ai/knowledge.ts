@@ -1,7 +1,6 @@
-import { cosineSimilarity } from "ai";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { embedDocumentTexts, embedQueryText } from "@/lib/ai/embeddings";
+import { embedDocumentTexts } from "@/lib/ai/embeddings";
 import { aiProviders, defaultModels } from "@/lib/ai/gateway";
 import {
   average,
@@ -10,18 +9,14 @@ import {
   formatDayOfWeek,
   formatGoal,
   normalizeJsonArray,
-  parseVector,
-  rankChunkByTokens,
-  toSafeNumber,
   toVectorLiteral,
+  toSafeNumber,
   type BodyMetricRow,
   type ContextSnapshotRow,
   type GoalRow,
-  type JsonRecord,
   type KnowledgeChunkEmbeddingInput,
   type KnowledgeChunkRow,
   type KnowledgeDocument,
-  type KnowledgeEmbeddingRow,
   type KnowledgeReindexResult,
   type MealItemRow,
   type MealRow,
@@ -35,6 +30,7 @@ import {
   type WorkoutExerciseRow,
   type WorkoutSetRow,
 } from "@/lib/ai/knowledge-model";
+import { retrieveKnowledgeMatchesWithPipeline } from "@/lib/ai/knowledge-retrieval";
 import {
   buildStructuredKnowledgeSignature,
   formatStructuredKnowledgeForDocument,
@@ -934,268 +930,17 @@ async function ensureKnowledgeIndex(
   }
 }
 
-async function retrieveKnowledgeMatchesViaRpc(
-  supabase: SupabaseClient,
-  queryEmbedding: number[],
-  limit: number,
-) {
-  const { data, error } = await supabase.rpc("match_knowledge_chunks", {
-    query_embedding: toVectorLiteral(queryEmbedding),
-    match_count: limit,
-    match_threshold: 0.45,
-  });
-
-  if (error) {
-    throw error;
-  }
-
-  return ((data as
-    | Array<{
-        id: string;
-        source_type: string;
-        source_id: string | null;
-        content: string;
-        metadata: JsonRecord;
-        similarity: number;
-      }>
-    | null) ?? [])
-    .map((item) => ({
-      id: item.id,
-      sourceType: item.source_type,
-      sourceId: item.source_id,
-      content: item.content,
-      metadata: item.metadata ?? {},
-      similarity: Number(item.similarity),
-    }))
-    .filter((item) => Number.isFinite(item.similarity));
-}
-
-async function retrieveKnowledgeMatchesViaTextRpc(
-  supabase: SupabaseClient,
-  query: string,
-  limit: number,
-) {
-  const { data, error } = await supabase.rpc("search_knowledge_chunks_text", {
-    query_text: query,
-    match_count: limit,
-  });
-
-  if (error) {
-    throw error;
-  }
-
-  return ((data as
-    | Array<{
-        id: string;
-        source_type: string;
-        source_id: string | null;
-        content: string;
-        metadata: JsonRecord;
-        similarity: number;
-      }>
-    | null) ?? [])
-    .map((item) => ({
-      id: item.id,
-      sourceType: item.source_type,
-      sourceId: item.source_id,
-      content: item.content,
-      metadata: item.metadata ?? {},
-      similarity: Number(item.similarity),
-    }))
-    .filter((item) => Number.isFinite(item.similarity));
-}
-
-async function retrieveKnowledgeMatchesWithFallback(
-  supabase: SupabaseClient,
-  userId: string,
-  queryEmbedding: number[],
-  limit: number,
-) {
-  const { data: embeddingData, error: embeddingError } = await supabase
-    .from("knowledge_embeddings")
-    .select("chunk_id, embedding")
-    .eq("user_id", userId)
-    .limit(400);
-
-  if (embeddingError) {
-    throw embeddingError;
-  }
-
-  const embeddingRows =
-    (embeddingData as KnowledgeEmbeddingRow[] | null) ?? [];
-
-  if (!embeddingRows.length) {
-    return [] as RetrievedKnowledgeItem[];
-  }
-
-  const chunkIds = [...new Set(embeddingRows.map((row) => row.chunk_id))];
-
-  const { data: chunkData, error: chunkError } = await supabase
-    .from("knowledge_chunks")
-    .select("id, source_type, source_id, content, metadata")
-    .eq("user_id", userId)
-    .in("id", chunkIds);
-
-  if (chunkError) {
-    throw chunkError;
-  }
-
-  const chunks = (chunkData as KnowledgeChunkRow[] | null) ?? [];
-  const chunksById = new Map(chunks.map((chunk) => [chunk.id, chunk]));
-
-  return embeddingRows
-    .map((row) => {
-      const chunk = chunksById.get(row.chunk_id);
-
-      if (!chunk) {
-        return null;
-      }
-
-      const candidateEmbedding = parseVector(row.embedding);
-
-      if (!candidateEmbedding.length || candidateEmbedding.length !== queryEmbedding.length) {
-        return null;
-      }
-
-      return {
-        id: chunk.id,
-        sourceType: chunk.source_type,
-        sourceId: chunk.source_id,
-        content: chunk.content,
-        metadata: chunk.metadata,
-        similarity: cosineSimilarity(queryEmbedding, candidateEmbedding),
-      } satisfies RetrievedKnowledgeItem;
-    })
-    .filter((item): item is RetrievedKnowledgeItem => Boolean(item))
-    .sort((left, right) => right.similarity - left.similarity)
-    .slice(0, limit);
-}
-
-async function retrieveKnowledgeMatchesViaTextFallback(
-  supabase: SupabaseClient,
-  userId: string,
-  query: string,
-  limit: number,
-) {
-  const { data, error } = await supabase
-    .from("knowledge_chunks")
-    .select("id, source_type, source_id, content, metadata")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false })
-    .limit(600);
-
-  if (error) {
-    throw error;
-  }
-
-  const chunks = (data as KnowledgeChunkRow[] | null) ?? [];
-
-  return chunks
-    .map((chunk) => ({
-      id: chunk.id,
-      sourceType: chunk.source_type,
-      sourceId: chunk.source_id,
-      content: chunk.content,
-      metadata: chunk.metadata,
-      similarity: rankChunkByTokens(chunk, query),
-    }))
-    .filter((item) => item.similarity > 0)
-    .sort((left, right) => right.similarity - left.similarity)
-    .slice(0, limit);
-}
-
 export async function retrieveKnowledgeMatches(
   supabase: SupabaseClient,
   userId: string,
   query: string,
   limit = 6,
 ): Promise<RetrievedKnowledgeItem[]> {
-  try {
-    await ensureKnowledgeIndex(supabase, userId);
-  } catch (error) {
-    logger.warn("knowledge index refresh failed; using existing chunks only", {
-      error,
-      userId,
-    });
-  }
-
-  let queryEmbedding: number[] | null = null;
-
-  try {
-    queryEmbedding = await embedQueryText(query);
-  } catch (error) {
-    logger.warn("knowledge query embedding unavailable; falling back to text retrieval", {
-      error,
-      userId,
-    });
-  }
-
-  if (queryEmbedding) {
-    try {
-      const rpcMatches = await retrieveKnowledgeMatchesViaRpc(
-        supabase,
-        queryEmbedding,
-        limit,
-      );
-
-      if (rpcMatches.length) {
-        return rpcMatches;
-      }
-    } catch (error) {
-      logger.warn("knowledge RPC retrieval fell back to app-side vector ranking", {
-        error,
-        userId,
-      });
-    }
-
-    try {
-      const vectorFallbackMatches = await retrieveKnowledgeMatchesWithFallback(
-        supabase,
-        userId,
-        queryEmbedding,
-        limit,
-      );
-
-      if (vectorFallbackMatches.length) {
-        return vectorFallbackMatches;
-      }
-    } catch (error) {
-      logger.warn("knowledge vector fallback failed; trying text retrieval", {
-        error,
-        userId,
-      });
-    }
-  }
-
-  try {
-    const textRpcMatches = await retrieveKnowledgeMatchesViaTextRpc(
-      supabase,
-      query,
-      limit,
-    );
-
-    if (textRpcMatches.length) {
-      return textRpcMatches;
-    }
-  } catch (error) {
-    logger.warn("knowledge text RPC retrieval fell back to app-side text ranking", {
-      error,
-      userId,
-    });
-  }
-
-  try {
-    return await retrieveKnowledgeMatchesViaTextFallback(
-      supabase,
-      userId,
-      query,
-      limit,
-    );
-  } catch (error) {
-    logger.warn("knowledge text fallback failed", {
-      error,
-      userId,
-    });
-    return [];
-  }
+  return retrieveKnowledgeMatchesWithPipeline({
+    ensureKnowledgeIndex,
+    limit,
+    query,
+    supabase,
+    userId,
+  });
 }

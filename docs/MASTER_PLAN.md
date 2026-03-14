@@ -85,6 +85,7 @@
 - [x] Вынести из `src/components/admin-user-detail.tsx` третий tranche секционных `profile/activity/operations/billing` блоков в отдельный UI-модуль.
 - [x] Убрать mojibake из `admin-user-detail` model/state словарей и section copy.
 - [x] Вынести из `src/lib/ai/knowledge.ts` первый tranche model/search helper слоя в отдельный модуль.
+- [x] Вынести из `src/lib/ai/knowledge.ts` второй tranche retrieval RPC/vector/text fallback слоя в отдельный модуль.
 - [x] Вынести из `src/components/ai-chat-panel.tsx` первый tranche model/helper и tool-card слоя в отдельные модули.
 - [x] Вынести из `src/components/ai-chat-panel.tsx` второй tranche `chat surface + composer` UI в отдельные модули.
 - [x] Убрать mojibake из `ai-chat-panel` и `ai-chat-panel-model` user-facing copy.

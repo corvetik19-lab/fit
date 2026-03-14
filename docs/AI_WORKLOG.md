@@ -2,6 +2,15 @@
 
 ## 2026-03-14
 
+### Production hardening: второй tranche декомпозиции `knowledge.ts`
+
+- Вынес из [knowledge.ts](/C:/fit/src/lib/ai/knowledge.ts) retrieval pipeline в новый модуль [knowledge-retrieval.ts](/C:/fit/src/lib/ai/knowledge-retrieval.ts).
+- В новый слой ушли RPC retrieval, vector fallback, text RPC fallback и финальная orchestration-цепочка `ensure -> embeddings -> rpc -> fallback`.
+- Сам [knowledge.ts](/C:/fit/src/lib/ai/knowledge.ts) после этого снова ближе к indexing/document assembly orchestrator-роли, а retrieval теперь можно развивать и тестировать отдельно от пересборки knowledge corpus.
+- Это закрывает ещё один крупный кусок `Wave 1`; следующим логичным tranche остаётся либо дальнейшее дробление `workout-day-session.tsx`, либо вынос indexing/document builders из `knowledge.ts`.
+
+## 2026-03-14
+
 ### Production hardening: второй tranche декомпозиции `ai-chat-panel.tsx`
 
 - Вынес из [ai-chat-panel.tsx](/C:/fit/src/components/ai-chat-panel.tsx) chat surface и composer UI в новые модули [ai-chat-transcript.tsx](/C:/fit/src/components/ai-chat-transcript.tsx) и [ai-chat-composer.tsx](/C:/fit/src/components/ai-chat-composer.tsx).
