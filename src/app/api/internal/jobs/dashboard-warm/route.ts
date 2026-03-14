@@ -8,6 +8,7 @@ import {
   getDashboardRuntimeMetrics,
 } from "@/lib/dashboard/metrics";
 import {
+  isInternalJobParamError,
   requireInternalAdminJobAccess,
   resolveTargetUserIds,
 } from "@/lib/internal-jobs";
@@ -91,6 +92,14 @@ async function handleRequest(request: Request) {
           : "Dashboard warm job completed successfully.",
     });
   } catch (error) {
+    if (isInternalJobParamError(error)) {
+      return createApiErrorResponse({
+        status: 400,
+        code: "DASHBOARD_WARM_JOB_INVALID",
+        message: error.message,
+      });
+    }
+
     logger.error("dashboard warm job failed", { error });
 
     return createApiErrorResponse({

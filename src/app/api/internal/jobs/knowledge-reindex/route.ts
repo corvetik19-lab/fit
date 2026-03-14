@@ -1,6 +1,7 @@
 import { reindexUserKnowledgeBase } from "@/lib/ai/knowledge";
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import {
+  isInternalJobParamError,
   requireInternalAdminJobAccess,
   resolveTargetUserIds,
 } from "@/lib/internal-jobs";
@@ -180,6 +181,14 @@ async function handleRequest(request: Request) {
           : "Knowledge reindex job completed successfully.",
     });
   } catch (error) {
+    if (isInternalJobParamError(error)) {
+      return createApiErrorResponse({
+        status: 400,
+        code: "KNOWLEDGE_REINDEX_JOB_INVALID",
+        message: error.message,
+      });
+    }
+
     logger.error("knowledge reindex job failed", { error });
 
     return createApiErrorResponse({

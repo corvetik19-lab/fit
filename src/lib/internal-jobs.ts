@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import { isAdminAccessError, requireAdminRouteAccess } from "@/lib/admin-auth";
 import { serverEnv } from "@/lib/env";
@@ -7,6 +9,17 @@ export type InternalJobAccessContext = {
   actorUserId: string | null;
   source: "admin" | "cron";
 };
+
+export class InternalJobParamError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "InternalJobParamError";
+  }
+}
+
+export function isInternalJobParamError(error: unknown): error is InternalJobParamError {
+  return error instanceof InternalJobParamError;
+}
 
 export function hasValidCronSecret(request: Request) {
   if (!serverEnv.CRON_SECRET) {
@@ -36,6 +49,23 @@ export function parsePositiveInt(
   }
 
   return Math.min(max, Math.max(1, Math.trunc(parsed)));
+}
+
+export function parseOptionalUuidParam(
+  value: string | null | undefined,
+  fieldLabel: string,
+) {
+  if (!value?.trim()) {
+    return null;
+  }
+
+  const parsed = z.string().uuid().safeParse(value.trim());
+
+  if (!parsed.success) {
+    throw new InternalJobParamError(`${fieldLabel} must be a valid UUID.`);
+  }
+
+  return parsed.data;
 }
 
 export async function requireInternalAdminJobAccess(
@@ -84,7 +114,10 @@ export async function resolveTargetUserIds(
 ) {
   const { searchParams } = new URL(request.url);
   const userIdParam = options?.userIdParam ?? "userId";
-  const explicitUserId = searchParams.get(userIdParam)?.trim() ?? null;
+  const explicitUserId = parseOptionalUuidParam(
+    searchParams.get(userIdParam),
+    userIdParam,
+  );
 
   if (explicitUserId) {
     return [explicitUserId];

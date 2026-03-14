@@ -114,6 +114,13 @@
 - В `src/app/api/sync/pull/route.ts` добавил Zod-валидацию `scope`, `dayId` и `cursor`, чтобы sync-route не принимал невалидные параметры.
 - После правок подтверждён baseline: `npm run lint`, `npm run typecheck`, `npm run build`.
 
+### 2026-03-15 00:20 - Ужесточил internal jobs параметры и ошибки
+
+- В `src/lib/internal-jobs.ts` добавил `parseOptionalUuidParam(...)` и `InternalJobParamError`, чтобы internal jobs не принимали произвольный `userId`.
+- В `dashboard-warm`, `knowledge-reindex`, `nutrition-summaries` и `billing-reconcile` route handlers невалидный `userId` теперь даёт явный `400`, а не уходит в общий `500`.
+- Это делает cron/admin job контракты предсказуемее и уменьшает ложные server-error сценарии при ручных вызовах и операционных проверках.
+- После правок снова подтверждён baseline: `npm run lint`, `npm run typecheck`, `npm run build`.
+
 ## Что осталось в production hardening
 
 - Дальнейшая санация локального `docs/AI_EXPLAINED.md` после отдельного triage пользовательских изменений.

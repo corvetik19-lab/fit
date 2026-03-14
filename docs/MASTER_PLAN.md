@@ -208,6 +208,7 @@
 
 - [x] Sentry, Vercel Analytics и health dashboards уже встроены частично.
 - [ ] Завершить Sentry rollout на production env.
+- [x] Добавить базовую валидацию `userId`-параметров для internal jobs и явные `400`, а не общие `500`.
 - [ ] Подтвердить auth/visibility для cron routes и internal jobs.
 - [ ] Задокументировать или устранить допустимые build warnings.
 

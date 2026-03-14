@@ -4,7 +4,9 @@ import {
   hasStripePortalEnv,
 } from "@/lib/env";
 import {
+  isInternalJobParamError,
   parsePositiveInt,
+  parseOptionalUuidParam,
   requireInternalAdminJobAccess,
 } from "@/lib/internal-jobs";
 import { logger } from "@/lib/logger";
@@ -19,7 +21,10 @@ export const maxDuration = 60;
 
 async function resolveBillingTargetUserIds(request: Request) {
   const { searchParams } = new URL(request.url);
-  const explicitUserId = searchParams.get("userId")?.trim() ?? null;
+  const explicitUserId = parseOptionalUuidParam(
+    searchParams.get("userId"),
+    "userId",
+  );
 
   if (explicitUserId) {
     return [explicitUserId];
@@ -260,6 +265,14 @@ async function handleRequest(request: Request) {
           : "Billing reconciliation job completed successfully.",
     });
   } catch (error) {
+    if (isInternalJobParamError(error)) {
+      return createApiErrorResponse({
+        status: 400,
+        code: "BILLING_RECONCILE_JOB_INVALID",
+        message: error.message,
+      });
+    }
+
     logger.error("billing reconciliation job failed", { error });
 
     return createApiErrorResponse({

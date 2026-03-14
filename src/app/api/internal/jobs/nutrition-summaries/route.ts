@@ -1,5 +1,6 @@
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import {
+  isInternalJobParamError,
   parsePositiveInt,
   requireInternalAdminJobAccess,
   resolveTargetUserIds,
@@ -98,6 +99,14 @@ async function handleRequest(request: Request) {
           : "Nutrition summaries job completed successfully.",
     });
   } catch (error) {
+    if (isInternalJobParamError(error)) {
+      return createApiErrorResponse({
+        status: 400,
+        code: "NUTRITION_SUMMARIES_JOB_INVALID",
+        message: error.message,
+      });
+    }
+
     logger.error("nutrition summaries job failed", { error });
 
     return createApiErrorResponse({
