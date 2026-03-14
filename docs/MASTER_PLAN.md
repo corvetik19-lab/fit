@@ -82,6 +82,8 @@
 - [x] Вынести из `src/components/workout-day-session.tsx` шестой tranche overview-card и day-context surface в отдельные client-модули.
 - [x] Вынести из `src/lib/dashboard/metrics.ts` первый tranche независимых helper’ов в `dashboard-utils` и `dashboard-snapshot`.
 - [x] Вынести из `src/lib/dashboard/metrics.ts` второй tranche workout-specific pure helpers (`buildRecoverySummary`, weekly trend skeleton/index) в `dashboard-workout-helpers.ts`.
+- [x] Вынести из `src/lib/dashboard/metrics.ts` третий tranche overview/period-comparison helper-слоя в `dashboard-overview.ts`.
+- [x] Вынести из `src/lib/dashboard/metrics.ts` четвертый tranche aggregate snapshot/cache слоя в `dashboard-aggregate.ts`.
 - [x] Вынести из `src/components/admin-users-directory.tsx` первый tranche model/helper слоя в отдельный модуль.
 - [x] Вынести из `src/components/admin-users-directory.tsx` второй tranche filter/selection/bulk request helper-слоя в общий model-модуль.
 - [x] Вынести из `src/components/admin-users-directory.tsx` третий tranche bulk actions/history UI в отдельный модуль.

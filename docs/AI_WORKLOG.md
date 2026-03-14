@@ -1891,3 +1891,17 @@
 
 - Проверен XML-парсинг SVG-файла
 - Проверен доступ к файлу в `public/` как standalone demo asset
+
+### 2026-03-14 16:00 - Третий tranche декомпозиции metrics.ts
+
+- Вынес overview/period-comparison helper-слой из [metrics.ts](/C:/fit/src/lib/dashboard/metrics.ts) в [dashboard-overview.ts](/C:/fit/src/lib/dashboard/dashboard-overview.ts).
+- В отдельный модуль ушли getDashboardSnapshot, aggregate mapping для period comparison и live fallback для period comparison.
+- Следующий tranche: aggregate/cache plumbing и runtime snapshot persistence.
+
+### 2026-03-14 17:05 - Четвертый tranche декомпозиции metrics.ts
+
+- Вынес aggregate snapshot/cache слой из [metrics.ts](/C:/fit/src/lib/dashboard/metrics.ts) в [dashboard-aggregate.ts](/C:/fit/src/lib/dashboard/dashboard-aggregate.ts).
+- В новый модуль ушли freshness cursor, сборка aggregate bundle, чтение и запись aggregate snapshot, а также fail-open cache orchestration для bundle-слоя.
+- Заодно обновил [dashboard-warm route](/C:/fit/src/app/api/internal/jobs/dashboard-warm/route.ts), чтобы он продолжал работать через тот же публичный контракт `getDashboardAggregateBundle(...)`.
+- Следующий tranche по dashboard analytics: runtime snapshot persistence/read-through cache для `getDashboardRuntimeMetrics(...)`.
+

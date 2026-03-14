@@ -1,6 +1,9 @@
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import { getAiRuntimeContext } from "@/lib/ai/user-context";
 import {
+  DASHBOARD_AGGREGATE_LOOKBACK_DAYS,
+  DASHBOARD_AGGREGATE_SNAPSHOT_MAX_AGE_MS,
+  DASHBOARD_AGGREGATE_SNAPSHOT_REASON,
   getDashboardAggregateBundle,
   getDashboardRuntimeMetrics,
 } from "@/lib/dashboard/metrics";
@@ -24,7 +27,10 @@ async function warmDashboardSnapshotsForUsers(userIds: string[]) {
   for (const userId of userIds) {
     try {
       await getDashboardAggregateBundle(supabase, userId, {
+        defaultMaxAgeMs: DASHBOARD_AGGREGATE_SNAPSHOT_MAX_AGE_MS,
+        defaultSnapshotReason: DASHBOARD_AGGREGATE_SNAPSHOT_REASON,
         forceRefresh: true,
+        lookbackDays: DASHBOARD_AGGREGATE_LOOKBACK_DAYS,
         persistSnapshot: true,
       });
       await getDashboardRuntimeMetrics(supabase, userId, {
