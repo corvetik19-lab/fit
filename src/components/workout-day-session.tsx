@@ -8,7 +8,6 @@ import {
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from "react";
 import {
@@ -22,14 +21,7 @@ import {
 } from "lucide-react";
 
 import {
-  cacheWorkoutDaySnapshot,
   clearQueuedWorkoutMutationsForDay,
-  cleanupStaleOfflineState,
-  flushOfflineMutations,
-  getCachedWorkoutDaySnapshot,
-  getPendingOfflineMutationCount,
-  listQueuedWorkoutMutationsForDay,
-  pullWorkoutDaySnapshot,
   queueWorkoutDayExecutionMutation,
   queueWorkoutSetActualRepsMutation,
 } from "@/lib/offline/workout-sync";
@@ -43,7 +35,6 @@ import type {
 } from "@/lib/workout/weekly-programs";
 import { buildWorkoutDayDerivedState } from "@/components/workout-session/derived-state";
 import {
-  applyQueuedMutations,
   applyWorkoutDayExecution,
   applyWorkoutSetPerformance,
   areExerciseDraftValuesSaved,
@@ -65,6 +56,7 @@ import {
   parseOptionalRpe,
   parseOptionalWeight,
 } from "@/components/workout-session/session-utils";
+import { useWorkoutDaySync } from "@/components/workout-session/use-workout-day-sync";
 import { useWorkoutSessionTimer } from "@/components/workout-session/use-workout-session-timer";
 
 const inputClassName =
@@ -106,14 +98,6 @@ export function WorkoutDaySession({
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [pendingMutationCount, setPendingMutationCount] = useState(0);
-  const [isOnline, setIsOnline] = useState(true);
-  const [lastSnapshotAt, setLastSnapshotAt] = useState<string | null>(null);
-  const pullCursorRef = useRef<string | null>(null);
-  const pullPromiseRef = useRef<Promise<WorkoutDayDetail | null> | null>(null);
-  const lastPullStartedAtRef = useRef(0);
-  const hasBootstrappedSyncRef = useRef(false);
   const [activeExerciseIndex, setActiveExerciseIndex] = useState(() => {
     const nextIndex = getFirstIncompleteExerciseIndex(initialDay.exercises);
     return nextIndex === -1 ? 0 : nextIndex;
@@ -143,6 +127,47 @@ export function WorkoutDaySession({
   } = useWorkoutSessionTimer({
     dayId: day.id,
     initialSessionDurationSeconds: initialDay.session_duration_seconds,
+  });
+
+  const hydrateDayState = useCallback(
+    (nextDay: WorkoutDayDetail) => {
+      setDay(nextDay);
+      setActualRepsBySetId(getInitialActualRepsMap(nextDay));
+      setActualWeightBySetId(getInitialActualWeightMap(nextDay));
+      setActualRpeBySetId(getInitialActualRpeMap(nextDay));
+      setEditableExerciseIds({});
+      setDayBodyWeightValue(
+        typeof nextDay.body_weight_kg === "number"
+          ? nextDay.body_weight_kg.toString()
+          : "",
+      );
+      setDaySessionNoteValue(nextDay.session_note ?? "");
+      applyTimerStateForDay(nextDay);
+      const nextExerciseIndex = getFirstIncompleteExerciseIndex(nextDay.exercises);
+      setActiveExerciseIndex(nextExerciseIndex === -1 ? 0 : nextExerciseIndex);
+    },
+    [applyTimerStateForDay],
+  );
+
+  const {
+    applyDaySnapshot,
+    flushQueuedMutations,
+    hydrateLocalDay,
+    isOnline,
+    isSyncing,
+    lastSnapshotAt,
+    markOffline,
+    markOnline,
+    pendingMutationCount,
+    persistWorkoutDay,
+    pullLatestDaySnapshot,
+    refreshPendingMutationCount,
+    resetPullCursor,
+  } = useWorkoutDaySync({
+    applyHydratedDay: hydrateDayState,
+    initialDay,
+    onError: setError,
+    onNotice: setNotice,
   });
 
   const {
@@ -180,179 +205,11 @@ export function WorkoutDaySession({
     ],
   );
 
-  const persistWorkoutDay = useCallback(async (nextDay: WorkoutDayDetail) => {
-    const updatedAt = await cacheWorkoutDaySnapshot(nextDay);
-    setLastSnapshotAt(updatedAt);
-  }, []);
-
-  const applyDaySnapshot = useCallback(
-    async (nextDay: WorkoutDayDetail) => {
-      setDay(nextDay);
-      setActualRepsBySetId(getInitialActualRepsMap(nextDay));
-      setActualWeightBySetId(getInitialActualWeightMap(nextDay));
-      setActualRpeBySetId(getInitialActualRpeMap(nextDay));
-      setEditableExerciseIds({});
-      setDayBodyWeightValue(
-        typeof nextDay.body_weight_kg === "number"
-          ? nextDay.body_weight_kg.toString()
-          : "",
-      );
-      setDaySessionNoteValue(nextDay.session_note ?? "");
-      applyTimerStateForDay(nextDay);
-      const nextExerciseIndex = getFirstIncompleteExerciseIndex(nextDay.exercises);
-      setActiveExerciseIndex(nextExerciseIndex === -1 ? 0 : nextExerciseIndex);
-      await persistWorkoutDay(nextDay);
-    },
-    [applyTimerStateForDay, persistWorkoutDay],
-  );
-
-  const refreshPendingMutationCount = useCallback(async () => {
-    const count = await getPendingOfflineMutationCount();
-    setPendingMutationCount(count);
-  }, []);
-
-  const hydrateLocalDay = useCallback(async () => {
-    await cleanupStaleOfflineState();
-
-    const [cachedSnapshot, queuedMutations] = await Promise.all([
-      getCachedWorkoutDaySnapshot(initialDay.id),
-      listQueuedWorkoutMutationsForDay(initialDay.id),
-    ]);
-    const baseDay = cachedSnapshot.day ?? initialDay;
-    const hydratedDay = applyQueuedMutations(baseDay, queuedMutations);
-
-    setDay(hydratedDay);
-    setActualRepsBySetId(getInitialActualRepsMap(hydratedDay));
-    setActualWeightBySetId(getInitialActualWeightMap(hydratedDay));
-    setActualRpeBySetId(getInitialActualRpeMap(hydratedDay));
-    setEditableExerciseIds({});
-    setDayBodyWeightValue(
-      typeof hydratedDay.body_weight_kg === "number"
-        ? hydratedDay.body_weight_kg.toString()
-        : "",
-    );
-    setDaySessionNoteValue(hydratedDay.session_note ?? "");
-    applyTimerStateForDay(hydratedDay);
-    const nextExerciseIndex = getFirstIncompleteExerciseIndex(hydratedDay.exercises);
-    setActiveExerciseIndex(nextExerciseIndex === -1 ? 0 : nextExerciseIndex);
-    setLastSnapshotAt(cachedSnapshot.updatedAt);
-    await persistWorkoutDay(hydratedDay);
-    await refreshPendingMutationCount();
-  }, [applyTimerStateForDay, initialDay, persistWorkoutDay, refreshPendingMutationCount]);
-
-  const pullLatestDaySnapshot = useCallback(
-    async (options?: { force?: boolean }) => {
-      if (pullPromiseRef.current) {
-        return pullPromiseRef.current;
-      }
-
-      const shouldThrottle = !options?.force;
-      const now = Date.now();
-
-      if (shouldThrottle && now - lastPullStartedAtRef.current < 10000) {
-        return null;
-      }
-
-      lastPullStartedAtRef.current = now;
-
-      const runPull = async () => {
-        if (typeof navigator !== "undefined" && !navigator.onLine) {
-          setIsOnline(false);
-          return null;
-        }
-
-        const result = await pullWorkoutDaySnapshot(
-          initialDay.id,
-          pullCursorRef.current,
-        );
-
-        if (result.snapshot) {
-          await applyDaySnapshot(result.snapshot);
-        }
-
-        pullCursorRef.current = result.nextCursor ?? null;
-        setIsOnline(true);
-
-        return result.snapshot;
-      };
-
-      const request = runPull();
-      pullPromiseRef.current = request;
-
-      try {
-        return await request;
-      } finally {
-        pullPromiseRef.current = null;
-      }
-    },
-    [applyDaySnapshot, initialDay.id],
-  );
-
-  const flushQueuedMutations = useCallback(async () => {
-    if (typeof navigator !== "undefined" && !navigator.onLine) {
-      setIsOnline(false);
-      return;
-    }
-
-    const queuedCount = await getPendingOfflineMutationCount();
-
-    if (!queuedCount) {
-      setPendingMutationCount(0);
-      return;
-    }
-
-    setIsSyncing(true);
-
-    try {
-      const result = await flushOfflineMutations();
-      await refreshPendingMutationCount();
-
-      const rejectedMutations = result.processed.filter(
-        (mutation) => mutation.status === "rejected",
-      );
-
-      if (rejectedMutations.length) {
-        setError(
-          rejectedMutations[0]?.message ??
-            "Не все изменения удалось отправить. Попробуй ещё раз позже.",
-        );
-      } else if (result.applied > 0) {
-        setNotice("Изменения отправлены.");
-      } else if (result.discardedStale > 0) {
-        setNotice(
-          `Очищено устаревших локальных изменений: ${result.discardedStale}.`,
-        );
-      }
-
-      if (result.applied > 0 || rejectedMutations.length > 0) {
-        await pullLatestDaySnapshot({ force: true }).catch(() => null);
-      }
-    } catch {
-      await refreshPendingMutationCount();
-    } finally {
-      setIsSyncing(false);
-    }
-  }, [pullLatestDaySnapshot, refreshPendingMutationCount]);
-
   useEffect(() => {
-    setDay(initialDay);
-    setActualRepsBySetId(getInitialActualRepsMap(initialDay));
-    setActualWeightBySetId(getInitialActualWeightMap(initialDay));
-    setActualRpeBySetId(getInitialActualRpeMap(initialDay));
-    setEditableExerciseIds({});
-    setDayBodyWeightValue(
-      typeof initialDay.body_weight_kg === "number"
-        ? initialDay.body_weight_kg.toString()
-        : "",
-    );
-    setDaySessionNoteValue(initialDay.session_note ?? "");
-    applyTimerStateForDay(initialDay);
-    const nextExerciseIndex = getFirstIncompleteExerciseIndex(initialDay.exercises);
-    setActiveExerciseIndex(nextExerciseIndex === -1 ? 0 : nextExerciseIndex);
-    pullCursorRef.current = null;
-
+    hydrateDayState(initialDay);
+    resetPullCursor();
     void hydrateLocalDay();
-  }, [applyTimerStateForDay, hydrateLocalDay, initialDay]);
+  }, [hydrateDayState, hydrateLocalDay, initialDay, resetPullCursor]);
 
   useEffect(() => {
     if (!isMobileFocusMode || !day.exercises.length) {
@@ -380,34 +237,6 @@ export function WorkoutDaySession({
     });
   }, [day.exercises, isMobileFocusMode, unlockedExerciseCount]);
 
-  useEffect(() => {
-    function handleOnline() {
-      setIsOnline(true);
-      void flushQueuedMutations();
-      void pullLatestDaySnapshot({ force: true }).catch(() => null);
-    }
-
-    function handleOffline() {
-      setIsOnline(false);
-    }
-
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
-
-    setIsOnline(navigator.onLine);
-
-    if (!hasBootstrappedSyncRef.current && navigator.onLine) {
-      hasBootstrappedSyncRef.current = true;
-      void flushQueuedMutations();
-      void pullLatestDaySnapshot().catch(() => null);
-    }
-
-    return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
-    };
-  }, [flushQueuedMutations, pullLatestDaySnapshot]);
-
   const persistDayExecution = useCallback(async (
     nextDay: WorkoutDayDetail,
     noticeMessage: string | null,
@@ -424,7 +253,7 @@ export function WorkoutDaySession({
         sessionDurationSeconds: nextDay.session_duration_seconds,
       });
       await refreshPendingMutationCount();
-      setIsOnline(false);
+      markOffline();
       if (offlineNoticeMessage) {
         setNotice(offlineNoticeMessage);
       }
@@ -452,12 +281,18 @@ export function WorkoutDaySession({
       throw new Error(payload?.message ?? "Не удалось сохранить день тренировки.");
     }
 
-    setIsOnline(true);
+    markOnline();
     if (noticeMessage) {
       setNotice(noticeMessage);
     }
     await pullLatestDaySnapshot({ force: true }).catch(() => null);
-  }, [persistWorkoutDay, pullLatestDaySnapshot, refreshPendingMutationCount]);
+  }, [
+    markOffline,
+    markOnline,
+    persistWorkoutDay,
+    pullLatestDaySnapshot,
+    refreshPendingMutationCount,
+  ]);
 
   const saveSessionDuration = useCallback(async (
     nextSeconds: number,
@@ -743,7 +578,7 @@ export function WorkoutDaySession({
           }
 
           await refreshPendingMutationCount();
-          setIsOnline(false);
+          markOffline();
           setNotice("Упражнение сохранено на устройстве и отправится позже.");
           return;
         }
@@ -777,7 +612,7 @@ export function WorkoutDaySession({
             "Упражнение сохранено локально. Статус тренировки отправится позже.",
           );
         } else {
-          setIsOnline(true);
+          markOnline();
           setNotice("Упражнение сохранено.");
           await pullLatestDaySnapshot({ force: true }).catch(() => null);
         }
@@ -941,7 +776,7 @@ export function WorkoutDaySession({
         await clearQueuedWorkoutMutationsForDay(day.id);
         await refreshPendingMutationCount();
         await applyDaySnapshot(payload.data);
-        pullCursorRef.current = null;
+        resetPullCursor();
         setNotice("Тренировка обнулена. Можно начать заново.");
       } catch (resetError) {
         setError(

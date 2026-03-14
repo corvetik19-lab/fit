@@ -76,6 +76,7 @@
 
 - [x] Вынести из `src/components/workout-day-session.tsx` первый tranche чистой логики в отдельные `session-utils` и `derived-state` модули.
 - [x] Вынести из `src/components/workout-day-session.tsx` второй tranche timer/focus-header state в отдельный hook-модуль.
+- [x] Вынести из `src/components/workout-day-session.tsx` третий tranche sync/hydration/offline orchestration в отдельный hook-модуль.
 - [x] Вынести из `src/lib/dashboard/metrics.ts` первый tranche независимых helper’ов в `dashboard-utils` и `dashboard-snapshot`.
 - [x] Вынести из `src/components/admin-users-directory.tsx` первый tranche model/helper слоя в отдельный модуль.
 - [x] Вынести из `src/components/admin-users-directory.tsx` второй tranche filter/selection/bulk request helper-слоя в общий model-модуль.
@@ -94,6 +95,7 @@
 
 - [ ] Derived state вынесен из JSX в отдельные helpers/hooks.
 - [x] Для `workout-day-session.tsx` уже есть референсный паттерн: derive-логика и локальные workout helpers вынесены из основного client-компонента.
+- [x] Для `workout-day-session.tsx` уже есть второй референсный паттерн: timer state и offline sync orchestration вынесены из основного execution-экрана в отдельные hooks.
 - [x] Для `metrics.ts` уже есть референсный паттерн: общие analytics/snapshot helper’ы вынесены из главного server-side orchestrator модуля.
 - [x] Для `admin-users-directory.tsx` уже есть референсный паттерн: data model, formatters и summary/filter helpers вынесены из основного client-компонента.
 - [x] Для `admin-user-detail.tsx` уже есть референсный паттерн: типы карточки, словари ролей/статусов и payload/format helpers вынесены из основного client-компонента.

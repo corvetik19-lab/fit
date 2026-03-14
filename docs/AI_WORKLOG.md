@@ -2,6 +2,13 @@
 
 ## 2026-03-14
 
+### Production hardening: третий tranche декомпозиции `workout-day-session.tsx`
+
+- Продолжил раскладывать [workout-day-session.tsx](/C:/fit/src/components/workout-day-session.tsx) и вынес sync/hydration/offline orchestration в новый hook [use-workout-day-sync.ts](/C:/fit/src/components/workout-session/use-workout-day-sync.ts).
+- В новый hook ушли локальный snapshot cache, hydration из offline-состояния, pull/throttle логика, flush очереди, online/offline listeners, bootstrap sync и состояние `isSyncing / pendingMutationCount / isOnline / lastSnapshotAt`.
+- В основном экране тренировки теперь меньше смешения concerns: UI, workout execution и domain actions остаются внутри [workout-day-session.tsx](/C:/fit/src/components/workout-day-session.tsx), а офлайн-sync plumbing больше не размазано по тому же файлу.
+- Этот tranche логически продолжает уже вынесенные [session-utils.ts](/C:/fit/src/components/workout-session/session-utils.ts), [derived-state.ts](/C:/fit/src/components/workout-session/derived-state.ts) и [use-workout-session-timer.ts](/C:/fit/src/components/workout-session/use-workout-session-timer.ts).
+
 ### Production hardening: второй tranche декомпозиции `workout-day-session.tsx`
 
 - Продолжил раскладывать [workout-day-session.tsx](/C:/fit/src/components/workout-day-session.tsx) и вынес timer/focus-header state в новый hook [use-workout-session-timer.ts](/C:/fit/src/components/workout-session/use-workout-session-timer.ts).
