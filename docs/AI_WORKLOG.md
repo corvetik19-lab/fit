@@ -2,6 +2,13 @@
 
 ## 2026-03-14
 
+### Production hardening: шестой tranche декомпозиции `workout-day-session.tsx`
+
+- Вынес из [workout-day-session.tsx](/C:/fit/src/components/workout-day-session.tsx) ещё два больших surface-блока в отдельные client-модули: [workout-day-overview-card.tsx](/C:/fit/src/components/workout-session/workout-day-overview-card.tsx) и [workout-day-context-card.tsx](/C:/fit/src/components/workout-session/workout-day-context-card.tsx).
+- Non-focus экран тренировки теперь собирается из отдельных обзорной и контекстной карточек, а основной файл больше не держит у себя длинные KPI/day-summary/day-context секции.
+- Это ещё сильнее приближает [workout-day-session.tsx](/C:/fit/src/components/workout-day-session.tsx) к orchestrator-роли: в нём остаются timer/focus flow, status actions, notices, derive state и orchestration между уже вынесенными surface-модулями.
+- Следующий логичный tranche по этому экрану: отдельный focus-header/status-notices surface или окончательная зачистка оставшегося copy/runtime-plumbing.
+
 ### Production hardening: пятый tranche декомпозиции `workout-day-session.tsx`
 
 - Вынес из [workout-day-session.tsx](/C:/fit/src/components/workout-day-session.tsx) два крупных UI-блока в отдельные client-модули: [workout-step-strip.tsx](/C:/fit/src/components/workout-session/workout-step-strip.tsx) и [workout-exercise-card.tsx](/C:/fit/src/components/workout-session/workout-exercise-card.tsx).

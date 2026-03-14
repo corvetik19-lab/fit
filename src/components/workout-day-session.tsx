@@ -1,7 +1,6 @@
 "use client";
 
 import type { Route } from "next";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   useCallback,
@@ -26,9 +25,6 @@ import {
   dayLabels,
   dayStatusLabels,
   formatDurationSeconds,
-  formatOptionalRpe,
-  formatSnapshotTime,
-  formatWeekRange,
   getFirstIncompleteExerciseIndex,
   getInitialActualRepsMap,
   getInitialActualRpeMap,
@@ -36,6 +32,8 @@ import {
   isCompletedWorkoutExercise,
   isExerciseDraftReadyToSave,
 } from "@/components/workout-session/session-utils";
+import { WorkoutDayContextCard } from "@/components/workout-session/workout-day-context-card";
+import { WorkoutDayOverviewCard } from "@/components/workout-session/workout-day-overview-card";
 import { WorkoutExerciseCard } from "@/components/workout-session/workout-exercise-card";
 import { WorkoutStepStrip } from "@/components/workout-session/workout-step-strip";
 import { useWorkoutSessionActions } from "@/components/workout-session/use-workout-session-actions";
@@ -521,115 +519,32 @@ export function WorkoutDaySession({
       ) : null}
 
       {!isMobileFocusMode ? (
-        <section className="card p-6">
-          <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
-                День тренировки
-              </p>
-              <h2 className="mt-2 text-2xl font-semibold text-foreground">
-                {dayLabels[day.day_of_week] ?? `День ${day.day_of_week}`}
-              </h2>
-              <p className="mt-2 text-sm leading-7 text-muted">
-                {day.program_title} · {formatWeekRange(day)}
-              </p>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <span className="pill">{dayStatusLabels[day.status] ?? day.status}</span>
-              <span className="pill">
-                {day.is_locked ? "Неделя зафиксирована" : "Черновик недели"}
-              </span>
-            </div>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-6">
-            {[
-              ["Упражнений", String(day.exercises.length)],
-              ["Подходов", String(totalSetsCount)],
-              ["Заполнено", `${completedSetsCount}/${totalSetsCount}`],
-              [
-                "Тоннаж",
-                totalTonnageKg > 0
-                  ? `${Math.round(totalTonnageKg).toLocaleString("ru-RU")} кг`
-                  : "нет данных",
-              ],
-              ["Средний RPE", avgActualRpe !== null ? formatOptionalRpe(avgActualRpe) : "нет данных"],
-              ["Таймер", formatDurationSeconds(day.session_duration_seconds ?? 0)],
-            ].map(([label, value]) => (
-              <article className="kpi p-4" key={label}>
-                <p className="text-sm text-muted">{label}</p>
-                <p className="mt-2 text-xl font-semibold text-foreground">{value}</p>
-              </article>
-            ))}
-          </div>
-
-          <p className="mt-4 text-sm text-muted">
-            Последнее локальное сохранение: {formatSnapshotTime(lastSnapshotAt)}
-          </p>
-
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Link
-              className="rounded-full border border-border px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-white/70 lg:hidden"
-              href={`${workoutDayHref}?focus=1`}
-            >
-              Развернуть на весь экран
-            </Link>
-            {renderStatusActions({ compact: false })}
-          </div>
-
-          {renderDayNotices()}
-        </section>
+        <WorkoutDayOverviewCard
+          avgActualRpe={avgActualRpe}
+          completedSetsCount={completedSetsCount}
+          day={day}
+          lastSnapshotAt={lastSnapshotAt}
+          notices={renderDayNotices()}
+          statusActions={renderStatusActions({ compact: false })}
+          totalSetsCount={totalSetsCount}
+          totalTonnageKg={totalTonnageKg}
+          workoutDayHref={workoutDayHref}
+        />
       ) : null}
 
       {!isMobileFocusMode ? (
-        <section className="card p-6">
-          <div className="mb-4">
-            <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
-              Контекст дня
-            </p>
-            <h3 className="mt-2 text-2xl font-semibold text-foreground">
-              Вес и заметка
-            </h3>
-            <p className="mt-2 text-sm leading-7 text-muted">
-              Эти данные помогают видеть самочувствие и восстановление по тренировке.
-            </p>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-[0.8fr_1.2fr_auto] md:items-end">
-            <label className="grid gap-2 text-sm text-muted">
-              Вес тела утром, кг
-              <input
-                className={inputClassName}
-                disabled={!day.is_locked || isPending || isSyncing}
-                inputMode="decimal"
-                onChange={(event) => setDayBodyWeightValue(event.target.value)}
-                placeholder="Например, 82.4"
-                value={dayBodyWeightValue}
-              />
-            </label>
-
-            <label className="grid gap-2 text-sm text-muted">
-              Заметка по тренировке
-              <textarea
-                className={textAreaClassName}
-                disabled={!day.is_locked || isPending || isSyncing}
-                onChange={(event) => setDaySessionNoteValue(event.target.value)}
-                placeholder="Сон, самочувствие, тяжёлые моменты, что далось лучше обычного"
-                value={daySessionNoteValue}
-              />
-            </label>
-
-            <button
-              className="rounded-full border border-border px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={!day.is_locked || isPending || isSyncing}
-              onClick={saveDayContext}
-              type="button"
-            >
-              Сохранить контекст
-            </button>
-          </div>
-        </section>
+        <WorkoutDayContextCard
+          dayBodyWeightValue={dayBodyWeightValue}
+          dayIsLocked={day.is_locked}
+          daySessionNoteValue={daySessionNoteValue}
+          inputClassName={inputClassName}
+          isPending={isPending}
+          isSyncing={isSyncing}
+          onBodyWeightChange={setDayBodyWeightValue}
+          onSave={saveDayContext}
+          onSessionNoteChange={setDaySessionNoteValue}
+          textAreaClassName={textAreaClassName}
+        />
       ) : null}
 
       <section className="grid gap-4">
