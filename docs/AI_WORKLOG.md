@@ -2,6 +2,34 @@
 
 ## 2026-03-14
 
+### Production hardening: второй tranche декомпозиции `admin-users-directory.tsx`
+
+- Продолжил раскладывать [admin-users-directory.tsx](/C:/fit/src/components/admin-users-directory.tsx) и вынес второй слой чистой логики в [admin-users-directory-model.ts](/C:/fit/src/components/admin-users-directory-model.ts).
+- В model-модуль ушли helper’ы для query-параметров каталога, синхронизации выделения, переключения видимых пользователей и сборки bulk-action request/notice payload’ов.
+- Сам каталог стал чище как orchestrator-компонент: fetch и UI остались внутри, а selection/filter/bulk plumbing больше не размазаны по клиентскому JSX-файлу.
+- Полную декомпозицию каталога всё ещё не считаю закрытой: крупные секции `каталог / приоритеты / массовые действия` и часть локального state management пойдут отдельными tranche'ами.
+
+### Production hardening: первый tranche декомпозиции `ai-chat-panel.tsx`
+
+- Вынес из [ai-chat-panel.tsx](/C:/fit/src/components/ai-chat-panel.tsx) типы, форматтеры и markdown helper-слой в новый [ai-chat-panel-model.ts](/C:/fit/src/components/ai-chat-panel-model.ts).
+- Вынес tool/proposal card UI в новый [ai-chat-panel-cards.tsx](/C:/fit/src/components/ai-chat-panel-cards.tsx), чтобы основной AI-чат стал ближе к orchestrator-компоненту, а не к монолиту со смешанными типами, форматтерами и презентационными блоками.
+- Заодно убрал мёртвый `quickPrompts` шум и поправил битый `aria-label` у кнопки библиотеки шаблонов, не меняя внешний runtime-контракт чата.
+- Полную декомпозицию AI-чата ещё не считаю завершённой: composer/history controls и session/runtime orchestration всё ещё живут в одном client-компоненте и пойдут следующими tranche'ами.
+
+### Production hardening: санация `docs/FRONTEND.md`
+
+- Полностью переписал [FRONTEND.md](/C:/fit/docs/FRONTEND.md) в чистом UTF-8 вместо старого файла с реальной битой кодировкой.
+- Новый документ синхронизирован с текущей frontend-архитектурой проекта: shell, workspace-паттерн, workout focus-mode, AI workspace, admin UI, PWA/offline slice и текущий набор quality gates.
+- Это закрывает реальный hygiene-долг в docs-слое и убирает один из источников mojibake в ключевой документации.
+
+### Проверка: AI chat decomposition и docs hygiene
+
+- `npx eslint src/components/ai-chat-panel.tsx src/components/ai-chat-panel-model.ts src/components/ai-chat-panel-cards.tsx`
+- `npm run lint`
+- `npx next typegen`
+- `npx tsc -p tsconfig.json --noEmit --incremental false`
+- `npm run build`
+
 ### Production hardening: первый tranche декомпозиции `knowledge.ts`
 
 - Вынес из [knowledge.ts](/C:/fit/src/lib/ai/knowledge.ts) типы строк и pure helper-слой в новый [knowledge-model.ts](/C:/fit/src/lib/ai/knowledge-model.ts).

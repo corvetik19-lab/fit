@@ -173,6 +173,22 @@ export type RecentBulkWave = {
   user_count: number;
 };
 
+export type AdminUsersFetchResponse = {
+  data?: AdminUserRow[];
+  message?: string;
+  summary?: AdminUsersSummary;
+  segments?: AdminUsersSegments;
+  recentBulkWaves?: RecentBulkWave[];
+} | null;
+
+export type AdminUsersBulkResponse = {
+  data?: {
+    failed?: number;
+    succeeded?: number;
+  };
+  message?: string;
+} | null;
+
 export const emptySummary: AdminUsersSummary = {
   totalUsers: 0,
   filteredUsers: 0,
@@ -338,4 +354,100 @@ export function buildActiveFilterSummary(input: {
       ? `Сортировка: ${input.sortKey.replaceAll("_", " ")}`
       : null,
   ].filter((item): item is string => Boolean(item));
+}
+
+export function buildAdminUsersSearchParams(input: {
+  activityFilter: ActivityFilter;
+  roleFilter: AdminRoleFilter;
+  searchQuery: string;
+  sortKey: AdminUsersSortKey;
+}) {
+  const searchParams = new URLSearchParams();
+
+  if (input.searchQuery.trim()) {
+    searchParams.set("q", input.searchQuery.trim());
+  }
+
+  if (input.roleFilter !== "all") {
+    searchParams.set("role", input.roleFilter);
+  }
+
+  if (input.activityFilter !== "all") {
+    searchParams.set("activity", input.activityFilter);
+  }
+
+  if (input.sortKey !== "created_desc") {
+    searchParams.set("sort", input.sortKey);
+  }
+
+  return searchParams;
+}
+
+export function filterSelectedUserIdsForVisibleUsers(
+  selectedUserIds: string[],
+  users: AdminUserRow[],
+) {
+  return selectedUserIds.filter((id) => users.some((user) => user.user_id === id));
+}
+
+export function buildVisibleUserIds(users: AdminUserRow[]) {
+  return users.map((user) => user.user_id);
+}
+
+export function areAllVisibleUsersSelected(
+  selectedUserIds: string[],
+  visibleUserIds: string[],
+) {
+  return (
+    visibleUserIds.length > 0 &&
+    visibleUserIds.every((id) => selectedUserIds.includes(id))
+  );
+}
+
+export function toggleSelectedUserId(selectedUserIds: string[], userId: string) {
+  return selectedUserIds.includes(userId)
+    ? selectedUserIds.filter((value) => value !== userId)
+    : [...selectedUserIds, userId];
+}
+
+export function toggleVisibleUserSelection(
+  selectedUserIds: string[],
+  visibleUserIds: string[],
+) {
+  if (areAllVisibleUsersSelected(selectedUserIds, visibleUserIds)) {
+    return selectedUserIds.filter((id) => !visibleUserIds.includes(id));
+  }
+
+  return Array.from(new Set([...selectedUserIds, ...visibleUserIds]));
+}
+
+export function buildBulkActionRequest(input: {
+  bulkAction: BulkAction;
+  bulkFeatureKey: string;
+  bulkLimitValue: string;
+  bulkReason: string;
+  bulkTrialDays: string;
+  selectedUserIds: string[];
+}) {
+  const body: Record<string, unknown> = {
+    action: input.bulkAction,
+    reason: input.bulkReason.trim() || undefined,
+    user_ids: input.selectedUserIds,
+  };
+
+  if (input.bulkAction === "grant_trial") {
+    body.duration_days = Number(input.bulkTrialDays) || 14;
+  }
+
+  if (input.bulkAction === "enable_entitlement") {
+    body.feature_key = input.bulkFeatureKey.trim();
+    body.limit_value =
+      input.bulkLimitValue.trim() === "" ? null : Number(input.bulkLimitValue);
+  }
+
+  return body;
+}
+
+export function buildBulkActionNotice(payload: AdminUsersBulkResponse) {
+  return `Готово: ${payload?.data?.succeeded ?? 0} успешно, ${payload?.data?.failed ?? 0} с ошибкой.`;
 }

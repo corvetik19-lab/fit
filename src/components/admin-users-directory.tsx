@@ -14,7 +14,12 @@ import {
   activitySourceLabels,
   activityToneClasses,
   buildActiveFilterSummary,
+  buildAdminUsersSearchParams,
+  buildBulkActionNotice,
+  buildBulkActionRequest,
+  buildVisibleUserIds,
   buildVisibleUsersSummary,
+  filterSelectedUserIdsForVisibleUsers,
   emptySegments,
   emptySummary,
   formatBulkAction,
@@ -22,8 +27,12 @@ import {
   formatDateTime,
   formatStatus,
   roleLabels,
+  toggleSelectedUserId,
+  toggleVisibleUserSelection,
   type ActivityBucket,
   type ActivityFilter,
+  type AdminUsersBulkResponse,
+  type AdminUsersFetchResponse,
   type AdminRoleFilter,
   type AdminUserRow,
   type AdminUsersSegments,
@@ -31,6 +40,7 @@ import {
   type AdminUsersSummary,
   type BulkAction,
   type RecentBulkWave,
+  areAllVisibleUsersSelected,
 } from "@/components/admin-users-directory-model";
 
 function DirectoryMetricCard({
@@ -92,24 +102,12 @@ export function AdminUsersDirectory({
       setIsLoading(true);
 
       try {
-        const searchParams = new URLSearchParams();
-
-        if (deferredSearchQuery.trim()) {
-          searchParams.set("q", deferredSearchQuery.trim());
-        }
-
-        if (roleFilter !== "all") {
-          searchParams.set("role", roleFilter);
-        }
-
-        if (activityFilter !== "all") {
-          searchParams.set("activity", activityFilter);
-        }
-
-        if (sortKey !== "created_desc") {
-          searchParams.set("sort", sortKey);
-        }
-
+        const searchParams = buildAdminUsersSearchParams({
+          activityFilter,
+          roleFilter,
+          searchQuery: deferredSearchQuery,
+          sortKey,
+        });
         const queryString = searchParams.toString();
         const response = await fetch(
           queryString ? `/api/admin/users?${queryString}` : "/api/admin/users",
@@ -117,15 +115,7 @@ export function AdminUsersDirectory({
             cache: "no-store",
           },
         );
-        const payload = (await response.json().catch(() => null)) as
-          | {
-              data?: AdminUserRow[];
-              message?: string;
-              summary?: AdminUsersSummary;
-              segments?: AdminUsersSegments;
-              recentBulkWaves?: RecentBulkWave[];
-            }
-          | null;
+        const payload = (await response.json().catch(() => null)) as AdminUsersFetchResponse;
 
         if (!response.ok) {
           if (isActive) {
@@ -144,9 +134,7 @@ export function AdminUsersDirectory({
           setSegments(payload?.segments ?? emptySegments);
           setRecentBulkWaves(payload?.recentBulkWaves ?? []);
           setSelectedUserIds((currentSelected) =>
-            currentSelected.filter((id) =>
-              (payload?.data ?? []).some((user) => user.user_id === id),
-            ),
+            filterSelectedUserIdsForVisibleUsers(currentSelected, payload?.data ?? []),
           );
           setError(null);
         }
@@ -171,10 +159,8 @@ export function AdminUsersDirectory({
 
   const isFiltered =
     Boolean(searchQuery.trim()) || roleFilter !== "all" || activityFilter !== "all";
-  const visibleUserIds = users.map((user) => user.user_id);
-  const allVisibleSelected =
-    visibleUserIds.length > 0 &&
-    visibleUserIds.every((id) => selectedUserIds.includes(id));
+  const visibleUserIds = buildVisibleUserIds(users);
+  const allVisibleSelected = areAllVisibleUsersSelected(selectedUserIds, visibleUserIds);
   const activeFilterSummary = useMemo(
     () =>
       buildActiveFilterSummary({
@@ -188,25 +174,11 @@ export function AdminUsersDirectory({
   );
 
   function toggleUserSelection(userId: string) {
-    setSelectedUserIds((current) =>
-      current.includes(userId)
-        ? current.filter((value) => value !== userId)
-        : [...current, userId],
-    );
+    setSelectedUserIds((current) => toggleSelectedUserId(current, userId));
   }
 
   function toggleVisibleSelection() {
-    setSelectedUserIds((current) => {
-      const allVisibleSelectedForCurrentView =
-        visibleUserIds.length > 0 &&
-        visibleUserIds.every((id) => current.includes(id));
-
-      if (allVisibleSelectedForCurrentView) {
-        return current.filter((id) => !visibleUserIds.includes(id));
-      }
-
-      return Array.from(new Set([...current, ...visibleUserIds]));
-    });
+    setSelectedUserIds((current) => toggleVisibleUserSelection(current, visibleUserIds));
   }
 
   function submitBulkAction() {
@@ -218,20 +190,14 @@ export function AdminUsersDirectory({
     setBulkNotice(null);
     setIsBulkPending(true);
 
-    const body: Record<string, unknown> = {
-      action: bulkAction,
-      reason: bulkReason.trim() || undefined,
-      user_ids: selectedUserIds,
-    };
-
-    if (bulkAction === "grant_trial") {
-      body.duration_days = Number(bulkTrialDays) || 14;
-    }
-
-    if (bulkAction === "enable_entitlement") {
-      body.feature_key = bulkFeatureKey.trim();
-      body.limit_value = bulkLimitValue.trim() === "" ? null : Number(bulkLimitValue);
-    }
+    const body = buildBulkActionRequest({
+      bulkAction,
+      bulkFeatureKey,
+      bulkLimitValue,
+      bulkReason,
+      bulkTrialDays,
+      selectedUserIds,
+    });
 
     void (async () => {
       try {
@@ -242,21 +208,14 @@ export function AdminUsersDirectory({
           },
           body: JSON.stringify(body),
         });
-        const payload = (await response.json().catch(() => null)) as
-          | {
-              data?: { succeeded?: number; failed?: number };
-              message?: string;
-            }
-          | null;
+        const payload = (await response.json().catch(() => null)) as AdminUsersBulkResponse;
 
         if (!response.ok) {
           setError(payload?.message ?? "Не удалось выполнить массовое действие.");
           return;
         }
 
-        setBulkNotice(
-          `Готово: ${payload?.data?.succeeded ?? 0} успешно, ${payload?.data?.failed ?? 0} с ошибкой.`,
-        );
+        setBulkNotice(buildBulkActionNotice(payload));
         setSelectedUserIds([]);
         setReloadToken((value) => value + 1);
       } finally {
