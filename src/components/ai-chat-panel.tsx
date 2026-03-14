@@ -3,7 +3,7 @@
 import { DefaultChatTransport } from "ai";
 import { useChat } from "@ai-sdk/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { AiChatComposer } from "@/components/ai-chat-composer";
 import { AiChatNotices } from "@/components/ai-chat-notices";
@@ -11,6 +11,7 @@ import { AiPromptLibrary } from "@/components/ai-prompt-library";
 import { AiChatTranscript } from "@/components/ai-chat-transcript";
 import { AiChatToolbar } from "@/components/ai-chat-toolbar";
 import { useAiChatActions } from "@/components/use-ai-chat-actions";
+import { useAiChatComposer } from "@/components/use-ai-chat-composer";
 import { useAiChatSessionState } from "@/components/use-ai-chat-session-state";
 import {
   timeFormatter,
@@ -118,57 +119,24 @@ export function AiChatPanel({
     });
   }, [messages, isBusy, notice]);
 
-  function submitText(nextText?: string) {
-    const trimmed = (nextText ?? draft).trim();
-
-    if (!trimmed || isComposerBusy || !access.allowed) {
-      return;
-    }
-
-    const nextSessionId = sessionId ?? crypto.randomUUID();
-    rememberLocalSession(nextSessionId, trimmed);
-    setNotice(null);
-
-    sendMessage(
-      { text: trimmed },
-      {
-        body: {
-          allowWebSearch,
-          sessionId: nextSessionId,
-        },
-      },
-    );
-
-    setDraft("");
-  }
-
   function resetChat() {
     setMessages([]);
     setSelectedImage(null);
     resetLocalSessionState();
   }
-
-  function handleComposerKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
-    if (event.key === "Enter" && !event.shiftKey) {
-      event.preventDefault();
-
-      if (selectedImage) {
-        void analyzeMealPhoto();
-        return;
-      }
-
-      submitText();
-    }
-  }
-
-  function handleSubmit() {
-    if (selectedImage) {
-      void analyzeMealPhoto();
-      return;
-    }
-
-    submitText();
-  }
+  const { handleComposerKeyDown, handleSubmit } = useAiChatComposer({
+    accessAllowed: access.allowed,
+    allowWebSearch,
+    analyzeMealPhoto,
+    draft,
+    isComposerBusy,
+    rememberLocalSession,
+    selectedImage,
+    sendMessage,
+    sessionId,
+    setDraft,
+    setNotice,
+  });
 
   return (
     <section className="card flex min-h-[72dvh] flex-col overflow-hidden p-4 sm:p-5 lg:min-h-[78dvh]">

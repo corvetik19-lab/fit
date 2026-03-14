@@ -2,6 +2,13 @@
 
 ## 2026-03-14
 
+### Production hardening: седьмой tranche декомпозиции `ai-chat-panel.tsx`
+
+- Вынес из [ai-chat-panel.tsx](/C:/fit/src/components/ai-chat-panel.tsx) submit/composer helper-слой в новый hook [use-ai-chat-composer.ts](/C:/fit/src/components/use-ai-chat-composer.ts).
+- В hook ушли `submitText`, `handleSubmit` и `handleComposerKeyDown`, включая orchestration вокруг `sendMessage`, `allowWebSearch`, `rememberLocalSession`, `draft`, `selectedImage` и `setNotice`.
+- После этого основной [ai-chat-panel.tsx](/C:/fit/src/components/ai-chat-panel.tsx) ещё сильнее свёлся к orchestration-компоненту: toolbar, notices, transcript, composer, session-state и runtime-actions уже вынесены, а в самом файле остаётся в основном сборка этих слоёв.
+- Следующий логичный tranche по AI-чату: добить последний runtime-plumbing слой вокруг `selectedImage`/preview или переключиться обратно на `knowledge.ts` и document builders.
+
 ### Production hardening: шестой tranche декомпозиции `ai-chat-panel.tsx`
 
 - Вынес из [ai-chat-panel.tsx](/C:/fit/src/components/ai-chat-panel.tsx) runtime helper-слой `proposal actions + meal-photo analysis` в новый hook [use-ai-chat-actions.ts](/C:/fit/src/components/use-ai-chat-actions.ts).
