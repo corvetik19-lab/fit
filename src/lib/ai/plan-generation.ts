@@ -30,7 +30,7 @@ function buildKnowledgeExcerpt(
   knowledge: Awaited<ReturnType<typeof retrieveKnowledgeMatches>>,
 ) {
   if (!knowledge.length) {
-    return "РСЃС‚РѕСЂРёС‡РµСЃРєРёР№ RAG-РєРѕРЅС‚РµРєСЃС‚ РїРѕРєР° РїСѓСЃС‚.";
+    return "Исторический RAG-контекст пока пуст. Если данных не хватает, скажи об этом прямо.";
   }
 
   return knowledge
@@ -49,60 +49,60 @@ export async function generateMealPlanProposalForUser(
   const dietaryNotes =
     input.dietaryNotes ??
     context.onboarding.dietaryPreferences.join(", ") ??
-    "Р±РµР· РѕРіСЂР°РЅРёС‡РµРЅРёР№";
+    "без дополнительных ограничений";
   const mealsPerDay = input.mealsPerDay ?? 4;
   const knowledge = await retrieveKnowledgeMatches(
     supabase,
     userId,
-    `РџРёС‚Р°РЅРёРµ, СЂР°С†РёРѕРЅ, РєР°Р»РѕСЂРёРё, Р±РµР»РѕРє Рё РёСЃС‚РѕСЂРёСЏ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ. Р¦РµР»СЊ ${goal}. РљР°Р»РѕСЂРёРё ${kcalTarget}. РљРѕРјРјРµРЅС‚Р°СЂРёР№ ${dietaryNotes}.`,
+    `Питание, рацион, калории, белок и история пользователя. Цель ${goal}. Калории ${kcalTarget}. Ограничения ${dietaryNotes}.`,
     8,
   );
 
   const result = await generateObject({
     model: models.chat,
     schema: mealPlanSchema,
-    prompt: `РЎРѕР±РµСЂРё proposal РїР»Р°РЅР° РїРёС‚Р°РЅРёСЏ РґР»СЏ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ С„РёС‚РЅРµСЃ-РїСЂРёР»РѕР¶РµРЅРёСЏ.
+    prompt: `Собери proposal плана питания для пользователя фитнес-приложения.
 
-РљРѕРЅС‚РµРєСЃС‚ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ:
-- С†РµР»СЊ: ${goal}
-- С†РµР»РµРІР°СЏ РєР°Р»РѕСЂРёР№РЅРѕСЃС‚СЊ: ${kcalTarget}
-- РїСЂРёС‘РјРѕРІ РїРёС‰Рё РІ РґРµРЅСЊ: ${mealsPerDay}
-- РїРѕР»: ${context.onboarding.sex ?? "РЅРµ СѓРєР°Р·Р°РЅ"}
-- РІРѕР·СЂР°СЃС‚: ${context.onboarding.age ?? "РЅРµ СѓРєР°Р·Р°РЅ"}
-- СЂРѕСЃС‚: ${context.onboarding.heightCm ?? "РЅРµ СѓРєР°Р·Р°РЅ"}
-- РІРµСЃ: ${context.onboarding.weightKg ?? "РЅРµ СѓРєР°Р·Р°РЅ"}
-- СѓСЂРѕРІРµРЅСЊ РїРѕРґРіРѕС‚РѕРІРєРё: ${context.onboarding.fitnessLevel ?? "РЅРµ СѓРєР°Р·Р°РЅ"}
-- РїРёС‰РµРІС‹Рµ РїСЂРµРґРїРѕС‡С‚РµРЅРёСЏ: ${context.onboarding.dietaryPreferences.join(", ") || "РЅРµ СѓРєР°Р·Р°РЅС‹"}
-- РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹Р№ РєРѕРјРјРµРЅС‚Р°СЂРёР№: ${dietaryNotes || "РЅРµС‚"}
-- СЃРІРµР¶Р°СЏ СЃРІРѕРґРєР° РїРѕ РїРёС‚Р°РЅРёСЋ: ${JSON.stringify(context.latestNutritionSummary)}
-- СЃСЂРµРґРЅСЏСЏ РєР°Р»РѕСЂРёР№РЅРѕСЃС‚СЊ Р·Р° 7 РґРЅРµР№: ${context.nutritionInsights.avgKcalLast7 ?? "РЅРµС‚ РґР°РЅРЅС‹С…"}
-- СЃСЂРµРґРЅРёР№ Р±РµР»РѕРє Р·Р° 7 РґРЅРµР№: ${context.nutritionInsights.avgProteinLast7 ?? "РЅРµС‚ РґР°РЅРЅС‹С…"}
-- РѕС‚РєР»РѕРЅРµРЅРёРµ РѕС‚ С†РµР»Рё РїРѕ РєР°Р»РѕСЂРёСЏРј: ${context.nutritionInsights.kcalDeltaFromTarget ?? "РЅРµС‚ РґР°РЅРЅС‹С…"}
-- РѕС‚РєР»РѕРЅРµРЅРёРµ РѕС‚ С†РµР»Рё РїРѕ Р±РµР»РєСѓ: ${context.nutritionInsights.proteinDeltaFromTarget ?? "РЅРµС‚ РґР°РЅРЅС‹С…"}
+Контекст пользователя:
+- Цель: ${goal}
+- Целевая калорийность: ${kcalTarget}
+- Приёмов пищи в день: ${mealsPerDay}
+- Пол: ${context.onboarding.sex ?? "не указан"}
+- Возраст: ${context.onboarding.age ?? "не указан"}
+- Рост: ${context.onboarding.heightCm ?? "не указан"}
+- Вес: ${context.onboarding.weightKg ?? "не указан"}
+- Уровень подготовки: ${context.onboarding.fitnessLevel ?? "не указан"}
+- Пищевые предпочтения: ${context.onboarding.dietaryPreferences.join(", ") || "не указаны"}
+- Дополнительные комментарии: ${dietaryNotes || "нет"}
+- Свежая сводка по питанию: ${JSON.stringify(context.latestNutritionSummary)}
+- Средняя калорийность за 7 дней: ${context.nutritionInsights.avgKcalLast7 ?? "нет данных"}
+- Средний белок за 7 дней: ${context.nutritionInsights.avgProteinLast7 ?? "нет данных"}
+- Отклонение от цели по калориям: ${context.nutritionInsights.kcalDeltaFromTarget ?? "нет данных"}
+- Отклонение от цели по белку: ${context.nutritionInsights.proteinDeltaFromTarget ?? "нет данных"}
 
-РљРѕСѓС‡-СЃРёРіРЅР°Р»С‹ РїРѕ С‚СЂРµРЅРёСЂРѕРІРѕС‡РЅРѕР№ РёСЃС‚РѕСЂРёРё:
+Коуч-сигналы по тренировочной истории:
 ${formatWorkoutCoachingSignalsForPrompt(context.workoutInsights.coachingSignals)}
 
-РџРёС‰РµРІС‹Рµ РєРѕСѓС‡-СЃРёРіРЅР°Р»С‹:
+Пищевые коуч-сигналы:
 ${formatNutritionCoachingSignalsForPrompt(context.nutritionInsights.coachingSignals)}
 
-Meal-level РїР°С‚С‚РµСЂРЅС‹ РїРёС‚Р°РЅРёСЏ:
+Meal-level паттерны питания:
 ${formatNutritionMealPatternsForPrompt(context.nutritionInsights.mealPatterns)}
 
-РџСЂРёРѕСЂРёС‚РµС‚РЅС‹Рµ СЂРµРєРѕРјРµРЅРґР°С†РёРё РїРѕ СЂР°С†РёРѕРЅСѓ:
+Приоритетные рекомендации по рациону:
 ${formatNutritionStrategyForPrompt(context.nutritionInsights.strategy)}
 
-РќРѕСЂРјР°Р»РёР·РѕРІР°РЅРЅС‹Рµ С„Р°РєС‚С‹ Рё РїСЂРёРѕСЂРёС‚РµС‚С‹:
+Нормализованные факты и приоритеты:
 ${formatStructuredKnowledgeForPrompt(context.structuredKnowledge)}
 
-РСЃС‚РѕСЂРёС‡РµСЃРєРёР№ RAG-РєРѕРЅС‚РµРєСЃС‚:
+Исторический RAG-контекст:
 ${buildKnowledgeExcerpt(knowledge)}
 
-РџСЂР°РІРёР»Р°:
-- РѕС‚РІРµС‚ РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ practical Рё non-medical;
-- СѓС‡РёС‚С‹РІР°Р№ С†РµР»СЊ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ, С‚РµРєСѓС‰СѓСЋ РєР°Р»РѕСЂРёР№РЅРѕСЃС‚СЊ Рё РІСЃСЋ РґРѕСЃС‚СѓРїРЅСѓСЋ РёСЃС‚РѕСЂРёСЋ РїРёС‚Р°РЅРёСЏ;
-- РЅРµ РїСЂРµРґР»Р°РіР°Р№ СЌРєСЃС‚СЂРµРјР°Р»СЊРЅС‹Рµ РґРµС„РёС†РёС‚С‹ РёР»Рё СЂРёСЃРєРѕРІР°РЅРЅС‹Рµ СЃС…РµРјС‹;
-- meals РґРµР»Р°Р№ СЂРµР°Р»РёСЃС‚РёС‡РЅС‹РјРё Рё РїСЂРёРіРѕРґРЅС‹РјРё РґР»СЏ СЂСѓС‡РЅРѕРіРѕ Р»РѕРіРёСЂРѕРІР°РЅРёСЏ.`,
+Правила:
+- ответ должен быть практичным и не медицинским;
+- учитывай цель пользователя, целевую калорийность и всю доступную историю питания;
+- не предлагай экстремальные дефициты, голодание или рискованные схемы;
+- план должен быть реалистичным и пригодным для ежедневного логирования в приложении.`,
   });
 
   return createAiPlanProposal(supabase, {
@@ -134,65 +134,65 @@ export async function generateWorkoutPlanProposalForUser(
     ? input.equipment
     : context.onboarding.equipment.length
       ? context.onboarding.equipment
-      : ["СЃРѕР±СЃС‚РІРµРЅРЅС‹Р№ РІРµСЃ"];
+      : ["собственный вес"];
   const daysPerWeek = input.daysPerWeek ?? context.goal.weeklyTrainingDays ?? 3;
-  const focus = input.focus ?? "РѕР±С‰РёР№ РїСЂРѕРіСЂРµСЃСЃ Р±РµР· РїРµСЂРµРіСЂСѓР·Р°";
+  const focus = input.focus ?? "общий прогресс без перегруза";
   const knowledge = await retrieveKnowledgeMatches(
     supabase,
     userId,
-    `РўСЂРµРЅРёСЂРѕРІРєРё, СѓРїСЂР°Р¶РЅРµРЅРёСЏ, РїРѕРІС‚РѕСЂРµРЅРёСЏ Рё РїСЂРѕРіСЂРµСЃСЃ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ. Р¦РµР»СЊ ${goal}. Р”РЅРµР№ ${daysPerWeek}. Р¤РѕРєСѓСЃ ${focus}.`,
+    `Тренировки, упражнения, ограничения, восстановление и прогресс пользователя. Цель ${goal}. Дней ${daysPerWeek}. Фокус ${focus}.`,
     8,
   );
 
   const result = await generateObject({
     model: models.chat,
     schema: workoutPlanSchema,
-    prompt: `РЎРѕР±РµСЂРё proposal С‚СЂРµРЅРёСЂРѕРІРѕС‡РЅРѕРіРѕ РїР»Р°РЅР° РґР»СЏ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ fitness-РїСЂРёР»РѕР¶РµРЅРёСЏ.
+    prompt: `Собери proposal тренировочного плана для пользователя фитнес-приложения.
 
-РљРѕРЅС‚РµРєСЃС‚ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ:
-- С†РµР»СЊ: ${goal}
-- С‚СЂРµРЅРёСЂРѕРІРѕС‡РЅС‹С… РґРЅРµР№ РІ РЅРµРґРµР»СЋ: ${daysPerWeek}
-- РѕР±РѕСЂСѓРґРѕРІР°РЅРёРµ: ${equipment.join(", ")}
-- СѓСЂРѕРІРµРЅСЊ РїРѕРґРіРѕС‚РѕРІРєРё: ${context.onboarding.fitnessLevel ?? "РЅРµ СѓРєР°Р·Р°РЅ"}
-- С‚СЂР°РІРјС‹/РѕРіСЂР°РЅРёС‡РµРЅРёСЏ: ${context.onboarding.injuries.join(", ") || "РЅРµ СѓРєР°Р·Р°РЅС‹"}
-- РїРѕР»: ${context.onboarding.sex ?? "РЅРµ СѓРєР°Р·Р°РЅ"}
-- РІРѕР·СЂР°СЃС‚: ${context.onboarding.age ?? "РЅРµ СѓРєР°Р·Р°РЅ"}
-- РІРµСЃ: ${context.onboarding.weightKg ?? "РЅРµ СѓРєР°Р·Р°РЅ"}
-- С„РѕРєСѓСЃ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ: ${focus}
-- Р·Р°РІРµСЂС€С‘РЅРЅС‹С… С‚СЂРµРЅРёСЂРѕРІРѕС‡РЅС‹С… РґРЅРµР№ Р·Р° 28 РґРЅРµР№: ${context.workoutInsights.completedDaysLast28}
-- СЃРѕС…СЂР°РЅС‘РЅРЅС‹С… СЃРµС‚РѕРІ Р·Р° 28 РґРЅРµР№: ${context.workoutInsights.loggedSetsLast28}
-- СЃСЂРµРґРЅРёРµ С„Р°РєС‚РёС‡РµСЃРєРёРµ РїРѕРІС‚РѕСЂС‹: ${context.workoutInsights.avgActualReps ?? "РЅРµС‚ РґР°РЅРЅС‹С…"}
-- СЃСЂРµРґРЅРёР№ СЂР°Р±РѕС‡РёР№ РІРµСЃ: ${context.workoutInsights.avgActualWeightKg ?? "РЅРµС‚ РґР°РЅРЅС‹С…"}
-- СЃСЂРµРґРЅРёР№ RPE: ${context.workoutInsights.avgActualRpe ?? "РЅРµС‚ РґР°РЅРЅС‹С…"}
-- РґРѕР»СЏ С‚СЏР¶С‘Р»С‹С… СЃРµС‚РѕРІ (RPE 8.5+): ${context.workoutInsights.hardSetShareLast28 ?? "РЅРµС‚ РґР°РЅРЅС‹С…"}
-- С‚РѕРЅРЅР°Р¶ Р·Р° 28 РґРЅРµР№: ${context.workoutInsights.tonnageLast28Kg ?? "РЅРµС‚ РґР°РЅРЅС‹С…"}
-- Р»СѓС‡С€РёР№ Р·Р°С„РёРєСЃРёСЂРѕРІР°РЅРЅС‹Р№ РІРµСЃ: ${context.workoutInsights.bestSetWeightKg ?? "РЅРµС‚ РґР°РЅРЅС‹С…"}
-- Р»СѓС‡С€Р°СЏ РѕС†РµРЅРєР° 1РџРњ: ${context.workoutInsights.bestEstimatedOneRmKg ?? "РЅРµС‚ РґР°РЅРЅС‹С…"}
-- РїРѕСЃР»РµРґРЅРёР№ РІРµСЃ С‚РµР»Р° РІ С‚СЂРµРЅРёСЂРѕРІРѕС‡РЅС‹Р№ РґРµРЅСЊ: ${context.workoutInsights.latestSessionBodyWeightKg ?? "РЅРµС‚ РґР°РЅРЅС‹С…"}
+Контекст пользователя:
+- Цель: ${goal}
+- Тренировочных дней в неделю: ${daysPerWeek}
+- Оборудование: ${equipment.join(", ")}
+- Уровень подготовки: ${context.onboarding.fitnessLevel ?? "не указан"}
+- Травмы и ограничения: ${context.onboarding.injuries.join(", ") || "не указаны"}
+- Пол: ${context.onboarding.sex ?? "не указан"}
+- Возраст: ${context.onboarding.age ?? "не указан"}
+- Вес: ${context.onboarding.weightKg ?? "не указан"}
+- Фокус пользователя: ${focus}
+- Завершённых тренировочных дней за 28 дней: ${context.workoutInsights.completedDaysLast28}
+- Залогированных сетов за 28 дней: ${context.workoutInsights.loggedSetsLast28}
+- Средние фактические повторы: ${context.workoutInsights.avgActualReps ?? "нет данных"}
+- Средний рабочий вес: ${context.workoutInsights.avgActualWeightKg ?? "нет данных"} кг
+- Средний RPE: ${context.workoutInsights.avgActualRpe ?? "нет данных"}
+- Доля тяжёлых сетов (RPE 8.5+): ${context.workoutInsights.hardSetShareLast28 ?? "нет данных"}
+- Тоннаж за 28 дней: ${context.workoutInsights.tonnageLast28Kg ?? "нет данных"} кг
+- Лучший зафиксированный вес: ${context.workoutInsights.bestSetWeightKg ?? "нет данных"} кг
+- Лучшая оценка 1ПМ: ${context.workoutInsights.bestEstimatedOneRmKg ?? "нет данных"} кг
+- Последний вес тела в тренировочный день: ${context.workoutInsights.latestSessionBodyWeightKg ?? "нет данных"} кг
 
-РљРѕСѓС‡-СЃРёРіРЅР°Р»С‹ РїРѕ РїСЂРѕРіСЂРµСЃСЃРёРё Рё РІРѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёСЋ:
+Коуч-сигналы по прогрессии и восстановлению:
 ${formatWorkoutCoachingSignalsForPrompt(context.workoutInsights.coachingSignals)}
 
-РџРёС‰РµРІС‹Рµ РєРѕСѓС‡-СЃРёРіРЅР°Р»С‹:
+Пищевые коуч-сигналы:
 ${formatNutritionCoachingSignalsForPrompt(context.nutritionInsights.coachingSignals)}
 
-Meal-level РїР°С‚С‚РµСЂРЅС‹ РїРёС‚Р°РЅРёСЏ:
+Meal-level паттерны питания:
 ${formatNutritionMealPatternsForPrompt(context.nutritionInsights.mealPatterns)}
 
-РџСЂРёРѕСЂРёС‚РµС‚РЅС‹Рµ СЂРµРєРѕРјРµРЅРґР°С†РёРё РїРѕ СЂР°С†РёРѕРЅСѓ:
+Приоритетные рекомендации по рациону:
 ${formatNutritionStrategyForPrompt(context.nutritionInsights.strategy)}
 
-РќРѕСЂРјР°Р»РёР·РѕРІР°РЅРЅС‹Рµ С„Р°РєС‚С‹ Рё РїСЂРёРѕСЂРёС‚РµС‚С‹:
+Нормализованные факты и приоритеты:
 ${formatStructuredKnowledgeForPrompt(context.structuredKnowledge)}
 
-РСЃС‚РѕСЂРёС‡РµСЃРєРёР№ RAG-РєРѕРЅС‚РµРєСЃС‚:
+Исторический RAG-контекст:
 ${buildKnowledgeExcerpt(knowledge)}
 
-РџСЂР°РІРёР»Р°:
-- РїР»Р°РЅ РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ realistic Рё safe;
-- РЅРµ РїСЂРµРґР»Р°РіР°Р№ РјРµРґРёС†РёРЅСЃРєРёРµ СЂРµРєРѕРјРµРЅРґР°С†РёРё;
-- СѓС‡РёС‚С‹РІР°Р№ РѕРіСЂР°РЅРёС‡РµРЅРёСЏ, РѕР±РѕСЂСѓРґРѕРІР°РЅРёРµ, СЂР°Р±РѕС‡РёРµ РІРµСЃР°, С‚РѕРЅРЅР°Р¶ Рё РІСЃСЋ РґРѕСЃС‚СѓРїРЅСѓСЋ РёСЃС‚РѕСЂРёСЋ С‚СЂРµРЅРёСЂРѕРІРѕРє;
-- summary Рё exercise names РґРµР»Р°Р№ РїСЂРёРіРѕРґРЅС‹РјРё РґР»СЏ СЂСѓСЃСЃРєРѕСЏР·С‹С‡РЅРѕРіРѕ UI.`,
+Правила:
+- план должен быть реалистичным и безопасным;
+- не предлагай медицинские назначения;
+- учитывай ограничения, оборудование, рабочие веса, тоннаж и всю доступную историю тренировок;
+- summary и exercise names делай пригодными для русскоязычного UI.`,
   });
 
   return createAiPlanProposal(supabase, {

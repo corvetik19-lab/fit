@@ -1,155 +1,161 @@
-# Master plan проекта `fit`
+# Master Plan проекта `fit`
 
 ## Как использовать этот план
 
-- `[x]` — уже сделано и подтверждено в коде или инфраструктуре.
+- `[x]` — сделано и подтверждено в коде, инфраструктуре или проверках.
 - `[ ]` — ещё не сделано или не доведено до production-ready состояния.
-- После каждого существенного изменения нужно:
-  - обновить этот файл;
-  - добавить короткую запись в `docs/AI_WORKLOG.md`;
-  - синхронизировать профильные документы в `docs/`, если изменился контракт или архитектура.
+- После каждого существенного tranche:
+  - обновлять этот файл;
+  - добавлять короткую запись в `docs/AI_WORKLOG.md`;
+  - синхронизировать профильные документы в `docs/`, если меняется контракт, архитектура или release-процесс.
 
-Этот файл — текущий production-hardening backlog проекта. Он заменяет старый bootstrap-план и отражает реальное состояние репозитория на 2026-03-13.
+Этот файл — текущий production-hardening backlog проекта. Он отражает фактическое состояние репозитория на `2026-03-14`.
 
-## Текущая фактическая база
+## Текущая база
 
-- [x] Web-first PWA уже существует и работает на Next.js 16 + React 19 + TypeScript strict.
-- [x] Основные продуктовые поверхности уже есть: `Dashboard`, `Workouts`, `Nutrition`, `AI`, `Admin`, `Settings`, `History`.
-- [x] Есть Supabase schema, migrations, RLS, admin-модель, cron routes и offline workout sync.
-- [x] Есть AI runtime слой, retrieval, structured knowledge, proposals и eval workspace.
+- [x] Есть web-first PWA на `Next.js 16 + React 19 + TypeScript strict`.
+- [x] Основные продуктовые поверхности уже существуют: `Dashboard`, `Workouts`, `Nutrition`, `AI`, `Admin`, `Settings`, `History`.
+- [x] Есть Supabase schema, migrations, RLS, admin-контур, cron routes и offline sync для тренировок.
+- [x] Есть AI runtime, retrieval, structured knowledge, proposals, eval workspace и SVG demo.
+- [x] `npm run lint` приведён к CI-формату и проверяет только поддерживаемые исходники.
+- [x] `npm run typecheck` стабилен через `next typegen + tsc`.
 - [x] `npm run build` проходит.
-- [x] `npm run typecheck` проходит как стабильный gate через `next typegen + tsc`.
-- [x] `npm run lint` приведён к воспроизводимому CI-формату и линкует только поддерживаемые исходники.
-- [ ] В репозитории почти нет реального автотестового покрытия.
-- [ ] Ключевая документация и часть UI/docs-поверхности содержат mojibake и требуют санации.
-- [ ] Первый production milestone ещё не достигнут.
+- [x] Есть минимальный smoke-контур и release checklist.
+- [ ] Документация и часть UI/docs-поверхности всё ещё содержат mojibake и требуют санации.
+- [ ] Полноценного regression-покрытия пока нет.
+- [ ] Первый production milestone ещё не закрыт.
 
-## Целевые milestones
+## Milestones
 
 ### Milestone 1 — Stable Web/PWA
 
-- [ ] Все engineering gates стабильны: `lint`, `typecheck`, `build`.
+- [x] Стабильные локальные engineering gates: `lint`, `typecheck`, `build`.
+- [x] Есть smoke baseline для ключевых маршрутов.
 - [ ] Ключевые пользовательские и админские сценарии проходят без hydration loops, infinite polling и layout regressions.
 - [ ] Документация, shell, AI workspace и workout flow доведены до production-качества.
-- [ ] Есть минимальный автоматизированный regression контур.
+- [ ] Есть минимальный automated regression contour сверх smoke.
 
 ### Milestone 2 — Live Billing
 
 - [ ] Stripe env полностью готовы на production/staging.
 - [ ] Работает живой контур `checkout -> return reconcile -> webhook -> portal`.
-- [ ] UI в `/settings` и `/admin` корректно показывает расхождения и статус подписки.
+- [ ] UI в `/settings` и `/admin` корректно показывает статус подписки и расхождения.
 
 ### Milestone 3 — Android Wrapper
 
-- [ ] Production PWA installability подтверждена.
+- [ ] Подтверждена installability production PWA.
 - [ ] Готов TWA wrapper.
-- [ ] Собраны `assetlinks.json`, package name, signing, splash, Play metadata.
+- [ ] Подготовлены `assetlinks.json`, package name, signing, splash и Play metadata.
 - [ ] Пройден Android smoke на production URL.
 
 ## Волна 0. Engineering hygiene и release baseline
 
 ### Quality gates
 
-- [x] Починить `typecheck` так, чтобы он проходил за один запуск без ручных повторов.
+- [x] Починить `typecheck`, чтобы он проходил за один запуск без ручных повторов.
 - [x] Убрать зависимость quality gates от мусорных `.next/types` и нестабильных `distDir`-сценариев.
-- [x] Привести `lint` к рабочему CI-формату: линтить только поддерживаемые исходники.
-- [x] Зафиксировать один воспроизводимый локальный baseline: `lint`, `typecheck`, `build`, smoke browser check.
+- [x] Привести `lint` к рабочему CI-формату.
+- [x] Зафиксировать воспроизводимый baseline: `lint`, `typecheck`, `build`, smoke.
 
 ### Workspace cleanup
 
-- [x] Убрать из активного dev-потока `.next_codex_*`, `.next_stale_*` и другие временные build-папки.
-- [x] Расширить `.gitignore`, чтобы build-мусор и generated artifacts не попадали в рабочий цикл.
-- [x] Зафиксировать line-ending policy через `.gitattributes`, чтобы уменьшить ложный workspace шум на Windows.
+- [x] Убрать из активного dev-потока `.next_codex_*`, `.next_stale_*` и временные build-папки.
+- [x] Расширить `.gitignore` для build-мусора и generated artifacts.
+- [x] Зафиксировать line-ending policy через `.gitattributes`.
 - [x] Убедиться, что quality gates не оставляют repo-tracked шум вроде изменений в `tsconfig.json`.
 
 ### Docs и entrypoints
 
-- [x] Переписать `README.md` в нормальном UTF-8 и синхронизировать его с реальным состоянием проекта.
+- [x] Переписать корневой `README.md` в нормальном UTF-8 и синхронизировать его с текущим состоянием проекта.
 - [x] Переписать `docs/MASTER_PLAN.md` как production-hardening backlog.
-- [x] Переписать `docs/FRONTEND.md` в чистом UTF-8 и синхронизировать его с текущим frontend-контуром.
-- [ ] Санировать `docs/README.md`, `docs/AI_WORKLOG.md`, `docs/FRONTEND.md`, `docs/BACKEND.md`, `docs/AI_STACK.md`, `docs/USER_GUIDE.md`, `docs/AI_EXPLAINED.md` от mojibake.
-- [x] Зафиксировать release checklist для production web/PWA.
+- [x] Переписать `docs/FRONTEND.md` в чистом UTF-8 и синхронизировать с текущим frontend-контуром.
+- [x] Добавить release checklist для production web/PWA.
+- [ ] Санировать `docs/README.md`, `docs/AI_WORKLOG.md`, `docs/BACKEND.md`, `docs/AI_STACK.md`, `docs/USER_GUIDE.md`, `docs/AI_EXPLAINED.md` от mojibake.
 
 ## Волна 1. Архитектурная декомпозиция рискованных модулей
 
-### Крупные монолиты
+### Workout execution
 
-- [x] Вынести из `src/components/workout-day-session.tsx` первый tranche чистой логики в отдельные `session-utils` и `derived-state` модули.
-- [x] Вынести из `src/components/workout-day-session.tsx` второй tranche timer/focus-header state в отдельный hook-модуль.
-- [x] Вынести из `src/components/workout-day-session.tsx` третий tranche sync/hydration/offline orchestration в отдельный hook-модуль.
-- [x] Вынести из `src/components/workout-day-session.tsx` четвертый tranche save/status/reset action-слоя в отдельный hook-модуль.
-- [x] Вынести из `src/components/workout-day-session.tsx` пятый tranche step-strip и exercise-card UI в отдельные client-модули.
-- [x] Вынести из `src/components/workout-day-session.tsx` шестой tranche overview-card и day-context surface в отдельные client-модули.
-- [x] Вынести из `src/lib/dashboard/metrics.ts` первый tranche независимых helper’ов в `dashboard-utils` и `dashboard-snapshot`.
-- [x] Вынести из `src/lib/dashboard/metrics.ts` второй tranche workout-specific pure helpers (`buildRecoverySummary`, weekly trend skeleton/index) в `dashboard-workout-helpers.ts`.
-- [x] Вынести из `src/lib/dashboard/metrics.ts` третий tranche overview/period-comparison helper-слоя в `dashboard-overview.ts`.
-- [x] Вынести из `src/lib/dashboard/metrics.ts` четвертый tranche aggregate snapshot/cache слоя в `dashboard-aggregate.ts`.
-- [x] Вынести из `src/lib/dashboard/metrics.ts` пятый tranche runtime snapshot cache слоя в `dashboard-runtime-cache.ts`.
-- [x] Вынести из `src/lib/dashboard/metrics.ts` шестой tranche live runtime assembly слоя в `dashboard-runtime-assembly.ts`.
-- [x] Вынести из `src/components/admin-users-directory.tsx` первый tranche model/helper слоя в отдельный модуль.
-- [x] Вынести из `src/components/admin-users-directory.tsx` второй tranche filter/selection/bulk request helper-слоя в общий model-модуль.
-- [x] Вынести из `src/components/admin-users-directory.tsx` третий tranche bulk actions/history UI в отдельный модуль.
-- [x] Вынести из `src/components/admin-user-detail.tsx` первый tranche model/helper слоя в отдельный модуль.
-- [x] Вынести из `src/components/admin-user-detail.tsx` второй tranche fetch/state и section-config слоя в отдельный hook-модуль.
-- [x] Вынести из `src/components/admin-user-detail.tsx` третий tranche секционных `profile/activity/operations/billing` блоков в отдельный UI-модуль.
+- [x] Вынести чистую логику из `src/components/workout-day-session.tsx` в `session-utils` и `derived-state`.
+- [x] Вынести timer/focus-header state в `use-workout-session-timer.ts`.
+- [x] Вынести sync/hydration/offline orchestration в `use-workout-day-sync.ts`.
+- [x] Вынести save/status/reset action-слой в `use-workout-session-actions.ts`.
+- [x] Вынести step-strip и exercise-card UI в отдельные модули.
+- [x] Вынести non-focus overview и day-context surface в отдельные модули.
+- [ ] Довести `workout-day-session.tsx` до окончательной orchestrator-роли без смешения UI, sync, persistence и доменных правил.
+
+### Dashboard analytics
+
+- [x] Вынести общие helper’ы из `src/lib/dashboard/metrics.ts` в `dashboard-utils.ts` и `dashboard-snapshot.ts`.
+- [x] Вынести workout-specific helper-слой в `dashboard-workout-helpers.ts`.
+- [x] Вынести overview/period-comparison в `dashboard-overview.ts`.
+- [x] Вынести aggregate snapshot/cache в `dashboard-aggregate.ts`.
+- [x] Вынести runtime snapshot cache в `dashboard-runtime-cache.ts`.
+- [x] Вынести live runtime assembly в `dashboard-runtime-assembly.ts`.
+- [ ] Продолжить вынос nutrition-specific analytics и fail-open/result-format слоя из `metrics.ts`.
+
+### Admin UI
+
+- [x] Вынести model/helper слой из `src/components/admin-users-directory.tsx`.
+- [x] Вынести filter/selection/bulk-request helper-слой из `src/components/admin-users-directory.tsx`.
+- [x] Вынести bulk actions/history UI из `src/components/admin-users-directory.tsx`.
+- [x] Вынести model/helper слой из `src/components/admin-user-detail.tsx`.
+- [x] Вынести fetch/state и section-config слой из `src/components/admin-user-detail.tsx`.
+- [x] Вынести секционные `profile/activity/operations/billing` блоки из `src/components/admin-user-detail.tsx`.
 - [x] Убрать mojibake из `admin-user-detail` model/state словарей и section copy.
-- [x] Вынести из `src/lib/ai/knowledge.ts` первый tranche model/search helper слоя в отдельный модуль.
-- [x] Вынести из `src/lib/ai/knowledge.ts` второй tranche retrieval RPC/vector/text fallback слоя в отдельный модуль.
-- [x] Вынести из `src/lib/ai/knowledge.ts` третий tranche data-loading/fetch preparation слоя в отдельный модуль `knowledge-source-data.ts`.
-- [x] Вынести из `src/lib/ai/knowledge.ts` четвертый tranche indexing/embeddings refresh слоя в отдельный модуль `knowledge-indexing.ts`.
-- [x] Вынести из `src/lib/ai/knowledge.ts` пятый tranche document builders и knowledge corpus assembly в отдельный модуль `knowledge-documents.ts`.
-- [x] Вынести из `src/components/ai-chat-panel.tsx` первый tranche model/helper и tool-card слоя в отдельные модули.
-- [x] Вынести из `src/components/ai-chat-panel.tsx` второй tranche `chat surface + composer` UI в отдельные модули.
-- [x] Вынести из `src/components/ai-chat-panel.tsx` третий tranche chat toolbar / prompt-library trigger / search toggle UI в отдельный модуль.
-- [x] Вынести из `src/components/ai-chat-panel.tsx` четвертый tranche access/error/notice panels в отдельный модуль.
-- [x] Вынести из `src/components/ai-chat-panel.tsx` пятый tranche local session / prompt-state / URL orchestration в отдельный hook-модуль.
-- [x] Вынести из `src/components/ai-chat-panel.tsx` шестой tranche proposal-action / meal-photo runtime helper-слоя в отдельный hook-модуль.
-- [x] Вынести из `src/components/ai-chat-panel.tsx` седьмой tranche submit / composer helper-слоя в отдельный hook-модуль.
-- [x] Вынести из `src/components/ai-chat-panel.tsx` восьмой tranche view/media state (`selectedImage`, preview URL, `messageTimes`, scroll viewport и transcript auto-scroll) в отдельный hook-модуль.
-- [x] Убрать mojibake из `ai-chat-panel` и `ai-chat-panel-model` user-facing copy.
-- [ ] Разбить `src/components/workout-day-session.tsx` на UI-композицию, timer/focus hooks, step/save logic и sync helpers.
-- [ ] Разбить `src/lib/dashboard/metrics.ts` на агрегаты, coaching signals, nutrition analytics и snapshot helpers.
-- [ ] Разбить `src/components/admin-users-directory.tsx` на каталог, сегменты, bulk actions и selection state.
-- [ ] Разбить `src/components/admin-user-detail.tsx` на профиль, активность, операции, биллинг и timeline-блоки.
-- [ ] Разбить `src/lib/ai/knowledge.ts` на retrieval, indexing, structured summaries и embeddings refresh.
-- [ ] Разбить `src/components/ai-chat-panel.tsx` на chat surface, composer, history controls, prompt library и tool/proposal UI.
+- [ ] Добить дальнейшую декомпозицию `admin-user-detail.tsx` по timeline/detail подблокам.
+
+### AI knowledge и chat
+
+- [x] Вынести model/search helper слой из `src/lib/ai/knowledge.ts`.
+- [x] Вынести retrieval RPC/vector/text fallback слой из `src/lib/ai/knowledge.ts`.
+- [x] Вынести data-loading/fetch preparation слой в `knowledge-source-data.ts`.
+- [x] Вынести indexing/embeddings refresh слой в `knowledge-indexing.ts`.
+- [x] Вынести document builders и knowledge corpus assembly в `knowledge-documents.ts`.
+- [x] Вынести model/helper и tool-card слой из `src/components/ai-chat-panel.tsx`.
+- [x] Вынести `chat surface + composer` UI из `src/components/ai-chat-panel.tsx`.
+- [x] Вынести toolbar / prompt-library trigger / search toggle UI из `src/components/ai-chat-panel.tsx`.
+- [x] Вынести access/error/notice panels из `src/components/ai-chat-panel.tsx`.
+- [x] Вынести local session / prompt-state / URL orchestration из `src/components/ai-chat-panel.tsx`.
+- [x] Вынести proposal-action / meal-photo runtime helper слой из `src/components/ai-chat-panel.tsx`.
+- [x] Вынести submit / composer helper слой из `src/components/ai-chat-panel.tsx`.
+- [x] Вынести view/media state из `src/components/ai-chat-panel.tsx`.
+- [x] Убрать mojibake из `src/lib/ai/plan-generation.ts` и `src/lib/ai/domain-policy.ts`.
+- [ ] Довести `knowledge.ts` и `ai-chat-panel.tsx` до финальной orchestrator-роли без смешения UI, retrieval, persistence и runtime plumbing.
 
 ### Общий стандарт для крупных модулей
 
-- [ ] Derived state вынесен из JSX в отдельные helpers/hooks.
-- [x] Для `workout-day-session.tsx` уже есть референсный паттерн: derive-логика и локальные workout helpers вынесены из основного client-компонента.
-- [x] Для `workout-day-session.tsx` уже есть второй референсный паттерн: timer state и offline sync orchestration вынесены из основного execution-экрана в отдельные hooks.
-- [x] Для `metrics.ts` уже есть референсный паттерн: общие analytics/snapshot helper’ы вынесены из главного server-side orchestrator модуля.
-- [x] Для `admin-users-directory.tsx` уже есть референсный паттерн: data model, formatters и summary/filter helpers вынесены из основного client-компонента.
-- [x] Для `admin-user-detail.tsx` уже есть референсный паттерн: типы карточки, словари ролей/статусов и payload/format helpers вынесены из основного client-компонента.
-- [x] Для `knowledge.ts` уже есть референсный паттерн: row/document types и pure retrieval/search helpers вынесены из основного AI knowledge orchestrator модуля.
-- [x] Для `ai-chat-panel.tsx` уже есть референсный паттерн: типы, форматтеры, markdown helpers и tool-card UI вынесены из основного chat-orchestrator компонента.
-- [ ] Async/data orchestration не смешана с визуальной разметкой.
-- [ ] Доменные правила не дублируются между route handlers и `lib`.
-- [ ] Новые модули пригодны для unit/integration тестов без браузера.
+- [x] Для `workout-day-session.tsx` есть референсный паттерн с derive-слоем, timer-hook и sync-hook.
+- [x] Для `metrics.ts` есть референсный паттерн с overview/aggregate/runtime разделением.
+- [x] Для `admin-users-directory.tsx` есть референсный паттерн с вынесенным model/helper слоем.
+- [x] Для `admin-user-detail.tsx` есть референсный паттерн с вынесенным state/model/sections слоем.
+- [x] Для `knowledge.ts` есть референсный паттерн с вынесенными retrieval/indexing/document builders.
+- [x] Для `ai-chat-panel.tsx` есть референсный паттерн с вынесенными session/actions/composer/view-state модулями.
+- [ ] Async/data orchestration больше не смешивается с JSX в оставшихся тяжёлых экранах.
+- [ ] Доменные правила больше не дублируются между route handlers и `lib`.
 
 ## Волна 2. UX overhaul для Web/PWA
 
 ### Shell и навигация
 
 - [x] Есть desktop и mobile shell.
-- [ ] Desktop top nav доведён до стабильного production-вида без потери разделов и без визуальных регрессий.
-- [ ] Mobile burger drawer работает без перекрытий, portal-глюков и hydration mismatch.
-- [ ] Убраны мешающие плавающие панели, сохранены только полезные действия.
+- [ ] Desktop top nav доведён до стабильного production-вида без визуальных регрессий.
+- [ ] Mobile burger drawer доведён до корректной работы без перекрытий, portal-глюков и hydration mismatch.
+- [ ] Убраны мешающие плавающие панели, оставлены только полезные действия.
 
 ### Workspace-паттерн страниц
 
 - [x] На части экранов уже есть логические разделы и переключение.
 - [ ] Все тяжёлые страницы (`Dashboard`, `Workouts`, `Nutrition`, `AI`, `Admin`) приведены к единому workspace-паттерну.
 - [ ] На мобильной PWA одновременно открыт только один логический блок.
-- [ ] Состояние скрытия/показа блоков сохраняется локально и ведёт себя предсказуемо.
+- [ ] Состояние скрытия/показа блоков ведёт себя предсказуемо на всех основных страницах.
 
 ### Workout execution
 
 - [x] Есть focus-mode и пошаговое выполнение тренировки.
 - [x] Видны все шаги тренировки, будущие шаги заблокированы.
 - [x] Сохранение упражнения требует полностью заполненных подходов.
-- [x] Есть таймер с лимитом 2 часа и сбросом тренировки.
+- [x] Есть таймер с лимитом 2 часа и корректный сброс тренировки.
 - [ ] Focus-mode на мобильной PWA доведён до эталонного UX без лишнего chrome и визуального шума.
 - [ ] Сброс, сохранение, завершение и редактирование пройдены повторно как regression-critical сценарии.
 
@@ -158,24 +164,24 @@
 - [x] Есть fullscreen AI workspace и история чатов.
 - [x] Есть удаление отдельных чатов и массовая очистка.
 - [x] Есть загрузка изображений и prompt library.
-- [ ] Убран весь служебный копирайт, пустые состояния и мешающий UI-хром.
-- [ ] Web search toggle и image upload доведены до естественного mobile-first UX.
-- [ ] Assistant flow полностью читается как сценарий `запрос -> анализ -> предложение -> подтверждение -> применение`.
+- [ ] Убрать весь служебный копирайт, пустые состояния и мешающий UI-хром.
+- [ ] Web search toggle и image upload довести до естественного mobile-first UX.
+- [ ] Assistant flow должен читаться как сценарий `запрос -> анализ -> предложение -> подтверждение -> применение`.
 
 ### Admin UI
 
 - [x] Есть `/admin`, каталог пользователей, user detail, health dashboards и operations inbox.
 - [ ] Полностью убрать сырые технические тексты и mojibake из admin UI.
 - [ ] Оставить детали ролей и capability only для root/super-admin.
-- [ ] Довести каталоги и карточки пользователя до секционного, читабельного desktop/mobile UX.
+- [ ] Довести каталоги и карточки пользователя до секционного desktop/mobile UX без перегруза.
 
-## Волна 3. Доменные и backend hardening
+## Волна 3. Доменные, AI и backend hardening
 
 ### Workout / Nutrition / API
 
 - [ ] Пройти все route handlers на валидацию, owner-only доступ, ошибки и idempotency.
 - [ ] Подтвердить, что reset/finish/sync сценарии не создают race conditions и бесконечный polling.
-- [ ] Подтвердить, что offline queue и stale cleanup не могут восстановить уже сброшенное состояние.
+- [ ] Подтвердить, что offline queue и stale cleanup не восстанавливают уже сброшенное состояние.
 - [ ] Проверить locked program guard и все mutation routes вокруг workout day execution.
 
 ### AI / RAG / CAG / KAG
@@ -198,7 +204,7 @@
 - [x] Sentry, Vercel Analytics и health dashboards уже встроены частично.
 - [ ] Завершить Sentry rollout на production env.
 - [ ] Подтвердить auth/visibility для cron routes и internal jobs.
-- [ ] Задокументировать или устранить текущие warnings, которые считаются допустимыми в build.
+- [ ] Задокументировать или устранить допустимые build warnings.
 
 ## Волна 4. Billing и SaaS readiness
 
@@ -212,7 +218,7 @@
 ### Billing UI
 
 - [x] Есть billing center в `/settings` и admin billing controls.
-- [ ] Довести user-facing billing UX до production-уровня без сырого статуса и промежуточных артефактов.
+- [ ] Довести user-facing billing UX до production-уровня без сырых промежуточных состояний.
 - [ ] Довести admin billing health и reconcile UX до операторского уровня.
 
 ## Волна 5. Тесты, CI и release process
@@ -220,7 +226,7 @@
 ### Автотесты
 
 - [ ] Добавить Playwright e2e для `auth -> onboarding -> dashboard -> workouts -> nutrition -> ai -> settings -> admin`.
-- [ ] Добавить smoke тесты на ключевые SSR/API маршруты.
+- [x] Добавить smoke тесты на ключевые SSR/API маршруты.
 - [ ] Добавить regression tests для offline/sync workout execution.
 - [ ] Добавить AI route contract tests без обязательного вызова платного провайдера.
 - [ ] Добавить изоляционные проверки для user-owned данных и RLS-контуров.
@@ -228,14 +234,14 @@
 ### CI
 
 - [x] Добавить обязательный CI workflow для `lint`, `typecheck`, `build`.
-- [x] Добавить smoke/e2e subset как merge gate.
+- [x] Добавить smoke subset как merge gate.
 - [ ] При наличии DB-изменений добавить migration/advisor verification.
 
 ### Release process
 
 - [x] Формализовать release checklist для web/PWA.
 - [ ] Ввести staging-like verification для Stripe и AI runtime.
-- [ ] Зафиксировать критерий `prod-ready`: не локальная сборка, а полный automated + manual acceptance набор.
+- [ ] Зафиксировать критерий `prod-ready` как набор automated + manual acceptance checks, а не только локальную сборку.
 
 ## Волна 6. Android / TWA
 

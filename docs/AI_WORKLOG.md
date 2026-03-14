@@ -1917,3 +1917,8 @@
 - В новый модуль ушла оркестрация `snapshot + periodComparison + workoutCharts + nutritionCharts`, а сам [metrics.ts](/C:/fit/src/lib/dashboard/metrics.ts) ещё сильнее свёлся к верхнеуровневому server-side coordinator слою.
 - Следующий tranche по dashboard analytics: вынос nutrition-specific helper-слоя или отдельного runtime result/fail-open formatter слоя.
 
+### 2026-03-14 22:35 - Санировал AI prompt и guardrail слой
+
+- Переписал [plan-generation.ts](/C:/fit/src/lib/ai/plan-generation.ts) в чистом UTF-8: meal/workout proposal prompts, retrieval queries и fallback copy больше не содержат mojibake.
+- Переписал [domain-policy.ts](/C:/fit/src/lib/ai/domain-policy.ts) в чистом UTF-8: sports-only guardrails, confidentiality policy, off-topic rejection и system prompt снова читаемые и детерминированные.
+- Подтвердил инженерные gate-команды после правки: `npm run lint`, `npm run typecheck`, `npm run build`.
