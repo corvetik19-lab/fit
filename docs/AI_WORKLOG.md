@@ -1922,3 +1922,9 @@
 - Переписал [plan-generation.ts](/C:/fit/src/lib/ai/plan-generation.ts) в чистом UTF-8: meal/workout proposal prompts, retrieval queries и fallback copy больше не содержат mojibake.
 - Переписал [domain-policy.ts](/C:/fit/src/lib/ai/domain-policy.ts) в чистом UTF-8: sports-only guardrails, confidentiality policy, off-topic rejection и system prompt снова читаемые и детерминированные.
 - Подтвердил инженерные gate-команды после правки: `npm run lint`, `npm run typecheck`, `npm run build`.
+
+### 2026-03-14 22:55 - Санировал план и backend-документацию
+
+- Переписал [MASTER_PLAN.md](/C:/fit/docs/MASTER_PLAN.md) в чистом UTF-8 как актуальный production-hardening backlog с сохранением выполненных tranche.
+- Переписал [README.md](/C:/fit/docs/README.md) внутри `docs/` как рабочий индекс документации.
+- Переписал [BACKEND.md](/C:/fit/docs/BACKEND.md) в компактный и актуальный серверный handoff-документ без mojibake.
