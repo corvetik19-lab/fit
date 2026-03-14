@@ -2,6 +2,15 @@
 
 ## 2026-03-14
 
+### Production hardening: третий tranche декомпозиции `admin-user-detail.tsx`
+
+- Вынес из [admin-user-detail.tsx](/C:/fit/src/components/admin-user-detail.tsx) крупные секционные блоки `profile / activity / operations / billing` в новый UI-модуль [admin-user-detail-sections.tsx](/C:/fit/src/components/admin-user-detail-sections.tsx).
+- Сам [admin-user-detail.tsx](/C:/fit/src/components/admin-user-detail.tsx) стал заметно ближе к orchestrator-компоненту: загрузка карточки, summary-метрики, переключение секций и выбор нужного section surface теперь собраны компактно, а большие карточки и timeline-блоки живут отдельно.
+- Заодно полностью очистил [admin-user-detail-model.ts](/C:/fit/src/components/admin-user-detail-model.ts) и [admin-user-detail-state.ts](/C:/fit/src/components/admin-user-detail-state.ts) от битой кириллицы: словари ролей, статусов, section copy и fallback-тексты теперь снова в чистом UTF-8.
+- Этот tranche закрывает основной UI-долг карточки пользователя: дальше по `Wave 1` уже можно дробить либо сам `workout-day-session.tsx`, либо оставшиеся монолиты вроде `knowledge.ts` и `ai-chat-panel.tsx` на более мелкие orchestration/data/UI слои.
+
+## 2026-03-14
+
 ### Production hardening: третий tranche декомпозиции `workout-day-session.tsx`
 
 - Продолжил раскладывать [workout-day-session.tsx](/C:/fit/src/components/workout-day-session.tsx) и вынес sync/hydration/offline orchestration в новый hook [use-workout-day-sync.ts](/C:/fit/src/components/workout-session/use-workout-day-sync.ts).

@@ -25,7 +25,7 @@ export const adminUserDetailSections: Array<{
   {
     key: "profile",
     label: "Профиль",
-    description: "Основные данные, цели и действия.",
+    description: "Основные данные, цели и служебные действия.",
   },
   {
     key: "activity",
@@ -43,14 +43,6 @@ export const adminUserDetailSections: Array<{
     description: "Подписка, доступы и история оплаты.",
   },
 ];
-
-export function renderList(items: string[] | undefined) {
-  if (!items?.length) {
-    return "Не заполнено";
-  }
-
-  return items.join(", ");
-}
 
 export function useAdminUserDetailState(userId: string) {
   const [detail, setDetail] = useState<AdminUserDetailData | null>(null);
@@ -74,7 +66,9 @@ export function useAdminUserDetailState(userId: string) {
 
         if (!response.ok) {
           if (isActive) {
-            setError(payload?.message ?? "Не удалось загрузить карточку пользователя.");
+            setError(
+              payload?.message ?? "Не удалось загрузить карточку пользователя.",
+            );
             setDetail(null);
           }
           return;

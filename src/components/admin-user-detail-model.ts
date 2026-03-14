@@ -251,7 +251,8 @@ export const auditActionLabels: Record<string, string> = {
   queue_export_job: "Создана выгрузка данных",
   queue_support_action: "Создано служебное действие",
   support_action_status_updated: "Изменение статуса служебного действия",
-  user_reconciled_stripe_checkout_return: "Синхронизация возврата после оплаты",
+  user_reconciled_stripe_checkout_return:
+    "Синхронизация возврата после оплаты",
   user_requested_billing_access_review: "Запрос на проверку доступа",
 };
 
@@ -295,6 +296,14 @@ export function formatAuditAction(value: string) {
 
 export function formatSupportAction(value: string) {
   return supportActionLabels[value] ?? formatAuditAction(value);
+}
+
+export function renderList(items: string[] | undefined) {
+  if (!items?.length) {
+    return "Не заполнено";
+  }
+
+  return items.join(", ");
 }
 
 export function getUserLabel(
