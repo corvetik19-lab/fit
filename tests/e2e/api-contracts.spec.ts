@@ -1,33 +1,7 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 import { hasAuthE2ECredentials, signInAndFinishOnboarding } from "./helpers/auth";
-
-type FetchResult = {
-  body: unknown;
-  status: number;
-};
-
-async function fetchJson(page: Page, input: {
-  body?: unknown;
-  method: "DELETE" | "PATCH" | "POST";
-  url: string;
-}) {
-  return page.evaluate(
-    async ({ body, method, url }) => {
-      const response = await fetch(url, {
-        method,
-        headers: body ? { "Content-Type": "application/json" } : undefined,
-        body: body ? JSON.stringify(body) : undefined,
-      });
-
-      return {
-        status: response.status,
-        body: await response.json().catch(() => null),
-      } satisfies FetchResult;
-    },
-    input,
-  );
-}
+import { fetchJson } from "./helpers/http";
 
 test.describe("api contracts", () => {
   test.skip(

@@ -157,3 +157,11 @@
 - Добавил `tests/e2e/api-contracts.spec.ts` с контрактами без платного AI runtime: invalid UUID дают явные `400`, а owner-scoped delete неизвестной AI session даёт корректный `404 AI_CHAT_SESSION_NOT_FOUND`.
 - Упростил e2e-селекторы: вместо хрупких русских строк тесты теперь опираются на URL, `href`, `textarea` и `aria-pressed`, поэтому меньше зависят от локализации и санитарных правок copy.
 - Подтвердил baseline полным прогоном: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth`.
+
+### 2026-03-15 04:05 - Добавил workout sync regression и owner-only isolation baseline
+
+- Добавил `tests/e2e/helpers/http.ts` и `tests/e2e/helpers/workouts.ts`, чтобы e2e могли сами создавать тестовый locked workout day через обычные product routes, без ручных сидов и без платного AI runtime.
+- Добавил `tests/e2e/workout-sync.spec.ts`: тест создаёт locked workout day, прогоняет `sync/push` с duplicate mutation id, incomplete set save и premature `done`, а затем проверяет, что валидная последовательность доходит до `sync/pull` snapshot с правильными `status`, `actual_reps`, `actual_weight_kg`, `actual_rpe` и `session_duration_seconds`.
+- Добавил `tests/e2e/ownership-isolation.spec.ts`: root-admin не может читать, сбрасывать или мутировать чужой `workout day` и чужой `workout set`, routes возвращают owner-scoped `404`, а не ложный успех.
+- Стабилизировал e2e baseline в `package.json`: `test:e2e` и `test:e2e:auth` пока сериализованы через `--workers=1`, чтобы auth/UI hydration не давали флак при параллельном запуске.
+- Подтвердил tranche полным прогоном: `npm run lint`, `npm run typecheck`, `npm run build`, `npx eslint tests/e2e tests/e2e/helpers`, `npm run test:e2e:auth`.
