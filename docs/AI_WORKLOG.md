@@ -2,6 +2,13 @@
 
 ## 2026-03-14
 
+### Production hardening: третий tranche декомпозиции `knowledge.ts`
+
+- Вынес из [knowledge.ts](/C:/fit/src/lib/ai/knowledge.ts) слой загрузки и подготовки исходных данных в новый модуль [knowledge-source-data.ts](/C:/fit/src/lib/ai/knowledge-source-data.ts).
+- В новый data-слой ушли `fetchAllRows`, загрузка `onboarding / goals / nutrition / workouts / meals / memory / snapshots`, а также подготовка `workoutSets`, `totalTonnageKg` и `bestSetWeightKg`.
+- После этого [knowledge.ts](/C:/fit/src/lib/ai/knowledge.ts) стал ближе к orchestrator-роли: retrieval уже живёт отдельно, исходные данные собираются отдельно, а основной модуль всё меньше смешивает query/fetch работу с indexing/document assembly.
+- Следующий логичный tranche по этому модулю: вынос самих document builders и structured summary surface из основного knowledge orchestrator.
+
 ### Production hardening: шестой tranche декомпозиции `workout-day-session.tsx`
 
 - Вынес из [workout-day-session.tsx](/C:/fit/src/components/workout-day-session.tsx) ещё два больших surface-блока в отдельные client-модули: [workout-day-overview-card.tsx](/C:/fit/src/components/workout-session/workout-day-overview-card.tsx) и [workout-day-context-card.tsx](/C:/fit/src/components/workout-session/workout-day-context-card.tsx).

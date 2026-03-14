@@ -11,229 +11,61 @@ import {
   normalizeJsonArray,
   toVectorLiteral,
   toSafeNumber,
-  type BodyMetricRow,
-  type ContextSnapshotRow,
-  type GoalRow,
-  type KnowledgeChunkEmbeddingInput,
   type KnowledgeChunkRow,
   type KnowledgeDocument,
   type KnowledgeReindexResult,
   type MealItemRow,
-  type MealRow,
-  type NutritionProfileRow,
-  type NutritionSummaryRow,
-  type OnboardingRow,
   type RetrievedKnowledgeItem,
-  type UserMemoryRow,
-  type WeeklyProgramRow,
   type WorkoutDayRow,
   type WorkoutExerciseRow,
   type WorkoutSetRow,
 } from "@/lib/ai/knowledge-model";
+import {
+  listKnowledgeChunkInputs,
+  loadKnowledgeSourceData,
+} from "@/lib/ai/knowledge-source-data";
 import { retrieveKnowledgeMatchesWithPipeline } from "@/lib/ai/knowledge-retrieval";
 import {
   buildStructuredKnowledgeSignature,
   formatStructuredKnowledgeForDocument,
 } from "@/lib/ai/structured-knowledge";
-import { getAiRuntimeContext } from "@/lib/ai/user-context";
 import { logger } from "@/lib/logger";
 import { buildNutritionMealPatternStats } from "@/lib/nutrition/meal-patterns";
 import { buildNutritionStrategyRecommendations } from "@/lib/nutrition/strategy-recommendations";
 import { formatPlannedRepTarget } from "@/lib/workout/rep-ranges";
-import { listAllWorkoutSetsWithRepRangeFallback } from "@/lib/workout/workout-sets";
 
 export type {
   KnowledgeReindexResult,
   RetrievedKnowledgeItem,
 } from "@/lib/ai/knowledge-model";
 
-const FETCH_PAGE_SIZE = 500;
 const KNOWLEDGE_EMBEDDING_MODEL =
   aiProviders.embeddings === "voyage"
     ? defaultModels.voyageEmbeddings
     : defaultModels.gatewayEmbeddings;
 
-async function fetchAllRows<T>(
-  loader: (from: number, to: number) => Promise<{ data: T[] | null; error: unknown }>,
-  pageSize = FETCH_PAGE_SIZE,
-) {
-  const rows: T[] = [];
-  let from = 0;
-
-  while (true) {
-    const to = from + pageSize - 1;
-    const result = await loader(from, to);
-
-    if (result.error) {
-      throw result.error;
-    }
-
-    const page = result.data ?? [];
-    rows.push(...page);
-
-    if (page.length < pageSize) {
-      break;
-    }
-
-    from += pageSize;
-  }
-
-  return rows;
-}
-
 async function buildKnowledgeDocuments(
   supabase: SupabaseClient,
   userId: string,
 ): Promise<KnowledgeDocument[]> {
-  const [
+  const {
     aiContext,
-    onboardingResult,
-    goalResult,
-    nutritionProfileResult,
+    bestSetWeightKg,
     bodyMetrics,
-    nutritionSummaries,
-    memoryFacts,
     contextSnapshots,
+    goal,
+    mealItems,
+    meals,
+    memoryFacts,
+    nutritionProfile,
+    nutritionSummaries,
+    onboarding,
     programs,
+    totalTonnageKg,
     workoutDays,
     workoutExercises,
-    meals,
-    mealItems,
-  ] = await Promise.all([
-    getAiRuntimeContext(supabase, userId, {
-      forceRefresh: true,
-    }).then((result) => result.context),
-    supabase
-      .from("onboarding_profiles")
-      .select(
-        "id, age, sex, height_cm, weight_kg, fitness_level, equipment, injuries, dietary_preferences",
-      )
-      .eq("user_id", userId)
-      .maybeSingle(),
-    supabase
-      .from("goals")
-      .select("id, goal_type, target_weight_kg, weekly_training_days, updated_at")
-      .eq("user_id", userId)
-      .order("updated_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    supabase
-      .from("nutrition_profiles")
-      .select("id, kcal_target, protein_target, fat_target, carbs_target")
-      .eq("user_id", userId)
-      .maybeSingle(),
-    fetchAllRows<BodyMetricRow>(async (from, to) =>
-      await supabase
-        .from("body_metrics")
-        .select("id, weight_kg, body_fat_pct, measured_at")
-        .eq("user_id", userId)
-        .order("measured_at", { ascending: false })
-        .range(from, to),
-    ),
-    fetchAllRows<NutritionSummaryRow>(async (from, to) =>
-      await supabase
-        .from("daily_nutrition_summaries")
-        .select("id, summary_date, kcal, protein, fat, carbs")
-        .eq("user_id", userId)
-        .order("summary_date", { ascending: false })
-        .range(from, to),
-    ),
-    fetchAllRows<UserMemoryRow>(async (from, to) =>
-      await supabase
-        .from("user_memory_facts")
-        .select("id, fact_type, content, confidence, created_at")
-        .eq("user_id", userId)
-        .order("created_at", { ascending: false })
-        .range(from, to),
-    ),
-    fetchAllRows<ContextSnapshotRow>(async (from, to) =>
-      await supabase
-        .from("user_context_snapshots")
-        .select("id, snapshot_reason, payload, created_at")
-        .eq("user_id", userId)
-        .order("created_at", { ascending: false })
-        .range(from, to),
-    ),
-    fetchAllRows<WeeklyProgramRow>(async (from, to) =>
-      await supabase
-        .from("weekly_programs")
-        .select("id, title, status, week_start_date, week_end_date, is_locked")
-        .eq("user_id", userId)
-        .order("week_start_date", { ascending: false })
-        .range(from, to),
-    ),
-    fetchAllRows<WorkoutDayRow>(async (from, to) =>
-      await supabase
-        .from("workout_days")
-        .select(
-          "id, weekly_program_id, day_of_week, status, body_weight_kg, session_note, updated_at",
-        )
-        .eq("user_id", userId)
-        .order("updated_at", { ascending: false })
-        .range(from, to),
-    ),
-    fetchAllRows<WorkoutExerciseRow>(async (from, to) =>
-      await supabase
-        .from("workout_exercises")
-        .select(
-          "id, workout_day_id, exercise_title_snapshot, sets_count, sort_order, updated_at",
-        )
-        .eq("user_id", userId)
-        .order("updated_at", { ascending: false })
-        .range(from, to),
-    ),
-    fetchAllRows<MealRow>(async (from, to) =>
-      await supabase
-        .from("meals")
-        .select("id, eaten_at, source")
-        .eq("user_id", userId)
-        .order("eaten_at", { ascending: false })
-        .range(from, to),
-    ),
-    fetchAllRows<MealItemRow>(async (from, to) =>
-      await supabase
-        .from("meal_items")
-        .select(
-          "id, meal_id, food_name_snapshot, servings, kcal, protein, fat, carbs",
-        )
-        .eq("user_id", userId)
-        .order("created_at", { ascending: false })
-        .range(from, to),
-    ),
-  ]);
-
-  if (onboardingResult.error) {
-    throw onboardingResult.error;
-  }
-
-  if (goalResult.error) {
-    throw goalResult.error;
-  }
-
-  if (nutritionProfileResult.error) {
-    throw nutritionProfileResult.error;
-  }
-
-  const workoutSets = await listAllWorkoutSetsWithRepRangeFallback(supabase, userId);
-  const totalTonnageKg = workoutSets.reduce((sum, set) => {
-    if (set.actual_reps === null || set.actual_weight_kg === null) {
-      return sum;
-    }
-
-    return sum + set.actual_reps * set.actual_weight_kg;
-  }, 0);
-  const bestSetWeightKg = workoutSets.reduce<number | null>((best, set) => {
-    if (set.actual_weight_kg === null) {
-      return best;
-    }
-
-    return best === null ? set.actual_weight_kg : Math.max(best, set.actual_weight_kg);
-  }, null);
-
-  const onboarding = (onboardingResult.data as OnboardingRow | null) ?? null;
-  const goal = (goalResult.data as GoalRow | null) ?? null;
-  const nutritionProfile =
-    (nutritionProfileResult.data as NutritionProfileRow | null) ?? null;
+    workoutSets,
+  } = await loadKnowledgeSourceData(supabase, userId);
 
   const documents: KnowledgeDocument[] = [];
   const structuredKnowledge = aiContext.structuredKnowledge;
@@ -741,20 +573,6 @@ async function buildKnowledgeDocuments(
   }
 
   return documents;
-}
-
-async function listKnowledgeChunkInputs(
-  supabase: SupabaseClient,
-  userId: string,
-) {
-  return fetchAllRows<KnowledgeChunkEmbeddingInput>(async (from, to) =>
-    await supabase
-      .from("knowledge_chunks")
-      .select("id, content")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false })
-      .range(from, to),
-  );
 }
 
 async function refreshKnowledgeEmbeddings(
