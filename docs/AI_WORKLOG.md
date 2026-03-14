@@ -2,6 +2,13 @@
 
 ## 2026-03-14
 
+### Production hardening: пятый tranche декомпозиции `ai-chat-panel.tsx`
+
+- Вынес из [ai-chat-panel.tsx](/C:/fit/src/components/ai-chat-panel.tsx) local session/prompt state и URL/session helper-слой в новый hook [use-ai-chat-session-state.ts](/C:/fit/src/components/use-ai-chat-session-state.ts).
+- В hook ушли `sessionId`, `sessionTitle`, `draft`, `notice`, `isPromptLibraryOpen`, а также локальная session URL orchestration, `rememberLocalSession`, `insertPromptTemplate` и `resetLocalSessionState`.
+- После этого [ai-chat-panel.tsx](/C:/fit/src/components/ai-chat-panel.tsx) ещё ближе к runtime-orchestrator роли: chat transport, submit/analyze/proposal actions и message pipeline остаются внутри, а локальное session/prompt plumbing больше не размазано по тому же компоненту.
+- Следующий логичный tranche по AI-чату: вынос meal-photo / proposal-action runtime helper-слоя или окончательное разделение history/session runtime orchestration.
+
 ### Production hardening: четвертый tranche декомпозиции `ai-chat-panel.tsx`
 
 - Вынес из [ai-chat-panel.tsx](/C:/fit/src/components/ai-chat-panel.tsx) панели доступа, ошибок и локальных notice-сообщений в новый модуль [ai-chat-notices.tsx](/C:/fit/src/components/ai-chat-notices.tsx).
