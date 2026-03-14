@@ -11,6 +11,7 @@
     "lint": "eslint src next.config.ts eslint.config.mjs postcss.config.mjs",
     "typecheck": "npx next typegen && npx tsc -p tsconfig.json --noEmit --incremental false",
     "test:e2e": "playwright test",
+    "test:e2e:auth": "playwright test tests/e2e",
     "test:smoke": "npm run build && playwright test tests/smoke"
   },
   "dependencies": {

@@ -268,3 +268,8 @@
 - [ ] Stripe-контур работает end-to-end.
 - [ ] AI quality gate пройден по минимуму: assistant, retrieval, workout plan, meal plan, safety.
 - [ ] Android wrapper smoke пройден после стабилизации web/PWA.
+
+## 2026-03-15 progress addendum
+
+- [x] Добавлен первый authenticated Playwright e2e baseline для обычного пользователя: вход, автозавершение онбординга при необходимости, переход по `Dashboard`, `Workouts`, `Nutrition`, `AI`, `Settings`, проверка восстановления сессии.
+- [ ] Следующий тестовый tranche: root/admin e2e, offline/sync regression для тренировки и AI route contract tests без платного runtime.

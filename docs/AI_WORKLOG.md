@@ -142,3 +142,10 @@
 - Route/backend audit по owner-only access, idempotency, reset/finish/sync и internal jobs.
 - Доведение оставшихся orchestrator-модулей до финального состояния.
 - Stripe live verification, AI quality gate и Android/TWA readiness.
+
+### 2026-03-15 01:55 - Добавил первый auth e2e baseline
+
+- Добавил `tests/e2e/helpers/auth.ts` с реальным входом, автозавершением онбординга и проверкой восстановления сессии в одном browser context.
+- Добавил `tests/e2e/authenticated-app.spec.ts` с проходом по `Dashboard`, `Workouts`, `Nutrition`, `AI`, `Settings` для обычного пользователя.
+- В `package.json` добавил `npm run test:e2e:auth`, чтобы auth-regression можно было запускать отдельно от smoke.
+- Прогнал сценарий локально с тестовым пользователем `leva@leva.ru`: `npm run test:e2e:auth` зелёный.
