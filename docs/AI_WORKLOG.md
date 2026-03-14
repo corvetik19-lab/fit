@@ -2,6 +2,13 @@
 
 ## 2026-03-14
 
+### Production hardening: пятый tranche декомпозиции `workout-day-session.tsx`
+
+- Вынес из [workout-day-session.tsx](/C:/fit/src/components/workout-day-session.tsx) два крупных UI-блока в отдельные client-модули: [workout-step-strip.tsx](/C:/fit/src/components/workout-session/workout-step-strip.tsx) и [workout-exercise-card.tsx](/C:/fit/src/components/workout-session/workout-exercise-card.tsx).
+- Step strip теперь отдельно отвечает за пошаговую навигацию между упражнениями, а карточка упражнения — за inputs, сохранение, read-only состояние и last-known performance summary.
+- После этого основной execution-экран стал заметно ближе к orchestrator-роли: step-surface и большая exercise-card разметка больше не размазаны по тому же файлу, где живут derive state, sync и action orchestration.
+- Критичный экран тренировки стал проще для следующего tranche: дальше можно отдельно выносить focus header / overview / day context surface или целенаправленно дочищать copy и mobile UX.
+
 ### Production hardening: четвертый tranche декомпозиции `workout-day-session.tsx`
 
 - Вынес из [workout-day-session.tsx](/C:/fit/src/components/workout-day-session.tsx) action-слой `save/status/finish/reset` в новый hook [use-workout-session-actions.ts](/C:/fit/src/components/workout-session/use-workout-session-actions.ts).
