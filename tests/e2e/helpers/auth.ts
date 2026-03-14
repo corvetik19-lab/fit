@@ -3,9 +3,22 @@ import { expect, type Page } from "@playwright/test";
 const authEmail = process.env.PLAYWRIGHT_TEST_EMAIL ?? null;
 const authPassword = process.env.PLAYWRIGHT_TEST_PASSWORD ?? null;
 const onboardingName = process.env.PLAYWRIGHT_TEST_FULL_NAME ?? "Leva Demo";
+const adminEmail = process.env.PLAYWRIGHT_ADMIN_EMAIL ?? null;
+const adminPassword = process.env.PLAYWRIGHT_ADMIN_PASSWORD ?? null;
+const adminFullName = process.env.PLAYWRIGHT_ADMIN_FULL_NAME ?? "Root Admin";
+
+type AuthCredentials = {
+  email: string;
+  fullName: string;
+  password: string;
+};
 
 export function hasAuthE2ECredentials() {
   return Boolean(authEmail && authPassword);
+}
+
+export function hasAdminE2ECredentials() {
+  return Boolean(adminEmail && adminPassword);
 }
 
 export async function signInAndFinishOnboarding(page: Page) {
@@ -15,49 +28,92 @@ export async function signInAndFinishOnboarding(page: Page) {
     );
   }
 
+  return signInWithCredentials(page, {
+    email: authEmail,
+    password: authPassword,
+    fullName: onboardingName,
+  });
+}
+
+export async function signInAsAdmin(page: Page) {
+  if (!adminEmail || !adminPassword) {
+    throw new Error(
+      "PLAYWRIGHT_ADMIN_EMAIL and PLAYWRIGHT_ADMIN_PASSWORD are required for admin e2e.",
+    );
+  }
+
+  return signInWithCredentials(page, {
+    email: adminEmail,
+    password: adminPassword,
+    fullName: adminFullName,
+  });
+}
+
+async function setFieldValue(locator: ReturnType<Page["locator"]>, value: string) {
+  await locator.evaluate((element, nextValue) => {
+    const input = element as HTMLInputElement;
+    const prototype = Object.getPrototypeOf(input) as HTMLInputElement;
+    const descriptor = Object.getOwnPropertyDescriptor(prototype, "value");
+
+    descriptor?.set?.call(input, nextValue);
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  }, value);
+}
+
+async function signInWithCredentials(page: Page, credentials: AuthCredentials) {
   await page.goto("/");
+  await page.waitForLoadState("networkidle");
+  await page.waitForTimeout(500);
 
   if (page.url().includes("/dashboard")) {
     await expect(page).toHaveURL(/\/dashboard$/);
     return;
   }
 
-  await expect(
-    page.getByRole("heading", { name: "Войдите в приложение" }),
-  ).toBeVisible();
+  const emailField = page.locator('input[type="email"]').first();
+  const passwordField = page.locator('input[type="password"]').first();
+  const submitButton = page.locator('button[type="submit"]').first();
 
-  const emailField = page.getByRole("textbox", { name: "Email" });
-  const passwordField = page.locator('input[type="password"]');
-  const submitButton = page.getByRole("button", { name: "Войти" });
+  await expect(emailField).toBeVisible();
+  await expect(passwordField).toBeVisible();
 
-  await emailField.click();
-  await emailField.pressSequentially(authEmail, { delay: 20 });
-  await expect(emailField).toHaveValue(authEmail);
-
-  await passwordField.click();
-  await passwordField.pressSequentially(authPassword, { delay: 20 });
-  await expect(passwordField).toHaveValue(authPassword);
-
+  await setFieldValue(emailField, credentials.email);
+  await setFieldValue(passwordField, credentials.password);
   await expect(submitButton).toBeEnabled();
-  await submitButton.click();
 
+  await submitButton.click();
   await page.waitForURL(/\/(dashboard|onboarding)/, { timeout: 20_000 });
 
   if (page.url().includes("/onboarding")) {
-    await completeOnboarding(page);
+    await completeOnboarding(page, credentials.fullName);
   }
 
   await expect(page).toHaveURL(/\/dashboard$/);
 }
 
-async function completeOnboarding(page: Page) {
-  await page.getByLabel("Имя").fill(onboardingName);
-  await page.getByLabel("Возраст").fill("30");
-  await page.getByLabel("Пол").selectOption("male");
-  await page.getByLabel("Уровень подготовки").selectOption("intermediate");
-  await page.getByLabel("Рост, см").fill("180");
-  await page.getByLabel("Вес, кг").fill("80");
-  await page.getByLabel("Тренировок в неделю").fill("3");
-  await page.getByRole("button", { name: "Сохранить и продолжить" }).click();
+async function completeOnboarding(page: Page, fullName: string) {
+  await page.waitForLoadState("networkidle");
+  await page.waitForTimeout(250);
+
+  const textInputs = page.locator('input[type="text"]');
+  const numberInputs = page.locator('input[type="number"]');
+  const selects = page.locator("select");
+  const submitButton = page.locator('button[type="button"]').first();
+
+  await expect(textInputs.first()).toBeVisible();
+  await expect(numberInputs).toHaveCount(5);
+  await expect(selects).toHaveCount(3);
+
+  await setFieldValue(textInputs.first(), fullName);
+  await setFieldValue(numberInputs.nth(0), "30");
+  await selects.nth(0).selectOption("male");
+  await selects.nth(1).selectOption("intermediate");
+  await setFieldValue(numberInputs.nth(1), "180");
+  await setFieldValue(numberInputs.nth(2), "80");
+  await setFieldValue(numberInputs.nth(3), "3");
+
+  await expect(submitButton).toBeEnabled();
+  await submitButton.click();
   await page.waitForURL(/\/dashboard$/, { timeout: 20_000 });
 }

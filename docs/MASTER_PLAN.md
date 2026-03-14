@@ -234,10 +234,10 @@
 
 ### Автотесты
 
-- [ ] Добавить Playwright e2e для `auth -> onboarding -> dashboard -> workouts -> nutrition -> ai -> settings -> admin`.
+- [x] Добавить Playwright e2e для `auth -> onboarding -> dashboard -> workouts -> nutrition -> ai -> settings -> admin`.
 - [x] Добавить smoke тесты на ключевые SSR/API маршруты.
 - [ ] Добавить regression tests для offline/sync workout execution.
-- [ ] Добавить AI route contract tests без обязательного вызова платного провайдера.
+- [x] Добавить AI route contract tests без обязательного вызова платного провайдера.
 - [ ] Добавить изоляционные проверки для user-owned данных и RLS-контуров.
 
 ### CI
@@ -272,4 +272,6 @@
 ## 2026-03-15 progress addendum
 
 - [x] Добавлен первый authenticated Playwright e2e baseline для обычного пользователя: вход, автозавершение онбординга при необходимости, переход по `Dashboard`, `Workouts`, `Nutrition`, `AI`, `Settings`, проверка восстановления сессии.
-- [ ] Следующий тестовый tranche: root/admin e2e, offline/sync regression для тренировки и AI route contract tests без платного runtime.
+- [x] Добавлен root/admin e2e baseline: `/admin`, `/admin/users`, открытие карточки пользователя и проверка секционного operator UI под `corvetik1@yandex.ru`.
+- [x] Добавлены route contract tests без платного AI runtime: явные `400` для invalid UUID и owner-scoped `404` для неизвестной AI session.
+- [ ] Следующий тестовый tranche: offline/sync regression для тренировки и user-owned isolation tests поверх текущего e2e baseline.

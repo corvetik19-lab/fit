@@ -14,31 +14,24 @@ test.describe("authenticated app", () => {
   test("user can open main product sections after sign-in", async ({ page }) => {
     await signInAndFinishOnboarding(page);
 
-    await expect(
-      page.getByRole("heading", {
-        name: "Открывай только тот слой аналитики, который нужен сейчас",
-      }),
-    ).toBeVisible();
+    await expect(page).toHaveURL(/\/dashboard$/);
+    await expect(page.locator('a[href="/ai"]').first()).toBeVisible();
 
     await page.goto("/workouts");
-    await expect(
-      page.getByRole("button", { name: /План недели/ }),
-    ).toBeVisible();
+    await expect(page).toHaveURL(/\/workouts$/);
+    await expect(page.locator('button[aria-pressed]').first()).toBeVisible();
 
     await page.goto("/nutrition");
-    await expect(
-      page.getByRole("button", { name: /Баланс дня/ }),
-    ).toBeVisible();
+    await expect(page).toHaveURL(/\/nutrition$/);
+    await expect(page.locator('button[aria-pressed]').first()).toBeVisible();
 
     await page.goto("/ai");
-    await expect(
-      page.getByRole("button", { name: /История/ }).first(),
-    ).toBeVisible();
+    await expect(page).toHaveURL(/\/ai$/);
+    await expect(page.locator("textarea").first()).toBeVisible();
 
     await page.goto("/settings");
-    await expect(
-      page.getByRole("button", { name: /Профиль/ }),
-    ).toBeVisible();
+    await expect(page).toHaveURL(/\/settings$/);
+    await expect(page.locator('button[aria-pressed]').first()).toBeVisible();
   });
 
   test("session is restored inside the same browser context", async ({ page }) => {
@@ -52,8 +45,6 @@ test.describe("authenticated app", () => {
     }
 
     await expect(page).toHaveURL(/\/dashboard$/);
-    await expect(
-      page.getByRole("heading", { name: "Открывай только тот слой аналитики, который нужен сейчас" }),
-    ).toBeVisible();
+    await expect(page.locator('a[href="/ai"]').first()).toBeVisible();
   });
 });

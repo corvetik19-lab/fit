@@ -149,3 +149,11 @@
 - Добавил `tests/e2e/authenticated-app.spec.ts` с проходом по `Dashboard`, `Workouts`, `Nutrition`, `AI`, `Settings` для обычного пользователя.
 - В `package.json` добавил `npm run test:e2e:auth`, чтобы auth-regression можно было запускать отдельно от smoke.
 - Прогнал сценарий локально с тестовым пользователем `leva@leva.ru`: `npm run test:e2e:auth` зелёный.
+
+### 2026-03-15 02:35 - Закрыл admin e2e и API contract baseline
+
+- Расширил `tests/e2e/helpers/auth.ts`: добавил root-admin credentials, стабилизировал auth helper через ожидание `networkidle`, а ввод в React-controlled формы перевёл на DOM setter + `input/change` events.
+- Добавил `tests/e2e/admin-app.spec.ts` с root-сценарием под `corvetik1@yandex.ru`: `/admin`, `/admin/users`, открытие карточки пользователя и проверка секционного operator UI.
+- Добавил `tests/e2e/api-contracts.spec.ts` с контрактами без платного AI runtime: invalid UUID дают явные `400`, а owner-scoped delete неизвестной AI session даёт корректный `404 AI_CHAT_SESSION_NOT_FOUND`.
+- Упростил e2e-селекторы: вместо хрупких русских строк тесты теперь опираются на URL, `href`, `textarea` и `aria-pressed`, поэтому меньше зависят от локализации и санитарных правок copy.
+- Подтвердил baseline полным прогоном: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth`.
