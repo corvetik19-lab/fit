@@ -86,6 +86,8 @@
 - [x] Убрать mojibake из `admin-user-detail` model/state словарей и section copy.
 - [x] Вынести из `src/lib/ai/knowledge.ts` первый tranche model/search helper слоя в отдельный модуль.
 - [x] Вынести из `src/components/ai-chat-panel.tsx` первый tranche model/helper и tool-card слоя в отдельные модули.
+- [x] Вынести из `src/components/ai-chat-panel.tsx` второй tranche `chat surface + composer` UI в отдельные модули.
+- [x] Убрать mojibake из `ai-chat-panel` и `ai-chat-panel-model` user-facing copy.
 - [ ] Разбить `src/components/workout-day-session.tsx` на UI-композицию, timer/focus hooks, step/save logic и sync helpers.
 - [ ] Разбить `src/lib/dashboard/metrics.ts` на агрегаты, coaching signals, nutrition analytics и snapshot helpers.
 - [ ] Разбить `src/components/admin-users-directory.tsx` на каталог, сегменты, bulk actions и selection state.

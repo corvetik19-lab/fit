@@ -2,37 +2,23 @@
 
 import { DefaultChatTransport } from "ai";
 import { useChat } from "@ai-sdk/react";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Globe, ImagePlus, WandSparkles } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
-import {
-  Globe,
-  ImagePlus,
-  LoaderCircle,
-  Square,
-  WandSparkles,
-  X,
-} from "lucide-react";
 
-import { AssistantMarkdown } from "@/components/assistant-markdown";
-import {
-  ProposalActionToolCard,
-  ProposalListToolCard,
-  ProposalToolCard,
-  SearchToolCard,
-} from "@/components/ai-chat-panel-cards";
+import { AiChatComposer } from "@/components/ai-chat-composer";
+import { AiPromptLibrary } from "@/components/ai-prompt-library";
+import { AiChatTranscript } from "@/components/ai-chat-transcript";
 import {
   buildMealPhotoMarkdown,
   timeFormatter,
   toUiTextMessage,
   type AiChatPanelProps,
   type AssistantProposalTarget,
-  type AssistantToolPart,
   type ChatMessage,
   type MealPhotoResponse,
 } from "@/components/ai-chat-panel-model";
-import { AiPromptLibrary } from "@/components/ai-prompt-library";
 import { toUiMessages } from "@/lib/ai/chat";
 
 export function AiChatPanel({
@@ -62,7 +48,10 @@ export function AiChatPanel({
     () => new Map(initialMessages.map((message) => [message.id, message.created_at])),
   );
 
-  const initialUiMessages = useMemo(() => toUiMessages(initialMessages), [initialMessages]);
+  const initialUiMessages = useMemo(
+    () => toUiMessages(initialMessages),
+    [initialMessages],
+  );
   const nowLabel = useMemo(() => timeFormatter.format(new Date()), []);
 
   const { messages, sendMessage, status, error, stop, setMessages } = useChat({
@@ -247,7 +236,9 @@ export function AiChatPanel({
       const payload = (await response.json().catch(() => null)) as MealPhotoResponse | null;
 
       if (!response.ok || !payload?.data) {
-        throw new Error(payload?.message ?? "Не удалось разобрать фото. Попробуй другой кадр.");
+        throw new Error(
+          payload?.message ?? "Не удалось разобрать фото. Попробуй другой кадр.",
+        );
       }
 
       const resolvedSessionId = payload.session?.id ?? nextSessionId;
@@ -288,7 +279,9 @@ export function AiChatPanel({
 
       setDraft("");
       setSelectedImage(null);
-      setNotice("Фото разобрано. Теперь можно попросить рецепт, замену или план питания.");
+      setNotice(
+        "Фото разобрано. Теперь можно попросить рецепт, замену или план питания.",
+      );
     } catch (mealPhotoError) {
       setNotice(
         mealPhotoError instanceof Error
@@ -323,6 +316,15 @@ export function AiChatPanel({
     }
   }
 
+  function handleSubmit() {
+    if (selectedImage) {
+      void analyzeMealPhoto();
+      return;
+    }
+
+    submitText();
+  }
+
   return (
     <section className="card flex min-h-[72dvh] flex-col overflow-hidden p-4 sm:p-5 lg:min-h-[78dvh]">
       <div className="flex items-center justify-between gap-3 border-b border-border pb-4">
@@ -350,6 +352,7 @@ export function AiChatPanel({
           >
             <Globe size={18} strokeWidth={2.2} />
           </button>
+
           <button
             aria-label="Открыть шаблоны"
             className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border bg-white/80 text-foreground transition hover:bg-white"
@@ -415,244 +418,35 @@ export function AiChatPanel({
         </p>
       ) : null}
 
-      <div
-        className="mt-4 flex-1 overflow-y-auto rounded-[1.75rem] border border-border bg-white/50 p-3 sm:p-4"
-        ref={scrollViewportRef}
-      >
-        <div className="grid gap-4">
-          {messages.length ? (
-            messages.map((message) => (
-              <article
-                className={`rounded-3xl border px-4 py-4 ${
-                  message.role === "assistant"
-                    ? "border-border bg-white/85"
-                    : "ml-auto border-accent/20 bg-accent/5"
-                }`}
-                key={message.id}
-              >
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-sm font-semibold text-foreground">
-                    {message.role === "assistant" ? "AI-коуч" : "Ты"}
-                  </p>
-                  <p className="text-xs text-muted">
-                    {messageTimes.has(message.id)
-                      ? timeFormatter.format(new Date(messageTimes.get(message.id) ?? ""))
-                      : nowLabel}
-                  </p>
-                </div>
+      <AiChatTranscript
+        actionBusyKey={actionBusyKey}
+        lastAssistantMessageId={lastAssistantMessageId}
+        messageTimes={messageTimes}
+        messages={messages}
+        nowLabel={nowLabel}
+        onApplyProposal={(target) => runProposalAction("apply", target)}
+        onApproveProposal={(target) => runProposalAction("approve", target)}
+        scrollViewportRef={scrollViewportRef}
+        status={status}
+      />
 
-                <div className="mt-3 grid gap-3">
-                  {(message.parts as AssistantToolPart[]).map((part, index) => {
-                    if (part.type === "text") {
-                      return (
-                        <AssistantMarkdown
-                          isStreaming={
-                            message.role === "assistant" &&
-                            status === "streaming" &&
-                            message.id === lastAssistantMessageId
-                          }
-                          key={`${message.id}-text-${index}`}
-                          text={part.text}
-                        />
-                      );
-                    }
-
-                    if (part.type === "tool-createWorkoutPlan") {
-                      return (
-                        <ProposalToolCard
-                          key={`${message.id}-workout-${index}`}
-                          output={part.output}
-                          state={part.state}
-                        />
-                      );
-                    }
-
-                    if (part.type === "tool-createMealPlan") {
-                      return (
-                        <ProposalToolCard
-                          key={`${message.id}-meal-${index}`}
-                          output={part.output}
-                          state={part.state}
-                        />
-                      );
-                    }
-
-                    if (part.type === "tool-searchWeb") {
-                      return (
-                        <SearchToolCard
-                          key={`${message.id}-search-${index}`}
-                          output={part.output}
-                          state={part.state}
-                        />
-                      );
-                    }
-
-                    if (part.type === "tool-listRecentProposals") {
-                      return (
-                        <ProposalListToolCard
-                          actionBusyKey={actionBusyKey}
-                          key={`${message.id}-proposal-list-${index}`}
-                          onApply={(target) => runProposalAction("apply", target)}
-                          onApprove={(target) => runProposalAction("approve", target)}
-                          output={part.output}
-                          state={part.state}
-                        />
-                      );
-                    }
-
-                    if (part.type === "tool-approveProposal") {
-                      return (
-                        <ProposalActionToolCard
-                          actionBusyKey={actionBusyKey}
-                          key={`${message.id}-proposal-approve-${index}`}
-                          onApply={(target) => runProposalAction("apply", target)}
-                          output={part.output}
-                          state={part.state}
-                          variant="approve"
-                        />
-                      );
-                    }
-
-                    if (part.type === "tool-applyProposal") {
-                      return (
-                        <ProposalActionToolCard
-                          actionBusyKey={actionBusyKey}
-                          key={`${message.id}-proposal-apply-${index}`}
-                          onApply={(target) => runProposalAction("apply", target)}
-                          output={part.output}
-                          state={part.state}
-                          variant="apply"
-                        />
-                      );
-                    }
-
-                    if (part.type === "tool-call") {
-                      return (
-                        <div
-                          className="rounded-2xl border border-border bg-white/70 px-4 py-3 text-sm text-muted"
-                          key={`${message.id}-tool-call-${index}`}
-                        >
-                          Выполняю действие: {part.toolName}
-                        </div>
-                      );
-                    }
-
-                    return null;
-                  })}
-                </div>
-              </article>
-            ))
-          ) : (
-            <div className="rounded-3xl border border-dashed border-border bg-white/70 px-4 py-6" />
-          )}
-        </div>
-      </div>
-
-      <form
-        className="mt-4 rounded-[1.75rem] border border-border bg-white/85 p-3 sm:p-4"
-        onSubmit={(event) => {
-          event.preventDefault();
-
-          if (selectedImage) {
-            void analyzeMealPhoto();
-            return;
-          }
-
-          submitText();
-        }}
-      >
-        {selectedImage ? (
-          <div className="mb-3 flex items-center gap-3 rounded-2xl border border-border bg-white/90 p-3">
-            {selectedImageUrl ? (
-              <Image
-                alt="Выбранное фото еды"
-                className="h-16 w-16 rounded-2xl object-cover"
-                height={64}
-                src={selectedImageUrl}
-                unoptimized
-                width={64}
-              />
-            ) : null}
-
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-foreground">{selectedImage.name}</p>
-              <p className="mt-1 text-xs text-muted">
-                Сначала AI разберёт фото, потом можно попросить рецепт, замену или план питания.
-              </p>
-            </div>
-
-            <button
-              aria-label="Убрать фото"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-white/80 text-muted transition hover:bg-white"
-              onClick={() => setSelectedImage(null)}
-              type="button"
-            >
-              <X size={16} strokeWidth={2.2} />
-            </button>
-          </div>
-        ) : null}
-
-        <textarea
-          className="min-h-28 w-full resize-none rounded-3xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15 disabled:cursor-not-allowed disabled:opacity-60"
-          disabled={!access.allowed}
-          onChange={(event) => setDraft(event.target.value)}
-          onKeyDown={handleComposerKeyDown}
-          placeholder={
-            selectedImage
-              ? "Например: это мой ужин после тренировки, оцени состав и подскажи, как улучшить."
-              : "Напиши вопрос, задачу или попроси собрать программу."
-          }
-          ref={composerRef}
-          value={draft}
-        />
-
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm text-muted">
-            {selectedImage
-              ? "Фото будет проанализировано и сохранено в историю этого чата."
-              : allowWebSearch
-                ? "Поиск в интернете включён."
-                : "Поиск в интернете выключен."}
-          </p>
-
-          <div className="flex flex-wrap gap-2">
-            {isBusy ? (
-              <button
-                className="rounded-full border border-border px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-white/80"
-                onClick={() => stop()}
-                type="button"
-              >
-                <span className="inline-flex items-center gap-2">
-                  <Square size={16} strokeWidth={2.2} />
-                  Остановить
-                </span>
-              </button>
-            ) : null}
-
-            <button
-              className="rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={
-                isComposerBusy ||
-                (!selectedImage && !draft.trim()) ||
-                (selectedImage && !mealPhotoAccess.allowed) ||
-                !access.allowed
-              }
-              type="submit"
-            >
-              <span className="inline-flex items-center gap-2">
-                {isComposerBusy ? <LoaderCircle className="animate-spin" size={16} /> : null}
-                {selectedImage
-                  ? isAnalyzingImage
-                    ? "Анализирую фото..."
-                    : "Разобрать фото"
-                  : isBusy
-                    ? "Отправляю..."
-                    : "Отправить"}
-              </span>
-            </button>
-          </div>
-        </div>
-      </form>
+      <AiChatComposer
+        accessAllowed={access.allowed}
+        allowWebSearch={allowWebSearch}
+        composerRef={composerRef}
+        draft={draft}
+        isAnalyzingImage={isAnalyzingImage}
+        isBusy={isBusy}
+        isComposerBusy={isComposerBusy}
+        mealPhotoAccessAllowed={mealPhotoAccess.allowed}
+        onClearSelectedImage={() => setSelectedImage(null)}
+        onDraftChange={setDraft}
+        onKeyDown={handleComposerKeyDown}
+        onStop={stop}
+        onSubmit={handleSubmit}
+        selectedImage={selectedImage}
+        selectedImageUrl={selectedImageUrl}
+      />
 
       <AiPromptLibrary
         isOpen={isPromptLibraryOpen}

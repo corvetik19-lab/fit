@@ -1,7 +1,7 @@
 import type { UIMessage } from "ai";
 
-import type { FeatureAccessSnapshot } from "@/lib/billing-access";
 import type { AiChatSessionRow } from "@/lib/ai/chat";
+import type { FeatureAccessSnapshot } from "@/lib/billing-access";
 
 export type ChatMessage = {
   id: string;

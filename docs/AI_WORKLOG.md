@@ -2,6 +2,15 @@
 
 ## 2026-03-14
 
+### Production hardening: второй tranche декомпозиции `ai-chat-panel.tsx`
+
+- Вынес из [ai-chat-panel.tsx](/C:/fit/src/components/ai-chat-panel.tsx) chat surface и composer UI в новые модули [ai-chat-transcript.tsx](/C:/fit/src/components/ai-chat-transcript.tsx) и [ai-chat-composer.tsx](/C:/fit/src/components/ai-chat-composer.tsx).
+- Сам [ai-chat-panel.tsx](/C:/fit/src/components/ai-chat-panel.tsx) после этого стал ближе к orchestrator-компоненту: session/draft/image/proposal действия остаются в нём, а разметка сообщений и ввод пользователя живут отдельно и проверяются изолированно.
+- Заодно очистил [ai-chat-panel-model.ts](/C:/fit/src/components/ai-chat-panel-model.ts) и user-facing строки AI-чата от битой кириллицы: статусы, markdown по фото еды, пустые/ошибочные тексты и кнопки снова в нормальном русском UTF-8.
+- Этот tranche закрывает ещё один кусок `Wave 1`: дальше для AI workspace логично выносить history/session runtime orchestration и web-search / meal-photo actions в отдельный hook-слой.
+
+## 2026-03-14
+
 ### Production hardening: третий tranche декомпозиции `admin-user-detail.tsx`
 
 - Вынес из [admin-user-detail.tsx](/C:/fit/src/components/admin-user-detail.tsx) крупные секционные блоки `profile / activity / operations / billing` в новый UI-модуль [admin-user-detail-sections.tsx](/C:/fit/src/components/admin-user-detail-sections.tsx).
