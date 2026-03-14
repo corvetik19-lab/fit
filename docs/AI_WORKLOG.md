@@ -2,6 +2,13 @@
 
 ## 2026-03-14
 
+### Production hardening: второй tranche декомпозиции `workout-day-session.tsx`
+
+- Продолжил раскладывать [workout-day-session.tsx](/C:/fit/src/components/workout-day-session.tsx) и вынес timer/focus-header state в новый hook [use-workout-session-timer.ts](/C:/fit/src/components/workout-session/use-workout-session-timer.ts).
+- В hook ушли timer base/live state, persisted timer restore, auto-expire logic на 2 часа, управление collapse-состоянием focus-header и локальные timer helper’ы вроде `startSessionTimer`, `clearActiveTimer` и `getResolvedCurrentSessionDurationSeconds`.
+- Сам экран тренировки стал ближе к orchestrator-компоненту: там осталось меньше таймерного plumbing и легче отделить следующий tranche с sync/hydration orchestration.
+- После выноса отдельно подчистил lint-замечания вокруг hook dependencies и убрал лишний `setState` внутри timer effect.
+
 ### Production hardening: второй tranche декомпозиции `admin-user-detail.tsx`
 
 - Продолжил раскладывать [admin-user-detail.tsx](/C:/fit/src/components/admin-user-detail.tsx) и вынес fetch/state слой в новый [admin-user-detail-state.ts](/C:/fit/src/components/admin-user-detail-state.ts).

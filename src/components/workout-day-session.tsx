@@ -47,7 +47,6 @@ import {
   applyWorkoutDayExecution,
   applyWorkoutSetPerformance,
   areExerciseDraftValuesSaved,
-  clearPersistedWorkoutTimer,
   dayLabels,
   dayStatusLabels,
   type ExerciseDraft,
@@ -61,15 +60,12 @@ import {
   getInitialActualRpeMap,
   getInitialActualWeightMap,
   getRpeOptions,
-  getRunningTimerSeconds,
-  hasRunningTimerExpired,
   isCompletedWorkoutExercise,
   isExerciseDraftReadyToSave,
-  loadPersistedWorkoutTimer,
   parseOptionalRpe,
   parseOptionalWeight,
-  persistWorkoutTimer,
 } from "@/components/workout-session/session-utils";
+import { useWorkoutSessionTimer } from "@/components/workout-session/use-workout-session-timer";
 
 const inputClassName =
   "w-full rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15";
@@ -118,17 +114,6 @@ export function WorkoutDaySession({
   const pullPromiseRef = useRef<Promise<WorkoutDayDetail | null> | null>(null);
   const lastPullStartedAtRef = useRef(0);
   const hasBootstrappedSyncRef = useRef(false);
-  const [isFocusHeaderCollapsed, setIsFocusHeaderCollapsed] = useState(false);
-  const [timerBaseSeconds, setTimerBaseSeconds] = useState(
-    () => initialDay.session_duration_seconds ?? 0,
-  );
-  const [timerLiveSeconds, setTimerLiveSeconds] = useState(
-    () => initialDay.session_duration_seconds ?? 0,
-  );
-  const [timerStartedAt, setTimerStartedAt] = useState<number | null>(null);
-  const [shouldPersistExpiredTimerReset, setShouldPersistExpiredTimerReset] =
-    useState(false);
-  const expiredTimerResetDayIdRef = useRef<string | null>(null);
   const [activeExerciseIndex, setActiveExerciseIndex] = useState(() => {
     const nextIndex = getFirstIncompleteExerciseIndex(initialDay.exercises);
     return nextIndex === -1 ? 0 : nextIndex;
@@ -136,48 +121,29 @@ export function WorkoutDaySession({
 
   const isMobileFocusMode = isFocusMode;
   const workoutDayHref = `/workouts/day/${day.id}` as Route;
-  const isTimerRunning = timerStartedAt !== null;
-  const currentSessionDurationSeconds = isTimerRunning
-    ? timerLiveSeconds
-    : timerBaseSeconds;
-
-  const applyTimerStateForDay = useCallback((nextDay: WorkoutDayDetail) => {
-    const persistedTimer = loadPersistedWorkoutTimer(nextDay.id);
-
-    if (!persistedTimer) {
-      if (expiredTimerResetDayIdRef.current === nextDay.id) {
-        setTimerStartedAt(null);
-        setTimerBaseSeconds(0);
-        setTimerLiveSeconds(0);
-        return;
-      }
-
-      const nextSeconds = nextDay.session_duration_seconds ?? 0;
-      setTimerStartedAt(null);
-      setTimerBaseSeconds(nextSeconds);
-      setTimerLiveSeconds(nextSeconds);
-      return;
-    }
-
-    if (hasRunningTimerExpired(persistedTimer.baseSeconds, persistedTimer.startedAt)) {
-      clearPersistedWorkoutTimer(nextDay.id);
-      expiredTimerResetDayIdRef.current = nextDay.id;
-      setTimerStartedAt(null);
-      setTimerBaseSeconds(0);
-      setTimerLiveSeconds(0);
-      setShouldPersistExpiredTimerReset(true);
-      return;
-    }
-
-    const nextSeconds = getRunningTimerSeconds(
-      persistedTimer.baseSeconds,
-      persistedTimer.startedAt,
-    );
-
-    setTimerStartedAt(persistedTimer.startedAt);
-    setTimerBaseSeconds(persistedTimer.baseSeconds);
-    setTimerLiveSeconds(nextSeconds);
-  }, []);
+  const {
+    applyTimerStateForDay,
+    clearActiveTimer,
+    currentSessionDurationSeconds,
+    expiredTimerResetDayIdRef,
+    getResolvedCurrentSessionDurationSeconds,
+    isFocusHeaderCollapsed,
+    isTimerRunning,
+    setIsFocusHeaderCollapsed,
+    setShouldPersistExpiredTimerReset,
+    setTimerBaseSeconds,
+    setTimerLiveSeconds,
+    setTimerStartedAt,
+    shouldPersistExpiredTimerReset,
+    restoreRunningTimer,
+    startSessionTimer,
+    timerBaseSeconds,
+    timerLiveSeconds,
+    timerStartedAt,
+  } = useWorkoutSessionTimer({
+    dayId: day.id,
+    initialSessionDurationSeconds: initialDay.session_duration_seconds,
+  });
 
   const {
     unlockedExerciseCount,
@@ -389,32 +355,6 @@ export function WorkoutDaySession({
   }, [applyTimerStateForDay, hydrateLocalDay, initialDay]);
 
   useEffect(() => {
-    if (timerStartedAt === null) {
-      setTimerLiveSeconds(timerBaseSeconds);
-      return;
-    }
-
-    const syncTimer = () => {
-      if (hasRunningTimerExpired(timerBaseSeconds, timerStartedAt)) {
-        clearPersistedWorkoutTimer(day.id);
-        expiredTimerResetDayIdRef.current = day.id;
-        setTimerStartedAt(null);
-        setTimerBaseSeconds(0);
-        setTimerLiveSeconds(0);
-        setShouldPersistExpiredTimerReset(true);
-        return;
-      }
-
-      setTimerLiveSeconds(getRunningTimerSeconds(timerBaseSeconds, timerStartedAt));
-    };
-
-    syncTimer();
-    const intervalId = window.setInterval(syncTimer, 1000);
-
-    return () => window.clearInterval(intervalId);
-  }, [day.id, timerBaseSeconds, timerStartedAt]);
-
-  useEffect(() => {
     if (!isMobileFocusMode || !day.exercises.length) {
       return;
     }
@@ -556,7 +496,13 @@ export function WorkoutDaySession({
     } finally {
       setIsPending(false);
     }
-  }, [day, persistDayExecution, persistWorkoutDay]);
+  }, [
+    day,
+    persistDayExecution,
+    persistWorkoutDay,
+    setTimerBaseSeconds,
+    setTimerLiveSeconds,
+  ]);
 
   useEffect(() => {
     if (!shouldPersistExpiredTimerReset) {
@@ -575,7 +521,12 @@ export function WorkoutDaySession({
       .finally(() => {
         expiredTimerResetDayIdRef.current = null;
       });
-  }, [saveSessionDuration, shouldPersistExpiredTimerReset]);
+  }, [
+    expiredTimerResetDayIdRef,
+    saveSessionDuration,
+    setShouldPersistExpiredTimerReset,
+    shouldPersistExpiredTimerReset,
+  ]);
 
   function updateDayStatus(nextStatus: "planned" | "in_progress" | "done") {
     setError(null);
@@ -844,47 +795,14 @@ export function WorkoutDaySession({
       }
     });
   }
-  function startSessionTimer() {
-    if (isTimerRunning) {
-      return;
-    }
-
-    setError(null);
-    setNotice(null);
-    const startedAt = Date.now();
-    expiredTimerResetDayIdRef.current = null;
-    persistWorkoutTimer(day.id, {
-      baseSeconds: timerBaseSeconds,
-      startedAt,
-    });
-    setTimerStartedAt(startedAt);
-  }
-
-  function getResolvedCurrentSessionDurationSeconds() {
-    if (timerStartedAt === null) {
-      return timerBaseSeconds;
-    }
-
-    if (hasRunningTimerExpired(timerBaseSeconds, timerStartedAt)) {
-      return 0;
-    }
-
-    return getRunningTimerSeconds(timerBaseSeconds, timerStartedAt);
-  }
-
   async function pauseSessionTimer(options?: { silent?: boolean }) {
     if (timerStartedAt === null) {
       return;
     }
 
-    const nextSeconds =
-      hasRunningTimerExpired(timerBaseSeconds, timerStartedAt)
-        ? 0
-        : getRunningTimerSeconds(timerBaseSeconds, timerStartedAt);
+    const nextSeconds = getResolvedCurrentSessionDurationSeconds();
 
-    clearPersistedWorkoutTimer(day.id);
-    expiredTimerResetDayIdRef.current = null;
-    setTimerStartedAt(null);
+    clearActiveTimer();
 
     await saveSessionDuration(
       nextSeconds,
@@ -894,9 +812,7 @@ export function WorkoutDaySession({
   }
 
   async function resetSessionTimer() {
-    clearPersistedWorkoutTimer(day.id);
-    expiredTimerResetDayIdRef.current = null;
-    setTimerStartedAt(null);
+    clearActiveTimer();
     await saveSessionDuration(
       0,
       "Таймер тренировки сброшен.",
@@ -927,9 +843,7 @@ export function WorkoutDaySession({
       ? getResolvedCurrentSessionDurationSeconds()
       : 0;
 
-    clearPersistedWorkoutTimer(day.id);
-    expiredTimerResetDayIdRef.current = null;
-    setTimerStartedAt(null);
+    clearActiveTimer();
     setTimerBaseSeconds(nextSessionDurationSeconds);
     setTimerLiveSeconds(nextSessionDurationSeconds);
 
@@ -963,7 +877,7 @@ export function WorkoutDaySession({
         setTimerLiveSeconds(previousTimerLiveSeconds);
 
         if (previousTimerStartedAt !== null) {
-          persistWorkoutTimer(day.id, {
+          restoreRunningTimer({
             baseSeconds: previousTimerBaseSeconds,
             startedAt: previousTimerStartedAt,
           });
@@ -1022,10 +936,8 @@ export function WorkoutDaySession({
           );
         }
 
-        clearPersistedWorkoutTimer(day.id);
-        expiredTimerResetDayIdRef.current = null;
+        clearActiveTimer();
         setShouldPersistExpiredTimerReset(false);
-        setTimerStartedAt(null);
         await clearQueuedWorkoutMutationsForDay(day.id);
         await refreshPendingMutationCount();
         await applyDaySnapshot(payload.data);
@@ -1235,6 +1147,8 @@ export function WorkoutDaySession({
                     return;
                   }
 
+                  setError(null);
+                  setNotice(null);
                   startSessionTimer();
                 }}
                 type="button"
