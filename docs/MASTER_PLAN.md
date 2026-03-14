@@ -192,6 +192,8 @@
 ### AI / RAG / CAG / KAG
 
 - [x] Есть retrieval, structured knowledge, proposals и snapshots.
+- [x] Для `AI sessions` и `proposal apply/approve` добавлены явные UUID-валидации и предсказуемые `400/404/409`, а не только общие `500`.
+- [x] Удаление AI chat session теперь проверяет owner-scoped существование сессии и не возвращает ложный успех.
 - [ ] Подтвердить owner-only data access для chat, sessions, retrieval, reindex и proposal apply.
 - [ ] Развести runtime failure UX и provider configuration UX.
 - [ ] Стабилизировать историю чатов, prompt library, web search toggle и image upload.

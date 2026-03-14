@@ -16,6 +16,22 @@ export type AiChatMessageRow = {
   created_at: string;
 };
 
+export class AiChatSessionError extends Error {
+  code: string;
+  status: number;
+
+  constructor(status: number, code: string, message: string) {
+    super(message);
+    this.name = "AiChatSessionError";
+    this.status = status;
+    this.code = code;
+  }
+}
+
+export function isAiChatSessionError(error: unknown): error is AiChatSessionError {
+  return error instanceof AiChatSessionError;
+}
+
 function buildSessionTitle(input: string) {
   const trimmed = input.trim();
 
@@ -248,6 +264,25 @@ export async function deleteAiChatSession(
   userId: string,
   sessionId: string,
 ) {
+  const { data: existingSession, error: sessionLookupError } = await supabase
+    .from("ai_chat_sessions")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("id", sessionId)
+    .maybeSingle();
+
+  if (sessionLookupError) {
+    throw sessionLookupError;
+  }
+
+  if (!existingSession) {
+    throw new AiChatSessionError(
+      404,
+      "AI_CHAT_SESSION_NOT_FOUND",
+      "Выбранный AI-чат не найден.",
+    );
+  }
+
   const { error: messageDeleteError } = await supabase
     .from("ai_chat_messages")
     .delete()

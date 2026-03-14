@@ -22,6 +22,22 @@ export type AiPlanProposalPreview = {
   updatedAt: string;
 };
 
+export class AiProposalActionError extends Error {
+  code: string;
+  status: number;
+
+  constructor(status: number, code: string, message: string) {
+    super(message);
+    this.name = "AiProposalActionError";
+    this.status = status;
+    this.code = code;
+  }
+}
+
+export function isAiProposalActionError(error: unknown): error is AiProposalActionError {
+  return error instanceof AiProposalActionError;
+}
+
 function getUtcMonday(date: Date) {
   const nextDate = new Date(date);
   const offset = (nextDate.getUTCDay() + 6) % 7;
@@ -176,15 +192,27 @@ export async function resolveAiPlanProposalTarget(
     const proposal = await getAiPlanProposal(supabase, input.userId, input.proposalId);
 
     if (!proposal) {
-      throw new Error("Нужное AI-предложение не найдено.");
+      throw new AiProposalActionError(
+        404,
+        "AI_PROPOSAL_NOT_FOUND",
+        "Нужное AI-предложение не найдено.",
+      );
     }
 
     if (input.proposalType && proposal.proposal_type !== input.proposalType) {
-      throw new Error("Тип AI-предложения не совпадает с запросом.");
+      throw new AiProposalActionError(
+        400,
+        "AI_PROPOSAL_TYPE_MISMATCH",
+        "Тип AI-предложения не совпадает с запросом.",
+      );
     }
 
     if (!input.includeApplied && proposal.status === "applied") {
-      throw new Error("Это AI-предложение уже применено.");
+      throw new AiProposalActionError(
+        409,
+        "AI_PROPOSAL_ALREADY_APPLIED",
+        "Это AI-предложение уже применено.",
+      );
     }
 
     return proposal;
@@ -200,7 +228,11 @@ export async function resolveAiPlanProposalTarget(
     null;
 
   if (!target) {
-    throw new Error("Подходящий черновик AI-предложения не найден.");
+    throw new AiProposalActionError(
+      404,
+      "AI_PROPOSAL_NOT_FOUND",
+      "Подходящий черновик AI-предложения не найден.",
+    );
   }
 
   return target;
@@ -432,11 +464,19 @@ export async function approveAiPlanProposal(
   const proposal = await getAiPlanProposal(supabase, input.userId, input.proposalId);
 
   if (!proposal) {
-    throw new Error("AI-предложение не найдено.");
+    throw new AiProposalActionError(
+      404,
+      "AI_PROPOSAL_NOT_FOUND",
+      "AI-предложение не найдено.",
+    );
   }
 
   if (proposal.status === "applied") {
-    throw new Error("AI-предложение уже применено и не требует подтверждения.");
+    throw new AiProposalActionError(
+      409,
+      "AI_PROPOSAL_ALREADY_APPLIED",
+      "AI-предложение уже применено и не требует подтверждения.",
+    );
   }
 
   const updated = await updateAiPlanProposal(supabase, {
@@ -465,11 +505,19 @@ export async function applyAiPlanProposal(
   const proposal = await getAiPlanProposal(supabase, input.userId, input.proposalId);
 
   if (!proposal) {
-    throw new Error("AI-предложение не найдено.");
+    throw new AiProposalActionError(
+      404,
+      "AI_PROPOSAL_NOT_FOUND",
+      "AI-предложение не найдено.",
+    );
   }
 
   if (proposal.status === "applied") {
-    throw new Error("AI-предложение уже применено.");
+    throw new AiProposalActionError(
+      409,
+      "AI_PROPOSAL_ALREADY_APPLIED",
+      "AI-предложение уже применено.",
+    );
   }
 
   if (proposal.proposal_type === "workout_plan") {

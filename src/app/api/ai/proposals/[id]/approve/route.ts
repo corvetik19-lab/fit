@@ -1,4 +1,9 @@
-import { approveAiPlanProposal } from "@/lib/ai/proposal-actions";
+import { z } from "zod";
+
+import {
+  approveAiPlanProposal,
+  isAiProposalActionError,
+} from "@/lib/ai/proposal-actions";
 import { getAiPlanProposal } from "@/lib/ai/proposals";
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import {
@@ -8,6 +13,10 @@ import {
 } from "@/lib/billing-access";
 import { logger } from "@/lib/logger";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+
+const paramsSchema = z.object({
+  id: z.string().uuid(),
+});
 
 export async function POST(
   _request: Request,
@@ -27,7 +36,7 @@ export async function POST(
       });
     }
 
-    const { id } = await context.params;
+    const { id } = paramsSchema.parse(await context.params);
     const proposal = await getAiPlanProposal(supabase, user.id, id);
 
     if (!proposal) {
@@ -59,6 +68,23 @@ export async function POST(
     return Response.json({ data: approved.proposal });
   } catch (error) {
     logger.error("ai proposal approve route failed", { error });
+
+    if (error instanceof z.ZodError) {
+      return createApiErrorResponse({
+        status: 400,
+        code: "AI_PROPOSAL_APPROVE_INVALID",
+        message: "Некорректный идентификатор AI-предложения.",
+        details: error.flatten(),
+      });
+    }
+
+    if (isAiProposalActionError(error)) {
+      return createApiErrorResponse({
+        status: error.status,
+        code: error.code,
+        message: error.message,
+      });
+    }
 
     return createApiErrorResponse({
       status: 500,
