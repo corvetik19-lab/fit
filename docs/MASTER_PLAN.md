@@ -92,6 +92,7 @@
 - [x] Вынести из `src/lib/ai/knowledge.ts` второй tranche retrieval RPC/vector/text fallback слоя в отдельный модуль.
 - [x] Вынести из `src/lib/ai/knowledge.ts` третий tranche data-loading/fetch preparation слоя в отдельный модуль `knowledge-source-data.ts`.
 - [x] Вынести из `src/lib/ai/knowledge.ts` четвертый tranche indexing/embeddings refresh слоя в отдельный модуль `knowledge-indexing.ts`.
+- [x] Вынести из `src/lib/ai/knowledge.ts` пятый tranche document builders и knowledge corpus assembly в отдельный модуль `knowledge-documents.ts`.
 - [x] Вынести из `src/components/ai-chat-panel.tsx` первый tranche model/helper и tool-card слоя в отдельные модули.
 - [x] Вынести из `src/components/ai-chat-panel.tsx` второй tranche `chat surface + composer` UI в отдельные модули.
 - [x] Вынести из `src/components/ai-chat-panel.tsx` третий tranche chat toolbar / prompt-library trigger / search toggle UI в отдельный модуль.
@@ -99,6 +100,7 @@
 - [x] Вынести из `src/components/ai-chat-panel.tsx` пятый tranche local session / prompt-state / URL orchestration в отдельный hook-модуль.
 - [x] Вынести из `src/components/ai-chat-panel.tsx` шестой tranche proposal-action / meal-photo runtime helper-слоя в отдельный hook-модуль.
 - [x] Вынести из `src/components/ai-chat-panel.tsx` седьмой tranche submit / composer helper-слоя в отдельный hook-модуль.
+- [x] Вынести из `src/components/ai-chat-panel.tsx` восьмой tranche view/media state (`selectedImage`, preview URL, `messageTimes`, scroll viewport и transcript auto-scroll) в отдельный hook-модуль.
 - [x] Убрать mojibake из `ai-chat-panel` и `ai-chat-panel-model` user-facing copy.
 - [ ] Разбить `src/components/workout-day-session.tsx` на UI-композицию, timer/focus hooks, step/save logic и sync helpers.
 - [ ] Разбить `src/lib/dashboard/metrics.ts` на агрегаты, coaching signals, nutrition analytics и snapshot helpers.

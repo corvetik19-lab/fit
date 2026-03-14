@@ -2,6 +2,18 @@
 
 ## 2026-03-14
 
+### Production hardening: восьмой tranche декомпозиции `ai-chat-panel.tsx`
+
+- Вынес из [ai-chat-panel.tsx](/C:/fit/src/components/ai-chat-panel.tsx) view/media state в новый hook [use-ai-chat-view-state.ts](/C:/fit/src/components/use-ai-chat-view-state.ts).
+- В hook ушли `selectedImage`, preview URL, `messageTimes`, `scrollViewportRef`, `lastAssistantMessageId`, cleanup object URL и auto-scroll transcript viewport.
+- После этого [ai-chat-panel.tsx](/C:/fit/src/components/ai-chat-panel.tsx) ещё ближе к orchestration-компоненту: toolbar, notices, transcript, composer, session-state, runtime-actions и view-state уже разведены по отдельным слоям.
+
+### Production hardening: пятый tranche декомпозиции `knowledge.ts`
+
+- Вынес из [knowledge.ts](/C:/fit/src/lib/ai/knowledge.ts) document builders и knowledge corpus assembly в новый модуль [knowledge-documents.ts](/C:/fit/src/lib/ai/knowledge-documents.ts).
+- В новый слой ушли profile/body/nutrition/memory/workout/structured knowledge document builders, а сам [knowledge.ts](/C:/fit/src/lib/ai/knowledge.ts) теперь ближе к orchestration-роли вокруг reindex, embeddings refresh и retrieval.
+- Следующий логичный tranche по AI-knowledge: выносить оставшиеся structured summary helpers или отдельный indexing/reindex contract для тестов без реального провайдера.
+
 ### Production hardening: седьмой tranche декомпозиции `ai-chat-panel.tsx`
 
 - Вынес из [ai-chat-panel.tsx](/C:/fit/src/components/ai-chat-panel.tsx) submit/composer helper-слой в новый hook [use-ai-chat-composer.ts](/C:/fit/src/components/use-ai-chat-composer.ts).

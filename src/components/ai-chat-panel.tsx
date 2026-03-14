@@ -3,7 +3,7 @@
 import { DefaultChatTransport } from "ai";
 import { useChat } from "@ai-sdk/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import { AiChatComposer } from "@/components/ai-chat-composer";
 import { AiChatNotices } from "@/components/ai-chat-notices";
@@ -13,6 +13,7 @@ import { AiChatToolbar } from "@/components/ai-chat-toolbar";
 import { useAiChatActions } from "@/components/use-ai-chat-actions";
 import { useAiChatComposer } from "@/components/use-ai-chat-composer";
 import { useAiChatSessionState } from "@/components/use-ai-chat-session-state";
+import { useAiChatViewState } from "@/components/use-ai-chat-view-state";
 import {
   timeFormatter,
   type AiChatPanelProps,
@@ -29,14 +30,9 @@ export function AiChatPanel({
 }: AiChatPanelProps) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const scrollViewportRef = useRef<HTMLDivElement | null>(null);
   const composerRef = useRef<HTMLTextAreaElement | null>(null);
 
   const [allowWebSearch, setAllowWebSearch] = useState(false);
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [messageTimes, setMessageTimes] = useState(
-    () => new Map(initialMessages.map((message) => [message.id, message.created_at])),
-  );
   const {
     draft,
     insertPromptTemplate,
@@ -61,10 +57,6 @@ export function AiChatPanel({
     [initialMessages],
   );
   const nowLabel = useMemo(() => timeFormatter.format(new Date()), []);
-  const selectedImageUrl = useMemo(
-    () => (selectedImage ? URL.createObjectURL(selectedImage) : null),
-    [selectedImage],
-  );
 
   const { messages, sendMessage, status, error, stop, setMessages } = useChat({
     messages: initialUiMessages,
@@ -74,6 +66,20 @@ export function AiChatPanel({
   });
 
   const isBusy = status === "submitted" || status === "streaming";
+  const {
+    lastAssistantMessageId,
+    messageTimes,
+    scrollViewportRef,
+    selectedImage,
+    selectedImageUrl,
+    setMessageTimes,
+    setSelectedImage,
+  } = useAiChatViewState({
+    initialMessages,
+    isBusy,
+    messages,
+    notice,
+  });
   const { actionBusyKey, analyzeMealPhoto, isAnalyzingImage, runProposalAction } =
     useAiChatActions({
       draft,
@@ -90,34 +96,6 @@ export function AiChatPanel({
       setSelectedImage,
     });
   const isComposerBusy = isBusy || isAnalyzingImage;
-  const lastAssistantMessageId = useMemo(() => {
-    const lastAssistantMessage = [...messages]
-      .reverse()
-      .find((message) => message.role === "assistant");
-    return lastAssistantMessage?.id ?? null;
-  }, [messages]);
-
-  useEffect(
-    () => () => {
-      if (selectedImageUrl) {
-        URL.revokeObjectURL(selectedImageUrl);
-      }
-    },
-    [selectedImageUrl],
-  );
-
-  useEffect(() => {
-    const viewport = scrollViewportRef.current;
-
-    if (!viewport) {
-      return;
-    }
-
-    viewport.scrollTo({
-      top: viewport.scrollHeight,
-      behavior: "smooth",
-    });
-  }, [messages, isBusy, notice]);
 
   function resetChat() {
     setMessages([]);
