@@ -1,108 +1,192 @@
 # Документация по AI-стеку
 
-## Runtime choices
+## Текущий AI runtime
 
-- AI Gateway provider: Vercel AI Gateway
-- основная generation model: `google/gemini-3.1-pro-preview`
-- основная embedding model: `voyage/voyage-4-large`
-
-## Текущий runtime helper
+Основной runtime живёт в:
 
 - `src/lib/ai/gateway.ts`
 
-Сейчас он определяет:
+Сейчас проект использует два отдельных слоя:
 
-- `models.chat`
-- `models.embeddings`
+- chat/generation runtime;
+- embeddings/retrieval runtime.
 
-## Текущая AI route-поверхность
+## Текущие модели и провайдеры
 
-- `src/app/api/chat/route.ts`
-- `src/app/api/ai/workout-plan/route.ts`
-- `src/app/api/ai/meal-plan/route.ts`
+### Chat / generation
+
+- основной runtime ориентирован на OpenRouter;
+- рабочая chat-модель задаётся через env и используется в `models.chat`;
+- в коде уже подготовлен production-путь для sports-only assistant, workout plan, meal plan и meal-photo сценариев.
+
+### Embeddings
+
+- embeddings идут отдельно от chat runtime;
+- retrieval слой опирается на dedicated embedding runtime;
+- knowledge индекс не жёстко привязан к chat-провайдеру.
+
+## Основные AI маршруты
+
+- `src/app/api/ai/assistant/route.ts`
+- `src/app/api/ai/chat/route.ts`
 - `src/app/api/ai/meal-photo/route.ts`
+- `src/app/api/ai/meal-plan/route.ts`
+- `src/app/api/ai/workout-plan/route.ts`
 - `src/app/api/ai/reindex/route.ts`
+- `src/app/api/ai/sessions/route.ts`
+- `src/app/api/ai/sessions/[id]/route.ts`
+- `src/app/api/ai/proposals/[id]/approve/route.ts`
+- `src/app/api/ai/proposals/[id]/apply/route.ts`
+
+## Слои AI-контура
+
+### 1. User context
+
+`src/lib/ai/user-context.ts` собирает:
+
+- профиль;
+- onboarding;
+- цели;
+- тренировочные сигналы;
+- nutrition сигналы;
+- body metrics;
+- structured knowledge;
+- snapshots.
+
+Это основной персональный контекст для assistant и генерации планов.
+
+### 2. Knowledge / retrieval
+
+Главный оркестратор:
+
+- `src/lib/ai/knowledge.ts`
+
+Вынесенные модули:
+
+- `src/lib/ai/knowledge-retrieval.ts`
+- `src/lib/ai/knowledge-source-data.ts`
+- `src/lib/ai/knowledge-indexing.ts`
+- `src/lib/ai/knowledge-documents.ts`
+
+Что делает knowledge layer:
+
+- собирает user-scoped corpus;
+- строит knowledge documents из тренировок, питания, snapshots и structured facts;
+- поддерживает retrieval через vector/text fallback;
+- умеет reindex и embeddings refresh;
+- не должен выходить за границы данных текущего пользователя.
+
+### 3. Structured knowledge
+
+`src/lib/ai/structured-knowledge.ts` нормализует факты:
+
+- ключевые сигналы по тренировкам;
+- сигналы по питанию;
+- meal-patterns;
+- nutrition strategy;
+- приоритеты для AI-ответа и планов.
+
+Это слой KAG/CAG-подобной нормализации поверх сырой истории.
+
+### 4. Proposals
+
+`src/lib/ai/proposals.ts` и `src/lib/ai/proposal-actions.ts` обеспечивают flow:
+
+- создать proposal;
+- показать draft;
+- подтвердить proposal;
+- применить proposal в приложение.
+
+Принцип остаётся proposal-first: AI не должен молча менять пользовательские данные.
+
+## AI chat workspace
+
+Ключевой клиентский экран:
+
+- `src/app/ai/page.tsx`
+
+Основные клиентские модули:
+
+- `src/components/ai-chat-panel.tsx`
+- `src/components/ai-chat-transcript.tsx`
+- `src/components/ai-chat-composer.tsx`
+- `src/components/ai-chat-toolbar.tsx`
+- `src/components/ai-chat-notices.tsx`
+- `src/components/ai-prompt-library.tsx`
+- `src/components/ai-workspace.tsx`
+- `src/components/ai-workspace-sidebar.tsx`
+
+Вынесенные hook-слои:
+
+- `src/components/use-ai-chat-session-state.ts`
+- `src/components/use-ai-chat-actions.ts`
+- `src/components/use-ai-chat-composer.ts`
+- `src/components/use-ai-chat-view-state.ts`
 
 ## Safety posture
 
-- AI-действия должны оставаться proposal-first
-- нельзя молча записывать workout plans или meal plans в пользовательские данные
-- risky или medical-style prompts должны блокироваться или понижаться до safe response
-- safety events предполагается логировать в `ai_safety_events`
+Главный guardrail слой:
 
-## Текущее состояние реализации
+- `src/lib/ai/domain-policy.ts`
 
-Реализовано:
+Что он делает:
 
-- локальный `AI_GATEWAY_API_KEY`
-- AI Gateway helper
-- route scaffolding для основных AI-сценариев
-- реальный meal photo route через AI Gateway OpenResponses с image input
-- реальный user-context helper для AI routes
-- persistence слой для `ai_plan_proposals`
-- реальные meal/workout proposal routes с сохранением результата
-- confirmation/apply routes для AI proposals
-- eval workspace scaffold внутри `ai-evals/`
-- admin-only queueing для `ai_eval_runs`
-- admin-only queueing для `ai/reindex`
+- ограничивает AI только темами спорта, тренировок, питания, восстановления и фитнес-здоровья;
+- блокирует off-topic запросы;
+- запрещает раскрытие модели, провайдера, system prompt и внутренней архитектуры;
+- требует русскоязычный ответ;
+- запрещает cross-user доступ к данным.
 
-Пока не завершено:
-
-- реальная retrieval wiring
-- сбор user-context из workout, nutrition и profile data
-- proposal confirmation UX
-- embeddings ingestion и query pipeline
-- eval runners и admin reporting
+`src/lib/ai/plan-generation.ts` теперь тоже санирован в чистом UTF-8 и использует нормальные русские prompt-строки для workout/meal proposals.
 
 ## Meal photo flow
 
-- `src/app/api/ai/meal-photo/route.ts` принимает изображение блюда и optional контекст через `FormData`
-- route валидирует размер и MIME-type изображения, а затем вызывает Vercel AI Gateway OpenResponses API
-- модель возвращает только proposal-оценку: название блюда, summary, confidence, estimated kcal, macros, detected items и suggestions
-- ответ валидируется через `mealPhotoAnalysisSchema`, чтобы UI не зависел от произвольного текстового формата модели
-- flow намеренно не создаёт meal log автоматически и остаётся proposal-first
+Маршрут:
 
-## Plan proposal flow
+- `src/app/api/ai/meal-photo/route.ts`
 
-- `meal-plan` и `workout-plan` routes теперь используют реальный user context вместо голых входных полей
-- контекст собирается из профиля, onboarding, goals, nutrition targets, body metrics и текущей nutrition summary
-- каждый успешный ответ модели сохраняется в `ai_plan_proposals`
-- `/ai` показывает эти предложения как историю AI-proposals, но не применяет их автоматически
+Что делает flow:
 
-## Confirmation flow
+- принимает изображение еды;
+- валидирует тип и размер файла;
+- отправляет изображение в vision runtime;
+- возвращает proposal-first разбор блюда: summary, kcal, macros, suggestions.
 
-- `approve` переводит proposal в подтверждённое состояние без немедленного изменения workout/nutrition домена
-- `apply` для workout proposals создаёт draft weekly program и при необходимости недостающие упражнения
-- `apply` для meal proposals создаёт reference-only `meal_templates`, которые служат управляемыми nutrition-артефактами
-- такой apply остаётся controlled: пользователь инициирует его вручную из `/ai`
+Важно: этот flow не должен автоматически создавать meal log без подтверждения пользователя.
 
-## AI evaluation workspace
+## Evaluations
+
+Отдельный eval-контур лежит в:
 
 - `ai-evals/README.md`
 - `ai-evals/datasets/README.md`
+- `ai-evals/fit_eval/runner.py`
 
 Назначение:
 
-- держать evaluation-логику вне runtime app code
-- запускать benchmark-наборы для chat, workout planning, meal planning, retrieval и safety
-- поддерживать будущие Ragas-based quality gates
+- benchmark assistant/retrieval/meal-plan/workout-plan/safety сценариев;
+- future quality gate через Ragas;
+- сравнение изменений prompt/retrieval/policy до релиза.
 
-## Операционная заметка
+## Текущее состояние
 
-Локальный AI-ключ уже существует, но deploy work пока поставлен на паузу. Текущий AI-контур нужно считать локально готовым для разработки, но не production-final.
-## Runtime RAG и AI-чат
+Уже реализовано:
 
-- В runtime добавлен user-scoped RAG pipeline:
-  - индексация knowledge chunks;
-  - embeddings через `voyage/voyage-4-large`;
-  - retrieval по пользовательскому запросу;
-  - подстановка источников контекста в system prompt AI-чата.
-- Chat runtime использует:
-  - [chat/route.ts](/C:/fit/src/app/api/ai/chat/route.ts);
-  - [chat.ts](/C:/fit/src/lib/ai/chat.ts);
-  - [knowledge.ts](/C:/fit/src/lib/ai/knowledge.ts).
-- На текущем этапе реализован базовый RAG по пользовательским данным. Следующие крупные незакрытые пункты AI-слоя:
-  - runtime CAG snapshots;
-  - структурированный KAG layer;
-  - admin knowledge base management;
-  - Ragas-based eval runs и quality gate.
+- assistant/chat runtime;
+- history sessions;
+- fullscreen AI workspace;
+- prompt library;
+- image upload;
+- retrieval по персональной истории;
+- structured knowledge;
+- proposal approve/apply flow;
+- admin reindex/eval surface;
+- sports-only guardrails;
+- чистый prompt/guardrail слой без mojibake.
+
+Ещё не закрыто до production hardening:
+
+- полноценный eval quality gate;
+- staging-like verification runtime провайдеров;
+- финальная sanitation-волна по всем AI docs;
+- полное подтверждение owner-only route isolation на каждом AI mutation/read path.
