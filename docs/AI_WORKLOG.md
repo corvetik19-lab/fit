@@ -2,6 +2,13 @@
 
 ## 2026-03-14
 
+### Production hardening: шестой tranche декомпозиции `ai-chat-panel.tsx`
+
+- Вынес из [ai-chat-panel.tsx](/C:/fit/src/components/ai-chat-panel.tsx) runtime helper-слой `proposal actions + meal-photo analysis` в новый hook [use-ai-chat-actions.ts](/C:/fit/src/components/use-ai-chat-actions.ts).
+- В hook ушли `runProposalAction`, `analyzeMealPhoto`, локальные `actionBusyKey` / `isAnalyzingImage` и orchestration вокруг `setMessages`, `setMessageTimes`, `rememberLocalSession`, `setNotice` и `router.refresh`.
+- Заодно дочистил object URL lifecycle для фото в [ai-chat-panel.tsx](/C:/fit/src/components/ai-chat-panel.tsx): теперь preview строится через `useMemo` и cleanup effect без `setState` внутри эффекта, что закрывает lint-rule `react-hooks/set-state-in-effect`.
+- Следующий логичный tranche по AI-чату: вынос submit/composer helper-слоя или переход обратно к `knowledge.ts` для document builders.
+
 ### Production hardening: пятый tranche декомпозиции `ai-chat-panel.tsx`
 
 - Вынес из [ai-chat-panel.tsx](/C:/fit/src/components/ai-chat-panel.tsx) local session/prompt state и URL/session helper-слой в новый hook [use-ai-chat-session-state.ts](/C:/fit/src/components/use-ai-chat-session-state.ts).

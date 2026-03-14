@@ -10,15 +10,11 @@ import { AiChatNotices } from "@/components/ai-chat-notices";
 import { AiPromptLibrary } from "@/components/ai-prompt-library";
 import { AiChatTranscript } from "@/components/ai-chat-transcript";
 import { AiChatToolbar } from "@/components/ai-chat-toolbar";
+import { useAiChatActions } from "@/components/use-ai-chat-actions";
 import { useAiChatSessionState } from "@/components/use-ai-chat-session-state";
 import {
-  buildMealPhotoMarkdown,
   timeFormatter,
-  toUiTextMessage,
   type AiChatPanelProps,
-  type AssistantProposalTarget,
-  type ChatMessage,
-  type MealPhotoResponse,
 } from "@/components/ai-chat-panel-model";
 import { toUiMessages } from "@/lib/ai/chat";
 
@@ -36,10 +32,7 @@ export function AiChatPanel({
   const composerRef = useRef<HTMLTextAreaElement | null>(null);
 
   const [allowWebSearch, setAllowWebSearch] = useState(false);
-  const [actionBusyKey, setActionBusyKey] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
-  const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
   const [messageTimes, setMessageTimes] = useState(
     () => new Map(initialMessages.map((message) => [message.id, message.created_at])),
   );
@@ -67,6 +60,10 @@ export function AiChatPanel({
     [initialMessages],
   );
   const nowLabel = useMemo(() => timeFormatter.format(new Date()), []);
+  const selectedImageUrl = useMemo(
+    () => (selectedImage ? URL.createObjectURL(selectedImage) : null),
+    [selectedImage],
+  );
 
   const { messages, sendMessage, status, error, stop, setMessages } = useChat({
     messages: initialUiMessages,
@@ -76,6 +73,21 @@ export function AiChatPanel({
   });
 
   const isBusy = status === "submitted" || status === "streaming";
+  const { actionBusyKey, analyzeMealPhoto, isAnalyzingImage, runProposalAction } =
+    useAiChatActions({
+      draft,
+      isChatBusy: isBusy,
+      mealPhotoAccess,
+      onRefresh: () => router.refresh(),
+      rememberLocalSession,
+      selectedImage,
+      sessionId,
+      setDraft,
+      setMessageTimes,
+      setMessages,
+      setNotice,
+      setSelectedImage,
+    });
   const isComposerBusy = isBusy || isAnalyzingImage;
   const lastAssistantMessageId = useMemo(() => {
     const lastAssistantMessage = [...messages]
@@ -84,29 +96,14 @@ export function AiChatPanel({
     return lastAssistantMessage?.id ?? null;
   }, [messages]);
 
-  useEffect(() => {
-    if (!selectedImage) {
-      setSelectedImageUrl((current) => {
-        if (current) {
-          URL.revokeObjectURL(current);
-        }
-        return null;
-      });
-      return;
-    }
-
-    const objectUrl = URL.createObjectURL(selectedImage);
-    setSelectedImageUrl((current) => {
-      if (current) {
-        URL.revokeObjectURL(current);
+  useEffect(
+    () => () => {
+      if (selectedImageUrl) {
+        URL.revokeObjectURL(selectedImageUrl);
       }
-      return objectUrl;
-    });
-
-    return () => {
-      URL.revokeObjectURL(objectUrl);
-    };
-  }, [selectedImage]);
+    },
+    [selectedImageUrl],
+  );
 
   useEffect(() => {
     const viewport = scrollViewportRef.current;
@@ -143,130 +140,6 @@ export function AiChatPanel({
     );
 
     setDraft("");
-  }
-
-  async function runProposalAction(
-    action: "approve" | "apply",
-    target: AssistantProposalTarget,
-  ) {
-    setNotice(null);
-    setActionBusyKey(`${action}:${target.proposalId}`);
-
-    try {
-      const response = await fetch(`/api/ai/proposals/${target.proposalId}/${action}`, {
-        method: "POST",
-      });
-      const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-
-      if (!response.ok) {
-        throw new Error(payload?.message ?? "Не удалось выполнить действие с предложением.");
-      }
-
-      setNotice(
-        action === "approve"
-          ? "Предложение подтверждено и готово к применению."
-          : target.proposalType === "workout_plan"
-            ? "План тренировок уже добавлен в приложение."
-            : "План питания уже добавлен в приложение.",
-      );
-      router.refresh();
-    } catch (proposalActionError) {
-      setNotice(
-        proposalActionError instanceof Error
-          ? proposalActionError.message
-          : "Не удалось выполнить действие с предложением.",
-      );
-    } finally {
-      setActionBusyKey(null);
-    }
-  }
-
-  async function analyzeMealPhoto() {
-    if (!selectedImage || isComposerBusy) {
-      return;
-    }
-
-    if (!mealPhotoAccess.allowed) {
-      setNotice(mealPhotoAccess.reason ?? "Анализ фото еды сейчас недоступен.");
-      return;
-    }
-
-    const nextSessionId = sessionId ?? crypto.randomUUID();
-    const trimmedNotes = draft.trim();
-    const formData = new FormData();
-    formData.set("image", selectedImage);
-    formData.set("sessionId", nextSessionId);
-
-    if (trimmedNotes) {
-      formData.set("notes", trimmedNotes);
-    }
-
-    setIsAnalyzingImage(true);
-    setNotice(null);
-
-    try {
-      const response = await fetch("/api/ai/meal-photo", {
-        method: "POST",
-        body: formData,
-      });
-      const payload = (await response.json().catch(() => null)) as MealPhotoResponse | null;
-
-      if (!response.ok || !payload?.data) {
-        throw new Error(
-          payload?.message ?? "Не удалось разобрать фото. Попробуй другой кадр.",
-        );
-      }
-
-      const resolvedSessionId = payload.session?.id ?? nextSessionId;
-      const nextTitle = payload.session?.title ?? trimmedNotes ?? "Разбор фото еды";
-      const userMessage =
-        payload.messages?.user ??
-        ({
-          id: crypto.randomUUID(),
-          session_id: resolvedSessionId,
-          role: "user",
-          content: trimmedNotes || "Загружено фото еды для анализа.",
-          created_at: new Date().toISOString(),
-        } satisfies ChatMessage);
-      const assistantMessage =
-        payload.messages?.assistant ??
-        ({
-          id: crypto.randomUUID(),
-          session_id: resolvedSessionId,
-          role: "assistant",
-          content: buildMealPhotoMarkdown(payload.data),
-          created_at: new Date().toISOString(),
-        } satisfies ChatMessage);
-
-      rememberLocalSession(resolvedSessionId, nextTitle);
-
-      setMessageTimes((current) => {
-        const next = new Map(current);
-        next.set(userMessage.id, userMessage.created_at);
-        next.set(assistantMessage.id, assistantMessage.created_at);
-        return next;
-      });
-
-      setMessages((current) => [
-        ...current,
-        toUiTextMessage(userMessage),
-        toUiTextMessage(assistantMessage),
-      ]);
-
-      setDraft("");
-      setSelectedImage(null);
-      setNotice(
-        "Фото разобрано. Теперь можно попросить рецепт, замену или план питания.",
-      );
-    } catch (mealPhotoError) {
-      setNotice(
-        mealPhotoError instanceof Error
-          ? mealPhotoError.message
-          : "Не удалось проанализировать фото.",
-      );
-    } finally {
-      setIsAnalyzingImage(false);
-    }
   }
 
   function resetChat() {
