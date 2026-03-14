@@ -24,6 +24,10 @@ const workoutDayUpdateSchema = z
     },
   );
 
+const paramsSchema = z.object({
+  id: z.string().uuid(),
+});
+
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -42,7 +46,7 @@ export async function PATCH(
       });
     }
 
-    const { id } = await params;
+    const { id } = paramsSchema.parse(await params);
     const payload = workoutDayUpdateSchema.parse(await request.json());
 
     const result = await updateWorkoutDayExecution(
@@ -69,7 +73,7 @@ export async function PATCH(
       return createApiErrorResponse({
         status: 400,
         code: "WORKOUT_DAY_UPDATE_INVALID",
-        message: "Workout day payload is invalid.",
+        message: "Workout day payload or route params are invalid.",
         details: error.flatten(),
       });
     }

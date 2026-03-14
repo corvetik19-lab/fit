@@ -1,7 +1,13 @@
+import { z } from "zod";
+
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import { logger } from "@/lib/logger";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { resetWorkoutDayExecution } from "@/lib/workout/execution";
+
+const paramsSchema = z.object({
+  id: z.string().uuid(),
+});
 
 export async function POST(
   _request: Request,
@@ -21,7 +27,7 @@ export async function POST(
       });
     }
 
-    const { id } = await params;
+    const { id } = paramsSchema.parse(await params);
     const result = await resetWorkoutDayExecution(supabase, user.id, id);
 
     if (result.error) {
@@ -30,6 +36,15 @@ export async function POST(
 
     return Response.json({ data: result.data });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return createApiErrorResponse({
+        status: 400,
+        code: "WORKOUT_DAY_RESET_INVALID",
+        message: "Workout day route params are invalid.",
+        details: error.flatten(),
+      });
+    }
+
     logger.error("workout day reset route failed", { error });
 
     return createApiErrorResponse({

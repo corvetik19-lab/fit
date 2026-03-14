@@ -11,6 +11,10 @@ const workoutSetUpdateSchema = z.object({
   actualRpe: z.number().min(1).max(10).nullable(),
 });
 
+const paramsSchema = z.object({
+  id: z.string().uuid(),
+});
+
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -29,7 +33,7 @@ export async function PATCH(
       });
     }
 
-    const { id } = await params;
+    const { id } = paramsSchema.parse(await params);
     const payload = workoutSetUpdateSchema.parse(await request.json());
 
     const result = await updateWorkoutSetActualReps(
@@ -53,7 +57,7 @@ export async function PATCH(
       return createApiErrorResponse({
         status: 400,
         code: "WORKOUT_SET_UPDATE_INVALID",
-        message: "Workout set payload is invalid.",
+        message: "Workout set payload or route params are invalid.",
         details: error.flatten(),
       });
     }

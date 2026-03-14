@@ -129,6 +129,13 @@
 - В `src/app/api/ai/proposals/[id]/approve/route.ts` и `.../apply/route.ts` добавил UUID-валидацию и маппинг typed proposal errors в корректные API-ответы.
 - После правок снова подтверждён baseline: `npm run lint`, `npm run typecheck`, `npm run build`.
 
+### 2026-03-15 01:10 - Ужесточил direct workout mutation routes
+
+- В `src/app/api/workout-days/[id]/route.ts`, `src/app/api/workout-days/[id]/reset/route.ts` и `src/app/api/workout-sets/[id]/route.ts` добавил UUID-валидацию route params.
+- Теперь некорректный `id` на этих mutation routes даёт явный `400` с валидационной ошибкой, а не проходит глубже в execution-слой.
+- Это выравнивает прямые workout API-контракты с уже ужесточёнными `sync` и `AI` route handlers.
+- После правок снова подтверждён baseline: `npm run lint`, `npm run typecheck`, `npm run build`.
+
 ## Что осталось в production hardening
 
 - Дальнейшая санация локального `docs/AI_EXPLAINED.md` после отдельного triage пользовательских изменений.
