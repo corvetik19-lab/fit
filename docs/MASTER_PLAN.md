@@ -180,6 +180,10 @@
 
 ### Workout / Nutrition / API
 
+- [x] Сделать `sync/push` для `workout_day_execution` атомарным, без частично применённого статуса при ошибке сохранения.
+- [x] Запретить частично заполненные set-updates на сервере: set считается либо пустым, либо полностью заполненным (`reps`, `weight`, `RPE`).
+- [x] Запретить перевод workout day в `done`, если не заполнены и не сохранены все сеты дня.
+- [x] Провалидировать параметры `sync/pull` на уровне route handler, а не только на клиенте.
 - [ ] Пройти все route handlers на валидацию, owner-only доступ, ошибки и idempotency.
 - [ ] Подтвердить, что reset/finish/sync сценарии не создают race conditions и бесконечный polling.
 - [ ] Подтвердить, что offline queue и stale cleanup не восстанавливают уже сброшенное состояние.

@@ -11,6 +11,183 @@ export type WorkoutDayExecutionInput = {
   sessionDurationSeconds?: number | null;
 };
 
+type WorkoutDayContext = {
+  id: string;
+  weekly_program_id: string;
+  status: WorkoutDayStatus;
+  body_weight_kg: number | null;
+  session_note: string | null;
+  session_duration_seconds: number | null;
+};
+
+type LockedWorkoutDayContext = {
+  day: WorkoutDayContext;
+  programId: string;
+};
+
+function createExecutionError(
+  status: number,
+  code: string,
+  message: string,
+) {
+  return {
+    error: {
+      status,
+      code,
+      message,
+    },
+    data: null,
+  } as const;
+}
+
+function isSetPerformanceEmpty(input: {
+  actualReps: number | null;
+  actualWeightKg: number | null;
+  actualRpe: number | null;
+}) {
+  return (
+    input.actualReps === null &&
+    input.actualWeightKg === null &&
+    input.actualRpe === null
+  );
+}
+
+function isSetPerformanceComplete(input: {
+  actualReps: number | null;
+  actualWeightKg: number | null;
+  actualRpe: number | null;
+}) {
+  return (
+    input.actualReps !== null &&
+    input.actualWeightKg !== null &&
+    input.actualRpe !== null
+  );
+}
+
+async function getLockedWorkoutDayContext(
+  supabase: SupabaseClient,
+  userId: string,
+  dayId: string,
+) {
+  const { data: dayRow, error: dayError } = await supabase
+    .from("workout_days")
+    .select(
+      "id, weekly_program_id, status, body_weight_kg, session_note, session_duration_seconds",
+    )
+    .eq("id", dayId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (dayError) {
+    throw dayError;
+  }
+
+  if (!dayRow) {
+    return createExecutionError(
+      404,
+      "WORKOUT_DAY_NOT_FOUND",
+      "Workout day was not found.",
+    );
+  }
+
+  const { data: programRow, error: programError } = await supabase
+    .from("weekly_programs")
+    .select("id, is_locked")
+    .eq("id", dayRow.weekly_program_id)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (programError) {
+    throw programError;
+  }
+
+  if (!programRow?.is_locked) {
+    return createExecutionError(
+      400,
+      "WORKOUT_DAY_REQUIRES_LOCKED_PROGRAM",
+      "Workout day execution is available only for locked weeks.",
+    );
+  }
+
+  return {
+    error: null,
+    data: {
+      day: dayRow as WorkoutDayContext,
+      programId: programRow.id,
+    } satisfies LockedWorkoutDayContext,
+  } as const;
+}
+
+async function ensureWorkoutDayCanBeCompleted(
+  supabase: SupabaseClient,
+  userId: string,
+  dayId: string,
+) {
+  const { data: exerciseRows, error: exerciseError } = await supabase
+    .from("workout_exercises")
+    .select("id")
+    .eq("workout_day_id", dayId)
+    .eq("user_id", userId);
+
+  if (exerciseError) {
+    throw exerciseError;
+  }
+
+  const exerciseIds = (exerciseRows ?? []).map((exercise) => exercise.id);
+
+  if (!exerciseIds.length) {
+    return createExecutionError(
+      400,
+      "WORKOUT_DAY_CANNOT_COMPLETE_EMPTY",
+      "Workout day cannot be marked as done without exercises.",
+    );
+  }
+
+  const { data: setRows, error: setError } = await supabase
+    .from("workout_sets")
+    .select("id, actual_reps, actual_weight_kg, actual_rpe")
+    .eq("user_id", userId)
+    .in("workout_exercise_id", exerciseIds);
+
+  if (setError) {
+    throw setError;
+  }
+
+  const sets = setRows ?? [];
+
+  if (!sets.length) {
+    return createExecutionError(
+      400,
+      "WORKOUT_DAY_CANNOT_COMPLETE_EMPTY",
+      "Workout day cannot be marked as done without exercise sets.",
+    );
+  }
+
+  const hasIncompleteSet = sets.some(
+    (set) =>
+      !isSetPerformanceComplete({
+        actualReps: set.actual_reps,
+        actualWeightKg: set.actual_weight_kg,
+        actualRpe: set.actual_rpe,
+      }),
+  );
+
+  if (hasIncompleteSet) {
+    return createExecutionError(
+      400,
+      "WORKOUT_DAY_INCOMPLETE",
+      "Complete and save every exercise before finishing the workout day.",
+    );
+  }
+
+  return {
+    error: null,
+    data: {
+      completedSets: sets.length,
+    },
+  } as const;
+}
+
 export async function updateWorkoutDayExecution(
   supabase: SupabaseClient,
   userId: string,
@@ -33,50 +210,26 @@ export async function updateWorkoutDayExecution(
     } as const;
   }
 
-  const { data: dayRow, error: dayError } = await supabase
-    .from("workout_days")
-    .select(
-      "id, weekly_program_id, status, body_weight_kg, session_note, session_duration_seconds",
-    )
-    .eq("id", dayId)
-    .eq("user_id", userId)
-    .maybeSingle();
+  const lockedDayContext = await getLockedWorkoutDayContext(
+    supabase,
+    userId,
+    dayId,
+  );
 
-  if (dayError) {
-    throw dayError;
+  if (lockedDayContext.error) {
+    return lockedDayContext;
   }
 
-  if (!dayRow) {
-    return {
-      error: {
-        status: 404,
-        code: "WORKOUT_DAY_NOT_FOUND",
-        message: "Workout day was not found.",
-      },
-      data: null,
-    } as const;
-  }
+  if (input.status === "done") {
+    const completionCheck = await ensureWorkoutDayCanBeCompleted(
+      supabase,
+      userId,
+      dayId,
+    );
 
-  const { data: programRow, error: programError } = await supabase
-    .from("weekly_programs")
-    .select("id, is_locked")
-    .eq("id", dayRow.weekly_program_id)
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  if (programError) {
-    throw programError;
-  }
-
-  if (!programRow?.is_locked) {
-    return {
-      error: {
-        status: 400,
-        code: "WORKOUT_DAY_REQUIRES_LOCKED_PROGRAM",
-        message: "Workout day execution is available only for locked weeks.",
-      },
-      data: null,
-    } as const;
+    if (completionCheck.error) {
+      return completionCheck;
+    }
   }
 
   const { data, error } = await supabase
@@ -126,48 +279,14 @@ export async function resetWorkoutDayExecution(
   userId: string,
   dayId: string,
 ) {
-  const { data: dayRow, error: dayError } = await supabase
-    .from("workout_days")
-    .select("id, weekly_program_id")
-    .eq("id", dayId)
-    .eq("user_id", userId)
-    .maybeSingle();
+  const lockedDayContext = await getLockedWorkoutDayContext(
+    supabase,
+    userId,
+    dayId,
+  );
 
-  if (dayError) {
-    throw dayError;
-  }
-
-  if (!dayRow) {
-    return {
-      error: {
-        status: 404,
-        code: "WORKOUT_DAY_NOT_FOUND",
-        message: "Workout day was not found.",
-      },
-      data: null,
-    } as const;
-  }
-
-  const { data: programRow, error: programError } = await supabase
-    .from("weekly_programs")
-    .select("id, is_locked")
-    .eq("id", dayRow.weekly_program_id)
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  if (programError) {
-    throw programError;
-  }
-
-  if (!programRow?.is_locked) {
-    return {
-      error: {
-        status: 400,
-        code: "WORKOUT_DAY_REQUIRES_LOCKED_PROGRAM",
-        message: "Workout day reset is available only for locked weeks.",
-      },
-      data: null,
-    } as const;
+  if (lockedDayContext.error) {
+    return lockedDayContext;
   }
 
   const { data: exerciseRows, error: exerciseError } = await supabase
@@ -240,6 +359,25 @@ export async function updateWorkoutSetActualReps(
   actualWeightKg: number | null,
   actualRpe: number | null,
 ) {
+  if (
+    !isSetPerformanceEmpty({
+      actualReps,
+      actualWeightKg,
+      actualRpe,
+    }) &&
+    !isSetPerformanceComplete({
+      actualReps,
+      actualWeightKg,
+      actualRpe,
+    })
+  ) {
+    return createExecutionError(
+      400,
+      "WORKOUT_SET_INCOMPLETE",
+      "A workout set can be saved only when reps, weight and RPE are all filled.",
+    );
+  }
+
   const { data: workoutSetRow, error: workoutSetError } = await supabase
     .from("workout_sets")
     .select("id, workout_exercise_id")
@@ -285,48 +423,14 @@ export async function updateWorkoutSetActualReps(
     } as const;
   }
 
-  const { data: workoutDayRow, error: workoutDayError } = await supabase
-    .from("workout_days")
-    .select("id, weekly_program_id")
-    .eq("id", workoutExerciseRow.workout_day_id)
-    .eq("user_id", userId)
-    .maybeSingle();
+  const lockedDayContext = await getLockedWorkoutDayContext(
+    supabase,
+    userId,
+    workoutExerciseRow.workout_day_id,
+  );
 
-  if (workoutDayError) {
-    throw workoutDayError;
-  }
-
-  if (!workoutDayRow) {
-    return {
-      error: {
-        status: 404,
-        code: "WORKOUT_DAY_NOT_FOUND",
-        message: "Workout day was not found.",
-      },
-      data: null,
-    } as const;
-  }
-
-  const { data: programRow, error: programError } = await supabase
-    .from("weekly_programs")
-    .select("id, is_locked")
-    .eq("id", workoutDayRow.weekly_program_id)
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  if (programError) {
-    throw programError;
-  }
-
-  if (!programRow?.is_locked) {
-    return {
-      error: {
-        status: 400,
-        code: "WORKOUT_SET_REQUIRES_LOCKED_PROGRAM",
-        message: "Workout set performance can be saved only for locked weeks.",
-      },
-      data: null,
-    } as const;
+  if (lockedDayContext.error) {
+    return lockedDayContext;
   }
 
   const { data, error } = await supabase
@@ -349,7 +453,7 @@ export async function updateWorkoutSetActualReps(
     error: null,
     data: {
       ...data,
-      workoutDayId: workoutDayRow.id,
+      workoutDayId: lockedDayContext.data.day.id,
     },
   } as const;
 }

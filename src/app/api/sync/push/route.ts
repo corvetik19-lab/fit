@@ -74,6 +74,7 @@ export async function POST(request: Request) {
     }
 
     const body = syncPushSchema.parse(await request.json());
+    const seenMutationIds = new Set<string>();
     const processed: Array<{
       id: string;
       status: "applied" | "rejected";
@@ -83,6 +84,18 @@ export async function POST(request: Request) {
 
     for (const mutation of body.mutations) {
       try {
+        if (seenMutationIds.has(mutation.id)) {
+          processed.push({
+            id: mutation.id,
+            status: "rejected",
+            code: "SYNC_MUTATION_DUPLICATE",
+            message: "Duplicate offline mutation ids are not allowed in one batch.",
+          });
+          continue;
+        }
+
+        seenMutationIds.add(mutation.id);
+
         if (mutation.entity === "workout_day_status") {
           const result = await updateWorkoutDayStatus(
             supabase,
@@ -103,11 +116,16 @@ export async function POST(request: Request) {
         }
 
         if (mutation.entity === "workout_day_execution") {
-          const result = await updateWorkoutDayStatus(
+          const result = await updateWorkoutDayExecution(
             supabase,
             user.id,
             mutation.payload.dayId,
-            mutation.payload.status,
+            {
+              status: mutation.payload.status,
+              bodyWeightKg: mutation.payload.bodyWeightKg,
+              sessionNote: mutation.payload.sessionNote,
+              sessionDurationSeconds: mutation.payload.sessionDurationSeconds,
+            },
           );
 
           if (result.error) {
@@ -116,27 +134,6 @@ export async function POST(request: Request) {
               status: "rejected",
               code: result.error.code,
               message: result.error.message,
-            });
-            continue;
-          }
-
-          const executionResult = await updateWorkoutDayExecution(
-            supabase,
-            user.id,
-            mutation.payload.dayId,
-            {
-              bodyWeightKg: mutation.payload.bodyWeightKg,
-              sessionNote: mutation.payload.sessionNote,
-              sessionDurationSeconds: mutation.payload.sessionDurationSeconds,
-            },
-          );
-
-          if (executionResult.error) {
-            processed.push({
-              id: mutation.id,
-              status: "rejected",
-              code: executionResult.error.code,
-              message: executionResult.error.message,
             });
             continue;
           }
