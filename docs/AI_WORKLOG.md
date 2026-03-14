@@ -1905,3 +1905,9 @@
 - Заодно обновил [dashboard-warm route](/C:/fit/src/app/api/internal/jobs/dashboard-warm/route.ts), чтобы он продолжал работать через тот же публичный контракт `getDashboardAggregateBundle(...)`.
 - Следующий tranche по dashboard analytics: runtime snapshot persistence/read-through cache для `getDashboardRuntimeMetrics(...)`.
 
+### 2026-03-14 18:05 - Пятый tranche декомпозиции metrics.ts
+
+- Вынес runtime snapshot cache и persist helper’ы из [metrics.ts](/C:/fit/src/lib/dashboard/metrics.ts) в [dashboard-runtime-cache.ts](/C:/fit/src/lib/dashboard/dashboard-runtime-cache.ts).
+- В новый слой ушли чтение runtime snapshot, freshness-проверка через dashboard cursor и сохранение runtime snapshot, а сам [metrics.ts](/C:/fit/src/lib/dashboard/metrics.ts) стал ближе к orchestration-роли вокруг live-сборки workout/nutrition/overview metrics.
+- Следующий tranche по dashboard analytics: вынести live runtime assembly для `getDashboardRuntimeMetrics(...)` или nutrition-specific analytics helper-слой.
+

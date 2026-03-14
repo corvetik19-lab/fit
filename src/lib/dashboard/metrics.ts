@@ -1,15 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import {
-  createDashboardRuntimeSnapshotPayload,
-  parseDashboardRuntimeSnapshotPayload,
-  type DashboardRuntimeSnapshotConfig,
-  type DashboardRuntimeSnapshotPayload,
-} from "@/lib/dashboard/dashboard-snapshot";
-import {
   getDashboardAggregateBundle,
-  getDashboardRuntimeFreshnessCursor,
 } from "@/lib/dashboard/dashboard-aggregate";
+import {
+  getCachedDashboardRuntimeMetrics,
+  persistDashboardRuntimeSnapshot,
+} from "@/lib/dashboard/dashboard-runtime-cache";
 import {
   buildDashboardPeriodComparisonFromAggregate,
   getDashboardSnapshot,
@@ -292,15 +289,7 @@ export {
   getDashboardAggregateBundle,
   persistDashboardAggregateSnapshot,
 } from "@/lib/dashboard/dashboard-aggregate";
-
-type DashboardRuntimeSnapshotRow = {
-  created_at: string;
-  id: string;
-  payload:
-    | DashboardRuntimeSnapshotPayload<DashboardRuntimeMetrics>
-    | Record<string, unknown>;
-  snapshot_reason: string;
-};
+export { persistDashboardRuntimeSnapshot } from "@/lib/dashboard/dashboard-runtime-cache";
 
 type WorkoutSetRow = {
   set_number: number;
@@ -1503,37 +1492,6 @@ export async function getDashboardPeriodComparison(
   );
 }
 
-export async function persistDashboardRuntimeSnapshot(
-  supabase: SupabaseClient,
-  userId: string,
-  metrics: DashboardRuntimeMetrics,
-  config: DashboardRuntimeSnapshotConfig,
-  snapshotReason = DASHBOARD_RUNTIME_SNAPSHOT_REASON,
-) {
-  const payload = createDashboardRuntimeSnapshotPayload(metrics, config);
-
-  const { data, error } = await supabase
-    .from("user_context_snapshots")
-    .insert({
-      user_id: userId,
-      snapshot_reason: snapshotReason,
-      payload,
-    })
-    .select("id, snapshot_reason, created_at")
-    .single();
-
-  if (error) {
-    throw error;
-  }
-
-  return {
-    createdAt: data.created_at,
-    generatedAt: payload.generatedAt,
-    snapshotId: data.id,
-    snapshotReason: data.snapshot_reason,
-  };
-}
-
 export async function getDashboardRuntimeMetrics(
   supabase: SupabaseClient,
   userId: string,
@@ -1559,56 +1517,14 @@ export async function getDashboardRuntimeMetrics(
     options?.snapshotReason ?? DASHBOARD_RUNTIME_SNAPSHOT_REASON;
 
   if (!options?.forceRefresh) {
-    const { data, error } = await supabase
-      .from("user_context_snapshots")
-      .select("id, snapshot_reason, payload, created_at")
-      .eq("user_id", userId)
-      .eq("snapshot_reason", snapshotReason)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    const cached = await getCachedDashboardRuntimeMetrics(supabase, userId, {
+      config,
+      maxAgeMs,
+      snapshotReason,
+    });
 
-    if (!error && data) {
-      const parsed =
-        parseDashboardRuntimeSnapshotPayload<DashboardRuntimeMetrics>(
-        (data as DashboardRuntimeSnapshotRow).payload,
-        );
-      const ageMs = Date.now() - new Date(data.created_at).getTime();
-      let hasNewerUserData = false;
-
-      try {
-        const freshnessCursor = await getDashboardRuntimeFreshnessCursor(
-          supabase,
-          userId,
-        );
-        hasNewerUserData =
-          typeof freshnessCursor === "string" &&
-          new Date(freshnessCursor).getTime() > new Date(data.created_at).getTime();
-      } catch {
-        hasNewerUserData = false;
-      }
-
-      if (
-        parsed &&
-        parsed.config.weeks === config.weeks &&
-        parsed.config.days === config.days &&
-        parsed.config.periodDays === config.periodDays &&
-        parsed.config.baselineDays === config.baselineDays &&
-        Number.isFinite(ageMs) &&
-        ageMs <= maxAgeMs &&
-        !hasNewerUserData
-      ) {
-        return {
-          cache: {
-            generatedAt: parsed.generatedAt,
-            snapshotCreatedAt: data.created_at,
-            snapshotId: data.id,
-            snapshotReason: data.snapshot_reason,
-            source: "snapshot",
-          },
-          metrics: parsed.metrics,
-        };
-      }
+    if (cached) {
+      return cached;
     }
   }
 
