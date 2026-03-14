@@ -10,7 +10,6 @@ import {
   type DashboardRuntimeSnapshotPayload,
 } from "@/lib/dashboard/dashboard-snapshot";
 import {
-  addUtcDays,
   getDateDaysAgo,
   getDaysBetween,
   getDaysSince,
@@ -26,6 +25,11 @@ import {
   toSafeNumber,
   toUtcDateString,
 } from "@/lib/dashboard/dashboard-utils";
+import {
+  buildRecoverySummary,
+  buildWeeklyTrendSkeleton,
+  getWeeklyTrendIndex,
+} from "@/lib/dashboard/dashboard-workout-helpers";
 import {
   buildNutritionCoachingSignals,
   type NutritionCoachingSignal,
@@ -393,85 +397,11 @@ type NutritionMealItemAnalyticsRow = {
   carbs: number | string | null;
 };
 
-const shortDateFormatter = new Intl.DateTimeFormat("ru-RU", {
-  day: "2-digit",
-  month: "short",
-  timeZone: "UTC",
-});
-
-const rangeDateFormatter = new Intl.DateTimeFormat("ru-RU", {
-  day: "2-digit",
-  month: "long",
-  timeZone: "UTC",
-});
-
 const dayLabelFormatter = new Intl.DateTimeFormat("ru-RU", {
   day: "2-digit",
   month: "short",
   timeZone: "UTC",
 });
-
-function buildRecoverySummary(input: {
-  consistencyRatio: number | null;
-  daysSinceLastWorkout: number | null;
-  loggedSetsLast14: number;
-  goalDaysPerWeek: number | null;
-  status: DashboardWorkoutRecovery["status"];
-}) {
-  if (input.daysSinceLastWorkout === null) {
-    return "Пока нет завершённых тренировок. После первых сессий здесь появится сигнал по ритму и восстановлению.";
-  }
-
-  if (input.status === "fresh") {
-    return input.goalDaysPerWeek
-      ? `Ритм держится близко к цели: за последние 14 дней выполнено ${input.loggedSetsLast14} рабочих подходов, а пауза после последней тренировки всего ${input.daysSinceLastWorkout} дн.`
-      : `Ритм сейчас хороший: последняя тренировка была ${input.daysSinceLastWorkout} дн. назад, а рабочие подходы фиксируются стабильно.`;
-  }
-
-  if (input.status === "steady") {
-    return input.consistencyRatio !== null
-      ? `Темп остаётся рабочим, но есть запас для более ровного графика: выполнено ${Math.round(input.consistencyRatio * 100)}% от целевого ритма за последние 14 дней.`
-      : "Темп остаётся рабочим. Следующая задача — удерживать более стабильный график без длинных пауз.";
-  }
-
-  return "Есть сигнал просадки по ритму: стоит вернуться к регулярности, прежде чем AI будет повышать объём в новых рекомендациях.";
-}
-
-function buildWeeklyTrendSkeleton(weeks: number) {
-  const currentWeekStart = getUtcWeekStart(new Date());
-
-  return Array.from({ length: weeks }, (_, index) => {
-    const weekStart = addUtcDays(currentWeekStart, (index - weeks + 1) * 7);
-    const weekEnd = addUtcDays(weekStart, 6);
-
-    return {
-      weekStart,
-      weekEnd,
-      label: shortDateFormatter.format(weekStart),
-      rangeLabel: `${rangeDateFormatter.format(weekStart)} - ${rangeDateFormatter.format(weekEnd)}`,
-      completedDays: 0,
-      loggedSets: 0,
-      tonnageKg: 0,
-    };
-  });
-}
-
-function getWeeklyTrendIndex(
-  weekStartsAt: Date,
-  bucketStart: Date,
-  totalBuckets: number,
-) {
-  const millisecondsPerWeek = 7 * 24 * 60 * 60 * 1000;
-  const index = Math.floor(
-    (weekStartsAt.getTime() - bucketStart.getTime()) / millisecondsPerWeek,
-  );
-
-  if (index < 0 || index >= totalBuckets) {
-    return null;
-  }
-
-  return index;
-}
 
 export async function getDashboardSnapshot(
   supabase: SupabaseClient,

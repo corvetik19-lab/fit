@@ -2,6 +2,12 @@
 
 ## 2026-03-14
 
+### Production hardening: второй tranche декомпозиции `metrics.ts`
+
+- Вынес из [metrics.ts](/C:/fit/src/lib/dashboard/metrics.ts) workout-specific pure helpers в новый модуль [dashboard-workout-helpers.ts](/C:/fit/src/lib/dashboard/dashboard-workout-helpers.ts).
+- В новый слой ушли `buildRecoverySummary`, `buildWeeklyTrendSkeleton` и `getWeeklyTrendIndex`, поэтому [metrics.ts](/C:/fit/src/lib/dashboard/metrics.ts) стал чуть ближе к server-side orchestration-роли, а не к смеси snapshot/runtime логики с workout formatter helper’ами.
+- Следующий логичный tranche по dashboard analytics: выносить snapshot/overview flow или aggregate/runtime cache plumbing из [metrics.ts](/C:/fit/src/lib/dashboard/metrics.ts).
+
 ### Production hardening: восьмой tranche декомпозиции `ai-chat-panel.tsx`
 
 - Вынес из [ai-chat-panel.tsx](/C:/fit/src/components/ai-chat-panel.tsx) view/media state в новый hook [use-ai-chat-view-state.ts](/C:/fit/src/components/use-ai-chat-view-state.ts).
