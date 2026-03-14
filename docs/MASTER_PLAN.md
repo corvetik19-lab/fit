@@ -94,6 +94,7 @@
 - [x] Вынести из `src/lib/ai/knowledge.ts` четвертый tranche indexing/embeddings refresh слоя в отдельный модуль `knowledge-indexing.ts`.
 - [x] Вынести из `src/components/ai-chat-panel.tsx` первый tranche model/helper и tool-card слоя в отдельные модули.
 - [x] Вынести из `src/components/ai-chat-panel.tsx` второй tranche `chat surface + composer` UI в отдельные модули.
+- [x] Вынести из `src/components/ai-chat-panel.tsx` третий tranche chat toolbar / prompt-library trigger / search toggle UI в отдельный модуль.
 - [x] Убрать mojibake из `ai-chat-panel` и `ai-chat-panel-model` user-facing copy.
 - [ ] Разбить `src/components/workout-day-session.tsx` на UI-композицию, timer/focus hooks, step/save logic и sync helpers.
 - [ ] Разбить `src/lib/dashboard/metrics.ts` на агрегаты, coaching signals, nutrition analytics и snapshot helpers.

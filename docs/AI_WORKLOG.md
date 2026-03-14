@@ -2,6 +2,13 @@
 
 ## 2026-03-14
 
+### Production hardening: третий tranche декомпозиции `ai-chat-panel.tsx`
+
+- Вынес из [ai-chat-panel.tsx](/C:/fit/src/components/ai-chat-panel.tsx) верхний chat toolbar в новый модуль [ai-chat-toolbar.tsx](/C:/fit/src/components/ai-chat-toolbar.tsx).
+- В отдельный UI-слой ушли переключатель web search, триггер prompt library, открытие загрузки фото еды и reset текущего чата.
+- После этого [ai-chat-panel.tsx](/C:/fit/src/components/ai-chat-panel.tsx) ещё ближе к orchestrator-компоненту: session/draft/image/runtime state остаются внутри, а верхняя chat-control surface больше не размазана по тому же файлу, где живут submit/analyze/proposal действия.
+- Следующий логичный tranche по AI-чату: history/session helper-слой и notices/access panels, чтобы основной компонент окончательно свести к orchestration-логике.
+
 ### Production hardening: четвертый tranche декомпозиции `knowledge.ts`
 
 - Вынес из [knowledge.ts](/C:/fit/src/lib/ai/knowledge.ts) indexing/embeddings refresh слой в новый модуль [knowledge-indexing.ts](/C:/fit/src/lib/ai/knowledge-indexing.ts).

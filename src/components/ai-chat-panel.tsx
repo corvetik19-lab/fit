@@ -4,12 +4,12 @@ import { DefaultChatTransport } from "ai";
 import { useChat } from "@ai-sdk/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Globe, ImagePlus, WandSparkles } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 
 import { AiChatComposer } from "@/components/ai-chat-composer";
 import { AiPromptLibrary } from "@/components/ai-prompt-library";
 import { AiChatTranscript } from "@/components/ai-chat-transcript";
+import { AiChatToolbar } from "@/components/ai-chat-toolbar";
 import {
   buildMealPhotoMarkdown,
   timeFormatter,
@@ -327,64 +327,16 @@ export function AiChatPanel({
 
   return (
     <section className="card flex min-h-[72dvh] flex-col overflow-hidden p-4 sm:p-5 lg:min-h-[78dvh]">
-      <div className="flex items-center justify-between gap-3 border-b border-border pb-4">
-        <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-foreground">
-            {sessionTitle?.trim() || "Новый чат"}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            aria-label={
-              allowWebSearch
-                ? "Выключить поиск в интернете"
-                : "Включить поиск в интернете"
-            }
-            aria-pressed={allowWebSearch}
-            className={`inline-flex h-11 w-11 items-center justify-center rounded-full border transition ${
-              allowWebSearch
-                ? "border-accent/30 bg-accent/10 text-accent"
-                : "border-border bg-white/80 text-muted hover:bg-white"
-            }`}
-            onClick={() => setAllowWebSearch((current) => !current)}
-            type="button"
-          >
-            <Globe size={18} strokeWidth={2.2} />
-          </button>
-
-          <button
-            aria-label="Открыть шаблоны"
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border bg-white/80 text-foreground transition hover:bg-white"
-            onClick={() => setIsPromptLibraryOpen(true)}
-            type="button"
-          >
-            <WandSparkles size={16} strokeWidth={2.1} />
-          </button>
-
-          <button
-            aria-label="Выбрать фото еды"
-            className={`inline-flex h-11 w-11 items-center justify-center rounded-full border transition ${
-              selectedImage
-                ? "border-accent/30 bg-accent/10 text-accent"
-                : "border-border bg-white/80 text-muted hover:bg-white"
-            }`}
-            disabled={!mealPhotoAccess.allowed}
-            onClick={() => fileInputRef.current?.click()}
-            type="button"
-          >
-            <ImagePlus size={18} strokeWidth={2.2} />
-          </button>
-
-          <button
-            className="rounded-full border border-border bg-white/80 px-4 py-2 text-sm font-medium text-foreground transition hover:bg-white"
-            onClick={resetChat}
-            type="button"
-          >
-            Новый чат
-          </button>
-        </div>
-      </div>
+      <AiChatToolbar
+        allowWebSearch={allowWebSearch}
+        mealPhotoAccessAllowed={mealPhotoAccess.allowed}
+        onOpenMealPhoto={() => fileInputRef.current?.click()}
+        onOpenPromptLibrary={() => setIsPromptLibraryOpen(true)}
+        onReset={resetChat}
+        onToggleWebSearch={() => setAllowWebSearch((current) => !current)}
+        selectedImage={Boolean(selectedImage)}
+        sessionTitle={sessionTitle}
+      />
 
       <input
         accept="image/*"
