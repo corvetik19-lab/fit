@@ -201,3 +201,9 @@
 - Добавил `PLAYWRIGHT_*` ключи в `.env.example`, а локально прописал тестовые креды в `.env.local` без коммита секретов.
 - Стабилизировал навигационные e2e через `tests/e2e/helpers/navigation.ts`, `tests/e2e/admin-app.spec.ts` и `tests/e2e/authenticated-app.spec.ts`, чтобы полный suite был зелёным и при обычном `npx playwright test`.
 - Переподтвердил baseline: `npm run lint`, `npm run typecheck`, `npm run build`, `npx playwright test` -> 12 passed.
+
+### 2026-03-15 19:40 - Расширил user-owned isolation до self-service settings export
+
+- Добавил `tests/e2e/helpers/settings-data.ts`: helper ставит `queue_export` через обычный product route `/api/settings/data` и при повторных прогонах умеет переиспользовать уже активную выгрузку вместо падения на `SETTINGS_EXPORT_ALREADY_ACTIVE`.
+- Расширил `tests/e2e/ownership-isolation.spec.ts`: root-admin теперь дополнительно проверяется на owner-isolation в self-service data center и не видит чужой export job в `GET /api/settings/data`, а `GET /api/settings/data/export/{id}/download` возвращает owner-scoped `404 SETTINGS_EXPORT_NOT_FOUND`.
+- Подтвердил tranche полным quality прогоном: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `10 passed`, `npx playwright test tests/smoke` -> `3 passed`.

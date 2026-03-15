@@ -11,6 +11,7 @@ import {
 import { createExerciseAsset } from "./helpers/exercises";
 import { fetchJson } from "./helpers/http";
 import { createNutritionAssets } from "./helpers/nutrition";
+import { ensureSettingsExportJob } from "./helpers/settings-data";
 import { createLockedWorkoutDay } from "./helpers/workouts";
 
 function buildFutureCloneDate() {
@@ -257,6 +258,52 @@ test.describe("user-owned isolation", () => {
 
     expect(patchExerciseResult.status).toBe(404);
     expect(patchExerciseResult.body?.code).toBe("EXERCISE_NOT_FOUND");
+
+    await adminContext.close();
+    await userContext.close();
+  });
+
+  test("root admin cannot access another user's self-service export jobs", async ({
+    browser,
+  }) => {
+    const userContext = await browser.newContext({
+      storageState: USER_STORAGE_STATE_PATH,
+    });
+    const userPage = await userContext.newPage();
+    await userPage.goto("/settings");
+    await expect(userPage).toHaveURL(/\/settings$/);
+    await userPage.waitForLoadState("networkidle");
+
+    const seededExport = await ensureSettingsExportJob(userPage);
+
+    const adminContext = await browser.newContext({
+      storageState: ADMIN_STORAGE_STATE_PATH,
+    });
+    const adminPage = await adminContext.newPage();
+    await adminPage.goto("/admin");
+    await expect(adminPage).toHaveURL(/\/admin$/);
+    await adminPage.waitForLoadState("networkidle");
+
+    const [settingsDataResult, exportDownloadResult] = await Promise.all([
+      fetchJson<{ data?: { exportJobs?: Array<{ id: string }> } }>(adminPage, {
+        method: "GET",
+        url: "/api/settings/data",
+      }),
+      fetchJson<{ code?: string }>(adminPage, {
+        method: "GET",
+        url: `/api/settings/data/export/${seededExport.exportJobId}/download`,
+      }),
+    ]);
+
+    expect(settingsDataResult.status).toBe(200);
+    expect(
+      (settingsDataResult.body?.data?.exportJobs ?? []).some(
+        (job) => job.id === seededExport.exportJobId,
+      ),
+    ).toBe(false);
+
+    expect(exportDownloadResult.status).toBe(404);
+    expect(exportDownloadResult.body?.code).toBe("SETTINGS_EXPORT_NOT_FOUND");
 
     await adminContext.close();
     await userContext.close();

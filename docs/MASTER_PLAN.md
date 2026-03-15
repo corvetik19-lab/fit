@@ -303,3 +303,10 @@
 
 - [x] Playwright e2e больше не требуют ручного `PLAYWRIGHT_*` export перед запуском: auth helper автоматически подхватывает `.env.local`, а локальный full suite подтверждён обычным `npx playwright test`.
 - [x] Дефолтный Playwright full suite стабилизирован на `workers: 2`: локально подтверждено `12 passed` без skip.
+
+## 2026-03-15 settings export isolation addendum
+
+- [x] Расширен user-owned isolation baseline до self-service `settings/data export`: root-admin не видит чужой export job в `GET /api/settings/data` и получает owner-scoped `404 SETTINGS_EXPORT_NOT_FOUND` на `GET /api/settings/data/export/{id}/download`.
+- [x] Добавлен `tests/e2e/helpers/settings-data.ts`, чтобы e2e могли штатно создавать или переиспользовать активную self-service выгрузку под тестовым пользователем без прямого DB-seed.
+- [x] Tranche подтверждён quality gates: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `10 passed`, `npx playwright test tests/smoke` -> `3 passed`.
+- [ ] Следующий тестовый tranche: расширить user-owned isolation на оставшиеся owner-scoped self-service и AI/data контуры beyond workout/program/nutrition/exercises/settings export.
