@@ -227,7 +227,7 @@
 - [x] `admin/users` теперь fail-open: при временном сбое внешних источников каталог пользователей отдаёт безопасный degraded snapshot вместо общего `500`, а UI показывает операторский banner.
 - [x] `admin/users/[id]` теперь fail-open: detail-route отдаёт degraded snapshot с `meta.degraded`, а карточка пользователя показывает явный banner вместо полного падения.
 - [x] Подтвердить auth/visibility для cron routes и internal jobs.
-- [ ] Задокументировать или устранить допустимые build warnings.
+- [x] Задокументировать допустимые build warnings и правила их эскалации.
 
 ## Волна 4. Billing и SaaS readiness
 
@@ -440,3 +440,9 @@
 - [x] `auth-e2e` job запускает `npm run test:e2e:auth` при наличии тех же secrets и Playwright browser setup.
 - [x] `README.md` и `docs/RELEASE_CHECKLIST.md` теперь явно перечисляют secrets, необходимые для полного CI regression-контура.
 - [ ] Следующий CI tranche: DB/advisor verification gate для migration-aware проверок.
+
+## 2026-03-16 build warnings addendum
+
+- [x] Добавлен `docs/BUILD_WARNINGS.md` как отдельный реестр допустимых warnings из Sentry/OpenTelemetry instrumentation.
+- [x] Зафиксированы условия, при которых текущий webpack warning-хвост остаётся допустимым, и условия, при которых он становится blocker'ом.
+- [x] `docs/README.md` и корневой `README.md` теперь ссылаются на этот документ как на source of truth по build warning policy.

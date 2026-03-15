@@ -104,6 +104,7 @@ npm run build
 - [docs/BACKEND.md](/C:/fit/docs/BACKEND.md)
 - [docs/AI_STACK.md](/C:/fit/docs/AI_STACK.md)
 - [docs/RELEASE_CHECKLIST.md](/C:/fit/docs/RELEASE_CHECKLIST.md)
+- [docs/BUILD_WARNINGS.md](/C:/fit/docs/BUILD_WARNINGS.md)
 
 ## Правила разработки
 

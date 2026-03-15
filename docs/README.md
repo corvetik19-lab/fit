@@ -9,6 +9,7 @@
 - `USER_GUIDE.md` — подробное пользовательское руководство по приложению.
 - `AI_EXPLAINED.md` — подробное объяснение AI-архитектуры: RAG, CAG, KAG, Ragas и рабочего AI-контура в `fit`.
 - `RELEASE_CHECKLIST.md` — релизный чеклист для merge, deploy и post-deploy smoke.
+- `BUILD_WARNINGS.md` — реестр известных допустимых build warnings и правила эскалации.
 - `FRONTEND.md` — состояние фронтенда, shell, UX-срезов и клиентских контрактов.
 - `BACKEND.md` — backend-контракты, Supabase, маршруты, RLS и server-side потоки.
 - `AI_STACK.md` — технический стек AI, модели, runtime и retrieval-слой.

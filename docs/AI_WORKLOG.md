@@ -378,3 +378,9 @@
 - `rls` job использует `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `PLAYWRIGHT_TEST_EMAIL`, `PLAYWRIGHT_TEST_PASSWORD`, `PLAYWRIGHT_ADMIN_EMAIL`, `PLAYWRIGHT_ADMIN_PASSWORD` и запускает `npm run test:rls`.
 - `auth-e2e` job использует тот же секретный набор, ставит Chromium и запускает `npm run test:e2e:auth`.
 - В `README.md` и `docs/RELEASE_CHECKLIST.md` зафиксировал явный список secrets для полного CI regression-контура, чтобы это было частью release hygiene, а не неявным знанием.
+
+### 2026-03-16 13:20 - Зафиксировал допустимые build warnings
+
+- Добавил `docs/BUILD_WARNINGS.md` как source of truth по текущему warning-хвосту от `@sentry/nextjs` и `@opentelemetry/*`.
+- Зафиксировал, что текущие `Critical dependency: the request of a dependency is an expression` warnings допустимы только пока они приходят из instrumentation dependencies и не ломают `npm run build`, manifest, traces и regression-suite.
+- В `docs/README.md`, `README.md` и `docs/MASTER_PLAN.md` добавил явные ссылки и policy, чтобы этот warning-хвост больше не считался “непонятным шумом” без статуса.
