@@ -298,3 +298,8 @@
 
 - [x] Расширен user-owned isolation baseline до custom exercises: route-контур `GET /api/exercises` и `PATCH /api/exercises/{id}` теперь явно держит owner guard по `user_id`, а root-admin не видит и не может обновить чужое упражнение.
 - [ ] Следующий тестовый tranche: расширить user-owned isolation beyond workout/program/nutrition/exercises flows до остальных owner-scoped и RLS-контуров.
+
+## 2026-03-15 playwright env addendum
+
+- [x] Playwright e2e больше не требуют ручного `PLAYWRIGHT_*` export перед запуском: auth helper автоматически подхватывает `.env.local`, а локальный full suite подтверждён обычным `npx playwright test`.
+- [x] Дефолтный Playwright full suite стабилизирован на `workers: 2`: локально подтверждено `12 passed` без skip.

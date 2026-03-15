@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+﻿import { expect, test } from "@playwright/test";
 
 import { hasAdminE2ECredentials } from "./helpers/auth";
 import { ADMIN_STORAGE_STATE_PATH } from "./helpers/auth-state";
@@ -15,20 +15,25 @@ test.describe("admin app", () => {
   );
 
   test("root admin can open core operator surfaces", async ({ page }) => {
+    test.setTimeout(60_000);
+
     await page.goto("/admin");
     await expect(page).toHaveURL(/\/admin$/);
     await page.waitForLoadState("networkidle");
-    await expect(page.locator('a[href="/admin/users"]').first()).toBeVisible();
+
+    const usersLink = page.locator('a[href="/admin/users"]').first();
+    await expect(usersLink).toBeVisible();
+
+    const myCardLink = page.locator('a[href^="/admin/users/"]').first();
+    await expect(myCardLink).toBeVisible();
+    const myCardHref = await myCardLink.getAttribute("href");
+    expect(myCardHref).toBeTruthy();
 
     await navigateStable(page, "/admin/users", /\/admin\/users$/);
     await page.waitForLoadState("networkidle");
+    await expect(page.locator('a[href^="/admin/users/"]').first()).toBeVisible();
 
-    const userCardLink = page.locator('a[href^="/admin/users/"]').first();
-    await expect(userCardLink).toBeVisible();
-    const userCardHref = await userCardLink.getAttribute("href");
-    expect(userCardHref).toBeTruthy();
-    await navigateStable(page, userCardHref!, /\/admin\/users\/.+$/);
-
+    await navigateStable(page, myCardHref!, /\/admin\/users\/.+$/);
     await expect(page).toHaveURL(/\/admin\/users\/.+$/);
     await expect(page.locator('button[aria-pressed]').first()).toBeVisible();
     await expect(page.locator('a[href="/admin/users"]').first()).toBeVisible();

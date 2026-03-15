@@ -193,3 +193,11 @@
 - Добавил `tests/e2e/helpers/navigation.ts` и перевёл `authenticated-app.spec.ts` и `admin-app.spec.ts` на `navigateStable(...)`, чтобы убрать flaky `ERR_ABORTED`/timeout при e2e navigation под `--workers=2`.
 - Усилил `tests/e2e/helpers/workouts.ts`: lock weekly program теперь переживает `WEEKLY_PROGRAM_ACTIVE_WEEK_CONFLICT` и выбирает следующий weekStartDate, поэтому workout sync regression больше не падает от накопившихся активных недель.
 - Переподтвердил полный auth/e2e baseline: `npm run lint`, `npm run typecheck`, `npm run build`, `npx eslint tests/e2e/... src/app/api/exercises`, `npm run test:e2e:auth` -> 9 passed.
+
+### 2026-03-15 16:20 - Убрал skip у локального Playwright full suite
+
+- В `tests/e2e/helpers/auth.ts` добавил автозагрузку `.env.local` через `@next/env`, поэтому e2e больше не зависят от ручного export `PLAYWRIGHT_TEST_EMAIL`, `PLAYWRIGHT_TEST_PASSWORD`, `PLAYWRIGHT_ADMIN_EMAIL`, `PLAYWRIGHT_ADMIN_PASSWORD` перед обычным `playwright test`.
+- Обновил `playwright.config.ts`: дефолтный full suite теперь идёт на `workers: 2`, а не на агрессивной авто-параллельности машины, из-за которой раньше появлялись ложные таймауты и ощущение, что тесты «не работают».
+- Добавил `PLAYWRIGHT_*` ключи в `.env.example`, а локально прописал тестовые креды в `.env.local` без коммита секретов.
+- Стабилизировал навигационные e2e через `tests/e2e/helpers/navigation.ts`, `tests/e2e/admin-app.spec.ts` и `tests/e2e/authenticated-app.spec.ts`, чтобы полный suite был зелёным и при обычном `npx playwright test`.
+- Переподтвердил baseline: `npm run lint`, `npm run typecheck`, `npm run build`, `npx playwright test` -> 12 passed.

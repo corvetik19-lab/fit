@@ -1,4 +1,4 @@
-import { expect, type Page } from "@playwright/test";
+﻿import { expect, type Page } from "@playwright/test";
 
 export async function navigateStable(
   page: Page,
@@ -11,9 +11,9 @@ export async function navigateStable(
     try {
       await page.goto(targetPath, {
         waitUntil: "domcontentloaded",
-        timeout: 20_000,
+        timeout: 30_000,
       });
-      await page.waitForURL(targetUrl, { timeout: 20_000 });
+      await page.waitForURL(targetUrl, { timeout: 30_000 });
       return;
     } catch (error) {
       lastError = error;

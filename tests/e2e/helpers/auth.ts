@@ -1,4 +1,7 @@
-import { expect, type Page } from "@playwright/test";
+﻿import { expect, type Page } from "@playwright/test";
+import { loadEnvConfig } from "@next/env";
+
+loadEnvConfig(process.cwd());
 
 const authEmail = process.env.PLAYWRIGHT_TEST_EMAIL ?? null;
 const authPassword = process.env.PLAYWRIGHT_TEST_PASSWORD ?? null;
