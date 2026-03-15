@@ -12,6 +12,10 @@ const weeklyProgramCloneSchema = z.object({
   weekStartDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 });
 
+const paramsSchema = z.object({
+  id: z.string().uuid(),
+});
+
 function computeWeekEndDate(weekStartDate: string) {
   const [year, month, day] = weekStartDate.split("-").map(Number);
   const nextDate = new Date(Date.UTC(year, month - 1, day));
@@ -39,7 +43,7 @@ export async function POST(
       });
     }
 
-    const { id } = await params;
+    const { id } = paramsSchema.parse(await params);
     const payload = weeklyProgramCloneSchema.parse(await request.json());
 
     const { data: sourceProgram, error: sourceProgramError } = await supabase
@@ -179,16 +183,16 @@ export async function POST(
       }
 
       await insertWorkoutSetWithRepRangeFallback(supabase, {
-          user_id: user.id,
-          workout_exercise_id: nextWorkoutExerciseId,
-          set_number: sourceSet.set_number,
-          planned_reps: sourceSet.planned_reps,
-          planned_reps_min: sourceSet.planned_reps_min,
-            planned_reps_max: sourceSet.planned_reps_max,
-            actual_reps: null,
-            actual_weight_kg: null,
-            actual_rpe: null,
-          });
+        user_id: user.id,
+        workout_exercise_id: nextWorkoutExerciseId,
+        set_number: sourceSet.set_number,
+        planned_reps: sourceSet.planned_reps,
+        planned_reps_min: sourceSet.planned_reps_min,
+        planned_reps_max: sourceSet.planned_reps_max,
+        actual_reps: null,
+        actual_weight_kg: null,
+        actual_rpe: null,
+      });
     }
 
     return Response.json({
@@ -216,7 +220,7 @@ export async function POST(
       return createApiErrorResponse({
         status: 400,
         code: "WEEKLY_PROGRAM_CLONE_INVALID",
-        message: "Weekly program clone payload is invalid.",
+        message: "Weekly program clone payload or route params are invalid.",
         details: error.flatten(),
       });
     }

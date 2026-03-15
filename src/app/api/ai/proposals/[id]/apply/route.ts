@@ -1,9 +1,6 @@
 import { z } from "zod";
 
-import {
-  applyAiPlanProposal,
-  isAiProposalActionError,
-} from "@/lib/ai/proposal-actions";
+import { applyAiPlanProposal, isAiProposalActionError } from "@/lib/ai/proposal-actions";
 import { getAiPlanProposal } from "@/lib/ai/proposals";
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import {

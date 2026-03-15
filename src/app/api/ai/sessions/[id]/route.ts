@@ -1,10 +1,7 @@
 import { z } from "zod";
 
+import { deleteAiChatSession, isAiChatSessionError } from "@/lib/ai/chat";
 import { createApiErrorResponse } from "@/lib/api/error-response";
-import {
-  deleteAiChatSession,
-  isAiChatSessionError,
-} from "@/lib/ai/chat";
 import { logger } from "@/lib/logger";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 

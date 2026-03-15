@@ -186,6 +186,8 @@
 - [x] Провалидировать параметры `sync/pull` на уровне route handler, а не только на клиенте.
 - [x] Добавить UUID-валидацию route params в direct workout mutation routes (`workout-days/[id]`, `reset`, `workout-sets/[id]`).
 - [x] Добавить regression-покрытие для сценария `sync -> reset -> sync/pull`, подтверждающее чистый snapshot после сброса тренировки.
+- [x] Добавить UUID-валидацию и явные `400` в owner-scoped mutation routes `weekly-programs/[id]/lock`, `weekly-programs/[id]/clone`, `foods/[id]`, `recipes/[id]`, `meals/[id]`, `meal-templates/[id]`.
+- [x] Расширить `api-contracts.spec.ts` invalid-param покрытием для weekly program и nutrition mutation routes.
 - [ ] Пройти все route handlers на валидацию, owner-only доступ, ошибки и idempotency.
 - [ ] Подтвердить, что reset/finish/sync сценарии не создают race conditions и бесконечный polling.
 - [x] Подтвердить, что offline queue и stale cleanup не восстанавливают уже сброшенное состояние.
@@ -196,6 +198,7 @@
 - [x] Есть retrieval, structured knowledge, proposals и snapshots.
 - [x] Для `AI sessions` и `proposal apply/approve` добавлены явные UUID-валидации и предсказуемые `400/404/409`, а не только общие `500`.
 - [x] Удаление AI chat session теперь проверяет owner-scoped существование сессии и не возвращает ложный успех.
+- [x] Санирован user-facing copy в `ai/chat`, `ai/reindex`, `ai/sessions/[id]`, `ai/proposals/[id]/apply`, `ai/proposals/[id]/approve`, чтобы AI surface не отдавал mojibake.
 - [ ] Подтвердить owner-only data access для chat, sessions, retrieval, reindex и proposal apply.
 - [ ] Развести runtime failure UX и provider configuration UX.
 - [ ] Стабилизировать историю чатов, prompt library, web search toggle и image upload.
@@ -365,4 +368,4 @@
 - [x] `tests/e2e/workout-sync.spec.ts` расширен сценарием `reset action clears stale local cache and queued mutations`: тест сидирует stale snapshot и queued mutations в IndexedDB, запускает reset через UI и подтверждает, что после reset и reload локальное offline state уже чистое.
 - [x] `tests/e2e/helpers/workouts.ts` усилен более широким диапазоном будущих недель и большим числом retry, чтобы seed locked-week не падал от накопившихся `active week conflict`.
 - [x] Tranche подтверждён quality gates: `npm run lint`, `npx eslint tests/e2e tests/e2e/helpers`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `16 passed`, `npm run test:smoke` -> `3 passed`.
-- [ ] Следующий backend tranche: добить оставшийся route/backend audit по owner-only access, idempotency и race conditions beyond workout reset/offline path.
+- [ ] Следующий backend tranche: добить оставшийся route/backend audit по owner-only access, idempotency и race conditions, в первую очередь AI retrieval/reindex/proposal ownership и locked-program execution guards.

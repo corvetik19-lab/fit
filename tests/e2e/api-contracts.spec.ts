@@ -19,31 +19,74 @@ test.describe("api contracts", () => {
     await expect(page).toHaveURL(/\/dashboard$/);
     await page.waitForLoadState("networkidle");
 
-    const [dayUpdate, dayReset, setUpdate, invalidAiSession, invalidExportDownload] =
-      await Promise.all([
-        fetchJson(page, {
-          method: "PATCH",
-          url: "/api/workout-days/not-a-uuid",
-          body: { status: "planned" },
-        }),
-        fetchJson(page, {
-          method: "POST",
-          url: "/api/workout-days/not-a-uuid/reset",
-        }),
-        fetchJson(page, {
-          method: "PATCH",
-          url: "/api/workout-sets/not-a-uuid",
-          body: { actualReps: 10, actualWeightKg: 50, actualRpe: 8 },
-        }),
-        fetchJson(page, {
-          method: "DELETE",
-          url: "/api/ai/sessions/not-a-uuid",
-        }),
-        fetchJson(page, {
-          method: "GET",
-          url: "/api/settings/data/export/not-a-uuid/download",
-        }),
-      ]);
+    const [
+      dayUpdate,
+      dayReset,
+      setUpdate,
+      invalidAiSession,
+      invalidExportDownload,
+      invalidWeeklyProgramLock,
+      invalidWeeklyProgramClone,
+      invalidFoodUpdate,
+      invalidFoodDelete,
+      invalidRecipeDelete,
+      invalidMealDelete,
+      invalidMealTemplateDelete,
+    ] = await Promise.all([
+      fetchJson(page, {
+        method: "PATCH",
+        url: "/api/workout-days/not-a-uuid",
+        body: { status: "planned" },
+      }),
+      fetchJson(page, {
+        method: "POST",
+        url: "/api/workout-days/not-a-uuid/reset",
+      }),
+      fetchJson(page, {
+        method: "PATCH",
+        url: "/api/workout-sets/not-a-uuid",
+        body: { actualReps: 10, actualWeightKg: 50, actualRpe: 8 },
+      }),
+      fetchJson(page, {
+        method: "DELETE",
+        url: "/api/ai/sessions/not-a-uuid",
+      }),
+      fetchJson(page, {
+        method: "GET",
+        url: "/api/settings/data/export/not-a-uuid/download",
+      }),
+      fetchJson(page, {
+        method: "POST",
+        url: "/api/weekly-programs/not-a-uuid/lock",
+      }),
+      fetchJson(page, {
+        method: "POST",
+        url: "/api/weekly-programs/not-a-uuid/clone",
+        body: { weekStartDate: "2026-03-16" },
+      }),
+      fetchJson(page, {
+        method: "PATCH",
+        url: "/api/foods/not-a-uuid",
+        body: { name: "Тестовый продукт" },
+      }),
+      fetchJson(page, {
+        method: "DELETE",
+        url: "/api/foods/not-a-uuid",
+      }),
+      fetchJson(page, {
+        method: "DELETE",
+        url: "/api/recipes/not-a-uuid",
+      }),
+      fetchJson(page, {
+        method: "DELETE",
+        url: "/api/meals/not-a-uuid",
+        body: { summaryDate: "2026-03-15" },
+      }),
+      fetchJson(page, {
+        method: "DELETE",
+        url: "/api/meal-templates/not-a-uuid",
+      }),
+    ]);
 
     expect(dayUpdate.status).toBe(400);
     expect((dayUpdate.body as { code?: string } | null)?.code).toBe(
@@ -68,6 +111,41 @@ test.describe("api contracts", () => {
     expect(invalidExportDownload.status).toBe(400);
     expect((invalidExportDownload.body as { code?: string } | null)?.code).toBe(
       "SETTINGS_EXPORT_INVALID",
+    );
+
+    expect(invalidWeeklyProgramLock.status).toBe(400);
+    expect((invalidWeeklyProgramLock.body as { code?: string } | null)?.code).toBe(
+      "WEEKLY_PROGRAM_LOCK_INVALID",
+    );
+
+    expect(invalidWeeklyProgramClone.status).toBe(400);
+    expect((invalidWeeklyProgramClone.body as { code?: string } | null)?.code).toBe(
+      "WEEKLY_PROGRAM_CLONE_INVALID",
+    );
+
+    expect(invalidFoodUpdate.status).toBe(400);
+    expect((invalidFoodUpdate.body as { code?: string } | null)?.code).toBe(
+      "FOOD_UPDATE_INVALID",
+    );
+
+    expect(invalidFoodDelete.status).toBe(400);
+    expect((invalidFoodDelete.body as { code?: string } | null)?.code).toBe(
+      "FOOD_DELETE_INVALID",
+    );
+
+    expect(invalidRecipeDelete.status).toBe(400);
+    expect((invalidRecipeDelete.body as { code?: string } | null)?.code).toBe(
+      "RECIPE_DELETE_INVALID",
+    );
+
+    expect(invalidMealDelete.status).toBe(400);
+    expect((invalidMealDelete.body as { code?: string } | null)?.code).toBe(
+      "MEAL_DELETE_INVALID",
+    );
+
+    expect(invalidMealTemplateDelete.status).toBe(400);
+    expect((invalidMealTemplateDelete.body as { code?: string } | null)?.code).toBe(
+      "MEAL_TEMPLATE_DELETE_INVALID",
     );
   });
 

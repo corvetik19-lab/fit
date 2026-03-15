@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 import { reindexUserKnowledgeBase } from "@/lib/ai/knowledge";
-import { createApiErrorResponse } from "@/lib/api/error-response";
 import { isAdminAccessError, requireAdminRouteAccess } from "@/lib/admin-auth";
+import { createApiErrorResponse } from "@/lib/api/error-response";
 import { logger } from "@/lib/logger";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 

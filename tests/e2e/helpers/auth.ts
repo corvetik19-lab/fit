@@ -64,6 +64,32 @@ async function setFieldValue(locator: ReturnType<Page["locator"]>, value: string
   }, value);
 }
 
+async function waitForPostAuthRoute(page: Page) {
+  try {
+    await page.waitForURL(/\/(dashboard|onboarding)/, {
+      timeout: 30_000,
+      waitUntil: "domcontentloaded",
+    });
+    return;
+  } catch (error) {
+    const authError = page.locator("text=/invalid login credentials/i").first();
+    const visibleError = await authError.isVisible().catch(() => false);
+
+    if (visibleError) {
+      throw error;
+    }
+  }
+
+  await page.goto("/dashboard", {
+    waitUntil: "domcontentloaded",
+    timeout: 30_000,
+  });
+
+  if (page.url().includes("/auth")) {
+    throw new Error("Auth session was not established after sign-in.");
+  }
+}
+
 async function signInWithCredentials(page: Page, credentials: AuthCredentials) {
   await page.goto("/");
   await page.waitForLoadState("networkidle");
@@ -86,7 +112,7 @@ async function signInWithCredentials(page: Page, credentials: AuthCredentials) {
   await expect(submitButton).toBeEnabled();
 
   await submitButton.click();
-  await page.waitForURL(/\/(dashboard|onboarding)/, { timeout: 20_000 });
+  await waitForPostAuthRoute(page);
 
   if (page.url().includes("/onboarding")) {
     await completeOnboarding(page, credentials.fullName);

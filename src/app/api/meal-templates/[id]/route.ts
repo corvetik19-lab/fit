@@ -1,6 +1,12 @@
+import { z } from "zod";
+
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import { logger } from "@/lib/logger";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+
+const paramsSchema = z.object({
+  id: z.string().uuid(),
+});
 
 export async function DELETE(
   _request: Request,
@@ -20,7 +26,7 @@ export async function DELETE(
       });
     }
 
-    const { id } = await params;
+    const { id } = paramsSchema.parse(await params);
     const { data, error } = await supabase
       .from("meal_templates")
       .delete()
@@ -44,6 +50,15 @@ export async function DELETE(
     return Response.json({ ok: true });
   } catch (error) {
     logger.error("meal template delete route failed", { error });
+
+    if (error instanceof z.ZodError) {
+      return createApiErrorResponse({
+        status: 400,
+        code: "MEAL_TEMPLATE_DELETE_INVALID",
+        message: "Идентификатор шаблона питания заполнен некорректно.",
+        details: error.flatten(),
+      });
+    }
 
     return createApiErrorResponse({
       status: 500,

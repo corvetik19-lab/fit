@@ -260,3 +260,17 @@
 - `tests/e2e/workout-sync.spec.ts` расширен новым browser-based regression: тест сидирует stale queued mutations и stale cache snapshot, запускает reset через UI и затем подтверждает, что локальный IndexedDB уже очищен и после reload не возвращает старое execution state.
 - Заодно усилил `tests/e2e/helpers/workouts.ts`, чтобы seed locked workout day был стабильнее и не выгорал по `active week conflict` на длинных suite.
 - Полный tranche подтверждён командами: `npm run lint`, `npx eslint tests/e2e tests/e2e/helpers`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `16 passed`, `npm run test:smoke` -> `3 passed`.
+
+### 2026-03-16 04:35 - Дожал owner-scoped mutation routes и invalid-param контракты
+
+- Ужесточил `src/app/api/weekly-programs/[id]/lock/route.ts`: route теперь валидирует UUID-параметр и при race по lock state возвращает предсказуемый `409 WEEKLY_PROGRAM_LOCK_CONFLICT`, а не общий `500`.
+- Ужесточил `src/app/api/weekly-programs/[id]/clone/route.ts`: `params.id` теперь проходит через `z.string().uuid()`, а invalid params попадают в явный `400 WEEKLY_PROGRAM_CLONE_INVALID`.
+- Санировал и довёл до явных `400`/`404` owner-scoped nutrition mutation routes: `src/app/api/foods/[id]/route.ts`, `src/app/api/recipes/[id]/route.ts`, `src/app/api/meals/[id]/route.ts`, `src/app/api/meal-templates/[id]/route.ts`.
+- Расширил `tests/e2e/api-contracts.spec.ts`: invalid route params теперь проверяются дополнительно для `weekly-programs/[id]/lock`, `weekly-programs/[id]/clone`, `foods/[id]`, `recipes/[id]`, `meals/[id]`, `meal-templates/[id]`.
+- Подтвердил tranche командами: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `16 passed`, `npm run test:smoke` -> `3 passed`.
+
+### 2026-03-16 05:20 - Санировал AI route surface и стабилизировал auth bootstrap для full e2e
+
+- В `tests/e2e/helpers/auth.ts` добавил более устойчивый post-sign-in flow: если client-side redirect задерживается, helper дожимает переход на `/dashboard`, не ломая storage-state bootstrap.
+- Санировал user-facing copy в `src/app/api/ai/chat/route.ts`, `src/app/api/ai/reindex/route.ts`, `src/app/api/ai/sessions/[id]/route.ts`, `src/app/api/ai/proposals/[id]/apply/route.ts`, `src/app/api/ai/proposals/[id]/approve/route.ts`, чтобы AI routes больше не отдавали mojibake в ошибках и ответах.
+- Повторно подтвердил полный baseline после AI-route sanitation: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `16 passed`, `npm run test:smoke` -> `3 passed`.

@@ -1,6 +1,12 @@
+import { z } from "zod";
+
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import { logger } from "@/lib/logger";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+
+const paramsSchema = z.object({
+  id: z.string().uuid(),
+});
 
 export async function POST(
   _request: Request,
@@ -20,7 +26,7 @@ export async function POST(
       });
     }
 
-    const { id } = await params;
+    const { id } = paramsSchema.parse(await params);
     const { data: program, error: programError } = await supabase
       .from("weekly_programs")
       .select("id, title, status, is_locked, week_start_date, week_end_date, created_at")
@@ -58,19 +64,26 @@ export async function POST(
       .eq("user_id", user.id)
       .eq("is_locked", false)
       .select("id, title, status, is_locked, week_start_date, week_end_date, created_at")
-      .single();
+      .maybeSingle();
 
     if (lockedProgramError) {
       if (lockedProgramError.code === "23505") {
         return createApiErrorResponse({
           status: 409,
           code: "WEEKLY_PROGRAM_ACTIVE_WEEK_CONFLICT",
-          message:
-            "An active weekly program already exists for this week.",
+          message: "An active weekly program already exists for this week.",
         });
       }
 
       throw lockedProgramError;
+    }
+
+    if (!lockedProgram) {
+      return createApiErrorResponse({
+        status: 409,
+        code: "WEEKLY_PROGRAM_LOCK_CONFLICT",
+        message: "Weekly program lock state changed during the request. Reload and try again.",
+      });
     }
 
     return Response.json({
@@ -78,6 +91,15 @@ export async function POST(
     });
   } catch (error) {
     logger.error("weekly program lock route failed", { error });
+
+    if (error instanceof z.ZodError) {
+      return createApiErrorResponse({
+        status: 400,
+        code: "WEEKLY_PROGRAM_LOCK_INVALID",
+        message: "Weekly program route params are invalid.",
+        details: error.flatten(),
+      });
+    }
 
     return createApiErrorResponse({
       status: 500,

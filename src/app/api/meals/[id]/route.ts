@@ -9,6 +9,10 @@ const mealDeleteSchema = z.object({
   summaryDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 });
 
+const paramsSchema = z.object({
+  id: z.string().uuid(),
+});
+
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -28,7 +32,7 @@ export async function DELETE(
     }
 
     const payload = mealDeleteSchema.parse(await request.json());
-    const { id } = await params;
+    const { id } = paramsSchema.parse(await params);
     const { data: meal, error: mealLookupError } = await supabase
       .from("meals")
       .select("id")
@@ -72,7 +76,7 @@ export async function DELETE(
       return createApiErrorResponse({
         status: 400,
         code: "MEAL_DELETE_INVALID",
-        message: "Некорректные данные для удаления приёма пищи.",
+        message: "Данные для удаления приёма пищи заполнены некорректно.",
         details: error.flatten(),
       });
     }

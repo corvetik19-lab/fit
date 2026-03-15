@@ -13,6 +13,10 @@ const foodUpdateSchema = z.object({
   barcode: z.string().trim().max(64).nullable().optional(),
 });
 
+const paramsSchema = z.object({
+  id: z.string().uuid(),
+});
+
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -32,7 +36,7 @@ export async function PATCH(
     }
 
     const payload = foodUpdateSchema.parse(await request.json());
-    const { id } = await params;
+    const { id } = paramsSchema.parse(await params);
     const updateData: Record<string, unknown> = {};
 
     if (payload.name !== undefined) {
@@ -95,7 +99,7 @@ export async function PATCH(
       return createApiErrorResponse({
         status: 400,
         code: "FOOD_UPDATE_INVALID",
-        message: "Данные продукта заполнены некорректно.",
+        message: "Данные продукта или route params заполнены некорректно.",
         details: error.flatten(),
       });
     }
@@ -126,7 +130,7 @@ export async function DELETE(
       });
     }
 
-    const { id } = await params;
+    const { id } = paramsSchema.parse(await params);
     const { data, error } = await supabase
       .from("foods")
       .delete()
@@ -150,6 +154,15 @@ export async function DELETE(
     return Response.json({ ok: true });
   } catch (error) {
     logger.error("food delete route failed", { error });
+
+    if (error instanceof z.ZodError) {
+      return createApiErrorResponse({
+        status: 400,
+        code: "FOOD_DELETE_INVALID",
+        message: "Идентификатор продукта заполнен некорректно.",
+        details: error.flatten(),
+      });
+    }
 
     return createApiErrorResponse({
       status: 500,
