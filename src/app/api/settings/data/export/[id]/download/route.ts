@@ -103,8 +103,6 @@ export async function GET(
       },
     });
   } catch (error) {
-    logger.error("settings export download route failed", { error });
-
     if (error instanceof z.ZodError) {
       return createApiErrorResponse({
         status: 400,
@@ -113,6 +111,8 @@ export async function GET(
         details: error.flatten(),
       });
     }
+
+    logger.error("settings export download route failed", { error });
 
     return createApiErrorResponse({
       status: 500,

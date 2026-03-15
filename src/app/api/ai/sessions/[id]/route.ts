@@ -46,8 +46,6 @@ export async function DELETE(_: Request, context: RouteContext) {
 
     return Response.json({ data: { deleted: true, sessionId: id } });
   } catch (error) {
-    logger.error("delete ai chat session route failed", { error });
-
     if (error instanceof z.ZodError) {
       return createApiErrorResponse({
         status: 400,
@@ -64,6 +62,8 @@ export async function DELETE(_: Request, context: RouteContext) {
         message: error.message,
       });
     }
+
+    logger.error("delete ai chat session route failed", { error });
 
     return createApiErrorResponse({
       status: 500,

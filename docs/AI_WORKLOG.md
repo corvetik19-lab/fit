@@ -290,3 +290,16 @@
 - В `src/app/settings/page.tsx`, `src/app/ai/page.tsx`, `src/app/nutrition/page.tsx` и `src/app/api/settings/billing/route.ts` user-facing server surfaces переведены на этот fail-open path, поэтому transient billing-access ошибки больше не ломают открытие основных экранов и billing center.
 - Тем же паттерном перевёл user-facing AI routes: `src/app/api/ai/chat/route.ts`, `src/app/api/ai/assistant/route.ts`, `src/app/api/ai/meal-photo/route.ts`, `src/app/api/ai/meal-plan/route.ts`, `src/app/api/ai/workout-plan/route.ts`, `src/app/api/ai/proposals/[id]/apply/route.ts`, `src/app/api/ai/proposals/[id]/approve/route.ts`. Теперь AI surface не падает из-за временного сбоя billing-access слоя и использует безопасную fallback policy.
 - Подтвердил tranche полным прогоном: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `18 passed`, `npm run test:smoke` -> `3 passed`.
+
+### 2026-03-16 08:05 - Снизил noisy route errors и довёл admin surfaces до fail-open
+
+- В `src/app/api/ai/sessions/[id]/route.ts`, `src/app/api/ai/chat/route.ts`, `src/app/api/ai/assistant/route.ts`, `src/app/api/settings/data/export/[id]/download/route.ts`, `src/app/api/workout-days/[id]/route.ts`, `src/app/api/workout-sets/[id]/route.ts`, `src/app/api/weekly-programs/[id]/lock/route.ts`, `src/app/api/weekly-programs/[id]/clone/route.ts`, `src/app/api/foods/[id]/route.ts`, `src/app/api/recipes/[id]/route.ts`, `src/app/api/meals/[id]/route.ts`, `src/app/api/meal-templates/[id]/route.ts` разнёс expected и unexpected path в `catch`: валидируемые `400/404` больше не шумят как route-level `logger.error`.
+- В `src/app/api/admin/stats/route.ts` добавил `createFallbackAdminStatsSnapshot()`, а в `src/app/api/admin/operations/route.ts` — `createFallbackOperationsSnapshot()`. Теперь при временном сбое внешнего Supabase/fetch слоя admin health и operations inbox отдают безопасный fallback snapshot с `meta.degraded`, а не общий `500`.
+- Повторный auth/e2e прогон подтвердил эффект: noisy `ZodError`/`AI_CHAT_SESSION_NOT_FOUND` логи из contract-tested routes ушли, а admin route timeout теперь деградирует до `warn + fallback`, не ломая suite.
+- Подтвердил tranche полным прогоном: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `18 passed`, `npm run test:smoke` -> `3 passed`.
+
+### 2026-03-16 08:30 - Показал degraded режим прямо в admin UI
+
+- В `src/components/admin-health-dashboard.tsx` и `src/components/admin-operations-inbox.tsx` добавил чтение `meta.degraded` из API и явные amber-notice баннеры для operator UX.
+- Теперь `/admin` и inbox операций не сваливаются в молчаливо пустые карточки: если сервер отдал fallback snapshot, оператор видит, что это резервный снимок и часть источников временно недоступна.
+- Подтвердил slice командами: `npm run lint`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/admin-app.spec.ts --workers=1` -> `1 passed`.

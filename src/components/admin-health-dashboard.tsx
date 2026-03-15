@@ -109,6 +109,9 @@ type AdminStatsPayload = {
 type AdminStatsResponse =
   | {
       data?: AdminStatsPayload;
+      meta?: {
+        degraded?: boolean;
+      };
       message?: string;
     }
   | null;
@@ -281,6 +284,7 @@ export function AdminHealthDashboard({
   canTriggerSentrySmokeTest,
 }: AdminHealthDashboardProps) {
   const [stats, setStats] = useState<AdminStatsPayload | null>(null);
+  const [isDegraded, setIsDegraded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSendingSmokeTest, setIsSendingSmokeTest] = useState(false);
@@ -304,6 +308,7 @@ export function AdminHealthDashboard({
   const refreshStats = useCallback(async () => {
     setIsRefreshing(true);
     setError(null);
+    setIsDegraded(false);
 
     try {
       const response = await fetch("/api/admin/stats", {
@@ -317,6 +322,7 @@ export function AdminHealthDashboard({
       }
 
       setStats(payload.data);
+      setIsDegraded(Boolean(payload.meta?.degraded));
     } finally {
       setIsRefreshing(false);
     }
@@ -575,6 +581,11 @@ export function AdminHealthDashboard({
           </div>
 
           {error ? <p className="rounded-2xl border border-red-300/60 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p> : null}
+          {isDegraded ? (
+            <p className="rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              Часть служебных источников сейчас недоступна. Панель показывает безопасный резервный снимок и может временно не отражать последние изменения.
+            </p>
+          ) : null}
           {smokeTestMessage ? <p className="rounded-2xl border border-sky-300/60 bg-sky-50 px-4 py-3 text-sm text-sky-800">{smokeTestMessage}</p> : null}
           {dashboardWarmMessage ? <p className="rounded-2xl border border-sky-300/60 bg-sky-50 px-4 py-3 text-sm text-sky-800">{dashboardWarmMessage}</p> : null}
           {nutritionSummariesMessage ? <p className="rounded-2xl border border-sky-300/60 bg-sky-50 px-4 py-3 text-sm text-sky-800">{nutritionSummariesMessage}</p> : null}

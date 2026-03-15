@@ -214,7 +214,13 @@ function getUserLabel(
 
 async function readJsonSafely(response: Response) {
   return (await response.json().catch(() => null)) as
-    | { data?: AdminOperationsPayload; message?: string }
+    | {
+        data?: AdminOperationsPayload;
+        meta?: {
+          degraded?: boolean;
+        };
+        message?: string;
+      }
     | null;
 }
 
@@ -224,6 +230,7 @@ export function AdminOperationsInbox({
   currentAdminRole: PlatformAdminRole;
 }) {
   const [payload, setPayload] = useState<AdminOperationsPayload | null>(null);
+  const [isDegraded, setIsDegraded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -239,6 +246,7 @@ export function AdminOperationsInbox({
   const refreshInbox = useCallback(async () => {
     setIsRefreshing(true);
     setError(null);
+    setIsDegraded(false);
 
     try {
       const response = await fetch("/api/admin/operations", {
@@ -252,6 +260,7 @@ export function AdminOperationsInbox({
       }
 
       setPayload(nextPayload.data);
+      setIsDegraded(Boolean(nextPayload.meta?.degraded));
     } finally {
       setIsRefreshing(false);
     }
@@ -385,6 +394,12 @@ export function AdminOperationsInbox({
           {error ? (
             <p className="rounded-2xl border border-red-300/60 bg-red-50 px-4 py-3 text-sm text-red-700">
               {error}
+            </p>
+          ) : null}
+
+          {isDegraded ? (
+            <p className="rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              Очередь операций показана из резервного снимка. Часть фоновых данных сейчас недоступна, поэтому обновления могут появиться с задержкой.
             </p>
           ) : null}
 

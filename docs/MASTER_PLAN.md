@@ -172,6 +172,7 @@
 ### Admin UI
 
 - [x] Есть `/admin`, каталог пользователей, user detail, health dashboards и operations inbox.
+- [x] Degraded/fallback режим в `admin health` и `operations inbox` явно показан в UI, а не прячется за молчаливым пустым состоянием.
 - [ ] Полностью убрать сырые технические тексты и mojibake из admin UI.
 - [ ] Оставить детали ролей и capability only для root/super-admin.
 - [ ] Довести каталоги и карточки пользователя до секционного desktop/mobile UX без перегруза.
@@ -202,6 +203,7 @@
 - [x] Удаление AI chat session теперь проверяет owner-scoped существование сессии и не возвращает ложный успех.
 - [x] `AI chat` и `AI assistant` теперь отклоняют неизвестный или чужой валидный `sessionId` с `404 AI_CHAT_SESSION_NOT_FOUND`, а не создают или продолжают новую сессию молча.
 - [x] Санирован user-facing copy в `ai/chat`, `ai/reindex`, `ai/sessions/[id]`, `ai/proposals/[id]/apply`, `ai/proposals/[id]/approve`, чтобы AI surface не отдавал mojibake.
+- [x] Expected contract errors (`400/404` на invalid params и owner-scoped misses) больше не логируются как route-level `error` в contract-tested mutation routes и AI session routes.
 - [ ] Подтвердить owner-only data access для chat, sessions, retrieval, reindex и proposal apply.
 - [ ] Развести runtime failure UX и provider configuration UX.
 - [ ] Стабилизировать историю чатов, prompt library, web search toggle и image upload.
@@ -219,6 +221,7 @@
 - [x] Sentry, Vercel Analytics и health dashboards уже встроены частично.
 - [ ] Завершить Sentry rollout на production env.
 - [x] Добавить базовую валидацию `userId`-параметров для internal jobs и явные `400`, а не общие `500`.
+- [x] `admin/stats` и `admin/operations` теперь fail-open: при временном сбое внешних запросов операторские экраны получают безопасный fallback snapshot вместо общего `500`.
 - [ ] Подтвердить auth/visibility для cron routes и internal jobs.
 - [ ] Задокументировать или устранить допустимые build warnings.
 

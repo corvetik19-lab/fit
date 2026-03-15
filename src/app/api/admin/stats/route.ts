@@ -33,6 +33,124 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+function createFallbackAdminStatsSnapshot() {
+  return {
+    readiness: {
+      supabasePublicEnv: hasSupabasePublicEnv(),
+      aiGatewayEnv: hasAiGatewayEnv(),
+      aiRuntimeEnv: hasAiRuntimeEnv(),
+      aiEmbeddingEnv: hasAiEmbeddingEnv(),
+      openRouterEnv: hasOpenRouterEnv(),
+      voyageEnv: hasVoyageEnv(),
+      serviceRoleEnv: Boolean(serverEnv.SUPABASE_SERVICE_ROLE_KEY),
+      sentryRuntimeEnv: hasSentryRuntimeEnv(),
+      sentryBuildEnv: hasSentryBuildEnv(),
+      stripeCheckoutEnv: hasStripeCheckoutEnv(),
+      stripePortalEnv: hasStripePortalEnv(),
+      stripeWebhookEnv: hasStripeWebhookEnv(),
+      vercelRuntimeEnv: hasVercelRuntimeEnv(),
+      workoutSyncPullEnv: true,
+    },
+    observability: {
+      sentry: {
+        runtimeMissing: getMissingSentryRuntimeEnv(),
+        buildMissing: getMissingSentryBuildEnv(),
+        org: serverEnv.SENTRY_ORG ?? null,
+        project: serverEnv.SENTRY_PROJECT ?? null,
+        environment: serverEnv.SENTRY_ENVIRONMENT ?? null,
+      },
+      vercel: {
+        environment: getVercelRuntimeEnv(),
+      },
+      stripe: {
+        checkoutMissing: getMissingStripeCheckoutEnv(),
+        portalMissing: getMissingStripePortalEnv(),
+        webhookMissing: getMissingStripeWebhookEnv(),
+        priceId: serverEnv.STRIPE_PREMIUM_MONTHLY_PRICE_ID ?? null,
+      },
+      ai: {
+        gatewayEnabled: hasAiGatewayEnv(),
+        runtimeEnabled: hasAiRuntimeEnv(),
+        embeddingEnabled: hasAiEmbeddingEnv(),
+        openRouterEnabled: hasOpenRouterEnv(),
+        voyageEnabled: hasVoyageEnv(),
+        openRouterBaseUrl: serverEnv.OPENROUTER_BASE_URL ?? null,
+        openRouterModel: serverEnv.OPENROUTER_CHAT_MODEL ?? null,
+        voyageModel: serverEnv.VOYAGE_EMBEDDING_MODEL ?? null,
+      },
+    },
+    snapshot: {
+      users: 0,
+      exercises: 0,
+      activePrograms: 0,
+      queuedSupportActions: 0,
+      aiEvalRuns: 0,
+      aiChatSessions: 0,
+      aiChatMessages: 0,
+      aiPlanProposals: 0,
+      aiSafetyEvents: 0,
+      knowledgeChunks: 0,
+      knowledgeEmbeddings: 0,
+      knowledgeReindexes: 0,
+    },
+    systemHealth: {
+      users: 0,
+      exercises: 0,
+      activePrograms: 0,
+      knowledgeChunks: 0,
+      knowledgeEmbeddings: 0,
+      latestProfileAt: null,
+      latestProgramAt: null,
+    },
+    knowledgeHealth: {
+      runtimeSnapshots: 0,
+      structuredFactSheets: 0,
+      structuredFacts: 0,
+      recentReindexes24h: 0,
+      embeddingCoverageRatio: null,
+      latestRuntimeSnapshotAt: null,
+      latestReindexAt: null,
+      latestReindexMode: null,
+      latestReindexSearchMode: null,
+    },
+    syncHealth: {
+      workoutDaysInProgress: 0,
+      workoutDaysDone: 0,
+      loggedWorkoutSets: 0,
+      queuedSupportActions: 0,
+      completedSupportActions: 0,
+      failedSupportActions: 0,
+      queuedExportJobs: 0,
+      activeDeletionRequests: 0,
+      dueDeletionRequests: 0,
+      queuedAiEvalRuns: 0,
+      runningAiEvalRuns: 0,
+      failedAiEvalRuns: 0,
+      latestWorkoutSetAt: null,
+      latestSupportActionAt: null,
+      latestExportJobAt: null,
+      latestDeletionRequestAt: null,
+      latestAiEvalRunAt: null,
+    },
+    billingHealth: {
+      stripeSubscriptions: 0,
+      stripeActiveSubscriptions: 0,
+      stripeTrialSubscriptions: 0,
+      stripePastDueSubscriptions: 0,
+      stripeLinkedCustomers: 0,
+      queuedBillingReviews: 0,
+      completedBillingReviews: 0,
+      recentBillingReconciles: 0,
+      failedBillingReconciles: 0,
+      recentCheckoutReturnReconciles: 0,
+      latestBillingReviewAt: null,
+      latestBillingReconcileAt: null,
+      latestStripeEventAt: null,
+      latestCheckoutReturnReconcileAt: null,
+    },
+  };
+}
+
 export async function GET() {
   try {
     await requireAdminRouteAccess("view_admin_dashboard");
@@ -531,7 +649,16 @@ export async function GET() {
       },
     });
   } catch (error) {
-    logger.error("admin stats route failed", { error });
+    if (!isAdminAccessError(error)) {
+      logger.warn("admin stats route degraded to fallback", { error });
+
+      return Response.json({
+        data: createFallbackAdminStatsSnapshot(),
+        meta: {
+          degraded: true,
+        },
+      });
+    }
 
     if (isAdminAccessError(error)) {
       return createApiErrorResponse({

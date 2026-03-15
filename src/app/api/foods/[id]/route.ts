@@ -93,8 +93,6 @@ export async function PATCH(
 
     return Response.json({ data });
   } catch (error) {
-    logger.error("food update route failed", { error });
-
     if (error instanceof z.ZodError) {
       return createApiErrorResponse({
         status: 400,
@@ -103,6 +101,8 @@ export async function PATCH(
         details: error.flatten(),
       });
     }
+
+    logger.error("food update route failed", { error });
 
     return createApiErrorResponse({
       status: 500,
@@ -153,8 +153,6 @@ export async function DELETE(
 
     return Response.json({ ok: true });
   } catch (error) {
-    logger.error("food delete route failed", { error });
-
     if (error instanceof z.ZodError) {
       return createApiErrorResponse({
         status: 400,
@@ -163,6 +161,8 @@ export async function DELETE(
         details: error.flatten(),
       });
     }
+
+    logger.error("food delete route failed", { error });
 
     return createApiErrorResponse({
       status: 500,

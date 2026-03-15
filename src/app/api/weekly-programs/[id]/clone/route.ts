@@ -199,6 +199,15 @@ export async function POST(
       data: createdProgram,
     });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return createApiErrorResponse({
+        status: 400,
+        code: "WEEKLY_PROGRAM_CLONE_INVALID",
+        message: "Weekly program clone payload or route params are invalid.",
+        details: error.flatten(),
+      });
+    }
+
     logger.error("weekly program clone route failed", { error });
 
     if (createdProgramId) {
@@ -214,15 +223,6 @@ export async function POST(
           createdProgramId,
         });
       }
-    }
-
-    if (error instanceof z.ZodError) {
-      return createApiErrorResponse({
-        status: 400,
-        code: "WEEKLY_PROGRAM_CLONE_INVALID",
-        message: "Weekly program clone payload or route params are invalid.",
-        details: error.flatten(),
-      });
     }
 
     return createApiErrorResponse({

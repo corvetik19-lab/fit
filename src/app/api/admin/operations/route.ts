@@ -117,6 +117,26 @@ function sortByActivity<T extends { created_at: string; updated_at?: string | nu
   });
 }
 
+function createFallbackOperationsSnapshot() {
+  return {
+    inbox: [],
+    recent: [],
+    summary: {
+      pending: {
+        deletionRequests: 0,
+        exportJobs: 0,
+        supportActions: 0,
+        total: 0,
+      },
+      recent: {
+        canceled: 0,
+        completed: 0,
+        failed: 0,
+      },
+    },
+  };
+}
+
 export async function GET() {
   try {
     await requireAdminRouteAccess("view_admin_dashboard");
@@ -328,7 +348,16 @@ export async function GET() {
       },
     });
   } catch (error) {
-    logger.error("admin operations route failed", { error });
+    if (!isAdminAccessError(error)) {
+      logger.warn("admin operations route degraded to fallback", { error });
+
+      return Response.json({
+        data: createFallbackOperationsSnapshot(),
+        meta: {
+          degraded: true,
+        },
+      });
+    }
 
     if (isAdminAccessError(error)) {
       return createApiErrorResponse({
