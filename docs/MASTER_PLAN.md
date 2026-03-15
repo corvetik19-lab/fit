@@ -185,6 +185,7 @@
 - [x] Запретить перевод workout day в `done`, если не заполнены и не сохранены все сеты дня.
 - [x] Провалидировать параметры `sync/pull` на уровне route handler, а не только на клиенте.
 - [x] Добавить UUID-валидацию route params в direct workout mutation routes (`workout-days/[id]`, `reset`, `workout-sets/[id]`).
+- [x] Добавить regression-покрытие для сценария `sync -> reset -> sync/pull`, подтверждающее чистый snapshot после сброса тренировки.
 - [ ] Пройти все route handlers на валидацию, owner-only доступ, ошибки и idempotency.
 - [ ] Подтвердить, что reset/finish/sync сценарии не создают race conditions и бесконечный polling.
 - [ ] Подтвердить, что offline queue и stale cleanup не восстанавливают уже сброшенное состояние.
@@ -349,3 +350,10 @@
 - [x] Добавлен `tests/e2e/helpers/ai.ts`, который сидирует пользовательскую AI session через blocked-flow `/api/ai/chat` без зависимости от платного live runtime.
 - [x] `tests/e2e/ownership-isolation.spec.ts` теперь подтверждает owner-scoped поведение и для single-session delete, и для bulk clear AI history.
 - [x] Tranche подтверждён quality gates: `npm run lint`, `npx eslint tests/e2e tests/e2e/helpers`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `14 passed`, `npm run test:smoke` -> `3 passed`.
+
+## 2026-03-15 workout reset regression addendum
+
+- [x] `tests/e2e/workout-sync.spec.ts` расширен отдельным regression-сценарием `sync -> done -> reset -> sync/pull`, который подтверждает, что после сброса тренировки `status` снова `planned`, `session_duration_seconds` сброшен в `0`, а все `actual_reps`, `actual_weight_kg`, `actual_rpe` очищены.
+- [x] Для `workout sync contracts` поднят timeout до `60_000`, чтобы длинный seed/lock/reset flow не давал ложный красный только из-за времени, а не из-за реальной проблемы контракта.
+- [x] Tranche подтверждён quality gates: `npm run lint`, `npx eslint tests/e2e tests/e2e/helpers`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `15 passed`, `npm run test:smoke` -> `3 passed`.
+- [ ] Следующий backend tranche: подтвердить уже именно локальный offline/queue контур, что stale IndexedDB state не может вернуть execution после reset даже при неблагоприятной сети и повторном hydrate.

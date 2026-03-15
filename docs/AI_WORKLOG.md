@@ -244,3 +244,10 @@
 - Расширил `tests/e2e/ownership-isolation.spec.ts`: root-admin теперь дополнительно проверяется на owner-isolation в AI history и не может удалить чужую AI session по `DELETE /api/ai/sessions/{id}`.
 - Тем же сценарием подтверждён bulk-clear contract: `DELETE /api/ai/sessions` под root-admin очищает только его собственную историю, а пользователь после этого всё ещё может удалить свою seeded session по `id`.
 - Полный tranche подтверждён прогоном `npm run lint`, `npx eslint tests/e2e tests/e2e/helpers`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `14 passed`, `npm run test:smoke` -> `3 passed`.
+
+### 2026-03-16 00:35 - Добавил workout reset regression для clean snapshot после sync
+
+- Расширил `tests/e2e/workout-sync.spec.ts` новым сценарием `reset clears synced execution and pull stays clean afterwards`.
+- Новый e2e сначала доводит locked workout day до сохранённого `done` через `sync/push`, затем вызывает `POST /api/workout-days/{id}/reset` и проверяет два последовательных `sync/pull`, чтобы убедиться: после reset не возвращаются старые `actual_reps`, `actual_weight_kg`, `actual_rpe`, а день снова `planned` с `session_duration_seconds = 0`.
+- Для `workout sync contracts` поднял timeout до `60_000`, потому что длинный seed/lock/reset flow реально выходит за дефолтные `30s`, хотя сам контракт уже зелёный.
+- Подтвердил tranche командами: `npm run lint`, `npx eslint tests/e2e tests/e2e/helpers`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `15 passed`, `npm run test:smoke` -> `3 passed`.
