@@ -341,3 +341,24 @@
 - В `tests/e2e/api-contracts.spec.ts` добавил контракт для обычного пользователя: `POST /api/ai/reindex` остаётся строго admin-only и возвращает `403 ADMIN_REQUIRED`.
 - В `tests/e2e/admin-app.spec.ts` добавил root-admin сценарий на невалидный `targetUserId`, подтверждающий `400 REINDEX_INVALID`.
 - Slice подтверждён таргетными прогонами `npx eslint src/app/api/ai/reindex/route.ts tests/e2e/api-contracts.spec.ts tests/e2e/admin-app.spec.ts` и Playwright contract-suite для `admin-app` + `api-contracts`.
+
+### 2026-03-16 10:55 - Расширил прямой RLS suite до AI history и self-service данных
+
+- В `tests/rls/helpers/supabase-rls.ts` fixture расширен прямыми service-role вставками в `ai_chat_sessions`, `ai_chat_messages`, `export_jobs`, `deletion_requests`, `user_context_snapshots`, `knowledge_chunks`, чтобы direct RLS tests покрывали не только proposals/programs/exercises, но и AI/history, retrieval corpus плюс self-service data.
+- В `tests/rls/ownership.spec.ts` добавлены прямые owner-only проверки: обычный пользователь через публичный Supabase client видит свои AI chat/session rows, export/deletion rows, context snapshot и retrieval chunk, а второй auth-user под тем же RLS не видит эти записи вообще.
+- Отдельно зафиксировано, что `support_actions` не используется как direct user-visible RLS surface: self-service billing snapshot собирается через admin-backed path, поэтому для прямого row-level coverage выбран `user_context_snapshots`.
+- Tranche подтверждён командами `npx eslint tests/rls tests/rls/helpers`, `npm run test:rls`, затем повторным общим baseline `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `22 passed`, `npm run test:smoke` -> `3 passed`.
+
+### 2026-03-16 11:25 - Закрыл targeted advisor warnings для AI history и self-service
+
+- Через Supabase MCP посмотрел `security` и `performance` advisors и взял узкий production-tranche по реальным hot tables: `ai_chat_messages`, `export_jobs`, `deletion_requests`, `support_actions`, `admin_audit_logs`.
+- Применил корректирующую миграцию `supabase/migrations/20260315173518_ai_history_self_service_index_hardening.sql`: функция `public.set_updated_at()` теперь с фиксированным `search_path = public, pg_temp`, а под AI/history/self-service query paths добавлены индексы на `session_id`, `requested_by`, `actor_user_id`, `target_user_id` и составные user/status маршруты.
+- Повторный прогон advisors подтвердил эффект: warning `function_search_path_mutable` для `public.set_updated_at()` ушёл, а targeted `unindexed_foreign_keys` по этой группе таблиц исчезли.
+- При этом глобальный advisor backlog сознательно оставлен отдельным последующим tranche: в проекте ещё есть `auth_rls_initplan` и `rls_enabled_no_policy` для более широкого круга admin/system tables, и это уже следующий системный слой, а не точечный hotfix.
+
+### 2026-03-16 11:45 - Закрыл targeted auth_rls_initplan для AI history и retrieval
+
+- Через `pg_policies` снял реальные owner-policy определения для `ai_chat_sessions`, `ai_chat_messages`, `export_jobs`, `deletion_requests`, `user_context_snapshots`, `knowledge_chunks`, `knowledge_embeddings`, `ai_safety_events` и подтвердил, что это безопасный массовый паттерн `auth.uid() = user_id`.
+- Применил корректирующую миграцию `supabase/migrations/20260315173725_ai_history_self_service_rls_initplan_hardening.sql`: все эти owner policies переведены на `(select auth.uid())`, чтобы Supabase больше не пересчитывал auth-функции per-row на горячих AI/history/self-service таблицах.
+- Повторный прогон performance advisors подтвердил, что targeted `auth_rls_initplan` warnings по этим таблицам ушли; после этого отдельно прогнал `npm run test:rls`, чтобы подтвердить сохранение реальной row-level изоляции после policy-alter.
+- Оставшийся advisor backlog теперь сузился до других product/admin/system таблиц и отдельного security-слоя `rls_enabled_no_policy`, который уже пойдёт следующим DB tranche, а не как часть AI/history hotfix.

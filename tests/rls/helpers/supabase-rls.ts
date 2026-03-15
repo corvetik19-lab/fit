@@ -142,6 +142,7 @@ export async function seedRlsOwnershipFixture() {
   const adminUserId = await findAuthUserIdByEmail(getAuthCredentials("admin").email);
   const seed = crypto.randomUUID().slice(0, 8);
   const weekWindow = buildFixtureWeekWindow(seed);
+  const deletionHoldUntil = addUtcDays(new Date("2035-01-01T00:00:00.000Z"), 14).toISOString();
 
   const { data: userProposalRow, error: userProposalError } = await supabase
     .from("ai_plan_proposals")
@@ -255,10 +256,114 @@ export async function seedRlsOwnershipFixture() {
     throw programError;
   }
 
+  const { data: chatSessionRow, error: chatSessionError } = await supabase
+    .from("ai_chat_sessions")
+    .insert({
+      user_id: userId,
+      title: `RLS Chat Session ${seed}`,
+    })
+    .select("id")
+    .single();
+
+  if (chatSessionError) {
+    throw chatSessionError;
+  }
+
+  const { data: chatMessageRow, error: chatMessageError } = await supabase
+    .from("ai_chat_messages")
+    .insert({
+      user_id: userId,
+      session_id: chatSessionRow.id,
+      role: "user",
+      content: `RLS chat message ${seed}`,
+    })
+    .select("id")
+    .single();
+
+  if (chatMessageError) {
+    throw chatMessageError;
+  }
+
+  const { data: exportJobRow, error: exportJobError } = await supabase
+    .from("export_jobs")
+    .insert({
+      user_id: userId,
+      requested_by: userId,
+      format: "json_csv_zip",
+      status: "queued",
+    })
+    .select("id, status")
+    .single();
+
+  if (exportJobError) {
+    throw exportJobError;
+  }
+
+  const { data: deletionRequestRow, error: deletionRequestError } = await supabase
+    .from("deletion_requests")
+    .upsert(
+      {
+        user_id: userId,
+        requested_by: userId,
+        status: "holding",
+        hold_until: deletionHoldUntil,
+      },
+      {
+        onConflict: "user_id",
+      },
+    )
+    .select("id, status")
+    .single();
+
+  if (deletionRequestError) {
+    throw deletionRequestError;
+  }
+
+  const { data: contextSnapshotRow, error: contextSnapshotError } = await supabase
+    .from("user_context_snapshots")
+    .insert({
+      user_id: userId,
+      snapshot_reason: "rls_fixture",
+      payload: {
+        summary: `RLS context snapshot ${seed}`,
+        source: "rls_test",
+      },
+    })
+    .select("id")
+    .single();
+
+  if (contextSnapshotError) {
+    throw contextSnapshotError;
+  }
+
+  const { data: knowledgeChunkRow, error: knowledgeChunkError } = await supabase
+    .from("knowledge_chunks")
+    .insert({
+      user_id: userId,
+      source_type: "rls_fixture",
+      source_id: seed,
+      content: `RLS knowledge chunk ${seed}`,
+      metadata: {
+        source: "rls_test",
+      },
+    })
+    .select("id")
+    .single();
+
+  if (knowledgeChunkError) {
+    throw knowledgeChunkError;
+  }
+
   return {
+    chatMessageId: chatMessageRow.id as string,
+    chatSessionId: chatSessionRow.id as string,
+    contextSnapshotId: contextSnapshotRow.id as string,
     adminProposalId: adminProposalRow.id as string,
     adminUserId,
+    deletionRequestId: deletionRequestRow.id as string,
     exerciseId: exerciseRow.id as string,
+    exportJobId: exportJobRow.id as string,
+    knowledgeChunkId: knowledgeChunkRow.id as string,
     programId: programRow.id as string,
     userId,
     userProposalId: userProposalRow.id as string,

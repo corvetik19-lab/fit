@@ -395,8 +395,8 @@
 
 - [x] Добавлен отдельный `npm run test:rls`, который не зависит от webServer и UI-логина: suite идёт через `PLAYWRIGHT_SKIP_AUTH_SETUP=1` и прямую Supabase auth с тестовыми учётками.
 - [x] `tests/rls/helpers/supabase-rls.ts` добавлен как RLS harness: он логинит обычного пользователя и root-admin через публичный key, а fixture сидируется service-role helper'ом.
-- [x] `tests/rls/ownership.spec.ts` подтверждает row-level изоляцию напрямую на таблицах `ai_plan_proposals`, `exercise_library`, `weekly_programs`: владелец видит свои строки, другой auth-user не видит их и не может обновить чужой proposal.
-- [x] Tranche подтверждён quality gates: `npx eslint tests/rls tests/e2e/helpers/supabase-admin.ts tests/e2e/helpers/ai.ts`, `npm run test:rls`, `npm run lint`, `npm run typecheck`, `npm run build`.
+- [x] `tests/rls/ownership.spec.ts` подтверждает row-level изоляцию напрямую на таблицах `ai_plan_proposals`, `exercise_library`, `weekly_programs`, `ai_chat_sessions`, `ai_chat_messages`, `export_jobs`, `deletion_requests`, `user_context_snapshots`, `knowledge_chunks`: владелец видит свои строки, другой auth-user не видит их и не может обновить чужой proposal.
+- [x] Tranche подтверждён quality gates: `npx eslint tests/rls tests/rls/helpers`, `npm run test:rls`, затем общим baseline `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `22 passed`, `npm run test:smoke` -> `3 passed`.
 - [ ] Следующий AI/data tranche: owner-only / RLS coverage для retrieval / reindex / proposal listing и затем расширение CI до отдельных DB/advisor verification шагов.
 
 ## 2026-03-16 admin users fail-open addendum
@@ -415,3 +415,11 @@
 - [x] `tests/e2e/api-contracts.spec.ts` расширен контрактом `ai reindex stays admin-only for authenticated non-admin users`, подтверждающим `403 ADMIN_REQUIRED`.
 - [x] `tests/e2e/admin-app.spec.ts` расширен root-admin сценарием на невалидный `targetUserId`, подтверждающим `400 REINDEX_INVALID`.
 - [ ] Следующий AI/data tranche: owner-only / RLS coverage для retrieval / proposal listing и затем расширение CI до отдельных DB/advisor verification шагов.
+
+## 2026-03-16 advisor hardening addendum
+
+- [x] Через Supabase advisors подтверждён targeted DB-аудит для AI/history/self-service контуров: warnings по mutable `search_path` у `public.set_updated_at()` и unindexed FK на `ai_chat_messages`, `export_jobs`, `deletion_requests`, `support_actions`, `admin_audit_logs` закрыты корректирующей миграцией.
+- [x] Добавлена миграция `supabase/migrations/20260315173518_ai_history_self_service_index_hardening.sql`, которая фиксирует `set_updated_at` с `search_path = public, pg_temp` и добавляет индексы под AI/history/self-service query paths.
+- [x] Добавлена миграция `supabase/migrations/20260315173725_ai_history_self_service_rls_initplan_hardening.sql`, которая переводит owner policies AI/history/self-service таблиц на `(select auth.uid())` и закрывает `auth_rls_initplan` warnings для `ai_chat_sessions`, `ai_chat_messages`, `export_jobs`, `deletion_requests`, `user_context_snapshots`, `knowledge_chunks`, `knowledge_embeddings`, `ai_safety_events`.
+- [x] После DDL повторно прогнаны Supabase advisors `security` и `performance`: targeted warnings по этой группе таблиц исчезли, а direct `npm run test:rls` подтвердил, что row-level ownership после policy-alter не сломался.
+- [ ] Следующий DB tranche: пройти remaining advisor backlog по `auth_rls_initplan`, `rls_enabled_no_policy` для admin/system tables и затем оформить migration/advisor verification как отдельный CI gate.
