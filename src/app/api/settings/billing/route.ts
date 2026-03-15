@@ -1,7 +1,10 @@
 import { z } from "zod";
 
 import { createApiErrorResponse } from "@/lib/api/error-response";
-import { BILLING_FEATURE_KEYS, readUserBillingAccess } from "@/lib/billing-access";
+import {
+  BILLING_FEATURE_KEYS,
+  readUserBillingAccessOrFallback,
+} from "@/lib/billing-access";
 import { logger } from "@/lib/logger";
 import { loadSettingsDataSnapshotOrFallback } from "@/lib/settings-data-server";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
@@ -67,7 +70,7 @@ async function loadBillingCenterData(
 ) {
   const [snapshot, access] = await Promise.all([
     loadSettingsDataSnapshotOrFallback(supabase, userId),
-    readUserBillingAccess(supabase, userId, {
+    readUserBillingAccessOrFallback(supabase, userId, {
       email: userEmail,
     }),
   ]);

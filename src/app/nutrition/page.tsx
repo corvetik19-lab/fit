@@ -3,7 +3,7 @@ import { NutritionGoalAdherence } from "@/components/nutrition-goal-adherence";
 import { NutritionPhotoAnalysis } from "@/components/nutrition-photo-analysis";
 import { NutritionTracker } from "@/components/nutrition-tracker";
 import { PageWorkspace } from "@/components/page-workspace";
-import { readUserBillingAccess } from "@/lib/billing-access";
+import { readUserBillingAccessOrFallback } from "@/lib/billing-access";
 import {
   getNutritionSummary,
   getNutritionTargets,
@@ -38,7 +38,7 @@ export default async function NutritionPage() {
     listNutritionRecipes(supabase, viewer.user.id),
     listMealTemplates(supabase, viewer.user.id),
     listNutritionSummaryTrend(supabase, viewer.user.id, 7),
-    readUserBillingAccess(supabase, viewer.user.id, {
+    readUserBillingAccessOrFallback(supabase, viewer.user.id, {
       email: viewer.user.email,
     }),
   ]);

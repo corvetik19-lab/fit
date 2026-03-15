@@ -9,7 +9,7 @@ import {
   BILLING_FEATURE_KEYS,
   createFeatureAccessDeniedResponse,
   incrementFeatureUsage,
-  readUserBillingAccess,
+  readUserBillingAccessOrFallback,
 } from "@/lib/billing-access";
 import { hasAiRuntimeEnv } from "@/lib/env";
 import { logger } from "@/lib/logger";
@@ -136,7 +136,7 @@ export async function POST(request: Request) {
       });
     }
 
-    const access = await readUserBillingAccess(supabase, user.id, {
+    const access = await readUserBillingAccessOrFallback(supabase, user.id, {
       email: user.email,
     });
     const feature = access.features[BILLING_FEATURE_KEYS.mealPhoto];

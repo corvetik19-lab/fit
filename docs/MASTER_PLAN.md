@@ -189,6 +189,7 @@
 - [x] Добавить UUID-валидацию и явные `400` в owner-scoped mutation routes `weekly-programs/[id]/lock`, `weekly-programs/[id]/clone`, `foods/[id]`, `recipes/[id]`, `meals/[id]`, `meal-templates/[id]`.
 - [x] Расширить `api-contracts.spec.ts` invalid-param покрытием для weekly program и nutrition mutation routes.
 - [x] `settings/data` и `settings/billing` snapshot routes теперь fail-open: при сбое загрузки оболочки settings UI получает безопасный пустой snapshot вместо общего `500`.
+- [x] User-facing billing access теперь fail-open на `/settings`, `/ai`, `/nutrition`, `/api/settings/billing` и в AI mutation routes: при сбое billing-access загрузки UI и AI surface больше не падают общим `500`, а используют безопасный fallback snapshot/access policy.
 - [ ] Пройти все route handlers на валидацию, owner-only доступ, ошибки и idempotency.
 - [ ] Подтвердить, что reset/finish/sync сценарии не создают race conditions и бесконечный polling.
 - [x] Подтвердить, что offline queue и stale cleanup не восстанавливают уже сброшенное состояние.

@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { isPrimarySuperAdminEmail } from "@/lib/admin-permissions";
 import { createApiErrorResponse } from "@/lib/api/error-response";
+import { logger } from "@/lib/logger";
 
 export const BILLING_FEATURE_KEYS = {
   aiChat: "ai_chat",
@@ -359,6 +360,82 @@ export async function readUserBillingAccess(
     },
     features,
   };
+}
+
+export function createFallbackUserBillingAccessSnapshot(options?: {
+  email?: string | null;
+}): UserBillingAccessSnapshot {
+  const featureKeys = Object.values(BILLING_FEATURE_KEYS);
+
+  if (isPrimarySuperAdminEmail(options?.email)) {
+    const privilegedFeatures = Object.fromEntries(
+      featureKeys.map((featureKey) => {
+        const config = FEATURE_CONFIG[featureKey];
+
+        return [
+          featureKey,
+          {
+            allowed: true,
+            description: config.description,
+            featureKey,
+            label: config.label,
+            reason: null,
+            source: "privileged",
+            usage: resolveUsageSnapshot(config.metricKey, null, null),
+          } satisfies FeatureAccessSnapshot,
+        ];
+      }),
+    ) as Record<BillingFeatureKey, FeatureAccessSnapshot>;
+
+    return {
+      subscription: {
+        currentPeriodEnd: null,
+        isActive: true,
+        isPrivilegedAccess: true,
+        provider: "admin",
+        status: "root_access",
+        updatedAt: null,
+      },
+      features: privilegedFeatures,
+    };
+  }
+
+  const features = Object.fromEntries(
+    featureKeys.map((featureKey) => [
+      featureKey,
+      buildFeatureAccess(featureKey, null, null, null),
+    ]),
+  ) as Record<BillingFeatureKey, FeatureAccessSnapshot>;
+
+  return {
+    subscription: {
+      currentPeriodEnd: null,
+      isActive: false,
+      isPrivilegedAccess: false,
+      provider: null,
+      status: null,
+      updatedAt: null,
+    },
+    features,
+  };
+}
+
+export async function readUserBillingAccessOrFallback(
+  supabase: Pick<SupabaseClient, "from">,
+  userId: string,
+  options?: {
+    email?: string | null;
+  },
+): Promise<UserBillingAccessSnapshot> {
+  try {
+    return await readUserBillingAccess(supabase, userId, options);
+  } catch (error) {
+    logger.warn("billing access load failed, using fallback", {
+      error,
+      userId,
+    });
+    return createFallbackUserBillingAccessSnapshot(options);
+  }
 }
 
 export function createFeatureAccessDeniedResponse(

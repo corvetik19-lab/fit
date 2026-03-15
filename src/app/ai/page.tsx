@@ -3,7 +3,7 @@ import { AppShell } from "@/components/app-shell";
 import { getAiChatState, listAiChatSessions } from "@/lib/ai/chat";
 import { listAiPlanProposals } from "@/lib/ai/proposals";
 import { getAiRuntimeContext } from "@/lib/ai/user-context";
-import { readUserBillingAccess } from "@/lib/billing-access";
+import { readUserBillingAccessOrFallback } from "@/lib/billing-access";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireReadyViewer } from "@/lib/viewer";
 
@@ -28,7 +28,7 @@ export default async function AiPage({ searchParams }: AiPageProps) {
       fallbackToLatest: false,
     }),
     listAiChatSessions(supabase, viewer.user.id, 30),
-    readUserBillingAccess(supabase, viewer.user.id, {
+    readUserBillingAccessOrFallback(supabase, viewer.user.id, {
       email: viewer.user.email,
     }),
   ]);

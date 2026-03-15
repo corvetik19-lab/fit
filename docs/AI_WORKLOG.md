@@ -283,3 +283,10 @@
 - `tests/e2e/ownership-isolation.spec.ts` и `tests/e2e/admin-app.spec.ts` перевёл на `navigateStable(...)` для стартового `/admin`, чтобы убрать flaky `ERR_ABORTED` на медленном client-side bootstrap.
 - В `src/lib/settings-data-server.ts` добавил `loadSettingsDataSnapshotOrFallback(...)`, а `src/app/api/settings/data/route.ts` и `src/app/api/settings/billing/route.ts` перевёл на безопасный fail-open snapshot: при сбое загрузки оболочки settings UI получает пустой snapshot вместо `500`.
 - Подтвердил tranche полным прогоном: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `18 passed`, `npm run test:smoke` -> `3 passed`.
+
+### 2026-03-16 07:10 - Довёл billing-access fail-open до user-facing страниц и AI routes
+
+- В `src/lib/billing-access.ts` добавил `createFallbackUserBillingAccessSnapshot(...)` и `readUserBillingAccessOrFallback(...)`: при временной ошибке чтения `subscriptions / entitlements / usage_counters` surface больше не валится общим `500`, а получает безопасный fallback-access; для root-super-admin fallback остаётся привилегированным.
+- В `src/app/settings/page.tsx`, `src/app/ai/page.tsx`, `src/app/nutrition/page.tsx` и `src/app/api/settings/billing/route.ts` user-facing server surfaces переведены на этот fail-open path, поэтому transient billing-access ошибки больше не ломают открытие основных экранов и billing center.
+- Тем же паттерном перевёл user-facing AI routes: `src/app/api/ai/chat/route.ts`, `src/app/api/ai/assistant/route.ts`, `src/app/api/ai/meal-photo/route.ts`, `src/app/api/ai/meal-plan/route.ts`, `src/app/api/ai/workout-plan/route.ts`, `src/app/api/ai/proposals/[id]/apply/route.ts`, `src/app/api/ai/proposals/[id]/approve/route.ts`. Теперь AI surface не падает из-за временного сбоя billing-access слоя и использует безопасную fallback policy.
+- Подтвердил tranche полным прогоном: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `18 passed`, `npm run test:smoke` -> `3 passed`.

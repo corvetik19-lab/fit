@@ -7,9 +7,9 @@ import { PanelCard } from "@/components/panel-card";
 import { SettingsBillingCenter } from "@/components/settings-billing-center";
 import { SettingsDataCenter } from "@/components/settings-data-center";
 import { SignOutButton } from "@/components/sign-out-button";
-import { readUserBillingAccess } from "@/lib/billing-access";
+import { readUserBillingAccessOrFallback } from "@/lib/billing-access";
 import { hasStripeCheckoutEnv, hasStripePortalEnv } from "@/lib/env";
-import { loadSettingsDataSnapshot } from "@/lib/settings-data-server";
+import { loadSettingsDataSnapshotOrFallback } from "@/lib/settings-data-server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireReadyViewer } from "@/lib/viewer";
 
@@ -24,8 +24,8 @@ export default async function SettingsPage() {
   const viewer = await requireReadyViewer();
   const supabase = await createServerSupabaseClient();
   const [dataSnapshot, access] = await Promise.all([
-    loadSettingsDataSnapshot(supabase, viewer.user.id),
-    readUserBillingAccess(supabase, viewer.user.id, {
+    loadSettingsDataSnapshotOrFallback(supabase, viewer.user.id),
+    readUserBillingAccessOrFallback(supabase, viewer.user.id, {
       email: viewer.user.email,
     }),
   ]);

@@ -9,7 +9,7 @@ import { createApiErrorResponse } from "@/lib/api/error-response";
 import {
   BILLING_FEATURE_KEYS,
   createFeatureAccessDeniedResponse,
-  readUserBillingAccess,
+  readUserBillingAccessOrFallback,
 } from "@/lib/billing-access";
 import { logger } from "@/lib/logger";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -47,7 +47,7 @@ export async function POST(
       });
     }
 
-    const access = await readUserBillingAccess(supabase, user.id, {
+    const access = await readUserBillingAccessOrFallback(supabase, user.id, {
       email: user.email,
     });
     const featureKey =
