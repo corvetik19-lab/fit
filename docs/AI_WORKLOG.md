@@ -319,3 +319,17 @@
 - Добавил `tests/rls/ownership.spec.ts`: suite подтверждает прямую row-level изоляцию в `ai_plan_proposals`, `exercise_library` и `weekly_programs`; владелец видит свои строки, другой auth-user не видит и не может обновить чужой proposal.
 - В `package.json` добавил `npm run test:rls`, который идёт отдельно от UI/e2e контура и не требует сборки test-server.
 - Подтвердил tranche командами: `npx eslint tests/rls tests/e2e/helpers/supabase-admin.ts tests/e2e/helpers/ai.ts`, `npm run test:rls`, `npm run lint`, `npm run typecheck`, `npm run build`.
+
+### 2026-03-16 10:05 - Перевёл admin users каталог на fail-open degraded snapshot
+
+- В `src/app/api/admin/users/route.ts` добавил `createFallbackAdminUsersResponse(...)`: при временном сбое внешнего Supabase/fetch слоя route больше не падает общим `500`, а отдаёт безопасный пустой snapshot с `meta.degraded`.
+- В `src/components/admin-users-directory-model.ts` расширил `AdminUsersFetchResponse` полем `meta.degraded`, а в `src/components/admin-users-directory.tsx` добавил отдельный amber-banner для оператора, если каталог пришёл из резервного снимка.
+- Теперь живой `admin users route failed` timeout-path из e2e деградирует предсказуемо и не ломает экран каталога пользователей.
+- Подтвердил tranche командами: `npx eslint src/app/api/admin/users/route.ts src/components/admin-users-directory.tsx src/components/admin-users-directory-model.ts`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/admin-app.spec.ts --workers=1`.
+
+### 2026-03-16 10:25 - Дожал reindex route contracts
+
+- В `src/app/api/ai/reindex/route.ts` развёл expected и unexpected error path: `AdminAccessError` и `ZodError` теперь возвращаются без noisy `logger.warn`, логирование оставлено только для неожиданных `500`.
+- В `tests/e2e/api-contracts.spec.ts` добавил контракт для обычного пользователя: `POST /api/ai/reindex` остаётся строго admin-only и возвращает `403 ADMIN_REQUIRED`.
+- В `tests/e2e/admin-app.spec.ts` добавил root-admin сценарий на невалидный `targetUserId`, подтверждающий `400 REINDEX_INVALID`.
+- Slice подтверждён таргетными прогонами `npx eslint src/app/api/ai/reindex/route.ts tests/e2e/api-contracts.spec.ts tests/e2e/admin-app.spec.ts` и Playwright contract-suite для `admin-app` + `api-contracts`.

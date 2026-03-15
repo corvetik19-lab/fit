@@ -253,4 +253,25 @@ test.describe("api contracts", () => {
       "AI_CHAT_SESSION_NOT_FOUND",
     );
   });
+
+  test("ai reindex stays admin-only for authenticated non-admin users", async ({
+    page,
+  }) => {
+    await page.goto("/ai");
+    await expect(page).toHaveURL(/\/ai$/);
+    await page.waitForLoadState("networkidle");
+
+    const reindexResult = await fetchJson(page, {
+      method: "POST",
+      url: "/api/ai/reindex",
+      body: {
+        mode: "embeddings",
+      },
+    });
+
+    expect(reindexResult.status).toBe(403);
+    expect((reindexResult.body as { code?: string } | null)?.code).toBe(
+      "ADMIN_REQUIRED",
+    );
+  });
 });

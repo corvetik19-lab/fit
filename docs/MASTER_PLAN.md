@@ -223,6 +223,7 @@
 - [ ] Завершить Sentry rollout на production env.
 - [x] Добавить базовую валидацию `userId`-параметров для internal jobs и явные `400`, а не общие `500`.
 - [x] `admin/stats` и `admin/operations` теперь fail-open: при временном сбое внешних запросов операторские экраны получают безопасный fallback snapshot вместо общего `500`.
+- [x] `admin/users` теперь fail-open: при временном сбое внешних источников каталог пользователей отдаёт безопасный degraded snapshot вместо общего `500`, а UI показывает операторский banner.
 - [ ] Подтвердить auth/visibility для cron routes и internal jobs.
 - [ ] Задокументировать или устранить допустимые build warnings.
 
@@ -395,3 +396,17 @@
 - [x] `tests/rls/ownership.spec.ts` подтверждает row-level изоляцию напрямую на таблицах `ai_plan_proposals`, `exercise_library`, `weekly_programs`: владелец видит свои строки, другой auth-user не видит их и не может обновить чужой proposal.
 - [x] Tranche подтверждён quality gates: `npx eslint tests/rls tests/e2e/helpers/supabase-admin.ts tests/e2e/helpers/ai.ts`, `npm run test:rls`, `npm run lint`, `npm run typecheck`, `npm run build`.
 - [ ] Следующий AI/data tranche: owner-only / RLS coverage для retrieval / reindex / proposal listing и затем расширение CI до отдельных DB/advisor verification шагов.
+
+## 2026-03-16 admin users fail-open addendum
+
+- [x] `src/app/api/admin/users/route.ts` переведён на degraded fallback: при временном сбое внешних источников route возвращает пустой безопасный snapshot с `meta.degraded`, а не общий `500`.
+- [x] `src/components/admin-users-directory-model.ts` расширен `meta.degraded`, а `src/components/admin-users-directory.tsx` показывает явный операторский banner, если каталог пришёл из резервного снимка.
+- [x] Tranche подтверждён quality gates: `npx eslint src/app/api/admin/users/route.ts src/components/admin-users-directory.tsx src/components/admin-users-directory-model.ts`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/admin-app.spec.ts --workers=1`.
+- [ ] Следующий операторский tranche: либо перевод detail surface `/api/admin/users/[id]` на аналогичный fail-open/degraded contract, либо возврат к AI/data backend audit по retrieval / reindex ownership.
+
+## 2026-03-16 AI reindex contract addendum
+
+- [x] `src/app/api/ai/reindex/route.ts` больше не логирует ожидаемые `403/400` как warn/error path; logging остаётся только для неожиданных `500`.
+- [x] `tests/e2e/api-contracts.spec.ts` расширен контрактом `ai reindex stays admin-only for authenticated non-admin users`, подтверждающим `403 ADMIN_REQUIRED`.
+- [x] `tests/e2e/admin-app.spec.ts` расширен root-admin сценарием на невалидный `targetUserId`, подтверждающим `400 REINDEX_INVALID`.
+- [ ] Следующий AI/data tranche: owner-only / RLS coverage для retrieval / proposal listing и затем расширение CI до отдельных DB/advisor verification шагов.

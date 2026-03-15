@@ -176,9 +176,12 @@ export type RecentBulkWave = {
 export type AdminUsersFetchResponse = {
   data?: AdminUserRow[];
   message?: string;
-  summary?: AdminUsersSummary;
-  segments?: AdminUsersSegments;
+  meta?: {
+    degraded?: boolean;
+  };
   recentBulkWaves?: RecentBulkWave[];
+  segments?: AdminUsersSegments;
+  summary?: AdminUsersSummary;
 } | null;
 
 export type AdminUsersBulkResponse = {

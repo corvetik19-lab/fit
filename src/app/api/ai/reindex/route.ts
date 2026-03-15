@@ -79,8 +79,6 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
-    logger.warn("reindex route rejected", { error });
-
     if (isAdminAccessError(error)) {
       return createApiErrorResponse({
         status: error.status,
@@ -97,6 +95,8 @@ export async function POST(request: Request) {
         details: error.flatten(),
       });
     }
+
+    logger.warn("reindex route rejected", { error });
 
     return createApiErrorResponse({
       status: 500,

@@ -1,7 +1,8 @@
-﻿import { expect, test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 import { hasAdminE2ECredentials } from "./helpers/auth";
 import { ADMIN_STORAGE_STATE_PATH } from "./helpers/auth-state";
+import { fetchJson } from "./helpers/http";
 import { navigateStable } from "./helpers/navigation";
 
 test.use({
@@ -35,5 +36,26 @@ test.describe("admin app", () => {
     ).toBeVisible({ timeout: 15_000 });
     await expect(page.locator('button[aria-pressed]').first()).toBeVisible();
     await expect(page.locator('a[href="/admin/users"]').first()).toBeVisible();
+  });
+
+  test("root admin gets explicit validation error for invalid reindex payload", async ({
+    page,
+  }) => {
+    await navigateStable(page, "/admin", /\/admin$/);
+    await page.waitForLoadState("networkidle");
+
+    const reindexResult = await fetchJson(page, {
+      method: "POST",
+      url: "/api/ai/reindex",
+      body: {
+        mode: "full",
+        targetUserId: "not-a-uuid",
+      },
+    });
+
+    expect(reindexResult.status).toBe(400);
+    expect((reindexResult.body as { code?: string } | null)?.code).toBe(
+      "REINDEX_INVALID",
+    );
   });
 });

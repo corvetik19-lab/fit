@@ -59,6 +59,63 @@ const ACTIVE_DELETION_STATUSES = new Set([
 ]);
 const ACTIVE_SUBSCRIPTION_STATUSES = new Set(["active", "trial"]);
 
+function createFallbackAdminUsersResponse(input: {
+  activityFilter: ActivityFilter;
+  roleFilter: AdminRoleFilter;
+  sortKey: AdminUsersSortKey;
+}) {
+  return {
+    data: [],
+    total: 0,
+    filters: {
+      activity: input.activityFilter,
+      role: input.roleFilter,
+      sort: input.sortKey,
+    },
+    meta: {
+      degraded: true,
+    },
+    recentBulkWaves: [],
+    summary: {
+      totalUsers: 0,
+      filteredUsers: 0,
+      adminCounts: {
+        superAdmins: 0,
+        supportAdmins: 0,
+        analysts: 0,
+      },
+      activityBuckets: {
+        today: 0,
+        sevenDays: 0,
+        thirtyDays: 0,
+        stale: 0,
+        never: 0,
+      },
+      operations: {
+        usersWithBacklog: 0,
+        pendingSupportActions: 0,
+        queuedExports: 0,
+        activeDeletionHolds: 0,
+      },
+      billing: {
+        activeSubscriptions: 0,
+        paidButStale: 0,
+      },
+      hygiene: {
+        neverSignedIn: 0,
+        withoutProfile: 0,
+        rootPolicyViolations: 0,
+      },
+    },
+    segments: {
+      priorityQueue: [],
+      inactivePaid: [],
+      newestUsers: [],
+      topWorkoutUsers: [],
+    },
+  };
+}
+
 function parseRoleFilter(value: string | null): AdminRoleFilter {
   switch (value) {
     case "super_admin":
@@ -306,16 +363,17 @@ function getDisplayName(user: {
 }
 
 export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const query = searchParams.get("q")?.trim().toLowerCase() ?? "";
+  const roleFilter = parseRoleFilter(searchParams.get("role")?.trim() ?? "all");
+  const activityFilter = parseActivityFilter(
+    searchParams.get("activity")?.trim() ?? "all",
+  );
+  const sortKey = parseSortKey(searchParams.get("sort")?.trim() ?? "created_desc");
+
   try {
     await requireAdminRouteAccess("view_admin_users");
     const adminSupabase = createAdminSupabaseClient();
-    const { searchParams } = new URL(request.url);
-    const query = searchParams.get("q")?.trim().toLowerCase() ?? "";
-    const roleFilter = parseRoleFilter(searchParams.get("role")?.trim() ?? "all");
-    const activityFilter = parseActivityFilter(
-      searchParams.get("activity")?.trim() ?? "all",
-    );
-    const sortKey = parseSortKey(searchParams.get("sort")?.trim() ?? "created_desc");
 
     const [
       { data: profiles, error: profilesError },
@@ -821,8 +879,6 @@ export async function GET(request: Request) {
       segments,
     });
   } catch (error) {
-    logger.error("admin users route failed", { error });
-
     if (isAdminAccessError(error)) {
       return createApiErrorResponse({
         status: error.status,
@@ -831,10 +887,14 @@ export async function GET(request: Request) {
       });
     }
 
-    return createApiErrorResponse({
-      status: 401,
-      code: "ADMIN_REQUIRED",
-      message: "Admin access is required.",
-    });
+    logger.warn("admin users route degraded to fallback", { error });
+
+    return Response.json(
+      createFallbackAdminUsersResponse({
+        activityFilter,
+        roleFilter,
+        sortKey,
+      }),
+    );
   }
 }

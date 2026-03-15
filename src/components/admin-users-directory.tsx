@@ -77,6 +77,7 @@ export function AdminUsersDirectory({
   const [segments, setSegments] = useState<AdminUsersSegments>(emptySegments);
   const [recentBulkWaves, setRecentBulkWaves] = useState<RecentBulkWave[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [isDegraded, setIsDegraded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<AdminRoleFilter>("all");
@@ -103,6 +104,7 @@ export function AdminUsersDirectory({
 
     async function loadUsers() {
       setIsLoading(true);
+      setIsDegraded(false);
 
       try {
         const searchParams = buildAdminUsersSearchParams({
@@ -136,6 +138,7 @@ export function AdminUsersDirectory({
           setCatalogSummary(payload?.summary ?? emptySummary);
           setSegments(payload?.segments ?? emptySegments);
           setRecentBulkWaves(payload?.recentBulkWaves ?? []);
+          setIsDegraded(Boolean(payload?.meta?.degraded));
           setSelectedUserIds((currentSelected) =>
             filterSelectedUserIdsForVisibleUsers(currentSelected, payload?.data ?? []),
           );
@@ -319,6 +322,13 @@ export function AdminUsersDirectory({
           />
         </div>
       </div>
+
+      {isDegraded ? (
+        <div className="mt-6 rounded-[28px] border border-amber-300/70 bg-amber-50/90 px-5 py-4 text-sm text-amber-900">
+          Каталог пользователей показан из резервного снимка. Часть служебных источников
+          временно не ответила, поэтому отдельные сигналы и сводки могут быть неполными.
+        </div>
+      ) : null}
 
       <div className="mt-6 rounded-[30px] border border-border bg-white/72 p-5 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
