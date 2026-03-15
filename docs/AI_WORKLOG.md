@@ -207,3 +207,9 @@
 - Добавил `tests/e2e/helpers/settings-data.ts`: helper ставит `queue_export` через обычный product route `/api/settings/data` и при повторных прогонах умеет переиспользовать уже активную выгрузку вместо падения на `SETTINGS_EXPORT_ALREADY_ACTIVE`.
 - Расширил `tests/e2e/ownership-isolation.spec.ts`: root-admin теперь дополнительно проверяется на owner-isolation в self-service data center и не видит чужой export job в `GET /api/settings/data`, а `GET /api/settings/data/export/{id}/download` возвращает owner-scoped `404 SETTINGS_EXPORT_NOT_FOUND`.
 - Подтвердил tranche полным quality прогоном: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `10 passed`, `npx playwright test tests/smoke` -> `3 passed`.
+
+### 2026-03-15 20:25 - Расширил user-owned isolation до workout templates
+
+- Расширил `tests/e2e/ownership-isolation.spec.ts`: root-admin теперь дополнительно проверяется на owner-isolation в `workout_templates`, не видит чужой template в `GET /api/workout-templates` и не может создать новый template из чужого `programId`, получая `404 WORKOUT_TEMPLATE_SOURCE_NOT_FOUND`.
+- Чтобы длинный seed/template flow не падал ложным красным, для `user-owned isolation` suite добавил `test.describe.configure({ timeout: 60_000 })`.
+- Подтвердил tranche quality gates: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `11 passed`, `npx playwright test tests/smoke` -> `3 passed`.

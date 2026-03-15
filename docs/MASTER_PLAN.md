@@ -310,3 +310,10 @@
 - [x] Добавлен `tests/e2e/helpers/settings-data.ts`, чтобы e2e могли штатно создавать или переиспользовать активную self-service выгрузку под тестовым пользователем без прямого DB-seed.
 - [x] Tranche подтверждён quality gates: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `10 passed`, `npx playwright test tests/smoke` -> `3 passed`.
 - [ ] Следующий тестовый tranche: расширить user-owned isolation на оставшиеся owner-scoped self-service и AI/data контуры beyond workout/program/nutrition/exercises/settings export.
+
+## 2026-03-15 workout templates isolation addendum
+
+- [x] Расширен user-owned isolation baseline до `workout_templates`: root-admin не видит чужой workout template в `GET /api/workout-templates` и получает owner-scoped `404 WORKOUT_TEMPLATE_SOURCE_NOT_FOUND` на попытку создать template из чужого `programId`.
+- [x] `tests/e2e/ownership-isolation.spec.ts` усилен ещё одним owner-scoped сценарием, а timeout isolation-suite увеличен до `60_000`, чтобы длительный seed/template flow не давал ложный красный таймаут.
+- [x] Tranche подтверждён quality gates: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `11 passed`, `npx playwright test tests/smoke` -> `3 passed`.
+- [ ] Следующий тестовый tranche: расширить user-owned isolation на оставшиеся owner-scoped self-service и AI/data контуры beyond workout/program/nutrition/exercises/settings export/workout templates.

@@ -21,6 +21,8 @@ function buildFutureCloneDate() {
 }
 
 test.describe("user-owned isolation", () => {
+  test.describe.configure({ timeout: 60_000 });
+
   test.skip(
     !hasAuthE2ECredentials() || !hasAdminE2ECredentials(),
     "requires regular and admin Playwright credentials",
@@ -304,6 +306,72 @@ test.describe("user-owned isolation", () => {
 
     expect(exportDownloadResult.status).toBe(404);
     expect(exportDownloadResult.body?.code).toBe("SETTINGS_EXPORT_NOT_FOUND");
+
+    await adminContext.close();
+    await userContext.close();
+  });
+
+  test("root admin cannot read or create another user's workout templates", async ({
+    browser,
+  }) => {
+    const userContext = await browser.newContext({
+      storageState: USER_STORAGE_STATE_PATH,
+    });
+    const userPage = await userContext.newPage();
+    await userPage.goto("/dashboard");
+    await expect(userPage).toHaveURL(/\/dashboard$/);
+    await userPage.waitForLoadState("networkidle");
+
+    const seededDay = await createLockedWorkoutDay(userPage, "template-isolation");
+    const templateTitle = `Isolation Template ${crypto.randomUUID().slice(0, 8)}`;
+
+    const createTemplateResult = await fetchJson<{ data?: { id: string } }>(userPage, {
+      method: "POST",
+      url: "/api/workout-templates",
+      body: {
+        programId: seededDay.programId,
+        title: templateTitle,
+      },
+    });
+
+    expect(createTemplateResult.status).toBe(200);
+    const templateId = createTemplateResult.body?.data?.id;
+    expect(templateId).toBeTruthy();
+
+    const adminContext = await browser.newContext({
+      storageState: ADMIN_STORAGE_STATE_PATH,
+    });
+    const adminPage = await adminContext.newPage();
+    await adminPage.goto("/admin");
+    await expect(adminPage).toHaveURL(/\/admin$/);
+    await adminPage.waitForLoadState("networkidle");
+
+    const [templateListResult, createForeignTemplateResult] = await Promise.all([
+      fetchJson<{ data?: Array<{ id: string }> }>(adminPage, {
+        method: "GET",
+        url: "/api/workout-templates",
+      }),
+      fetchJson<{ code?: string }>(adminPage, {
+        method: "POST",
+        url: "/api/workout-templates",
+        body: {
+          programId: seededDay.programId,
+          title: `Foreign Template ${crypto.randomUUID().slice(0, 8)}`,
+        },
+      }),
+    ]);
+
+    expect(templateListResult.status).toBe(200);
+    expect(
+      (templateListResult.body?.data ?? []).some(
+        (template) => template.id === templateId,
+      ),
+    ).toBe(false);
+
+    expect(createForeignTemplateResult.status).toBe(404);
+    expect(createForeignTemplateResult.body?.code).toBe(
+      "WORKOUT_TEMPLATE_SOURCE_NOT_FOUND",
+    );
 
     await adminContext.close();
     await userContext.close();
