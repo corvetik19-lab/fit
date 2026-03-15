@@ -332,3 +332,13 @@
 - [x] Изолированный build для тестов сохранён отдельно: `build:test`, `start:test`, `typecheck`, `test:e2e*` и `test:smoke` используют `.next_build` через явный `--dist-dir=.next_build`, а production build не зависит от этого контура.
 - [x] `scripts/run-next-with-dist-dir.mjs` теперь поддерживает явный `--dist-dir`, а не подменяет output directory глобально по умолчанию.
 - [x] Hotfix подтверждён quality gates: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `12 passed`, `npm run test:smoke` -> `3 passed`.
+
+## 2026-03-15 settings billing isolation addendum
+
+- [x] Расширен user-owned isolation baseline до self-service `settings/billing`: root-admin не видит чужой billing review request в `GET /api/settings/billing`, а пользовательский request остаётся виден только владельцу.
+- [x] `tests/e2e/helpers/settings-data.ts` дополнен helper-ом `ensureSettingsBillingReviewRequest(...)`, чтобы e2e могли штатно создавать или переиспользовать self-service billing review без прямого DB seed.
+- [x] `GET /api/settings/data/export/[id]/download` получил UUID-валидацию params и теперь даёт явный `400 SETTINGS_EXPORT_INVALID` вместо провала глубже в route.
+- [x] `tests/e2e/api-contracts.spec.ts` расширен новым invalid-param контрактом для export download route.
+- [x] `test:smoke` отвязан от обязательного auth bootstrap: smoke-suite теперь запускается через `PLAYWRIGHT_SKIP_AUTH_SETUP=1`, а глобальный auth setup корректно пишет пустой storage state для smoke-only запуска.
+- [x] Tranche подтверждён quality gates: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `13 passed`, `npm run test:smoke` -> `3 passed`.
+- [ ] Следующий тестовый tranche: расширить user-owned isolation на оставшиеся owner-scoped AI/data контуры beyond workout/program/nutrition/exercises/settings export/workout templates/settings deletion/settings billing.

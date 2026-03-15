@@ -74,7 +74,7 @@ export async function GET() {
       return createApiErrorResponse({
         status: 401,
         code: "AUTH_REQUIRED",
-        message: "Sign in before opening the data center.",
+        message: "Войди в аккаунт, чтобы открыть центр данных.",
       });
     }
 
@@ -90,7 +90,7 @@ export async function GET() {
     return createApiErrorResponse({
       status: 500,
       code: "SETTINGS_DATA_SNAPSHOT_FAILED",
-      message: "Unable to load settings data center.",
+      message: "Не удалось загрузить центр данных.",
     });
   }
 }
@@ -103,7 +103,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 401,
         code: "AUTH_REQUIRED",
-        message: "Sign in before changing data center settings.",
+        message: "Войди в аккаунт, чтобы изменить настройки центра данных.",
       });
     }
 
@@ -128,7 +128,8 @@ export async function POST(request: Request) {
         return createApiErrorResponse({
           status: 409,
           code: "SETTINGS_EXPORT_ALREADY_ACTIVE",
-          message: "У тебя уже есть активная выгрузка. Дождись её завершения.",
+          message:
+            "У тебя уже есть активная выгрузка. Дождись её завершения перед новым запросом.",
         });
       }
 
@@ -155,7 +156,7 @@ export async function POST(request: Request) {
         return createApiErrorResponse({
           status: 403,
           code: "PRIMARY_SUPER_ADMIN_PROTECTED",
-          message: `Primary super admin ${PRIMARY_SUPER_ADMIN_EMAIL} cannot enter deletion workflow.`,
+          message: `Основной супер-админ ${PRIMARY_SUPER_ADMIN_EMAIL} не может запустить удаление аккаунта.`,
         });
       }
 
@@ -200,7 +201,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 400,
         code: "SETTINGS_DATA_INVALID",
-        message: "Data center payload is invalid.",
+        message: "Запрос к центру данных заполнен некорректно.",
         details: error.flatten(),
       });
     }
@@ -208,7 +209,7 @@ export async function POST(request: Request) {
     return createApiErrorResponse({
       status: 500,
       code: "SETTINGS_DATA_UPDATE_FAILED",
-      message: "Unable to update settings data center.",
+      message: "Не удалось обновить настройки центра данных.",
     });
   }
 }
@@ -221,7 +222,7 @@ export async function DELETE() {
       return createApiErrorResponse({
         status: 401,
         code: "AUTH_REQUIRED",
-        message: "Sign in before changing data center settings.",
+        message: "Войди в аккаунт, чтобы изменить настройки центра данных.",
       });
     }
 
@@ -266,7 +267,7 @@ export async function DELETE() {
     return createApiErrorResponse({
       status: 500,
       code: "SETTINGS_DELETION_CANCEL_FAILED",
-      message: "Unable to cancel deletion request.",
+      message: "Не удалось отменить запрос на удаление.",
     });
   }
 }

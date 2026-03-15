@@ -16,7 +16,7 @@
     "pretest:smoke": "npm run build:test",
     "test:e2e": "playwright test --workers=2",
     "test:e2e:auth": "playwright test tests/e2e --workers=2",
-    "test:smoke": "playwright test tests/smoke"
+    "test:smoke": "node scripts/run-playwright.mjs PLAYWRIGHT_SKIP_AUTH_SETUP=1 -- test tests/smoke"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^1.0.34",

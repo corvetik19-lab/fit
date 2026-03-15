@@ -12,6 +12,7 @@ import { createExerciseAsset } from "./helpers/exercises";
 import { fetchJson } from "./helpers/http";
 import { createNutritionAssets } from "./helpers/nutrition";
 import {
+  ensureSettingsBillingReviewRequest,
   ensureSettingsDeletionRequest,
   ensureSettingsExportJob,
 } from "./helpers/settings-data";
@@ -430,6 +431,63 @@ test.describe("user-owned isolation", () => {
     expect(userSnapshotResult.status).toBe(200);
     expect(userSnapshotResult.body?.data?.deletionRequest?.id).toBe(
       seededDeletion.deletionRequestId,
+    );
+
+    await adminContext.close();
+    await userContext.close();
+  });
+
+  test("root admin cannot see another user's billing review request", async ({
+    browser,
+  }) => {
+    const userContext = await browser.newContext({
+      storageState: USER_STORAGE_STATE_PATH,
+    });
+    const userPage = await userContext.newPage();
+    await userPage.goto("/settings");
+    await expect(userPage).toHaveURL(/\/settings$/);
+    await userPage.waitForLoadState("networkidle");
+
+    const seededReview = await ensureSettingsBillingReviewRequest(userPage);
+
+    const adminContext = await browser.newContext({
+      storageState: ADMIN_STORAGE_STATE_PATH,
+    });
+    const adminPage = await adminContext.newPage();
+    await adminPage.goto("/admin");
+    await expect(adminPage).toHaveURL(/\/admin$/);
+    await adminPage.waitForLoadState("networkidle");
+
+    const settingsBillingResult = await fetchJson<{
+      data?: {
+        snapshot?: {
+          billingReviewRequest?: { id: string } | null;
+        };
+      };
+    }>(adminPage, {
+      method: "GET",
+      url: "/api/settings/billing",
+    });
+
+    expect(settingsBillingResult.status).toBe(200);
+    expect(
+      settingsBillingResult.body?.data?.snapshot?.billingReviewRequest?.id,
+    ).not.toBe(seededReview.reviewRequestId);
+
+    const userBillingResult = await fetchJson<{
+      data?: {
+        snapshot?: {
+          billingReviewRequest?: { id: string } | null;
+        };
+      };
+    }>(userPage, {
+      method: "GET",
+      url: "/api/settings/billing",
+    });
+
+    expect(userBillingResult.status).toBe(200);
+    expect(userBillingResult.body?.data?.snapshot?.billingReviewRequest?.id).toBe(
+      seededReview.reviewRequestId,
     );
 
     await adminContext.close();

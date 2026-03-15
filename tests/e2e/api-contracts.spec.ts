@@ -19,26 +19,31 @@ test.describe("api contracts", () => {
     await expect(page).toHaveURL(/\/dashboard$/);
     await page.waitForLoadState("networkidle");
 
-    const [dayUpdate, dayReset, setUpdate, invalidAiSession] = await Promise.all([
-      fetchJson(page, {
-        method: "PATCH",
-        url: "/api/workout-days/not-a-uuid",
-        body: { status: "planned" },
-      }),
-      fetchJson(page, {
-        method: "POST",
-        url: "/api/workout-days/not-a-uuid/reset",
-      }),
-      fetchJson(page, {
-        method: "PATCH",
-        url: "/api/workout-sets/not-a-uuid",
-        body: { actualReps: 10, actualWeightKg: 50, actualRpe: 8 },
-      }),
-      fetchJson(page, {
-        method: "DELETE",
-        url: "/api/ai/sessions/not-a-uuid",
-      }),
-    ]);
+    const [dayUpdate, dayReset, setUpdate, invalidAiSession, invalidExportDownload] =
+      await Promise.all([
+        fetchJson(page, {
+          method: "PATCH",
+          url: "/api/workout-days/not-a-uuid",
+          body: { status: "planned" },
+        }),
+        fetchJson(page, {
+          method: "POST",
+          url: "/api/workout-days/not-a-uuid/reset",
+        }),
+        fetchJson(page, {
+          method: "PATCH",
+          url: "/api/workout-sets/not-a-uuid",
+          body: { actualReps: 10, actualWeightKg: 50, actualRpe: 8 },
+        }),
+        fetchJson(page, {
+          method: "DELETE",
+          url: "/api/ai/sessions/not-a-uuid",
+        }),
+        fetchJson(page, {
+          method: "GET",
+          url: "/api/settings/data/export/not-a-uuid/download",
+        }),
+      ]);
 
     expect(dayUpdate.status).toBe(400);
     expect((dayUpdate.body as { code?: string } | null)?.code).toBe(
@@ -58,6 +63,11 @@ test.describe("api contracts", () => {
     expect(invalidAiSession.status).toBe(400);
     expect((invalidAiSession.body as { code?: string } | null)?.code).toBe(
       "AI_CHAT_SESSION_INVALID",
+    );
+
+    expect(invalidExportDownload.status).toBe(400);
+    expect((invalidExportDownload.body as { code?: string } | null)?.code).toBe(
+      "SETTINGS_EXPORT_INVALID",
     );
   });
 

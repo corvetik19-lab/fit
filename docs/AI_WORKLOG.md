@@ -227,3 +227,13 @@
 - Переписал `scripts/run-next-with-dist-dir.mjs`: теперь он по умолчанию оставляет стандартный `.next`, а кастомный output directory включается только через явный `--dist-dir=...`.
 - Обновил `package.json`: `build` снова production-safe, а `build:test`, `start:test`, `typecheck`, `pretest:e2e`, `pretest:e2e:auth`, `pretest:smoke` работают через отдельный `.next_build`, не смешивая локальный test/build контур с production output.
 - Подтвердил hotfix полным прогоном: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `12 passed`, `npm run test:smoke` -> `3 passed`.
+
+### 2026-03-15 23:10 - Расширил settings isolation и отвязал smoke от auth bootstrap
+
+- Дополнил `tests/e2e/helpers/settings-data.ts` helper-ом `ensureSettingsBillingReviewRequest(...)`, чтобы e2e могли создавать self-service billing review через обычный route `/api/settings/billing` и не зависели от прямого seed-а в БД.
+- Расширил `tests/e2e/ownership-isolation.spec.ts`: root-admin теперь дополнительно проверяется на owner-isolation в `settings/billing` и не видит чужой billing review request в `GET /api/settings/billing`.
+- Ужесточил `src/app/api/settings/data/export/[id]/download/route.ts`: route теперь валидирует UUID-параметр и даёт явный `400 SETTINGS_EXPORT_INVALID` на невалидный `id`.
+- Расширил `tests/e2e/api-contracts.spec.ts` новым invalid-param контрактом для `GET /api/settings/data/export/not-a-uuid/download`.
+- Санировал user-facing copy в `src/app/api/settings/billing/route.ts`, `src/app/api/settings/data/route.ts` и `src/app/api/settings/data/export/[id]/download/route.ts`, чтобы этот settings self-service контур не отдавал смешанный английский или битые промежуточные формулировки.
+- Добавил `PLAYWRIGHT_SKIP_AUTH_SETUP` в `tests/e2e/global-auth-setup.ts` и новый runner `scripts/run-playwright.mjs`; `npm run test:smoke` теперь не пытается логинить тестовых пользователей и не падает от флака auth bootstrap.
+- Подтвердил tranche полным прогоном: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `13 passed`, `npm run test:smoke` -> `3 passed`.

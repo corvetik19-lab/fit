@@ -86,7 +86,7 @@ export async function GET() {
       return createApiErrorResponse({
         status: 401,
         code: "AUTH_REQUIRED",
-        message: "Sign in before opening billing settings.",
+        message: "Войди в аккаунт, чтобы открыть раздел доступа.",
       });
     }
 
@@ -103,7 +103,7 @@ export async function GET() {
     return createApiErrorResponse({
       status: 500,
       code: "SETTINGS_BILLING_SNAPSHOT_FAILED",
-      message: "Не удалось загрузить billing-центр.",
+      message: "Не удалось загрузить центр доступа.",
     });
   }
 }
@@ -116,7 +116,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 401,
         code: "AUTH_REQUIRED",
-        message: "Sign in before changing billing settings.",
+        message: "Войди в аккаунт, чтобы отправить запрос на доступ.",
       });
     }
 
@@ -145,7 +145,8 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 409,
         code: "SETTINGS_BILLING_REVIEW_ALREADY_ACTIVE",
-        message: "У тебя уже есть активный billing review. Дождись его обработки.",
+        message:
+          "У тебя уже есть активный запрос на проверку доступа. Дождись обработки текущего обращения.",
       });
     }
 
@@ -187,7 +188,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 400,
         code: "SETTINGS_BILLING_INVALID",
-        message: "Billing payload is invalid.",
+        message: "Запрос на проверку доступа заполнен некорректно.",
         details: error.flatten(),
       });
     }
@@ -195,7 +196,7 @@ export async function POST(request: Request) {
     return createApiErrorResponse({
       status: 500,
       code: "SETTINGS_BILLING_UPDATE_FAILED",
-      message: "Не удалось отправить billing review.",
+      message: "Не удалось отправить запрос на проверку доступа.",
     });
   }
 }

@@ -1,9 +1,15 @@
+import { z } from "zod";
+
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import { logger } from "@/lib/logger";
 import { buildUserDataExportBundle } from "@/lib/settings-data-server";
 import { buildUserDataExportArchive } from "@/lib/settings-export-archive";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+
+const paramsSchema = z.object({
+  id: z.string().uuid(),
+});
 
 async function writeDownloadAuditLog(exportJobId: string, userId: string) {
   try {
@@ -36,7 +42,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const { id } = await params;
+    const { id } = paramsSchema.parse(await params);
     const supabase = await createServerSupabaseClient();
     const {
       data: { user },
@@ -46,7 +52,7 @@ export async function GET(
       return createApiErrorResponse({
         status: 401,
         code: "AUTH_REQUIRED",
-        message: "Sign in before downloading an export.",
+        message: "Войди в аккаунт, чтобы скачать выгрузку.",
       });
     }
 
@@ -65,7 +71,7 @@ export async function GET(
       return createApiErrorResponse({
         status: 404,
         code: "SETTINGS_EXPORT_NOT_FOUND",
-        message: "Экспорт не найден.",
+        message: "Выгрузка не найдена.",
       });
     }
 
@@ -73,7 +79,7 @@ export async function GET(
       return createApiErrorResponse({
         status: 409,
         code: "SETTINGS_EXPORT_NOT_READY",
-        message: "Экспорт ещё не готов к скачиванию.",
+        message: "Выгрузка ещё не готова к скачиванию.",
       });
     }
 
@@ -99,10 +105,19 @@ export async function GET(
   } catch (error) {
     logger.error("settings export download route failed", { error });
 
+    if (error instanceof z.ZodError) {
+      return createApiErrorResponse({
+        status: 400,
+        code: "SETTINGS_EXPORT_INVALID",
+        message: "Некорректный идентификатор выгрузки.",
+        details: error.flatten(),
+      });
+    }
+
     return createApiErrorResponse({
       status: 500,
       code: "SETTINGS_EXPORT_DOWNLOAD_FAILED",
-      message: "Unable to prepare export download.",
+      message: "Не удалось подготовить выгрузку к скачиванию.",
     });
   }
 }

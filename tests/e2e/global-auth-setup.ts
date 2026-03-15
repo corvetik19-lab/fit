@@ -39,6 +39,12 @@ async function saveStorageState(
 export default async function globalAuthSetup(config: FullConfig) {
   ensureAuthStateDir();
 
+  if (process.env.PLAYWRIGHT_SKIP_AUTH_SETUP === "1") {
+    writeEmptyStorageState(USER_STORAGE_STATE_PATH);
+    writeEmptyStorageState(ADMIN_STORAGE_STATE_PATH);
+    return;
+  }
+
   const baseURL =
     config.projects.find((project) => typeof project.use.baseURL === "string")?.use
       .baseURL ?? "http://127.0.0.1:3000";

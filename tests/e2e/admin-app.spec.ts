@@ -20,18 +20,14 @@ test.describe("admin app", () => {
     await page.goto("/admin");
     await expect(page).toHaveURL(/\/admin$/);
     await page.waitForLoadState("networkidle");
+    await expect(page.locator("main")).toBeVisible();
 
-    const usersLink = page.locator('a[href="/admin/users"]').first();
-    await expect(usersLink).toBeVisible();
-
+    await navigateStable(page, "/admin/users", /\/admin\/users$/);
+    await page.waitForLoadState("networkidle");
     const myCardLink = page.locator('a[href^="/admin/users/"]').first();
     await expect(myCardLink).toBeVisible();
     const myCardHref = await myCardLink.getAttribute("href");
     expect(myCardHref).toBeTruthy();
-
-    await navigateStable(page, "/admin/users", /\/admin\/users$/);
-    await page.waitForLoadState("networkidle");
-    await expect(page.locator('a[href^="/admin/users/"]').first()).toBeVisible();
 
     await navigateStable(page, myCardHref!, /\/admin\/users\/.+$/);
     await expect(page).toHaveURL(/\/admin\/users\/.+$/);
