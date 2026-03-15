@@ -8,7 +8,11 @@ import {
   hasAdminE2ECredentials,
   hasAuthE2ECredentials,
 } from "./helpers/auth";
-import { ensureAiChatSession } from "./helpers/ai";
+import {
+  ensureAiChatSession,
+  ensureAiPlanProposal,
+  readAiPlanProposal,
+} from "./helpers/ai";
 import { createExerciseAsset } from "./helpers/exercises";
 import { fetchJson } from "./helpers/http";
 import { navigateStable } from "./helpers/navigation";
@@ -577,6 +581,57 @@ test.describe("user-owned isolation", () => {
     expect(deleteUserSessionResult.body?.data?.sessionId).toBe(
       seededSession.sessionId,
     );
+
+    await adminContext.close();
+    await userContext.close();
+  });
+
+  test("root admin cannot approve or apply another user's AI plan proposal", async ({
+    browser,
+  }) => {
+    const userContext = await browser.newContext({
+      storageState: USER_STORAGE_STATE_PATH,
+    });
+    const userPage = await userContext.newPage();
+    await navigateStable(userPage, "/ai", /\/ai$/);
+    await userPage.waitForLoadState("networkidle");
+
+    const seededProposal = await ensureAiPlanProposal(userPage, {
+      proposalType: "meal_plan",
+    });
+
+    const adminContext = await browser.newContext({
+      storageState: ADMIN_STORAGE_STATE_PATH,
+    });
+    const adminPage = await adminContext.newPage();
+    await navigateStable(adminPage, "/admin", /\/admin$/);
+    await adminPage.waitForLoadState("networkidle");
+
+    const [approveForeignProposalResult, applyForeignProposalResult] =
+      await Promise.all([
+        fetchJson<{ code?: string }>(adminPage, {
+          method: "POST",
+          url: `/api/ai/proposals/${seededProposal.proposalId}/approve`,
+        }),
+        fetchJson<{ code?: string }>(adminPage, {
+          method: "POST",
+          url: `/api/ai/proposals/${seededProposal.proposalId}/apply`,
+        }),
+      ]);
+
+    expect(approveForeignProposalResult.status).toBe(404);
+    expect(approveForeignProposalResult.body?.code).toBe("AI_PROPOSAL_NOT_FOUND");
+
+    expect(applyForeignProposalResult.status).toBe(404);
+    expect(applyForeignProposalResult.body?.code).toBe("AI_PROPOSAL_NOT_FOUND");
+
+    const proposalAfterAdminAttempts = await readAiPlanProposal(
+      seededProposal.proposalId,
+    );
+
+    expect(proposalAfterAdminAttempts?.id).toBe(seededProposal.proposalId);
+    expect(proposalAfterAdminAttempts?.user_id).toBe(seededProposal.userId);
+    expect(proposalAfterAdminAttempts?.status).toBe("draft");
 
     await adminContext.close();
     await userContext.close();

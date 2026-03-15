@@ -39,6 +39,8 @@ test.describe("api contracts", () => {
       dayReset,
       setUpdate,
       invalidAiSession,
+      invalidAiProposalApprove,
+      invalidAiProposalApply,
       invalidExportDownload,
       invalidWeeklyProgramLock,
       invalidWeeklyProgramClone,
@@ -65,6 +67,14 @@ test.describe("api contracts", () => {
       fetchJson(page, {
         method: "DELETE",
         url: "/api/ai/sessions/not-a-uuid",
+      }),
+      fetchJson(page, {
+        method: "POST",
+        url: "/api/ai/proposals/not-a-uuid/approve",
+      }),
+      fetchJson(page, {
+        method: "POST",
+        url: "/api/ai/proposals/not-a-uuid/apply",
       }),
       fetchJson(page, {
         method: "GET",
@@ -121,6 +131,16 @@ test.describe("api contracts", () => {
     expect(invalidAiSession.status).toBe(400);
     expect((invalidAiSession.body as { code?: string } | null)?.code).toBe(
       "AI_CHAT_SESSION_INVALID",
+    );
+
+    expect(invalidAiProposalApprove.status).toBe(400);
+    expect((invalidAiProposalApprove.body as { code?: string } | null)?.code).toBe(
+      "AI_PROPOSAL_APPROVE_INVALID",
+    );
+
+    expect(invalidAiProposalApply.status).toBe(400);
+    expect((invalidAiProposalApply.body as { code?: string } | null)?.code).toBe(
+      "AI_PROPOSAL_APPLY_INVALID",
     );
 
     expect(invalidExportDownload.status).toBe(400);

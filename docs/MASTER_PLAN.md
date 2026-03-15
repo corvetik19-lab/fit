@@ -202,6 +202,7 @@
 - [x] Для `AI sessions` и `proposal apply/approve` добавлены явные UUID-валидации и предсказуемые `400/404/409`, а не только общие `500`.
 - [x] Удаление AI chat session теперь проверяет owner-scoped существование сессии и не возвращает ложный успех.
 - [x] `AI chat` и `AI assistant` теперь отклоняют неизвестный или чужой валидный `sessionId` с `404 AI_CHAT_SESSION_NOT_FOUND`, а не создают или продолжают новую сессию молча.
+- [x] `AI proposal approve/apply` теперь подтверждены owner-scoped e2e: root-admin получает `404 AI_PROPOSAL_NOT_FOUND` на чужом `proposalId`, а invalid UUID даёт явные `400 AI_PROPOSAL_APPROVE_INVALID` / `AI_PROPOSAL_APPLY_INVALID`.
 - [x] Санирован user-facing copy в `ai/chat`, `ai/reindex`, `ai/sessions/[id]`, `ai/proposals/[id]/apply`, `ai/proposals/[id]/approve`, чтобы AI surface не отдавал mojibake.
 - [x] Expected contract errors (`400/404` на invalid params и owner-scoped misses) больше не логируются как route-level `error` в contract-tested mutation routes и AI session routes.
 - [ ] Подтвердить owner-only data access для chat, sessions, retrieval, reindex и proposal apply.
@@ -376,3 +377,13 @@
 - [x] `tests/e2e/helpers/workouts.ts` усилен более широким диапазоном будущих недель и большим числом retry, чтобы seed locked-week не падал от накопившихся `active week conflict`.
 - [x] Tranche подтверждён quality gates: `npm run lint`, `npx eslint tests/e2e tests/e2e/helpers`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `16 passed`, `npm run test:smoke` -> `3 passed`.
 - [ ] Следующий backend tranche: добить оставшийся route/backend audit по owner-only access, idempotency и race conditions, в первую очередь AI retrieval/reindex/proposal ownership и locked-program execution guards.
+
+## 2026-03-16 AI proposal isolation addendum
+
+- [x] `tests/e2e/helpers/supabase-admin.ts` добавлен как минимальный service-role helper для owner-isolation e2e: он подхватывает `.env.local`, находит тестового пользователя по email и сидирует user-owned AI proposal без вызова live модели.
+- [x] `tests/e2e/helpers/ai.ts` расширен helper-ами `ensureAiPlanProposal(...)` и `readAiPlanProposal(...)`, поэтому AI proposal ownership теперь можно проверять без платного runtime и без ручного SQL seed.
+- [x] `tests/e2e/ownership-isolation.spec.ts` расширен сценарием `root admin cannot approve or apply another user's AI plan proposal`: root-admin получает owner-scoped `404 AI_PROPOSAL_NOT_FOUND` и не меняет статус чужого proposal.
+- [x] `tests/e2e/api-contracts.spec.ts` расширен invalid-param контрактами для `POST /api/ai/proposals/not-a-uuid/approve` и `/apply`, route-контур подтверждён явными `400 AI_PROPOSAL_APPROVE_INVALID` и `400 AI_PROPOSAL_APPLY_INVALID`.
+- [x] `src/app/api/ai/proposals/[id]/approve/route.ts` и `.../apply/route.ts` больше не логируют ожидаемые `400/404` как route-level `error`; логирование оставлено только для неожиданных `500` path.
+- [x] Tranche подтверждён quality gates: `npm run lint`, `npx eslint tests/e2e tests/e2e/helpers src/app/api/ai/proposals/[id]/approve/route.ts src/app/api/ai/proposals/[id]/apply/route.ts`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `19 passed`.
+- [ ] Следующий AI/data tranche: owner-only / RLS coverage для retrieval / reindex / proposal listing, затем отдельный `test:rls` слой поверх route-level isolation.

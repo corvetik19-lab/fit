@@ -21,7 +21,7 @@ const paramsSchema = z.object({
 export async function POST(
   _request: Request,
   context: { params: Promise<{ id: string }> },
-) {
+  ) {
   try {
     const supabase = await createServerSupabaseClient();
     const {
@@ -67,8 +67,6 @@ export async function POST(
 
     return Response.json({ data: approved.proposal });
   } catch (error) {
-    logger.error("ai proposal approve route failed", { error });
-
     if (error instanceof z.ZodError) {
       return createApiErrorResponse({
         status: 400,
@@ -85,6 +83,8 @@ export async function POST(
         message: error.message,
       });
     }
+
+    logger.error("ai proposal approve route failed", { error });
 
     return createApiErrorResponse({
       status: 500,

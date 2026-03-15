@@ -303,3 +303,12 @@
 - В `src/components/admin-health-dashboard.tsx` и `src/components/admin-operations-inbox.tsx` добавил чтение `meta.degraded` из API и явные amber-notice баннеры для operator UX.
 - Теперь `/admin` и inbox операций не сваливаются в молчаливо пустые карточки: если сервер отдал fallback snapshot, оператор видит, что это резервный снимок и часть источников временно недоступна.
 - Подтвердил slice командами: `npm run lint`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/admin-app.spec.ts --workers=1` -> `1 passed`.
+
+### 2026-03-16 09:05 - Закрыл owner-isolation для AI proposal approve/apply
+
+- Добавил `tests/e2e/helpers/supabase-admin.ts` как минимальный Playwright helper с `SUPABASE_SERVICE_ROLE_KEY`, чтобы e2e могли находить тестового пользователя по email и сидировать user-owned записи без прямых ручных SQL команд.
+- Расширил `tests/e2e/helpers/ai.ts`: кроме blocked AI chat session helper, там теперь есть `ensureAiPlanProposal(...)` и `readAiPlanProposal(...)`, поэтому AI proposal ownership можно проверять без live AI runtime.
+- Расширил `tests/e2e/ownership-isolation.spec.ts`: root-admin теперь дополнительно проверяется на owner-isolation в `POST /api/ai/proposals/{id}/approve` и `/apply` и получает `404 AI_PROPOSAL_NOT_FOUND` на чужом proposal.
+- Расширил `tests/e2e/api-contracts.spec.ts`: invalid UUID для AI proposal routes теперь подтверждаются явными `400 AI_PROPOSAL_APPROVE_INVALID` и `400 AI_PROPOSAL_APPLY_INVALID`.
+- В `src/app/api/ai/proposals/[id]/approve/route.ts` и `src/app/api/ai/proposals/[id]/apply/route.ts` убрал noisy route-level `logger.error` для ожидаемых `400/404`, оставив логирование только для неожиданных `500`.
+- Полный tranche подтверждён командами: `npm run lint`, `npx eslint tests/e2e tests/e2e/helpers src/app/api/ai/proposals/[id]/approve/route.ts src/app/api/ai/proposals/[id]/apply/route.ts`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `19 passed`.
