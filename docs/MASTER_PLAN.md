@@ -341,4 +341,11 @@
 - [x] `tests/e2e/api-contracts.spec.ts` расширен новым invalid-param контрактом для export download route.
 - [x] `test:smoke` отвязан от обязательного auth bootstrap: smoke-suite теперь запускается через `PLAYWRIGHT_SKIP_AUTH_SETUP=1`, а глобальный auth setup корректно пишет пустой storage state для smoke-only запуска.
 - [x] Tranche подтверждён quality gates: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `13 passed`, `npm run test:smoke` -> `3 passed`.
-- [ ] Следующий тестовый tranche: расширить user-owned isolation на оставшиеся owner-scoped AI/data контуры beyond workout/program/nutrition/exercises/settings export/workout templates/settings deletion/settings billing.
+- [ ] Следующий тестовый tranche: расширить user-owned isolation на оставшиеся owner-scoped AI/data контуры beyond workout/program/nutrition/exercises/settings export/workout templates/settings deletion/settings billing/AI history.
+
+## 2026-03-15 AI history isolation addendum
+
+- [x] Расширен user-owned isolation baseline до `AI history`: root-admin не может удалить чужую AI session по `DELETE /api/ai/sessions/{id}` и не задевает историю пользователя при `DELETE /api/ai/sessions`.
+- [x] Добавлен `tests/e2e/helpers/ai.ts`, который сидирует пользовательскую AI session через blocked-flow `/api/ai/chat` без зависимости от платного live runtime.
+- [x] `tests/e2e/ownership-isolation.spec.ts` теперь подтверждает owner-scoped поведение и для single-session delete, и для bulk clear AI history.
+- [x] Tranche подтверждён quality gates: `npm run lint`, `npx eslint tests/e2e tests/e2e/helpers`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `14 passed`, `npm run test:smoke` -> `3 passed`.

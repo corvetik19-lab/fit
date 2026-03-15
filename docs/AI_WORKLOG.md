@@ -237,3 +237,10 @@
 - Санировал user-facing copy в `src/app/api/settings/billing/route.ts`, `src/app/api/settings/data/route.ts` и `src/app/api/settings/data/export/[id]/download/route.ts`, чтобы этот settings self-service контур не отдавал смешанный английский или битые промежуточные формулировки.
 - Добавил `PLAYWRIGHT_SKIP_AUTH_SETUP` в `tests/e2e/global-auth-setup.ts` и новый runner `scripts/run-playwright.mjs`; `npm run test:smoke` теперь не пытается логинить тестовых пользователей и не падает от флака auth bootstrap.
 - Подтвердил tranche полным прогоном: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `13 passed`, `npm run test:smoke` -> `3 passed`.
+
+### 2026-03-15 23:45 - Расширил user-owned isolation до AI history
+
+- Добавил `tests/e2e/helpers/ai.ts`: helper `ensureAiChatSession(...)` сидирует AI chat session через safe blocked-flow (`/api/ai/chat` с risky prompt), поэтому e2e не зависят от платного AI runtime и всё равно получают реальную owner-scoped session в БД.
+- Расширил `tests/e2e/ownership-isolation.spec.ts`: root-admin теперь дополнительно проверяется на owner-isolation в AI history и не может удалить чужую AI session по `DELETE /api/ai/sessions/{id}`.
+- Тем же сценарием подтверждён bulk-clear contract: `DELETE /api/ai/sessions` под root-admin очищает только его собственную историю, а пользователь после этого всё ещё может удалить свою seeded session по `id`.
+- Полный tranche подтверждён прогоном `npm run lint`, `npx eslint tests/e2e tests/e2e/helpers`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `14 passed`, `npm run test:smoke` -> `3 passed`.

@@ -8,6 +8,7 @@ import {
   hasAdminE2ECredentials,
   hasAuthE2ECredentials,
 } from "./helpers/auth";
+import { ensureAiChatSession } from "./helpers/ai";
 import { createExerciseAsset } from "./helpers/exercises";
 import { fetchJson } from "./helpers/http";
 import { createNutritionAssets } from "./helpers/nutrition";
@@ -488,6 +489,61 @@ test.describe("user-owned isolation", () => {
     expect(userBillingResult.status).toBe(200);
     expect(userBillingResult.body?.data?.snapshot?.billingReviewRequest?.id).toBe(
       seededReview.reviewRequestId,
+    );
+
+    await adminContext.close();
+    await userContext.close();
+  });
+
+  test("root admin cannot delete another user's AI chat history", async ({
+    browser,
+  }) => {
+    const userContext = await browser.newContext({
+      storageState: USER_STORAGE_STATE_PATH,
+    });
+    const userPage = await userContext.newPage();
+    await userPage.goto("/ai");
+    await expect(userPage).toHaveURL(/\/ai$/);
+    await userPage.waitForLoadState("networkidle");
+
+    const seededSession = await ensureAiChatSession(userPage);
+
+    const adminContext = await browser.newContext({
+      storageState: ADMIN_STORAGE_STATE_PATH,
+    });
+    const adminPage = await adminContext.newPage();
+    await adminPage.goto("/admin");
+    await expect(adminPage).toHaveURL(/\/admin$/);
+    await adminPage.waitForLoadState("networkidle");
+
+    const [deleteForeignSessionResult, clearAdminHistoryResult] = await Promise.all([
+      fetchJson<{ code?: string }>(adminPage, {
+        method: "DELETE",
+        url: `/api/ai/sessions/${seededSession.sessionId}`,
+      }),
+      fetchJson<{ data?: { cleared?: boolean } }>(adminPage, {
+        method: "DELETE",
+        url: "/api/ai/sessions",
+      }),
+    ]);
+
+    expect(deleteForeignSessionResult.status).toBe(404);
+    expect(deleteForeignSessionResult.body?.code).toBe("AI_CHAT_SESSION_NOT_FOUND");
+
+    expect(clearAdminHistoryResult.status).toBe(200);
+    expect(clearAdminHistoryResult.body?.data?.cleared).toBe(true);
+
+    const deleteUserSessionResult = await fetchJson<{
+      data?: { deleted?: boolean; sessionId?: string };
+    }>(userPage, {
+      method: "DELETE",
+      url: `/api/ai/sessions/${seededSession.sessionId}`,
+    });
+
+    expect(deleteUserSessionResult.status).toBe(200);
+    expect(deleteUserSessionResult.body?.data?.deleted).toBe(true);
+    expect(deleteUserSessionResult.body?.data?.sessionId).toBe(
+      seededSession.sessionId,
     );
 
     await adminContext.close();
