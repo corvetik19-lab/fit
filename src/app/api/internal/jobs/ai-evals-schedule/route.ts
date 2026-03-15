@@ -69,8 +69,6 @@ async function handleRequest(request: Request) {
         : "Scheduled AI eval добавлен в очередь.",
     });
   } catch (error) {
-    logger.error("scheduled ai eval job failed", { error });
-
     if (error instanceof z.ZodError) {
       return createApiErrorResponse({
         status: 400,
@@ -79,6 +77,8 @@ async function handleRequest(request: Request) {
         details: error.flatten(),
       });
     }
+
+    logger.error("scheduled ai eval job failed", { error });
 
     return createApiErrorResponse({
       status: 500,

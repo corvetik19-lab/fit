@@ -362,3 +362,12 @@
 - Применил корректирующую миграцию `supabase/migrations/20260315173725_ai_history_self_service_rls_initplan_hardening.sql`: все эти owner policies переведены на `(select auth.uid())`, чтобы Supabase больше не пересчитывал auth-функции per-row на горячих AI/history/self-service таблицах.
 - Повторный прогон performance advisors подтвердил, что targeted `auth_rls_initplan` warnings по этим таблицам ушли; после этого отдельно прогнал `npm run test:rls`, чтобы подтвердить сохранение реальной row-level изоляции после policy-alter.
 - Оставшийся advisor backlog теперь сузился до других product/admin/system таблиц и отдельного security-слоя `rls_enabled_no_policy`, который уже пойдёт следующим DB tranche, а не как часть AI/history hotfix.
+
+### 2026-03-16 12:35 - Закрыл internal jobs auth и invalid-param контракты
+
+- Добавил `tests/e2e/internal-jobs.spec.ts` как отдельный contract-suite для `/api/internal/jobs/*`.
+- Для обычного пользователя подтверждён `403 ADMIN_REQUIRED` на `dashboard-warm`, `nutrition-summaries`, `knowledge-reindex`, `ai-evals-schedule`, `billing-reconcile`.
+- Для root-admin подтверждены явные `400` на невалидных параметрах `dashboard-warm`, `nutrition-summaries`, `knowledge-reindex`, `ai-evals-schedule`.
+- В `src/app/api/internal/jobs/ai-evals-schedule/route.ts` разнёс expected и unexpected error path: `ZodError` больше не шумит как route-level `logger.error`.
+- Усилил `tests/e2e/helpers/auth.ts`: вход теперь сначала использует обычный `fill`, затем fallback через setter, и ждёт активации submit до 10 секунд. Это убрало flaky bootstrap в `global-auth-setup`.
+- Подтвердил tranche полным baseline: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `24 passed`, `npm run test:smoke` -> `3 passed`.

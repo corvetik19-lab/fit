@@ -53,15 +53,24 @@ export async function signInAsAdmin(page: Page) {
 }
 
 async function setFieldValue(locator: ReturnType<Page["locator"]>, value: string) {
-  await locator.evaluate((element, nextValue) => {
-    const input = element as HTMLInputElement;
-    const prototype = Object.getPrototypeOf(input) as HTMLInputElement;
-    const descriptor = Object.getOwnPropertyDescriptor(prototype, "value");
+  await locator.fill("");
+  await locator.fill(value);
 
-    descriptor?.set?.call(input, nextValue);
-    input.dispatchEvent(new Event("input", { bubbles: true }));
-    input.dispatchEvent(new Event("change", { bubbles: true }));
-  }, value);
+  const currentValue = await locator.inputValue().catch(() => "");
+
+  if (currentValue !== value) {
+    await locator.evaluate((element, nextValue) => {
+      const input = element as HTMLInputElement;
+      const prototype = Object.getPrototypeOf(input) as HTMLInputElement;
+      const descriptor = Object.getOwnPropertyDescriptor(prototype, "value");
+
+      descriptor?.set?.call(input, nextValue);
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    }, value);
+  }
+
+  await locator.blur().catch(() => undefined);
 }
 
 async function waitForPostAuthRoute(page: Page) {
@@ -109,7 +118,7 @@ async function signInWithCredentials(page: Page, credentials: AuthCredentials) {
 
   await setFieldValue(emailField, credentials.email);
   await setFieldValue(passwordField, credentials.password);
-  await expect(submitButton).toBeEnabled();
+  await expect(submitButton).toBeEnabled({ timeout: 10_000 });
 
   await submitButton.click();
   await waitForPostAuthRoute(page);

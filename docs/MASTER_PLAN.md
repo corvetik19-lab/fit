@@ -226,7 +226,7 @@
 - [x] `admin/stats` и `admin/operations` теперь fail-open: при временном сбое внешних запросов операторские экраны получают безопасный fallback snapshot вместо общего `500`.
 - [x] `admin/users` теперь fail-open: при временном сбое внешних источников каталог пользователей отдаёт безопасный degraded snapshot вместо общего `500`, а UI показывает операторский banner.
 - [x] `admin/users/[id]` теперь fail-open: detail-route отдаёт degraded snapshot с `meta.degraded`, а карточка пользователя показывает явный banner вместо полного падения.
-- [ ] Подтвердить auth/visibility для cron routes и internal jobs.
+- [x] Подтвердить auth/visibility для cron routes и internal jobs.
 - [ ] Задокументировать или устранить допустимые build warnings.
 
 ## Волна 4. Billing и SaaS readiness
@@ -423,3 +423,11 @@
 - [x] Добавлена миграция `supabase/migrations/20260315173725_ai_history_self_service_rls_initplan_hardening.sql`, которая переводит owner policies AI/history/self-service таблиц на `(select auth.uid())` и закрывает `auth_rls_initplan` warnings для `ai_chat_sessions`, `ai_chat_messages`, `export_jobs`, `deletion_requests`, `user_context_snapshots`, `knowledge_chunks`, `knowledge_embeddings`, `ai_safety_events`.
 - [x] После DDL повторно прогнаны Supabase advisors `security` и `performance`: targeted warnings по этой группе таблиц исчезли, а direct `npm run test:rls` подтвердил, что row-level ownership после policy-alter не сломался.
 - [ ] Следующий DB tranche: пройти remaining advisor backlog по `auth_rls_initplan`, `rls_enabled_no_policy` для admin/system tables и затем оформить migration/advisor verification как отдельный CI gate.
+
+## 2026-03-16 internal jobs contracts addendum
+
+- [x] Добавлен `tests/e2e/internal-jobs.spec.ts` как отдельный contract-suite для `/api/internal/jobs/*`.
+- [x] Подтверждено, что обычный пользователь получает `403 ADMIN_REQUIRED` на `dashboard-warm`, `nutrition-summaries`, `knowledge-reindex`, `ai-evals-schedule`, `billing-reconcile`.
+- [x] Подтверждено, что root-admin получает явные `400` на невалидных параметрах `dashboard-warm`, `nutrition-summaries`, `knowledge-reindex`, `ai-evals-schedule`.
+- [x] `src/app/api/internal/jobs/ai-evals-schedule/route.ts` больше не логирует ожидаемый `ZodError` как route-level `error`.
+- [x] Tranche подтверждён baseline: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `24 passed`, `npm run test:smoke` -> `3 passed`.
