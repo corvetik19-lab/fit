@@ -38,6 +38,35 @@ test.describe("admin app", () => {
     await expect(page.locator('a[href="/admin/users"]').first()).toBeVisible();
   });
 
+  test("root admin gets degraded fallback for admin user detail snapshot", async ({
+    page,
+  }) => {
+    await navigateStable(page, "/admin/users", /\/admin\/users$/);
+    await page.waitForLoadState("networkidle");
+    const myCardHref = await page.locator('a[href^="/admin/users/"]').first().getAttribute("href");
+    expect(myCardHref).toBeTruthy();
+    const targetUserId = myCardHref!.split("/").at(-1);
+    expect(targetUserId).toBeTruthy();
+
+    const detailResult = await fetchJson<{
+      data?: {
+        authUser?: {
+          email?: string | null;
+        } | null;
+      };
+      meta?: {
+        degraded?: boolean;
+      };
+    }>(page, {
+      method: "GET",
+      url: `/api/admin/users/${targetUserId}?__test_admin_detail_fallback=1`,
+    });
+
+    expect(detailResult.status).toBe(200);
+    expect(detailResult.body?.meta?.degraded).toBe(true);
+    expect(detailResult.body?.data?.authUser?.email).toBeTruthy();
+  });
+
   test("root admin gets explicit validation error for invalid reindex payload", async ({
     page,
   }) => {

@@ -50,6 +50,7 @@ export function AdminUserDetail({
     activeSection,
     detail,
     error,
+    isDegraded,
     isLoading,
     reload,
     setActiveSection,
@@ -90,7 +91,7 @@ export function AdminUserDetail({
   const summaryMetrics = [
     ["Упражнения", String(detail.stats.workout.activeExercises)],
     ["Программы", String(detail.stats.workout.programs)],
-    ["Приемы пищи", String(detail.stats.nutrition.meals)],
+    ["Приёмы пищи", String(detail.stats.nutrition.meals)],
     ["Чаты ИИ", String(detail.stats.ai.chatSessions)],
     ["Подходы", String(detail.stats.workout.loggedSets)],
     canViewRoleDetails
@@ -136,9 +137,16 @@ export function AdminUserDetail({
           ))}
         </div>
 
+        {isDegraded ? (
+          <p className="mt-4 rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            Часть служебных данных временно недоступна. Карточка показана из
+            резервного снимка.
+          </p>
+        ) : null}
+
         {canViewRoleDetails && !detail.superAdminPolicy.targetCanBeSuperAdmin ? (
           <p className="mt-4 rounded-2xl border border-sky-300/60 bg-sky-50 px-4 py-3 text-sm text-sky-800">
-            Главный доступ нельзя назначить этому пользователю. Он закреплен
+            Главный доступ нельзя назначить этому пользователю. Он закреплён
             только за {detail.superAdminPolicy.primaryEmail}.
           </p>
         ) : null}

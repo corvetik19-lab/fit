@@ -173,6 +173,7 @@
 
 - [x] Есть `/admin`, каталог пользователей, user detail, health dashboards и operations inbox.
 - [x] Degraded/fallback режим в `admin health` и `operations inbox` явно показан в UI, а не прячется за молчаливым пустым состоянием.
+- [x] Верхний слой `admin user detail` переведён в чистый UTF-8: state, summary shell и section-switcher больше не отдают mojibake.
 - [ ] Полностью убрать сырые технические тексты и mojibake из admin UI.
 - [ ] Оставить детали ролей и capability only для root/super-admin.
 - [ ] Довести каталоги и карточки пользователя до секционного desktop/mobile UX без перегруза.
@@ -224,6 +225,7 @@
 - [x] Добавить базовую валидацию `userId`-параметров для internal jobs и явные `400`, а не общие `500`.
 - [x] `admin/stats` и `admin/operations` теперь fail-open: при временном сбое внешних запросов операторские экраны получают безопасный fallback snapshot вместо общего `500`.
 - [x] `admin/users` теперь fail-open: при временном сбое внешних источников каталог пользователей отдаёт безопасный degraded snapshot вместо общего `500`, а UI показывает операторский banner.
+- [x] `admin/users/[id]` теперь fail-open: detail-route отдаёт degraded snapshot с `meta.degraded`, а карточка пользователя показывает явный banner вместо полного падения.
 - [ ] Подтвердить auth/visibility для cron routes и internal jobs.
 - [ ] Задокументировать или устранить допустимые build warnings.
 
@@ -402,7 +404,10 @@
 - [x] `src/app/api/admin/users/route.ts` переведён на degraded fallback: при временном сбое внешних источников route возвращает пустой безопасный snapshot с `meta.degraded`, а не общий `500`.
 - [x] `src/components/admin-users-directory-model.ts` расширен `meta.degraded`, а `src/components/admin-users-directory.tsx` показывает явный операторский banner, если каталог пришёл из резервного снимка.
 - [x] Tranche подтверждён quality gates: `npx eslint src/app/api/admin/users/route.ts src/components/admin-users-directory.tsx src/components/admin-users-directory-model.ts`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/admin-app.spec.ts --workers=1`.
-- [ ] Следующий операторский tranche: либо перевод detail surface `/api/admin/users/[id]` на аналогичный fail-open/degraded contract, либо возврат к AI/data backend audit по retrieval / reindex ownership.
+- [x] Detail surface `/api/admin/users/[id]` переведён на аналогичный fail-open/degraded contract: route теперь отдаёт резервный snapshot вместо общего `500`, state понимает `meta.degraded`, а верхний слой карточки и section-switcher очищены от mojibake.
+- [x] Добавлен e2e контракт на degraded detail snapshot: root-admin может запросить test-only fallback и получить `meta.degraded = true` без падения карточки.
+- [x] Tranche подтверждён quality gates: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth`, `npm run test:smoke`.
+- [ ] Следующий операторский tranche: добить remaining mojibake и timeline/detail подблоки внутри `admin-user-detail-sections.tsx`, либо вернуться к AI/data backend audit по retrieval / reindex ownership.
 
 ## 2026-03-16 AI reindex contract addendum
 

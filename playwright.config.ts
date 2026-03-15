@@ -32,6 +32,10 @@ export default defineConfig({
     ? undefined
     : {
         command: "npm run start:test",
+        env: {
+          ...process.env,
+          PLAYWRIGHT_TEST_HOOKS: "1",
+        },
         url: `${baseURL}/smoke`,
         reuseExistingServer: !process.env.CI,
         timeout: 120_000,

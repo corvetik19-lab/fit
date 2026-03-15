@@ -2,20 +2,16 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import type { AdminUserDetailData } from "@/components/admin-user-detail-model";
+import type {
+  AdminUserDetailData,
+  AdminUserDetailResponse,
+} from "@/components/admin-user-detail-model";
 
 export type AdminUserDetailSection =
   | "profile"
   | "activity"
   | "operations"
   | "billing";
-
-type AdminUserDetailResponse =
-  | {
-      data?: AdminUserDetailData;
-      message?: string;
-    }
-  | null;
 
 export const adminUserDetailSections: Array<{
   description: string;
@@ -47,6 +43,7 @@ export const adminUserDetailSections: Array<{
 export function useAdminUserDetailState(userId: string) {
   const [detail, setDetail] = useState<AdminUserDetailData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isDegraded, setIsDegraded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [reloadVersion, setReloadVersion] = useState(0);
   const [activeSection, setActiveSection] =
@@ -62,7 +59,9 @@ export function useAdminUserDetailState(userId: string) {
         const response = await fetch(`/api/admin/users/${userId}`, {
           cache: "no-store",
         });
-        const payload = (await response.json().catch(() => null)) as AdminUserDetailResponse;
+        const payload = (await response
+          .json()
+          .catch(() => null)) as AdminUserDetailResponse;
 
         if (!response.ok) {
           if (isActive) {
@@ -70,6 +69,7 @@ export function useAdminUserDetailState(userId: string) {
               payload?.message ?? "Не удалось загрузить карточку пользователя.",
             );
             setDetail(null);
+            setIsDegraded(false);
           }
           return;
         }
@@ -77,6 +77,7 @@ export function useAdminUserDetailState(userId: string) {
         if (isActive) {
           setDetail(payload?.data ?? null);
           setError(null);
+          setIsDegraded(Boolean(payload?.meta?.degraded));
         }
       } finally {
         if (isActive) {
@@ -100,6 +101,7 @@ export function useAdminUserDetailState(userId: string) {
     activeSection,
     detail,
     error,
+    isDegraded,
     isLoading,
     reload,
     setActiveSection,

@@ -192,6 +192,16 @@ export type AdminUserDetailData = {
   }>;
 };
 
+export type AdminUserDetailResponse =
+  | {
+      data?: AdminUserDetailData;
+      message?: string;
+      meta?: {
+        degraded?: boolean;
+      };
+    }
+  | null;
+
 const dateFormatter = new Intl.DateTimeFormat("ru-RU", {
   day: "2-digit",
   month: "long",

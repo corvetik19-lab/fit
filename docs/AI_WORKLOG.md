@@ -118,6 +118,14 @@
 
 - В `src/lib/internal-jobs.ts` добавил `parseOptionalUuidParam(...)` и `InternalJobParamError`, чтобы internal jobs не принимали произвольный `userId`.
 - В `dashboard-warm`, `knowledge-reindex`, `nutrition-summaries` и `billing-reconcile` route handlers невалидный `userId` теперь даёт явный `400`, а не уходит в общий `500`.
+
+### 2026-03-15 05:10 - Перевёл admin user detail на fail-open и degraded contract
+
+- В `src/app/api/admin/users/[id]/route.ts` добавил UUID-валидацию `userId`, резервный degraded snapshot и явный `500 ADMIN_USER_DETAIL_FAILED` для действительно неожиданных ошибок вместо ложного `401`.
+- В `src/components/admin-user-detail-state.ts` добавил поддержку `meta.degraded`, а верхний слой `src/components/admin-user-detail.tsx` и `src/app/admin/users/[id]/page.tsx` перевёл в чистый UTF-8.
+- В `src/components/admin-user-detail-model.ts` почистил словари ролей, статусов и форматтеры от mojibake, чтобы detail-карточка и связанные admin surface'ы не показывали сломанный русский текст.
+- В `tests/e2e/admin-app.spec.ts` добавил отдельный degraded-contract: root-admin может принудительно запросить test-only fallback detail snapshot и получить `meta.degraded = true`.
+- Проверки после tranche: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth`, `npm run test:smoke`.
 - Это делает cron/admin job контракты предсказуемее и уменьшает ложные server-error сценарии при ручных вызовах и операционных проверках.
 - После правок снова подтверждён baseline: `npm run lint`, `npm run typecheck`, `npm run build`.
 
