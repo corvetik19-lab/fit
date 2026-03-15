@@ -250,7 +250,7 @@
 - [x] Добавить regression tests для offline/sync workout execution.
 - [x] Добавить AI route contract tests без обязательного вызова платного провайдера.
 - [x] Добавить route-level изоляционные проверки для owner-scoped user data (`workout`, `nutrition`, `custom exercises`, `settings`, `AI history`).
-- [ ] Добавить отдельные RLS-focused проверки сверх route-level owner isolation.
+- [x] Добавить отдельные RLS-focused проверки сверх route-level owner isolation.
 
 ### CI
 
@@ -387,3 +387,11 @@
 - [x] `src/app/api/ai/proposals/[id]/approve/route.ts` и `.../apply/route.ts` больше не логируют ожидаемые `400/404` как route-level `error`; логирование оставлено только для неожиданных `500` path.
 - [x] Tranche подтверждён quality gates: `npm run lint`, `npx eslint tests/e2e tests/e2e/helpers src/app/api/ai/proposals/[id]/approve/route.ts src/app/api/ai/proposals/[id]/apply/route.ts`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `19 passed`.
 - [ ] Следующий AI/data tranche: owner-only / RLS coverage для retrieval / reindex / proposal listing, затем отдельный `test:rls` слой поверх route-level isolation.
+
+## 2026-03-16 RLS test baseline addendum
+
+- [x] Добавлен отдельный `npm run test:rls`, который не зависит от webServer и UI-логина: suite идёт через `PLAYWRIGHT_SKIP_AUTH_SETUP=1` и прямую Supabase auth с тестовыми учётками.
+- [x] `tests/rls/helpers/supabase-rls.ts` добавлен как RLS harness: он логинит обычного пользователя и root-admin через публичный key, а fixture сидируется service-role helper'ом.
+- [x] `tests/rls/ownership.spec.ts` подтверждает row-level изоляцию напрямую на таблицах `ai_plan_proposals`, `exercise_library`, `weekly_programs`: владелец видит свои строки, другой auth-user не видит их и не может обновить чужой proposal.
+- [x] Tranche подтверждён quality gates: `npx eslint tests/rls tests/e2e/helpers/supabase-admin.ts tests/e2e/helpers/ai.ts`, `npm run test:rls`, `npm run lint`, `npm run typecheck`, `npm run build`.
+- [ ] Следующий AI/data tranche: owner-only / RLS coverage для retrieval / reindex / proposal listing и затем расширение CI до отдельных DB/advisor verification шагов.

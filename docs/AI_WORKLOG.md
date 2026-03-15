@@ -312,3 +312,10 @@
 - Расширил `tests/e2e/api-contracts.spec.ts`: invalid UUID для AI proposal routes теперь подтверждаются явными `400 AI_PROPOSAL_APPROVE_INVALID` и `400 AI_PROPOSAL_APPLY_INVALID`.
 - В `src/app/api/ai/proposals/[id]/approve/route.ts` и `src/app/api/ai/proposals/[id]/apply/route.ts` убрал noisy route-level `logger.error` для ожидаемых `400/404`, оставив логирование только для неожиданных `500`.
 - Полный tranche подтверждён командами: `npm run lint`, `npx eslint tests/e2e tests/e2e/helpers src/app/api/ai/proposals/[id]/approve/route.ts src/app/api/ai/proposals/[id]/apply/route.ts`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `19 passed`.
+
+### 2026-03-16 09:35 - Добавил отдельный RLS test baseline
+
+- Добавил `tests/rls/helpers/supabase-rls.ts`: helper логинит обычного пользователя и root-admin напрямую через публичный Supabase key, а fixture сидирует через service-role helper без UI и без webServer.
+- Добавил `tests/rls/ownership.spec.ts`: suite подтверждает прямую row-level изоляцию в `ai_plan_proposals`, `exercise_library` и `weekly_programs`; владелец видит свои строки, другой auth-user не видит и не может обновить чужой proposal.
+- В `package.json` добавил `npm run test:rls`, который идёт отдельно от UI/e2e контура и не требует сборки test-server.
+- Подтвердил tranche командами: `npx eslint tests/rls tests/e2e/helpers/supabase-admin.ts tests/e2e/helpers/ai.ts`, `npm run test:rls`, `npm run lint`, `npm run typecheck`, `npm run build`.
