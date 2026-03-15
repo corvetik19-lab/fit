@@ -34,7 +34,6 @@ function buildFutureWeekStartDate(seed: string) {
 export async function createLockedWorkoutDay(page: Page, titleSeed: string) {
   const suffix = crypto.randomUUID().slice(0, 8);
   const exerciseTitle = `E2E ${titleSeed} ${suffix}`;
-  const weekStartDate = buildFutureWeekStartDate(suffix);
 
   const exerciseResult = await fetchJson<{ data: ExerciseRow }>(page, {
     method: "POST",
@@ -52,38 +51,52 @@ export async function createLockedWorkoutDay(page: Page, titleSeed: string) {
   const exerciseId = exerciseResult.body?.data?.id;
   expect(exerciseId).toBeTruthy();
 
-  const programResult = await fetchJson<{ data: { id: string } }>(page, {
-    method: "POST",
-    url: "/api/weekly-programs",
-    body: {
-      title: `E2E Program ${titleSeed} ${suffix}`,
-      weekStartDate,
-      days: [
-        {
-          dayOfWeek: 1,
-          exercises: [
-            {
-              exerciseLibraryId: exerciseId,
-              setsCount: 1,
-              repRangeKey: "6-10",
-            },
-          ],
-        },
-      ],
-    },
-  });
+  let programId: string | null = null;
 
-  expect(programResult.status).toBe(200);
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    const attemptSeed = `${suffix}-${attempt}`;
+    const weekStartDate = buildFutureWeekStartDate(attemptSeed);
+    const programResult = await fetchJson<{ data: { id: string } }>(page, {
+      method: "POST",
+      url: "/api/weekly-programs",
+      body: {
+        title: `E2E Program ${titleSeed} ${attemptSeed}`,
+        weekStartDate,
+        days: [
+          {
+            dayOfWeek: 1,
+            exercises: [
+              {
+                exerciseLibraryId: exerciseId,
+                setsCount: 1,
+                repRangeKey: "6-10",
+              },
+            ],
+          },
+        ],
+      },
+    });
 
-  const programId = programResult.body?.data?.id;
+    expect(programResult.status).toBe(200);
+
+    programId = programResult.body?.data?.id ?? null;
+    expect(programId).toBeTruthy();
+
+    const lockResult = await fetchJson<{ code?: string }>(page, {
+      method: "POST",
+      url: `/api/weekly-programs/${programId}/lock`,
+    });
+
+    if (lockResult.status === 200) {
+      break;
+    }
+
+    expect(lockResult.status).toBe(409);
+    expect(lockResult.body?.code).toBe("WEEKLY_PROGRAM_ACTIVE_WEEK_CONFLICT");
+    programId = null;
+  }
+
   expect(programId).toBeTruthy();
-
-  const lockResult = await fetchJson(page, {
-    method: "POST",
-    url: `/api/weekly-programs/${programId}/lock`,
-  });
-
-  expect(lockResult.status).toBe(200);
 
   const listResult = await fetchJson<{ data: WeeklyProgramSummary[] }>(page, {
     method: "GET",

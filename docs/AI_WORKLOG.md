@@ -185,3 +185,11 @@
 - Добавил `tests/e2e/helpers/nutrition.ts`, чтобы e2e могли штатно сидировать food, recipe, meal template и meal через обычные product routes под тестовым пользователем.
 - Расширил `tests/e2e/ownership-isolation.spec.ts`: root-admin теперь дополнительно проверяется на owner-isolation в nutrition-контуре и получает корректные `404 FOOD_NOT_FOUND`, `RECIPE_NOT_FOUND`, `MEAL_TEMPLATE_NOT_FOUND`, `MEAL_NOT_FOUND` для чужих assets.
 - Переподтвердил полный auth/e2e baseline: `npm run lint`, `npm run typecheck`, `npm run build`, `npx eslint tests/e2e tests/e2e/helpers`, `npm run test:e2e:auth` -> 8 passed.
+
+### 2026-03-15 14:10 - Расширил user-owned isolation до custom exercises и стабилизировал e2e navigation
+
+- Ужесточил `src/app/api/exercises/route.ts` и `src/app/api/exercises/[id]/route.ts`: list/update теперь явно фильтруют по `user_id`, а update route дополнительно валидирует UUID и возвращает owner-scoped `404 EXERCISE_NOT_FOUND` для чужого ресурса.
+- Добавил `tests/e2e/helpers/exercises.ts` и расширил `tests/e2e/ownership-isolation.spec.ts`: root-admin теперь не видит чужое custom exercise в `GET /api/exercises` и не может обновить его через `PATCH /api/exercises/{id}`.
+- Добавил `tests/e2e/helpers/navigation.ts` и перевёл `authenticated-app.spec.ts` и `admin-app.spec.ts` на `navigateStable(...)`, чтобы убрать flaky `ERR_ABORTED`/timeout при e2e navigation под `--workers=2`.
+- Усилил `tests/e2e/helpers/workouts.ts`: lock weekly program теперь переживает `WEEKLY_PROGRAM_ACTIVE_WEEK_CONFLICT` и выбирает следующий weekStartDate, поэтому workout sync regression больше не падает от накопившихся активных недель.
+- Переподтвердил полный auth/e2e baseline: `npm run lint`, `npm run typecheck`, `npm run build`, `npx eslint tests/e2e/... src/app/api/exercises`, `npm run test:e2e:auth` -> 9 passed.

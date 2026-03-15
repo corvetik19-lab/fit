@@ -293,3 +293,8 @@
 
 - [x] Расширен user-owned isolation baseline до nutrition routes: root-admin не видит чужие foods в `GET /api/foods` и получает owner-scoped `404` на `PATCH/DELETE /api/foods/{id}`, `DELETE /api/recipes/{id}`, `DELETE /api/meal-templates/{id}` и `DELETE /api/meals/{id}` для чужих nutrition assets.
 - [ ] Следующий тестовый tranche: расширить user-owned isolation beyond workout/program/nutrition flows до остальных owner-scoped и RLS-контуров.
+
+## 2026-03-15 exercises isolation addendum
+
+- [x] Расширен user-owned isolation baseline до custom exercises: route-контур `GET /api/exercises` и `PATCH /api/exercises/{id}` теперь явно держит owner guard по `user_id`, а root-admin не видит и не может обновить чужое упражнение.
+- [ ] Следующий тестовый tranche: расширить user-owned isolation beyond workout/program/nutrition/exercises flows до остальных owner-scoped и RLS-контуров.

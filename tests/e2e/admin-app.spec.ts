@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import { hasAdminE2ECredentials } from "./helpers/auth";
 import { ADMIN_STORAGE_STATE_PATH } from "./helpers/auth-state";
+import { navigateStable } from "./helpers/navigation";
 
 test.use({
   storageState: ADMIN_STORAGE_STATE_PATH,
@@ -19,13 +20,14 @@ test.describe("admin app", () => {
     await page.waitForLoadState("networkidle");
     await expect(page.locator('a[href="/admin/users"]').first()).toBeVisible();
 
-    await page.goto("/admin/users", { waitUntil: "domcontentloaded" });
-    await expect(page).toHaveURL(/\/admin\/users$/);
+    await navigateStable(page, "/admin/users", /\/admin\/users$/);
     await page.waitForLoadState("networkidle");
 
     const userCardLink = page.locator('a[href^="/admin/users/"]').first();
     await expect(userCardLink).toBeVisible();
-    await Promise.all([page.waitForURL(/\/admin\/users\/.+$/), userCardLink.click()]);
+    const userCardHref = await userCardLink.getAttribute("href");
+    expect(userCardHref).toBeTruthy();
+    await navigateStable(page, userCardHref!, /\/admin\/users\/.+$/);
 
     await expect(page).toHaveURL(/\/admin\/users\/.+$/);
     await expect(page.locator('button[aria-pressed]').first()).toBeVisible();

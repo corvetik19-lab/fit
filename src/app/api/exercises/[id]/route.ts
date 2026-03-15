@@ -12,6 +12,10 @@ const exerciseUpdateSchema = z.object({
   isArchived: z.boolean().optional(),
 });
 
+const exerciseParamsSchema = z.object({
+  id: z.string().uuid(),
+});
+
 function normalizeText(value: string | null | undefined) {
   if (value == null) {
     return null;
@@ -40,7 +44,7 @@ export async function PATCH(
     }
 
     const payload = exerciseUpdateSchema.parse(await request.json());
-    const { id } = await context.params;
+    const { id } = exerciseParamsSchema.parse(await context.params);
 
     const updateData: Record<string, unknown> = {};
 
@@ -76,6 +80,7 @@ export async function PATCH(
       .from("exercise_library")
       .update(updateData)
       .eq("id", id)
+      .eq("user_id", user.id)
       .select(
         "id, title, muscle_group, description, note, is_archived, created_at, updated_at",
       )

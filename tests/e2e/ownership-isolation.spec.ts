@@ -8,6 +8,7 @@ import {
   hasAdminE2ECredentials,
   hasAuthE2ECredentials,
 } from "./helpers/auth";
+import { createExerciseAsset } from "./helpers/exercises";
 import { fetchJson } from "./helpers/http";
 import { createNutritionAssets } from "./helpers/nutrition";
 import { createLockedWorkoutDay } from "./helpers/workouts";
@@ -207,6 +208,55 @@ test.describe("user-owned isolation", () => {
 
     expect(deleteMealResult.status).toBe(404);
     expect(deleteMealResult.body?.code).toBe("MEAL_NOT_FOUND");
+
+    await adminContext.close();
+    await userContext.close();
+  });
+
+  test("root admin cannot read or mutate another user's custom exercises", async ({
+    browser,
+  }) => {
+    const userContext = await browser.newContext({
+      storageState: USER_STORAGE_STATE_PATH,
+    });
+    const userPage = await userContext.newPage();
+    await userPage.goto("/dashboard");
+    await expect(userPage).toHaveURL(/\/dashboard$/);
+    await userPage.waitForLoadState("networkidle");
+
+    const seededExercise = await createExerciseAsset(userPage, "exercise-isolation");
+
+    const adminContext = await browser.newContext({
+      storageState: ADMIN_STORAGE_STATE_PATH,
+    });
+    const adminPage = await adminContext.newPage();
+    await adminPage.goto("/admin");
+    await expect(adminPage).toHaveURL(/\/admin$/);
+    await adminPage.waitForLoadState("networkidle");
+
+    const [exerciseListResult, patchExerciseResult] = await Promise.all([
+      fetchJson<{ data?: Array<{ id: string }> }>(adminPage, {
+        method: "GET",
+        url: "/api/exercises",
+      }),
+      fetchJson<{ code?: string }>(adminPage, {
+        method: "PATCH",
+        url: `/api/exercises/${seededExercise.exerciseId}`,
+        body: {
+          title: "Hacked exercise title",
+        },
+      }),
+    ]);
+
+    expect(exerciseListResult.status).toBe(200);
+    expect(
+      (exerciseListResult.body?.data ?? []).some(
+        (exercise) => exercise.id === seededExercise.exerciseId,
+      ),
+    ).toBe(false);
+
+    expect(patchExerciseResult.status).toBe(404);
+    expect(patchExerciseResult.body?.code).toBe("EXERCISE_NOT_FOUND");
 
     await adminContext.close();
     await userContext.close();

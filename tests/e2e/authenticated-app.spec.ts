@@ -4,6 +4,7 @@ import {
   hasAuthE2ECredentials,
 } from "./helpers/auth";
 import { USER_STORAGE_STATE_PATH } from "./helpers/auth-state";
+import { navigateStable } from "./helpers/navigation";
 
 test.use({
   storageState: USER_STORAGE_STATE_PATH,
@@ -20,20 +21,16 @@ test.describe("authenticated app", () => {
     await expect(page).toHaveURL(/\/dashboard$/);
     await expect(page.locator('a[href="/ai"]').first()).toBeVisible();
 
-    await page.goto("/workouts");
-    await expect(page).toHaveURL(/\/workouts$/);
+    await navigateStable(page, "/workouts", /\/workouts$/);
     await expect(page.locator('button[aria-pressed]').first()).toBeVisible();
 
-    await page.goto("/nutrition");
-    await expect(page).toHaveURL(/\/nutrition$/);
+    await navigateStable(page, "/nutrition", /\/nutrition$/);
     await expect(page.locator('button[aria-pressed]').first()).toBeVisible();
 
-    await page.goto("/ai");
-    await expect(page).toHaveURL(/\/ai$/);
+    await navigateStable(page, "/ai", /\/ai$/);
     await expect(page.locator("textarea").first()).toBeVisible();
 
-    await page.goto("/settings");
-    await expect(page).toHaveURL(/\/settings$/);
+    await navigateStable(page, "/settings", /\/settings$/);
     await expect(page.locator('button[aria-pressed]').first()).toBeVisible();
   });
 
