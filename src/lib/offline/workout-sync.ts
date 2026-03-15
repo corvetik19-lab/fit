@@ -52,6 +52,15 @@ async function replaceQueuedMutation(
   });
 }
 
+function getWorkoutMutationIdsForDay(
+  mutations: OfflineMutation[],
+  dayId: string,
+) {
+  return mutations
+    .filter((mutation) => mutation.payload.dayId === dayId)
+    .map((mutation) => mutation.id);
+}
+
 export async function queueWorkoutDayStatusMutation(
   payload: WorkoutDayStatusOfflineMutation["payload"],
 ) {
@@ -115,9 +124,7 @@ export async function listQueuedWorkoutMutationsForDay(dayId: string) {
 
 export async function clearQueuedWorkoutMutationsForDay(dayId: string) {
   const mutations = await offlineDb.mutationQueue.toArray();
-  const mutationIds = mutations
-    .filter((mutation) => mutation.payload.dayId === dayId)
-    .map((mutation) => mutation.id);
+  const mutationIds = getWorkoutMutationIdsForDay(mutations, dayId);
 
   if (mutationIds.length) {
     await offlineDb.mutationQueue.bulkDelete(mutationIds);
@@ -204,6 +211,35 @@ export async function cacheWorkoutDaySnapshot(day: WorkoutDayDetail) {
   });
 
   return updatedAt;
+}
+
+export async function replaceWorkoutDayOfflineState(day: WorkoutDayDetail) {
+  const updatedAt = new Date().toISOString();
+  const snapshotKey = getWorkoutDayCacheKey(day.id);
+  const mutations = await offlineDb.mutationQueue.toArray();
+  const mutationIds = getWorkoutMutationIdsForDay(mutations, day.id);
+
+  await offlineDb.transaction(
+    "rw",
+    offlineDb.mutationQueue,
+    offlineDb.cacheSnapshots,
+    async () => {
+      if (mutationIds.length) {
+        await offlineDb.mutationQueue.bulkDelete(mutationIds);
+      }
+
+      await offlineDb.cacheSnapshots.put({
+        key: snapshotKey,
+        value: day as unknown as Record<string, unknown>,
+        updatedAt,
+      });
+    },
+  );
+
+  return {
+    clearedMutations: mutationIds.length,
+    updatedAt,
+  };
 }
 
 export async function getCachedWorkoutDaySnapshot(dayId: string) {

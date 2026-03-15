@@ -3,6 +3,10 @@ import { expect, test } from "@playwright/test";
 import { hasAuthE2ECredentials } from "./helpers/auth";
 import { USER_STORAGE_STATE_PATH } from "./helpers/auth-state";
 import { fetchJson } from "./helpers/http";
+import {
+  readWorkoutDayOfflineState,
+  seedWorkoutDayOfflineState,
+} from "./helpers/offline-db";
 import { createLockedWorkoutDay } from "./helpers/workouts";
 
 type SeededWorkoutDay = Awaited<ReturnType<typeof createLockedWorkoutDay>>;
@@ -121,7 +125,7 @@ function expectResetSnapshot(snapshot: WorkoutDaySyncSnapshot | undefined) {
 }
 
 test.describe("workout sync contracts", () => {
-  test.describe.configure({ timeout: 60_000 });
+  test.describe.configure({ timeout: 90_000 });
 
   test.skip(
     !hasAuthE2ECredentials(),
@@ -298,5 +302,96 @@ test.describe("workout sync contracts", () => {
 
     expect(secondResetPull.status).toBe(200);
     expectResetSnapshot(secondResetPull.body?.data?.snapshot);
+  });
+
+  test("reset action clears stale local cache and queued mutations", async ({
+    page,
+  }) => {
+    await page.goto("/dashboard");
+    await expect(page).toHaveURL(/\/dashboard$/);
+    await page.waitForLoadState("networkidle");
+
+    const seededDay = await createLockedWorkoutDay(page, "offline-reset");
+
+    const pushResult = await fetchJson<{
+      data?: {
+        accepted: number;
+        applied: number;
+        rejected: number;
+      };
+    }>(page, {
+      method: "POST",
+      url: "/api/sync/push",
+      body: {
+        mutations: buildValidWorkoutExecutionMutations(seededDay),
+      },
+    });
+
+    expect(pushResult.status).toBe(200);
+    expect(pushResult.body?.data?.applied).toBe(3);
+
+    const completedPull = await pullWorkoutDaySnapshot(page, seededDay.dayId);
+
+    expect(completedPull.status).toBe(200);
+    expectCompletedSnapshot(completedPull.body?.data?.snapshot);
+
+    const completedSnapshot = completedPull.body?.data?.snapshot;
+    expect(completedSnapshot).toBeTruthy();
+
+    await page.goto(`/workouts/day/${seededDay.dayId}`);
+    await expect(page).toHaveURL(new RegExp(`/workouts/day/${seededDay.dayId}$`));
+    await page.waitForLoadState("networkidle");
+
+    await seedWorkoutDayOfflineState(page, {
+      dayId: seededDay.dayId,
+      mutations: buildValidWorkoutExecutionMutations(seededDay),
+      snapshot: completedSnapshot as Record<string, unknown>,
+    });
+
+    const seededOfflineState = await readWorkoutDayOfflineState(
+      page,
+      seededDay.dayId,
+    );
+
+    expect(seededOfflineState.queuedMutations).toHaveLength(3);
+    expectCompletedSnapshot(
+      seededOfflineState.snapshot as WorkoutDaySyncSnapshot | undefined,
+    );
+
+    const resetResponsePromise = page.waitForResponse(
+      (response) =>
+        response.url().includes(`/api/workout-days/${seededDay.dayId}/reset`) &&
+        response.request().method() === "POST",
+    );
+
+    page.once("dialog", async (dialog) => {
+      await dialog.accept();
+    });
+
+    await page.getByTestId("workout-reset-button").click();
+    await resetResponsePromise;
+    await page.waitForLoadState("networkidle");
+
+    const offlineStateAfterReset = await readWorkoutDayOfflineState(
+      page,
+      seededDay.dayId,
+    );
+
+    expect(offlineStateAfterReset.queuedMutations).toHaveLength(0);
+    expectResetSnapshot(
+      offlineStateAfterReset.snapshot as WorkoutDaySyncSnapshot | undefined,
+    );
+
+    await page.reload({ waitUntil: "networkidle" });
+
+    const offlineStateAfterReload = await readWorkoutDayOfflineState(
+      page,
+      seededDay.dayId,
+    );
+
+    expect(offlineStateAfterReload.queuedMutations).toHaveLength(0);
+    expectResetSnapshot(
+      offlineStateAfterReload.snapshot as WorkoutDaySyncSnapshot | undefined,
+    );
   });
 });

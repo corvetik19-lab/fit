@@ -188,7 +188,7 @@
 - [x] Добавить regression-покрытие для сценария `sync -> reset -> sync/pull`, подтверждающее чистый snapshot после сброса тренировки.
 - [ ] Пройти все route handlers на валидацию, owner-only доступ, ошибки и idempotency.
 - [ ] Подтвердить, что reset/finish/sync сценарии не создают race conditions и бесконечный polling.
-- [ ] Подтвердить, что offline queue и stale cleanup не восстанавливают уже сброшенное состояние.
+- [x] Подтвердить, что offline queue и stale cleanup не восстанавливают уже сброшенное состояние.
 - [ ] Проверить locked program guard и все mutation routes вокруг workout day execution.
 
 ### AI / RAG / CAG / KAG
@@ -356,4 +356,13 @@
 - [x] `tests/e2e/workout-sync.spec.ts` расширен отдельным regression-сценарием `sync -> done -> reset -> sync/pull`, который подтверждает, что после сброса тренировки `status` снова `planned`, `session_duration_seconds` сброшен в `0`, а все `actual_reps`, `actual_weight_kg`, `actual_rpe` очищены.
 - [x] Для `workout sync contracts` поднят timeout до `60_000`, чтобы длинный seed/lock/reset flow не давал ложный красный только из-за времени, а не из-за реальной проблемы контракта.
 - [x] Tranche подтверждён quality gates: `npm run lint`, `npx eslint tests/e2e tests/e2e/helpers`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `15 passed`, `npm run test:smoke` -> `3 passed`.
-- [ ] Следующий backend tranche: подтвердить уже именно локальный offline/queue контур, что stale IndexedDB state не может вернуть execution после reset даже при неблагоприятной сети и повторном hydrate.
+
+## 2026-03-16 offline reset state addendum
+
+- [x] В `src/lib/offline/workout-sync.ts` добавлен атомарный helper `replaceWorkoutDayOfflineState(...)`, который в одной транзакции очищает `mutationQueue` по `dayId` и заменяет `cacheSnapshots` на свежий snapshot после reset.
+- [x] `src/components/workout-session/use-workout-day-sync.ts` и `src/components/workout-session/use-workout-session-actions.ts` переведены на этот атомарный reset-path, чтобы клиентский reset не зависел от последовательности `clear queue -> refresh count -> persist snapshot`.
+- [x] `tests/e2e/helpers/offline-db.ts` добавлен для работы с реальным браузерным `fit-offline` IndexedDB внутри Playwright regression.
+- [x] `tests/e2e/workout-sync.spec.ts` расширен сценарием `reset action clears stale local cache and queued mutations`: тест сидирует stale snapshot и queued mutations в IndexedDB, запускает reset через UI и подтверждает, что после reset и reload локальное offline state уже чистое.
+- [x] `tests/e2e/helpers/workouts.ts` усилен более широким диапазоном будущих недель и большим числом retry, чтобы seed locked-week не падал от накопившихся `active week conflict`.
+- [x] Tranche подтверждён quality gates: `npm run lint`, `npx eslint tests/e2e tests/e2e/helpers`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `16 passed`, `npm run test:smoke` -> `3 passed`.
+- [ ] Следующий backend tranche: добить оставшийся route/backend audit по owner-only access, idempotency и race conditions beyond workout reset/offline path.

@@ -251,3 +251,12 @@
 - Новый e2e сначала доводит locked workout day до сохранённого `done` через `sync/push`, затем вызывает `POST /api/workout-days/{id}/reset` и проверяет два последовательных `sync/pull`, чтобы убедиться: после reset не возвращаются старые `actual_reps`, `actual_weight_kg`, `actual_rpe`, а день снова `planned` с `session_duration_seconds = 0`.
 - Для `workout sync contracts` поднял timeout до `60_000`, потому что длинный seed/lock/reset flow реально выходит за дефолтные `30s`, хотя сам контракт уже зелёный.
 - Подтвердил tranche командами: `npm run lint`, `npx eslint tests/e2e tests/e2e/helpers`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `15 passed`, `npm run test:smoke` -> `3 passed`.
+
+### 2026-03-16 02:10 - Закрыл локальный offline reset контур против stale IndexedDB state
+
+- В `src/lib/offline/workout-sync.ts` добавил `replaceWorkoutDayOfflineState(...)`: helper теперь атомарно очищает `mutationQueue` по `dayId` и сразу заменяет `cacheSnapshots` новым snapshot внутри одной Dexie-транзакции.
+- В `src/components/workout-session/use-workout-day-sync.ts` и `src/components/workout-session/use-workout-session-actions.ts` reset переведён на этот helper, поэтому клиентский сброс тренировки больше не зависит от нескольких разнесённых шагов в offline слое.
+- Добавил `tests/e2e/helpers/offline-db.ts`, чтобы Playwright мог работать с реальным `fit-offline` IndexedDB, а не только проверять server routes.
+- `tests/e2e/workout-sync.spec.ts` расширен новым browser-based regression: тест сидирует stale queued mutations и stale cache snapshot, запускает reset через UI и затем подтверждает, что локальный IndexedDB уже очищен и после reload не возвращает старое execution state.
+- Заодно усилил `tests/e2e/helpers/workouts.ts`, чтобы seed locked workout day был стабильнее и не выгорал по `active week conflict` на длинных suite.
+- Полный tranche подтверждён командами: `npm run lint`, `npx eslint tests/e2e tests/e2e/helpers`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `16 passed`, `npm run test:smoke` -> `3 passed`.

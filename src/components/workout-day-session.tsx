@@ -131,7 +131,6 @@ export function WorkoutDaySession({
   );
 
   const {
-    applyDaySnapshot,
     flushQueuedMutations,
     hydrateLocalDay,
     isOnline,
@@ -143,6 +142,7 @@ export function WorkoutDaySession({
     persistWorkoutDay,
     pullLatestDaySnapshot,
     refreshPendingMutationCount,
+    replaceOfflineDayState,
     resetPullCursor,
   } = useWorkoutDaySync({
     applyHydratedDay: hydrateDayState,
@@ -235,7 +235,6 @@ export function WorkoutDaySession({
     actualRepsBySetId,
     actualRpeBySetId,
     actualWeightBySetId,
-    applyDaySnapshot,
     canFinishWorkout,
     clearActiveTimer,
     currentSessionDurationSeconds,
@@ -251,6 +250,7 @@ export function WorkoutDaySession({
     persistWorkoutDay,
     pullLatestDaySnapshot,
     refreshPendingMutationCount,
+    replaceOfflineDayState,
     resetPullCursor,
     restoreRunningTimer,
     setDay,
@@ -348,6 +348,7 @@ export function WorkoutDaySession({
 
         <button
           className={secondaryButtonClassName}
+          data-testid="workout-reset-button"
           disabled={!canResetWorkoutDay || isPending || isSyncing}
           onClick={() => resetWorkoutDay()}
           type="button"

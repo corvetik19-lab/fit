@@ -10,6 +10,7 @@ import {
   getPendingOfflineMutationCount,
   listQueuedWorkoutMutationsForDay,
   pullWorkoutDaySnapshot,
+  replaceWorkoutDayOfflineState,
 } from "@/lib/offline/workout-sync";
 import type { WorkoutDayDetail } from "@/lib/workout/weekly-programs";
 import { applyQueuedMutations } from "@/components/workout-session/session-utils";
@@ -51,6 +52,18 @@ export function useWorkoutDaySync({
     const count = await getPendingOfflineMutationCount();
     setPendingMutationCount(count);
   }, []);
+
+  const replaceOfflineDayState = useCallback(
+    async (nextDay: WorkoutDayDetail) => {
+      const result = await replaceWorkoutDayOfflineState(nextDay);
+      applyHydratedDay(nextDay);
+      setLastSnapshotAt(result.updatedAt);
+      await refreshPendingMutationCount();
+
+      return result;
+    },
+    [applyHydratedDay, refreshPendingMutationCount],
+  );
 
   const hydrateLocalDay = useCallback(async () => {
     await cleanupStaleOfflineState();
@@ -205,6 +218,7 @@ export function useWorkoutDaySync({
     persistWorkoutDay,
     pullLatestDaySnapshot,
     refreshPendingMutationCount,
+    replaceOfflineDayState,
     resetPullCursor,
   };
 }

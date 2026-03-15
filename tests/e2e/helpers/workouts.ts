@@ -25,7 +25,8 @@ function toDateOnly(value: Date) {
 
 function buildFutureWeekStartDate(seed: string) {
   const hash = seed.split("").reduce((total, char) => total + char.charCodeAt(0), 0);
-  const offsetDays = 30 + (hash % 720);
+  const randomOffset = Math.floor(Math.random() * 3650);
+  const offsetDays = 30 + (hash % 3650) + randomOffset;
   const nextDate = new Date(Date.now() + offsetDays * 24 * 60 * 60 * 1000);
 
   return toDateOnly(nextDate);
@@ -53,7 +54,7 @@ export async function createLockedWorkoutDay(page: Page, titleSeed: string) {
 
   let programId: string | null = null;
 
-  for (let attempt = 0; attempt < 10; attempt += 1) {
+  for (let attempt = 0; attempt < 40; attempt += 1) {
     const attemptSeed = `${suffix}-${attempt}`;
     const weekStartDate = buildFutureWeekStartDate(attemptSeed);
     const programResult = await fetchJson<{ data: { id: string } }>(page, {

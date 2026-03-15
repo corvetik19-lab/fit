@@ -10,7 +10,6 @@ import {
 } from "react";
 
 import {
-  clearQueuedWorkoutMutationsForDay,
   queueWorkoutDayExecutionMutation,
   queueWorkoutSetActualRepsMutation,
 } from "@/lib/offline/workout-sync";
@@ -35,7 +34,6 @@ export function useWorkoutSessionActions({
   actualRepsBySetId,
   actualRpeBySetId,
   actualWeightBySetId,
-  applyDaySnapshot,
   canFinishWorkout,
   clearActiveTimer,
   currentSessionDurationSeconds,
@@ -51,6 +49,7 @@ export function useWorkoutSessionActions({
   persistWorkoutDay,
   pullLatestDaySnapshot,
   refreshPendingMutationCount,
+  replaceOfflineDayState,
   resetPullCursor,
   restoreRunningTimer,
   setDay,
@@ -72,7 +71,6 @@ export function useWorkoutSessionActions({
   actualRepsBySetId: Record<string, string>;
   actualRpeBySetId: Record<string, string>;
   actualWeightBySetId: Record<string, string>;
-  applyDaySnapshot: (nextDay: WorkoutDayDetail) => Promise<void>;
   canFinishWorkout: boolean;
   clearActiveTimer: () => void;
   currentSessionDurationSeconds: number;
@@ -88,6 +86,10 @@ export function useWorkoutSessionActions({
   persistWorkoutDay: (nextDay: WorkoutDayDetail) => Promise<void>;
   pullLatestDaySnapshot: (options?: { force?: boolean }) => Promise<WorkoutDayDetail | null>;
   refreshPendingMutationCount: () => Promise<void>;
+  replaceOfflineDayState: (nextDay: WorkoutDayDetail) => Promise<{
+    clearedMutations: number;
+    updatedAt: string;
+  }>;
   resetPullCursor: () => void;
   restoreRunningTimer: (timer: { baseSeconds: number; startedAt: number }) => void;
   setDay: (nextDay: WorkoutDayDetail) => void;
@@ -723,9 +725,7 @@ export function useWorkoutSessionActions({
 
         clearActiveTimer();
         setShouldPersistExpiredTimerReset(false);
-        await clearQueuedWorkoutMutationsForDay(day.id);
-        await refreshPendingMutationCount();
-        await applyDaySnapshot(payload.data);
+        await replaceOfflineDayState(payload.data);
         resetPullCursor();
         setNotice("Тренировка обнулена. Можно начать заново.");
       } catch (resetError) {
@@ -739,11 +739,10 @@ export function useWorkoutSessionActions({
       }
     });
   }, [
-    applyDaySnapshot,
     clearActiveTimer,
     day.id,
     isSyncing,
-    refreshPendingMutationCount,
+    replaceOfflineDayState,
     resetPullCursor,
     setError,
     setIsPending,
