@@ -1,4 +1,4 @@
-# Master Plan проекта `fit`
+﻿# Master Plan проекта `fit`
 
 ## Как использовать этот план
 
@@ -288,3 +288,8 @@
 - [x] typecheck, build и тестовый webServer переведены на отдельный NEXT_DIST_DIR=.next_build, чтобы quality gates и e2e не конфликтовали с локальным .next.
 - [x] Playwright переведён на выделенный порт 3100, поэтому тесты больше не зависят от случайного локального сервера на 3000.
 - [x] npm run test:e2e:auth подтверждён на --workers=2: 7 passed.
+
+## 2026-03-15 nutrition isolation addendum
+
+- [x] Расширен user-owned isolation baseline до nutrition routes: root-admin не видит чужие foods в `GET /api/foods` и получает owner-scoped `404` на `PATCH/DELETE /api/foods/{id}`, `DELETE /api/recipes/{id}`, `DELETE /api/meal-templates/{id}` и `DELETE /api/meals/{id}` для чужих nutrition assets.
+- [ ] Следующий тестовый tranche: расширить user-owned isolation beyond workout/program/nutrition flows до остальных owner-scoped и RLS-контуров.

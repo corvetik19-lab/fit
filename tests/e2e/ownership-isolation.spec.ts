@@ -9,6 +9,7 @@ import {
   hasAuthE2ECredentials,
 } from "./helpers/auth";
 import { fetchJson } from "./helpers/http";
+import { createNutritionAssets } from "./helpers/nutrition";
 import { createLockedWorkoutDay } from "./helpers/workouts";
 
 function buildFutureCloneDate() {
@@ -119,6 +120,93 @@ test.describe("user-owned isolation", () => {
 
     expect(weeklyProgramCloneResult.status).toBe(404);
     expect(weeklyProgramCloneResult.body?.code).toBe("WEEKLY_PROGRAM_NOT_FOUND");
+
+    await adminContext.close();
+    await userContext.close();
+  });
+
+  test("root admin cannot read or mutate another user's nutrition assets", async ({
+    browser,
+  }) => {
+    const userContext = await browser.newContext({
+      storageState: USER_STORAGE_STATE_PATH,
+    });
+    const userPage = await userContext.newPage();
+    await userPage.goto("/dashboard");
+    await expect(userPage).toHaveURL(/\/dashboard$/);
+    await userPage.waitForLoadState("networkidle");
+
+    const seededNutrition = await createNutritionAssets(userPage, "nutrition-isolation");
+
+    const adminContext = await browser.newContext({
+      storageState: ADMIN_STORAGE_STATE_PATH,
+    });
+    const adminPage = await adminContext.newPage();
+    await adminPage.goto("/admin");
+    await expect(adminPage).toHaveURL(/\/admin$/);
+    await adminPage.waitForLoadState("networkidle");
+
+    const [
+      foodsResult,
+      patchFoodResult,
+      deleteFoodResult,
+      deleteRecipeResult,
+      deleteMealTemplateResult,
+      deleteMealResult,
+    ] = await Promise.all([
+      fetchJson<{ data?: Array<{ id: string }> }>(adminPage, {
+        method: "GET",
+        url: "/api/foods",
+      }),
+      fetchJson<{ code?: string }>(adminPage, {
+        method: "PATCH",
+        url: `/api/foods/${seededNutrition.foodId}`,
+        body: {
+          name: "Hacked food title",
+        },
+      }),
+      fetchJson<{ code?: string }>(adminPage, {
+        method: "DELETE",
+        url: `/api/foods/${seededNutrition.foodId}`,
+      }),
+      fetchJson<{ code?: string }>(adminPage, {
+        method: "DELETE",
+        url: `/api/recipes/${seededNutrition.recipeId}`,
+      }),
+      fetchJson<{ code?: string }>(adminPage, {
+        method: "DELETE",
+        url: `/api/meal-templates/${seededNutrition.mealTemplateId}`,
+      }),
+      fetchJson<{ code?: string }>(adminPage, {
+        method: "DELETE",
+        url: `/api/meals/${seededNutrition.mealId}`,
+        body: {
+          summaryDate: seededNutrition.summaryDate,
+        },
+      }),
+    ]);
+
+    expect(foodsResult.status).toBe(200);
+    expect(
+      (foodsResult.body?.data ?? []).some(
+        (food) => food.id === seededNutrition.foodId,
+      ),
+    ).toBe(false);
+
+    expect(patchFoodResult.status).toBe(404);
+    expect(patchFoodResult.body?.code).toBe("FOOD_NOT_FOUND");
+
+    expect(deleteFoodResult.status).toBe(404);
+    expect(deleteFoodResult.body?.code).toBe("FOOD_NOT_FOUND");
+
+    expect(deleteRecipeResult.status).toBe(404);
+    expect(deleteRecipeResult.body?.code).toBe("RECIPE_NOT_FOUND");
+
+    expect(deleteMealTemplateResult.status).toBe(404);
+    expect(deleteMealTemplateResult.body?.code).toBe("MEAL_TEMPLATE_NOT_FOUND");
+
+    expect(deleteMealResult.status).toBe(404);
+    expect(deleteMealResult.body?.code).toBe("MEAL_NOT_FOUND");
 
     await adminContext.close();
     await userContext.close();

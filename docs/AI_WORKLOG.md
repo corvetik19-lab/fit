@@ -1,4 +1,4 @@
-# AI Worklog
+﻿# AI Worklog
 
 ## Как читать этот файл
 
@@ -179,3 +179,9 @@
 - Перевёл Playwright на выделенный порт 3100 и обновил package.json/playwright.config.ts, чтобы e2e больше не упирались в случайные процессы на 3000.
 - Ужесточил e2e helper'ы: fetchJson(...) теперь переживает navigation race, а auth/admin/workout/api scenarios стабилизированы под --workers=2.
 - Подтвердил tranche полным прогоном: npm run lint, npm run typecheck, npm run build, npx eslint tests/e2e tests/e2e/helpers, npm run test:e2e:auth -> 7 passed.
+
+### 2026-03-15 13:05 - Расширил user-owned isolation до nutrition assets
+
+- Добавил `tests/e2e/helpers/nutrition.ts`, чтобы e2e могли штатно сидировать food, recipe, meal template и meal через обычные product routes под тестовым пользователем.
+- Расширил `tests/e2e/ownership-isolation.spec.ts`: root-admin теперь дополнительно проверяется на owner-isolation в nutrition-контуре и получает корректные `404 FOOD_NOT_FOUND`, `RECIPE_NOT_FOUND`, `MEAL_TEMPLATE_NOT_FOUND`, `MEAL_NOT_FOUND` для чужих assets.
+- Переподтвердил полный auth/e2e baseline: `npm run lint`, `npm run typecheck`, `npm run build`, `npx eslint tests/e2e tests/e2e/helpers`, `npm run test:e2e:auth` -> 8 passed.
