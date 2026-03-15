@@ -220,3 +220,10 @@
 - Расширил `tests/e2e/ownership-isolation.spec.ts`: root-admin теперь дополнительно проверяется на owner-isolation в `settings/data deletion`, не видит чужой deletion request в `GET /api/settings/data`, не может отменить его через `DELETE /api/settings/data` и получает `404 SETTINGS_DELETION_NOT_FOUND`, при этом пользовательский request остаётся на месте.
 - Обновил `tests/e2e/admin-app.spec.ts`: тест detail-экрана администратора больше не привязан к раннему появлению `button[aria-pressed]`, а ждёт реальный секционный heading после client-side загрузки карточки.
 - Подтвердил tranche quality gates: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `12 passed`, `npx playwright test tests/smoke` -> `3 passed`.
+
+### 2026-03-15 21:40 - Починил Vercel production output directory и сохранил test-build isolation
+
+- Причина падения Vercel оказалась в `scripts/run-next-with-dist-dir.mjs`: helper по умолчанию подставлял `NEXT_DIST_DIR=.next_build`, поэтому production `npm run build` складывал артефакты не в `.next`, а Vercel искал `/.next/routes-manifest.json` и падал после успешной сборки.
+- Переписал `scripts/run-next-with-dist-dir.mjs`: теперь он по умолчанию оставляет стандартный `.next`, а кастомный output directory включается только через явный `--dist-dir=...`.
+- Обновил `package.json`: `build` снова production-safe, а `build:test`, `start:test`, `typecheck`, `pretest:e2e`, `pretest:e2e:auth`, `pretest:smoke` работают через отдельный `.next_build`, не смешивая локальный test/build контур с production output.
+- Подтвердил hotfix полным прогоном: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `12 passed`, `npm run test:smoke` -> `3 passed`.

@@ -1,6 +1,32 @@
 import { spawn } from "node:child_process";
 
-const nextArgs = process.argv.slice(2);
+const rawArgs = process.argv.slice(2);
+
+let distDir = process.env.NEXT_DIST_DIR ?? ".next";
+const nextArgs = [];
+
+for (let index = 0; index < rawArgs.length; index += 1) {
+  const arg = rawArgs[index];
+
+  if (arg.startsWith("--dist-dir=")) {
+    distDir = arg.slice("--dist-dir=".length) || distDir;
+    continue;
+  }
+
+  if (arg === "--dist-dir") {
+    const value = rawArgs[index + 1];
+
+    if (value) {
+      distDir = value;
+      index += 1;
+    }
+
+    continue;
+  }
+
+  nextArgs.push(arg);
+}
+
 const nextCommand = `npx next ${nextArgs.join(" ")}`;
 
 if (!nextArgs.length) {
@@ -13,7 +39,7 @@ const child = spawn(nextCommand, {
   shell: true,
   env: {
     ...process.env,
-    NEXT_DIST_DIR: process.env.NEXT_DIST_DIR || ".next_build",
+    NEXT_DIST_DIR: distDir,
   },
 });
 

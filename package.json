@@ -5,14 +5,18 @@
   "scripts": {
     "dev": "next dev",
     "build": "node scripts/run-next-with-dist-dir.mjs build --webpack",
+    "build:test": "node scripts/run-next-with-dist-dir.mjs build --webpack --dist-dir=.next_build",
     "start": "next start",
-    "start:test": "node scripts/run-next-with-dist-dir.mjs start --hostname 127.0.0.1 --port 3100",
+    "start:test": "node scripts/run-next-with-dist-dir.mjs start --hostname 127.0.0.1 --port 3100 --dist-dir=.next_build",
     "smoke:server": "npm run start:test",
     "lint": "eslint src next.config.ts eslint.config.mjs postcss.config.mjs",
-    "typecheck": "node scripts/run-next-with-dist-dir.mjs typegen && npx tsc -p tsconfig.json --noEmit --incremental false",
+    "typecheck": "node scripts/run-next-with-dist-dir.mjs typegen --dist-dir=.next_build && npx tsc -p tsconfig.json --noEmit --incremental false",
+    "pretest:e2e": "npm run build:test",
+    "pretest:e2e:auth": "npm run build:test",
+    "pretest:smoke": "npm run build:test",
     "test:e2e": "playwright test --workers=2",
     "test:e2e:auth": "playwright test tests/e2e --workers=2",
-    "test:smoke": "npm run build && playwright test tests/smoke"
+    "test:smoke": "playwright test tests/smoke"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^1.0.34",

@@ -325,3 +325,10 @@
 - [x] `tests/e2e/admin-app.spec.ts` стабилизирован ожиданием реального секционного heading на detail-экране, поэтому auth e2e снова зелёный без флака из-за client-side loading state.
 - [x] Tranche подтверждён quality gates: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `12 passed`, `npx playwright test tests/smoke` -> `3 passed`.
 - [ ] Следующий тестовый tranche: расширить user-owned isolation на оставшиеся owner-scoped self-service и AI/data контуры beyond workout/program/nutrition/exercises/settings export/workout templates/settings deletion.
+
+## 2026-03-15 build output hotfix addendum
+
+- [x] Устранён production build conflict с Vercel: `npm run build` снова собирает в стандартный `.next`, поэтому Vercel больше не упирается в отсутствующий `.next/routes-manifest.json`.
+- [x] Изолированный build для тестов сохранён отдельно: `build:test`, `start:test`, `typecheck`, `test:e2e*` и `test:smoke` используют `.next_build` через явный `--dist-dir=.next_build`, а production build не зависит от этого контура.
+- [x] `scripts/run-next-with-dist-dir.mjs` теперь поддерживает явный `--dist-dir`, а не подменяет output directory глобально по умолчанию.
+- [x] Hotfix подтверждён quality gates: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `12 passed`, `npm run test:smoke` -> `3 passed`.
