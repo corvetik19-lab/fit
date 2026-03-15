@@ -259,6 +259,7 @@
 
 - [x] Добавить обязательный CI workflow для `lint`, `typecheck`, `build`.
 - [x] Добавить smoke subset как merge gate.
+- [x] Добавить secret-guarded `test:rls` и `test:e2e:auth` jobs для полного regression-контура в GitHub Actions.
 - [ ] При наличии DB-изменений добавить migration/advisor verification.
 
 ### Release process
@@ -431,3 +432,11 @@
 - [x] Подтверждено, что root-admin получает явные `400` на невалидных параметрах `dashboard-warm`, `nutrition-summaries`, `knowledge-reindex`, `ai-evals-schedule`.
 - [x] `src/app/api/internal/jobs/ai-evals-schedule/route.ts` больше не логирует ожидаемый `ZodError` как route-level `error`.
 - [x] Tranche подтверждён baseline: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `24 passed`, `npm run test:smoke` -> `3 passed`.
+
+## 2026-03-16 CI regression addendum
+
+- [x] `.github/workflows/quality.yml` расширен secret-guarded jobs `rls` и `auth-e2e`.
+- [x] `rls` job запускает `npm run test:rls` при наличии Supabase и Playwright auth secrets.
+- [x] `auth-e2e` job запускает `npm run test:e2e:auth` при наличии тех же secrets и Playwright browser setup.
+- [x] `README.md` и `docs/RELEASE_CHECKLIST.md` теперь явно перечисляют secrets, необходимые для полного CI regression-контура.
+- [ ] Следующий CI tranche: DB/advisor verification gate для migration-aware проверок.

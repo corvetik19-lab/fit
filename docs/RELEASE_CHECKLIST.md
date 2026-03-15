@@ -6,6 +6,8 @@
 - [ ] `npm run typecheck`
 - [ ] `npm run build`
 - [ ] `npm run test:smoke`
+- [ ] если менялся auth/RLS/owner-only контур, пройти `npm run test:rls`
+- [ ] если менялись пользовательские сценарии или route contracts, пройти `npm run test:e2e:auth`
 - [ ] нет лишних локальных изменений в tracked-файлах после quality gates
 - [ ] `docs/MASTER_PLAN.md` и `docs/AI_WORKLOG.md` обновлены, если менялся контракт
 
@@ -18,6 +20,14 @@
 - [ ] подтверждены `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN`
 - [ ] подтверждены `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PREMIUM_MONTHLY_PRICE_ID`, если затронут billing
 - [ ] после DDL-изменений применены миграции и проверены advisors `security` и `performance`
+
+## Для полного CI в GitHub Actions
+
+- [ ] в secrets заданы `NEXT_PUBLIC_SUPABASE_URL` и `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+- [ ] задан `SUPABASE_SERVICE_ROLE_KEY`
+- [ ] заданы `PLAYWRIGHT_TEST_EMAIL` и `PLAYWRIGHT_TEST_PASSWORD`
+- [ ] заданы `PLAYWRIGHT_ADMIN_EMAIL` и `PLAYWRIGHT_ADMIN_PASSWORD`
+- [ ] `quality.yml` действительно запускает `test:rls` и `test:e2e:auth`, а не только `smoke`
 
 ## Smoke после deploy
 

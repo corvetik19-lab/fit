@@ -43,6 +43,20 @@ npm run build
 
 Цель проекта — чтобы все три команды проходили стабильно за один запуск и были готовы для CI.
 
+### Что нужно для полного CI regression-контура
+
+Чтобы в GitHub Actions включались `test:rls` и `test:e2e:auth`, в secrets репозитория должны быть:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `PLAYWRIGHT_TEST_EMAIL`
+- `PLAYWRIGHT_TEST_PASSWORD`
+- `PLAYWRIGHT_ADMIN_EMAIL`
+- `PLAYWRIGHT_ADMIN_PASSWORD`
+
+Если этих secrets нет, workflow всё равно прогоняет `lint`, `typecheck`, `build` и `test:smoke`, а полные auth/RLS regression jobs просто пропускаются.
+
 ## Переменные окружения
 
 Скопируй `.env.example` в `.env.local` и заполни нужные значения.

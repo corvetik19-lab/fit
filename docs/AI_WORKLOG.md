@@ -371,3 +371,10 @@
 - В `src/app/api/internal/jobs/ai-evals-schedule/route.ts` разнёс expected и unexpected error path: `ZodError` больше не шумит как route-level `logger.error`.
 - Усилил `tests/e2e/helpers/auth.ts`: вход теперь сначала использует обычный `fill`, затем fallback через setter, и ждёт активации submit до 10 секунд. Это убрало flaky bootstrap в `global-auth-setup`.
 - Подтвердил tranche полным baseline: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `24 passed`, `npm run test:smoke` -> `3 passed`.
+
+### 2026-03-16 13:05 - Расширил CI до полного regression-контура
+
+- В `.github/workflows/quality.yml` добавил secret-guarded jobs `rls` и `auth-e2e`, чтобы GitHub Actions мог прогонять не только `lint/typecheck/build/smoke`, но и прямые RLS tests плюс authenticated e2e.
+- `rls` job использует `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `PLAYWRIGHT_TEST_EMAIL`, `PLAYWRIGHT_TEST_PASSWORD`, `PLAYWRIGHT_ADMIN_EMAIL`, `PLAYWRIGHT_ADMIN_PASSWORD` и запускает `npm run test:rls`.
+- `auth-e2e` job использует тот же секретный набор, ставит Chromium и запускает `npm run test:e2e:auth`.
+- В `README.md` и `docs/RELEASE_CHECKLIST.md` зафиксировал явный список secrets для полного CI regression-контура, чтобы это было частью release hygiene, а не неявным знанием.
