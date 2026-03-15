@@ -10,7 +10,7 @@ import {
   DATA_EXPORT_FORMAT,
   getDefaultDeletionHoldUntil,
 } from "@/lib/settings-data";
-import { loadSettingsDataSnapshot } from "@/lib/settings-data-server";
+import { loadSettingsDataSnapshotOrFallback } from "@/lib/settings-data-server";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -78,7 +78,7 @@ export async function GET() {
       });
     }
 
-    const snapshot = await loadSettingsDataSnapshot(
+    const snapshot = await loadSettingsDataSnapshotOrFallback(
       context.supabase,
       context.user.id,
     );
@@ -186,7 +186,7 @@ export async function POST(request: Request) {
       });
     }
 
-    const snapshot = await loadSettingsDataSnapshot(
+    const snapshot = await loadSettingsDataSnapshotOrFallback(
       context.supabase,
       context.user.id,
     );
@@ -253,7 +253,7 @@ export async function DELETE() {
       deletionRequestId: data.id,
     });
 
-    const snapshot = await loadSettingsDataSnapshot(
+    const snapshot = await loadSettingsDataSnapshotOrFallback(
       context.supabase,
       context.user.id,
     );

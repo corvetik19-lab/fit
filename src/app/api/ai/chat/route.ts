@@ -4,6 +4,7 @@ import { z } from "zod";
 import {
   createAiChatMessage,
   ensureAiChatSession,
+  isAiChatSessionError,
   listAiChatMessages,
   toModelMessages,
   touchAiChatSession,
@@ -245,6 +246,14 @@ export async function POST(request: Request) {
         code: "AI_CHAT_INVALID_PAYLOAD",
         message: "Запрос к AI-чату заполнен некорректно.",
         details: error.flatten(),
+      });
+    }
+
+    if (isAiChatSessionError(error)) {
+      return createApiErrorResponse({
+        status: error.status,
+        code: error.code,
+        message: error.message,
       });
     }
 

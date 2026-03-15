@@ -188,6 +188,7 @@
 - [x] Добавить regression-покрытие для сценария `sync -> reset -> sync/pull`, подтверждающее чистый snapshot после сброса тренировки.
 - [x] Добавить UUID-валидацию и явные `400` в owner-scoped mutation routes `weekly-programs/[id]/lock`, `weekly-programs/[id]/clone`, `foods/[id]`, `recipes/[id]`, `meals/[id]`, `meal-templates/[id]`.
 - [x] Расширить `api-contracts.spec.ts` invalid-param покрытием для weekly program и nutrition mutation routes.
+- [x] `settings/data` и `settings/billing` snapshot routes теперь fail-open: при сбое загрузки оболочки settings UI получает безопасный пустой snapshot вместо общего `500`.
 - [ ] Пройти все route handlers на валидацию, owner-only доступ, ошибки и idempotency.
 - [ ] Подтвердить, что reset/finish/sync сценарии не создают race conditions и бесконечный polling.
 - [x] Подтвердить, что offline queue и stale cleanup не восстанавливают уже сброшенное состояние.
@@ -198,6 +199,7 @@
 - [x] Есть retrieval, structured knowledge, proposals и snapshots.
 - [x] Для `AI sessions` и `proposal apply/approve` добавлены явные UUID-валидации и предсказуемые `400/404/409`, а не только общие `500`.
 - [x] Удаление AI chat session теперь проверяет owner-scoped существование сессии и не возвращает ложный успех.
+- [x] `AI chat` и `AI assistant` теперь отклоняют неизвестный или чужой валидный `sessionId` с `404 AI_CHAT_SESSION_NOT_FOUND`, а не создают или продолжают новую сессию молча.
 - [x] Санирован user-facing copy в `ai/chat`, `ai/reindex`, `ai/sessions/[id]`, `ai/proposals/[id]/apply`, `ai/proposals/[id]/approve`, чтобы AI surface не отдавал mojibake.
 - [ ] Подтвердить owner-only data access для chat, sessions, retrieval, reindex и proposal apply.
 - [ ] Развести runtime failure UX и provider configuration UX.
@@ -242,7 +244,8 @@
 - [x] Добавить smoke тесты на ключевые SSR/API маршруты.
 - [x] Добавить regression tests для offline/sync workout execution.
 - [x] Добавить AI route contract tests без обязательного вызова платного провайдера.
-- [ ] Добавить изоляционные проверки для user-owned данных и RLS-контуров.
+- [x] Добавить route-level изоляционные проверки для owner-scoped user data (`workout`, `nutrition`, `custom exercises`, `settings`, `AI history`).
+- [ ] Добавить отдельные RLS-focused проверки сверх route-level owner isolation.
 
 ### CI
 

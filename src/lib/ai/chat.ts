@@ -49,22 +49,31 @@ export async function ensureAiChatSession(
   firstPrompt: string,
 ) {
   if (sessionId) {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("ai_chat_sessions")
       .select("id, title, created_at, updated_at")
       .eq("id", sessionId)
       .eq("user_id", userId)
       .maybeSingle();
 
-    if (data) {
-      return data as AiChatSessionRow;
+    if (error) {
+      throw error;
     }
+
+    if (!data) {
+      throw new AiChatSessionError(
+        404,
+        "AI_CHAT_SESSION_NOT_FOUND",
+        "Выбранный AI-чат не найден.",
+      );
+    }
+
+    return data as AiChatSessionRow;
   }
 
   const { data, error } = await supabase
     .from("ai_chat_sessions")
     .insert({
-      ...(sessionId ? { id: sessionId } : {}),
       user_id: userId,
       title: buildSessionTitle(firstPrompt),
     })

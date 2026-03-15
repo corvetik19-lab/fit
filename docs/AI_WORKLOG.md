@@ -274,3 +274,12 @@
 - В `tests/e2e/helpers/auth.ts` добавил более устойчивый post-sign-in flow: если client-side redirect задерживается, helper дожимает переход на `/dashboard`, не ломая storage-state bootstrap.
 - Санировал user-facing copy в `src/app/api/ai/chat/route.ts`, `src/app/api/ai/reindex/route.ts`, `src/app/api/ai/sessions/[id]/route.ts`, `src/app/api/ai/proposals/[id]/apply/route.ts`, `src/app/api/ai/proposals/[id]/approve/route.ts`, чтобы AI routes больше не отдавали mojibake в ошибках и ответах.
 - Повторно подтвердил полный baseline после AI-route sanitation: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `16 passed`, `npm run test:smoke` -> `3 passed`.
+
+### 2026-03-16 06:25 - Закрыл AI session ownership reuse и settings snapshot fail-open
+
+- В `src/lib/ai/chat.ts` изменил контракт `ensureAiChatSession(...)`: переданный `sessionId` больше не может тихо создать новую сессию; неизвестный или чужой валидный id теперь даёт owner-scoped `404 AI_CHAT_SESSION_NOT_FOUND`.
+- В `src/app/api/ai/chat/route.ts` и `src/app/api/ai/assistant/route.ts` добавил явный маппинг `AiChatSessionError`, поэтому оба AI route handler'а возвращают корректный `404`, а не общий `500`.
+- В `tests/e2e/api-contracts.spec.ts` добавил контракты для `ai chat` и `ai assistant`, подтверждающие, что неизвестный валидный `sessionId` не создаёт новую сессию молча, а даёт `404 AI_CHAT_SESSION_NOT_FOUND`; в `tests/e2e/ownership-isolation.spec.ts` подтвердил, что root-admin не может продолжить чужую AI session ни через chat, ни через assistant surface.
+- `tests/e2e/ownership-isolation.spec.ts` и `tests/e2e/admin-app.spec.ts` перевёл на `navigateStable(...)` для стартового `/admin`, чтобы убрать flaky `ERR_ABORTED` на медленном client-side bootstrap.
+- В `src/lib/settings-data-server.ts` добавил `loadSettingsDataSnapshotOrFallback(...)`, а `src/app/api/settings/data/route.ts` и `src/app/api/settings/billing/route.ts` перевёл на безопасный fail-open snapshot: при сбое загрузки оболочки settings UI получает пустой snapshot вместо `500`.
+- Подтвердил tranche полным прогоном: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `18 passed`, `npm run test:smoke` -> `3 passed`.

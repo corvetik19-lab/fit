@@ -11,6 +11,7 @@ import {
 import { ensureAiChatSession } from "./helpers/ai";
 import { createExerciseAsset } from "./helpers/exercises";
 import { fetchJson } from "./helpers/http";
+import { navigateStable } from "./helpers/navigation";
 import { createNutritionAssets } from "./helpers/nutrition";
 import {
   ensureSettingsBillingReviewRequest,
@@ -23,6 +24,21 @@ function buildFutureCloneDate() {
   return new Date(Date.now() + 900 * 24 * 60 * 60 * 1000)
     .toISOString()
     .slice(0, 10);
+}
+
+function buildAssistantMessages() {
+  return [
+    {
+      id: crypto.randomUUID(),
+      parts: [
+        {
+          text: "I want an extreme calorie deficit and I am ready to starve to lose weight fast.",
+          type: "text",
+        },
+      ],
+      role: "user",
+    },
+  ];
 }
 
 test.describe("user-owned isolation", () => {
@@ -40,8 +56,7 @@ test.describe("user-owned isolation", () => {
       storageState: USER_STORAGE_STATE_PATH,
     });
     const userPage = await userContext.newPage();
-    await userPage.goto("/dashboard");
-    await expect(userPage).toHaveURL(/\/dashboard$/);
+    await navigateStable(userPage, "/dashboard", /\/dashboard$/);
     await userPage.waitForLoadState("networkidle");
 
     const seededDay = await createLockedWorkoutDay(userPage, "isolation");
@@ -50,8 +65,7 @@ test.describe("user-owned isolation", () => {
       storageState: ADMIN_STORAGE_STATE_PATH,
     });
     const adminPage = await adminContext.newPage();
-    await adminPage.goto("/admin");
-    await expect(adminPage).toHaveURL(/\/admin$/);
+    await navigateStable(adminPage, "/admin", /\/admin$/);
     await adminPage.waitForLoadState("networkidle");
 
     const [
@@ -141,8 +155,7 @@ test.describe("user-owned isolation", () => {
       storageState: USER_STORAGE_STATE_PATH,
     });
     const userPage = await userContext.newPage();
-    await userPage.goto("/dashboard");
-    await expect(userPage).toHaveURL(/\/dashboard$/);
+    await navigateStable(userPage, "/dashboard", /\/dashboard$/);
     await userPage.waitForLoadState("networkidle");
 
     const seededNutrition = await createNutritionAssets(userPage, "nutrition-isolation");
@@ -151,8 +164,7 @@ test.describe("user-owned isolation", () => {
       storageState: ADMIN_STORAGE_STATE_PATH,
     });
     const adminPage = await adminContext.newPage();
-    await adminPage.goto("/admin");
-    await expect(adminPage).toHaveURL(/\/admin$/);
+    await navigateStable(adminPage, "/admin", /\/admin$/);
     await adminPage.waitForLoadState("networkidle");
 
     const [
@@ -228,8 +240,7 @@ test.describe("user-owned isolation", () => {
       storageState: USER_STORAGE_STATE_PATH,
     });
     const userPage = await userContext.newPage();
-    await userPage.goto("/dashboard");
-    await expect(userPage).toHaveURL(/\/dashboard$/);
+    await navigateStable(userPage, "/dashboard", /\/dashboard$/);
     await userPage.waitForLoadState("networkidle");
 
     const seededExercise = await createExerciseAsset(userPage, "exercise-isolation");
@@ -238,8 +249,7 @@ test.describe("user-owned isolation", () => {
       storageState: ADMIN_STORAGE_STATE_PATH,
     });
     const adminPage = await adminContext.newPage();
-    await adminPage.goto("/admin");
-    await expect(adminPage).toHaveURL(/\/admin$/);
+    await navigateStable(adminPage, "/admin", /\/admin$/);
     await adminPage.waitForLoadState("networkidle");
 
     const [exerciseListResult, patchExerciseResult] = await Promise.all([
@@ -277,8 +287,7 @@ test.describe("user-owned isolation", () => {
       storageState: USER_STORAGE_STATE_PATH,
     });
     const userPage = await userContext.newPage();
-    await userPage.goto("/settings");
-    await expect(userPage).toHaveURL(/\/settings$/);
+    await navigateStable(userPage, "/settings", /\/settings$/);
     await userPage.waitForLoadState("networkidle");
 
     const seededExport = await ensureSettingsExportJob(userPage);
@@ -287,8 +296,7 @@ test.describe("user-owned isolation", () => {
       storageState: ADMIN_STORAGE_STATE_PATH,
     });
     const adminPage = await adminContext.newPage();
-    await adminPage.goto("/admin");
-    await expect(adminPage).toHaveURL(/\/admin$/);
+    await navigateStable(adminPage, "/admin", /\/admin$/);
     await adminPage.waitForLoadState("networkidle");
 
     const [settingsDataResult, exportDownloadResult] = await Promise.all([
@@ -323,8 +331,7 @@ test.describe("user-owned isolation", () => {
       storageState: USER_STORAGE_STATE_PATH,
     });
     const userPage = await userContext.newPage();
-    await userPage.goto("/dashboard");
-    await expect(userPage).toHaveURL(/\/dashboard$/);
+    await navigateStable(userPage, "/dashboard", /\/dashboard$/);
     await userPage.waitForLoadState("networkidle");
 
     const seededDay = await createLockedWorkoutDay(userPage, "template-isolation");
@@ -347,8 +354,7 @@ test.describe("user-owned isolation", () => {
       storageState: ADMIN_STORAGE_STATE_PATH,
     });
     const adminPage = await adminContext.newPage();
-    await adminPage.goto("/admin");
-    await expect(adminPage).toHaveURL(/\/admin$/);
+    await navigateStable(adminPage, "/admin", /\/admin$/);
     await adminPage.waitForLoadState("networkidle");
 
     const [templateListResult, createForeignTemplateResult] = await Promise.all([
@@ -389,8 +395,7 @@ test.describe("user-owned isolation", () => {
       storageState: USER_STORAGE_STATE_PATH,
     });
     const userPage = await userContext.newPage();
-    await userPage.goto("/settings");
-    await expect(userPage).toHaveURL(/\/settings$/);
+    await navigateStable(userPage, "/settings", /\/settings$/);
     await userPage.waitForLoadState("networkidle");
 
     const seededDeletion = await ensureSettingsDeletionRequest(userPage);
@@ -399,8 +404,7 @@ test.describe("user-owned isolation", () => {
       storageState: ADMIN_STORAGE_STATE_PATH,
     });
     const adminPage = await adminContext.newPage();
-    await adminPage.goto("/admin");
-    await expect(adminPage).toHaveURL(/\/admin$/);
+    await navigateStable(adminPage, "/admin", /\/admin$/);
     await adminPage.waitForLoadState("networkidle");
 
     const [settingsDataResult, cancelDeletionResult] = await Promise.all([
@@ -445,8 +449,7 @@ test.describe("user-owned isolation", () => {
       storageState: USER_STORAGE_STATE_PATH,
     });
     const userPage = await userContext.newPage();
-    await userPage.goto("/settings");
-    await expect(userPage).toHaveURL(/\/settings$/);
+    await navigateStable(userPage, "/settings", /\/settings$/);
     await userPage.waitForLoadState("networkidle");
 
     const seededReview = await ensureSettingsBillingReviewRequest(userPage);
@@ -455,8 +458,7 @@ test.describe("user-owned isolation", () => {
       storageState: ADMIN_STORAGE_STATE_PATH,
     });
     const adminPage = await adminContext.newPage();
-    await adminPage.goto("/admin");
-    await expect(adminPage).toHaveURL(/\/admin$/);
+    await navigateStable(adminPage, "/admin", /\/admin$/);
     await adminPage.waitForLoadState("networkidle");
 
     const settingsBillingResult = await fetchJson<{
@@ -502,8 +504,7 @@ test.describe("user-owned isolation", () => {
       storageState: USER_STORAGE_STATE_PATH,
     });
     const userPage = await userContext.newPage();
-    await userPage.goto("/ai");
-    await expect(userPage).toHaveURL(/\/ai$/);
+    await navigateStable(userPage, "/ai", /\/ai$/);
     await userPage.waitForLoadState("networkidle");
 
     const seededSession = await ensureAiChatSession(userPage);
@@ -512,23 +513,54 @@ test.describe("user-owned isolation", () => {
       storageState: ADMIN_STORAGE_STATE_PATH,
     });
     const adminPage = await adminContext.newPage();
-    await adminPage.goto("/admin");
-    await expect(adminPage).toHaveURL(/\/admin$/);
+    await navigateStable(adminPage, "/admin", /\/admin$/);
     await adminPage.waitForLoadState("networkidle");
 
-    const [deleteForeignSessionResult, clearAdminHistoryResult] = await Promise.all([
-      fetchJson<{ code?: string }>(adminPage, {
-        method: "DELETE",
-        url: `/api/ai/sessions/${seededSession.sessionId}`,
-      }),
-      fetchJson<{ data?: { cleared?: boolean } }>(adminPage, {
-        method: "DELETE",
-        url: "/api/ai/sessions",
-      }),
-    ]);
+    const [
+      deleteForeignSessionResult,
+      chatForeignSessionResult,
+      assistantForeignSessionResult,
+      clearAdminHistoryResult,
+    ] =
+      await Promise.all([
+        fetchJson<{ code?: string }>(adminPage, {
+          method: "DELETE",
+          url: `/api/ai/sessions/${seededSession.sessionId}`,
+        }),
+        fetchJson<{ code?: string }>(adminPage, {
+          method: "POST",
+          url: "/api/ai/chat",
+          body: {
+            sessionId: seededSession.sessionId,
+            message:
+              "I want an extreme calorie deficit and I am ready to starve to lose weight fast.",
+          },
+        }),
+        fetchJson<{ code?: string }>(adminPage, {
+          method: "POST",
+          url: "/api/ai/assistant",
+          body: {
+            allowWebSearch: false,
+            messages: buildAssistantMessages(),
+            sessionId: seededSession.sessionId,
+          },
+        }),
+        fetchJson<{ data?: { cleared?: boolean } }>(adminPage, {
+          method: "DELETE",
+          url: "/api/ai/sessions",
+        }),
+      ]);
 
     expect(deleteForeignSessionResult.status).toBe(404);
     expect(deleteForeignSessionResult.body?.code).toBe("AI_CHAT_SESSION_NOT_FOUND");
+
+    expect(chatForeignSessionResult.status).toBe(404);
+    expect(chatForeignSessionResult.body?.code).toBe("AI_CHAT_SESSION_NOT_FOUND");
+
+    expect(assistantForeignSessionResult.status).toBe(404);
+    expect(assistantForeignSessionResult.body?.code).toBe(
+      "AI_CHAT_SESSION_NOT_FOUND",
+    );
 
     expect(clearAdminHistoryResult.status).toBe(200);
     expect(clearAdminHistoryResult.body?.data?.cleared).toBe(true);

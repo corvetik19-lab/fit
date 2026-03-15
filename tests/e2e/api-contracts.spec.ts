@@ -4,6 +4,21 @@ import { hasAuthE2ECredentials } from "./helpers/auth";
 import { USER_STORAGE_STATE_PATH } from "./helpers/auth-state";
 import { fetchJson } from "./helpers/http";
 
+function buildAssistantMessages() {
+  return [
+    {
+      id: crypto.randomUUID(),
+      parts: [
+        {
+          text: "I want an extreme calorie deficit and I am ready to starve to lose weight fast.",
+          type: "text",
+        },
+      ],
+      role: "user",
+    },
+  ];
+}
+
 test.use({
   storageState: USER_STORAGE_STATE_PATH,
 });
@@ -168,6 +183,54 @@ test.describe("api contracts", () => {
     ).toBe("AI_CHAT_SESSION_NOT_FOUND");
     expect(randomId).toMatch(
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+    );
+  });
+
+  test("ai chat rejects unknown valid session id instead of creating a new session", async ({
+    page,
+  }) => {
+    await page.goto("/ai");
+    await expect(page).toHaveURL(/\/ai$/);
+    await page.waitForLoadState("networkidle");
+
+    const randomId = crypto.randomUUID();
+    const unknownSessionResult = await fetchJson(page, {
+      method: "POST",
+      url: "/api/ai/chat",
+      body: {
+        sessionId: randomId,
+        message:
+          "I want an extreme calorie deficit and I am ready to starve to lose weight fast.",
+      },
+    });
+
+    expect(unknownSessionResult.status).toBe(404);
+    expect((unknownSessionResult.body as { code?: string } | null)?.code).toBe(
+      "AI_CHAT_SESSION_NOT_FOUND",
+    );
+  });
+
+  test("ai assistant rejects unknown valid session id instead of creating a new session", async ({
+    page,
+  }) => {
+    await page.goto("/ai");
+    await expect(page).toHaveURL(/\/ai$/);
+    await page.waitForLoadState("networkidle");
+
+    const randomId = crypto.randomUUID();
+    const unknownSessionResult = await fetchJson(page, {
+      method: "POST",
+      url: "/api/ai/assistant",
+      body: {
+        allowWebSearch: false,
+        messages: buildAssistantMessages(),
+        sessionId: randomId,
+      },
+    });
+
+    expect(unknownSessionResult.status).toBe(404);
+    expect((unknownSessionResult.body as { code?: string } | null)?.code).toBe(
+      "AI_CHAT_SESSION_NOT_FOUND",
     );
   });
 });

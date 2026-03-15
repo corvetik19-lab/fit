@@ -17,8 +17,7 @@ test.describe("admin app", () => {
   test("root admin can open core operator surfaces", async ({ page }) => {
     test.setTimeout(60_000);
 
-    await page.goto("/admin");
-    await expect(page).toHaveURL(/\/admin$/);
+    await navigateStable(page, "/admin", /\/admin$/);
     await page.waitForLoadState("networkidle");
     await expect(page.locator("main")).toBeVisible();
 

@@ -11,6 +11,16 @@ import type {
 } from "@/lib/settings-data";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 
+export function createEmptySettingsDataSnapshot(): SettingsDataSnapshot {
+  return {
+    billingEvents: [],
+    billingReviewRequest: null,
+    deletionRequest: null,
+    exportJobs: [],
+    privacyEvents: [],
+  };
+}
+
 const SETTINGS_PRIVACY_AUDIT_ACTIONS = [
   "user_requested_export",
   "user_downloaded_export",
@@ -679,6 +689,21 @@ export async function loadSettingsDataSnapshot(
     exportJobs: (exportJobsResult.data ?? []).map(mapExportJob),
     privacyEvents,
   };
+}
+
+export async function loadSettingsDataSnapshotOrFallback(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<SettingsDataSnapshot> {
+  try {
+    return await loadSettingsDataSnapshot(supabase, userId);
+  } catch (error) {
+    logger.warn("settings data snapshot load failed, using fallback", {
+      error,
+      userId,
+    });
+    return createEmptySettingsDataSnapshot();
+  }
 }
 
 export async function buildUserDataExportBundle(
