@@ -3,6 +3,10 @@ import { expect, type Page } from "@playwright/test";
 import { fetchJson } from "./http";
 
 type SettingsDataSnapshot = {
+  deletionRequest?: {
+    id: string;
+    status: string;
+  } | null;
   exportJobs?: Array<{
     id: string;
     status: string;
@@ -48,5 +52,26 @@ export async function ensureSettingsExportJob(page: Page) {
 
   return {
     exportJobId: exportJobId!,
+  };
+}
+
+export async function ensureSettingsDeletionRequest(page: Page) {
+  const requestResult = await fetchJson<{
+    data?: SettingsDataSnapshot;
+  }>(page, {
+    method: "POST",
+    url: "/api/settings/data",
+    body: {
+      action: "request_deletion",
+    },
+  });
+
+  expect(requestResult.status).toBe(200);
+
+  const deletionRequestId = requestResult.body?.data?.deletionRequest?.id;
+  expect(deletionRequestId).toBeTruthy();
+
+  return {
+    deletionRequestId: deletionRequestId!,
   };
 }

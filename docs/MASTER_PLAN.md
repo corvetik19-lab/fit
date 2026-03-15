@@ -317,3 +317,11 @@
 - [x] `tests/e2e/ownership-isolation.spec.ts` усилен ещё одним owner-scoped сценарием, а timeout isolation-suite увеличен до `60_000`, чтобы длительный seed/template flow не давал ложный красный таймаут.
 - [x] Tranche подтверждён quality gates: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `11 passed`, `npx playwright test tests/smoke` -> `3 passed`.
 - [ ] Следующий тестовый tranche: расширить user-owned isolation на оставшиеся owner-scoped self-service и AI/data контуры beyond workout/program/nutrition/exercises/settings export/workout templates.
+
+## 2026-03-15 settings deletion isolation addendum
+
+- [x] Расширен user-owned isolation baseline до self-service `settings/data deletion`: root-admin не видит чужой deletion request в `GET /api/settings/data`, не может отменить его через `DELETE /api/settings/data` и получает owner-scoped `404 SETTINGS_DELETION_NOT_FOUND`.
+- [x] `tests/e2e/helpers/settings-data.ts` дополнен helper-ом для `request_deletion`, а `tests/e2e/ownership-isolation.spec.ts` теперь покрывает и export, и deletion self-service контуры `settings/data`.
+- [x] `tests/e2e/admin-app.spec.ts` стабилизирован ожиданием реального секционного heading на detail-экране, поэтому auth e2e снова зелёный без флака из-за client-side loading state.
+- [x] Tranche подтверждён quality gates: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `12 passed`, `npx playwright test tests/smoke` -> `3 passed`.
+- [ ] Следующий тестовый tranche: расширить user-owned isolation на оставшиеся owner-scoped self-service и AI/data контуры beyond workout/program/nutrition/exercises/settings export/workout templates/settings deletion.

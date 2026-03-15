@@ -213,3 +213,10 @@
 - Расширил `tests/e2e/ownership-isolation.spec.ts`: root-admin теперь дополнительно проверяется на owner-isolation в `workout_templates`, не видит чужой template в `GET /api/workout-templates` и не может создать новый template из чужого `programId`, получая `404 WORKOUT_TEMPLATE_SOURCE_NOT_FOUND`.
 - Чтобы длинный seed/template flow не падал ложным красным, для `user-owned isolation` suite добавил `test.describe.configure({ timeout: 60_000 })`.
 - Подтвердил tranche quality gates: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `11 passed`, `npx playwright test tests/smoke` -> `3 passed`.
+
+### 2026-03-15 21:05 - Расширил user-owned isolation до self-service deletion и стабилизировал admin e2e
+
+- Дополнил `tests/e2e/helpers/settings-data.ts` helper-ом `ensureSettingsDeletionRequest(...)`, чтобы e2e могли штатно создавать self-service deletion request через обычный product route `/api/settings/data`.
+- Расширил `tests/e2e/ownership-isolation.spec.ts`: root-admin теперь дополнительно проверяется на owner-isolation в `settings/data deletion`, не видит чужой deletion request в `GET /api/settings/data`, не может отменить его через `DELETE /api/settings/data` и получает `404 SETTINGS_DELETION_NOT_FOUND`, при этом пользовательский request остаётся на месте.
+- Обновил `tests/e2e/admin-app.spec.ts`: тест detail-экрана администратора больше не привязан к раннему появлению `button[aria-pressed]`, а ждёт реальный секционный heading после client-side загрузки карточки.
+- Подтвердил tranche quality gates: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `12 passed`, `npx playwright test tests/smoke` -> `3 passed`.

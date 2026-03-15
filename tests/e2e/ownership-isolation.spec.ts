@@ -11,7 +11,10 @@ import {
 import { createExerciseAsset } from "./helpers/exercises";
 import { fetchJson } from "./helpers/http";
 import { createNutritionAssets } from "./helpers/nutrition";
-import { ensureSettingsExportJob } from "./helpers/settings-data";
+import {
+  ensureSettingsDeletionRequest,
+  ensureSettingsExportJob,
+} from "./helpers/settings-data";
 import { createLockedWorkoutDay } from "./helpers/workouts";
 
 function buildFutureCloneDate() {
@@ -371,6 +374,62 @@ test.describe("user-owned isolation", () => {
     expect(createForeignTemplateResult.status).toBe(404);
     expect(createForeignTemplateResult.body?.code).toBe(
       "WORKOUT_TEMPLATE_SOURCE_NOT_FOUND",
+    );
+
+    await adminContext.close();
+    await userContext.close();
+  });
+
+  test("root admin cannot cancel another user's deletion request", async ({
+    browser,
+  }) => {
+    const userContext = await browser.newContext({
+      storageState: USER_STORAGE_STATE_PATH,
+    });
+    const userPage = await userContext.newPage();
+    await userPage.goto("/settings");
+    await expect(userPage).toHaveURL(/\/settings$/);
+    await userPage.waitForLoadState("networkidle");
+
+    const seededDeletion = await ensureSettingsDeletionRequest(userPage);
+
+    const adminContext = await browser.newContext({
+      storageState: ADMIN_STORAGE_STATE_PATH,
+    });
+    const adminPage = await adminContext.newPage();
+    await adminPage.goto("/admin");
+    await expect(adminPage).toHaveURL(/\/admin$/);
+    await adminPage.waitForLoadState("networkidle");
+
+    const [settingsDataResult, cancelDeletionResult] = await Promise.all([
+      fetchJson<{ data?: { deletionRequest?: { id: string } | null } }>(adminPage, {
+        method: "GET",
+        url: "/api/settings/data",
+      }),
+      fetchJson<{ code?: string }>(adminPage, {
+        method: "DELETE",
+        url: "/api/settings/data",
+      }),
+    ]);
+
+    expect(settingsDataResult.status).toBe(200);
+    expect(settingsDataResult.body?.data?.deletionRequest?.id).not.toBe(
+      seededDeletion.deletionRequestId,
+    );
+
+    expect(cancelDeletionResult.status).toBe(404);
+    expect(cancelDeletionResult.body?.code).toBe("SETTINGS_DELETION_NOT_FOUND");
+
+    const userSnapshotResult = await fetchJson<{
+      data?: { deletionRequest?: { id: string } | null };
+    }>(userPage, {
+      method: "GET",
+      url: "/api/settings/data",
+    });
+
+    expect(userSnapshotResult.status).toBe(200);
+    expect(userSnapshotResult.body?.data?.deletionRequest?.id).toBe(
+      seededDeletion.deletionRequestId,
     );
 
     await adminContext.close();
