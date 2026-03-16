@@ -48,6 +48,11 @@ export async function fetchJson<T = unknown>(
         }
       }
 
+      if (response.status() === 401 && attempt < 2) {
+        await page.waitForTimeout(250 * (attempt + 1));
+        continue;
+      }
+
       return {
         status: response.status(),
         body: parsedBody as T,

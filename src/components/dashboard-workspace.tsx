@@ -269,10 +269,7 @@ export function DashboardWorkspace({
                   неделю, средние калории{" "}
                   {formatNumber(aiContext.nutritionInsights.avgKcalLast7)} и
                   белок{" "}
-                  {formatNumber(
-                    aiContext.nutritionInsights.avgProteinLast7,
-                    "г",
-                  )}
+                  {formatNumber(aiContext.nutritionInsights.avgProteinLast7, "г")}
                   .
                 </p>
                 <p className="mt-3 text-sm font-medium text-foreground">
@@ -477,8 +474,7 @@ export function DashboardWorkspace({
               <div className="mt-4 grid gap-3">
                 <div className="rounded-3xl border border-border bg-white/76 p-4 text-sm leading-6 text-muted">
                   Частота и объём тренировок уже попадают в AI-контекст вместе с
-                  тоннажом, лучшими подходами, RPE, отдыхом и заметками по
-                  сессиям.
+                  тоннажом, лучшими подходами, RPE и сигналами по восстановлению.
                 </div>
                 <div className="rounded-3xl border border-border bg-white/76 p-4 text-sm leading-6 text-muted">
                   Питание тоже учитывается не только по КБЖУ, но и по частоте
@@ -547,7 +543,9 @@ export function DashboardWorkspace({
                 </p>
                 <ul className="mt-3 grid gap-2 text-sm leading-6 text-muted">
                   <li>Собрать новую программу тренировок или питания.</li>
-                  <li>Запросить совет по прогрессии нагрузки и восстановлению.</li>
+                  <li>
+                    Запросить совет по прогрессии нагрузки и восстановлению.
+                  </li>
                   <li>Сразу применить готовое предложение в приложение.</li>
                 </ul>
               </article>

@@ -489,3 +489,11 @@
 - В `src/components/ai-chat-toolbar.tsx`, `src/components/ai-chat-composer.tsx`, `src/components/ai-prompt-library.tsx`, `src/components/ai-workspace-sidebar.tsx`, `src/components/ai-workspace.tsx`, `src/app/ai/page.tsx` почистил user-facing AI workspace copy до нормального UTF-8 и убрал свежий mojibake из этого surface.
 - В `src/components/ai-chat-panel.tsx` добавил стабильный hydration marker `data-hydrated`, а `tests/e2e/ui-regressions.spec.ts` и новый AI workspace suite перевёл на него вместо хрупких ранних селекторов и старых desktop-ссылок.
 - Tranche подтверждён полным baseline: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `36 passed`, `npm run test:smoke` -> `3 passed`.
+
+### 2026-03-16 23:10 - Закрыл workspace sanitation и стабилизировал AI surface
+
+- Переписал `src/components/page-workspace.tsx` и `src/components/dashboard-workspace.tsx` в чистом UTF-8, чтобы базовый workspace-контур основных страниц больше не отдавал битую кириллицу.
+- Дожал весь AI workspace surface: `src/components/ai-workspace.tsx`, `src/components/ai-workspace-sidebar.tsx`, `src/components/ai-chat-toolbar.tsx`, `src/components/ai-chat-composer.tsx`, `src/components/ai-prompt-library.tsx`, `src/app/ai/page.tsx` теперь в нормальном русском UX без mojibake.
+- Перевел web-search toggle в `src/components/ai-chat-panel.tsx` на `useSyncExternalStore` поверх `sessionStorage`, чтобы режим не терялся при remount и не нарушал `react-hooks/set-state-in-effect`.
+- Усилил тестовую устойчивость в `tests/e2e/ai-workspace.spec.ts`, `tests/e2e/ui-regressions.spec.ts` и `tests/e2e/helpers/http.ts`: prompt library re-open, degraded admin detail и неожиданные `401` от auth bootstrap больше не дают ложный красный.
+- Tranche подтверждён полным baseline: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `36 passed`, `npm run test:smoke` -> `3 passed`.

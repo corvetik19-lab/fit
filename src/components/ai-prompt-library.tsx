@@ -42,13 +42,15 @@ const BUILT_IN_PROMPTS: BuiltInPromptTemplate[] = [
     id: "meal-plan",
     title: "План питания на день",
     subtitle: "С упором на белок, восстановление и удобство.",
-    prompt: "Составь план питания на день с упором на белок и восстановление.",
+    prompt:
+      "Составь план питания на день с упором на белок и восстановление.",
   },
   {
     id: "meal-photo",
     title: "Разбор фото еды",
     subtitle: "Оценить состав, рецепт и возможные замены.",
-    prompt: "Разбери фото еды, оцени состав и предложи рецепт или улучшения.",
+    prompt:
+      "Разбери фото еды, оцени состав и предложи рецепт или улучшения.",
   },
 ];
 
@@ -247,7 +249,9 @@ export function AiPromptLibrary({
       <div className="flex max-h-[min(88dvh,52rem)] w-full max-w-3xl flex-col overflow-hidden rounded-[2rem] border border-border bg-[color-mix(in_srgb,var(--surface)_96%,white)] shadow-[0_30px_90px_-34px_rgba(24,22,19,0.44)]">
         <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-5 sm:px-6">
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-foreground">Шаблоны запросов</p>
+            <p className="text-sm font-semibold text-foreground">
+              Шаблоны запросов
+            </p>
             <p className="mt-1 text-sm leading-6 text-muted">
               Готовые варианты и твои собственные запросы. Шаблон просто
               вставляется в поле ввода и не засоряет переписку.
@@ -330,7 +334,9 @@ export function AiPromptLibrary({
         <div className="grid flex-1 gap-5 overflow-y-auto px-5 py-5 sm:px-6">
           <div className="grid gap-3">
             <div className="flex items-center justify-between gap-3">
-              <p className="text-sm font-semibold text-foreground">Готовые шаблоны</p>
+              <p className="text-sm font-semibold text-foreground">
+                Готовые шаблоны
+              </p>
               <span className="pill">{filteredBuiltInPrompts.length}</span>
             </div>
 
@@ -379,7 +385,9 @@ export function AiPromptLibrary({
 
           <div className="grid gap-3">
             <div className="flex items-center justify-between gap-3">
-              <p className="text-sm font-semibold text-foreground">Мои шаблоны</p>
+              <p className="text-sm font-semibold text-foreground">
+                Мои шаблоны
+              </p>
               <span className="pill">{filteredCustomPrompts.length}</span>
             </div>
 

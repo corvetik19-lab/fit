@@ -317,12 +317,12 @@ export function PageWorkspace({
 
                   return (
                     <button
-                    aria-pressed={isActive}
-                    className={`flex items-start justify-between gap-3 rounded-2xl border px-3 py-3 text-left transition ${
-                      isActive
-                        ? "border-accent/20 bg-[color-mix(in_srgb,var(--accent-soft)_72%,white)] text-foreground"
-                        : "border-transparent bg-white/72 text-foreground hover:bg-white"
-                    }`}
+                      aria-pressed={isActive}
+                      className={`flex items-start justify-between gap-3 rounded-2xl border px-3 py-3 text-left transition ${
+                        isActive
+                          ? "border-accent/20 bg-[color-mix(in_srgb,var(--accent-soft)_72%,white)] text-foreground"
+                          : "border-transparent bg-white/72 text-foreground hover:bg-white"
+                      }`}
                       key={section.key}
                       onClick={() => handleSectionSelect(section.key)}
                       type="button"

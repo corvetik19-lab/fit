@@ -3,7 +3,7 @@
 import { DefaultChatTransport } from "ai";
 import { useChat } from "@ai-sdk/react";
 import { useRouter } from "next/navigation";
-import { useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useMemo, useRef, useSyncExternalStore } from "react";
 
 import { AiChatComposer } from "@/components/ai-chat-composer";
 import { AiChatNotices } from "@/components/ai-chat-notices";
@@ -21,6 +21,31 @@ import {
 import { toUiMessages } from "@/lib/ai/chat";
 
 const subscribeToHydration = () => () => {};
+const WEB_SEARCH_STORAGE_KEY = "fit.ai.web-search";
+const WEB_SEARCH_EVENT = "fit:ai:web-search";
+
+function subscribeToWebSearch(callback: () => void) {
+  if (typeof window === "undefined") {
+    return () => {};
+  }
+
+  const handleChange = () => callback();
+  window.addEventListener("storage", handleChange);
+  window.addEventListener(WEB_SEARCH_EVENT, handleChange);
+
+  return () => {
+    window.removeEventListener("storage", handleChange);
+    window.removeEventListener(WEB_SEARCH_EVENT, handleChange);
+  };
+}
+
+function getWebSearchSnapshot() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  return window.sessionStorage.getItem(WEB_SEARCH_STORAGE_KEY) === "true";
+}
 
 export function AiChatPanel({
   access,
@@ -34,10 +59,14 @@ export function AiChatPanel({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const composerRef = useRef<HTMLTextAreaElement | null>(null);
 
-  const [allowWebSearch, setAllowWebSearch] = useState(false);
   const isHydrated = useSyncExternalStore(
     subscribeToHydration,
     () => true,
+    () => false,
+  );
+  const allowWebSearch = useSyncExternalStore(
+    subscribeToWebSearch,
+    getWebSearchSnapshot,
     () => false,
   );
   const {
@@ -109,6 +138,20 @@ export function AiChatPanel({
     setSelectedImage(null);
     resetLocalSessionState();
   }
+
+  function toggleWebSearch() {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const next = !allowWebSearch;
+    window.sessionStorage.setItem(
+      WEB_SEARCH_STORAGE_KEY,
+      next ? "true" : "false",
+    );
+    window.dispatchEvent(new Event(WEB_SEARCH_EVENT));
+  }
+
   const { handleComposerKeyDown, handleSubmit } = useAiChatComposer({
     accessAllowed: access.allowed,
     allowWebSearch,
@@ -135,7 +178,7 @@ export function AiChatPanel({
         onOpenMealPhoto={() => fileInputRef.current?.click()}
         onOpenPromptLibrary={() => setIsPromptLibraryOpen(true)}
         onReset={resetChat}
-        onToggleWebSearch={() => setAllowWebSearch((current) => !current)}
+        onToggleWebSearch={toggleWebSearch}
         selectedImage={Boolean(selectedImage)}
         sessionTitle={sessionTitle}
       />

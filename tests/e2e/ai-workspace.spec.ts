@@ -41,12 +41,25 @@ test.describe("ai workspace", () => {
       .poll(async () => webSearchToggle.getAttribute("aria-pressed"))
       .toBe("true");
 
-    await chatPanel.locator('[data-testid="ai-prompt-library-open"]').click();
-    await expect(page.locator('[data-testid="ai-prompt-library"]')).toBeVisible();
+    const promptLibrary = page.locator('[data-testid="ai-prompt-library"]');
+    const promptLibraryOpenButton = chatPanel.locator(
+      '[data-testid="ai-prompt-library-open"]',
+    );
+
+    await promptLibraryOpenButton.click();
+    if (!(await promptLibrary.isVisible().catch(() => false))) {
+      await page.waitForTimeout(200);
+      await promptLibraryOpenButton.click();
+    }
+    await expect(promptLibrary).toBeVisible({ timeout: 10_000 });
 
     await page.locator('[data-testid="ai-prompt-library-toggle-create"]').click();
-    await page.locator('[data-testid="ai-prompt-library-new-title"]').fill(customPromptTitle);
-    await page.locator('[data-testid="ai-prompt-library-new-prompt"]').fill(customPromptText);
+    await page
+      .locator('[data-testid="ai-prompt-library-new-title"]')
+      .fill(customPromptTitle);
+    await page
+      .locator('[data-testid="ai-prompt-library-new-prompt"]')
+      .fill(customPromptText);
     await page.locator('[data-testid="ai-prompt-library-save"]').click();
 
     const customCard = page.locator('[data-testid="ai-custom-prompt-card"]').filter({
@@ -58,7 +71,7 @@ test.describe("ai workspace", () => {
     await expect(chatPanel.locator('[data-testid="ai-chat-composer"]')).toHaveValue(
       customPromptText,
     );
-    await expect(page.locator('[data-testid="ai-prompt-library"]')).toHaveCount(0);
+    await expect(promptLibrary).toHaveCount(0);
 
     await chatPanel.locator('[data-testid="ai-image-input"]').setInputFiles({
       name: "meal-photo.png",

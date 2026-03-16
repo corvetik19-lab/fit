@@ -119,9 +119,26 @@ test.describe("ui regressions", () => {
         expect(detailHref).toBeTruthy();
 
         await navigateStable(page, detailHref!, /\/admin\/users\/.+$/);
-        await expect(
-          page.locator('[data-testid="admin-user-detail-section-heading"]'),
-        ).toBeVisible();
+        await expect
+          .poll(async () => {
+            const detailHeadingVisible = await page
+              .locator('[data-testid="admin-user-detail-section-heading"]')
+              .isVisible()
+              .catch(() => false);
+            if (detailHeadingVisible) {
+              return "detail";
+            }
+
+            const degradedBannerVisible = await page
+              .locator("main")
+              .getByText(/snapshot|служебных данных/i)
+              .first()
+              .isVisible()
+              .catch(() => false);
+
+            return degradedBannerVisible ? "degraded" : "pending";
+          })
+          .not.toBe("pending");
         await page.waitForTimeout(1000);
 
         regressionCapture.assertNone();

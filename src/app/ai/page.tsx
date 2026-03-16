@@ -21,20 +21,27 @@ export default async function AiPage({ searchParams }: AiPageProps) {
     ? resolvedSearchParams.session[0]
     : resolvedSearchParams.session ?? null;
 
-  const [runtimeContext, proposals, chatState, recentSessions, access] = await Promise.all([
-    getAiRuntimeContext(supabase, viewer.user.id),
-    listAiPlanProposals(supabase, viewer.user.id, 10),
-    getAiChatState(supabase, viewer.user.id, sessionParam, {
-      fallbackToLatest: false,
-    }),
-    listAiChatSessions(supabase, viewer.user.id, 30),
-    readUserBillingAccessOrFallback(supabase, viewer.user.id, {
-      email: viewer.user.email,
-    }),
-  ]);
+  const [runtimeContext, proposals, chatState, recentSessions, access] =
+    await Promise.all([
+      getAiRuntimeContext(supabase, viewer.user.id),
+      listAiPlanProposals(supabase, viewer.user.id, 10),
+      getAiChatState(supabase, viewer.user.id, sessionParam, {
+        fallbackToLatest: false,
+      }),
+      listAiChatSessions(supabase, viewer.user.id, 30),
+      readUserBillingAccessOrFallback(supabase, viewer.user.id, {
+        email: viewer.user.email,
+      }),
+    ]);
 
   return (
-    <AppShell compactHeader eyebrow="AI" hideAssistantWidget immersive title="AI-коуч">
+    <AppShell
+      compactHeader
+      eyebrow="AI"
+      hideAssistantWidget
+      immersive
+      title="AI-коуч"
+    >
       <AiWorkspace
         chatAccess={access.features.ai_chat}
         initialMessages={chatState.messages}

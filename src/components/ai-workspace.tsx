@@ -78,7 +78,9 @@ function parseProposalTitle(proposal: AiPlanProposalRow) {
   const parsed = schema.safeParse(payload.proposal);
 
   if (!parsed.success) {
-    return proposal.proposal_type === "meal_plan" ? "План питания" : "План тренировок";
+    return proposal.proposal_type === "meal_plan"
+      ? "План питания"
+      : "План тренировок";
   }
 
   return parsed.data.title;
@@ -139,15 +141,20 @@ function PlansSection({ proposals }: { proposals: AiPlanProposalRow[] }) {
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="pill">
-                      {proposal.proposal_type === "meal_plan" ? "Питание" : "Тренировки"}
+                      {proposal.proposal_type === "meal_plan"
+                        ? "Питание"
+                        : "Тренировки"}
                     </span>
-                    <span className="pill">{formatProposalStatus(proposal.status)}</span>
+                    <span className="pill">
+                      {formatProposalStatus(proposal.status)}
+                    </span>
                   </div>
                   <p className="mt-3 text-base font-semibold text-foreground">
                     {parseProposalTitle(proposal)}
                   </p>
                   <p className="mt-2 text-sm leading-6 text-muted">
-                    {parseProposalSummary(proposal) || "Параметры черновика уже сохранены."}
+                    {parseProposalSummary(proposal) ||
+                      "Параметры черновика уже сохранены."}
                   </p>
                 </div>
                 <p className="text-xs text-muted">
@@ -163,7 +170,11 @@ function PlansSection({ proposals }: { proposals: AiPlanProposalRow[] }) {
                 ) : (
                   <Link
                     className="rounded-full border border-border bg-white/90 px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white"
-                    href={proposal.proposal_type === "meal_plan" ? "/nutrition" : "/workouts"}
+                    href={
+                      proposal.proposal_type === "meal_plan"
+                        ? "/nutrition"
+                        : "/workouts"
+                    }
                   >
                     Открыть раздел
                   </Link>
@@ -173,7 +184,8 @@ function PlansSection({ proposals }: { proposals: AiPlanProposalRow[] }) {
           ))
         ) : (
           <div className="rounded-3xl border border-dashed border-border bg-white/70 px-4 py-6 text-sm leading-6 text-muted">
-            Здесь появятся черновики программ, которые AI соберёт по твоему запросу.
+            Здесь появятся черновики программ, которые AI соберёт по твоему
+            запросу.
           </div>
         )}
       </div>
@@ -227,7 +239,9 @@ export function AiWorkspace({
       const response = await fetch(`/api/ai/sessions/${sessionId}`, {
         method: "DELETE",
       });
-      const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+      const payload = (await response.json().catch(() => null)) as {
+        message?: string;
+      } | null;
 
       if (!response.ok) {
         throw new Error(payload?.message ?? "Не удалось удалить чат.");
@@ -242,7 +256,9 @@ export function AiWorkspace({
 
       router.refresh();
     } catch (error) {
-      setHistoryError(error instanceof Error ? error.message : "Не удалось удалить чат.");
+      setHistoryError(
+        error instanceof Error ? error.message : "Не удалось удалить чат.",
+      );
     } finally {
       setBusySessionId(null);
     }
@@ -264,7 +280,9 @@ export function AiWorkspace({
       const response = await fetch("/api/ai/sessions", {
         method: "DELETE",
       });
-      const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+      const payload = (await response.json().catch(() => null)) as {
+        message?: string;
+      } | null;
 
       if (!response.ok) {
         throw new Error(payload?.message ?? "Не удалось очистить историю чатов.");
@@ -276,7 +294,9 @@ export function AiWorkspace({
       router.refresh();
     } catch (error) {
       setHistoryError(
-        error instanceof Error ? error.message : "Не удалось очистить историю чатов.",
+        error instanceof Error
+          ? error.message
+          : "Не удалось очистить историю чатов.",
       );
     } finally {
       setIsClearingAll(false);
@@ -300,7 +320,8 @@ export function AiWorkspace({
       />
     );
 
-  const activeMeta = sectionMeta.find((item) => item.key === activeSection) ?? sectionMeta[0];
+  const activeMeta =
+    sectionMeta.find((item) => item.key === activeSection) ?? sectionMeta[0];
 
   function returnToApp() {
     if (window.history.length > 1) {

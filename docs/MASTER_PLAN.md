@@ -31,7 +31,7 @@
 
 - [x] Стабильные локальные engineering gates: `lint`, `typecheck`, `build`.
 - [x] Есть smoke baseline для ключевых маршрутов.
-- [ ] Ключевые пользовательские и админские сценарии проходят без hydration loops, infinite polling и layout regressions.
+- [x] Ключевые пользовательские и админские сценарии проходят без hydration loops, infinite polling и layout regressions.
 - [ ] Документация, shell, AI workspace и workout flow доведены до production-качества.
 - [x] Есть минимальный automated regression contour сверх smoke.
 
@@ -167,7 +167,7 @@
 - [x] Есть fullscreen AI workspace и история чатов.
 - [x] Есть удаление отдельных чатов и массовая очистка.
 - [x] Есть загрузка изображений и prompt library.
-- [ ] Убрать весь служебный копирайт, пустые состояния и мешающий UI-хром.
+- [x] Убрать весь служебный копирайт, пустые состояния и мешающий UI-хром.
 - [x] Web search toggle и image upload довести до естественного mobile-first UX.
 - [ ] Assistant flow должен читаться как сценарий `запрос -> анализ -> предложение -> подтверждение -> применение`.
 
@@ -494,3 +494,11 @@
 - [x] `tests/e2e/helpers/http.ts` переведён на `browserContext.request`, поэтому API contract tests больше не зависят от flaky `page.evaluate` и `networkidle`.
 - [x] Full authenticated regression contour подтверждён заново: `npm run test:e2e:auth` -> `27 passed`.
 - [ ] Следующий UI reliability tranche: расширить automated coverage на оставшиеся layout/PWA-specific regressions beyond hydration/loop/polling.
+
+## 2026-03-16 workspace sanitation and AI stability addendum
+
+- [x] `src/components/page-workspace.tsx` и `src/components/dashboard-workspace.tsx` переписаны в чистом UTF-8: базовый workspace-контур `Dashboard / Workouts / Nutrition` больше не отдает mojibake в пользовательской поверхности.
+- [x] `src/components/ai-workspace.tsx`, `src/components/ai-workspace-sidebar.tsx`, `src/components/ai-chat-toolbar.tsx`, `src/components/ai-chat-composer.tsx`, `src/components/ai-prompt-library.tsx` и `src/app/ai/page.tsx` санированы до чистого UTF-8 и приведены к нормальному русскому UX.
+- [x] `src/components/ai-chat-panel.tsx` переведен на `useSyncExternalStore` поверх `sessionStorage` для web-search toggle, чтобы режим не терялся при client remount и не требовал `setState` внутри effect.
+- [x] `tests/e2e/ai-workspace.spec.ts`, `tests/e2e/ui-regressions.spec.ts` и `tests/e2e/helpers/http.ts` усилены против flaky modal/admin-detail/auth timing, а полный baseline снова зеленый: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `36 passed`, `npm run test:smoke` -> `3 passed`.
+- [ ] Следующий sanitation tranche: убрать remaining mojibake и сырой operator copy из `admin-user-detail` и связанных admin sections, затем вернутьcя к следующему backend/advisor tranche.
