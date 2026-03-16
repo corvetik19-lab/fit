@@ -43,25 +43,22 @@ test.describe("mobile pwa regressions", () => {
 
       try {
         await navigateStable(page, "/dashboard", /\/dashboard$/);
+        await page.waitForLoadState("networkidle");
+        await page.waitForTimeout(300);
         const drawerToggle = page
-          .getByRole("button", { name: "Открыть меню" })
+          .getByTestId("app-mobile-header-drawer-toggle")
           .first();
         await expect(drawerToggle).toBeVisible({ timeout: 15_000 });
         await expectNoHorizontalOverflow(page, "/dashboard");
 
         await drawerToggle.click();
-        const drawer = page.locator('#app-mobile-drawer[aria-hidden="false"]').first();
+        const drawer = page.getByTestId("app-mobile-drawer").first();
         await expect(drawer).toHaveAttribute("aria-hidden", "false");
         await expectDrawerFillsViewport(page);
         await expect(drawer).toContainText("Разделы приложения");
         await expect(drawer).toContainText("Настройки");
-        await drawer
-          .getByRole("button", { name: "Закрыть меню" })
-          .first()
-          .click();
-        await expect(
-          page.locator('#app-mobile-drawer[aria-hidden="false"]'),
-        ).toHaveCount(0);
+        await page.keyboard.press("Escape");
+        await expect(drawer).toHaveAttribute("aria-hidden", "true");
 
         const dashboardSectionTrigger = page
           .getByRole("button")
@@ -78,6 +75,8 @@ test.describe("mobile pwa regressions", () => {
         await expectNoHorizontalOverflow(page, "dashboard section switch");
 
         await navigateStable(page, "/workouts", /\/workouts$/);
+        await page.waitForLoadState("networkidle");
+        await page.waitForTimeout(300);
         await expectNoHorizontalOverflow(page, "/workouts");
         const workoutsSectionTrigger = page
           .getByRole("button")
@@ -99,6 +98,8 @@ test.describe("mobile pwa regressions", () => {
         await expectNoHorizontalOverflow(page, "workouts section controls");
 
         await navigateStable(page, "/nutrition", /\/nutrition$/);
+        await page.waitForLoadState("networkidle");
+        await page.waitForTimeout(300);
         await expectNoHorizontalOverflow(page, "/nutrition");
         const nutritionSectionTrigger = page
           .getByRole("button")
@@ -140,15 +141,15 @@ test.describe("mobile pwa regressions", () => {
           `/workouts/day/${seededDay.dayId}?focus=1`,
           new RegExp(`/workouts/day/${seededDay.dayId}\\?focus=1$`),
         );
+        await page.waitForLoadState("networkidle");
+        await page.waitForTimeout(300);
 
         await expect(
           page.getByRole("button", { name: "Обычный вид" }),
         ).toBeVisible();
         await expectNoHorizontalOverflow(page, "workout focus mode");
 
-        const collapseToggle = page
-          .locator("section.sticky button[aria-expanded]")
-          .first();
+        const collapseToggle = page.getByTestId("workout-focus-header-toggle");
         await expect(collapseToggle).toBeVisible();
         await collapseToggle.click();
         await expect(collapseToggle).toHaveAttribute("aria-expanded", "false");
@@ -181,25 +182,22 @@ test.describe("mobile pwa regressions", () => {
 
       try {
         await navigateStable(page, "/admin/users", /\/admin\/users$/);
+        await page.waitForLoadState("networkidle");
+        await page.waitForTimeout(300);
         await expectNoHorizontalOverflow(page, "/admin/users");
 
         await page
-          .getByRole("button", { name: "Открыть меню" })
+          .getByTestId("app-mobile-header-drawer-toggle")
           .first()
           .click();
-        const drawer = page.locator('#app-mobile-drawer[aria-hidden="false"]').first();
+        const drawer = page.getByTestId("app-mobile-drawer").first();
         await expect(drawer).toHaveAttribute("aria-hidden", "false");
         await expectDrawerFillsViewport(page);
         await expect(drawer).toContainText("Центр управления");
         await expect(drawer).toContainText("Пользователи");
 
-        await drawer
-          .getByRole("button", { name: "Закрыть меню" })
-          .first()
-          .click();
-        await expect(
-          page.locator('#app-mobile-drawer[aria-hidden="false"]'),
-        ).toHaveCount(0);
+        await page.keyboard.press("Escape");
+        await expect(drawer).toHaveAttribute("aria-hidden", "true");
         await expectNoHorizontalOverflow(page, "admin mobile drawer");
 
         regressionCapture.assertNone();

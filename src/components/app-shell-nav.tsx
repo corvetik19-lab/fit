@@ -305,6 +305,7 @@ export function AppShellNav({
           aria-expanded={isDrawerOpen}
           aria-label="Открыть меню"
           className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border bg-white/82 text-foreground shadow-[0_16px_40px_-28px_rgba(24,22,19,0.5)] transition hover:bg-white lg:hidden"
+          data-testid="app-mobile-header-drawer-toggle"
           onClick={() => setIsDrawerOpen(true)}
           type="button"
         >
@@ -324,6 +325,7 @@ export function AppShellNav({
               <aside
                 aria-hidden={!isDrawerOpen}
                 className={`app-drawer ${isDrawerOpen ? "app-drawer--open" : ""}`}
+                data-testid="app-mobile-drawer"
                 id="app-mobile-drawer"
               >
                 <div className="app-drawer__surface">
@@ -343,6 +345,7 @@ export function AppShellNav({
                     <button
                       aria-label="Закрыть меню"
                       className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border bg-white/75 text-foreground transition hover:bg-white"
+                      data-testid="app-mobile-drawer-close"
                       onClick={() => setIsDrawerOpen(false)}
                       type="button"
                     >

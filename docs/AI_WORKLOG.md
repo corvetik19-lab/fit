@@ -33,6 +33,14 @@
 - `tests/e2e/admin-app.spec.ts` расширен так, что invalid admin user id scenario теперь дополнительно покрывает `GET /api/admin/users/not-a-uuid` и `POST /api/admin/users/bulk` с невалидным `user_ids`.
 - Целевой контракт подтверждён через `lint`, `typecheck`, `build` и targeted Playwright `--grep "invalid admin user ids"`.
 
+### Mobile PWA regression stabilization
+
+- В `src/components/app-shell-nav.tsx` развёл test ids для shell drawer trigger и drawer surface, чтобы mobile suite больше не цеплялся за скрытый дубль кнопки меню.
+- В `src/components/workout-day-session.tsx` focus-header toggle переведён на functional state update и получил стабильный `data-testid`, чтобы mobile focus mode проверял реальный collapse path без double-toggle race.
+- В `tests/e2e/mobile-pwa-regressions.spec.ts` добавил `networkidle + settle` перед mobile interactions и перевёл drawer/focus assertions на стабильные selectors и keyboard close path.
+- В `tests/e2e/ownership-isolation.spec.ts` поднял timeout тяжёлого nutrition isolation сценария до 90 секунд, чтобы seed nutrition assets не падал ложным таймаутом под медленной сетью.
+- Regression tranche подтверждён через `lint`, `typecheck`, `build` и targeted `npm run test:e2e:auth -- --workers=1 --grep "mobile pwa regressions|nutrition assets"` -> `4 passed`.
+
 ### Dashboard nutrition extraction and focus-header stabilization
 
 - `metrics.ts` перестал держать nutrition analytics внутри основного runtime-файла: source loading, result formatting и fail-open fallback вынесены в `dashboard-nutrition.ts`.

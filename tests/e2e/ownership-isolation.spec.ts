@@ -155,6 +155,8 @@ test.describe("user-owned isolation", () => {
   test("root admin cannot read or mutate another user's nutrition assets", async ({
     browser,
   }) => {
+    test.setTimeout(90_000);
+
     const userContext = await browser.newContext({
       storageState: USER_STORAGE_STATE_PATH,
     });

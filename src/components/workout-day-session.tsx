@@ -414,8 +414,9 @@ export function WorkoutDaySession({
               <button
                 aria-expanded={!isFocusHeaderCollapsed}
                 className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border bg-white/80 text-foreground transition hover:bg-white"
+                data-testid="workout-focus-header-toggle"
                 onClick={() =>
-                  setIsFocusHeaderCollapsed(!isFocusHeaderCollapsed)
+                  setIsFocusHeaderCollapsed((current) => !current)
                 }
                 type="button"
               >
