@@ -35,9 +35,7 @@ test.describe("authenticated app", () => {
   });
 
   test("session is restored inside the same browser context", async ({ page }) => {
-    await page.goto("/");
-    await page.waitForURL(/\/(dashboard|onboarding)/, { timeout: 20_000 });
-
+    await navigateStable(page, "/dashboard", /\/(dashboard|onboarding)$/);
     await expect(page).toHaveURL(/\/dashboard$/);
     await expect(page.locator('a[href="/ai"]').first()).toBeVisible();
   });

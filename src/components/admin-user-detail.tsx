@@ -166,7 +166,10 @@ export function AdminUserDetail({
             <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
               Разделы карточки
             </p>
-            <h2 className="mt-2 text-xl font-semibold text-foreground">
+            <h2
+              className="mt-2 text-xl font-semibold text-foreground"
+              data-testid="admin-user-detail-section-heading"
+            >
               Открывайте только нужный раздел
             </h2>
           </div>

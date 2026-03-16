@@ -13,6 +13,13 @@
 - В `AGENTS.md` зафиксирован рабочий режим без лишних пауз: агент должен идти tranche-by-tranche по `MASTER_PLAN`, после каждого куска обновлять docs, коммитить, пушить и сразу брать следующий открытый пункт.
 - Останавливаться теперь допустимо только на реальном внешнем блокере: отсутствующий доступ, секреты, платный провайдер или недоступный внешний сервис.
 
+### AI plan route validation and auth-e2e stabilization
+
+- В `src/lib/ai/schemas.ts` добавлены общие request schemas для `meal-plan` и `workout-plan`, чтобы AI plan routes валидировали payload до billing/runtime слоя и не смешивали в route handler ручной parsing с доменными правилами.
+- `src/app/api/ai/meal-plan/route.ts` и `src/app/api/ai/workout-plan/route.ts` теперь возвращают явные `400 MEAL_PLAN_INVALID` / `WORKOUT_PLAN_INVALID` с `zod.flatten()` для невалидных payload, а не падают глубже в plan-generation или feature gating.
+- В `src/components/admin-user-detail.tsx` добавлен стабильный `data-testid` для section heading, а `tests/e2e/admin-app.spec.ts`, `tests/e2e/ui-regressions.spec.ts` и `tests/e2e/authenticated-app.spec.ts` переведены на менее хрупкие селекторы и redirect assumptions.
+- После этого снова подтверждён полный baseline: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `34 passed`, `npm run test:smoke` -> `3 passed`.
+
 ### Admin dashboard fail-open
 
 - `/admin` больше не падает целиком из-за временного сбоя server-side admin fan-out. В `src/app/admin/page.tsx` добавлен fail-open path: страница показывает hero, быстрые переходы и резервный banner, даже если часть служебных запросов не загрузилась.

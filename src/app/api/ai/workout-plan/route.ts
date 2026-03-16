@@ -5,28 +5,15 @@ import {
   readUserBillingAccessOrFallback,
 } from "@/lib/billing-access";
 import { generateWorkoutPlanProposalForUser } from "@/lib/ai/plan-generation";
+import { workoutPlanRequestSchema } from "@/lib/ai/schemas";
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import { hasAiRuntimeEnv } from "@/lib/env";
 import { logger } from "@/lib/logger";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { z } from "zod";
 
 export async function POST(request: Request) {
   try {
-    const body = (await request.json()) as {
-      goal?: string;
-      equipment?: string[];
-      daysPerWeek?: number;
-      focus?: string;
-    };
-
-    if (!hasAiRuntimeEnv()) {
-      return createApiErrorResponse({
-        status: 503,
-        code: "AI_RUNTIME_NOT_CONFIGURED",
-        message: "AI runtime не настроен.",
-      });
-    }
-
     const supabase = await createServerSupabaseClient();
     const {
       data: { user },
@@ -37,6 +24,16 @@ export async function POST(request: Request) {
         status: 401,
         code: "UNAUTHORIZED",
         message: "Нужно войти в аккаунт, чтобы генерировать AI-тренировки.",
+      });
+    }
+
+    const body = workoutPlanRequestSchema.parse(await request.json().catch(() => ({})));
+
+    if (!hasAiRuntimeEnv()) {
+      return createApiErrorResponse({
+        status: 503,
+        code: "AI_RUNTIME_NOT_CONFIGURED",
+        message: "AI runtime не настроен.",
       });
     }
 
@@ -64,6 +61,15 @@ export async function POST(request: Request) {
 
     return Response.json({ data: proposal });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return createApiErrorResponse({
+        status: 400,
+        code: "WORKOUT_PLAN_INVALID",
+        message: "Параметры тренировочного плана заполнены некорректно.",
+        details: error.flatten(),
+      });
+    }
+
     logger.error("workout plan route failed", { error });
 
     return createApiErrorResponse({

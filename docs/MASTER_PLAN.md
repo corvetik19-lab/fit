@@ -205,6 +205,7 @@
 
 - [x] Есть retrieval, structured knowledge, proposals и snapshots.
 - [x] Для `AI sessions` и `proposal apply/approve` добавлены явные UUID-валидации и предсказуемые `400/404/409`, а не только общие `500`.
+- [x] `AI meal-plan` и `AI workout-plan` routes теперь валидируют вход через общий Zod schema helper и возвращают явные `400 MEAL_PLAN_INVALID` / `WORKOUT_PLAN_INVALID` до runtime, billing и provider слоя.
 - [x] Удаление AI chat session теперь проверяет owner-scoped существование сессии и не возвращает ложный успех.
 - [x] `AI chat` и `AI assistant` теперь отклоняют неизвестный или чужой валидный `sessionId` с `404 AI_CHAT_SESSION_NOT_FOUND`, а не создают или продолжают новую сессию молча.
 - [x] `AI proposal approve/apply` теперь подтверждены owner-scoped e2e: root-admin получает `404 AI_PROPOSAL_NOT_FOUND` на чужом `proposalId`, а invalid UUID даёт явные `400 AI_PROPOSAL_APPROVE_INVALID` / `AI_PROPOSAL_APPLY_INVALID`.
@@ -258,6 +259,7 @@
 - [x] Добавить smoke тесты на ключевые SSR/API маршруты.
 - [x] Добавить regression tests для offline/sync workout execution.
 - [x] Добавить AI route contract tests без обязательного вызова платного провайдера.
+- [x] Полный `auth-e2e` baseline снова подтверждён на зелёном полном прогоне после стабилизации admin detail selectors и session-restore flow.
 - [x] Добавить route-level изоляционные проверки для owner-scoped user data (`workout`, `nutrition`, `custom exercises`, `settings`, `AI history`).
 - [x] Добавить отдельные RLS-focused проверки сверх route-level owner isolation.
 

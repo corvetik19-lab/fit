@@ -5,29 +5,16 @@ import {
   readUserBillingAccessOrFallback,
 } from "@/lib/billing-access";
 import { generateMealPlanProposalForUser } from "@/lib/ai/plan-generation";
+import { mealPlanRequestSchema } from "@/lib/ai/schemas";
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import { hasAiRuntimeEnv } from "@/lib/env";
 import { logger } from "@/lib/logger";
 import { hasRiskyIntent } from "@/lib/safety";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { z } from "zod";
 
 export async function POST(request: Request) {
   try {
-    const body = (await request.json()) as {
-      goal?: string;
-      kcalTarget?: number;
-      dietaryNotes?: string;
-      mealsPerDay?: number;
-    };
-
-    if (!hasAiRuntimeEnv()) {
-      return createApiErrorResponse({
-        status: 503,
-        code: "AI_RUNTIME_NOT_CONFIGURED",
-        message: "AI runtime не настроен.",
-      });
-    }
-
     const supabase = await createServerSupabaseClient();
     const {
       data: { user },
@@ -38,6 +25,16 @@ export async function POST(request: Request) {
         status: 401,
         code: "UNAUTHORIZED",
         message: "Нужно войти в аккаунт, чтобы генерировать AI-планы питания.",
+      });
+    }
+
+    const body = mealPlanRequestSchema.parse(await request.json().catch(() => ({})));
+
+    if (!hasAiRuntimeEnv()) {
+      return createApiErrorResponse({
+        status: 503,
+        code: "AI_RUNTIME_NOT_CONFIGURED",
+        message: "AI runtime не настроен.",
       });
     }
 
@@ -62,7 +59,7 @@ export async function POST(request: Request) {
     const proposal = await generateMealPlanProposalForUser(supabase, user.id, {
       goal: body.goal ?? null,
       kcalTarget: body.kcalTarget ?? null,
-      dietaryNotes: body.dietaryNotes,
+      dietaryNotes: body.dietaryNotes ?? undefined,
       mealsPerDay: body.mealsPerDay ?? null,
     });
 
@@ -70,6 +67,15 @@ export async function POST(request: Request) {
 
     return Response.json({ data: proposal });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return createApiErrorResponse({
+        status: 400,
+        code: "MEAL_PLAN_INVALID",
+        message: "Параметры плана питания заполнены некорректно.",
+        details: error.flatten(),
+      });
+    }
+
     logger.error("meal plan route failed", { error });
 
     return createApiErrorResponse({

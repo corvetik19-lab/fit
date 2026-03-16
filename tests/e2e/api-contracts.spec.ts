@@ -266,4 +266,43 @@ test.describe("api contracts", () => {
       "ADMIN_REQUIRED",
     );
   });
+
+  test("ai plan routes reject invalid payloads before runtime execution", async ({
+    page,
+  }) => {
+    await page.goto("/ai");
+    await expect(page).toHaveURL(/\/ai$/);
+    await page.waitForLoadState("networkidle");
+
+    const [mealPlanResult, workoutPlanResult] = await Promise.all([
+      fetchJson(page, {
+        method: "POST",
+        url: "/api/ai/meal-plan",
+        body: {
+          goal: "  ",
+          kcalTarget: 200,
+          mealsPerDay: 12,
+        },
+      }),
+      fetchJson(page, {
+        method: "POST",
+        url: "/api/ai/workout-plan",
+        body: {
+          daysPerWeek: 0,
+          equipment: ["", "Гантели"],
+          focus: "x".repeat(300),
+        },
+      }),
+    ]);
+
+    expect(mealPlanResult.status).toBe(400);
+    expect((mealPlanResult.body as { code?: string } | null)?.code).toBe(
+      "MEAL_PLAN_INVALID",
+    );
+
+    expect(workoutPlanResult.status).toBe(400);
+    expect((workoutPlanResult.body as { code?: string } | null)?.code).toBe(
+      "WORKOUT_PLAN_INVALID",
+    );
+  });
 });

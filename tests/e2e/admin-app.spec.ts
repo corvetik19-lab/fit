@@ -32,7 +32,7 @@ test.describe("admin app", () => {
     await navigateStable(page, myCardHref!, /\/admin\/users\/.+$/);
     await expect(page).toHaveURL(/\/admin\/users\/.+$/);
     await expect(
-      page.getByRole("heading", { name: "Открывайте только нужный раздел" }),
+      page.locator('[data-testid="admin-user-detail-section-heading"]'),
     ).toBeVisible({ timeout: 15_000 });
     await expect(page.locator('button[aria-pressed]').first()).toBeVisible();
     await expect(page.locator('a[href="/admin/users"]').first()).toBeVisible();

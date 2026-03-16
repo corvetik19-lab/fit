@@ -119,7 +119,9 @@ test.describe("ui regressions", () => {
         expect(detailHref).toBeTruthy();
 
         await navigateStable(page, detailHref!, /\/admin\/users\/.+$/);
-        await expect(page.locator('button[aria-pressed]').first()).toBeVisible();
+        await expect(
+          page.locator('[data-testid="admin-user-detail-section-heading"]'),
+        ).toBeVisible();
         await page.waitForTimeout(1000);
 
         regressionCapture.assertNone();

@@ -2,6 +2,48 @@ import { z } from "zod";
 
 const confidenceSchema = z.enum(["low", "medium", "high"]);
 
+const optionalTrimmedText = (max: number) =>
+  z.preprocess(
+    (value) => {
+      if (value === undefined) {
+        return undefined;
+      }
+
+      if (value === null) {
+        return null;
+      }
+
+      if (typeof value === "string") {
+        const trimmed = value.trim();
+        return trimmed.length ? trimmed : null;
+      }
+
+      return value;
+    },
+    z.string().max(max).nullable().optional(),
+  );
+
+export const mealPlanRequestSchema = z
+  .object({
+    goal: optionalTrimmedText(120),
+    kcalTarget: z.number().int().min(1000).max(8000).nullable().optional(),
+    dietaryNotes: optionalTrimmedText(600),
+    mealsPerDay: z.number().int().min(1).max(8).nullable().optional(),
+  })
+  .strict();
+
+export const workoutPlanRequestSchema = z
+  .object({
+    goal: optionalTrimmedText(120),
+    equipment: z
+      .array(z.string().trim().min(1).max(80))
+      .max(20)
+      .optional(),
+    daysPerWeek: z.number().int().min(1).max(7).nullable().optional(),
+    focus: optionalTrimmedText(200),
+  })
+  .strict();
+
 export const workoutPlanSchema = z.object({
   title: z.string(),
   summary: z.string(),
