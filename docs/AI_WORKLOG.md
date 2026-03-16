@@ -8,6 +8,12 @@
 
 ## 2026-03-16
 
+### Admin user detail timeline decomposition
+
+- `admin-user-detail-sections.tsx` перестал быть монолитом по history/detail surface: timeline и billing-collections вынесены в отдельные модули для операций, аудита, entitlements, usage counters и subscription events.
+- Общие `MetricCard`, `KeyValueCard` и `EmptyState` вынесены в отдельный primitives-слой, так что `admin-user-detail-sections.tsx` теперь ближе к секционному orchestrator-компоненту.
+- Baseline после refactor подтверждён через `lint`, `typecheck`, `build` и полный `test:e2e:auth`.
+
 ### Mobile PWA regression coverage
 
 - Добавлен отдельный mobile/PWA Playwright suite для узкого viewport: shell drawer, workspace section-menu, mobile workout focus-mode и admin drawer теперь проверяются на client-side regressions и horizontal overflow.

@@ -104,7 +104,7 @@
 - [x] Вынести fetch/state и section-config слой из `src/components/admin-user-detail.tsx`.
 - [x] Вынести секционные `profile/activity/operations/billing` блоки из `src/components/admin-user-detail.tsx`.
 - [x] Убрать mojibake из `admin-user-detail` model/state словарей и section copy.
-- [ ] Добить дальнейшую декомпозицию `admin-user-detail.tsx` по timeline/detail подблокам.
+- [x] Добить дальнейшую декомпозицию `admin-user-detail.tsx` по timeline/detail подблокам.
 
 ### AI knowledge и chat
 
