@@ -2,6 +2,10 @@ import { z } from "zod";
 
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import { isAdminAccessError, requireAdminRouteAccess } from "@/lib/admin-auth";
+import {
+  isAdminRouteParamError,
+  parseAdminUserIdParam,
+} from "@/lib/admin-route-params";
 import { logger } from "@/lib/logger";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 
@@ -15,7 +19,11 @@ export async function POST(
 ) {
   try {
     const { user } = await requireAdminRouteAccess("queue_support_actions");
-    const { id } = await params;
+    const { id: rawId } = await params;
+    const id = parseAdminUserIdParam(rawId, {
+      code: "ADMIN_RESTORE_TARGET_INVALID",
+      message: "Target user id is invalid.",
+    });
     const payload = restoreSchema.parse(await request.json().catch(() => ({})));
     const adminSupabase = createAdminSupabaseClient();
 
@@ -60,13 +68,20 @@ export async function POST(
       },
     });
   } catch (error) {
-    logger.error("admin restore route failed", { error });
-
     if (isAdminAccessError(error)) {
       return createApiErrorResponse({
         status: error.status,
         code: error.code,
         message: error.message,
+      });
+    }
+
+    if (isAdminRouteParamError(error)) {
+      return createApiErrorResponse({
+        status: error.status,
+        code: error.code,
+        message: error.message,
+        details: error.details,
       });
     }
 
@@ -78,6 +93,8 @@ export async function POST(
         details: error.flatten(),
       });
     }
+
+    logger.error("admin restore route failed", { error });
 
     return createApiErrorResponse({
       status: 500,

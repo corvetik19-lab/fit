@@ -3,6 +3,10 @@ import { z } from "zod";
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import { isAdminAccessError, requireAdminRouteAccess } from "@/lib/admin-auth";
 import {
+  isAdminRouteParamError,
+  parseAdminUserIdParam,
+} from "@/lib/admin-route-params";
+import {
   PRIMARY_SUPER_ADMIN_GUARD_MESSAGE,
   assertUserIsNotPrimarySuperAdmin,
 } from "@/lib/admin-target-guard";
@@ -21,7 +25,11 @@ export async function POST(
 ) {
   try {
     const { user } = await requireAdminRouteAccess("queue_support_actions");
-    const { id } = await params;
+    const { id: rawId } = await params;
+    const id = parseAdminUserIdParam(rawId, {
+      code: "ADMIN_SUPPORT_ACTION_TARGET_INVALID",
+      message: "Target user id is invalid.",
+    });
     const body = supportActionSchema.parse(await request.json());
     const adminSupabase = createAdminSupabaseClient();
 
@@ -66,13 +74,20 @@ export async function POST(
       },
     });
   } catch (error) {
-    logger.error("admin support action route failed", { error });
-
     if (isAdminAccessError(error)) {
       return createApiErrorResponse({
         status: error.status,
         code: error.code,
         message: error.message,
+      });
+    }
+
+    if (isAdminRouteParamError(error)) {
+      return createApiErrorResponse({
+        status: error.status,
+        code: error.code,
+        message: error.message,
+        details: error.details,
       });
     }
 
@@ -95,6 +110,8 @@ export async function POST(
         details: error.flatten(),
       });
     }
+
+    logger.error("admin support action route failed", { error });
 
     return createApiErrorResponse({
       status: 500,

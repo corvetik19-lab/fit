@@ -7,6 +7,10 @@ import {
   isPrimarySuperAdminEmail,
 } from "@/lib/admin-permissions";
 import { isAdminAccessError, requireAdminRouteAccess } from "@/lib/admin-auth";
+import {
+  isAdminRouteParamError,
+  parseAdminUserIdParam,
+} from "@/lib/admin-route-params";
 import { logger } from "@/lib/logger";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 
@@ -22,7 +26,11 @@ export async function PATCH(
   try {
     const actor = await requireAdminRouteAccess("manage_admin_roles");
 
-    const { id } = await params;
+    const { id: rawId } = await params;
+    const id = parseAdminUserIdParam(rawId, {
+      code: "ADMIN_ROLE_TARGET_INVALID",
+      message: "Target user id is invalid.",
+    });
     const payload = roleSchema.parse(await request.json());
 
     if (actor.user.id === id && payload.role !== "super_admin") {
@@ -125,13 +133,20 @@ export async function PATCH(
       },
     });
   } catch (error) {
-    logger.error("admin role update route failed", { error });
-
     if (isAdminAccessError(error)) {
       return createApiErrorResponse({
         status: error.status,
         code: error.code,
         message: error.message,
+      });
+    }
+
+    if (isAdminRouteParamError(error)) {
+      return createApiErrorResponse({
+        status: error.status,
+        code: error.code,
+        message: error.message,
+        details: error.details,
       });
     }
 
@@ -143,6 +158,8 @@ export async function PATCH(
         details: error.flatten(),
       });
     }
+
+    logger.error("admin role update route failed", { error });
 
     return createApiErrorResponse({
       status: 500,
@@ -159,7 +176,11 @@ export async function DELETE(
   try {
     const actor = await requireAdminRouteAccess("manage_admin_roles");
 
-    const { id } = await params;
+    const { id: rawId } = await params;
+    const id = parseAdminUserIdParam(rawId, {
+      code: "ADMIN_ROLE_TARGET_INVALID",
+      message: "Target user id is invalid.",
+    });
     const body = await request.json().catch(() => ({}));
     const reason =
       typeof body?.reason === "string" ? body.reason.trim().slice(0, 300) : "";
@@ -245,8 +266,6 @@ export async function DELETE(
       },
     });
   } catch (error) {
-    logger.error("admin role revoke route failed", { error });
-
     if (isAdminAccessError(error)) {
       return createApiErrorResponse({
         status: error.status,
@@ -254,6 +273,17 @@ export async function DELETE(
         message: error.message,
       });
     }
+
+    if (isAdminRouteParamError(error)) {
+      return createApiErrorResponse({
+        status: error.status,
+        code: error.code,
+        message: error.message,
+        details: error.details,
+      });
+    }
+
+    logger.error("admin role revoke route failed", { error });
 
     return createApiErrorResponse({
       status: 500,

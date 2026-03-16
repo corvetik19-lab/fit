@@ -107,4 +107,115 @@ test.describe("admin app", () => {
       "REINDEX_INVALID",
     );
   });
+
+  test("root admin gets explicit validation errors for invalid admin user ids", async ({
+    page,
+  }) => {
+    await page.goto("/admin");
+    await expect(page).toHaveURL(/\/admin$/);
+    await page.waitForLoadState("networkidle");
+
+    const [
+      billingResult,
+      deletionQueueResult,
+      deletionCancelResult,
+      exportResult,
+      restoreResult,
+      roleResult,
+      supportActionResult,
+      suspendResult,
+      billingReconcileResult,
+    ] = await Promise.all([
+      fetchJson(page, {
+        method: "POST",
+        url: "/api/admin/users/not-a-uuid/billing",
+        body: {
+          action: "grant_trial",
+        },
+      }),
+      fetchJson(page, {
+        method: "POST",
+        url: "/api/admin/users/not-a-uuid/deletion",
+      }),
+      fetchJson(page, {
+        method: "DELETE",
+        url: "/api/admin/users/not-a-uuid/deletion",
+      }),
+      fetchJson(page, {
+        method: "POST",
+        url: "/api/admin/users/not-a-uuid/export",
+      }),
+      fetchJson(page, {
+        method: "POST",
+        url: "/api/admin/users/not-a-uuid/restore",
+      }),
+      fetchJson(page, {
+        method: "PATCH",
+        url: "/api/admin/users/not-a-uuid/role",
+        body: {
+          role: "analyst",
+        },
+      }),
+      fetchJson(page, {
+        method: "POST",
+        url: "/api/admin/users/not-a-uuid/support-action",
+        body: {
+          action: "resync_user_context",
+        },
+      }),
+      fetchJson(page, {
+        method: "POST",
+        url: "/api/admin/users/not-a-uuid/suspend",
+      }),
+      fetchJson(page, {
+        method: "POST",
+        url: "/api/admin/users/not-a-uuid/billing/reconcile",
+      }),
+    ]);
+
+    expect(billingResult.status).toBe(400);
+    expect((billingResult.body as { code?: string } | null)?.code).toBe(
+      "ADMIN_BILLING_TARGET_INVALID",
+    );
+
+    expect(deletionQueueResult.status).toBe(400);
+    expect((deletionQueueResult.body as { code?: string } | null)?.code).toBe(
+      "ADMIN_DELETION_TARGET_INVALID",
+    );
+
+    expect(deletionCancelResult.status).toBe(400);
+    expect((deletionCancelResult.body as { code?: string } | null)?.code).toBe(
+      "ADMIN_DELETION_TARGET_INVALID",
+    );
+
+    expect(exportResult.status).toBe(400);
+    expect((exportResult.body as { code?: string } | null)?.code).toBe(
+      "ADMIN_EXPORT_TARGET_INVALID",
+    );
+
+    expect(restoreResult.status).toBe(400);
+    expect((restoreResult.body as { code?: string } | null)?.code).toBe(
+      "ADMIN_RESTORE_TARGET_INVALID",
+    );
+
+    expect(roleResult.status).toBe(400);
+    expect((roleResult.body as { code?: string } | null)?.code).toBe(
+      "ADMIN_ROLE_TARGET_INVALID",
+    );
+
+    expect(supportActionResult.status).toBe(400);
+    expect((supportActionResult.body as { code?: string } | null)?.code).toBe(
+      "ADMIN_SUPPORT_ACTION_TARGET_INVALID",
+    );
+
+    expect(suspendResult.status).toBe(400);
+    expect((suspendResult.body as { code?: string } | null)?.code).toBe(
+      "ADMIN_SUSPEND_TARGET_INVALID",
+    );
+
+    expect(billingReconcileResult.status).toBe(400);
+    expect((billingReconcileResult.body as { code?: string } | null)?.code).toBe(
+      "ADMIN_BILLING_RECONCILE_TARGET_INVALID",
+    );
+  });
 });

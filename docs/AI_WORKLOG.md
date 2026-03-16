@@ -19,6 +19,13 @@
 - Для e2e добавлен test-only fallback hook `?__test_admin_dashboard_fallback=1`, чтобы деградационный режим можно было подтверждать отдельно и без ожидания случайного внешнего timeout.
 - `tests/e2e/admin-app.spec.ts` расширен сценарием на degraded dashboard page. Tranche подтверждён через `lint`, `typecheck`, `build` и целевой `admin-app` Playwright suite.
 
+### Admin user mutation route validation hardening
+
+- Добавлен общий helper `src/lib/admin-route-params.ts` с typed `AdminRouteParamError`, чтобы admin mutation routes не дублировали UUID-парсинг `userId`.
+- В `billing`, `billing/reconcile`, `deletion`, `export`, `restore`, `role`, `support-action`, `suspend` route handlers невалидный target user id теперь даёт явные `400` с route-specific кодами вместо случайного провала глубже в доменный слой.
+- Ожидаемые invalid-param ветки в этих admin routes больше не логируются как `logger.error`; noisy logging остаётся только для реально неожиданных сбоев.
+- `tests/e2e/admin-app.spec.ts` расширен отдельным contract-сценарием на invalid admin user ids, а tranche подтверждён через `lint`, `typecheck`, `build` и полный `npm run test:e2e:auth`.
+
 ### Dashboard nutrition extraction and focus-header stabilization
 
 - `metrics.ts` перестал держать nutrition analytics внутри основного runtime-файла: source loading, result formatting и fail-open fallback вынесены в `dashboard-nutrition.ts`.

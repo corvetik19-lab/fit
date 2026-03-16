@@ -3,6 +3,10 @@ import { z } from "zod";
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import { isAdminAccessError, requireAdminRouteAccess } from "@/lib/admin-auth";
 import {
+  isAdminRouteParamError,
+  parseAdminUserIdParam,
+} from "@/lib/admin-route-params";
+import {
   PRIMARY_SUPER_ADMIN_GUARD_MESSAGE,
   assertUserIsNotPrimarySuperAdmin,
 } from "@/lib/admin-target-guard";
@@ -27,7 +31,11 @@ export async function POST(
 ) {
   try {
     const { user } = await requireAdminRouteAccess("queue_support_actions");
-    const { id } = await params;
+    const { id: rawId } = await params;
+    const id = parseAdminUserIdParam(rawId, {
+      code: "ADMIN_DELETION_TARGET_INVALID",
+      message: "Target user id is invalid.",
+    });
     const payload = deletionRequestSchema.parse(
       await request.json().catch(() => ({})),
     );
@@ -80,13 +88,20 @@ export async function POST(
       },
     });
   } catch (error) {
-    logger.error("admin deletion queue route failed", { error });
-
     if (isAdminAccessError(error)) {
       return createApiErrorResponse({
         status: error.status,
         code: error.code,
         message: error.message,
+      });
+    }
+
+    if (isAdminRouteParamError(error)) {
+      return createApiErrorResponse({
+        status: error.status,
+        code: error.code,
+        message: error.message,
+        details: error.details,
       });
     }
 
@@ -110,6 +125,8 @@ export async function POST(
       });
     }
 
+    logger.error("admin deletion queue route failed", { error });
+
     return createApiErrorResponse({
       status: 500,
       code: "ADMIN_DELETION_FAILED",
@@ -124,7 +141,11 @@ export async function DELETE(
 ) {
   try {
     const { user } = await requireAdminRouteAccess("queue_support_actions");
-    const { id } = await params;
+    const { id: rawId } = await params;
+    const id = parseAdminUserIdParam(rawId, {
+      code: "ADMIN_DELETION_TARGET_INVALID",
+      message: "Target user id is invalid.",
+    });
     const payload = deletionRequestSchema.parse(
       await request.json().catch(() => ({})),
     );
@@ -177,13 +198,20 @@ export async function DELETE(
       },
     });
   } catch (error) {
-    logger.error("admin deletion cancel route failed", { error });
-
     if (isAdminAccessError(error)) {
       return createApiErrorResponse({
         status: error.status,
         code: error.code,
         message: error.message,
+      });
+    }
+
+    if (isAdminRouteParamError(error)) {
+      return createApiErrorResponse({
+        status: error.status,
+        code: error.code,
+        message: error.message,
+        details: error.details,
       });
     }
 
@@ -206,6 +234,8 @@ export async function DELETE(
         details: error.flatten(),
       });
     }
+
+    logger.error("admin deletion cancel route failed", { error });
 
     return createApiErrorResponse({
       status: 500,

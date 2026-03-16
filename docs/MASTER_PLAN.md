@@ -190,6 +190,7 @@
 - [x] Добавить UUID-валидацию route params в direct workout mutation routes (`workout-days/[id]`, `reset`, `workout-sets/[id]`).
 - [x] Добавить regression-покрытие для сценария `sync -> reset -> sync/pull`, подтверждающее чистый snapshot после сброса тренировки.
 - [x] Добавить UUID-валидацию и явные `400` в owner-scoped mutation routes `weekly-programs/[id]/lock`, `weekly-programs/[id]/clone`, `foods/[id]`, `recipes/[id]`, `meals/[id]`, `meal-templates/[id]`.
+- [x] Добавить UUID-валидацию и явные `400` в admin user mutation routes `billing`, `billing/reconcile`, `deletion`, `export`, `restore`, `role`, `support-action`, `suspend`.
 - [x] Расширить `api-contracts.spec.ts` invalid-param покрытием для weekly program и nutrition mutation routes.
 - [x] `settings/data` и `settings/billing` snapshot routes теперь fail-open: при сбое загрузки оболочки settings UI получает безопасный пустой snapshot вместо общего `500`.
 - [x] User-facing billing access теперь fail-open на `/settings`, `/ai`, `/nutrition`, `/api/settings/billing` и в AI mutation routes: при сбое billing-access загрузки UI и AI surface больше не падают общим `500`, а используют безопасный fallback snapshot/access policy.
@@ -228,6 +229,7 @@
 - [x] `/admin` page теперь fail-open: server-side hero и операторские quick links остаются доступны даже при временном сбое части admin-запросов.
 - [x] `admin/users` теперь fail-open: при временном сбое внешних источников каталог пользователей отдаёт безопасный degraded snapshot вместо общего `500`, а UI показывает операторский banner.
 - [x] `admin/users/[id]` теперь fail-open: detail-route отдаёт degraded snapshot с `meta.degraded`, а карточка пользователя показывает явный banner вместо полного падения.
+- [x] Expected invalid `userId` errors в admin mutation routes больше не шумят как `logger.error`: ожидаемые `400` обрабатываются до unexpected-failure logging.
 - [x] Подтвердить auth/visibility для cron routes и internal jobs.
 - [x] Задокументировать допустимые build warnings и правила их эскалации.
 

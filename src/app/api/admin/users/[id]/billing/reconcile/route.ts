@@ -1,5 +1,9 @@
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import { isAdminAccessError, requireAdminRouteAccess } from "@/lib/admin-auth";
+import {
+  isAdminRouteParamError,
+  parseAdminUserIdParam,
+} from "@/lib/admin-route-params";
 import { logger } from "@/lib/logger";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import {
@@ -12,7 +16,11 @@ export async function POST(
 ) {
   try {
     const currentAdmin = await requireAdminRouteAccess("manage_billing");
-    const { id } = await params;
+    const { id: rawId } = await params;
+    const id = parseAdminUserIdParam(rawId, {
+      code: "ADMIN_BILLING_RECONCILE_TARGET_INVALID",
+      message: "Target user id is invalid.",
+    });
     const adminSupabase = createAdminSupabaseClient();
     const reconciliation = await reconcileStripeSubscriptionForUser(
       adminSupabase,
@@ -60,8 +68,6 @@ export async function POST(
       },
     });
   } catch (error) {
-    logger.error("admin billing reconcile route failed", { error });
-
     if (isAdminAccessError(error)) {
       return createApiErrorResponse({
         status: error.status,
@@ -69,6 +75,17 @@ export async function POST(
         message: error.message,
       });
     }
+
+    if (isAdminRouteParamError(error)) {
+      return createApiErrorResponse({
+        status: error.status,
+        code: error.code,
+        message: error.message,
+        details: error.details,
+      });
+    }
+
+    logger.error("admin billing reconcile route failed", { error });
 
     return createApiErrorResponse({
       status: 500,
