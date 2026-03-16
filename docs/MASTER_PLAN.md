@@ -504,3 +504,17 @@
 - [x] `src/lib/admin-permissions.ts`, `src/components/admin-role-manager.tsx`, `src/components/admin-user-actions.tsx`, `src/components/admin-ai-operations.tsx`, `src/components/admin-ai-eval-runs.tsx` и `src/components/admin-operations-inbox.tsx` переписаны в чистом UTF-8: operator surfaces больше не отдают mojibake и не показывают лишние role/capability детали не-root администраторам.
 - [x] Санитарный tranche подтверждён повторным baseline: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `36 passed`, `npm run test:smoke` -> `3 passed`.
 - [ ] Следующий sanitation tranche: добить оставшиеся словари/formatters в `admin-users-directory-model.ts` и `admin-user-detail-model.ts`, затем вернуться к следующему backend/advisor tranche.
+
+## 2026-03-17 advisor initplan and policy merge addendum
+
+- [x] Добавлена миграция `supabase/migrations/20260317012000_query_path_and_fk_index_hardening.sql`: закрыты targeted `unindexed_foreign_keys` и первая волна `auth_rls_initplan` для `profiles`, `subscriptions`, `subscription_events`, `workout_days`, `ai_plan_proposals`.
+- [x] Добавлена миграция `supabase/migrations/20260317014500_owner_policy_initplan_hardening.sql`: owner-policies на `body_metrics`, `daily_metrics`, `daily_nutrition_summaries`, `entitlements`, `exercise_library`, `foods`, `goals`, `meal_items`, `meal_templates`, `meals`, `nutrition_goals`, `nutrition_profiles`, `onboarding_profiles`, `period_metric_snapshots`, `recipe_items`, `recipes`, `usage_counters`, `user_memory_facts`, `weekly_programs`, `workout_exercises`, `workout_sets`, `workout_templates`, плюс `platform_admins_self_select` и `user_admin_states_owner_select` переведены на `(select auth.uid())`.
+- [x] Добавлена миграция `supabase/migrations/20260317015500_foods_select_policy_merge.sql`: два permissive select-policy на `public.foods` схлопнуты в одну `foods_access_select`, и performance-advisor больше не ругается на `multiple_permissive_policies`.
+- [x] После DDL повторно прогнаны Supabase advisors `performance` и `security`: performance backlog очищен от `auth_rls_initplan`, `multiple_permissive_policies` и targeted FK warnings; в backlog остались только `unused_index` info и отдельный security-layer (`rls_enabled_no_policy`, `extension_in_public`, `auth_leaked_password_protection`).
+- [x] Tranche подтверждён полным baseline: `npm run verify:migrations`, `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:rls` -> `1 passed`, `npm run test:e2e:auth` -> `36 passed`, `npm run test:smoke` -> `3 passed`.
+- [ ] Следующий DB tranche: либо осознанно разбирать security-advisor backlog по service-role/admin tables, либо вводить advisor-policy document/gate вместо слепого добавления RLS policies на системные таблицы.
+
+## 2026-03-17 ui regression selector hardening addendum
+
+- [x] `tests/e2e/ui-regressions.spec.ts` больше не зависит от хрупкого `button[aria-pressed]` на всех user surfaces; suite ждёт гарантированный page-root (`main`) там, где section-pill не является обязательным DOM-контрактом.
+- [x] После правки full authenticated regression contour снова подтверждён целиком без flaky failure в `ui regressions`.

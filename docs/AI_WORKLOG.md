@@ -512,3 +512,17 @@
 - Переписал `src/components/admin-role-manager.tsx`, `src/components/admin-user-actions.tsx`, `src/components/admin-ai-operations.tsx`, `src/components/admin-ai-eval-runs.tsx`, `src/components/admin-operations-inbox.tsx` в нормальный русский operator UX.
 - Для non-root/admin-only режимов убрал лишний показ role/capability деталей: там, где доступен только просмотр, UI теперь говорит об этом нейтрально, без лишних внутренних формулировок.
 - Tranche подтверждён baseline-пакетом: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `36 passed`, `npm run test:smoke` -> `3 passed`.
+
+### 2026-03-17 01:20 - Дожал advisor backlog по owner policies и query paths
+
+- Проверил рабочее дерево и зафиксировал, что ложный sanitation-slice по `admin-users-directory-model.ts` и `admin-user-detail-model.ts` не дал реального git diff; в commit пошёл только настоящий DB tranche плюс тестовый hotfix.
+- Применил через Supabase MCP `supabase/migrations/20260317012000_query_path_and_fk_index_hardening.sql`: закрыл первую волну `auth_rls_initplan` для `profiles`, `subscriptions`, `subscription_events`, `workout_days`, `ai_plan_proposals` и добавил targeted FK indexes под горячие query paths.
+- Затем применил `supabase/migrations/20260317014500_owner_policy_initplan_hardening.sql`: owner-policies на user-level таблицах питания, тренировок, профиля, usage и memory перевёл на `(select auth.uid())`, чтобы убрать массовый `auth_rls_initplan`.
+- Затем применил `supabase/migrations/20260317015500_foods_select_policy_merge.sql`: `foods_owner_select` и `foods_owner_shared_select` схлопнуты в одну permissive select-policy `foods_access_select`, чтобы performance-advisor больше не ругался на `multiple_permissive_policies`.
+- Повторный прогон advisors после DDL подтвердил, что performance backlog теперь очищен от `auth_rls_initplan`, `multiple_permissive_policies` и targeted FK warnings; в remaining backlog остались только `unused_index` info и отдельный security-layer (`rls_enabled_no_policy`, `extension_in_public`, `auth_leaked_password_protection`).
+- Полный verification после DB tranche зелёный: `npm run verify:migrations`, `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:rls` -> `1 passed`, `npm run test:e2e:auth` -> `36 passed`, `npm run test:smoke` -> `3 passed`.
+
+### 2026-03-17 01:35 - Убрал flaky селектор из ui-regressions
+
+- В `tests/e2e/ui-regressions.spec.ts` заменил хрупкий `button[aria-pressed]` на гарантированный `main` для `dashboard / workouts / nutrition / settings`, потому что наличие section-pill не является обязательным DOM-контрактом для каждого user surface.
+- Сначала подтвердил targeted suite `npx playwright test tests/e2e/ui-regressions.spec.ts --workers=1` -> `3 passed`, затем заново прогнал весь `npm run test:e2e:auth` -> `36 passed`.
