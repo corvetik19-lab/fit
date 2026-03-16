@@ -168,7 +168,7 @@
 - [x] Есть удаление отдельных чатов и массовая очистка.
 - [x] Есть загрузка изображений и prompt library.
 - [ ] Убрать весь служебный копирайт, пустые состояния и мешающий UI-хром.
-- [ ] Web search toggle и image upload довести до естественного mobile-first UX.
+- [x] Web search toggle и image upload довести до естественного mobile-first UX.
 - [ ] Assistant flow должен читаться как сценарий `запрос -> анализ -> предложение -> подтверждение -> применение`.
 
 ### Admin UI
@@ -213,7 +213,7 @@
 - [x] Expected contract errors (`400/404` на invalid params и owner-scoped misses) больше не логируются как route-level `error` в contract-tested mutation routes и AI session routes.
 - [ ] Подтвердить owner-only data access для chat, sessions, retrieval, reindex и proposal apply.
 - [ ] Развести runtime failure UX и provider configuration UX.
-- [ ] Стабилизировать историю чатов, prompt library, web search toggle и image upload.
+- [x] Стабилизировать историю чатов, prompt library, web search toggle и image upload.
 - [ ] Прогнать assistant/retrieval/workout-plan/meal-plan/safety eval suites как quality gate.
 - [ ] Подтвердить retrieval по всей исторической базе пользователя, а не только по свежим данным.
 

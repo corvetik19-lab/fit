@@ -24,7 +24,10 @@ export function AiChatToolbar({
   sessionTitle,
 }: AiChatToolbarProps) {
   return (
-    <div className="flex items-center justify-between gap-3 border-b border-border pb-4">
+    <div
+      className="flex items-center justify-between gap-3 border-b border-border pb-4"
+      data-testid="ai-chat-toolbar"
+    >
       <div className="min-w-0">
         <p className="truncate text-sm font-semibold text-foreground">
           {sessionTitle?.trim() || "Новый чат"}
@@ -44,6 +47,7 @@ export function AiChatToolbar({
               ? "border-accent/30 bg-accent/10 text-accent"
               : "border-border bg-white/80 text-muted hover:bg-white"
           }`}
+          data-testid="ai-web-search-toggle"
           onClick={onToggleWebSearch}
           type="button"
         >
@@ -53,6 +57,7 @@ export function AiChatToolbar({
         <button
           aria-label="Открыть шаблоны"
           className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border bg-white/80 text-foreground transition hover:bg-white"
+          data-testid="ai-prompt-library-open"
           onClick={onOpenPromptLibrary}
           type="button"
         >
@@ -66,6 +71,7 @@ export function AiChatToolbar({
               ? "border-accent/30 bg-accent/10 text-accent"
               : "border-border bg-white/80 text-muted hover:bg-white"
           }`}
+          data-testid="ai-meal-photo-open"
           disabled={!mealPhotoAccessAllowed}
           onClick={onOpenMealPhoto}
           type="button"
@@ -75,6 +81,7 @@ export function AiChatToolbar({
 
         <button
           className="rounded-full border border-border bg-white/80 px-4 py-2 text-sm font-medium text-foreground transition hover:bg-white"
+          data-testid="ai-chat-reset"
           onClick={onReset}
           type="button"
         >

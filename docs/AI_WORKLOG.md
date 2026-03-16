@@ -482,3 +482,10 @@
 - Новый suite проверяет три вещи: отсутствие hydration/render-loop ошибок на user/admin surfaces, отсутствие runaway `sync/pull` в workout focus-mode и сохранение этих проверок внутри общего `test:e2e:auth`.
 - Для этого добавил `tests/e2e/helpers/client-regressions.ts`, а `tests/e2e/helpers/http.ts` перевёл на `browserContext.request`, чтобы API contract tests не падали из-за фона страницы и `networkidle`.
 - После правок `npm run test:e2e:auth` снова зелёный и теперь проходит как `27 passed`.
+
+### 2026-03-16 18:20 - Закрыл AI workspace regression tranche
+
+- Добавил отдельный `tests/e2e/ai-workspace.spec.ts`: suite покрывает prompt library, web-search toggle, image upload, одиночное удаление чата и массовую очистку истории.
+- В `src/components/ai-chat-toolbar.tsx`, `src/components/ai-chat-composer.tsx`, `src/components/ai-prompt-library.tsx`, `src/components/ai-workspace-sidebar.tsx`, `src/components/ai-workspace.tsx`, `src/app/ai/page.tsx` почистил user-facing AI workspace copy до нормального UTF-8 и убрал свежий mojibake из этого surface.
+- В `src/components/ai-chat-panel.tsx` добавил стабильный hydration marker `data-hydrated`, а `tests/e2e/ui-regressions.spec.ts` и новый AI workspace suite перевёл на него вместо хрупких ранних селекторов и старых desktop-ссылок.
+- Tranche подтверждён полным baseline: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `36 passed`, `npm run test:smoke` -> `3 passed`.

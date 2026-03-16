@@ -65,7 +65,7 @@ export function AiChatComposer({
               {selectedImage.name}
             </p>
             <p className="mt-1 text-xs text-muted">
-              Сначала AI разберет фото, потом можно попросить рецепт, замену или
+              Сначала AI разберёт фото, потом можно попросить рецепт, замену или
               план питания.
             </p>
           </div>
@@ -83,6 +83,7 @@ export function AiChatComposer({
 
       <textarea
         className="min-h-28 w-full resize-none rounded-3xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15 disabled:cursor-not-allowed disabled:opacity-60"
+        data-testid="ai-chat-composer"
         disabled={!accessAllowed}
         onChange={(event) => onDraftChange(event.target.value)}
         onKeyDown={onKeyDown}
@@ -98,9 +99,9 @@ export function AiChatComposer({
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted">
           {selectedImage
-            ? "Фото будет проанализировано и сохранено в историю этого чата."
+            ? "Фото будет проанализировано и сохранено в истории этого чата."
             : allowWebSearch
-              ? "Поиск в интернете включен."
+              ? "Поиск в интернете включён."
               : "Поиск в интернете выключен."}
         </p>
 

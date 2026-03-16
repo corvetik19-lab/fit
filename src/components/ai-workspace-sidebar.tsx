@@ -56,8 +56,12 @@ export function AiWorkspaceSidebar({
       <section className="card p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">Контекст</p>
-            <h2 className="mt-2 text-xl font-semibold text-foreground">Что AI уже знает</h2>
+            <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
+              Контекст
+            </p>
+            <h2 className="mt-2 text-xl font-semibold text-foreground">
+              Что AI уже знает
+            </h2>
           </div>
           <span className="pill">{structuredKnowledge.facts.length}</span>
         </div>
@@ -75,7 +79,9 @@ export function AiWorkspaceSidebar({
                     {fact.topic}
                   </span>
                 </div>
-                <p className="mt-3 text-sm font-semibold text-foreground">{fact.title}</p>
+                <p className="mt-3 text-sm font-semibold text-foreground">
+                  {fact.title}
+                </p>
                 <p className="mt-2 text-sm leading-6 text-muted">{fact.summary}</p>
                 {fact.action ? (
                   <p className="mt-3 text-sm leading-6 text-foreground">
@@ -86,8 +92,8 @@ export function AiWorkspaceSidebar({
             ))
           ) : (
             <div className="rounded-2xl border border-dashed border-border bg-white/60 px-4 py-5 text-sm leading-6 text-muted">
-              Когда накопится история тренировок и питания, здесь появятся короткие факты, на
-              которые AI будет опираться в ответах.
+              Когда накопится история тренировок и питания, здесь появятся
+              короткие факты, на которые AI будет опираться в ответах.
             </div>
           )}
         </div>
@@ -99,8 +105,12 @@ export function AiWorkspaceSidebar({
     <section className="card p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">История</p>
-          <h2 className="mt-2 text-xl font-semibold text-foreground">Сохранённые чаты</h2>
+          <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
+            История
+          </p>
+          <h2 className="mt-2 text-xl font-semibold text-foreground">
+            Сохранённые чаты
+          </h2>
         </div>
 
         <div className="flex flex-wrap gap-2">
@@ -112,9 +122,10 @@ export function AiWorkspaceSidebar({
             Новый чат
           </button>
 
-          {recentSessions.length && onClearSessions ? (
+          {recentSessions.length > 0 && onClearSessions ? (
             <button
               className="rounded-full border border-border bg-white/80 px-4 py-2 text-sm font-medium text-foreground transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+              data-testid="ai-session-clear-all"
               disabled={isClearingAll}
               onClick={onClearSessions}
               type="button"
@@ -133,63 +144,70 @@ export function AiWorkspaceSidebar({
 
       <div className="mt-5 grid gap-3">
         {recentSessions.length ? (
-          recentSessions.map((session) => {
-            const isActive = session.id === activeSessionId;
-            const isDeleting = busySessionId === session.id;
+          <div className="grid gap-3" data-testid="ai-session-list">
+            {recentSessions.map((session) => {
+              const isActive = session.id === activeSessionId;
+              const isDeleting = busySessionId === session.id;
 
-            return (
-              <article
-                className={`rounded-2xl border px-4 py-4 text-sm transition ${
-                  isActive
-                    ? "border-accent/40 bg-accent/8"
-                    : "border-border bg-white/70 hover:bg-white"
-                }`}
-                key={session.id}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="line-clamp-2 font-semibold text-foreground">
-                      {session.title?.trim() || "Чат без названия"}
-                    </p>
-                    <p className="mt-2 text-muted">
-                      Обновлено {formatSessionTime(session.updated_at)}
-                    </p>
+              return (
+                <article
+                  className={`rounded-2xl border px-4 py-4 text-sm transition ${
+                    isActive
+                      ? "border-accent/40 bg-accent/8"
+                      : "border-border bg-white/70 hover:bg-white"
+                  }`}
+                  data-testid="ai-session-item"
+                  key={session.id}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="line-clamp-2 font-semibold text-foreground">
+                        {session.title?.trim() || "Чат без названия"}
+                      </p>
+                      <p className="mt-2 text-muted">
+                        Обновлено {formatSessionTime(session.updated_at)}
+                      </p>
+                    </div>
+                    {isActive ? <span className="pill">Открыт</span> : null}
                   </div>
-                  {isActive ? <span className="pill">Открыт</span> : null}
-                </div>
 
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <button
-                    className="rounded-full border border-border bg-white/90 px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white"
-                    onClick={() => router.push(`/ai?session=${session.id}`)}
-                    type="button"
-                  >
-                    Открыть
-                  </button>
-
-                  {onDeleteSession ? (
+                  <div className="mt-4 flex flex-wrap gap-2">
                     <button
-                      className="inline-flex items-center gap-2 rounded-full border border-border bg-white/90 px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
-                      disabled={isDeleting || isClearingAll}
-                      onClick={() => onDeleteSession(session.id)}
+                      className="rounded-full border border-border bg-white/90 px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white"
+                      onClick={() => router.push(`/ai?session=${session.id}`)}
                       type="button"
                     >
-                      {isDeleting ? (
-                        <LoaderCircle className="animate-spin" size={15} />
-                      ) : (
-                        <Trash2 size={15} strokeWidth={2.1} />
-                      )}
-                      {isDeleting ? "Удаляю..." : "Удалить"}
+                      Открыть
                     </button>
-                  ) : null}
-                </div>
-              </article>
-            );
-          })
+
+                    {onDeleteSession ? (
+                      <button
+                        className="inline-flex items-center gap-2 rounded-full border border-border bg-white/90 px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                        data-testid="ai-session-delete"
+                        disabled={isDeleting || isClearingAll}
+                        onClick={() => onDeleteSession(session.id)}
+                        type="button"
+                      >
+                        {isDeleting ? (
+                          <LoaderCircle className="animate-spin" size={15} />
+                        ) : (
+                          <Trash2 size={15} strokeWidth={2.1} />
+                        )}
+                        {isDeleting ? "Удаляю..." : "Удалить"}
+                      </button>
+                    ) : null}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
         ) : (
-          <div className="rounded-2xl border border-dashed border-border bg-white/60 px-4 py-5 text-sm leading-6 text-muted">
-            После первых сообщений здесь появится история переписки. Любой чат можно будет открыть,
-            продолжить или удалить.
+          <div
+            className="rounded-2xl border border-dashed border-border bg-white/60 px-4 py-5 text-sm leading-6 text-muted"
+            data-testid="ai-session-empty-state"
+          >
+            После первых сообщений здесь появится история переписки. Любой чат
+            можно будет открыть, продолжить или удалить.
           </div>
         )}
       </div>

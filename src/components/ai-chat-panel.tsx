@@ -3,7 +3,7 @@
 import { DefaultChatTransport } from "ai";
 import { useChat } from "@ai-sdk/react";
 import { useRouter } from "next/navigation";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, useSyncExternalStore } from "react";
 
 import { AiChatComposer } from "@/components/ai-chat-composer";
 import { AiChatNotices } from "@/components/ai-chat-notices";
@@ -20,6 +20,8 @@ import {
 } from "@/components/ai-chat-panel-model";
 import { toUiMessages } from "@/lib/ai/chat";
 
+const subscribeToHydration = () => () => {};
+
 export function AiChatPanel({
   access,
   initialSessionId,
@@ -33,6 +35,11 @@ export function AiChatPanel({
   const composerRef = useRef<HTMLTextAreaElement | null>(null);
 
   const [allowWebSearch, setAllowWebSearch] = useState(false);
+  const isHydrated = useSyncExternalStore(
+    subscribeToHydration,
+    () => true,
+    () => false,
+  );
   const {
     draft,
     insertPromptTemplate,
@@ -117,7 +124,11 @@ export function AiChatPanel({
   });
 
   return (
-    <section className="card flex min-h-[72dvh] flex-col overflow-hidden p-4 sm:p-5 lg:min-h-[78dvh]">
+    <section
+      className="card flex min-h-[72dvh] flex-col overflow-hidden p-4 sm:p-5 lg:min-h-[78dvh]"
+      data-testid="ai-chat-panel"
+      data-hydrated={isHydrated ? "true" : "false"}
+    >
       <AiChatToolbar
         allowWebSearch={allowWebSearch}
         mealPhotoAccessAllowed={mealPhotoAccess.allowed}
@@ -132,6 +143,7 @@ export function AiChatPanel({
       <input
         accept="image/*"
         className="hidden"
+        data-testid="ai-image-input"
         onChange={(event) => setSelectedImage(event.target.files?.[0] ?? null)}
         ref={fileInputRef}
         type="file"

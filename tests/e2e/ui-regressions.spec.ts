@@ -32,10 +32,10 @@ test.describe("ui regressions", () => {
 
       try {
         const routes: Array<[string, RegExp, string]> = [
-          ["/dashboard", /\/dashboard$/, 'a[href="/ai"]'],
+          ["/dashboard", /\/dashboard$/, 'button[aria-pressed]'],
           ["/workouts", /\/workouts$/, 'button[aria-pressed]'],
           ["/nutrition", /\/nutrition$/, 'button[aria-pressed]'],
-          ["/ai", /\/ai$/, "textarea"],
+          ["/ai", /\/ai$/, '[data-testid="ai-chat-panel"][data-hydrated="true"]'],
           ["/settings", /\/settings$/, 'button[aria-pressed]'],
         ];
 
