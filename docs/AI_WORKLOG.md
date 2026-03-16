@@ -396,3 +396,15 @@
 - На текущем Windows + Next.js 16 custom `NEXT_DIST_DIR` для `next build` стабильно упирался в `spawn EPERM`, поэтому `build:test` и `start:test` откатил на стандартный `.next`.
 - Изоляция осталась там, где она реально стабильна: `typecheck` продолжает работать через `.next_build`, а Playwright всё так же использует выделенный порт `3100`.
 - После rollback заново прогнал baseline, чтобы `test:smoke`, `test:rls` и `test:e2e:auth` снова были зелёными на реальном локальном контуре.
+
+### 2026-03-16 15:05 - Переписал frontend handoff-док
+
+- `docs/FRONTEND.md` был в mojibake и перестал быть usable handoff-документом.
+- Переписал его с нуля под текущий `fit`: shell, workspace-паттерн, workouts, nutrition, AI workspace, admin UI, quality gates и практические правила для frontend-изменений.
+- `docs/AI_EXPLAINED.md` сознательно не трогал: он остаётся отдельным triaged локальным документом вне этого sanitation tranche.
+
+### 2026-03-16 15:20 - Зафиксировал критерий prod-ready
+
+- Добавил `docs/PROD_READY.md` как отдельный документ с production-ready критерием: automated gates, manual acceptance, env readiness и release blockers.
+- В `docs/README.md`, `README.md` и `docs/MASTER_PLAN.md` закрепил, что `prod-ready` в `fit` больше не равен просто “локальный build зелёный”.
+- Это не закрывает Stripe/AI live verification, но даёт нормальный release-контракт, от которого теперь можно двигаться дальше по staging-like tranche.

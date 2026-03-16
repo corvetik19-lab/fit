@@ -267,7 +267,7 @@
 
 - [x] Формализовать release checklist для web/PWA.
 - [ ] Ввести staging-like verification для Stripe и AI runtime.
-- [ ] Зафиксировать критерий `prod-ready` как набор automated + manual acceptance checks, а не только локальную сборку.
+- [x] Зафиксировать критерий `prod-ready` как набор automated + manual acceptance checks, а не только локальную сборку.
 
 ## Волна 6. Android / TWA
 
@@ -460,3 +460,14 @@
 - [x] На текущем Windows/Next.js 16 стеке custom `NEXT_DIST_DIR` для `next build` даёт `spawn EPERM`, поэтому `build:test` и `start:test` возвращены на стандартный `.next`.
 - [x] Изоляция не потеряна полностью: `typecheck` по-прежнему использует отдельный `.next_build`, а e2e/smoke сервер остаётся на выделенном порту `3100`.
 - [x] После rollback test-build контура baseline снова зелёный локально: `build`, `test:smoke`, `test:rls`, `test:e2e:auth`.
+
+## 2026-03-16 frontend docs sanitation addendum
+
+- [x] `docs/FRONTEND.md` полностью переписан в нормальном UTF-8 вместо mojibake и снова описывает текущий shell, workspace-паттерн, workouts, nutrition, AI workspace и admin UI.
+- [ ] Следующий sanitation tranche: пройти оставшиеся ключевые docs/UI-поверхности на реальные mojibake и устаревшие handoff-описания, не трогая отдельно triaged `docs/AI_EXPLAINED.md`.
+
+## 2026-03-16 prod-ready definition addendum
+
+- [x] Добавлен `docs/PROD_READY.md` как отдельный source of truth по `prod-ready`: automated gates, manual acceptance, env readiness и release blockers.
+- [x] `docs/README.md` и корневой `README.md` теперь ссылаются на этот документ вместо неявного “зелёный build = можно выкатывать”.
+- [ ] Следующий release tranche: staging-like verification для Stripe и AI runtime уже против этого явного `prod-ready` критерия.

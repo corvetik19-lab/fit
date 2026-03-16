@@ -56,6 +56,15 @@ npm run build
 - `PLAYWRIGHT_ADMIN_EMAIL`
 - `PLAYWRIGHT_ADMIN_PASSWORD`
 
+### Что считается `prod-ready`
+
+Source of truth по production-ready состоянию теперь вынесен в [docs/PROD_READY.md](./docs/PROD_READY.md). Там зафиксированы:
+
+- обязательные automated gates;
+- обязательные manual acceptance сценарии;
+- env readiness;
+- release blockers для web/PWA, AI, billing и Android.
+
 Если этих secrets нет, workflow всё равно прогоняет `lint`, `typecheck`, `build` и `test:smoke`, а полные auth/RLS regression jobs просто пропускаются.
 
 Если в diff есть файлы из `supabase/migrations`, CI дополнительно запускает `npm run verify:migrations` и требует синхронных обновлений `docs/MASTER_PLAN.md` и `docs/AI_WORKLOG.md`.
