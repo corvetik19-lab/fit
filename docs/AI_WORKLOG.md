@@ -13,6 +13,12 @@
 - В `AGENTS.md` зафиксирован рабочий режим без лишних пауз: агент должен идти tranche-by-tranche по `MASTER_PLAN`, после каждого куска обновлять docs, коммитить, пушить и сразу брать следующий открытый пункт.
 - Останавливаться теперь допустимо только на реальном внешнем блокере: отсутствующий доступ, секреты, платный провайдер или недоступный внешний сервис.
 
+### Admin dashboard fail-open
+
+- `/admin` больше не падает целиком из-за временного сбоя server-side admin fan-out. В `src/app/admin/page.tsx` добавлен fail-open path: страница показывает hero, быстрые переходы и резервный banner, даже если часть служебных запросов не загрузилась.
+- Для e2e добавлен test-only fallback hook `?__test_admin_dashboard_fallback=1`, чтобы деградационный режим можно было подтверждать отдельно и без ожидания случайного внешнего timeout.
+- `tests/e2e/admin-app.spec.ts` расширен сценарием на degraded dashboard page. Tranche подтверждён через `lint`, `typecheck`, `build` и целевой `admin-app` Playwright suite.
+
 ### Dashboard nutrition extraction and focus-header stabilization
 
 - `metrics.ts` перестал держать nutrition analytics внутри основного runtime-файла: source loading, result formatting и fail-open fallback вынесены в `dashboard-nutrition.ts`.

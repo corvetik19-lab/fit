@@ -225,6 +225,7 @@
 - [ ] Завершить Sentry rollout на production env.
 - [x] Добавить базовую валидацию `userId`-параметров для internal jobs и явные `400`, а не общие `500`.
 - [x] `admin/stats` и `admin/operations` теперь fail-open: при временном сбое внешних запросов операторские экраны получают безопасный fallback snapshot вместо общего `500`.
+- [x] `/admin` page теперь fail-open: server-side hero и операторские quick links остаются доступны даже при временном сбое части admin-запросов.
 - [x] `admin/users` теперь fail-open: при временном сбое внешних источников каталог пользователей отдаёт безопасный degraded snapshot вместо общего `500`, а UI показывает операторский banner.
 - [x] `admin/users/[id]` теперь fail-open: detail-route отдаёт degraded snapshot с `meta.degraded`, а карточка пользователя показывает явный banner вместо полного падения.
 - [x] Подтвердить auth/visibility для cron routes и internal jobs.
@@ -411,6 +412,13 @@
 - [x] Добавлен e2e контракт на degraded detail snapshot: root-admin может запросить test-only fallback и получить `meta.degraded = true` без падения карточки.
 - [x] Tranche подтверждён quality gates: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth`, `npm run test:smoke`.
 - [ ] Следующий операторский tranche: добить remaining mojibake и timeline/detail подблоки внутри `admin-user-detail-sections.tsx`, либо вернуться к AI/data backend audit по retrieval / reindex ownership.
+
+## 2026-03-16 admin dashboard fail-open addendum
+
+- [x] `src/app/admin/page.tsx` переведён на server-side fail-open: при временном сбое admin query fan-out hero, quick links и operator shell остаются доступными, а page показывает явный degraded banner вместо падения всего `/admin`.
+- [x] В page добавлен test-only fallback hook `?__test_admin_dashboard_fallback=1`, чтобы резервный режим можно было подтверждать отдельным e2e без зависимости от внешнего timeout.
+- [x] `tests/e2e/admin-app.spec.ts` расширен новым сценарием `root admin gets degraded fallback for admin dashboard page`.
+- [x] Tranche подтверждён quality gates: `npm run lint`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/admin-app.spec.ts --workers=1`.
 
 ## 2026-03-16 AI reindex contract addendum
 

@@ -38,6 +38,20 @@ test.describe("admin app", () => {
     await expect(page.locator('a[href="/admin/users"]').first()).toBeVisible();
   });
 
+  test("root admin gets degraded fallback for admin dashboard page", async ({
+    page,
+  }) => {
+    await navigateStable(
+      page,
+      "/admin?__test_admin_dashboard_fallback=1",
+      /\/admin\?__test_admin_dashboard_fallback=1$/,
+    );
+    await page.waitForLoadState("networkidle");
+    await expect(page.locator('[data-testid="admin-page-degraded-banner"]')).toBeVisible();
+    await expect(page.locator('a[href="/admin/users"]').first()).toBeVisible();
+    await expect(page.locator('a[href="/dashboard"]').first()).toBeVisible();
+  });
+
   test("root admin gets degraded fallback for admin user detail snapshot", async ({
     page,
   }) => {

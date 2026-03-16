@@ -14,6 +14,7 @@ import {
   hasAdminCapability,
   isPrimarySuperAdminEmail,
 } from "@/lib/admin-permissions";
+import { logger } from "@/lib/logger";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { requireViewer } from "@/lib/viewer";
 
@@ -154,8 +155,19 @@ const adminRoleOrder: Record<string, number> = {
   analyst: 2,
 };
 
-export default async function AdminPage() {
+type AdminPageProps = {
+  searchParams?: Promise<{
+    __test_admin_dashboard_fallback?: string | string[];
+  }>;
+};
+
+export default async function AdminPage({ searchParams }: AdminPageProps) {
   const viewer = await requireViewer();
+  const resolvedSearchParams = searchParams ? await searchParams : {};
+  const forceFallback =
+    (Array.isArray(resolvedSearchParams.__test_admin_dashboard_fallback)
+      ? resolvedSearchParams.__test_admin_dashboard_fallback[0]
+      : resolvedSearchParams.__test_admin_dashboard_fallback) === "1";
 
   if (!viewer.isPlatformAdmin) {
     return (
@@ -202,110 +214,198 @@ export default async function AdminPage() {
   }
 
   const adminSupabase = createAdminSupabaseClient();
+  let isDegraded = false;
+  let users: Array<{
+    created_at: string;
+    full_name: string | null;
+    user_id: string;
+  }> = [];
+  let admins: Array<{
+    created_at: string;
+    role: string;
+    user_id: string;
+  }> = [];
+  let supportActions: Array<{
+    action: string;
+    created_at: string;
+    id: string;
+    status: string;
+    target_user_id: string | null;
+  }> = [];
+  let aiEvalRuns: Array<{
+    completed_at: string | null;
+    created_at: string;
+    id: string;
+    label: string;
+    model_id: string;
+    started_at: string | null;
+    status: string;
+  }> = [];
+  let aiSafetyEvents: Array<{
+    action: string;
+    created_at: string;
+    id: string;
+    prompt_excerpt: string | null;
+    route_key: string;
+  }> = [];
+  let adminAuditLogs: Array<{
+    action: string;
+    actor_user_id: string | null;
+    created_at: string;
+    id: string;
+    reason: string | null;
+    target_user_id: string | null;
+  }> = [];
+  let usersCount = 0;
+  let activeProgramsCount = 0;
+  let aiChatMessagesCount = 0;
+  let aiPlanProposalsCount = 0;
+  let aiSafetyEventsCount = 0;
+  let knowledgeChunksCount = 0;
+  let knowledgeEmbeddingsCount = 0;
+  let reindexActionsCount = 0;
+  let authUsersById = new Map<
+    string,
+    {
+      email: string | null;
+      last_sign_in_at: string | null;
+    }
+  >();
 
-  const [
-    usersResult,
-    adminsResult,
-    supportActionsResult,
-    aiEvalRunsResult,
-    aiSafetyEventsResult,
-    usersCountResult,
-    activeProgramsCountResult,
-    aiChatMessagesCountResult,
-    aiPlanProposalsCountResult,
-    aiSafetyEventsCountResult,
-    knowledgeChunksCountResult,
-    knowledgeEmbeddingsCountResult,
-    reindexActionsCountResult,
-    authUsersResult,
-    adminAuditLogsResult,
-  ] = await Promise.all([
-    adminSupabase
-      .from("profiles")
-      .select("user_id, full_name, created_at")
-      .order("created_at", { ascending: false })
-      .limit(8),
-    adminSupabase
-      .from("platform_admins")
-      .select("user_id, role, created_at")
-      .order("created_at", { ascending: false })
-      .limit(20),
-    adminSupabase
-      .from("support_actions")
-      .select("id, action, status, created_at, target_user_id")
-      .order("created_at", { ascending: false })
-      .limit(8),
-    adminSupabase
-      .from("ai_eval_runs")
-      .select("id, label, model_id, status, created_at, started_at, completed_at")
-      .order("created_at", { ascending: false })
-      .limit(8),
-    adminSupabase
-      .from("ai_safety_events")
-      .select("id, route_key, action, prompt_excerpt, created_at")
-      .order("created_at", { ascending: false })
-      .limit(8),
-    adminSupabase.from("profiles").select("*", { count: "exact", head: true }),
-    adminSupabase
-      .from("weekly_programs")
-      .select("*", { count: "exact", head: true })
-      .eq("status", "active"),
-    adminSupabase
-      .from("ai_chat_messages")
-      .select("*", { count: "exact", head: true }),
-    adminSupabase
-      .from("ai_plan_proposals")
-      .select("*", { count: "exact", head: true }),
-    adminSupabase
-      .from("ai_safety_events")
-      .select("*", { count: "exact", head: true }),
-    adminSupabase
-      .from("knowledge_chunks")
-      .select("*", { count: "exact", head: true }),
-    adminSupabase
-      .from("knowledge_embeddings")
-      .select("*", { count: "exact", head: true }),
-    adminSupabase
-      .from("support_actions")
-      .select("*", { count: "exact", head: true })
-      .eq("action", "reindex_knowledge"),
-    adminSupabase.auth.admin.listUsers({
-      page: 1,
-      perPage: 100,
-    }),
-    adminSupabase
-      .from("admin_audit_logs")
-      .select("id, action, reason, created_at, actor_user_id, target_user_id")
-      .order("created_at", { ascending: false })
-      .limit(8),
-  ]);
+  try {
+    if (forceFallback) {
+      throw new Error("admin dashboard fallback requested by test");
+    }
 
-  if (authUsersResult.error) {
-    throw authUsersResult.error;
+    const [
+      usersResult,
+      adminsResult,
+      supportActionsResult,
+      aiEvalRunsResult,
+      aiSafetyEventsResult,
+      usersCountResult,
+      activeProgramsCountResult,
+      aiChatMessagesCountResult,
+      aiPlanProposalsCountResult,
+      aiSafetyEventsCountResult,
+      knowledgeChunksCountResult,
+      knowledgeEmbeddingsCountResult,
+      reindexActionsCountResult,
+      authUsersResult,
+      adminAuditLogsResult,
+    ] = await Promise.all([
+      adminSupabase
+        .from("profiles")
+        .select("user_id, full_name, created_at")
+        .order("created_at", { ascending: false })
+        .limit(8),
+      adminSupabase
+        .from("platform_admins")
+        .select("user_id, role, created_at")
+        .order("created_at", { ascending: false })
+        .limit(20),
+      adminSupabase
+        .from("support_actions")
+        .select("id, action, status, created_at, target_user_id")
+        .order("created_at", { ascending: false })
+        .limit(8),
+      adminSupabase
+        .from("ai_eval_runs")
+        .select("id, label, model_id, status, created_at, started_at, completed_at")
+        .order("created_at", { ascending: false })
+        .limit(8),
+      adminSupabase
+        .from("ai_safety_events")
+        .select("id, route_key, action, prompt_excerpt, created_at")
+        .order("created_at", { ascending: false })
+        .limit(8),
+      adminSupabase.from("profiles").select("*", { count: "exact", head: true }),
+      adminSupabase
+        .from("weekly_programs")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "active"),
+      adminSupabase
+        .from("ai_chat_messages")
+        .select("*", { count: "exact", head: true }),
+      adminSupabase
+        .from("ai_plan_proposals")
+        .select("*", { count: "exact", head: true }),
+      adminSupabase
+        .from("ai_safety_events")
+        .select("*", { count: "exact", head: true }),
+      adminSupabase
+        .from("knowledge_chunks")
+        .select("*", { count: "exact", head: true }),
+      adminSupabase
+        .from("knowledge_embeddings")
+        .select("*", { count: "exact", head: true }),
+      adminSupabase
+        .from("support_actions")
+        .select("*", { count: "exact", head: true })
+        .eq("action", "reindex_knowledge"),
+      adminSupabase.auth.admin.listUsers({
+        page: 1,
+        perPage: 100,
+      }),
+      adminSupabase
+        .from("admin_audit_logs")
+        .select("id, action, reason, created_at, actor_user_id, target_user_id")
+        .order("created_at", { ascending: false })
+        .limit(8),
+    ]);
+
+    if (authUsersResult.error) {
+      throw authUsersResult.error;
+    }
+
+    const failedResult = [
+      usersResult,
+      adminsResult,
+      supportActionsResult,
+      aiEvalRunsResult,
+      aiSafetyEventsResult,
+      usersCountResult,
+      activeProgramsCountResult,
+      aiChatMessagesCountResult,
+      aiPlanProposalsCountResult,
+      aiSafetyEventsCountResult,
+      knowledgeChunksCountResult,
+      knowledgeEmbeddingsCountResult,
+      reindexActionsCountResult,
+      adminAuditLogsResult,
+    ].find((result) => result.error);
+
+    if (failedResult?.error) {
+      throw failedResult.error;
+    }
+
+    users = usersResult.data ?? [];
+    admins = adminsResult.data ?? [];
+    supportActions = supportActionsResult.data ?? [];
+    aiEvalRuns = aiEvalRunsResult.data ?? [];
+    aiSafetyEvents = aiSafetyEventsResult.data ?? [];
+    adminAuditLogs = adminAuditLogsResult.data ?? [];
+    usersCount = usersCountResult.count ?? 0;
+    activeProgramsCount = activeProgramsCountResult.count ?? 0;
+    aiChatMessagesCount = aiChatMessagesCountResult.count ?? 0;
+    aiPlanProposalsCount = aiPlanProposalsCountResult.count ?? 0;
+    aiSafetyEventsCount = aiSafetyEventsCountResult.count ?? 0;
+    knowledgeChunksCount = knowledgeChunksCountResult.count ?? 0;
+    knowledgeEmbeddingsCount = knowledgeEmbeddingsCountResult.count ?? 0;
+    reindexActionsCount = reindexActionsCountResult.count ?? 0;
+    authUsersById = new Map(
+      (authUsersResult.data.users ?? []).map((user) => [
+        user.id,
+        {
+          email: user.email ?? null,
+          last_sign_in_at: user.last_sign_in_at ?? null,
+        },
+      ]),
+    );
+  } catch (error) {
+    isDegraded = true;
+    logger.warn("admin page degraded to fallback", { error });
   }
-
-  const failedResult = [
-    usersResult,
-    adminsResult,
-    supportActionsResult,
-    aiEvalRunsResult,
-    aiSafetyEventsResult,
-    adminAuditLogsResult,
-  ].find((result) => result.error);
-
-  if (failedResult?.error) {
-    throw failedResult.error;
-  }
-
-  const users = usersResult.data ?? [];
-  const admins = adminsResult.data ?? [];
-  const supportActions = supportActionsResult.data ?? [];
-  const aiEvalRuns = aiEvalRunsResult.data ?? [];
-  const aiSafetyEvents = aiSafetyEventsResult.data ?? [];
-  const adminAuditLogs = adminAuditLogsResult.data ?? [];
-  const authUsersById = new Map(
-    (authUsersResult.data.users ?? []).map((user) => [user.id, user]),
-  );
 
   const adminRoster = admins
     .map((admin) => {
@@ -355,17 +455,17 @@ export default async function AdminPage() {
   const heroMetrics = [
     {
       label: "Пользователи",
-      value: String(usersCountResult.count ?? 0),
+      value: String(usersCount),
       detail: "активная база профилей",
     },
     {
       label: "Активные недели",
-      value: String(activeProgramsCountResult.count ?? 0),
+      value: String(activeProgramsCount),
       detail: "программы, которые сейчас используются",
     },
     {
       label: "Сообщения ИИ",
-      value: String(aiChatMessagesCountResult.count ?? 0),
+      value: String(aiChatMessagesCount),
       detail: "последняя активность в AI",
     },
     {
@@ -402,6 +502,17 @@ export default async function AdminPage() {
                 без длинной стены одинаковых блоков.
               </p>
             </div>
+
+            {isDegraded ? (
+              <p
+                className="max-w-3xl rounded-3xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm leading-7 text-amber-900"
+                data-testid="admin-page-degraded-banner"
+              >
+                Панель показана в резервном режиме. Часть служебных источников сейчас
+                недоступна, поэтому показатели и списки могут быть неполными до следующего
+                обновления.
+              </p>
+            ) : null}
 
             <div className="flex flex-wrap gap-3">
               <Link
@@ -452,8 +563,8 @@ export default async function AdminPage() {
             />
             <StatTile
               label="База ИИ"
-              value={String(knowledgeEmbeddingsCountResult.count ?? 0)}
-              detail={`материалы: ${knowledgeChunksCountResult.count ?? 0} · обновления: ${reindexActionsCountResult.count ?? 0}`}
+              value={String(knowledgeEmbeddingsCount)}
+              detail={`материалы: ${knowledgeChunksCount} · обновления: ${reindexActionsCount}`}
             />
           </div>
         </div>
@@ -743,13 +854,13 @@ export default async function AdminPage() {
               <p className="mt-2 text-muted">
                 Предложения ИИ:{" "}
                 <span className="text-foreground">
-                  {aiPlanProposalsCountResult.count ?? 0}
+                  {aiPlanProposalsCount}
                 </span>
               </p>
               <p className="mt-2 text-muted">
                 События безопасности ИИ:{" "}
                 <span className="text-foreground">
-                  {aiSafetyEventsCountResult.count ?? 0}
+                  {aiSafetyEventsCount}
                 </span>
               </p>
             </article>
