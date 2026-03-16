@@ -281,8 +281,6 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
-    logger.error("admin bulk route failed", { error });
-
     if (isAdminAccessError(error)) {
       return createApiErrorResponse({
         status: error.status,
@@ -299,6 +297,8 @@ export async function POST(request: Request) {
         details: error.flatten(),
       });
     }
+
+    logger.error("admin bulk route failed", { error });
 
     return createApiErrorResponse({
       status: 500,

@@ -26,6 +26,13 @@
 - Ожидаемые invalid-param ветки в этих admin routes больше не логируются как `logger.error`; noisy logging остаётся только для реально неожиданных сбоев.
 - `tests/e2e/admin-app.spec.ts` расширен отдельным contract-сценарием на invalid admin user ids, а tranche подтверждён через `lint`, `typecheck`, `build` и полный `npm run test:e2e:auth`.
 
+### Admin detail и bulk invalid-id contracts
+
+- `src/app/api/admin/users/[id]/route.ts` переведён на общий `parseAdminUserIdParam(...)`, так что detail-route теперь использует тот же typed invalid-id path, что и остальные admin user handlers.
+- `src/app/api/admin/users/bulk/route.ts` больше не пишет `logger.error` на ожидаемом `ADMIN_BULK_INVALID`; шум остаётся только для неожиданных сбоев bulk execution.
+- `tests/e2e/admin-app.spec.ts` расширен так, что invalid admin user id scenario теперь дополнительно покрывает `GET /api/admin/users/not-a-uuid` и `POST /api/admin/users/bulk` с невалидным `user_ids`.
+- Целевой контракт подтверждён через `lint`, `typecheck`, `build` и targeted Playwright `--grep "invalid admin user ids"`.
+
 ### Dashboard nutrition extraction and focus-header stabilization
 
 - `metrics.ts` перестал держать nutrition analytics внутри основного runtime-файла: source loading, result formatting и fail-open fallback вынесены в `dashboard-nutrition.ts`.

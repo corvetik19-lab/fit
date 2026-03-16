@@ -191,6 +191,7 @@
 - [x] Добавить regression-покрытие для сценария `sync -> reset -> sync/pull`, подтверждающее чистый snapshot после сброса тренировки.
 - [x] Добавить UUID-валидацию и явные `400` в owner-scoped mutation routes `weekly-programs/[id]/lock`, `weekly-programs/[id]/clone`, `foods/[id]`, `recipes/[id]`, `meals/[id]`, `meal-templates/[id]`.
 - [x] Добавить UUID-валидацию и явные `400` в admin user mutation routes `billing`, `billing/reconcile`, `deletion`, `export`, `restore`, `role`, `support-action`, `suspend`.
+- [x] Унифицировать invalid-id контракты для `admin/users/[id]` и `admin/users/bulk`, чтобы detail route и bulk route тоже отдавали предсказуемые `400` без noisy error logging.
 - [x] Расширить `api-contracts.spec.ts` invalid-param покрытием для weekly program и nutrition mutation routes.
 - [x] `settings/data` и `settings/billing` snapshot routes теперь fail-open: при сбое загрузки оболочки settings UI получает безопасный пустой snapshot вместо общего `500`.
 - [x] User-facing billing access теперь fail-open на `/settings`, `/ai`, `/nutrition`, `/api/settings/billing` и в AI mutation routes: при сбое billing-access загрузки UI и AI surface больше не падают общим `500`, а используют безопасный fallback snapshot/access policy.

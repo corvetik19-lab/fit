@@ -1,5 +1,4 @@
 import type { User } from "@supabase/supabase-js";
-import { z } from "zod";
 
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import {
@@ -7,6 +6,10 @@ import {
   isPrimarySuperAdminEmail,
 } from "@/lib/admin-permissions";
 import { isAdminAccessError, requireAdminRouteAccess } from "@/lib/admin-auth";
+import {
+  isAdminRouteParamError,
+  parseAdminUserIdParam,
+} from "@/lib/admin-route-params";
 import { logger } from "@/lib/logger";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 
@@ -26,8 +29,6 @@ const OPERATION_AUDIT_ACTIONS = [
   "export_job_status_updated",
   "deletion_request_status_updated",
 ] as const;
-
-const adminUserIdSchema = z.string().uuid();
 
 function asJsonRecord(value: unknown): JsonRecord {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -192,24 +193,17 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const { id } = await params;
-  const parsedUserId = adminUserIdSchema.safeParse(id);
-
-  if (!parsedUserId.success) {
-    return createApiErrorResponse({
-      status: 400,
-      code: "ADMIN_USER_DETAIL_INVALID",
-      message: "User id is invalid.",
-    });
-  }
-
-  const userId = parsedUserId.data;
+  const { id: rawId } = await params;
   const forceFallback =
     process.env.PLAYWRIGHT_TEST_HOOKS === "1" &&
     new URL(request.url).searchParams.get("__test_admin_detail_fallback") ===
       "1";
 
   try {
+    const userId = parseAdminUserIdParam(rawId, {
+      code: "ADMIN_USER_DETAIL_INVALID",
+      message: "User id is invalid.",
+    });
     const currentAdmin = await requireAdminRouteAccess("view_admin_user_details");
     const adminSupabase = createAdminSupabaseClient();
     const authUserResult = await adminSupabase.auth.admin.getUserById(userId);
@@ -445,7 +439,7 @@ export async function GET(
       adminSupabase
         .from("subscription_events")
         .select("id, event_type, provider_event_id, payload, created_at, updated_at")
-        .eq("user_id", id)
+        .eq("user_id", userId)
         .order("created_at", { ascending: false })
         .limit(8),
       adminSupabase
@@ -733,7 +727,16 @@ export async function GET(
       });
     }
 
-    logger.error("admin user detail route failed", { error, userId });
+    if (isAdminRouteParamError(error)) {
+      return createApiErrorResponse({
+        status: error.status,
+        code: error.code,
+        message: error.message,
+        details: error.details,
+      });
+    }
+
+    logger.error("admin user detail route failed", { error, userId: rawId });
 
     return createApiErrorResponse({
       status: 500,

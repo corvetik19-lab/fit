@@ -116,6 +116,7 @@ test.describe("admin app", () => {
     await page.waitForLoadState("networkidle");
 
     const [
+      detailResult,
       billingResult,
       deletionQueueResult,
       deletionCancelResult,
@@ -125,7 +126,12 @@ test.describe("admin app", () => {
       supportActionResult,
       suspendResult,
       billingReconcileResult,
+      bulkResult,
     ] = await Promise.all([
+      fetchJson(page, {
+        method: "GET",
+        url: "/api/admin/users/not-a-uuid",
+      }),
       fetchJson(page, {
         method: "POST",
         url: "/api/admin/users/not-a-uuid/billing",
@@ -171,7 +177,20 @@ test.describe("admin app", () => {
         method: "POST",
         url: "/api/admin/users/not-a-uuid/billing/reconcile",
       }),
+      fetchJson(page, {
+        method: "POST",
+        url: "/api/admin/users/bulk",
+        body: {
+          action: "queue_resync",
+          user_ids: ["not-a-uuid"],
+        },
+      }),
     ]);
+
+    expect(detailResult.status).toBe(400);
+    expect((detailResult.body as { code?: string } | null)?.code).toBe(
+      "ADMIN_USER_DETAIL_INVALID",
+    );
 
     expect(billingResult.status).toBe(400);
     expect((billingResult.body as { code?: string } | null)?.code).toBe(
@@ -216,6 +235,11 @@ test.describe("admin app", () => {
     expect(billingReconcileResult.status).toBe(400);
     expect((billingReconcileResult.body as { code?: string } | null)?.code).toBe(
       "ADMIN_BILLING_RECONCILE_TARGET_INVALID",
+    );
+
+    expect(bulkResult.status).toBe(400);
+    expect((bulkResult.body as { code?: string } | null)?.code).toBe(
+      "ADMIN_BULK_INVALID",
     );
   });
 });
