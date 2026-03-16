@@ -254,16 +254,16 @@ export const auditActionLabels: Record<string, string> = {
   admin_reconcile_stripe_subscription: "Ручная сверка подписки",
   bulk_wave_completed: "Завершена групповая операция",
   cancel_deletion_request: "Отмена запроса на удаление",
-  deletion_request_status_updated: "Изменение статуса запроса на удаление",
-  export_job_status_updated: "Изменение статуса выгрузки данных",
-  queue_deletion_purge_action: "Постановка очистки данных",
+  deletion_request_status_updated: "Изменён статус запроса на удаление",
+  export_job_status_updated: "Изменён статус выгрузки данных",
+  queue_deletion_purge_action: "Поставлена очистка данных",
   queue_deletion_request: "Создан запрос на удаление",
   queue_export_job: "Создана выгрузка данных",
   queue_support_action: "Создано служебное действие",
-  support_action_status_updated: "Изменение статуса служебного действия",
+  support_action_status_updated: "Изменён статус служебного действия",
   user_reconciled_stripe_checkout_return:
-    "Синхронизация возврата после оплаты",
-  user_requested_billing_access_review: "Запрос на проверку доступа",
+    "Синхронизирован возврат после оплаты",
+  user_requested_billing_access_review: "Запрошена проверка доступа к оплате",
 };
 
 export const supportActionLabels: Record<string, string> = {
@@ -281,7 +281,13 @@ export function formatDateTime(value: string | null | undefined) {
     return "Нет данных";
   }
 
-  return dateFormatter.format(new Date(value));
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Нет данных";
+  }
+
+  return dateFormatter.format(date);
 }
 
 export function formatStatus(value: string | null | undefined) {
@@ -289,7 +295,7 @@ export function formatStatus(value: string | null | undefined) {
     return "Нет данных";
   }
 
-  return statusLabels[value] ?? value.replaceAll("_", " ");
+  return statusLabels[value] ?? formatSnakeLabel(value);
 }
 
 export function formatSnakeLabel(value: string | null | undefined) {
@@ -301,7 +307,7 @@ export function formatSnakeLabel(value: string | null | undefined) {
 }
 
 export function formatAuditAction(value: string) {
-  return auditActionLabels[value] ?? value.replaceAll("_", " ");
+  return auditActionLabels[value] ?? formatSnakeLabel(value);
 }
 
 export function formatSupportAction(value: string) {

@@ -8,6 +8,14 @@
 
 ## 2026-03-16
 
+### Admin detail sanitation and regression stabilization
+
+- Полностью санировал `admin user detail` surface в чистый UTF-8: переписал `src/components/admin-user-detail.tsx`, `admin-user-detail-state.ts`, `admin-user-detail-model.ts`, `admin-user-detail-sections.tsx`, `admin-user-detail-operations.tsx`, `admin-user-detail-billing.tsx` и `src/app/admin/users/[id]/page.tsx`.
+- Убрал mojibake и сырой operator copy из summary shell, section tabs, profile/activity/operations/billing блоков, словарей статусов и пользовательских fallback-сообщений.
+- Добавил стабильный degraded selector `data-testid="admin-user-detail-degraded-banner"` и перевёл `tests/e2e/ui-regressions.spec.ts` на явную проверку clean admin fallback вместо старого текстового mojibake-поиска.
+- Переписал `tests/e2e/ai-workspace.spec.ts` и `tests/e2e/mobile-pwa-regressions.spec.ts` в чистый UTF-8 и стабилизировал flaky места: web search toggle теперь проходит с retry-нажатием, а mobile focus-mode не зависит от старых битых текстовых селекторов.
+- Tranche подтверждён полным baseline: `npm run lint`, `npm run typecheck`, `npm run build`, targeted `admin/ui/mobile` Playwright suites, `npm run test:e2e:auth` -> `36 passed`, `npm run test:smoke` -> `3 passed`.
+
 ### Autonomous tranche execution contract
 
 - В `AGENTS.md` зафиксирован рабочий режим без лишних пауз: агент должен идти tranche-by-tranche по `MASTER_PLAN`, после каждого куска обновлять docs, коммитить, пушить и сразу брать следующий открытый пункт.

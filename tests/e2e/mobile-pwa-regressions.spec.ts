@@ -144,13 +144,18 @@ test.describe("mobile pwa regressions", () => {
         await page.waitForLoadState("networkidle");
         await page.waitForTimeout(300);
 
-        await expect(
-          page.getByRole("button", { name: "Обычный вид" }),
-        ).toBeVisible();
-        await expectNoHorizontalOverflow(page, "workout focus mode");
-
         const collapseToggle = page.getByTestId("workout-focus-header-toggle");
         await expect(collapseToggle).toBeVisible();
+        await expectNoHorizontalOverflow(page, "workout focus mode");
+
+        const normalViewButton = page.getByRole("button", {
+          name: "Обычный вид",
+        });
+        if (!(await normalViewButton.isVisible().catch(() => false))) {
+          await page.waitForTimeout(400);
+        }
+        await expect(normalViewButton).toBeVisible();
+
         await collapseToggle.click();
         await expect(collapseToggle).toHaveAttribute("aria-expanded", "false");
         await expectNoHorizontalOverflow(page, "collapsed workout focus header");

@@ -31,7 +31,7 @@ export function AdminUserEntitlementsCard({
           detail.stats.lifecycle.recentEntitlements.map((entitlement) => (
             <BillingEntry key={entitlement.id}>
               <p className="font-medium text-foreground">
-                {entitlement.feature_key}
+                {formatSnakeLabel(entitlement.feature_key)}
               </p>
               <p className="mt-1 text-muted">
                 Статус:{" "}
@@ -54,7 +54,9 @@ export function AdminUserEntitlementsCard({
             </BillingEntry>
           ))
         ) : (
-          <EmptyState>Для этого пользователя пока нет настроенных доступов.</EmptyState>
+          <EmptyState>
+            Для этого пользователя пока нет настроенных доступов.
+          </EmptyState>
         )}
       </div>
     </article>
@@ -73,10 +75,14 @@ export function AdminUserUsageCountersCard({
         {detail.stats.lifecycle.recentUsageCounters.length ? (
           detail.stats.lifecycle.recentUsageCounters.map((counter) => (
             <BillingEntry key={counter.id}>
-              <p className="font-medium text-foreground">{counter.metric_key}</p>
+              <p className="font-medium text-foreground">
+                {formatSnakeLabel(counter.metric_key)}
+              </p>
               <p className="mt-1 text-muted">
                 Период:{" "}
-                <span className="text-foreground">{counter.metric_window}</span>
+                <span className="text-foreground">
+                  {formatSnakeLabel(counter.metric_window)}
+                </span>
               </p>
               <p className="mt-1 text-muted">
                 Использовано:{" "}

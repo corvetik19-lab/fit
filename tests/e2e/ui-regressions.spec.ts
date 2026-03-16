@@ -77,7 +77,9 @@ test.describe("ui regressions", () => {
           `/workouts/day/${seededDay.dayId}?focus=1`,
           new RegExp(`/workouts/day/${seededDay.dayId}\\?focus=1$`),
         );
-        await expect(page.getByRole("button", { name: "Обычный вид" })).toBeVisible();
+        await expect(
+          page.getByRole("button", { name: "Обычный вид" }),
+        ).toBeVisible();
 
         await page.waitForTimeout(8000);
 
@@ -130,9 +132,7 @@ test.describe("ui regressions", () => {
             }
 
             const degradedBannerVisible = await page
-              .locator("main")
-              .getByText(/snapshot|служебных данных/i)
-              .first()
+              .locator('[data-testid="admin-user-detail-degraded-banner"]')
               .isVisible()
               .catch(() => false);
 

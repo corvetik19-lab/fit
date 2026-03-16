@@ -176,7 +176,7 @@
 - [x] Есть `/admin`, каталог пользователей, user detail, health dashboards и operations inbox.
 - [x] Degraded/fallback режим в `admin health` и `operations inbox` явно показан в UI, а не прячется за молчаливым пустым состоянием.
 - [x] Верхний слой `admin user detail` переведён в чистый UTF-8: state, summary shell и section-switcher больше не отдают mojibake.
-- [ ] Полностью убрать сырые технические тексты и mojibake из admin UI.
+- [x] Полностью убрать сырые технические тексты и mojibake из admin UI.
 - [ ] Оставить детали ролей и capability only для root/super-admin.
 - [ ] Довести каталоги и карточки пользователя до секционного desktop/mobile UX без перегруза.
 

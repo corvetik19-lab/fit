@@ -21,22 +21,22 @@ export const adminUserDetailSections: Array<{
   {
     key: "profile",
     label: "Профиль",
-    description: "Основные данные, цели и служебные действия.",
+    description: "Основные данные, цели и ручные действия по аккаунту.",
   },
   {
     key: "activity",
     label: "Активность",
-    description: "Тренировки, питание, ИИ и жизненный цикл.",
+    description: "Тренировки, питание, ИИ и общий жизненный цикл.",
   },
   {
     key: "operations",
     label: "Операции",
-    description: "Очереди, выгрузки, удаление и аудит.",
+    description: "Выгрузки, удаление данных, очереди и аудит.",
   },
   {
     key: "billing",
     label: "Оплата",
-    description: "Подписка, доступы и история оплаты.",
+    description: "Подписка, доступы, лимиты и события оплаты.",
   },
 ];
 
@@ -66,7 +66,8 @@ export function useAdminUserDetailState(userId: string) {
         if (!response.ok) {
           if (isActive) {
             setError(
-              payload?.message ?? "Не удалось загрузить карточку пользователя.",
+              payload?.message ??
+                "Не удалось загрузить карточку пользователя.",
             );
             setDetail(null);
             setIsDegraded(false);

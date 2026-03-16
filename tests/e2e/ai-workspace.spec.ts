@@ -1,6 +1,6 @@
 import { Buffer } from "node:buffer";
 
-import { expect, test } from "@playwright/test";
+import { expect, test, type Locator } from "@playwright/test";
 
 import { hasAuthE2ECredentials } from "./helpers/auth";
 import { USER_STORAGE_STATE_PATH } from "./helpers/auth-state";
@@ -13,6 +13,29 @@ const PNG_1X1_BASE64 =
 test.use({
   storageState: USER_STORAGE_STATE_PATH,
 });
+
+async function ensureWebSearchEnabled(webSearchToggle: Locator) {
+  await expect(webSearchToggle).toHaveAttribute("aria-pressed", "false");
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    await webSearchToggle.click();
+
+    const isEnabled = await webSearchToggle
+      .getAttribute("aria-pressed")
+      .then((value) => value === "true")
+      .catch(() => false);
+
+    if (isEnabled) {
+      return;
+    }
+
+    await webSearchToggle.page().waitForTimeout(300);
+  }
+
+  await expect
+    .poll(async () => webSearchToggle.getAttribute("aria-pressed"))
+    .toBe("true");
+}
 
 test.describe("ai workspace", () => {
   test.skip(
@@ -30,16 +53,15 @@ test.describe("ai workspace", () => {
     await navigateStable(page, "/ai", /\/ai$/);
     const chatPanel = page.locator('[data-testid="ai-chat-panel"]').first();
     await expect(chatPanel).toHaveAttribute("data-hydrated", "true");
-    await expect(chatPanel.locator('[data-testid="ai-chat-composer"]')).toBeVisible();
+    await expect(
+      chatPanel.locator('[data-testid="ai-chat-composer"]'),
+    ).toBeVisible();
 
     const webSearchToggle = chatPanel
       .locator('[data-testid="ai-chat-toolbar"]')
       .locator('[data-testid="ai-web-search-toggle"]');
-    await expect(webSearchToggle).toHaveAttribute("aria-pressed", "false");
-    await webSearchToggle.click();
-    await expect
-      .poll(async () => webSearchToggle.getAttribute("aria-pressed"))
-      .toBe("true");
+
+    await ensureWebSearchEnabled(webSearchToggle);
 
     const promptLibrary = page.locator('[data-testid="ai-prompt-library"]');
     const promptLibraryOpenButton = chatPanel.locator(

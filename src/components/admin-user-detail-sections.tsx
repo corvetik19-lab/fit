@@ -60,9 +60,11 @@ export function AdminUserProfileSection({
 
         <div className="grid gap-4 md:grid-cols-2">
           <KeyValueCard
-            title="Профиль"
             rows={[
-              { label: "Email", value: detail.authUser?.email ?? "Нет данных" },
+              {
+                label: "Email",
+                value: detail.authUser?.email ?? "Нет данных",
+              },
               {
                 label: "Последний вход",
                 value: formatDateTime(detail.authUser?.last_sign_in_at),
@@ -72,18 +74,20 @@ export function AdminUserProfileSection({
                 value: formatDateTime(detail.authUser?.created_at),
               },
               {
-                label: "Профиль обновлен",
+                label: "Профиль обновлён",
                 value: formatDateTime(detail.profile?.updated_at),
               },
               {
                 label: "Состояние аккаунта",
-                value: detail.adminState?.is_suspended ? "Ограничен" : "Активен",
+                value: detail.adminState?.is_suspended
+                  ? "Ограничен"
+                  : "Активен",
               },
             ]}
+            title="Профиль"
           />
 
           <KeyValueCard
-            title="Цели"
             rows={[
               {
                 label: "Тип цели",
@@ -107,10 +111,10 @@ export function AdminUserProfileSection({
                     : "Не заполнено",
               },
             ]}
+            title="Цели"
           />
 
           <KeyValueCard
-            title="Онбординг"
             rows={[
               {
                 label: "Возраст",
@@ -146,10 +150,10 @@ export function AdminUserProfileSection({
                   : "Не заполнено",
               },
             ]}
+            title="Онбординг"
           />
 
           <KeyValueCard
-            title="Дополнительно"
             rows={[
               {
                 label: "Оборудование",
@@ -164,6 +168,7 @@ export function AdminUserProfileSection({
                 value: renderList(detail.onboarding?.dietary_preferences),
               },
             ]}
+            title="Дополнительно"
           />
         </div>
       </section>
@@ -216,9 +221,9 @@ export function AdminUserActivitySection({
               ["Шаблоны", String(detail.stats.workout.templates)],
               ["Программы", String(detail.stats.workout.programs)],
               ["Активные недели", String(detail.stats.workout.activePrograms)],
-              ["Завершенные дни", String(detail.stats.workout.completedDays)],
+              ["Завершённые дни", String(detail.stats.workout.completedDays)],
               ["Дни в процессе", String(detail.stats.workout.inProgressDays)],
-              ["Сохраненные подходы", String(detail.stats.workout.loggedSets)],
+              ["Сохранённые подходы", String(detail.stats.workout.loggedSets)],
               [
                 "Последняя активность",
                 formatDateTime(detail.stats.workout.latestWorkoutAt),
@@ -242,13 +247,13 @@ export function AdminUserActivitySection({
           <div className="grid gap-3 sm:grid-cols-2">
             {[
               ["Продукты", String(detail.stats.nutrition.foods)],
-              ["Приемы пищи", String(detail.stats.nutrition.meals)],
-              ["Позиции в приемах", String(detail.stats.nutrition.mealItems)],
+              ["Приёмы пищи", String(detail.stats.nutrition.meals)],
+              ["Позиции в приёмах", String(detail.stats.nutrition.mealItems)],
               ["Рецепты", String(detail.stats.nutrition.recipes)],
               ["Шаблоны питания", String(detail.stats.nutrition.templates)],
               ["Сводки по дням", String(detail.stats.nutrition.summaryDays)],
               [
-                "Последний прием пищи",
+                "Последний приём пищи",
                 formatDateTime(detail.stats.nutrition.latestMealAt),
               ],
             ].map(([label, value]) => (
@@ -275,7 +280,7 @@ export function AdminUserActivitySection({
               ["Сообщения", String(detail.stats.ai.chatMessages)],
               ["Планы", String(detail.stats.ai.proposals)],
               ["События безопасности", String(detail.stats.ai.safetyEvents)],
-              ["Сохраненные сводки", String(detail.stats.ai.contextSnapshots)],
+              ["Сохранённые сводки", String(detail.stats.ai.contextSnapshots)],
               ["Фрагменты базы", String(detail.stats.ai.knowledgeChunks)],
               [
                 "Последняя активность ИИ",
@@ -305,7 +310,7 @@ export function AdminUserActivitySection({
               ["Подписки", String(detail.stats.lifecycle.subscriptions)],
               ["Доступы", String(detail.stats.lifecycle.entitlements)],
               [
-                "Счетчики использования",
+                "Счётчики использования",
                 String(detail.stats.lifecycle.usageCounters),
               ],
               [
@@ -342,7 +347,6 @@ export function AdminUserOperationsSection({
         <div className="grid gap-6 xl:grid-cols-3">
           <div className="grid gap-4">
             <KeyValueCard
-              title="Текущая выгрузка"
               rows={[
                 {
                   label: "Статус",
@@ -350,30 +354,34 @@ export function AdminUserOperationsSection({
                 },
                 {
                   label: "Формат",
-                  value: detail.stats.lifecycle.latestExportJob?.format ?? "Нет данных",
+                  value:
+                    detail.stats.lifecycle.latestExportJob?.format ?? "Нет данных",
                 },
                 {
                   label: "Кто запросил",
                   value: getUserLabel(
-                    detail.stats.lifecycle.latestExportJob?.requested_by_user ?? null,
+                    detail.stats.lifecycle.latestExportJob?.requested_by_user ??
+                      null,
                     detail.stats.lifecycle.latestExportJob?.requested_by ?? null,
                   ),
                 },
                 {
-                  label: "Обновлен",
+                  label: "Обновлён",
                   value: formatDateTime(
                     detail.stats.lifecycle.latestExportJob?.updated_at,
                   ),
                 },
               ]}
+              title="Текущая выгрузка"
             />
 
             <KeyValueCard
-              title="Текущий запрос на удаление"
               rows={[
                 {
                   label: "Статус",
-                  value: formatStatus(detail.stats.lifecycle.deletionRequest?.status),
+                  value: formatStatus(
+                    detail.stats.lifecycle.deletionRequest?.status,
+                  ),
                 },
                 {
                   label: "Удержание до",
@@ -384,17 +392,19 @@ export function AdminUserOperationsSection({
                 {
                   label: "Последний оператор",
                   value: getUserLabel(
-                    detail.stats.lifecycle.deletionRequest?.requested_by_user ?? null,
+                    detail.stats.lifecycle.deletionRequest?.requested_by_user ??
+                      null,
                     detail.stats.lifecycle.deletionRequest?.requested_by ?? null,
                   ),
                 },
                 {
-                  label: "Обновлен",
+                  label: "Обновлён",
                   value: formatDateTime(
                     detail.stats.lifecycle.deletionRequest?.updated_at,
                   ),
                 },
               ]}
+              title="Текущий запрос на удаление"
             />
           </div>
 
@@ -402,6 +412,7 @@ export function AdminUserOperationsSection({
           <AdminUserSupportActionsCard detail={detail} />
         </div>
       </section>
+
       <AdminUserOperationAuditSection detail={detail} />
       <AdminUserAdminAuditSection detail={detail} />
     </>
@@ -426,7 +437,6 @@ export function AdminUserBillingSection({
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <KeyValueCard
-          title="Текущая подписка"
           rows={[
             {
               label: "Статус",
@@ -434,7 +444,8 @@ export function AdminUserBillingSection({
             },
             {
               label: "Провайдер",
-              value: detail.stats.lifecycle.latestSubscription?.provider ?? "Нет данных",
+              value:
+                detail.stats.lifecycle.latestSubscription?.provider ?? "Нет данных",
             },
             {
               label: "Период до",
@@ -444,13 +455,15 @@ export function AdminUserBillingSection({
             },
             {
               label: "Обновлено",
-              value: formatDateTime(detail.stats.lifecycle.latestSubscription?.updated_at),
+              value: formatDateTime(
+                detail.stats.lifecycle.latestSubscription?.updated_at,
+              ),
             },
           ]}
+          title="Текущая подписка"
         />
 
         <KeyValueCard
-          title="Платежный профиль"
           rows={[
             {
               label: "Клиент",
@@ -461,8 +474,8 @@ export function AdminUserBillingSection({
             {
               label: "Подписка",
               value:
-                detail.stats.lifecycle.latestSubscription?.provider_subscription_id ??
-                "Нет данных",
+                detail.stats.lifecycle.latestSubscription
+                  ?.provider_subscription_id ?? "Нет данных",
             },
             {
               label: "Период с",
@@ -479,17 +492,17 @@ export function AdminUserBillingSection({
                     "Нет данных",
             },
           ]}
+          title="Платёжный профиль"
         />
 
         <KeyValueCard
-          title="Доступ и счетчики"
           rows={[
             {
               label: "Доступы",
               value: String(detail.stats.lifecycle.entitlements),
             },
             {
-              label: "Счетчики использования",
+              label: "Счётчики использования",
               value: String(detail.stats.lifecycle.usageCounters),
             },
             {
@@ -501,6 +514,7 @@ export function AdminUserBillingSection({
               value: String(detail.stats.lifecycle.deletionRequests),
             },
           ]}
+          title="Доступ и счётчики"
         />
 
         <AdminUserEntitlementsCard detail={detail} />

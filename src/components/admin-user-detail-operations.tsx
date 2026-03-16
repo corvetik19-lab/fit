@@ -15,15 +15,15 @@ import {
 import { EmptyState } from "@/components/admin-user-detail-primitives";
 
 function TimelineCard({
+  children,
   count,
   description,
   title,
-  children,
 }: {
+  children: React.ReactNode;
   count: number;
   description: string;
   title: string;
-  children: React.ReactNode;
 }) {
   return (
     <article className="rounded-3xl border border-border bg-white/60 p-4 text-sm">
@@ -55,7 +55,7 @@ export function AdminUserExportHistoryCard({
   return (
     <TimelineCard
       count={detail.recentExportJobs.length}
-      description="Последние выгрузки и их текущий статус"
+      description="Последние выгрузки данных и их текущий статус."
       title="История выгрузок"
     >
       {detail.recentExportJobs.length ? (
@@ -71,13 +71,13 @@ export function AdminUserExportHistoryCard({
               </span>
             </p>
             <p className="mt-1 text-muted">
-              Создан:{" "}
+              Создано:{" "}
               <span className="text-foreground">
                 {formatDateTime(job.created_at)}
               </span>
             </p>
             <p className="mt-1 text-muted">
-              Обновлен:{" "}
+              Обновлено:{" "}
               <span className="text-foreground">
                 {formatDateTime(job.updated_at)}
               </span>
@@ -104,8 +104,8 @@ export function AdminUserSupportActionsCard({
   return (
     <TimelineCard
       count={detail.recentSupportActions.length}
-      description="Очередь, решения и комментарии по ручным действиям"
-      title="История служебных действий"
+      description="Очередь, решения и комментарии по ручным служебным действиям."
+      title="Служебные действия"
     >
       {detail.recentSupportActions.length ? (
         detail.recentSupportActions.map((action) => {
@@ -147,13 +147,13 @@ export function AdminUserSupportActionsCard({
                 </p>
               ) : null}
               <p className="mt-1 text-muted">
-                Создан:{" "}
+                Создано:{" "}
                 <span className="text-foreground">
                   {formatDateTime(action.created_at)}
                 </span>
               </p>
               <p className="mt-1 text-muted">
-                Обновлен:{" "}
+                Обновлено:{" "}
                 <span className="text-foreground">
                   {formatDateTime(action.updated_at)}
                 </span>
@@ -230,7 +230,9 @@ export function AdminUserOperationAuditSection({
                   <p className="mt-1 text-muted">
                     Переход:{" "}
                     <span className="text-foreground">
-                      {formatStatus(fromStatus)} → {formatStatus(toStatus)}
+                      {formatStatus(fromStatus)}
+                      {" -> "}
+                      {formatStatus(toStatus)}
                     </span>
                   </p>
                 ) : null}
