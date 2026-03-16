@@ -209,10 +209,6 @@ test.describe("api contracts", () => {
   test("ai chat rejects unknown valid session id instead of creating a new session", async ({
     page,
   }) => {
-    await page.goto("/ai");
-    await expect(page).toHaveURL(/\/ai$/);
-    await page.waitForLoadState("networkidle");
-
     const randomId = crypto.randomUUID();
     const unknownSessionResult = await fetchJson(page, {
       method: "POST",
@@ -233,10 +229,6 @@ test.describe("api contracts", () => {
   test("ai assistant rejects unknown valid session id instead of creating a new session", async ({
     page,
   }) => {
-    await page.goto("/ai");
-    await expect(page).toHaveURL(/\/ai$/);
-    await page.waitForLoadState("networkidle");
-
     const randomId = crypto.randomUUID();
     const unknownSessionResult = await fetchJson(page, {
       method: "POST",

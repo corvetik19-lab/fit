@@ -508,17 +508,12 @@ test.describe("user-owned isolation", () => {
       storageState: USER_STORAGE_STATE_PATH,
     });
     const userPage = await userContext.newPage();
-    await navigateStable(userPage, "/ai", /\/ai$/);
-    await userPage.waitForLoadState("networkidle");
-
     const seededSession = await ensureAiChatSession(userPage);
 
     const adminContext = await browser.newContext({
       storageState: ADMIN_STORAGE_STATE_PATH,
     });
     const adminPage = await adminContext.newPage();
-    await navigateStable(adminPage, "/admin", /\/admin$/);
-    await adminPage.waitForLoadState("networkidle");
 
     const [
       deleteForeignSessionResult,

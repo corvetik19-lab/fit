@@ -260,7 +260,8 @@
 - [x] Добавить обязательный CI workflow для `lint`, `typecheck`, `build`.
 - [x] Добавить smoke subset как merge gate.
 - [x] Добавить secret-guarded `test:rls` и `test:e2e:auth` jobs для полного regression-контура в GitHub Actions.
-- [ ] При наличии DB-изменений добавить migration/advisor verification.
+- [x] При наличии DB-изменений добавить migration-aware verification в CI.
+- [ ] Добавить advisor execution/verification для DB-изменений в CI.
 
 ### Release process
 
@@ -439,10 +440,23 @@
 - [x] `rls` job запускает `npm run test:rls` при наличии Supabase и Playwright auth secrets.
 - [x] `auth-e2e` job запускает `npm run test:e2e:auth` при наличии тех же secrets и Playwright browser setup.
 - [x] `README.md` и `docs/RELEASE_CHECKLIST.md` теперь явно перечисляют secrets, необходимые для полного CI regression-контура.
-- [ ] Следующий CI tranche: DB/advisor verification gate для migration-aware проверок.
+- [x] Добавлен migration-aware verification gate для DB-изменений.
+- [ ] Следующий CI tranche: advisor verification gate для DB-изменений.
 
 ## 2026-03-16 build warnings addendum
 
 - [x] Добавлен `docs/BUILD_WARNINGS.md` как отдельный реестр допустимых warnings из Sentry/OpenTelemetry instrumentation.
 - [x] Зафиксированы условия, при которых текущий webpack warning-хвост остаётся допустимым, и условия, при которых он становится blocker'ом.
 - [x] `docs/README.md` и корневой `README.md` теперь ссылаются на этот документ как на source of truth по build warning policy.
+## 2026-03-16 migration verification addendum
+
+- [x] Добавлены `scripts/verify-migrations.ps1` и `scripts/verify-migrations.mjs`: PowerShell-обёртка собирает diff, а JS-валидатор проверяет изменения в `supabase/migrations`.
+- [x] Скрипт валидирует формат migration filenames, запрещает пустые `.sql` и требует синхронные updates в `docs/MASTER_PLAN.md` и `docs/AI_WORKLOG.md`.
+- [x] `.github/workflows/quality.yml` теперь запускает этот gate перед основным `quality` job, а локально он доступен через `npm run verify:migrations`.
+- [ ] Следующий DB tranche: реальное advisor verification в CI или отдельный automation gate для `security/performance` после DDL.
+
+## 2026-03-16 test build fallback addendum
+
+- [x] На текущем Windows/Next.js 16 стеке custom `NEXT_DIST_DIR` для `next build` даёт `spawn EPERM`, поэтому `build:test` и `start:test` возвращены на стандартный `.next`.
+- [x] Изоляция не потеряна полностью: `typecheck` по-прежнему использует отдельный `.next_build`, а e2e/smoke сервер остаётся на выделенном порту `3100`.
+- [x] После rollback test-build контура baseline снова зелёный локально: `build`, `test:smoke`, `test:rls`, `test:e2e:auth`.

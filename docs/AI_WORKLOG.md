@@ -384,3 +384,15 @@
 - Добавил `docs/BUILD_WARNINGS.md` как source of truth по текущему warning-хвосту от `@sentry/nextjs` и `@opentelemetry/*`.
 - Зафиксировал, что текущие `Critical dependency: the request of a dependency is an expression` warnings допустимы только пока они приходят из instrumentation dependencies и не ломают `npm run build`, manifest, traces и regression-suite.
 - В `docs/README.md`, `README.md` и `docs/MASTER_PLAN.md` добавил явные ссылки и policy, чтобы этот warning-хвост больше не считался “непонятным шумом” без статуса.
+### 2026-03-16 13:40 - Добавил migration-aware CI gate
+
+- Добавил `scripts/verify-migrations.ps1` и `scripts/verify-migrations.mjs`: PowerShell-обёртка собирает diff локально и в CI, а JS-валидатор проверяет изменения в `supabase/migrations`, формат migration filenames, пустые `.sql` и обязательный update `docs/MASTER_PLAN.md` плюс `docs/AI_WORKLOG.md`.
+- В `package.json` появился `npm run verify:migrations`, а `.github/workflows/quality.yml` теперь запускает тот же gate перед основным `quality` job.
+- В `README.md` и `docs/RELEASE_CHECKLIST.md` зафиксировал, что при изменениях `supabase/migrations` этот gate должен быть зелёным и в локальном baseline, и в CI.
+- Это сознательно только migration-aware слой: advisor execution через CI пока остаётся отдельным следующим tranche, потому что требует отдельного secret/runtime контура.
+
+### 2026-03-16 14:20 - Вернул test-build на стандартный .next
+
+- На текущем Windows + Next.js 16 custom `NEXT_DIST_DIR` для `next build` стабильно упирался в `spawn EPERM`, поэтому `build:test` и `start:test` откатил на стандартный `.next`.
+- Изоляция осталась там, где она реально стабильна: `typecheck` продолжает работать через `.next_build`, а Playwright всё так же использует выделенный порт `3100`.
+- После rollback заново прогнал baseline, чтобы `test:smoke`, `test:rls` и `test:e2e:auth` снова были зелёными на реальном локальном контуре.

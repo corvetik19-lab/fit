@@ -8,6 +8,7 @@
 - [ ] `npm run test:smoke`
 - [ ] если менялся auth/RLS/owner-only контур, пройти `npm run test:rls`
 - [ ] если менялись пользовательские сценарии или route contracts, пройти `npm run test:e2e:auth`
+- [ ] если менялись `supabase/migrations`, проходит `npm run verify:migrations`
 - [ ] нет лишних локальных изменений в tracked-файлах после quality gates
 - [ ] `docs/MASTER_PLAN.md` и `docs/AI_WORKLOG.md` обновлены, если менялся контракт
 
@@ -28,6 +29,7 @@
 - [ ] заданы `PLAYWRIGHT_TEST_EMAIL` и `PLAYWRIGHT_TEST_PASSWORD`
 - [ ] заданы `PLAYWRIGHT_ADMIN_EMAIL` и `PLAYWRIGHT_ADMIN_PASSWORD`
 - [ ] `quality.yml` действительно запускает `test:rls` и `test:e2e:auth`, а не только `smoke`
+- [ ] `quality.yml` действительно запускает `verify:migrations`, если в diff есть SQL migrations
 
 ## Smoke после deploy
 

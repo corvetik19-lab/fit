@@ -40,6 +40,7 @@ npm run build
 - `npm run typecheck`
 - `npm run build`
 - `npm run test:smoke`
+- `npm run verify:migrations` при изменениях в `supabase/migrations`
 
 Цель проекта — чтобы все три команды проходили стабильно за один запуск и были готовы для CI.
 
@@ -56,6 +57,8 @@ npm run build
 - `PLAYWRIGHT_ADMIN_PASSWORD`
 
 Если этих secrets нет, workflow всё равно прогоняет `lint`, `typecheck`, `build` и `test:smoke`, а полные auth/RLS regression jobs просто пропускаются.
+
+Если в diff есть файлы из `supabase/migrations`, CI дополнительно запускает `npm run verify:migrations` и требует синхронных обновлений `docs/MASTER_PLAN.md` и `docs/AI_WORKLOG.md`.
 
 ## Переменные окружения
 
