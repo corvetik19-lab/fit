@@ -8,6 +8,13 @@
 
 ## 2026-03-16
 
+### Dashboard nutrition extraction and focus-header stabilization
+
+- `metrics.ts` перестал держать nutrition analytics внутри основного runtime-файла: source loading, result formatting и fail-open fallback вынесены в `dashboard-nutrition.ts`.
+- Dashboard runtime теперь может деградировать по nutrition-слою отдельно и не валит весь `/dashboard`, если один nutrition-запрос временно не отработал.
+- В `workout-day-session.tsx` стабилизирован mobile focus-header toggle: collapse-кнопка больше не возвращается в исходное состояние из-за double-toggle под mobile emulation, и regression suite снова проходит зелёно.
+- Baseline после tranche подтверждён через `lint`, `typecheck`, `build`, `test:smoke` и полный `test:e2e:auth`.
+
 ### Admin user detail timeline decomposition
 
 - `admin-user-detail-sections.tsx` перестал быть монолитом по history/detail surface: timeline и billing-collections вынесены в отдельные модули для операций, аудита, entitlements, usage counters и subscription events.

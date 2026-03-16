@@ -93,7 +93,7 @@
 - [x] Вынести aggregate snapshot/cache в `dashboard-aggregate.ts`.
 - [x] Вынести runtime snapshot cache в `dashboard-runtime-cache.ts`.
 - [x] Вынести live runtime assembly в `dashboard-runtime-assembly.ts`.
-- [ ] Продолжить вынос nutrition-specific analytics и fail-open/result-format слоя из `metrics.ts`.
+- [x] Продолжить вынос nutrition-specific analytics и fail-open/result-format слоя из `metrics.ts`.
 
 ### Admin UI
 
