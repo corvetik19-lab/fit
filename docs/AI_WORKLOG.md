@@ -505,3 +505,10 @@
 - Перевел web-search toggle в `src/components/ai-chat-panel.tsx` на `useSyncExternalStore` поверх `sessionStorage`, чтобы режим не терялся при remount и не нарушал `react-hooks/set-state-in-effect`.
 - Усилил тестовую устойчивость в `tests/e2e/ai-workspace.spec.ts`, `tests/e2e/ui-regressions.spec.ts` и `tests/e2e/helpers/http.ts`: prompt library re-open, degraded admin detail и неожиданные `401` от auth bootstrap больше не дают ложный красный.
 - Tranche подтверждён полным baseline: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `36 passed`, `npm run test:smoke` -> `3 passed`.
+
+### 2026-03-17 00:35 - Санировал admin role и operator surfaces
+
+- Переписал `src/lib/admin-permissions.ts` в чистом UTF-8: роль-подписи и capability error copy больше не отдают mojibake.
+- Переписал `src/components/admin-role-manager.tsx`, `src/components/admin-user-actions.tsx`, `src/components/admin-ai-operations.tsx`, `src/components/admin-ai-eval-runs.tsx`, `src/components/admin-operations-inbox.tsx` в нормальный русский operator UX.
+- Для non-root/admin-only режимов убрал лишний показ role/capability деталей: там, где доступен только просмотр, UI теперь говорит об этом нейтрально, без лишних внутренних формулировок.
+- Tranche подтверждён baseline-пакетом: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `36 passed`, `npm run test:smoke` -> `3 passed`.

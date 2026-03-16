@@ -4,7 +4,6 @@ import { startTransition, useState } from "react";
 
 import {
   canUseRootAdminControls,
-  getAdminRoleLabel,
   hasAdminCapability,
   type PlatformAdminRole,
 } from "@/lib/admin-permissions";
@@ -100,8 +99,7 @@ export function AdminUserActions({
         <div className="grid gap-4">
           {!canQueueSupportActions ? (
             <p className="rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-              Роль {getAdminRoleLabel(currentAdminRole)} не может менять состояние
-              пользователя.
+              Для этого аккаунта доступен только просмотр этого блока.
             </p>
           ) : null}
 
@@ -276,8 +274,7 @@ export function AdminUserActions({
 
           {!canManageBilling ? (
             <p className="rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-              Управлять оплатой и доступами может только главный супер-админ
-              {" "}corvetik1@yandex.ru.
+              Управление оплатой и доступами доступно только главному супер-админу.
             </p>
           ) : null}
 

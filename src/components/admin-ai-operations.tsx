@@ -3,7 +3,6 @@
 import { useState } from "react";
 
 import {
-  getAdminRoleLabel,
   hasAdminCapability,
   type PlatformAdminRole,
 } from "@/lib/admin-permissions";
@@ -21,7 +20,7 @@ export function AdminAiOperations({
   const [mode, setMode] = useState<"embeddings" | "full">("full");
   const [targetUserId, setTargetUserId] = useState(defaultTargetUserId);
   const [reason, setReason] = useState(
-    "Обновление контекста ИИ и поиска после изменений в данных пользователя",
+    "Обновление контекста ИИ и поиска после изменения данных пользователя",
   );
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -98,8 +97,7 @@ export function AdminAiOperations({
 
       {!canRunReindex ? (
         <p className="rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          Роль {getAdminRoleLabel(currentAdminRole)} может только просматривать этот
-          раздел.
+          Для этого аккаунта в этом разделе доступен только просмотр.
         </p>
       ) : null}
 

@@ -8,7 +8,6 @@ import {
   type AiEvalSuite,
 } from "@/lib/ai/eval-suites";
 import {
-  getAdminRoleLabel,
   hasAdminCapability,
   type PlatformAdminRole,
 } from "@/lib/admin-permissions";
@@ -235,7 +234,7 @@ export function AdminAiEvalRuns({
       <div className="grid gap-4">
         {!canQueueAiEvalRuns ? (
           <p className="rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            Роль {getAdminRoleLabel(currentAdminRole)} не может запускать проверки ИИ.
+            Для этого аккаунта в этом разделе доступен только просмотр.
           </p>
         ) : null}
 
@@ -294,8 +293,8 @@ export function AdminAiEvalRuns({
             <div className="space-y-1">
               <p className="font-semibold text-foreground">Плановая быстрая проверка</p>
               <p className="text-muted">
-                Быстрый контроль ключевых функций ИИ, который можно запустить вручную
-                или по расписанию.
+                Быстрый контроль ключевых функций ИИ, который можно запустить
+                вручную или по расписанию.
               </p>
             </div>
             <button

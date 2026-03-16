@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import {
   PRIMARY_SUPER_ADMIN_EMAIL,
   canUseRootAdminControls,
+  getAdminRoleLabel,
   isPrimarySuperAdminEmail,
 } from "@/lib/admin-permissions";
 
@@ -21,14 +22,23 @@ type AdminRoleManagerProps = {
 const inputClassName =
   "w-full rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15";
 
-const roleLabels: Record<string, string> = {
-  super_admin: "Супер-админ",
-  support_admin: "Поддержка",
-  analyst: "Аналитик",
-};
-
 async function readJsonSafely(response: Response) {
   return (await response.json().catch(() => null)) as { message?: string } | null;
+}
+
+function getPrimaryActionLabel(
+  currentRole: AdminRoleManagerProps["targetAdminRole"],
+  selectedRole: "super_admin" | "support_admin" | "analyst",
+) {
+  if (!currentRole) {
+    return "Выдать доступ";
+  }
+
+  if (currentRole === selectedRole) {
+    return "Подтвердить роль";
+  }
+
+  return "Сохранить роль";
 }
 
 export function AdminRoleManager({
@@ -53,11 +63,6 @@ export function AdminRoleManager({
     currentUserEmail,
   );
   const targetCanBeSuperAdmin = isPrimarySuperAdminEmail(userEmail);
-  const primaryActionLabel = !targetAdminRole
-    ? "Выдать доступ"
-    : targetAdminRole === selectedRole
-      ? "Подтвердить роль"
-      : "Сохранить роль";
 
   useEffect(() => {
     setSelectedRole(targetAdminRole ?? "support_admin");
@@ -128,11 +133,11 @@ export function AdminRoleManager({
       const payload = await readJsonSafely(response);
 
       if (!response.ok) {
-        setError(payload?.message ?? "Не удалось убрать права администратора.");
+        setError(payload?.message ?? "Не удалось убрать административный доступ.");
         return;
       }
 
-      setNotice("Права администратора убраны.");
+      setNotice("Административный доступ снят.");
       setReason("");
       onUpdated();
     } finally {
@@ -158,21 +163,17 @@ export function AdminRoleManager({
         <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm">
           <p className="text-muted">Текущая роль</p>
           <p className="mt-2 text-lg font-semibold text-foreground">
-            {targetAdminRole
-              ? roleLabels[targetAdminRole] ?? targetAdminRole
-              : "Обычный пользователь"}
+            {targetAdminRole ? getAdminRoleLabel(targetAdminRole) : "Обычный пользователь"}
           </p>
         </article>
 
         <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm">
           <p className="text-muted">Ваш уровень доступа</p>
           <p className="mt-2 text-lg font-semibold text-foreground">
-            {currentAdminRole
-              ? roleLabels[currentAdminRole] ?? currentAdminRole
-              : "Нет доступа"}
+            {currentAdminRole ? getAdminRoleLabel(currentAdminRole) : "Нет доступа"}
           </p>
           <p className="mt-2 text-muted">
-            Все изменения сохраняются в истории действий.
+            Все изменения сохраняются в журнале действий.
           </p>
         </article>
       </div>
@@ -210,7 +211,7 @@ export function AdminRoleManager({
             className={`${inputClassName} min-h-24 resize-y`}
             disabled={!canManageRoles || isPending}
             onChange={(event) => setReason(event.target.value)}
-            placeholder="Например: дать доступ сотруднику поддержки"
+            placeholder="Например: выдать доступ сотруднику поддержки"
             value={reason}
           />
         </label>
@@ -222,7 +223,7 @@ export function AdminRoleManager({
             onClick={() => void applyRole()}
             type="button"
           >
-            {primaryActionLabel}
+            {getPrimaryActionLabel(targetAdminRole, selectedRole)}
           </button>
 
           <button
@@ -237,13 +238,13 @@ export function AdminRoleManager({
 
         {!canManageRoles ? (
           <p className="rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            Роли может менять только главный супер-админ {PRIMARY_SUPER_ADMIN_EMAIL}.
+            Менять роли может только главный супер-админ.
           </p>
         ) : null}
 
         {isSelf ? (
           <p className="rounded-2xl border border-sky-300/60 bg-sky-50 px-4 py-3 text-sm text-sky-800">
-            Главный супер-админ не может убрать свой собственный доступ.
+            Нельзя снять административный доступ с собственного аккаунта.
           </p>
         ) : null}
       </div>

@@ -5,7 +5,6 @@ import { useCallback, useEffect, useState } from "react";
 
 import { PanelCard } from "@/components/panel-card";
 import {
-  getAdminRoleLabel,
   hasAdminCapability,
   type PlatformAdminRole,
 } from "@/lib/admin-permissions";
@@ -155,17 +154,17 @@ function formatKind(kind: AdminOperationItem["kind"]) {
 function formatSupportAction(action: string | null | undefined) {
   switch (action) {
     case "billing_access_review":
-      return "проверка доступа к оплате";
+      return "Проверка доступа к оплате";
     case "purge_user_data":
-      return "очистка данных";
+      return "Очистка данных";
     case "resync_user_context":
-      return "обновление контекста пользователя";
+      return "Обновление контекста пользователя";
     case "restore_user":
-      return "восстановление доступа";
+      return "Восстановление доступа";
     case "suspend_user":
-      return "приостановка доступа";
+      return "Ограничение доступа";
     default:
-      return action ?? "операция поддержки";
+      return action ?? "Операция поддержки";
   }
 }
 
@@ -175,7 +174,7 @@ function formatTitle(item: AdminOperationItem) {
   }
 
   if (item.kind === "export_job") {
-    return item.meta.format ? `выгрузка данных (${item.meta.format})` : item.title;
+    return item.meta.format ? `Выгрузка данных (${item.meta.format})` : item.title;
   }
 
   return item.title;
@@ -296,9 +295,7 @@ export function AdminOperationsInbox({
         | null;
 
       if (!response.ok || !result?.data) {
-        setError(
-          result?.message ?? "Не удалось обработать очередь операций.",
-        );
+        setError(result?.message ?? "Не удалось обработать очередь операций.");
         return;
       }
 
@@ -359,8 +356,8 @@ export function AdminOperationsInbox({
         <div className="grid gap-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm leading-7 text-muted">
-              Здесь видны запросы на поддержку, выгрузку и удаление данных. Нужные
-              действия можно выполнить прямо из панели.
+              Здесь видны запросы на поддержку, выгрузку и удаление данных.
+              Нужные действия можно выполнить прямо из панели.
             </p>
             <div className="flex flex-wrap gap-2">
               {canManageOperations ? (
@@ -386,8 +383,7 @@ export function AdminOperationsInbox({
 
           {!canManageOperations ? (
             <p className="rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-              Роль {getAdminRoleLabel(currentAdminRole)} видит этот раздел только в
-              режиме просмотра.
+              Для этого аккаунта в этом разделе доступен только просмотр.
             </p>
           ) : null}
 
@@ -399,7 +395,8 @@ export function AdminOperationsInbox({
 
           {isDegraded ? (
             <p className="rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-              Очередь операций показана из резервного снимка. Часть фоновых данных сейчас недоступна, поэтому обновления могут появиться с задержкой.
+              Очередь операций показана из резервного снимка. Часть фоновых данных
+              сейчас недоступна, поэтому обновления могут появляться с задержкой.
             </p>
           ) : null}
 

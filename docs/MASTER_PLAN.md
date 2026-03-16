@@ -177,7 +177,7 @@
 - [x] Degraded/fallback режим в `admin health` и `operations inbox` явно показан в UI, а не прячется за молчаливым пустым состоянием.
 - [x] Верхний слой `admin user detail` переведён в чистый UTF-8: state, summary shell и section-switcher больше не отдают mojibake.
 - [x] Полностью убрать сырые технические тексты и mojibake из admin UI.
-- [ ] Оставить детали ролей и capability only для root/super-admin.
+- [x] Оставить детали ролей и capability only для root/super-admin.
 - [ ] Довести каталоги и карточки пользователя до секционного desktop/mobile UX без перегруза.
 
 ## Волна 3. Доменные, AI и backend hardening
@@ -501,4 +501,6 @@
 - [x] `src/components/ai-workspace.tsx`, `src/components/ai-workspace-sidebar.tsx`, `src/components/ai-chat-toolbar.tsx`, `src/components/ai-chat-composer.tsx`, `src/components/ai-prompt-library.tsx` и `src/app/ai/page.tsx` санированы до чистого UTF-8 и приведены к нормальному русскому UX.
 - [x] `src/components/ai-chat-panel.tsx` переведен на `useSyncExternalStore` поверх `sessionStorage` для web-search toggle, чтобы режим не терялся при client remount и не требовал `setState` внутри effect.
 - [x] `tests/e2e/ai-workspace.spec.ts`, `tests/e2e/ui-regressions.spec.ts` и `tests/e2e/helpers/http.ts` усилены против flaky modal/admin-detail/auth timing, а полный baseline снова зеленый: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `36 passed`, `npm run test:smoke` -> `3 passed`.
-- [ ] Следующий sanitation tranche: убрать remaining mojibake и сырой operator copy из `admin-user-detail` и связанных admin sections, затем вернутьcя к следующему backend/advisor tranche.
+- [x] `src/lib/admin-permissions.ts`, `src/components/admin-role-manager.tsx`, `src/components/admin-user-actions.tsx`, `src/components/admin-ai-operations.tsx`, `src/components/admin-ai-eval-runs.tsx` и `src/components/admin-operations-inbox.tsx` переписаны в чистом UTF-8: operator surfaces больше не отдают mojibake и не показывают лишние role/capability детали не-root администраторам.
+- [x] Санитарный tranche подтверждён повторным baseline: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `36 passed`, `npm run test:smoke` -> `3 passed`.
+- [ ] Следующий sanitation tranche: добить оставшиеся словари/formatters в `admin-users-directory-model.ts` и `admin-user-detail-model.ts`, затем вернуться к следующему backend/advisor tranche.
