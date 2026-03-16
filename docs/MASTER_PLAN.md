@@ -471,3 +471,11 @@
 - [x] Добавлен `docs/PROD_READY.md` как отдельный source of truth по `prod-ready`: automated gates, manual acceptance, env readiness и release blockers.
 - [x] `docs/README.md` и корневой `README.md` теперь ссылаются на этот документ вместо неявного “зелёный build = можно выкатывать”.
 - [ ] Следующий release tranche: staging-like verification для Stripe и AI runtime уже против этого явного `prod-ready` критерия.
+
+## 2026-03-16 ui regression addendum
+
+- [x] Добавлен `tests/e2e/ui-regressions.spec.ts` как отдельный regression-слой для client-side проблем: hydration mismatch, render-loop сообщения и runaway `sync/pull` на workout focus-mode.
+- [x] Добавлен `tests/e2e/helpers/client-regressions.ts`, который ловит browser console/pageerror сигналы вроде `Hydration failed`, `Maximum update depth exceeded`, `Recoverable Error`.
+- [x] `tests/e2e/helpers/http.ts` переведён на `browserContext.request`, поэтому API contract tests больше не зависят от flaky `page.evaluate` и `networkidle`.
+- [x] Full authenticated regression contour подтверждён заново: `npm run test:e2e:auth` -> `27 passed`.
+- [ ] Следующий UI reliability tranche: расширить automated coverage на оставшиеся layout/PWA-specific regressions beyond hydration/loop/polling.

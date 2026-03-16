@@ -408,3 +408,10 @@
 - Добавил `docs/PROD_READY.md` как отдельный документ с production-ready критерием: automated gates, manual acceptance, env readiness и release blockers.
 - В `docs/README.md`, `README.md` и `docs/MASTER_PLAN.md` закрепил, что `prod-ready` в `fit` больше не равен просто “локальный build зелёный”.
 - Это не закрывает Stripe/AI live verification, но даёт нормальный release-контракт, от которого теперь можно двигаться дальше по staging-like tranche.
+
+### 2026-03-16 16:10 - Добавил UI regression suite
+
+- Добавил `tests/e2e/ui-regressions.spec.ts`: отдельный Playwright-slice на client-side reliability, а не только на happy-path навигацию.
+- Новый suite проверяет три вещи: отсутствие hydration/render-loop ошибок на user/admin surfaces, отсутствие runaway `sync/pull` в workout focus-mode и сохранение этих проверок внутри общего `test:e2e:auth`.
+- Для этого добавил `tests/e2e/helpers/client-regressions.ts`, а `tests/e2e/helpers/http.ts` перевёл на `browserContext.request`, чтобы API contract tests не падали из-за фона страницы и `networkidle`.
+- После правок `npm run test:e2e:auth` снова зелёный и теперь проходит как `27 passed`.
