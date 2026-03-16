@@ -6,6 +6,14 @@
 - Во время production hardening журнал был сжат и переписан в чистый UTF-8.
 - Ниже остаются только ключевые tranche, которые помогают понять текущее состояние продукта и инженерного контура.
 
+## 2026-03-16
+
+### Mobile PWA regression coverage
+
+- Добавлен отдельный mobile/PWA Playwright suite для узкого viewport: shell drawer, workspace section-menu, mobile workout focus-mode и admin drawer теперь проверяются на client-side regressions и horizontal overflow.
+- Добавлен layout helper для проверки отсутствия горизонтального переполнения и для подтверждения, что mobile drawer действительно занимает высоту viewport.
+- `MASTER_PLAN.md` обновлён: минимальный automated regression contour сверх smoke теперь явно зафиксирован как закрытый пункт.
+
 ## 2026-03-13
 
 ### Пользовательский контур и mobile/PWA UX

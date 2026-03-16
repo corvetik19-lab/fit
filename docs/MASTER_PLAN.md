@@ -22,7 +22,7 @@
 - [x] `npm run build` проходит.
 - [x] Есть минимальный smoke-контур и release checklist.
 - [ ] Документация и часть UI/docs-поверхности всё ещё содержат mojibake и требуют санации.
-- [ ] Полноценного regression-покрытия пока нет.
+- [x] Есть минимальный regression-контур сверх smoke: auth/admin e2e, API contracts, RLS, workout sync и UI regression suites.
 - [ ] Первый production milestone ещё не закрыт.
 
 ## Milestones
@@ -33,7 +33,7 @@
 - [x] Есть smoke baseline для ключевых маршрутов.
 - [ ] Ключевые пользовательские и админские сценарии проходят без hydration loops, infinite polling и layout regressions.
 - [ ] Документация, shell, AI workspace и workout flow доведены до production-качества.
-- [ ] Есть минимальный automated regression contour сверх smoke.
+- [x] Есть минимальный automated regression contour сверх smoke.
 
 ### Milestone 2 — Live Billing
 
@@ -143,6 +143,7 @@
 - [ ] Desktop top nav доведён до стабильного production-вида без визуальных регрессий.
 - [ ] Mobile burger drawer доведён до корректной работы без перекрытий, portal-глюков и hydration mismatch.
 - [ ] Убраны мешающие плавающие панели, оставлены только полезные действия.
+- [x] Есть mobile/PWA regression suite для burger drawer, focus-mode и section-menu на узком viewport.
 
 ### Workspace-паттерн страниц
 
