@@ -123,3 +123,75 @@ export async function createLockedWorkoutDay(page: Page, titleSeed: string) {
     setId: createdProgram!.days[0]!.exercises[0]!.sets[0]!.id,
   };
 }
+
+export async function createUnlockedWorkoutDay(page: Page, titleSeed: string) {
+  const suffix = crypto.randomUUID().slice(0, 8);
+  const exerciseTitle = `E2E ${titleSeed} ${suffix}`;
+
+  const exerciseResult = await fetchJson<{ data: ExerciseRow }>(page, {
+    method: "POST",
+    url: "/api/exercises",
+    body: {
+      title: exerciseTitle,
+      muscleGroup: "Legs",
+      description: "Playwright seeded exercise",
+      note: "",
+    },
+  });
+
+  expect(exerciseResult.status).toBe(200);
+
+  const exerciseId = exerciseResult.body?.data?.id;
+  expect(exerciseId).toBeTruthy();
+
+  const weekStartDate = buildFutureWeekStartDate(`${suffix}-draft`);
+  const programResult = await fetchJson<{ data: { id: string } }>(page, {
+    method: "POST",
+    url: "/api/weekly-programs",
+    body: {
+      title: `E2E Draft Program ${titleSeed} ${suffix}`,
+      weekStartDate,
+      days: [
+        {
+          dayOfWeek: 1,
+          exercises: [
+            {
+              exerciseLibraryId: exerciseId,
+              setsCount: 1,
+              repRangeKey: "6-10",
+            },
+          ],
+        },
+      ],
+    },
+  });
+
+  expect(programResult.status).toBe(200);
+
+  const programId = programResult.body?.data?.id ?? null;
+  expect(programId).toBeTruthy();
+
+  const listResult = await fetchJson<{ data: WeeklyProgramSummary[] }>(page, {
+    method: "GET",
+    url: "/api/weekly-programs",
+  });
+
+  expect(listResult.status).toBe(200);
+
+  const createdProgram = (listResult.body?.data ?? []).find(
+    (program) => program.id === programId,
+  );
+
+  expect(createdProgram).toBeTruthy();
+  expect(createdProgram?.days.length).toBeGreaterThan(0);
+  expect(createdProgram?.days[0]?.exercises.length).toBeGreaterThan(0);
+  expect(createdProgram?.days[0]?.exercises[0]?.sets.length).toBeGreaterThan(0);
+
+  return {
+    exerciseId,
+    programId,
+    dayId: createdProgram!.days[0]!.id,
+    workoutExerciseId: createdProgram!.days[0]!.exercises[0]!.id,
+    setId: createdProgram!.days[0]!.exercises[0]!.sets[0]!.id,
+  };
+}

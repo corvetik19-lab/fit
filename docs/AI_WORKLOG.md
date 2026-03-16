@@ -15,6 +15,12 @@
 - В `workout-day-session.tsx` стабилизирован mobile focus-header toggle: collapse-кнопка больше не возвращается в исходное состояние из-за double-toggle под mobile emulation, и regression suite снова проходит зелёно.
 - Baseline после tranche подтверждён через `lint`, `typecheck`, `build`, `test:smoke` и полный `test:e2e:auth`.
 
+### Locked workout execution guard coverage
+
+- В `workout-sync.spec.ts` добавлен прямой сценарий для незалоченной недели: `PATCH /api/workout-days/{id}`, `POST /api/workout-days/{id}/reset` и `PATCH /api/workout-sets/{id}` теперь подтверждены как закрытые контрактом `WORKOUT_DAY_REQUIRES_LOCKED_PROGRAM`.
+- Для этого добавлен helper `createUnlockedWorkoutDay(...)`, который сидирует черновую неделю без lock и позволяет проверять mutation-guards отдельно от основного locked-flow.
+- Целевой regression-suite `tests/e2e/workout-sync.spec.ts` подтверждён отдельно: `4 passed`.
+
 ### Admin user detail timeline decomposition
 
 - `admin-user-detail-sections.tsx` перестал быть монолитом по history/detail surface: timeline и billing-collections вынесены в отдельные модули для операций, аудита, entitlements, usage counters и subscription events.

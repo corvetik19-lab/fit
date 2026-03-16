@@ -7,7 +7,10 @@ import {
   readWorkoutDayOfflineState,
   seedWorkoutDayOfflineState,
 } from "./helpers/offline-db";
-import { createLockedWorkoutDay } from "./helpers/workouts";
+import {
+  createLockedWorkoutDay,
+  createUnlockedWorkoutDay,
+} from "./helpers/workouts";
 
 type SeededWorkoutDay = Awaited<ReturnType<typeof createLockedWorkoutDay>>;
 
@@ -393,5 +396,50 @@ test.describe("workout sync contracts", () => {
     expectResetSnapshot(
       offlineStateAfterReload.snapshot as WorkoutDaySyncSnapshot | undefined,
     );
+  });
+
+  test("direct execution routes reject unlocked-week workout mutations", async ({
+    page,
+  }) => {
+    await page.goto("/dashboard");
+    await expect(page).toHaveURL(/\/dashboard$/);
+    await page.waitForLoadState("networkidle");
+
+    const seededDay = await createUnlockedWorkoutDay(page, "unlocked-guard");
+
+    const [dayUpdateResult, dayResetResult, setUpdateResult] = await Promise.all([
+      fetchJson<{ code?: string }>(page, {
+        method: "PATCH",
+        url: `/api/workout-days/${seededDay.dayId}`,
+        body: {
+          status: "in_progress",
+          bodyWeightKg: null,
+          sessionNote: null,
+          sessionDurationSeconds: null,
+        },
+      }),
+      fetchJson<{ code?: string }>(page, {
+        method: "POST",
+        url: `/api/workout-days/${seededDay.dayId}/reset`,
+      }),
+      fetchJson<{ code?: string }>(page, {
+        method: "PATCH",
+        url: `/api/workout-sets/${seededDay.setId}`,
+        body: {
+          actualReps: 8,
+          actualWeightKg: 60,
+          actualRpe: 8,
+        },
+      }),
+    ]);
+
+    expect(dayUpdateResult.status).toBe(400);
+    expect(dayUpdateResult.body?.code).toBe("WORKOUT_DAY_REQUIRES_LOCKED_PROGRAM");
+
+    expect(dayResetResult.status).toBe(400);
+    expect(dayResetResult.body?.code).toBe("WORKOUT_DAY_REQUIRES_LOCKED_PROGRAM");
+
+    expect(setUpdateResult.status).toBe(400);
+    expect(setUpdateResult.body?.code).toBe("WORKOUT_DAY_REQUIRES_LOCKED_PROGRAM");
   });
 });

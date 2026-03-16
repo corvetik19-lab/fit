@@ -41,11 +41,17 @@ test.describe("admin app", () => {
   test("root admin gets degraded fallback for admin user detail snapshot", async ({
     page,
   }) => {
-    await navigateStable(page, "/admin/users", /\/admin\/users$/);
-    await page.waitForLoadState("networkidle");
-    const myCardHref = await page.locator('a[href^="/admin/users/"]').first().getAttribute("href");
-    expect(myCardHref).toBeTruthy();
-    const targetUserId = myCardHref!.split("/").at(-1);
+    const usersResult = await fetchJson<{
+      data?: Array<{
+        user_id?: string;
+      }>;
+    }>(page, {
+      method: "GET",
+      url: "/api/admin/users",
+    });
+
+    expect(usersResult.status).toBe(200);
+    const targetUserId = usersResult.body?.data?.[0]?.user_id;
     expect(targetUserId).toBeTruthy();
 
     const detailResult = await fetchJson<{

@@ -196,7 +196,7 @@
 - [ ] Пройти все route handlers на валидацию, owner-only доступ, ошибки и idempotency.
 - [ ] Подтвердить, что reset/finish/sync сценарии не создают race conditions и бесконечный polling.
 - [x] Подтвердить, что offline queue и stale cleanup не восстанавливают уже сброшенное состояние.
-- [ ] Проверить locked program guard и все mutation routes вокруг workout day execution.
+- [x] Проверить locked program guard и все mutation routes вокруг workout day execution.
 
 ### AI / RAG / CAG / KAG
 
