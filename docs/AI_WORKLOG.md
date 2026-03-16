@@ -8,6 +8,11 @@
 
 ## 2026-03-16
 
+### Autonomous tranche execution contract
+
+- В `AGENTS.md` зафиксирован рабочий режим без лишних пауз: агент должен идти tranche-by-tranche по `MASTER_PLAN`, после каждого куска обновлять docs, коммитить, пушить и сразу брать следующий открытый пункт.
+- Останавливаться теперь допустимо только на реальном внешнем блокере: отсутствующий доступ, секреты, платный провайдер или недоступный внешний сервис.
+
 ### Dashboard nutrition extraction and focus-header stabilization
 
 - `metrics.ts` перестал держать nutrition analytics внутри основного runtime-файла: source loading, result formatting и fail-open fallback вынесены в `dashboard-nutrition.ts`.

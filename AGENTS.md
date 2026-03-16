@@ -23,6 +23,12 @@
 - `docs/AI_WORKLOG.md` must receive a short Russian entry for every substantial implemented slice, including what changed and what was verified.
 - All developer-facing project documentation should be written in Russian unless a file explicitly needs another language.
 
+## Execution mode
+- Work continuously tranche-by-tranche until `docs/MASTER_PLAN.md` is fully closed or a real external blocker appears.
+- Do not pause between slices to ask for confirmation when the next step is already defined in the plan and can be discovered from the repository state.
+- The default loop is: implement the next open tranche -> verify -> update `docs/MASTER_PLAN.md` and `docs/AI_WORKLOG.md` -> commit -> push -> immediately continue with the next open tranche.
+- Only stop and surface a blocker when progress is genuinely blocked by missing access, missing env/secrets, paid provider limitations, or an external service outage.
+
 ## Data and security rules
 - All business data is user-scoped by default through `user_id`.
 - Every business table must have RLS enabled.
