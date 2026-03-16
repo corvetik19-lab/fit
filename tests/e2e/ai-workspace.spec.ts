@@ -74,8 +74,12 @@ test.describe("ai workspace", () => {
       await promptLibraryOpenButton.click();
     }
     await expect(promptLibrary).toBeVisible({ timeout: 10_000 });
-
-    await page.locator('[data-testid="ai-prompt-library-toggle-create"]').click();
+    const createToggle = promptLibrary.locator(
+      '[data-testid="ai-prompt-library-toggle-create"]',
+    );
+    await expect(createToggle).toBeVisible();
+    await expect(createToggle).toBeEnabled();
+    await createToggle.click();
     await page
       .locator('[data-testid="ai-prompt-library-new-title"]')
       .fill(customPromptTitle);

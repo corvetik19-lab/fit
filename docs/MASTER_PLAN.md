@@ -518,3 +518,11 @@
 
 - [x] `tests/e2e/ui-regressions.spec.ts` больше не зависит от хрупкого `button[aria-pressed]` на всех user surfaces; suite ждёт гарантированный page-root (`main`) там, где section-pill не является обязательным DOM-контрактом.
 - [x] После правки full authenticated regression contour снова подтверждён целиком без flaky failure в `ui regressions`.
+
+## 2026-03-17 security advisor policy baseline addendum
+
+- [x] Добавлена миграция `supabase/migrations/20260317022000_system_table_rls_policy_baseline.sql`: на `admin_audit_logs`, `ai_eval_results`, `ai_eval_runs`, `feature_flags`, `platform_settings`, `support_actions`, `system_metrics_snapshots` заданы явные deny-all policies `..._deny_all`.
+- [x] Перед миграцией подтверждено по коду, что эти таблицы читаются через `createAdminSupabaseClient()` или service-role paths, поэтому явные deny-all policies не меняют user-facing runtime-контракты и не мешают admin/service-role доступу.
+- [x] После DDL повторно прогнаны advisors: `security` больше не содержит `rls_enabled_no_policy`, а remaining security backlog сужен до двух platform-level warning — `extension_in_public` для `vector` и `auth_leaked_password_protection`.
+- [x] Tranche подтверждён verification-пакетом: `npm run verify:migrations`, `npm run test:rls` -> `1 passed`, `npm run test:e2e:auth` -> `36 passed`, `npm run test:smoke` -> `3 passed`.
+- [ ] Следующий DB tranche: отдельно оформить policy по двум оставшимся platform-level warning (`vector` schema и leaked password protection) и решить, что из этого автоматизируется в repo, а что остаётся внешним release checklist для Supabase проекта.

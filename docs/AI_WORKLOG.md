@@ -526,3 +526,11 @@
 
 - В `tests/e2e/ui-regressions.spec.ts` заменил хрупкий `button[aria-pressed]` на гарантированный `main` для `dashboard / workouts / nutrition / settings`, потому что наличие section-pill не является обязательным DOM-контрактом для каждого user surface.
 - Сначала подтвердил targeted suite `npx playwright test tests/e2e/ui-regressions.spec.ts --workers=1` -> `3 passed`, затем заново прогнал весь `npm run test:e2e:auth` -> `36 passed`.
+
+### 2026-03-17 02:10 - Закрыл security-advisor baseline для системных таблиц
+
+- Через кодовый аудит подтвердил, что `admin_audit_logs`, `support_actions`, `ai_eval_runs`, `ai_eval_results`, `feature_flags`, `platform_settings`, `system_metrics_snapshots` читаются только через `createAdminSupabaseClient()` или service-role контуры, а не через обычный user client.
+- Применил `supabase/migrations/20260317022000_system_table_rls_policy_baseline.sql`: добавил явные deny-all policies на эти таблицы, чтобы закрыть `rls_enabled_no_policy` без изменения runtime-контрактов для владельцев или админских service-role путей.
+- Повторный прогон `security` advisors подтвердил, что `rls_enabled_no_policy` полностью ушёл; в security backlog остались только platform-level warnings `extension_in_public` для `vector` и `auth_leaked_password_protection`.
+- После DB slice пришлось отдельно дожать flaky AI workspace test: в `tests/e2e/ai-workspace.spec.ts` создание шаблона теперь ждёт visible+enabled состояние кнопки внутри модалки, после чего full `npm run test:e2e:auth` снова зелёный (`36 passed`).
+- Tranche подтверждён командами `npm run verify:migrations`, `npm run test:rls`, `npx playwright test tests/e2e/ai-workspace.spec.ts --workers=1`, `npm run test:e2e:auth`, `npm run test:smoke`.
