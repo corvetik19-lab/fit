@@ -159,6 +159,19 @@ test.describe("rls ownership", () => {
       expect(ownKnowledgeChunkRows?.[0]?.user_id).toBe(fixture.userId);
       expect(ownKnowledgeChunkRows?.[0]?.source_type).toBe("rls_fixture");
 
+      const { data: ownKnowledgeEmbeddingRows, error: ownKnowledgeEmbeddingError } =
+        await regularUser.client
+          .from("knowledge_embeddings")
+          .select("id, user_id, chunk_id, model")
+          .eq("id", fixture.knowledgeEmbeddingId);
+
+      expect(ownKnowledgeEmbeddingError).toBeNull();
+      expect(ownKnowledgeEmbeddingRows).toHaveLength(1);
+      expect(ownKnowledgeEmbeddingRows?.[0]?.id).toBe(fixture.knowledgeEmbeddingId);
+      expect(ownKnowledgeEmbeddingRows?.[0]?.user_id).toBe(fixture.userId);
+      expect(ownKnowledgeEmbeddingRows?.[0]?.chunk_id).toBe(fixture.knowledgeChunkId);
+      expect(ownKnowledgeEmbeddingRows?.[0]?.model).toBe("text-embedding-3-small");
+
       const { data: hiddenChatSessionRows, error: hiddenChatSessionError } =
         await adminUser.client
           .from("ai_chat_sessions")
@@ -211,6 +224,15 @@ test.describe("rls ownership", () => {
 
       expect(hiddenKnowledgeChunkError).toBeNull();
       expect(hiddenKnowledgeChunkRows).toEqual([]);
+
+      const { data: hiddenKnowledgeEmbeddingRows, error: hiddenKnowledgeEmbeddingError } =
+        await adminUser.client
+          .from("knowledge_embeddings")
+          .select("id")
+          .eq("id", fixture.knowledgeEmbeddingId);
+
+      expect(hiddenKnowledgeEmbeddingError).toBeNull();
+      expect(hiddenKnowledgeEmbeddingRows).toEqual([]);
 
       const { data: hiddenFoodRows, error: hiddenFoodError } = await adminUser.client
         .from("foods")

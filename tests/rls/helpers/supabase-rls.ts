@@ -6,6 +6,12 @@ import {
   findAuthUserIdByEmail,
 } from "../../e2e/helpers/supabase-admin";
 
+function buildFixtureEmbeddingLiteral() {
+  return `[${Array.from({ length: 1024 }, (_, index) =>
+    ((index % 8) / 1000).toFixed(8),
+  ).join(",")}]`;
+}
+
 loadEnvConfig(process.cwd());
 
 const regularEmail = process.env.PLAYWRIGHT_TEST_EMAIL ?? null;
@@ -434,6 +440,21 @@ export async function seedRlsOwnershipFixture() {
     throw knowledgeChunkError;
   }
 
+  const { data: knowledgeEmbeddingRow, error: knowledgeEmbeddingError } = await supabase
+    .from("knowledge_embeddings")
+    .insert({
+      user_id: userId,
+      chunk_id: knowledgeChunkRow.id,
+      embedding: buildFixtureEmbeddingLiteral(),
+      model: "text-embedding-3-small",
+    })
+    .select("id")
+    .single();
+
+  if (knowledgeEmbeddingError) {
+    throw knowledgeEmbeddingError;
+  }
+
   return {
     chatMessageId: chatMessageRow.id as string,
     chatSessionId: chatSessionRow.id as string,
@@ -445,6 +466,7 @@ export async function seedRlsOwnershipFixture() {
     exportJobId: exportJobRow.id as string,
     foodId: foodRow.id as string,
     knowledgeChunkId: knowledgeChunkRow.id as string,
+    knowledgeEmbeddingId: knowledgeEmbeddingRow.id as string,
     programId: programRow.id as string,
     recipeId: recipeRow.id as string,
     userId,

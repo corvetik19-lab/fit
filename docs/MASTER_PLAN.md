@@ -213,7 +213,7 @@
 - [x] `AI proposal approve/apply` теперь подтверждены owner-scoped e2e: root-admin получает `404 AI_PROPOSAL_NOT_FOUND` на чужом `proposalId`, а invalid UUID даёт явные `400 AI_PROPOSAL_APPROVE_INVALID` / `AI_PROPOSAL_APPLY_INVALID`.
 - [x] Санирован user-facing copy в `ai/chat`, `ai/reindex`, `ai/sessions/[id]`, `ai/proposals/[id]/apply`, `ai/proposals/[id]/approve`, чтобы AI surface не отдавал mojibake.
 - [x] Expected contract errors (`400/404` на invalid params и owner-scoped misses) больше не логируются как route-level `error` в contract-tested mutation routes и AI session routes.
-- [ ] Подтвердить owner-only data access для chat, sessions, retrieval, reindex и proposal apply.
+- [x] Подтвердить owner-only data access для chat, sessions, retrieval, reindex и proposal apply.
 - [ ] Развести runtime failure UX и provider configuration UX.
 - [x] Стабилизировать историю чатов, prompt library, web search toggle и image upload.
 - [ ] Прогнать assistant/retrieval/workout-plan/meal-plan/safety eval suites как quality gate.

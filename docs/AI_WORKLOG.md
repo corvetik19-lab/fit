@@ -606,3 +606,10 @@
 - В `package.json` появился `npm run verify:advisors`, а в `.github/workflows/quality.yml` добавлен secret-guarded job `advisors`, который запускается при наличии `SUPABASE_ACCESS_TOKEN` и `SUPABASE_PROJECT_REF`.
 - Gate падает только на новые `WARN/ERROR` findings; текущий platform-level security warning `auth_leaked_password_protection` зафиксирован как baseline allowlist, чтобы workflow не был вечно красным из-за внешней настройки проекта.
 - Локально tranche подтверждён командами `npm run verify:advisors`, `npm run lint`, `npm run typecheck`, `npm run build`; `verify:advisors` корректно делает no-op, если в текущем diff нет SQL-миграций.
+
+### 2026-03-17 17:35 - Закрыл retrieval ownership для vector-layer
+
+- `tests/rls/helpers/supabase-rls.ts` расширен fixture-строкой в `knowledge_embeddings`: теперь direct RLS suite сидирует не только `knowledge_chunks`, но и реальный vector row для того же пользователя.
+- `tests/rls/ownership.spec.ts` теперь подтверждает, что владелец видит свой `knowledge_embeddings` row, а другой auth-user не видит его даже при точечном запросе по `id`.
+- После этого подпункт плана про owner-only доступ для `chat`, `sessions`, `retrieval`, `reindex` и `proposal apply` можно считать закрытым не только по route-level сценариям, но и по прямому retrieval storage layer.
+- Tranche подтверждён командами `npx eslint tests/rls tests/rls/helpers`, `npm run test:rls`, `npm run typecheck`, `npm run build`.
