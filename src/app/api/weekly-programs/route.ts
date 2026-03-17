@@ -56,7 +56,7 @@ export async function GET() {
       return createApiErrorResponse({
         status: 401,
         code: "AUTH_REQUIRED",
-        message: "Sign in before loading weekly programs.",
+        message: "Нужно войти в аккаунт, чтобы открыть недельные программы.",
       });
     }
 
@@ -69,7 +69,7 @@ export async function GET() {
     return createApiErrorResponse({
       status: 500,
       code: "WEEKLY_PROGRAM_LIST_FAILED",
-      message: "Unable to load weekly programs.",
+      message: "Не удалось загрузить недельные программы.",
     });
   }
 }
@@ -87,7 +87,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 401,
         code: "AUTH_REQUIRED",
-        message: "Sign in before creating weekly programs.",
+        message: "Нужно войти в аккаунт, чтобы создавать недельные программы.",
       });
     }
 
@@ -99,7 +99,7 @@ export async function POST(request: Request) {
         return createApiErrorResponse({
           status: 400,
           code: "WEEKLY_PROGRAM_DUPLICATE_DAY",
-          message: "Each training day can appear only once in a weekly program.",
+          message: "Каждый тренировочный день можно добавить только один раз.",
         });
       }
 
@@ -128,8 +128,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 400,
         code: "WEEKLY_PROGRAM_EXERCISE_INVALID",
-        message:
-          "One or more exercises are missing from the active library.",
+        message: "Одно или несколько упражнений не найдены в активной библиотеке.",
       });
     }
 
@@ -182,7 +181,7 @@ export async function POST(request: Request) {
           return createApiErrorResponse({
             status: 400,
             code: "WEEKLY_PROGRAM_REP_RANGE_INVALID",
-            message: "Rep range preset is invalid.",
+            message: "Диапазон повторений заполнен некорректно.",
           });
         }
 
@@ -250,7 +249,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 400,
         code: "WEEKLY_PROGRAM_CREATE_INVALID",
-        message: "Weekly program payload is invalid.",
+        message: "Параметры недельной программы заполнены некорректно.",
         details: error.flatten(),
       });
     }
@@ -258,7 +257,7 @@ export async function POST(request: Request) {
     return createApiErrorResponse({
       status: 500,
       code: "WEEKLY_PROGRAM_CREATE_FAILED",
-      message: "Unable to create weekly program.",
+      message: "Не удалось создать недельную программу.",
     });
   }
 }

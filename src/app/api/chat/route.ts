@@ -16,7 +16,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 503,
         code: "AI_RUNTIME_NOT_CONFIGURED",
-        message: "AI runtime env is missing.",
+        message: "ИИ-контур сейчас не настроен для этого чата.",
       });
     }
 
@@ -31,7 +31,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 400,
         code: "CHAT_PAYLOAD_INVALID",
-        message: "messages payload is required.",
+        message: "Для ответа нужен текстовый запрос.",
       });
     }
 
@@ -39,8 +39,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 400,
         code: "AI_SAFETY_BLOCK",
-        message:
-          "The requested guidance crosses the current safety envelope for the app.",
+        message: "Этот запрос выходит за безопасный контур приложения.",
       });
     }
 
@@ -58,7 +57,7 @@ export async function POST(request: Request) {
     return createApiErrorResponse({
       status: 500,
       code: "CHAT_ROUTE_FAILED",
-      message: "Unable to process chat request.",
+      message: "Не удалось обработать запрос к чату.",
     });
   }
 }

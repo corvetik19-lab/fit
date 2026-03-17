@@ -22,7 +22,7 @@ export async function PUT(request: Request) {
       return createApiErrorResponse({
         status: 401,
         code: "AUTH_REQUIRED",
-        message: "Войди в аккаунт, чтобы сохранять цели по питанию.",
+        message: "Нужно войти в аккаунт, чтобы сохранять цели по питанию.",
       });
     }
 

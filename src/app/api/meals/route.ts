@@ -30,7 +30,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 401,
         code: "AUTH_REQUIRED",
-        message: "Войди в аккаунт, чтобы сохранять приёмы пищи.",
+        message: "Нужно войти в аккаунт, чтобы сохранять приёмы пищи.",
       });
     }
 

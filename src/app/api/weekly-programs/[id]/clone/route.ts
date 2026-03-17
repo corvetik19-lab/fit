@@ -39,7 +39,7 @@ export async function POST(
       return createApiErrorResponse({
         status: 401,
         code: "AUTH_REQUIRED",
-        message: "Sign in before cloning weekly programs.",
+        message: "Нужно войти в аккаунт, чтобы копировать недельные программы.",
       });
     }
 
@@ -61,7 +61,7 @@ export async function POST(
       return createApiErrorResponse({
         status: 404,
         code: "WEEKLY_PROGRAM_NOT_FOUND",
-        message: "Source weekly program was not found.",
+        message: "Исходная недельная программа не найдена.",
       });
     }
 
@@ -203,7 +203,7 @@ export async function POST(
       return createApiErrorResponse({
         status: 400,
         code: "WEEKLY_PROGRAM_CLONE_INVALID",
-        message: "Weekly program clone payload or route params are invalid.",
+        message: "Параметры копирования недельной программы заполнены некорректно.",
         details: error.flatten(),
       });
     }
@@ -228,7 +228,7 @@ export async function POST(
     return createApiErrorResponse({
       status: 500,
       code: "WEEKLY_PROGRAM_CLONE_FAILED",
-      message: "Unable to clone weekly program.",
+      message: "Не удалось скопировать недельную программу.",
     });
   }
 }

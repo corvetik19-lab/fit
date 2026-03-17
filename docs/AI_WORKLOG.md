@@ -575,3 +575,9 @@
 - `tests/rls/ownership.spec.ts` теперь напрямую подтверждает, что обычный пользователь видит свои `foods`, `recipes` и `workout_templates`, а root-admin не видит эти строки через обычный user client.
 - В `src/app/api/workout-templates/route.ts`, `src/app/api/foods/route.ts` и `src/app/api/recipes/route.ts` дочистил user-facing copy до нормального русского без обрывков старой технической формулировки.
 - Tranche подтверждён командами `npx eslint tests/rls tests/rls/helpers src/app/api/workout-templates/route.ts src/app/api/foods/route.ts src/app/api/recipes/route.ts`, `npm run test:rls`, `npm run typecheck`, `npm run build`.
+
+### 2026-03-17 13:20 - Санировал product API copy для тренировок, питания и онбординга
+
+- Перевёл в нормальный русский user-facing ошибки и статусы в `src/app/api/weekly-programs/route.ts`, `src/app/api/weekly-programs/[id]/clone/route.ts`, `src/app/api/weekly-programs/[id]/lock/route.ts`, `src/app/api/nutrition/targets/route.ts`, `src/app/api/onboarding/route.ts`, `src/app/api/chat/route.ts`, `src/app/api/meal-templates/route.ts`, `src/app/api/meals/route.ts`, `src/app/api/settings/billing/route.ts`.
+- Закрыл остатки английского и mojibake в self-service/product route surface: weekly programs, nutrition targets, onboarding, legacy chat, meal templates, meals и billing center теперь отдают чистый UTF-8 copy.
+- Tranche подтверждён командами `npx eslint ...`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `36 passed`.

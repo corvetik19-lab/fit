@@ -89,7 +89,7 @@ export async function GET() {
       return createApiErrorResponse({
         status: 401,
         code: "AUTH_REQUIRED",
-        message: "Войди в аккаунт, чтобы открыть раздел доступа.",
+        message: "Нужно войти в аккаунт, чтобы открыть центр доступа.",
       });
     }
 
@@ -119,7 +119,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 401,
         code: "AUTH_REQUIRED",
-        message: "Войди в аккаунт, чтобы отправить запрос на доступ.",
+        message: "Нужно войти в аккаунт, чтобы отправить запрос на доступ.",
       });
     }
 

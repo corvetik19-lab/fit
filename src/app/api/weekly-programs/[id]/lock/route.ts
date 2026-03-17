@@ -22,7 +22,7 @@ export async function POST(
       return createApiErrorResponse({
         status: 401,
         code: "AUTH_REQUIRED",
-        message: "Sign in before locking weekly programs.",
+        message: "Нужно войти в аккаунт, чтобы зафиксировать недельную программу.",
       });
     }
 
@@ -42,7 +42,7 @@ export async function POST(
       return createApiErrorResponse({
         status: 404,
         code: "WEEKLY_PROGRAM_NOT_FOUND",
-        message: "Weekly program was not found.",
+        message: "Недельная программа не найдена.",
       });
     }
 
@@ -50,7 +50,7 @@ export async function POST(
       return createApiErrorResponse({
         status: 400,
         code: "WEEKLY_PROGRAM_ALREADY_LOCKED",
-        message: "Weekly program is already locked.",
+        message: "Недельная программа уже зафиксирована.",
       });
     }
 
@@ -71,7 +71,7 @@ export async function POST(
         return createApiErrorResponse({
           status: 409,
           code: "WEEKLY_PROGRAM_ACTIVE_WEEK_CONFLICT",
-          message: "An active weekly program already exists for this week.",
+          message: "На эту неделю уже есть активная программа.",
         });
       }
 
@@ -82,7 +82,7 @@ export async function POST(
       return createApiErrorResponse({
         status: 409,
         code: "WEEKLY_PROGRAM_LOCK_CONFLICT",
-        message: "Weekly program lock state changed during the request. Reload and try again.",
+        message: "Состояние программы изменилось во время запроса. Обнови экран и попробуй ещё раз.",
       });
     }
 
@@ -94,7 +94,7 @@ export async function POST(
       return createApiErrorResponse({
         status: 400,
         code: "WEEKLY_PROGRAM_LOCK_INVALID",
-        message: "Weekly program route params are invalid.",
+        message: "Параметры недельной программы заполнены некорректно.",
         details: error.flatten(),
       });
     }
@@ -104,7 +104,7 @@ export async function POST(
     return createApiErrorResponse({
       status: 500,
       code: "WEEKLY_PROGRAM_LOCK_FAILED",
-      message: "Unable to lock weekly program.",
+      message: "Не удалось зафиксировать недельную программу.",
     });
   }
 }

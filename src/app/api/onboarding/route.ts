@@ -30,7 +30,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 401,
         code: "AUTH_REQUIRED",
-        message: "Sign in before completing onboarding.",
+        message: "Нужно войти в аккаунт, чтобы завершить онбординг.",
       });
     }
 
@@ -136,7 +136,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 400,
         code: "ONBOARDING_PAYLOAD_INVALID",
-        message: "Onboarding payload is invalid.",
+        message: "Данные онбординга заполнены некорректно.",
         details: error.flatten(),
       });
     }
@@ -144,7 +144,7 @@ export async function POST(request: Request) {
     return createApiErrorResponse({
       status: 500,
       code: "ONBOARDING_SAVE_FAILED",
-      message: "Unable to save onboarding data.",
+      message: "Не удалось сохранить данные онбординга.",
     });
   }
 }

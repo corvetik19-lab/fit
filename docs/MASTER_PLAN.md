@@ -560,3 +560,10 @@
 - [x] Заодно дочищен user-facing copy в `src/app/api/workout-templates/route.ts`, `src/app/api/foods/route.ts`, `src/app/api/recipes/route.ts`: self-service тренировки и питание больше не отдают английские login/save/load сообщения.
 - [x] Tranche подтверждён baseline: `npx eslint tests/rls tests/rls/helpers src/app/api/workout-templates/route.ts src/app/api/foods/route.ts src/app/api/recipes/route.ts`, `npm run test:rls` -> `1 passed`, `npm run typecheck`, `npm run build`.
 - [ ] Следующий backend tranche: продолжить `owner-only / idempotency / retrieval` audit по оставшимся AI/data routes и затем решить, нужен ли ещё один direct RLS слой для оставшихся user-scoped tables.
+
+## 2026-03-17 product API sanitation addendum
+
+- [x] Санирован user-facing copy в `src/app/api/weekly-programs/route.ts`, `src/app/api/weekly-programs/[id]/clone/route.ts`, `src/app/api/weekly-programs/[id]/lock/route.ts`, `src/app/api/nutrition/targets/route.ts`, `src/app/api/onboarding/route.ts`, `src/app/api/chat/route.ts`, `src/app/api/meal-templates/route.ts`, `src/app/api/meals/route.ts`, `src/app/api/settings/billing/route.ts`.
+- [x] `weekly programs`, `nutrition targets`, `onboarding`, `legacy chat`, `meal templates`, `meals` и `settings billing` больше не отдают английские сообщения и mojibake в user-facing error surface.
+- [x] Tranche подтверждён baseline-пакетом: `npx eslint ...`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `36 passed`.
+- [ ] Следующий sanitation/backend tranche: дочистить оставшиеся self-service и product API routes вне этого пакета, затем вернуться к owner-only / retrieval audit по оставшимся AI/data контурам.
