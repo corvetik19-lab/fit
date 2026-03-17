@@ -179,7 +179,7 @@ export async function POST(
       return createApiErrorResponse({
         status: 400,
         code: "ADMIN_BILLING_INVALID",
-        message: "Billing payload is invalid.",
+        message: "Параметры биллинга заполнены некорректно.",
         details: error.flatten(),
       });
     }
@@ -189,7 +189,7 @@ export async function POST(
     return createApiErrorResponse({
       status: 500,
       code: "ADMIN_BILLING_FAILED",
-      message: "Unable to update billing or entitlement state.",
+      message: "Не удалось обновить биллинг или entitlement-состояние.",
     });
   }
 }

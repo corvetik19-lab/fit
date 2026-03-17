@@ -22,7 +22,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 401,
         code: "AUTH_REQUIRED",
-        message: "Sign in before bootstrapping admin access.",
+        message: "Нужно войти в аккаунт, чтобы выдать админ-доступ.",
       });
     }
 
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 403,
         code: "ADMIN_BOOTSTRAP_DENIED",
-        message: "Invalid bootstrap token.",
+        message: "Bootstrap token заполнен некорректно.",
       });
     }
 
@@ -98,7 +98,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 400,
         code: "ADMIN_BOOTSTRAP_PAYLOAD_INVALID",
-        message: "Bootstrap payload is invalid.",
+        message: "Параметры bootstrap заполнены некорректно.",
         details: error.flatten(),
       });
     }
@@ -106,7 +106,7 @@ export async function POST(request: Request) {
     return createApiErrorResponse({
       status: 500,
       code: "ADMIN_BOOTSTRAP_FAILED",
-      message: "Unable to bootstrap admin access.",
+      message: "Не удалось выдать админ-доступ.",
     });
   }
 }

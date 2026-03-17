@@ -90,7 +90,7 @@ export async function POST(
     return createApiErrorResponse({
       status: 500,
       code: "ADMIN_BILLING_RECONCILE_FAILED",
-      message: "Unable to reconcile Stripe subscription state.",
+      message: "Не удалось сверить состояние Stripe-подписки.",
     });
   }
 }

@@ -69,7 +69,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 400,
         code: "AI_EVAL_RUN_INVALID",
-        message: "AI eval payload is invalid.",
+        message: "Параметры AI eval заполнены некорректно.",
         details: error.flatten(),
       });
     }
@@ -77,7 +77,7 @@ export async function POST(request: Request) {
     return createApiErrorResponse({
       status: 500,
       code: "AI_EVAL_RUN_FAILED",
-      message: "Unable to queue AI eval run.",
+      message: "Не удалось поставить AI eval в очередь.",
     });
   }
 }

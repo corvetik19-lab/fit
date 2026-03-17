@@ -166,7 +166,7 @@ export async function POST(request: Request) {
     return createApiErrorResponse({
       status: 500,
       code: "STRIPE_WEBHOOK_FAILED",
-      message: "Unable to process Stripe webhook.",
+      message: "Не удалось обработать Stripe webhook.",
     });
   }
 }

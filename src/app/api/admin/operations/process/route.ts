@@ -44,14 +44,14 @@ export async function POST(request: Request) {
         status: 400,
         code: "ADMIN_OPERATIONS_PROCESS_INVALID",
         details: error.flatten(),
-        message: "Invalid operations processor payload.",
+        message: "Параметры обработчика операций заполнены некорректно.",
       });
     }
 
     return createApiErrorResponse({
       status: 500,
       code: "ADMIN_OPERATIONS_PROCESS_FAILED",
-      message: "Unable to process admin operation queues.",
+      message: "Не удалось обработать очередь админ-операций.",
     });
   }
 }

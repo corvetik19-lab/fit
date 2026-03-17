@@ -89,7 +89,7 @@ export async function POST(
       return createApiErrorResponse({
         status: 400,
         code: "ADMIN_RESTORE_INVALID",
-        message: "Restore payload is invalid.",
+        message: "Параметры восстановления заполнены некорректно.",
         details: error.flatten(),
       });
     }
@@ -99,7 +99,7 @@ export async function POST(
     return createApiErrorResponse({
       status: 500,
       code: "ADMIN_RESTORE_FAILED",
-      message: "Unable to queue restore action.",
+      message: "Не удалось поставить восстановление в очередь.",
     });
   }
 }

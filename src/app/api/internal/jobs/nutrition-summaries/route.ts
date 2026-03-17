@@ -112,7 +112,7 @@ async function handleRequest(request: Request) {
     return createApiErrorResponse({
       status: 500,
       code: "NUTRITION_SUMMARIES_JOB_FAILED",
-      message: "Unable to recalculate nutrition summaries.",
+      message: "Не удалось пересчитать nutrition summaries.",
     });
   }
 }

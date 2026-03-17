@@ -317,14 +317,14 @@ export async function PATCH(
         status: 400,
         code: "ADMIN_OPERATION_INVALID",
         details: error.flatten(),
-        message: "Invalid operations inbox payload.",
+        message: "Параметры элемента operations inbox заполнены некорректно.",
       });
     }
 
     return createApiErrorResponse({
       status: 500,
       code: "ADMIN_OPERATION_UPDATE_FAILED",
-      message: "Unable to update operations inbox item.",
+      message: "Не удалось обновить элемент operations inbox.",
     });
   }
 }

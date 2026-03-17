@@ -106,7 +106,7 @@ export async function POST(
       return createApiErrorResponse({
         status: 400,
         code: "ADMIN_SUSPEND_INVALID",
-        message: "Suspend payload is invalid.",
+        message: "Параметры блокировки заполнены некорректно.",
         details: error.flatten(),
       });
     }
@@ -116,7 +116,7 @@ export async function POST(
     return createApiErrorResponse({
       status: 500,
       code: "ADMIN_SUSPEND_FAILED",
-      message: "Unable to queue suspend action.",
+      message: "Не удалось поставить блокировку в очередь.",
     });
   }
 }

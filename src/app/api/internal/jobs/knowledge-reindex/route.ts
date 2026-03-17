@@ -194,7 +194,7 @@ async function handleRequest(request: Request) {
     return createApiErrorResponse({
       status: 500,
       code: "KNOWLEDGE_REINDEX_JOB_FAILED",
-      message: "Unable to refresh the knowledge index.",
+      message: "Не удалось обновить индекс базы знаний.",
     });
   }
 }

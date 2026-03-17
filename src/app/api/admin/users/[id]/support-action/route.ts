@@ -106,7 +106,7 @@ export async function POST(
       return createApiErrorResponse({
         status: 400,
         code: "ADMIN_SUPPORT_ACTION_INVALID",
-        message: "Support action payload is invalid.",
+        message: "Параметры support action заполнены некорректно.",
         details: error.flatten(),
       });
     }
@@ -116,7 +116,7 @@ export async function POST(
     return createApiErrorResponse({
       status: 500,
       code: "ADMIN_SUPPORT_ACTION_FAILED",
-      message: "Unable to queue support action.",
+      message: "Не удалось поставить support action в очередь.",
     });
   }
 }

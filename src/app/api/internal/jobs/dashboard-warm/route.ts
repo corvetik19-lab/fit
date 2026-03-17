@@ -105,7 +105,7 @@ async function handleRequest(request: Request) {
     return createApiErrorResponse({
       status: 500,
       code: "DASHBOARD_WARM_JOB_FAILED",
-      message: "Unable to warm dashboard snapshots.",
+      message: "Не удалось прогреть snapshots дашборда.",
     });
   }
 }

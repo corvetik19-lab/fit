@@ -120,7 +120,7 @@ export async function POST(
       return createApiErrorResponse({
         status: 400,
         code: "ADMIN_DELETION_INVALID",
-        message: "Deletion payload is invalid.",
+        message: "Параметры удаления заполнены некорректно.",
         details: error.flatten(),
       });
     }
@@ -130,7 +130,7 @@ export async function POST(
     return createApiErrorResponse({
       status: 500,
       code: "ADMIN_DELETION_FAILED",
-      message: "Unable to queue deletion request.",
+      message: "Не удалось поставить запрос на удаление в очередь.",
     });
   }
 }
@@ -230,7 +230,7 @@ export async function DELETE(
       return createApiErrorResponse({
         status: 400,
         code: "ADMIN_DELETION_INVALID",
-        message: "Deletion payload is invalid.",
+        message: "Параметры удаления заполнены некорректно.",
         details: error.flatten(),
       });
     }
@@ -240,7 +240,7 @@ export async function DELETE(
     return createApiErrorResponse({
       status: 500,
       code: "ADMIN_DELETION_CANCEL_FAILED",
-      message: "Unable to cancel deletion request.",
+      message: "Не удалось отменить запрос на удаление.",
     });
   }
 }

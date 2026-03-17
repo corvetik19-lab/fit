@@ -370,7 +370,7 @@ export async function GET() {
     return createApiErrorResponse({
       status: 500,
       code: "ADMIN_OPERATIONS_FAILED",
-      message: "Unable to load operations inbox.",
+      message: "Не удалось загрузить операционный inbox.",
     });
   }
 }

@@ -278,7 +278,7 @@ async function handleRequest(request: Request) {
     return createApiErrorResponse({
       status: 500,
       code: "BILLING_RECONCILE_JOB_FAILED",
-      message: "Unable to reconcile Stripe billing state.",
+      message: "Не удалось сверить состояние Stripe billing.",
     });
   }
 }

@@ -154,7 +154,7 @@ export async function PATCH(
       return createApiErrorResponse({
         status: 400,
         code: "ADMIN_ROLE_INVALID",
-        message: "Admin role payload is invalid.",
+        message: "Параметры админ-роли заполнены некорректно.",
         details: error.flatten(),
       });
     }
@@ -164,7 +164,7 @@ export async function PATCH(
     return createApiErrorResponse({
       status: 500,
       code: "ADMIN_ROLE_UPDATE_FAILED",
-      message: "Unable to update admin role.",
+      message: "Не удалось обновить админ-роль.",
     });
   }
 }
@@ -288,7 +288,7 @@ export async function DELETE(
     return createApiErrorResponse({
       status: 500,
       code: "ADMIN_ROLE_REVOKE_FAILED",
-      message: "Unable to revoke admin role.",
+      message: "Не удалось отозвать админ-роль.",
     });
   }
 }

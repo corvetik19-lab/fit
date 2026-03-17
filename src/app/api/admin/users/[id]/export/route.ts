@@ -88,7 +88,7 @@ export async function POST(
       return createApiErrorResponse({
         status: 400,
         code: "ADMIN_EXPORT_INVALID",
-        message: "Export payload is invalid.",
+        message: "Параметры выгрузки заполнены некорректно.",
         details: error.flatten(),
       });
     }
@@ -98,7 +98,7 @@ export async function POST(
     return createApiErrorResponse({
       status: 500,
       code: "ADMIN_EXPORT_FAILED",
-      message: "Unable to queue export job.",
+      message: "Не удалось поставить выгрузку в очередь.",
     });
   }
 }

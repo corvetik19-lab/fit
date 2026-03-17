@@ -293,7 +293,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 400,
         code: "ADMIN_BULK_INVALID",
-        message: "Bulk admin payload is invalid.",
+        message: "Параметры массового админ-действия заполнены некорректно.",
         details: error.flatten(),
       });
     }
@@ -303,7 +303,7 @@ export async function POST(request: Request) {
     return createApiErrorResponse({
       status: 500,
       code: "ADMIN_BULK_FAILED",
-      message: "Unable to execute bulk admin action.",
+      message: "Не удалось выполнить массовое админ-действие.",
     });
   }
 }
