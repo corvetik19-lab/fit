@@ -12,6 +12,7 @@
     "lint": "eslint src next.config.ts eslint.config.mjs postcss.config.mjs",
     "typecheck": "node scripts/run-next-with-dist-dir.mjs typegen --dist-dir=.next_build && npx tsc -p tsconfig.json --noEmit --incremental false",
     "verify:migrations": "powershell -ExecutionPolicy Bypass -File scripts/verify-migrations.ps1",
+    "verify:advisors": "powershell -ExecutionPolicy Bypass -File scripts/verify-advisors.ps1",
     "pretest:e2e": "npm run build:test",
     "pretest:e2e:auth": "npm run build:test",
     "pretest:smoke": "npm run build:test",

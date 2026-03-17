@@ -31,6 +31,32 @@ jobs:
         shell: pwsh
         run: ./scripts/verify-migrations.ps1
 
+  advisors:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: db-verification
+    if: ${{ secrets.SUPABASE_ACCESS_TOKEN != '' && secrets.SUPABASE_PROJECT_REF != '' }}
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+      SUPABASE_ADVISOR_ALLOWLIST: auth_leaked_password_protection
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Verify Supabase advisors for DB changes
+        shell: pwsh
+        run: ./scripts/verify-advisors.ps1
+
   quality:
     runs-on: ubuntu-latest
     timeout-minutes: 20

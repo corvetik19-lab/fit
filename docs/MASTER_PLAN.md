@@ -56,6 +56,7 @@
 - [x] Убрать зависимость quality gates от мусорных `.next/types` и нестабильных `distDir`-сценариев.
 - [x] Привести `lint` к рабочему CI-формату.
 - [x] Зафиксировать воспроизводимый baseline: `lint`, `typecheck`, `build`, smoke.
+- [x] Добавить воспроизводимый `verify:advisors` gate для DB-изменений при наличии Supabase management secrets.
 
 ### Workspace cleanup
 
@@ -221,7 +222,7 @@
 ### Database / Supabase
 
 - [ ] Провести полный аудит схемы, RLS, RPC, cron-related функций и индексных путей через Supabase MCP.
-- [ ] После DDL-изменений запускать advisors `security` и `performance` как обязательную проверку.
+- [x] После DDL-изменений запускать advisors `security` и `performance` как обязательную проверку.
 - [ ] Проверить query paths и индексы для `sync`, `workout`, `knowledge`, `admin`, `billing`.
 
 ### Observability
@@ -270,7 +271,7 @@
 - [x] Добавить smoke subset как merge gate.
 - [x] Добавить secret-guarded `test:rls` и `test:e2e:auth` jobs для полного regression-контура в GitHub Actions.
 - [x] При наличии DB-изменений добавить migration-aware verification в CI.
-- [ ] Добавить advisor execution/verification для DB-изменений в CI.
+- [x] Добавить advisor execution/verification для DB-изменений в CI.
 
 ### Release process
 

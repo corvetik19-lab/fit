@@ -41,6 +41,7 @@ npm run build
 - `npm run build`
 - `npm run test:smoke`
 - `npm run verify:migrations` при изменениях в `supabase/migrations`
+- `npm run verify:advisors` при изменениях в `supabase/migrations`, если доступны Supabase management secrets
 
 Цель проекта — чтобы все три команды проходили стабильно за один запуск и были готовы для CI.
 
@@ -51,6 +52,8 @@ npm run build
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
+- `SUPABASE_PROJECT_REF`
+- `SUPABASE_ACCESS_TOKEN`
 - `PLAYWRIGHT_TEST_EMAIL`
 - `PLAYWRIGHT_TEST_PASSWORD`
 - `PLAYWRIGHT_ADMIN_EMAIL`
@@ -67,7 +70,7 @@ Source of truth по production-ready состоянию теперь вынес
 
 Если этих secrets нет, workflow всё равно прогоняет `lint`, `typecheck`, `build` и `test:smoke`, а полные auth/RLS regression jobs просто пропускаются.
 
-Если в diff есть файлы из `supabase/migrations`, CI дополнительно запускает `npm run verify:migrations` и требует синхронных обновлений `docs/MASTER_PLAN.md` и `docs/AI_WORKLOG.md`.
+Если в diff есть файлы из `supabase/migrations`, CI дополнительно запускает `npm run verify:migrations`, а при наличии `SUPABASE_PROJECT_REF` и `SUPABASE_ACCESS_TOKEN` ещё и `npm run verify:advisors`. Для миграций по-прежнему требуются синхронные обновления `docs/MASTER_PLAN.md` и `docs/AI_WORKLOG.md`.
 
 ## Переменные окружения
 
