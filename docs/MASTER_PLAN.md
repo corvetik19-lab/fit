@@ -567,3 +567,10 @@
 - [x] `weekly programs`, `nutrition targets`, `onboarding`, `legacy chat`, `meal templates`, `meals` и `settings billing` больше не отдают английские сообщения и mojibake в user-facing error surface.
 - [x] Tranche подтверждён baseline-пакетом: `npx eslint ...`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `36 passed`.
 - [ ] Следующий sanitation/backend tranche: дочистить оставшиеся self-service и product API routes вне этого пакета, затем вернуться к owner-only / retrieval audit по оставшимся AI/data контурам.
+
+## 2026-03-17 self-service route sanitation follow-up
+
+- [x] Санирован user-facing copy в `src/app/api/foods/[id]/route.ts`, `src/app/api/meal-templates/[id]/route.ts`, `src/app/api/meals/[id]/route.ts`, `src/app/api/recipes/[id]/route.ts`, `src/app/api/settings/data/route.ts`, `src/app/api/settings/data/export/[id]/download/route.ts`.
+- [x] Delete/update/export поверхности для продуктов, шаблонов питания, приёмов пищи, рецептов и центра данных больше не отдают mojibake и выровнены по понятному русскому self-service UX.
+- [x] Follow-up подтверждён baseline-пакетом: `npx eslint ...`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `36 passed`.
+- [ ] Следующий sanitation/backend tranche: дочистить remaining operator/self-service routes вне этого пакета и затем вернуться к owner-only / retrieval audit по оставшимся AI/data контурам.

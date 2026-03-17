@@ -74,7 +74,7 @@ export async function GET() {
       return createApiErrorResponse({
         status: 401,
         code: "AUTH_REQUIRED",
-        message: "Войди в аккаунт, чтобы открыть центр данных.",
+        message: "Нужно войти в аккаунт, чтобы открыть центр данных.",
       });
     }
 
@@ -103,7 +103,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 401,
         code: "AUTH_REQUIRED",
-        message: "Войди в аккаунт, чтобы изменить настройки центра данных.",
+        message: "Нужно войти в аккаунт, чтобы изменить настройки центра данных.",
       });
     }
 
@@ -222,7 +222,7 @@ export async function DELETE() {
       return createApiErrorResponse({
         status: 401,
         code: "AUTH_REQUIRED",
-        message: "Войди в аккаунт, чтобы изменить настройки центра данных.",
+        message: "Нужно войти в аккаунт, чтобы изменить настройки центра данных.",
       });
     }
 

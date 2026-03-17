@@ -581,3 +581,9 @@
 - Перевёл в нормальный русский user-facing ошибки и статусы в `src/app/api/weekly-programs/route.ts`, `src/app/api/weekly-programs/[id]/clone/route.ts`, `src/app/api/weekly-programs/[id]/lock/route.ts`, `src/app/api/nutrition/targets/route.ts`, `src/app/api/onboarding/route.ts`, `src/app/api/chat/route.ts`, `src/app/api/meal-templates/route.ts`, `src/app/api/meals/route.ts`, `src/app/api/settings/billing/route.ts`.
 - Закрыл остатки английского и mojibake в self-service/product route surface: weekly programs, nutrition targets, onboarding, legacy chat, meal templates, meals и billing center теперь отдают чистый UTF-8 copy.
 - Tranche подтверждён командами `npx eslint ...`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `36 passed`.
+
+### 2026-03-17 14:10 - Дочистил self-service delete/export routes
+
+- Переписал в чистом UTF-8 `src/app/api/foods/[id]/route.ts`, `src/app/api/meal-templates/[id]/route.ts`, `src/app/api/meals/[id]/route.ts`, `src/app/api/recipes/[id]/route.ts`, `src/app/api/settings/data/route.ts`, `src/app/api/settings/data/export/[id]/download/route.ts`.
+- Self-service update/delete/export поверхности для продуктов, шаблонов питания, приёмов пищи, рецептов и центра данных теперь отдают единый понятный русский copy без mojibake.
+- Follow-up подтверждён командами `npx eslint ...`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `36 passed`.

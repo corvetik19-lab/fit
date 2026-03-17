@@ -22,7 +22,7 @@ export async function DELETE(
       return createApiErrorResponse({
         status: 401,
         code: "AUTH_REQUIRED",
-        message: "Войди в аккаунт, чтобы удалять рецепты.",
+        message: "Нужно войти в аккаунт, чтобы удалять рецепты.",
       });
     }
 

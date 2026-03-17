@@ -31,7 +31,7 @@ export async function PATCH(
       return createApiErrorResponse({
         status: 401,
         code: "AUTH_REQUIRED",
-        message: "Войди в аккаунт, чтобы редактировать продукты.",
+        message: "Нужно войти в аккаунт, чтобы редактировать продукты.",
       });
     }
 
@@ -97,7 +97,7 @@ export async function PATCH(
       return createApiErrorResponse({
         status: 400,
         code: "FOOD_UPDATE_INVALID",
-        message: "Данные продукта или route params заполнены некорректно.",
+        message: "Данные продукта или параметры маршрута заполнены некорректно.",
         details: error.flatten(),
       });
     }
@@ -126,7 +126,7 @@ export async function DELETE(
       return createApiErrorResponse({
         status: 401,
         code: "AUTH_REQUIRED",
-        message: "Войди в аккаунт, чтобы удалять продукты.",
+        message: "Нужно войти в аккаунт, чтобы удалять продукты.",
       });
     }
 

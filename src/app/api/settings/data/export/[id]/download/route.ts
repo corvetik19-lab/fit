@@ -52,7 +52,7 @@ export async function GET(
       return createApiErrorResponse({
         status: 401,
         code: "AUTH_REQUIRED",
-        message: "Войди в аккаунт, чтобы скачать выгрузку.",
+        message: "Нужно войти в аккаунт, чтобы скачать выгрузку.",
       });
     }
 
