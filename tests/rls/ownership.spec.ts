@@ -60,6 +60,38 @@ test.describe("rls ownership", () => {
       expect(hiddenProgramError).toBeNull();
       expect(hiddenProgramRows).toEqual([]);
 
+      const { data: ownFoodRows, error: ownFoodError } = await regularUser.client
+        .from("foods")
+        .select("id, user_id, source, name")
+        .eq("id", fixture.foodId);
+
+      expect(ownFoodError).toBeNull();
+      expect(ownFoodRows).toHaveLength(1);
+      expect(ownFoodRows?.[0]?.id).toBe(fixture.foodId);
+      expect(ownFoodRows?.[0]?.user_id).toBe(fixture.userId);
+      expect(ownFoodRows?.[0]?.source).toBe("custom");
+
+      const { data: ownRecipeRows, error: ownRecipeError } = await regularUser.client
+        .from("recipes")
+        .select("id, user_id, title")
+        .eq("id", fixture.recipeId);
+
+      expect(ownRecipeError).toBeNull();
+      expect(ownRecipeRows).toHaveLength(1);
+      expect(ownRecipeRows?.[0]?.id).toBe(fixture.recipeId);
+      expect(ownRecipeRows?.[0]?.user_id).toBe(fixture.userId);
+
+      const { data: ownWorkoutTemplateRows, error: ownWorkoutTemplateError } =
+        await regularUser.client
+          .from("workout_templates")
+          .select("id, user_id, title")
+          .eq("id", fixture.workoutTemplateId);
+
+      expect(ownWorkoutTemplateError).toBeNull();
+      expect(ownWorkoutTemplateRows).toHaveLength(1);
+      expect(ownWorkoutTemplateRows?.[0]?.id).toBe(fixture.workoutTemplateId);
+      expect(ownWorkoutTemplateRows?.[0]?.user_id).toBe(fixture.userId);
+
       const { data: ownChatSessionRows, error: ownChatSessionError } = await regularUser.client
         .from("ai_chat_sessions")
         .select("id, user_id, title")
@@ -179,6 +211,31 @@ test.describe("rls ownership", () => {
 
       expect(hiddenKnowledgeChunkError).toBeNull();
       expect(hiddenKnowledgeChunkRows).toEqual([]);
+
+      const { data: hiddenFoodRows, error: hiddenFoodError } = await adminUser.client
+        .from("foods")
+        .select("id")
+        .eq("id", fixture.foodId);
+
+      expect(hiddenFoodError).toBeNull();
+      expect(hiddenFoodRows).toEqual([]);
+
+      const { data: hiddenRecipeRows, error: hiddenRecipeError } = await adminUser.client
+        .from("recipes")
+        .select("id")
+        .eq("id", fixture.recipeId);
+
+      expect(hiddenRecipeError).toBeNull();
+      expect(hiddenRecipeRows).toEqual([]);
+
+      const { data: hiddenWorkoutTemplateRows, error: hiddenWorkoutTemplateError } =
+        await adminUser.client
+          .from("workout_templates")
+          .select("id")
+          .eq("id", fixture.workoutTemplateId);
+
+      expect(hiddenWorkoutTemplateError).toBeNull();
+      expect(hiddenWorkoutTemplateRows).toEqual([]);
 
       const { data: foreignUpdateRows, error: foreignUpdateError } = await adminUser.client
         .from("ai_plan_proposals")

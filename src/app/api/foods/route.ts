@@ -24,7 +24,7 @@ export async function GET() {
       return createApiErrorResponse({
         status: 401,
         code: "AUTH_REQUIRED",
-        message: "Войди в аккаунт, чтобы загрузить продукты.",
+        message: "Нужно войти в аккаунт, чтобы загрузить продукты.",
       });
     }
 
@@ -61,7 +61,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 401,
         code: "AUTH_REQUIRED",
-        message: "Войди в аккаунт, чтобы добавлять продукты.",
+        message: "Нужно войти в аккаунт, чтобы добавлять продукты.",
       });
     }
 

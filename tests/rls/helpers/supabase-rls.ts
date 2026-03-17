@@ -239,6 +239,24 @@ export async function seedRlsOwnershipFixture() {
     throw exerciseError;
   }
 
+  const { data: foodRow, error: foodError } = await supabase
+    .from("foods")
+    .insert({
+      user_id: userId,
+      source: "custom",
+      name: `RLS Food ${seed}`,
+      kcal: 220,
+      protein: 18,
+      fat: 7,
+      carbs: 24,
+    })
+    .select("id")
+    .single();
+
+  if (foodError) {
+    throw foodError;
+  }
+
   const { data: programRow, error: programError } = await supabase
     .from("weekly_programs")
     .insert({
@@ -254,6 +272,68 @@ export async function seedRlsOwnershipFixture() {
 
   if (programError) {
     throw programError;
+  }
+
+  const { data: workoutTemplateRow, error: workoutTemplateError } = await supabase
+    .from("workout_templates")
+    .insert({
+      user_id: userId,
+      title: `RLS Template ${seed}`,
+      payload: {
+        days: [
+          {
+            dayOfWeek: 1,
+            exercises: [
+              {
+                exerciseTitleSnapshot: `RLS Exercise ${seed}`,
+                setsCount: 4,
+                plannedReps: 8,
+                plannedRepsMin: 8,
+                plannedRepsMax: 10,
+                repRangeKey: "strength",
+                exerciseLibraryId: exerciseRow.id,
+              },
+            ],
+          },
+        ],
+      },
+    })
+    .select("id")
+    .single();
+
+  if (workoutTemplateError) {
+    throw workoutTemplateError;
+  }
+
+  const { data: recipeRow, error: recipeError } = await supabase
+    .from("recipes")
+    .insert({
+      user_id: userId,
+      title: `RLS Recipe ${seed}`,
+      instructions: "RLS ownership fixture",
+      servings: 2,
+    })
+    .select("id")
+    .single();
+
+  if (recipeError) {
+    throw recipeError;
+  }
+
+  const { error: recipeItemError } = await supabase.from("recipe_items").insert({
+    user_id: userId,
+    recipe_id: recipeRow.id,
+    food_id: foodRow.id,
+    food_name_snapshot: `RLS Food ${seed}`,
+    servings: 1,
+    kcal: 220,
+    protein: 18,
+    fat: 7,
+    carbs: 24,
+  });
+
+  if (recipeItemError) {
+    throw recipeItemError;
   }
 
   const { data: chatSessionRow, error: chatSessionError } = await supabase
@@ -363,10 +443,13 @@ export async function seedRlsOwnershipFixture() {
     deletionRequestId: deletionRequestRow.id as string,
     exerciseId: exerciseRow.id as string,
     exportJobId: exportJobRow.id as string,
+    foodId: foodRow.id as string,
     knowledgeChunkId: knowledgeChunkRow.id as string,
     programId: programRow.id as string,
+    recipeId: recipeRow.id as string,
     userId,
     userProposalId: userProposalRow.id as string,
+    workoutTemplateId: workoutTemplateRow.id as string,
   };
 }
 

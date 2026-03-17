@@ -552,3 +552,11 @@
 - [x] Из AI API убраны английские сообщения и лишние технические формулировки вроде `AI runtime`, `live-запросы`, `AI-предложение`; пользовательская поверхность теперь везде говорит по-русски и понятнее разводит runtime/config ошибки.
 - [x] Tranche подтверждён baseline: `npx eslint ...src/app/api/ai/*`, `npm run typecheck`, `npm run build`, `npm run build:test`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1` -> `6 passed`.
 - [ ] Следующий AI/backend tranche: вернуться к `owner-only / idempotency / retrieval` audit по AI/data routes и добить remaining route-level ownership coverage.
+
+## 2026-03-17 direct RLS ownership expansion addendum
+
+- [x] `tests/rls/helpers/supabase-rls.ts` расширен новыми fixture rows для `foods`, `recipes`, `recipe_items` и `workout_templates`, seeded через service-role под тестового пользователя.
+- [x] `tests/rls/ownership.spec.ts` теперь напрямую подтверждает row-level изоляцию не только для `ai_plan_proposals`, `exercise_library`, `weekly_programs`, `ai_chat_*`, `export_jobs`, `deletion_requests`, `user_context_snapshots`, `knowledge_chunks`, но и для `foods`, `recipes`, `workout_templates`.
+- [x] Заодно дочищен user-facing copy в `src/app/api/workout-templates/route.ts`, `src/app/api/foods/route.ts`, `src/app/api/recipes/route.ts`: self-service тренировки и питание больше не отдают английские login/save/load сообщения.
+- [x] Tranche подтверждён baseline: `npx eslint tests/rls tests/rls/helpers src/app/api/workout-templates/route.ts src/app/api/foods/route.ts src/app/api/recipes/route.ts`, `npm run test:rls` -> `1 passed`, `npm run typecheck`, `npm run build`.
+- [ ] Следующий backend tranche: продолжить `owner-only / idempotency / retrieval` audit по оставшимся AI/data routes и затем решить, нужен ли ещё один direct RLS слой для оставшихся user-scoped tables.

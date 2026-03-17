@@ -23,7 +23,7 @@ export async function GET() {
       return createApiErrorResponse({
         status: 401,
         code: "AUTH_REQUIRED",
-        message: "Sign in before loading workout templates.",
+        message: "Нужно войти в аккаунт, чтобы открыть шаблоны тренировок.",
       });
     }
 
@@ -35,7 +35,7 @@ export async function GET() {
     return createApiErrorResponse({
       status: 500,
       code: "WORKOUT_TEMPLATE_LIST_FAILED",
-      message: "Unable to load workout templates.",
+      message: "Не удалось загрузить шаблоны тренировок.",
     });
   }
 }
@@ -51,7 +51,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 401,
         code: "AUTH_REQUIRED",
-        message: "Sign in before saving workout templates.",
+        message: "Нужно войти в аккаунт, чтобы сохранять шаблоны тренировок.",
       });
     }
 
@@ -72,7 +72,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 404,
         code: "WORKOUT_TEMPLATE_SOURCE_NOT_FOUND",
-        message: "Source weekly program was not found.",
+        message: "Исходная недельная программа не найдена.",
       });
     }
 
@@ -195,7 +195,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 400,
         code: "WORKOUT_TEMPLATE_CREATE_INVALID",
-        message: "Workout template payload is invalid.",
+        message: "Параметры шаблона тренировки заполнены некорректно.",
         details: error.flatten(),
       });
     }
@@ -203,7 +203,7 @@ export async function POST(request: Request) {
     return createApiErrorResponse({
       status: 500,
       code: "WORKOUT_TEMPLATE_CREATE_FAILED",
-      message: "Unable to save workout template.",
+      message: "Не удалось сохранить шаблон тренировки.",
     });
   }
 }

@@ -568,3 +568,10 @@
 - Убрал английские сообщения и технический жаргон вроде `AI runtime`, `live-запросы`, `AI-предложение`; вместо этого ошибки и статусы теперь объясняются по-русски и без лишнего внутреннего языка.
 - Прогнал машинный scan по `src/app/api/ai` и подтвердил, что английских `message:` / `return` строк в user-facing слое больше не осталось.
 - Tranche подтверждён командами `npx eslint ...src/app/api/ai/*`, `npm run typecheck`, `npm run build`, `npm run build:test`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1` -> `6 passed`.
+
+### 2026-03-17 12:25 - Расширил direct RLS ownership и дочистил self-service route copy
+
+- `tests/rls/helpers/supabase-rls.ts` расширен fixture-данными для `foods`, `recipes`, `recipe_items` и `workout_templates`, чтобы direct row-level suite покрывал не только proposals/history/self-service, но и user-scoped nutrition plus workout template surfaces.
+- `tests/rls/ownership.spec.ts` теперь напрямую подтверждает, что обычный пользователь видит свои `foods`, `recipes` и `workout_templates`, а root-admin не видит эти строки через обычный user client.
+- В `src/app/api/workout-templates/route.ts`, `src/app/api/foods/route.ts` и `src/app/api/recipes/route.ts` дочистил user-facing copy до нормального русского без обрывков старой технической формулировки.
+- Tranche подтверждён командами `npx eslint tests/rls tests/rls/helpers src/app/api/workout-templates/route.ts src/app/api/foods/route.ts src/app/api/recipes/route.ts`, `npm run test:rls`, `npm run typecheck`, `npm run build`.
