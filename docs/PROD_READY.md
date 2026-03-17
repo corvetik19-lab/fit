@@ -6,7 +6,7 @@
 
 - `npm run build` зелёный;
 - Vercel deployment создался;
-- приложение “в целом открывается”.
+- приложение "в целом открывается".
 
 `Prod-ready` означает, что одновременно выполнены automated gates, manual acceptance, env readiness и release-specific проверки.
 
@@ -21,14 +21,14 @@
 
 ### Дополнительные обязательные проверки по изменению контура
 
-- `npm run test:rls` — если менялся auth, RLS, owner-only или self-service контур
-- `npm run test:e2e:auth` — если менялись пользовательские сценарии, shell, API contracts, AI/admin UX
-- `npm run verify:migrations` — если менялись `supabase/migrations`
+- `npm run test:rls` - если менялся auth, RLS, owner-only или self-service контур
+- `npm run test:e2e:auth` - если менялись пользовательские сценарии, shell, API contracts, AI/admin UX
+- `npm run verify:migrations` - если менялись `supabase/migrations`
 
 ### Что считается провалом automated gates
 
 - хотя бы одна из команд падает;
-- команды проходят только “со второго раза” без объяснимой причины;
+- команды проходят только "со второго раза" без объяснимой причины;
 - quality gates оставляют неожиданный tracked-noise;
 - тесты зелёные только за счёт skip, а не реального прохождения сценариев.
 
@@ -122,14 +122,20 @@
 - не готовы `assetlinks.json`, package name, signing и splash;
 - не пройден smoke на production URL.
 
-## 5. Минимум для статуса “можно выкатывать”
+### Supabase platform нельзя считать release-ready, если
 
-Статус “можно выкатывать” допустим только если одновременно верны все пункты:
+- leaked password protection остаётся выключенной без отдельного принятого риска;
+- нет зафиксированного решения по `vector` extension в `public`;
+- platform-level настройки расходятся с `docs/RELEASE_CHECKLIST.md`.
+
+## 5. Минимум для статуса "можно выкатывать"
+
+Статус "можно выкатывать" допустим только если одновременно верны все пункты:
 
 - baseline quality gates зелёные;
 - критические manual acceptance сценарии пройдены;
 - нет известных blocker-багов по shell, workouts, nutrition, AI и admin;
-- release checklist пройдён;
+- release checklist пройден;
 - env для затронутого контура подтверждены;
 - для DDL-изменений пройдены migration discipline и advisor checks.
 
@@ -138,3 +144,4 @@
 - общий merge/deploy чеклист: `docs/RELEASE_CHECKLIST.md`
 - текущий backlog и незакрытые blocker-пункты: `docs/MASTER_PLAN.md`
 - история изменений и последних прогонов: `docs/AI_WORKLOG.md`
+- допустимый warning-хвост сборки: `docs/BUILD_WARNINGS.md`

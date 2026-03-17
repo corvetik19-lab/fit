@@ -37,6 +37,51 @@ async function ensureWebSearchEnabled(webSearchToggle: Locator) {
     .toBe("true");
 }
 
+async function openPromptLibrary(
+  promptLibrary: Locator,
+  promptLibraryOpenButton: Locator,
+) {
+  const createToggle = promptLibrary.locator(
+    '[data-testid="ai-prompt-library-toggle-create"]',
+  );
+
+  await expect
+    .poll(async () => {
+      const isVisible = await createToggle.isVisible().catch(() => false);
+
+      if (isVisible) {
+        return "ready";
+      }
+
+      await promptLibraryOpenButton.click({ force: true });
+      await promptLibraryOpenButton.page().waitForTimeout(250);
+      return createToggle.isVisible().then((value) => (value ? "ready" : "pending"));
+    })
+    .toBe("ready");
+
+  return createToggle;
+}
+
+async function openPromptCreateForm(promptLibrary: Locator, createToggle: Locator) {
+  const newTitleInput = promptLibrary.locator('[data-testid="ai-prompt-library-new-title"]');
+
+  await expect
+    .poll(async () => {
+      const isVisible = await newTitleInput.isVisible().catch(() => false);
+
+      if (isVisible) {
+        return "ready";
+      }
+
+      await createToggle.click({ force: true });
+      await createToggle.page().waitForTimeout(250);
+      return newTitleInput.isVisible().then((value) => (value ? "ready" : "pending"));
+    })
+    .toBe("ready");
+
+  return newTitleInput;
+}
+
 test.describe("ai workspace", () => {
   test.skip(
     !hasAuthE2ECredentials(),
@@ -68,21 +113,15 @@ test.describe("ai workspace", () => {
       '[data-testid="ai-prompt-library-open"]',
     );
 
-    await promptLibraryOpenButton.click();
-    if (!(await promptLibrary.isVisible().catch(() => false))) {
-      await page.waitForTimeout(200);
-      await promptLibraryOpenButton.click();
-    }
-    await expect(promptLibrary).toBeVisible({ timeout: 10_000 });
-    const createToggle = promptLibrary.locator(
-      '[data-testid="ai-prompt-library-toggle-create"]',
+    const createToggle = await openPromptLibrary(
+      promptLibrary,
+      promptLibraryOpenButton,
     );
+    await expect(promptLibrary).toBeVisible({ timeout: 10_000 });
     await expect(createToggle).toBeVisible();
     await expect(createToggle).toBeEnabled();
-    await createToggle.click();
-    await page
-      .locator('[data-testid="ai-prompt-library-new-title"]')
-      .fill(customPromptTitle);
+    const newTitleInput = await openPromptCreateForm(promptLibrary, createToggle);
+    await newTitleInput.fill(customPromptTitle);
     await page
       .locator('[data-testid="ai-prompt-library-new-prompt"]')
       .fill(customPromptText);

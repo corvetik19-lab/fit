@@ -6,6 +6,15 @@
 - Во время production hardening журнал был сжат и переписан в чистый UTF-8.
 - Ниже остаются только ключевые tranche, которые помогают понять текущее состояние продукта и инженерного контура.
 
+## 2026-03-17
+
+### Release docs sanitation and AI reindex copy
+
+- Переписал `docs/RELEASE_CHECKLIST.md`, `docs/PROD_READY.md` и `docs/BUILD_WARNINGS.md` в чистом UTF-8, чтобы release-policy документы снова были пригодны как source of truth, а не содержали mojibake.
+- Зафиксировал в release docs два оставшихся platform-level Supabase ручных шага: leaked password protection и осознанное решение по `vector` extension в `public`.
+- В `src/app/api/ai/reindex/route.ts` санировал audit reason и user-facing сообщения, чтобы manual reindex path больше не возвращал битую кириллицу в support/admin surface.
+- Tranche подтверждён baseline-проверками: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth`, `npm run test:smoke`.
+
 ## 2026-03-16
 
 ### Admin detail sanitation and regression stabilization

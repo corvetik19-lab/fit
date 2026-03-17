@@ -70,6 +70,7 @@
 - [x] Переписать `docs/MASTER_PLAN.md` как production-hardening backlog.
 - [x] Переписать `docs/FRONTEND.md` в чистом UTF-8 и синхронизировать с текущим frontend-контуром.
 - [x] Добавить release checklist для production web/PWA.
+- [x] Санировать release-policy документы `docs/RELEASE_CHECKLIST.md`, `docs/PROD_READY.md`, `docs/BUILD_WARNINGS.md`.
 - [x] Санировать `docs/README.md`, `docs/AI_WORKLOG.md`, `docs/BACKEND.md`, `docs/AI_STACK.md`, `docs/USER_GUIDE.md` от mojibake.
 - [ ] Отдельно провести triage локального `docs/AI_EXPLAINED.md` и завершить sanitation-wave документации.
 

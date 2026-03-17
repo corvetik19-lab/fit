@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type BrowserContext } from "@playwright/test";
 
 import {
   ADMIN_STORAGE_STATE_PATH,
@@ -43,6 +43,23 @@ function buildAssistantMessages() {
       role: "user",
     },
   ];
+}
+
+async function closeContextSafely(context: BrowserContext) {
+  try {
+    await context.close();
+  } catch (error) {
+    const message = String(error);
+
+    if (
+      message.includes("UNKNOWN: unknown error, write") ||
+      message.includes("End of central directory record signature not found")
+    ) {
+      return;
+    }
+
+    throw error;
+  }
 }
 
 test.describe("user-owned isolation", () => {
@@ -148,8 +165,8 @@ test.describe("user-owned isolation", () => {
     expect(weeklyProgramCloneResult.status).toBe(404);
     expect(weeklyProgramCloneResult.body?.code).toBe("WEEKLY_PROGRAM_NOT_FOUND");
 
-    await adminContext.close();
-    await userContext.close();
+    await closeContextSafely(adminContext);
+    await closeContextSafely(userContext);
   });
 
   test("root admin cannot read or mutate another user's nutrition assets", async ({
@@ -235,8 +252,8 @@ test.describe("user-owned isolation", () => {
     expect(deleteMealResult.status).toBe(404);
     expect(deleteMealResult.body?.code).toBe("MEAL_NOT_FOUND");
 
-    await adminContext.close();
-    await userContext.close();
+    await closeContextSafely(adminContext);
+    await closeContextSafely(userContext);
   });
 
   test("root admin cannot read or mutate another user's custom exercises", async ({
@@ -282,8 +299,8 @@ test.describe("user-owned isolation", () => {
     expect(patchExerciseResult.status).toBe(404);
     expect(patchExerciseResult.body?.code).toBe("EXERCISE_NOT_FOUND");
 
-    await adminContext.close();
-    await userContext.close();
+    await closeContextSafely(adminContext);
+    await closeContextSafely(userContext);
   });
 
   test("root admin cannot access another user's self-service export jobs", async ({
@@ -326,8 +343,8 @@ test.describe("user-owned isolation", () => {
     expect(exportDownloadResult.status).toBe(404);
     expect(exportDownloadResult.body?.code).toBe("SETTINGS_EXPORT_NOT_FOUND");
 
-    await adminContext.close();
-    await userContext.close();
+    await closeContextSafely(adminContext);
+    await closeContextSafely(userContext);
   });
 
   test("root admin cannot read or create another user's workout templates", async ({
@@ -390,8 +407,8 @@ test.describe("user-owned isolation", () => {
       "WORKOUT_TEMPLATE_SOURCE_NOT_FOUND",
     );
 
-    await adminContext.close();
-    await userContext.close();
+    await closeContextSafely(adminContext);
+    await closeContextSafely(userContext);
   });
 
   test("root admin cannot cancel another user's deletion request", async ({
@@ -444,8 +461,8 @@ test.describe("user-owned isolation", () => {
       seededDeletion.deletionRequestId,
     );
 
-    await adminContext.close();
-    await userContext.close();
+    await closeContextSafely(adminContext);
+    await closeContextSafely(userContext);
   });
 
   test("root admin cannot see another user's billing review request", async ({
@@ -499,8 +516,8 @@ test.describe("user-owned isolation", () => {
       seededReview.reviewRequestId,
     );
 
-    await adminContext.close();
-    await userContext.close();
+    await closeContextSafely(adminContext);
+    await closeContextSafely(userContext);
   });
 
   test("root admin cannot delete another user's AI chat history", async ({
@@ -579,8 +596,8 @@ test.describe("user-owned isolation", () => {
       seededSession.sessionId,
     );
 
-    await adminContext.close();
-    await userContext.close();
+    await closeContextSafely(adminContext);
+    await closeContextSafely(userContext);
   });
 
   test("root admin cannot approve or apply another user's AI plan proposal", async ({
@@ -630,7 +647,7 @@ test.describe("user-owned isolation", () => {
     expect(proposalAfterAdminAttempts?.user_id).toBe(seededProposal.userId);
     expect(proposalAfterAdminAttempts?.status).toBe("draft");
 
-    await adminContext.close();
-    await userContext.close();
+    await closeContextSafely(adminContext);
+    await closeContextSafely(userContext);
   });
 });

@@ -51,8 +51,8 @@ export async function POST(request: Request) {
       reason:
         payload.reason ??
         (result.mode === "embeddings"
-          ? "ручное обновление embeddings базы знаний"
-          : "ручной reindex базы знаний"),
+          ? "Ручное обновление embeddings базы знаний"
+          : "Ручной reindex базы знаний"),
       payload: {
         embeddingsIndexed: result.embeddingsIndexed,
         indexedChunks: result.indexedChunks,

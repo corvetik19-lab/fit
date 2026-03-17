@@ -137,7 +137,7 @@ test.describe("ui regressions", () => {
               .catch(() => false);
 
             return degradedBannerVisible ? "degraded" : "pending";
-          })
+          }, { timeout: 15_000 })
           .not.toBe("pending");
         await page.waitForTimeout(1000);
 

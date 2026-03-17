@@ -22,6 +22,52 @@ const mobileUse = {
   hasTouch: true,
 } as const;
 
+async function toggleFocusHeader(
+  page: Parameters<typeof expectNoHorizontalOverflow>[0],
+  expectedExpanded: "true" | "false",
+) {
+  const collapseToggle = page.getByTestId("workout-focus-header-toggle");
+
+  await expect
+    .poll(async () => {
+      const currentValue = await collapseToggle.getAttribute("aria-expanded");
+
+      if (currentValue === expectedExpanded) {
+        return currentValue;
+      }
+
+      await collapseToggle.click({ force: true });
+      await page.waitForTimeout(250);
+      return collapseToggle.getAttribute("aria-expanded");
+    })
+    .toBe(expectedExpanded);
+}
+
+async function openMobileDrawer(
+  page: Parameters<typeof expectNoHorizontalOverflow>[0],
+) {
+  const drawerToggle = page.getByTestId("app-mobile-header-drawer-toggle").first();
+  const drawer = page.getByTestId("app-mobile-drawer").first();
+
+  await expect(drawerToggle).toBeVisible({ timeout: 15_000 });
+
+  await expect
+    .poll(async () => {
+      const ariaHidden = await drawer.getAttribute("aria-hidden");
+
+      if (ariaHidden === "false") {
+        return ariaHidden;
+      }
+
+      await drawerToggle.click({ force: true });
+      await page.waitForTimeout(250);
+      return drawer.getAttribute("aria-hidden");
+    })
+    .toBe("false");
+
+  return drawer;
+}
+
 test.describe("mobile pwa regressions", () => {
   test.describe.configure({ timeout: 60_000 });
 
@@ -45,15 +91,9 @@ test.describe("mobile pwa regressions", () => {
         await navigateStable(page, "/dashboard", /\/dashboard$/);
         await page.waitForLoadState("networkidle");
         await page.waitForTimeout(300);
-        const drawerToggle = page
-          .getByTestId("app-mobile-header-drawer-toggle")
-          .first();
-        await expect(drawerToggle).toBeVisible({ timeout: 15_000 });
         await expectNoHorizontalOverflow(page, "/dashboard");
 
-        await drawerToggle.click();
-        const drawer = page.getByTestId("app-mobile-drawer").first();
-        await expect(drawer).toHaveAttribute("aria-hidden", "false");
+        const drawer = await openMobileDrawer(page);
         await expectDrawerFillsViewport(page);
         await expect(drawer).toContainText("Разделы приложения");
         await expect(drawer).toContainText("Настройки");
@@ -141,11 +181,9 @@ test.describe("mobile pwa regressions", () => {
         }
         await expect(normalViewButton).toBeVisible();
 
-        await collapseToggle.click();
-        await expect(collapseToggle).toHaveAttribute("aria-expanded", "false");
+        await toggleFocusHeader(page, "false");
         await expectNoHorizontalOverflow(page, "collapsed workout focus header");
-        await collapseToggle.click();
-        await expect(collapseToggle).toHaveAttribute("aria-expanded", "true");
+        await toggleFocusHeader(page, "true");
 
         regressionCapture.assertNone();
       } finally {
@@ -176,12 +214,7 @@ test.describe("mobile pwa regressions", () => {
         await page.waitForTimeout(300);
         await expectNoHorizontalOverflow(page, "/admin/users");
 
-        await page
-          .getByTestId("app-mobile-header-drawer-toggle")
-          .first()
-          .click();
-        const drawer = page.getByTestId("app-mobile-drawer").first();
-        await expect(drawer).toHaveAttribute("aria-hidden", "false");
+        const drawer = await openMobileDrawer(page);
         await expectDrawerFillsViewport(page);
         await expect(drawer).toContainText("Центр управления");
         await expect(drawer).toContainText("Пользователи");

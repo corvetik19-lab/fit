@@ -25,7 +25,7 @@
 - warning возникает после успешной компиляции и не ломает итоговый build;
 - route manifest, static generation и server traces собираются корректно;
 - `lint`, `typecheck`, `build`, `test:smoke`, `test:e2e:auth`, `test:rls` продолжают проходить;
-- источник warning — динамические `require(...)` внутри сторонних instrumentation packages, а не наша бизнес-логика.
+- источник warning - динамические `require(...)` внутри сторонних instrumentation packages, а не наша бизнес-логика.
 
 Иными словами: это известный webpack-шум от Sentry/OpenTelemetry-интеграций, а не индикатор поломанного приложения.
 
@@ -46,4 +46,4 @@
 2. `npm run build` завершается успешно;
 3. smoke/e2e/rls baseline остаётся зелёным.
 
-Если warning меняется по форме или начинает затрагивать новый пакет, его нужно отдельно triage'ить и добавить в `docs/AI_WORKLOG.md`.
+Если warning меняется по форме или начинает затрагивать новый пакет, его нужно отдельно triage'ить и добавлять в `docs/AI_WORKLOG.md`.

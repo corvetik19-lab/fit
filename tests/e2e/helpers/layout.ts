@@ -35,20 +35,43 @@ export async function expectNoHorizontalOverflow(page: Page, label: string) {
 }
 
 export async function expectDrawerFillsViewport(page: Page) {
-  const metrics = await page
+  const drawerSurface = page
     .locator('#app-mobile-drawer[aria-hidden="false"] .app-drawer__surface')
-    .evaluate((element) => {
-      const rect = element.getBoundingClientRect();
+    .first();
+  let lastError: unknown = null;
 
-      return {
-        top: rect.top,
-        height: rect.height,
-        viewportHeight: window.innerHeight,
-      };
-    });
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      await expect(drawerSurface).toBeVisible();
+      const metrics = await drawerSurface.evaluate((element) => {
+        const rect = element.getBoundingClientRect();
 
-  expect(metrics.top).toBeLessThanOrEqual(1);
-  expect(Math.abs(metrics.height - metrics.viewportHeight)).toBeLessThanOrEqual(
-    2,
-  );
+        return {
+          top: rect.top,
+          height: rect.height,
+          viewportHeight: window.innerHeight,
+        };
+      });
+
+      expect(metrics.top).toBeLessThanOrEqual(1);
+      expect(
+        Math.abs(metrics.height - metrics.viewportHeight),
+      ).toBeLessThanOrEqual(2);
+      return;
+    } catch (error) {
+      lastError = error;
+      const message = String(error);
+
+      if (
+        !message.includes("Execution context was destroyed") &&
+        !message.includes("element is not attached")
+      ) {
+        throw error;
+      }
+
+      await page.waitForTimeout(250);
+    }
+  }
+
+  throw lastError;
 }

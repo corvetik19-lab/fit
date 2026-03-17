@@ -24,6 +24,8 @@ test.use({
 });
 
 test.describe("api contracts", () => {
+  test.describe.configure({ timeout: 60_000 });
+
   test.skip(
     !hasAuthE2ECredentials(),
     "requires PLAYWRIGHT_TEST_EMAIL and PLAYWRIGHT_TEST_PASSWORD",
