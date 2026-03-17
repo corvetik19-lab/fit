@@ -537,3 +537,11 @@
 - [x] `tests/e2e/mobile-pwa-regressions.spec.ts` переведён на новые stable selectors; regression suite подтверждает, что `Dashboard / Workouts / Nutrition / Admin` mobile surfaces остаются usable без overflow и без зависимости от старого mojibake.
 - [x] Tranche подтверждён baseline: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `36 passed`, `npm run test:smoke` -> `3 passed`.
 - [ ] Следующий sanitation/backend tranche: добить remaining mojibake и operator copy на оставшихся user-facing surfaces, затем вернуться к `owner-only / idempotency / retrieval` audit по AI/data routes.
+
+## 2026-03-17 admin user detail sanitation addendum
+
+- [x] Полностью санирован `admin user detail` surface: `src/components/admin-user-detail.tsx`, `src/components/admin-user-detail-state.ts`, `src/components/admin-user-detail-model.ts`, `src/components/admin-user-detail-sections.tsx`, `src/components/admin-user-detail-operations.tsx`, `src/components/admin-user-detail-billing.tsx`, `src/app/admin/users/[id]/page.tsx` переписаны в чистом UTF-8.
+- [x] Карточка пользователя, секции `Профиль / Активность / Операции / Оплата`, degraded-banner, summary metrics, role/status словари и timeline/billing коллекции теперь показывают нормальный русский operator copy без mojibake.
+- [x] Дожат flaky admin fallback regression: `src/app/admin/page.tsx` получил стабильные `data-testid` для degraded CTA-кнопок, а `tests/e2e/admin-app.spec.ts` больше не зависит от общего `href`-локатора на фоне shell/nav DOM.
+- [x] Tranche подтверждён baseline: `npx eslint ...admin-user-detail* src/app/admin/page.tsx tests/e2e/admin-app.spec.ts`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/admin-app.spec.ts --workers=1` -> `5 passed`, `npx playwright test tests/e2e/mobile-pwa-regressions.spec.ts --workers=1` -> `3 passed`, `npm run test:e2e:auth` -> `36 passed`.
+- [ ] Следующий sanitation/backend tranche: пройти remaining operator copy на оставшихся admin/user-facing surfaces и затем вернуться к `owner-only / idempotency / retrieval` audit по AI/data routes.

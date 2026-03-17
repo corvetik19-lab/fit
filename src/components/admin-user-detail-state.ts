@@ -65,10 +65,7 @@ export function useAdminUserDetailState(userId: string) {
 
         if (!response.ok) {
           if (isActive) {
-            setError(
-              payload?.message ??
-                "Не удалось загрузить карточку пользователя.",
-            );
+            setError(payload?.message ?? "Не удалось загрузить карточку пользователя.");
             setDetail(null);
             setIsDegraded(false);
           }

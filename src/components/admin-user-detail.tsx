@@ -63,9 +63,7 @@ export function AdminUserDetail({
   if (isLoading) {
     return (
       <section className="card p-6">
-        <p className="text-sm text-muted">
-          Загружаю карточку пользователя...
-        </p>
+        <p className="text-sm text-muted">Загружаю карточку пользователя...</p>
       </section>
     );
   }
@@ -94,7 +92,7 @@ export function AdminUserDetail({
     ["Упражнения", String(detail.stats.workout.activeExercises)],
     ["Программы", String(detail.stats.workout.programs)],
     ["Приёмы пищи", String(detail.stats.nutrition.meals)],
-    ["ИИ-чаты", String(detail.stats.ai.chatSessions)],
+    ["Чаты ИИ", String(detail.stats.ai.chatSessions)],
     ["Подходы", String(detail.stats.workout.loggedSets)],
     canViewRoleDetails
       ? [

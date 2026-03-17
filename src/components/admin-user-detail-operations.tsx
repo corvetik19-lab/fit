@@ -350,9 +350,7 @@ export function AdminUserAdminAuditSection({
                 <p className="mt-1 text-muted">
                   Синхронизировано:{" "}
                   <span className="text-foreground">
-                    {getPayloadBoolean(entry.payload, "reconciled")
-                      ? "да"
-                      : "нет"}
+                    {getPayloadBoolean(entry.payload, "reconciled") ? "да" : "нет"}
                   </span>
                 </p>
               ) : null}

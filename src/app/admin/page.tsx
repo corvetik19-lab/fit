@@ -517,18 +517,21 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             <div className="flex flex-wrap gap-3">
               <Link
                 className="rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90"
+                data-testid="admin-page-open-users-link"
                 href={"/admin/users" as Route}
               >
                 Открыть пользователей
               </Link>
               <Link
                 className="rounded-full border border-border px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-white/70"
+                data-testid="admin-page-open-self-link"
                 href={`/admin/users/${viewer.user.id}` as Route}
               >
                 Моя карточка
               </Link>
               <Link
                 className="rounded-full border border-border px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-white/70"
+                data-testid="admin-page-back-to-dashboard-link"
                 href={"/dashboard" as Route}
               >
                 Вернуться в продукт

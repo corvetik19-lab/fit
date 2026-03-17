@@ -178,7 +178,6 @@ export type AdminUserDetailData = {
     actor_user_id: string | null;
     actor_user: UserReference | null;
     created_at: string;
-    updated_at: string;
   }>;
   recentAdminAuditLogs: Array<{
     id: string;
@@ -188,7 +187,6 @@ export type AdminUserDetailData = {
     actor_user_id: string | null;
     actor_user: UserReference | null;
     created_at: string;
-    updated_at: string;
   }>;
 };
 
@@ -253,7 +251,7 @@ export const statusLabels: Record<string, string> = {
 export const auditActionLabels: Record<string, string> = {
   admin_reconcile_stripe_subscription: "Ручная сверка подписки",
   bulk_wave_completed: "Завершена групповая операция",
-  cancel_deletion_request: "Отмена запроса на удаление",
+  cancel_deletion_request: "Отменён запрос на удаление",
   deletion_request_status_updated: "Изменён статус запроса на удаление",
   export_job_status_updated: "Изменён статус выгрузки данных",
   queue_deletion_purge_action: "Поставлена очистка данных",
@@ -263,7 +261,8 @@ export const auditActionLabels: Record<string, string> = {
   support_action_status_updated: "Изменён статус служебного действия",
   user_reconciled_stripe_checkout_return:
     "Синхронизирован возврат после оплаты",
-  user_requested_billing_access_review: "Запрошена проверка доступа к оплате",
+  user_requested_billing_access_review:
+    "Запрошена проверка доступа к оплате",
 };
 
 export const supportActionLabels: Record<string, string> = {

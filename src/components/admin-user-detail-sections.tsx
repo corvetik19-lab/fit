@@ -79,9 +79,7 @@ export function AdminUserProfileSection({
               },
               {
                 label: "Состояние аккаунта",
-                value: detail.adminState?.is_suspended
-                  ? "Ограничен"
-                  : "Активен",
+                value: detail.adminState?.is_suspended ? "Ограничен" : "Активен",
               },
             ]}
             title="Профиль"
@@ -354,8 +352,7 @@ export function AdminUserOperationsSection({
                 },
                 {
                   label: "Формат",
-                  value:
-                    detail.stats.lifecycle.latestExportJob?.format ?? "Нет данных",
+                  value: detail.stats.lifecycle.latestExportJob?.format ?? "Нет данных",
                 },
                 {
                   label: "Кто запросил",
@@ -444,8 +441,7 @@ export function AdminUserBillingSection({
             },
             {
               label: "Провайдер",
-              value:
-                detail.stats.lifecycle.latestSubscription?.provider ?? "Нет данных",
+              value: detail.stats.lifecycle.latestSubscription?.provider ?? "Нет данных",
             },
             {
               label: "Период до",

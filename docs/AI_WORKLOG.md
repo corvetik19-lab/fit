@@ -551,3 +551,13 @@
 - Переписал `src/app/workouts/page.tsx` и `src/app/nutrition/page.tsx` в нормальный русский user-facing copy для badges, metrics, section labels и descriptions.
 - Обновил `tests/e2e/mobile-pwa-regressions.spec.ts`: mobile regression теперь опирается на стабильные test ids вместо старых текстовых селекторов и снова подтверждает `Dashboard / Workouts / Nutrition / Admin` на узком viewport.
 - Tranche подтверждён baseline-пакетом: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `36 passed`, `npm run test:smoke` -> `3 passed`.
+
+### 2026-03-17 10:35 - Санировал admin user detail surface
+
+- Переписал `src/components/admin-user-detail.tsx`, `src/components/admin-user-detail-state.ts`, `src/components/admin-user-detail-model.ts`, `src/components/admin-user-detail-sections.tsx`, `src/components/admin-user-detail-operations.tsx`, `src/components/admin-user-detail-billing.tsx` и `src/app/admin/users/[id]/page.tsx` в чистом UTF-8.
+- Убрал mojibake из summary metrics, degraded-banner, section-switcher, профиля, активности, операций, биллинга и role/status словарей для карточки пользователя.
+- Сразу после санации прогнал targeted operator regression: `npx playwright test tests/e2e/admin-app.spec.ts --workers=1` -> `5 passed`, `npx playwright test tests/e2e/mobile-pwa-regressions.spec.ts --workers=1` -> `3 passed`.
+- Общие quality gates по tranche тоже зелёные: `npx eslint ...admin-user-detail*`, `npm run typecheck`, `npm run build`.
+- После первого полного прогона `npm run test:e2e:auth` поймал flaky degraded-dashboard check: тест цеплялся за общий `a[href="/admin/users"]`, а не за конкретный fallback CTA.
+- Для этого добавил стабильные `data-testid` на degraded CTA в `src/app/admin/page.tsx` и перевёл `tests/e2e/admin-app.spec.ts` на эти селекторы.
+- После hotfix полный auth baseline снова зелёный: `npm run test:e2e:auth` -> `36 passed`.

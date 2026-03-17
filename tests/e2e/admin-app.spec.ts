@@ -48,8 +48,12 @@ test.describe("admin app", () => {
     );
     await page.waitForLoadState("networkidle");
     await expect(page.locator('[data-testid="admin-page-degraded-banner"]')).toBeVisible();
-    await expect(page.locator('a[href="/admin/users"]').first()).toBeVisible();
-    await expect(page.locator('a[href="/dashboard"]').first()).toBeVisible();
+    await expect(
+      page.locator('[data-testid="admin-page-open-users-link"]'),
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(
+      page.locator('[data-testid="admin-page-back-to-dashboard-link"]'),
+    ).toBeVisible({ timeout: 15_000 });
   });
 
   test("root admin gets degraded fallback for admin user detail snapshot", async ({
