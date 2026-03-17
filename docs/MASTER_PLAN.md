@@ -574,3 +574,10 @@
 - [x] Delete/update/export поверхности для продуктов, шаблонов питания, приёмов пищи, рецептов и центра данных больше не отдают mojibake и выровнены по понятному русскому self-service UX.
 - [x] Follow-up подтверждён baseline-пакетом: `npx eslint ...`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `36 passed`.
 - [ ] Следующий sanitation/backend tranche: дочистить remaining operator/self-service routes вне этого пакета и затем вернуться к owner-only / retrieval audit по оставшимся AI/data контурам.
+
+## 2026-03-17 billing sync workout copy sanitation addendum
+
+- [x] Санирован user-facing copy в `src/app/api/billing/checkout/route.ts`, `src/app/api/billing/checkout/reconcile/route.ts`, `src/app/api/billing/portal/route.ts`, `src/app/api/dashboard/period-compare/route.ts`, `src/app/api/exercises/route.ts`, `src/app/api/exercises/[id]/route.ts`, `src/app/api/sync/pull/route.ts`, `src/app/api/sync/push/route.ts`, `src/app/api/workout-days/[id]/route.ts`, `src/app/api/workout-days/[id]/reset/route.ts`, `src/app/api/workout-sets/[id]/route.ts`.
+- [x] Billing, dashboard compare, exercise library, sync и workout execution route surface теперь отдают понятный русский copy вместо английских login/update/error сообщений.
+- [x] Tranche подтверждён baseline-пакетом: `npx eslint ...`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `36 passed`.
+- [ ] Следующий sanitation/backend tranche: дочистить remaining operator/internal routes с английским copy и затем вернуться к owner-only / retrieval audit по оставшимся AI/data контурам.

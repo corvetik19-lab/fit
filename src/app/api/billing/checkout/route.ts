@@ -41,7 +41,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 503,
         code: "STRIPE_CHECKOUT_NOT_CONFIGURED",
-        message: "Stripe checkout is not configured yet.",
+        message: "Stripe checkout пока не настроен.",
         details: {
           missing: getMissingStripeCheckoutEnv(),
         },
@@ -57,7 +57,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 401,
         code: "AUTH_REQUIRED",
-        message: "Sign in before starting checkout.",
+        message: "Нужно войти в аккаунт, чтобы начать оплату.",
       });
     }
 
@@ -122,7 +122,7 @@ export async function POST(request: Request) {
     return createApiErrorResponse({
       status: 500,
       code: "STRIPE_CHECKOUT_FAILED",
-      message: "Unable to start Stripe checkout.",
+      message: "Не удалось запустить Stripe checkout.",
     });
   }
 }

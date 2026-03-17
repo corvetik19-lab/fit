@@ -587,3 +587,9 @@
 - Переписал в чистом UTF-8 `src/app/api/foods/[id]/route.ts`, `src/app/api/meal-templates/[id]/route.ts`, `src/app/api/meals/[id]/route.ts`, `src/app/api/recipes/[id]/route.ts`, `src/app/api/settings/data/route.ts`, `src/app/api/settings/data/export/[id]/download/route.ts`.
 - Self-service update/delete/export поверхности для продуктов, шаблонов питания, приёмов пищи, рецептов и центра данных теперь отдают единый понятный русский copy без mojibake.
 - Follow-up подтверждён командами `npx eslint ...`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `36 passed`.
+
+### 2026-03-17 15:00 - Санировал billing, sync и workout route copy
+
+- Перевёл в нормальный русский user-facing copy в `src/app/api/billing/checkout/route.ts`, `src/app/api/billing/checkout/reconcile/route.ts`, `src/app/api/billing/portal/route.ts`, `src/app/api/dashboard/period-compare/route.ts`, `src/app/api/exercises/route.ts`, `src/app/api/exercises/[id]/route.ts`, `src/app/api/sync/pull/route.ts`, `src/app/api/sync/push/route.ts`, `src/app/api/workout-days/[id]/route.ts`, `src/app/api/workout-days/[id]/reset/route.ts`, `src/app/api/workout-sets/[id]/route.ts`.
+- Billing, dashboard compare, exercise library, sync и workout execution route surface больше не отдают английские login/update/error сообщения и выровнены по русскому production copy.
+- Tranche подтверждён командами `npx eslint ...`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `36 passed`.

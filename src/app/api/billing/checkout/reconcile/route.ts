@@ -68,7 +68,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 503,
         code: "STRIPE_CHECKOUT_NOT_CONFIGURED",
-        message: "Stripe checkout is not configured yet.",
+        message: "Stripe checkout пока не настроен.",
         details: {
           missing: getMissingStripeCheckoutEnv(),
         },
@@ -84,7 +84,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 401,
         code: "AUTH_REQUIRED",
-        message: "Sign in before reconciling checkout.",
+        message: "Нужно войти в аккаунт, чтобы подтвердить оплату.",
       });
     }
 
@@ -104,7 +104,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 403,
         code: "STRIPE_CHECKOUT_SESSION_FORBIDDEN",
-        message: "This Stripe checkout session does not belong to the current user.",
+        message: "Эта Stripe-сессия оплаты не относится к текущему пользователю.",
       });
     }
 
@@ -158,7 +158,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 400,
         code: "STRIPE_CHECKOUT_RECONCILE_INVALID",
-        message: "Checkout reconcile payload is invalid.",
+        message: "Параметры подтверждения оплаты заполнены некорректно.",
         details: error.flatten(),
       });
     }
@@ -166,7 +166,7 @@ export async function POST(request: Request) {
     return createApiErrorResponse({
       status: 500,
       code: "STRIPE_CHECKOUT_RECONCILE_FAILED",
-      message: "Unable to reconcile Stripe checkout return.",
+      message: "Не удалось подтвердить возврат из Stripe checkout.",
     });
   }
 }

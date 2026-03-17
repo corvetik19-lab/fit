@@ -22,7 +22,7 @@ export async function GET(request: Request) {
       return createApiErrorResponse({
         status: 401,
         code: "AUTH_REQUIRED",
-        message: "Sign in before requesting dashboard comparison.",
+        message: "Нужно войти в аккаунт, чтобы запросить сравнение периодов.",
       });
     }
 
@@ -51,7 +51,7 @@ export async function GET(request: Request) {
     return createApiErrorResponse({
       status: 500,
       code: "DASHBOARD_PERIOD_COMPARE_FAILED",
-      message: "Unable to calculate the requested period comparison.",
+      message: "Не удалось рассчитать сравнение выбранных периодов.",
     });
   }
 }

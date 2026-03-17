@@ -39,7 +39,7 @@ export async function PATCH(
       return createApiErrorResponse({
         status: 401,
         code: "AUTH_REQUIRED",
-        message: "Sign in before updating exercises.",
+        message: "Нужно войти в аккаунт, чтобы редактировать упражнения.",
       });
     }
 
@@ -72,7 +72,7 @@ export async function PATCH(
       return createApiErrorResponse({
         status: 400,
         code: "EXERCISE_UPDATE_EMPTY",
-        message: "Nothing to update.",
+        message: "Нет изменений для сохранения.",
       });
     }
 
@@ -94,7 +94,7 @@ export async function PATCH(
       return createApiErrorResponse({
         status: 404,
         code: "EXERCISE_NOT_FOUND",
-        message: "Exercise was not found.",
+        message: "Упражнение не найдено.",
       });
     }
 
@@ -106,7 +106,7 @@ export async function PATCH(
       return createApiErrorResponse({
         status: 400,
         code: "EXERCISE_UPDATE_INVALID",
-        message: "Exercise update payload is invalid.",
+        message: "Параметры упражнения заполнены некорректно.",
         details: error.flatten(),
       });
     }
@@ -114,7 +114,7 @@ export async function PATCH(
     return createApiErrorResponse({
       status: 500,
       code: "EXERCISE_UPDATE_FAILED",
-      message: "Unable to update exercise.",
+      message: "Не удалось обновить упражнение.",
     });
   }
 }

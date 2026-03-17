@@ -19,7 +19,7 @@ const workoutDayUpdateSchema = z
       value.sessionNote !== undefined ||
       value.sessionDurationSeconds !== undefined,
     {
-      message: "At least one workout day field is required.",
+      message: "Нужно передать хотя бы одно поле тренировочного дня.",
       path: ["status"],
     },
   );
@@ -42,7 +42,7 @@ export async function PATCH(
       return createApiErrorResponse({
         status: 401,
         code: "AUTH_REQUIRED",
-        message: "Sign in before updating workout day status.",
+        message: "Нужно войти в аккаунт, чтобы обновить тренировочный день.",
       });
     }
 
@@ -71,7 +71,7 @@ export async function PATCH(
       return createApiErrorResponse({
         status: 400,
         code: "WORKOUT_DAY_UPDATE_INVALID",
-        message: "Workout day payload or route params are invalid.",
+        message: "Параметры тренировочного дня заполнены некорректно.",
         details: error.flatten(),
       });
     }
@@ -81,7 +81,7 @@ export async function PATCH(
     return createApiErrorResponse({
       status: 500,
       code: "WORKOUT_DAY_UPDATE_FAILED",
-      message: "Unable to update workout day status.",
+      message: "Не удалось обновить тренировочный день.",
     });
   }
 }

@@ -22,7 +22,7 @@ export async function GET(request: Request) {
       return createApiErrorResponse({
         status: 401,
         code: "AUTH_REQUIRED",
-        message: "Sign in before loading exercises.",
+        message: "Нужно войти в аккаунт, чтобы открыть упражнения.",
       });
     }
 
@@ -56,7 +56,7 @@ export async function GET(request: Request) {
     return createApiErrorResponse({
       status: 500,
       code: "EXERCISE_LIST_FAILED",
-      message: "Unable to load exercise library.",
+      message: "Не удалось загрузить библиотеку упражнений.",
     });
   }
 }
@@ -72,7 +72,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 401,
         code: "AUTH_REQUIRED",
-        message: "Sign in before creating exercises.",
+        message: "Нужно войти в аккаунт, чтобы создавать упражнения.",
       });
     }
 
@@ -104,7 +104,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 400,
         code: "EXERCISE_CREATE_INVALID",
-        message: "Exercise payload is invalid.",
+        message: "Параметры упражнения заполнены некорректно.",
         details: error.flatten(),
       });
     }
@@ -112,7 +112,7 @@ export async function POST(request: Request) {
     return createApiErrorResponse({
       status: 500,
       code: "EXERCISE_CREATE_FAILED",
-      message: "Unable to create exercise.",
+      message: "Не удалось создать упражнение.",
     });
   }
 }

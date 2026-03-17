@@ -22,7 +22,7 @@ export async function GET(request: Request) {
       return createApiErrorResponse({
         status: 401,
         code: "AUTH_REQUIRED",
-        message: "Sign in before pulling sync data.",
+        message: "Нужно войти в аккаунт, чтобы загрузить изменения синхронизации.",
       });
     }
 
@@ -39,7 +39,7 @@ export async function GET(request: Request) {
       return createApiErrorResponse({
         status: 404,
         code: "WORKOUT_DAY_NOT_FOUND",
-        message: "Workout day not found.",
+        message: "Тренировочный день не найден.",
       });
     }
 
@@ -56,7 +56,7 @@ export async function GET(request: Request) {
       return createApiErrorResponse({
         status: 400,
         code: "SYNC_PULL_INVALID",
-        message: "Sync pull parameters are invalid.",
+        message: "Параметры sync pull заполнены некорректно.",
         details: error.flatten(),
       });
     }
@@ -66,7 +66,7 @@ export async function GET(request: Request) {
     return createApiErrorResponse({
       status: 500,
       code: "SYNC_PULL_FAILED",
-      message: "Unable to load sync changes.",
+      message: "Не удалось загрузить изменения синхронизации.",
     });
   }
 }

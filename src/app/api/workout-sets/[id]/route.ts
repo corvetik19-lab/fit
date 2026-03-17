@@ -29,7 +29,7 @@ export async function PATCH(
       return createApiErrorResponse({
         status: 401,
         code: "AUTH_REQUIRED",
-        message: "Sign in before updating actual reps.",
+        message: "Нужно войти в аккаунт, чтобы сохранить подход.",
       });
     }
 
@@ -55,7 +55,7 @@ export async function PATCH(
       return createApiErrorResponse({
         status: 400,
         code: "WORKOUT_SET_UPDATE_INVALID",
-        message: "Workout set payload or route params are invalid.",
+        message: "Параметры подхода заполнены некорректно.",
         details: error.flatten(),
       });
     }
@@ -65,7 +65,7 @@ export async function PATCH(
     return createApiErrorResponse({
       status: 500,
       code: "WORKOUT_SET_UPDATE_FAILED",
-      message: "Unable to save workout set performance.",
+      message: "Не удалось сохранить результат подхода.",
     });
   }
 }

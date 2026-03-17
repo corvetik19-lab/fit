@@ -15,7 +15,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 401,
         code: "AUTH_REQUIRED",
-        message: "Sign in before opening the billing portal.",
+        message: "Нужно войти в аккаунт, чтобы открыть платёжный кабинет.",
       });
     }
 
@@ -38,7 +38,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 409,
         code: "STRIPE_PORTAL_UNAVAILABLE",
-        message: "Stripe customer is not linked yet for this account.",
+        message: "Для этого аккаунта ещё не привязан Stripe customer.",
       });
     }
 
@@ -59,7 +59,7 @@ export async function POST(request: Request) {
     return createApiErrorResponse({
       status: 500,
       code: "STRIPE_PORTAL_FAILED",
-      message: "Unable to open Stripe billing portal.",
+      message: "Не удалось открыть Stripe billing portal.",
     });
   }
 }

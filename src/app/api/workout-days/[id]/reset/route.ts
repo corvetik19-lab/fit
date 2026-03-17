@@ -23,7 +23,7 @@ export async function POST(
       return createApiErrorResponse({
         status: 401,
         code: "AUTH_REQUIRED",
-        message: "Sign in before resetting workout day progress.",
+        message: "Нужно войти в аккаунт, чтобы сбросить прогресс тренировки.",
       });
     }
 
@@ -40,7 +40,7 @@ export async function POST(
       return createApiErrorResponse({
         status: 400,
         code: "WORKOUT_DAY_RESET_INVALID",
-        message: "Workout day route params are invalid.",
+        message: "Параметры тренировочного дня заполнены некорректно.",
         details: error.flatten(),
       });
     }
@@ -50,7 +50,7 @@ export async function POST(
     return createApiErrorResponse({
       status: 500,
       code: "WORKOUT_DAY_RESET_FAILED",
-      message: "Unable to reset workout day progress.",
+      message: "Не удалось сбросить прогресс тренировки.",
     });
   }
 }

@@ -69,7 +69,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 401,
         code: "AUTH_REQUIRED",
-        message: "Sign in before pushing offline mutations.",
+        message: "Нужно войти в аккаунт, чтобы отправить офлайн-изменения.",
       });
     }
 
@@ -89,7 +89,7 @@ export async function POST(request: Request) {
             id: mutation.id,
             status: "rejected",
             code: "SYNC_MUTATION_DUPLICATE",
-            message: "Duplicate offline mutation ids are not allowed in one batch.",
+            message: "Повторяющиеся идентификаторы офлайн-изменений в одном пакете недопустимы.",
           });
           continue;
         }
@@ -174,7 +174,7 @@ export async function POST(request: Request) {
           id: mutation.id,
           status: "rejected",
           code: "SYNC_MUTATION_FAILED",
-          message: "Unable to apply offline mutation.",
+          message: "Не удалось применить офлайн-изменение.",
         });
       }
     }
@@ -193,7 +193,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 400,
         code: "SYNC_PUSH_INVALID",
-        message: "Unable to accept the sync push payload.",
+        message: "Параметры sync push заполнены некорректно.",
         details: error.flatten(),
       });
     }
@@ -203,7 +203,7 @@ export async function POST(request: Request) {
     return createApiErrorResponse({
       status: 500,
       code: "SYNC_PUSH_FAILED",
-      message: "Unable to process offline mutations.",
+      message: "Не удалось обработать офлайн-изменения.",
     });
   }
 }
