@@ -3,7 +3,7 @@
 import { DefaultChatTransport } from "ai";
 import { useChat } from "@ai-sdk/react";
 import { useRouter } from "next/navigation";
-import { useMemo, useRef, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 
 import { AiChatComposer } from "@/components/ai-chat-composer";
 import { AiChatNotices } from "@/components/ai-chat-notices";
@@ -16,6 +16,7 @@ import { useAiChatSessionState } from "@/components/use-ai-chat-session-state";
 import { useAiChatViewState } from "@/components/use-ai-chat-view-state";
 import {
   classifyAiSurfaceErrorMessage,
+  createAiSurfaceNotice,
   timeFormatter,
   type AiChatPanelProps,
 } from "@/components/ai-chat-panel-model";
@@ -48,6 +49,10 @@ function getWebSearchSnapshot() {
   return window.sessionStorage.getItem(WEB_SEARCH_STORAGE_KEY) === "true";
 }
 
+function isMissingChatSessionError(message: string | null | undefined) {
+  return Boolean(message?.includes("AI_CHAT_SESSION_NOT_FOUND"));
+}
+
 export function AiChatPanel({
   access,
   initialSessionId,
@@ -59,6 +64,10 @@ export function AiChatPanel({
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const composerRef = useRef<HTMLTextAreaElement | null>(null);
+  const pendingRetryRef = useRef<{ text: string; allowWebSearch: boolean } | null>(
+    null,
+  );
+  const missingSessionRetriedRef = useRef(false);
 
   const isHydrated = useSyncExternalStore(
     subscribeToHydration,
@@ -71,13 +80,14 @@ export function AiChatPanel({
     () => false,
   );
   const {
+    createRemoteSession,
     draft,
     insertPromptTemplate,
     isPromptLibraryOpen,
     notice,
     rememberLocalSession,
     resetLocalSessionState,
-    sessionId,
+    sessionIdRef,
     sessionTitle,
     setDraft,
     setIsPromptLibraryOpen,
@@ -95,14 +105,25 @@ export function AiChatPanel({
   );
   const nowLabel = useMemo(() => timeFormatter.format(new Date()), []);
 
-  const { messages, sendMessage, status, error, stop, setMessages } = useChat({
+  const {
+    clearError,
+    messages,
+    sendMessage,
+    status,
+    error,
+    stop,
+    setMessages,
+  } = useChat({
     messages: initialUiMessages,
     transport: new DefaultChatTransport({
       api: "/api/ai/assistant",
     }),
   });
   const errorNotice = useMemo(
-    () => classifyAiSurfaceErrorMessage(error?.message ?? null),
+    () =>
+      isMissingChatSessionError(error?.message)
+        ? null
+        : classifyAiSurfaceErrorMessage(error?.message ?? null),
     [error?.message],
   );
 
@@ -123,13 +144,14 @@ export function AiChatPanel({
   });
   const { actionBusyKey, analyzeMealPhoto, isAnalyzingImage, runProposalAction } =
     useAiChatActions({
+      createRemoteSession,
       draft,
       isChatBusy: isBusy,
       mealPhotoAccess,
       onRefresh: () => router.refresh(),
       rememberLocalSession,
       selectedImage,
-      sessionId,
+      sessionIdRef,
       setDraft,
       setMessageTimes,
       setMessages,
@@ -138,10 +160,81 @@ export function AiChatPanel({
     });
   const isComposerBusy = isBusy || isAnalyzingImage;
 
+  useEffect(() => {
+    if (!isMissingChatSessionError(error?.message)) {
+      return;
+    }
+
+    const retryPayload = pendingRetryRef.current;
+    setMessages([]);
+    setSelectedImage(null);
+    resetLocalSessionState();
+    clearError();
+
+    if (retryPayload && !missingSessionRetriedRef.current) {
+      missingSessionRetriedRef.current = true;
+      pendingRetryRef.current = null;
+      setNotice(
+        createAiSurfaceNotice(
+          "info",
+          "Предыдущий чат больше недоступен. Создаю новый чат и повторяю запрос.",
+        ),
+      );
+
+      void (async () => {
+        try {
+          const nextSessionId = await createRemoteSession(retryPayload.text);
+
+          window.setTimeout(() => {
+            sendMessage(
+              { text: retryPayload.text },
+              {
+                body: {
+                  allowWebSearch: retryPayload.allowWebSearch,
+                  sessionId: nextSessionId,
+                },
+              },
+            );
+          }, 0);
+        } catch (sessionError) {
+          setNotice(
+            createAiSurfaceNotice(
+              "runtime",
+              sessionError instanceof Error
+                ? sessionError.message
+                : "Не удалось открыть новый AI-чат.",
+            ),
+          );
+        }
+      })();
+      return;
+    }
+
+    pendingRetryRef.current = null;
+    setNotice(
+      createAiSurfaceNotice(
+        "info",
+        "Предыдущий чат больше недоступен. Открыт новый пустой чат.",
+      ),
+    );
+  }, [
+    clearError,
+    createRemoteSession,
+    error?.message,
+    resetLocalSessionState,
+    sendMessage,
+    setMessages,
+    setNotice,
+    setSelectedImage,
+  ]);
+
   function resetChat() {
     setMessages([]);
     setSelectedImage(null);
     resetLocalSessionState();
+    pendingRetryRef.current = null;
+    missingSessionRetriedRef.current = false;
+    clearError();
   }
 
   function toggleWebSearch() {
@@ -161,12 +254,19 @@ export function AiChatPanel({
     accessAllowed: access.allowed,
     allowWebSearch,
     analyzeMealPhoto,
+    createRemoteSession,
     draft,
     isComposerBusy,
-    rememberLocalSession,
+    onBeforeSend: (text) => {
+      pendingRetryRef.current = {
+        text,
+        allowWebSearch,
+      };
+      missingSessionRetriedRef.current = false;
+    },
     selectedImage,
     sendMessage,
-    sessionId,
+    sessionIdRef,
     setDraft,
     setNotice,
   });

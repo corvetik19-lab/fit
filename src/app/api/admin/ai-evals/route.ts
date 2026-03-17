@@ -36,7 +36,7 @@ export async function GET() {
     return createApiErrorResponse({
       status: 401,
       code: "ADMIN_REQUIRED",
-      message: "Admin access is required.",
+      message: "Для просмотра AI-проверок нужен доступ администратора.",
     });
   }
 }

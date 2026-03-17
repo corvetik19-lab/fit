@@ -15,10 +15,12 @@
     "verify:advisors": "powershell -ExecutionPolicy Bypass -File scripts/verify-advisors.ps1",
     "pretest:e2e": "node scripts/ensure-next-build.mjs",
     "pretest:e2e:auth": "node scripts/ensure-next-build.mjs",
+    "pretest:ai-gate": "node scripts/ensure-next-build.mjs",
     "pretest:smoke": "node scripts/ensure-next-build.mjs",
     "test:rls": "node scripts/run-playwright.mjs PLAYWRIGHT_SKIP_AUTH_SETUP=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:1 -- test tests/rls --workers=1",
     "test:e2e": "playwright test --workers=2",
     "test:e2e:auth": "playwright test tests/e2e --workers=2",
+    "test:ai-gate": "playwright test tests/ai-gate --workers=1",
     "test:smoke": "node scripts/run-playwright.mjs PLAYWRIGHT_SKIP_AUTH_SETUP=1 -- test tests/smoke"
   },
   "dependencies": {

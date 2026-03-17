@@ -216,7 +216,7 @@
 - [x] Подтвердить owner-only data access для chat, sessions, retrieval, reindex и proposal apply.
 - [x] Развести runtime failure UX и provider configuration UX.
 - [x] Стабилизировать историю чатов, prompt library, web search toggle и image upload.
-- [ ] Прогнать assistant/retrieval/workout-plan/meal-plan/safety eval suites как quality gate.
+- [ ] Прогнать assistant/retrieval/workout-plan/meal-plan/safety eval suites как quality gate. Кодовый контур уже готов; текущий внешний blocker — `OpenRouter 402` по кредитам и `Voyage 403` по embeddings.
 - [x] Подтвердить retrieval по всей исторической базе пользователя, а не только по свежим данным.
 
 ### Database / Supabase
@@ -293,7 +293,7 @@
 - [ ] Нет mojibake в ключевой документации и основных экранах приложения.
 - [ ] Нет hydration mismatch, render loops, infinite polling и state desync в базовых пользовательских сценариях.
 - [ ] Stripe-контур работает end-to-end.
-- [ ] AI quality gate пройден по минимуму: assistant, retrieval, workout plan, meal plan, safety.
+- [ ] AI quality gate пройден по минимуму: assistant, retrieval, workout plan, meal plan, safety. Кодовая часть и явные provider/runtime notices уже доведены; остаётся снять внешний блок по кредитам и embeddings.
 - [ ] Android wrapper smoke пройден после стабилизации web/PWA.
 
 ## 2026-03-15 progress addendum
@@ -605,3 +605,12 @@
 - [x] Добавлен прямой regression suite `tests/rls/retrieval-history.spec.ts`, который без внешнего AI-провайдера подтверждает три вещи: pager доходит дальше первых страниц, text fallback поднимает старый релевантный chunk, vector fallback поднимает старый релевантный embedding.
 - [x] Tranche подтверждён baseline-пакетом: `npx eslint src/lib/ai/knowledge-retrieval.ts tests/rls/retrieval-history.spec.ts`, `npm run test:rls` -> `4 passed`, `npm run typecheck`, `npm run build`.
 - [ ] Следующий AI/backend tranche: закрывать минимальный AI quality gate (`assistant`, `retrieval`, `workout plan`, `meal plan`, `safety`) и привязать его к release baseline.
+
+## 2026-03-17 AI quality gate readiness addendum
+
+- [x] В `src/lib/ai/chat.ts` добавлен явный server-contract `createAiChatSession(...)`, а `src/app/api/ai/sessions/route.ts` теперь поддерживает `POST` для создания нового пустого AI-чата до первого сообщения.
+- [x] `src/components/use-ai-chat-session-state.ts`, `src/components/use-ai-chat-composer.ts`, `src/components/use-ai-chat-actions.ts` и `src/components/ai-chat-panel.tsx` переведены на этот контракт: новый чат, stale-session recovery и анализ фото еды больше не генерируют фальшивый `sessionId`, который сервер режет как `AI_CHAT_SESSION_NOT_FOUND`.
+- [x] `tests/ai-gate/ai-quality-gate.spec.ts` доведён до реального quality-gate поведения: assistant workspace больше не зависает на пустом transcript state и честно доходит до provider/runtime surface.
+- [x] Tranche подтверждён baseline-пакетом: `npm run lint`, `npm run typecheck`, `npm run build`, `npx eslint tests/ai-gate tests/e2e/helpers/ai.ts tests/e2e/helpers/auth.ts`, `npx playwright test tests/e2e/ai-workspace.spec.ts --workers=1` -> `2 passed`, `npm run test:e2e:auth` -> `36 passed`, `npm run test:smoke` -> `3 passed`.
+- [x] `npm run test:ai-gate` теперь падает не на внутреннем UI/session баге, а на реальном внешнем блокере: assistant, retrieval, meal plan, workout plan и safety упираются в `OpenRouter 402` по кредитам, а retrieval слой дополнительно логирует `Voyage 403` по embeddings.
+- [ ] Следующий AI/backend tranche: снять внешний blocker по `OpenRouter/Voyage` или продолжать следующие незаблокированные production tranche до момента, когда live AI providers будут готовы.

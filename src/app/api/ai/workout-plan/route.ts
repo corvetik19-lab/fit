@@ -1,16 +1,18 @@
+import { z } from "zod";
+
+import { generateWorkoutPlanProposalForUser } from "@/lib/ai/plan-generation";
+import { isAiProviderConfigurationFailure } from "@/lib/ai/runtime-errors";
+import { workoutPlanRequestSchema } from "@/lib/ai/schemas";
+import { createApiErrorResponse } from "@/lib/api/error-response";
 import {
   BILLING_FEATURE_KEYS,
   createFeatureAccessDeniedResponse,
   incrementFeatureUsage,
   readUserBillingAccessOrFallback,
 } from "@/lib/billing-access";
-import { generateWorkoutPlanProposalForUser } from "@/lib/ai/plan-generation";
-import { workoutPlanRequestSchema } from "@/lib/ai/schemas";
-import { createApiErrorResponse } from "@/lib/api/error-response";
 import { hasAiRuntimeEnv } from "@/lib/env";
 import { logger } from "@/lib/logger";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { z } from "zod";
 
 export async function POST(request: Request) {
   try {
@@ -23,17 +25,20 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 401,
         code: "UNAUTHORIZED",
-        message: "Нужно войти в аккаунт, чтобы генерировать тренировочные планы через ИИ.",
+        message:
+          "Нужно войти в аккаунт, чтобы генерировать тренировочные планы через AI.",
       });
     }
 
-    const body = workoutPlanRequestSchema.parse(await request.json().catch(() => ({})));
+    const body = workoutPlanRequestSchema.parse(
+      await request.json().catch(() => ({})),
+    );
 
     if (!hasAiRuntimeEnv()) {
       return createApiErrorResponse({
         status: 503,
         code: "AI_RUNTIME_NOT_CONFIGURED",
-        message: "ИИ-контур пока не настроен.",
+        message: "AI-контур для тренировочных планов пока не настроен.",
       });
     }
 
@@ -73,9 +78,13 @@ export async function POST(request: Request) {
     logger.error("workout plan route failed", { error });
 
     return createApiErrorResponse({
-      status: 500,
-      code: "WORKOUT_PLAN_FAILED",
-      message: "Не удалось сгенерировать предложение тренировочного плана.",
+      status: isAiProviderConfigurationFailure(error) ? 503 : 500,
+      code: isAiProviderConfigurationFailure(error)
+        ? "AI_PROVIDER_UNAVAILABLE"
+        : "WORKOUT_PLAN_FAILED",
+      message: isAiProviderConfigurationFailure(error)
+        ? "Сервис AI временно недоступен. Провайдер не активирован для генерации тренировочных планов."
+        : "Не удалось сгенерировать предложение тренировочного плана.",
     });
   }
 }

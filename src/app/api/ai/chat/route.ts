@@ -15,6 +15,7 @@ import {
 } from "@/lib/ai/domain-policy";
 import { models } from "@/lib/ai/gateway";
 import { retrieveKnowledgeMatches } from "@/lib/ai/knowledge";
+import { isAiProviderConfigurationFailure } from "@/lib/ai/runtime-errors";
 import { getAiRuntimeContext } from "@/lib/ai/user-context";
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import {
@@ -48,36 +49,8 @@ function buildSafetyFallback() {
   ].join(" ");
 }
 
-function stringifyAiError(error: unknown) {
-  if (error instanceof Error) {
-    return `${error.name}: ${error.message}`;
-  }
-
-  if (typeof error === "string") {
-    return error;
-  }
-
-  try {
-    return JSON.stringify(error);
-  } catch {
-    return String(error);
-  }
-}
-
-function isProviderConfigurationFailure(error: unknown) {
-  const normalized = stringifyAiError(error).toLowerCase();
-
-  return (
-    normalized.includes("credit card") ||
-    normalized.includes("customer_verification_required") ||
-    normalized.includes("insufficient credits") ||
-    normalized.includes("payment required") ||
-    normalized.includes("quota")
-  );
-}
-
 function buildProviderErrorMessage(error: unknown) {
-  return isProviderConfigurationFailure(error)
+  return isAiProviderConfigurationFailure(error)
     ? aiChatProviderMessage
     : aiChatRuntimeMessage;
 }
@@ -265,8 +238,8 @@ export async function POST(request: Request) {
     logger.error("ai chat route failed", { error });
 
     return createApiErrorResponse({
-      status: isProviderConfigurationFailure(error) ? 503 : 502,
-      code: isProviderConfigurationFailure(error)
+      status: isAiProviderConfigurationFailure(error) ? 503 : 502,
+      code: isAiProviderConfigurationFailure(error)
         ? "AI_PROVIDER_UNAVAILABLE"
         : "AI_CHAT_FAILED",
       message: buildProviderErrorMessage(error),

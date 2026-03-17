@@ -42,6 +42,27 @@ function buildSessionTitle(input: string) {
   return `${trimmed.slice(0, 69)}...`;
 }
 
+export async function createAiChatSession(
+  supabase: SupabaseClient,
+  userId: string,
+  firstPrompt: string,
+) {
+  const { data, error } = await supabase
+    .from("ai_chat_sessions")
+    .insert({
+      user_id: userId,
+      title: buildSessionTitle(firstPrompt),
+    })
+    .select("id, title, created_at, updated_at")
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return data as AiChatSessionRow;
+}
+
 export async function ensureAiChatSession(
   supabase: SupabaseClient,
   userId: string,
@@ -71,20 +92,7 @@ export async function ensureAiChatSession(
     return data as AiChatSessionRow;
   }
 
-  const { data, error } = await supabase
-    .from("ai_chat_sessions")
-    .insert({
-      user_id: userId,
-      title: buildSessionTitle(firstPrompt),
-    })
-    .select("id, title, created_at, updated_at")
-    .single();
-
-  if (error) {
-    throw error;
-  }
-
-  return data as AiChatSessionRow;
+  return createAiChatSession(supabase, userId, firstPrompt);
 }
 
 export async function touchAiChatSession(

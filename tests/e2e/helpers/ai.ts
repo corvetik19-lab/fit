@@ -7,6 +7,7 @@ import {
 import { fetchJson } from "./http";
 
 const defaultUserEmail = process.env.PLAYWRIGHT_TEST_EMAIL ?? null;
+const defaultAdminEmail = process.env.PLAYWRIGHT_ADMIN_EMAIL ?? null;
 
 type AiPlanProposalType = "meal_plan" | "workout_plan";
 
@@ -166,4 +167,52 @@ export async function readAiPlanProposal(proposalId: string) {
         status: string;
       }
     | null;
+}
+
+export async function seedHistoricalMemoryFact(input?: {
+  content?: string;
+  createdAt?: string;
+  email?: string;
+  factType?: string;
+}) {
+  const email = input?.email ?? defaultAdminEmail ?? defaultUserEmail;
+
+  if (!email) {
+    throw new Error(
+      "PLAYWRIGHT_ADMIN_EMAIL or PLAYWRIGHT_TEST_EMAIL is required to seed historical AI memory facts.",
+    );
+  }
+
+  const supabase = createSupabaseAdminTestClient();
+  const userId = await findAuthUserIdByEmail(email);
+  const marker = crypto.randomUUID().slice(0, 8);
+  const createdAt = input?.createdAt ?? "2024-02-15T09:30:00.000Z";
+  const content =
+    input?.content ??
+    `Исторический факт для AI retrieval ${marker}: пользователь лучше восстанавливается после двух коротких прогулок в день.`;
+
+  const { data, error } = await supabase
+    .from("user_memory_facts")
+    .insert({
+      user_id: userId,
+      fact_type: input?.factType ?? "recovery_preference",
+      content,
+      source: "e2e",
+      confidence: 0.97,
+      created_at: createdAt,
+      updated_at: createdAt,
+    })
+    .select("id, content")
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return {
+    content: data.content as string,
+    factId: data.id as string,
+    marker,
+    userId,
+  };
 }

@@ -627,3 +627,11 @@
 - Вынес чистые helper’ы `collectPaginatedRows`, `rankKnowledgeChunksByText`, `rankKnowledgeMatchesFromEmbeddingRows`, чтобы исторический retrieval был проверяемым без живого AI runtime и без внешнего embedding provider.
 - Добавил `tests/rls/retrieval-history.spec.ts`: suite подтверждает, что pager доходит дальше первых страниц, старый релевантный text chunk находится среди сотен новых нерелевантных записей, а старый релевантный embedding выигрывает в vector fallback после загрузки поздних страниц.
 - Tranche подтверждён командами `npx eslint src/lib/ai/knowledge-retrieval.ts tests/rls/retrieval-history.spec.ts`, `npm run test:rls` -> `4 passed`, `npm run typecheck`, `npm run build`.
+
+### 2026-03-17 21:56 - Довёл AI quality gate до реального внешнего блокера
+
+- В `src/lib/ai/chat.ts` добавил явное создание новой AI-сессии, а `src/app/api/ai/sessions/route.ts` научил `POST`, чтобы новый чат существовал на сервере до первого сообщения.
+- `src/components/use-ai-chat-session-state.ts`, `src/components/use-ai-chat-composer.ts`, `src/components/use-ai-chat-actions.ts` и `src/components/ai-chat-panel.tsx` перевёл на этот контракт: новый чат, stale-session recovery и анализ фото еды больше не падают на ложном `AI_CHAT_SESSION_NOT_FOUND`.
+- Дочистил AI gate тест `tests/ai-gate/ai-quality-gate.spec.ts`: assistant surface теперь доходит до provider/runtime notice вместо зависания на пустом transcript state.
+- Подтвердил общий baseline: `npm run lint`, `npm run typecheck`, `npm run build`, `npx eslint tests/ai-gate tests/e2e/helpers/ai.ts tests/e2e/helpers/auth.ts`, `npx playwright test tests/e2e/ai-workspace.spec.ts --workers=1` -> `2 passed`, `npm run test:e2e:auth` -> `36 passed`, `npm run test:smoke` -> `3 passed`.
+- `npm run test:ai-gate` теперь падает только на реальном внешнем блокере: `OpenRouter 402` по кредитам и `Voyage 403` по embeddings.

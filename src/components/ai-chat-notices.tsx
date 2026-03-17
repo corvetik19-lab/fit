@@ -31,7 +31,10 @@ function NoticeCard({ notice }: { notice: AiSurfaceNotice }) {
           : "Не удалось выполнить запрос";
 
   return (
-    <div className={`mt-4 rounded-2xl border px-4 py-3 text-sm ${styles}`}>
+    <div
+      className={`mt-4 rounded-2xl border px-4 py-3 text-sm ${styles}`}
+      data-testid={`ai-notice-${notice.kind}`}
+    >
       <p className="font-semibold">{title}</p>
       <p className="mt-1">{notice.message}</p>
     </div>
@@ -47,10 +50,14 @@ export function AiChatNotices({
   return (
     <>
       {!accessAllowed ? (
-        <div className="mt-4 rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <div
+          className="mt-4 rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800"
+          data-testid="ai-access-closed"
+        >
           <p className="font-semibold">Доступ к AI закрыт</p>
           <p className="mt-1">
-            {accessReason ?? "AI-чат сейчас недоступен для текущего доступа."}
+            {accessReason ??
+              "AI-чат сейчас недоступен для текущего уровня доступа."}
           </p>
           <Link
             className="mt-3 inline-flex rounded-full border border-amber-400/70 bg-white/80 px-4 py-2 font-semibold text-foreground transition hover:bg-white"

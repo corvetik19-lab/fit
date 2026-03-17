@@ -43,6 +43,7 @@ export function AiChatTranscript({
   return (
     <div
       className="mt-4 flex-1 overflow-y-auto rounded-[1.75rem] border border-border bg-white/50 p-3 sm:p-4"
+      data-testid="ai-chat-transcript"
       ref={scrollViewportRef}
     >
       <div className="grid gap-4">
@@ -54,6 +55,9 @@ export function AiChatTranscript({
                   ? "border-border bg-white/85"
                   : "ml-auto border-accent/20 bg-accent/5"
               }`}
+              data-message-id={message.id}
+              data-role={message.role}
+              data-testid="ai-transcript-message"
               key={message.id}
             >
               <div className="flex flex-wrap items-center justify-between gap-2">
@@ -171,7 +175,10 @@ export function AiChatTranscript({
             </article>
           ))
         ) : (
-          <div className="rounded-3xl border border-dashed border-border bg-white/70 px-4 py-6" />
+          <div
+            className="rounded-3xl border border-dashed border-border bg-white/70 px-4 py-6"
+            data-testid="ai-transcript-empty"
+          />
         )}
       </div>
     </div>

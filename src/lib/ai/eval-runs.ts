@@ -41,7 +41,8 @@ function buildDefaultEvalLabel(
   trigger: QueueAiEvalRunParams["trigger"],
 ) {
   const isoDate = new Date().toISOString().slice(0, 10);
-  const prefix = trigger === "manual_admin" ? "AI eval" : "Scheduled AI eval";
+  const prefix =
+    trigger === "manual_admin" ? "Проверка AI" : "Плановая проверка AI";
   return `${prefix} ${suite} ${isoDate}`;
 }
 

@@ -65,8 +65,8 @@ export function AiChatComposer({
               {selectedImage.name}
             </p>
             <p className="mt-1 text-xs text-muted">
-              Сначала AI разберёт фото, потом можно попросить рецепт, замену или
-              план питания.
+              Сначала AI разберёт фото, потом можно попросить рецепт, замену
+              продуктов или план питания.
             </p>
           </div>
 
@@ -109,6 +109,7 @@ export function AiChatComposer({
           {isBusy ? (
             <button
               className="rounded-full border border-border px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-white/80"
+              data-testid="ai-chat-stop"
               onClick={onStop}
               type="button"
             >
@@ -121,6 +122,7 @@ export function AiChatComposer({
 
           <button
             className="rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+            data-testid="ai-chat-submit"
             disabled={
               isComposerBusy ||
               (!selectedImage && !draft.trim()) ||

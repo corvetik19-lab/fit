@@ -3,8 +3,8 @@
 import { useState } from "react";
 
 import {
-  AI_EVAL_SUITE_LABELS,
   AI_EVAL_SUITES,
+  AI_EVAL_SUITE_LABELS,
   type AiEvalSuite,
 } from "@/lib/ai/eval-suites";
 import {
@@ -113,7 +113,7 @@ export function AdminAiEvalRuns({
       const payload = await readJsonSafely(response);
 
       if (!response.ok) {
-        setError(payload?.message ?? "Не удалось обновить список проверок ИИ.");
+        setError(payload?.message ?? "Не удалось обновить список AI-проверок.");
         return;
       }
 
@@ -148,7 +148,9 @@ export function AdminAiEvalRuns({
       const payload = await readJsonSafely(response);
 
       if (!response.ok) {
-        setError(payload?.message ?? "Не удалось поставить проверку ИИ в очередь.");
+        setError(
+          payload?.message ?? "Не удалось поставить AI-проверку в очередь.",
+        );
         return;
       }
 
@@ -161,7 +163,7 @@ export function AdminAiEvalRuns({
 
       setNotice(
         queuedRun?.message ??
-          "Проверка ИИ поставлена в очередь и добавлена в историю запусков.",
+          "AI-проверка поставлена в очередь и добавлена в историю запусков.",
       );
       setLabel("");
     } finally {
@@ -189,7 +191,8 @@ export function AdminAiEvalRuns({
 
       if (!response.ok) {
         setError(
-          payload?.message ?? "Не удалось поставить плановую проверку ИИ в очередь.",
+          payload?.message ??
+            "Не удалось поставить плановую AI-проверку в очередь.",
         );
         return;
       }
@@ -204,7 +207,7 @@ export function AdminAiEvalRuns({
         });
       }
 
-      setNotice(payload?.message ?? "Плановая проверка ИИ добавлена в очередь.");
+      setNotice(payload?.message ?? "Плановая AI-проверка добавлена в очередь.");
     } finally {
       setIsScheduling(false);
     }
@@ -215,10 +218,10 @@ export function AdminAiEvalRuns({
       <div className="mb-5 flex items-center justify-between gap-3">
         <div>
           <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
-            Качество ИИ
+            Качество AI
           </p>
           <h2 className="mt-2 text-2xl font-semibold text-foreground">
-            Проверки качества ИИ и история запусков
+            Проверки качества AI и история запусков
           </h2>
         </div>
         <button
@@ -251,7 +254,7 @@ export function AdminAiEvalRuns({
           </label>
 
           <label className="grid gap-2 text-sm text-muted">
-            Модель ИИ
+            Модель AI
             <input
               className={inputClassName}
               disabled={!canQueueAiEvalRuns || isSubmitting}
@@ -291,9 +294,11 @@ export function AdminAiEvalRuns({
         {canRunScheduledJobs ? (
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-white/60 px-4 py-4 text-sm">
             <div className="space-y-1">
-              <p className="font-semibold text-foreground">Плановая быстрая проверка</p>
+              <p className="font-semibold text-foreground">
+                Плановая быстрая проверка
+              </p>
               <p className="text-muted">
-                Быстрый контроль ключевых функций ИИ, который можно запустить
+                Быстрый контроль ключевых функций AI, который можно запустить
                 вручную или по расписанию.
               </p>
             </div>
@@ -330,12 +335,16 @@ export function AdminAiEvalRuns({
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="space-y-1">
                     <p className="font-semibold text-foreground">{run.label}</p>
-                    <p className="text-muted">Набор: {getSuiteLabel(run.summary?.suite)}</p>
+                    <p className="text-muted">
+                      Набор: {getSuiteLabel(run.summary?.suite)}
+                    </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <span className="pill">{formatStatus(run.status)}</span>
                     {run.summary?.isScheduled ? (
-                      <span className="pill bg-sky-100 text-sky-700">по расписанию</span>
+                      <span className="pill bg-sky-100 text-sky-700">
+                        по расписанию
+                      </span>
                     ) : null}
                     {run.summary?.qualityGatePassed === true ? (
                       <span className="pill bg-emerald-100 text-emerald-700">
@@ -358,7 +367,7 @@ export function AdminAiEvalRuns({
             ))
           ) : (
             <p className="text-sm leading-7 text-muted">
-              Проверки качества ИИ пока не запускались.
+              Проверки качества AI пока не запускались.
             </p>
           )}
         </div>

@@ -53,12 +53,21 @@ export async function signInAsAdmin(page: Page) {
 }
 
 async function setFieldValue(locator: ReturnType<Page["locator"]>, value: string) {
-  await locator.fill("");
-  await locator.fill(value);
+  await locator.click();
+  await locator.press("Control+A").catch(() => undefined);
+  await locator.press("Delete").catch(() => undefined);
+  await locator.pressSequentially(value, { delay: 12 }).catch(() => undefined);
 
   const currentValue = await locator.inputValue().catch(() => "");
 
   if (currentValue !== value) {
+    await locator.fill("").catch(() => undefined);
+    await locator.fill(value).catch(() => undefined);
+  }
+
+  const filledValue = await locator.inputValue().catch(() => "");
+
+  if (filledValue !== value) {
     await locator.evaluate((element, nextValue) => {
       const input = element as HTMLInputElement;
       const prototype = Object.getPrototypeOf(input) as HTMLInputElement;

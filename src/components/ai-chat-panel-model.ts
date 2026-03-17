@@ -141,11 +141,7 @@ export type AiChatPanelProps = {
   onSessionTouched?: (session: AiChatSessionRow) => void;
 };
 
-export type AiSurfaceNoticeKind =
-  | "success"
-  | "info"
-  | "provider"
-  | "runtime";
+export type AiSurfaceNoticeKind = "success" | "info" | "provider" | "runtime";
 
 export type AiSurfaceNotice = {
   kind: AiSurfaceNoticeKind;
@@ -161,6 +157,8 @@ const providerConfigurationMarkers = [
   "обработка изображений временно выключена",
   "сервис ии временно недоступен",
   "анализ фото временно недоступен",
+  "ai_provider_unavailable",
+  "ai_runtime_not_configured",
 ];
 
 export function createAiSurfaceNotice(
@@ -240,7 +238,7 @@ export function buildMealPhotoMarkdown(result: MealPhotoAnalysis) {
       ? result.items
           .map(
             (item) =>
-              `- ${item.name} · ${item.portion} · уверенность ${formatConfidence(item.confidence)}`,
+              `- ${item.name} | ${item.portion} | уверенность ${formatConfidence(item.confidence)}`,
           )
           .join("\n")
       : "- Точный состав определить не удалось.";
@@ -255,7 +253,7 @@ export function buildMealPhotoMarkdown(result: MealPhotoAnalysis) {
     result.summary,
     "",
     `Оценка: **${result.estimatedKcal} ккал**`,
-    `Белки: **${result.macros.protein} г** · Жиры: **${result.macros.fat} г** · Углеводы: **${result.macros.carbs} г**`,
+    `Белки: **${result.macros.protein} г** | Жиры: **${result.macros.fat} г** | Углеводы: **${result.macros.carbs} г**`,
     "",
     "Что видно на фото:",
     items,

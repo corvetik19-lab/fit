@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, type KeyboardEvent } from "react";
+import { useCallback, type KeyboardEvent, type MutableRefObject } from "react";
 
 import type { AiSurfaceNotice } from "@/components/ai-chat-panel-model";
 
@@ -8,62 +8,76 @@ export function useAiChatComposer({
   accessAllowed,
   allowWebSearch,
   analyzeMealPhoto,
+  createRemoteSession,
   draft,
   isComposerBusy,
-  rememberLocalSession,
+  onBeforeSend,
   selectedImage,
   sendMessage,
-  sessionId,
+  sessionIdRef,
   setDraft,
   setNotice,
 }: {
   accessAllowed: boolean;
   allowWebSearch: boolean;
   analyzeMealPhoto: () => Promise<void>;
+  createRemoteSession: (titleSeed: string) => Promise<string>;
   draft: string;
   isComposerBusy: boolean;
-  rememberLocalSession: (nextSessionId: string, titleSeed: string) => void;
+  onBeforeSend?: (text: string) => void;
   selectedImage: File | null;
   sendMessage: (
     message: { text: string },
-    options: { body: { allowWebSearch: boolean; sessionId: string } },
+    options: { body: { allowWebSearch: boolean; sessionId?: string } },
   ) => void;
-  sessionId: string | null;
+  sessionIdRef: MutableRefObject<string | null>;
   setDraft: (value: string) => void;
   setNotice: (value: AiSurfaceNotice | null) => void;
 }) {
   const submitText = useCallback(
-    (nextText?: string) => {
+    async (nextText?: string) => {
       const trimmed = (nextText ?? draft).trim();
 
       if (!trimmed || isComposerBusy || !accessAllowed) {
         return;
       }
 
-      const nextSessionId = sessionId ?? crypto.randomUUID();
-      rememberLocalSession(nextSessionId, trimmed);
-      setNotice(null);
+      try {
+        const nextSessionId =
+          sessionIdRef.current ?? (await createRemoteSession(trimmed));
+        onBeforeSend?.(trimmed);
+        setNotice(null);
 
-      sendMessage(
-        { text: trimmed },
-        {
-          body: {
-            allowWebSearch,
-            sessionId: nextSessionId,
+        sendMessage(
+          { text: trimmed },
+          {
+            body: {
+              allowWebSearch,
+              sessionId: nextSessionId,
+            },
           },
-        },
-      );
+        );
 
-      setDraft("");
+        setDraft("");
+      } catch (sessionError) {
+        setNotice({
+          kind: "runtime",
+          message:
+            sessionError instanceof Error
+              ? sessionError.message
+              : "Не удалось открыть новый AI-чат.",
+        });
+      }
     },
     [
       accessAllowed,
       allowWebSearch,
+      createRemoteSession,
       draft,
       isComposerBusy,
-      rememberLocalSession,
+      onBeforeSend,
       sendMessage,
-      sessionId,
+      sessionIdRef,
       setDraft,
       setNotice,
     ],
@@ -79,7 +93,7 @@ export function useAiChatComposer({
           return;
         }
 
-        submitText();
+        void submitText();
       }
     },
     [analyzeMealPhoto, selectedImage, submitText],
@@ -91,7 +105,7 @@ export function useAiChatComposer({
       return;
     }
 
-    submitText();
+    void submitText();
   }, [analyzeMealPhoto, selectedImage, submitText]);
 
   return {

@@ -29,6 +29,7 @@ import {
   generateMealPlanProposalForUser,
   generateWorkoutPlanProposalForUser,
 } from "@/lib/ai/plan-generation";
+import { isAiProviderConfigurationFailure } from "@/lib/ai/runtime-errors";
 import { mealPlanSchema, workoutPlanSchema } from "@/lib/ai/schemas";
 import { getAiRuntimeContext } from "@/lib/ai/user-context";
 import { searchWebSnippets } from "@/lib/ai/web-search";
@@ -92,32 +93,8 @@ function buildSafetyFallback() {
   ].join(" ");
 }
 
-function stringifyAssistantError(error: unknown) {
-  if (error instanceof Error) {
-    return `${error.name}: ${error.message}`;
-  }
-
-  if (typeof error === "string") {
-    return error;
-  }
-
-  try {
-    return JSON.stringify(error);
-  } catch {
-    return String(error);
-  }
-}
-
 function isAssistantProviderConfigurationFailure(error: unknown) {
-  const normalized = stringifyAssistantError(error).toLowerCase();
-
-  return (
-    normalized.includes("credit card") ||
-    normalized.includes("customer_verification_required") ||
-    normalized.includes("ai gateway requires") ||
-    normalized.includes("insufficient credits") ||
-    normalized.includes("payment required")
-  );
+  return isAiProviderConfigurationFailure(error);
 }
 
 function buildAssistantStreamErrorMessage(error: unknown) {

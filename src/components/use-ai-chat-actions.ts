@@ -1,7 +1,12 @@
 "use client";
 
 import type { UIMessage } from "ai";
-import { useState, type Dispatch, type SetStateAction } from "react";
+import {
+  useState,
+  type Dispatch,
+  type MutableRefObject,
+  type SetStateAction,
+} from "react";
 
 import {
   buildMealPhotoMarkdown,
@@ -34,26 +39,28 @@ function resolveErrorNotice(
 }
 
 export function useAiChatActions({
+  createRemoteSession,
   draft,
   isChatBusy,
   mealPhotoAccess,
   onRefresh,
   rememberLocalSession,
   selectedImage,
-  sessionId,
+  sessionIdRef,
   setDraft,
   setMessageTimes,
   setMessages,
   setNotice,
   setSelectedImage,
 }: {
+  createRemoteSession: (titleSeed: string) => Promise<string>;
   draft: string;
   isChatBusy: boolean;
   mealPhotoAccess: FeatureAccessSnapshot;
   onRefresh: () => void;
-  rememberLocalSession: (nextSessionId: string, titleSeed: string) => void;
+  rememberLocalSession: (nextSessionId: string, titleSeed: string) => string;
   selectedImage: File | null;
-  sessionId: string | null;
+  sessionIdRef: MutableRefObject<string | null>;
   setDraft: Dispatch<SetStateAction<string>>;
   setMessageTimes: Dispatch<SetStateAction<Map<string, string>>>;
   setMessages: Dispatch<SetStateAction<UIMessage[]>>;
@@ -71,10 +78,15 @@ export function useAiChatActions({
     setActionBusyKey(`${action}:${target.proposalId}`);
 
     try {
-      const response = await fetch(`/api/ai/proposals/${target.proposalId}/${action}`, {
-        method: "POST",
-      });
-      const payload = (await response.json().catch(() => null)) as ProposalActionResponse | null;
+      const response = await fetch(
+        `/api/ai/proposals/${target.proposalId}/${action}`,
+        {
+          method: "POST",
+        },
+      );
+      const payload = (await response.json().catch(() => null)) as
+        | ProposalActionResponse
+        | null;
       const fallbackMessage =
         "Не удалось выполнить действие с предложением. Попробуй ещё раз чуть позже.";
 
@@ -120,25 +132,29 @@ export function useAiChatActions({
       return;
     }
 
-    const nextSessionId = sessionId ?? crypto.randomUUID();
-    const trimmedNotes = draft.trim();
-    const formData = new FormData();
-    formData.set("image", selectedImage);
-    formData.set("sessionId", nextSessionId);
-
-    if (trimmedNotes) {
-      formData.set("notes", trimmedNotes);
-    }
-
     setIsAnalyzingImage(true);
     setNotice(null);
 
     try {
+      const trimmedNotes = draft.trim();
+      const nextSessionId =
+        sessionIdRef.current ??
+        (await createRemoteSession(trimmedNotes || "Разбор фото еды"));
+      const formData = new FormData();
+      formData.set("image", selectedImage);
+      formData.set("sessionId", nextSessionId);
+
+      if (trimmedNotes) {
+        formData.set("notes", trimmedNotes);
+      }
+
       const response = await fetch("/api/ai/meal-photo", {
         method: "POST",
         body: formData,
       });
-      const payload = (await response.json().catch(() => null)) as MealPhotoApiResponse | null;
+      const payload = (await response.json().catch(() => null)) as
+        | MealPhotoApiResponse
+        | null;
       const fallbackMessage =
         "Не удалось разобрать фото. Попробуй другой кадр или повтори запрос чуть позже.";
 
