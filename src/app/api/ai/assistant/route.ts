@@ -118,10 +118,10 @@ function buildAssistantStreamErrorMessage(error: unknown) {
     normalized.includes("insufficient credits") ||
     normalized.includes("payment required")
   ) {
-    return "AI временно недоступен: внешний провайдер ещё не активирован для живых запросов. Доступ к твоим данным не нарушен, но ответ сейчас сгенерировать нельзя.";
+    return "ИИ-ассистент временно недоступен: внешний провайдер ещё не активирован для живых запросов. Доступ к твоим данным не нарушен, но ответ сейчас сгенерировать нельзя.";
   }
 
-  return "Не удалось получить ответ AI-ассистента. Попробуй ещё раз немного позже.";
+  return "Не удалось получить ответ ИИ-ассистента. Попробуй ещё раз немного позже.";
 }
 
 function getLastUserText(messages: UIMessage[]) {
@@ -270,7 +270,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 503,
         code: "AI_RUNTIME_NOT_CONFIGURED",
-        message: "AI runtime ещё не настроен для ассистента.",
+        message: "ИИ-контур пока не настроен для ассистента.",
       });
     }
 
@@ -285,7 +285,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 401,
         code: "UNAUTHORIZED",
-        message: "Нужно войти в аккаунт, чтобы открыть AI-ассистента.",
+        message: "Нужно войти в аккаунт, чтобы открыть ИИ-ассистента.",
       });
     }
 
@@ -655,7 +655,7 @@ export async function POST(request: Request) {
     return createApiErrorResponse({
       status: 500,
       code: "AI_ASSISTANT_FAILED",
-      message: "Не удалось получить ответ AI-ассистента.",
+      message: "Не удалось получить ответ ИИ-ассистента.",
     });
   }
 }

@@ -561,3 +561,10 @@
 - После первого полного прогона `npm run test:e2e:auth` поймал flaky degraded-dashboard check: тест цеплялся за общий `a[href="/admin/users"]`, а не за конкретный fallback CTA.
 - Для этого добавил стабильные `data-testid` на degraded CTA в `src/app/admin/page.tsx` и перевёл `tests/e2e/admin-app.spec.ts` на эти селекторы.
 - После hotfix полный auth baseline снова зелёный: `npm run test:e2e:auth` -> `36 passed`.
+
+### 2026-03-17 11:40 - Санировал user-facing copy в AI API
+
+- Дочистил весь `/api/ai` user-facing слой: `chat`, `assistant`, `meal-photo`, `meal-plan`, `workout-plan`, `reindex`, `sessions`, `sessions/[id]`, `proposals/[id]/apply`, `proposals/[id]/approve`.
+- Убрал английские сообщения и технический жаргон вроде `AI runtime`, `live-запросы`, `AI-предложение`; вместо этого ошибки и статусы теперь объясняются по-русски и без лишнего внутреннего языка.
+- Прогнал машинный scan по `src/app/api/ai` и подтвердил, что английских `message:` / `return` строк в user-facing слое больше не осталось.
+- Tranche подтверждён командами `npx eslint ...src/app/api/ai/*`, `npm run typecheck`, `npm run build`, `npm run build:test`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1` -> `6 passed`.

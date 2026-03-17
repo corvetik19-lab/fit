@@ -23,7 +23,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 401,
         code: "UNAUTHORIZED",
-        message: "Нужно войти в аккаунт, чтобы генерировать AI-тренировки.",
+        message: "Нужно войти в аккаунт, чтобы генерировать тренировочные планы через ИИ.",
       });
     }
 
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 503,
         code: "AI_RUNTIME_NOT_CONFIGURED",
-        message: "AI runtime не настроен.",
+        message: "ИИ-контур пока не настроен.",
       });
     }
 

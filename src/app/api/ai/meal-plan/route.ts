@@ -24,7 +24,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 401,
         code: "UNAUTHORIZED",
-        message: "Нужно войти в аккаунт, чтобы генерировать AI-планы питания.",
+        message: "Нужно войти в аккаунт, чтобы генерировать планы питания через ИИ.",
       });
     }
 
@@ -34,7 +34,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 503,
         code: "AI_RUNTIME_NOT_CONFIGURED",
-        message: "AI runtime не настроен.",
+        message: "ИИ-контур пока не настроен.",
       });
     }
 
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
         status: 400,
         code: "AI_SAFETY_BLOCK",
         message:
-          "Комментарий к плану питания вышел за текущий safety-контур приложения.",
+          "Комментарий к плану питания вышел за безопасный контур приложения.",
       });
     }
 

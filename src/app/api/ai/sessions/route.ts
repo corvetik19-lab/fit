@@ -24,7 +24,7 @@ export async function DELETE() {
       return createApiErrorResponse({
         status: 401,
         code: "AUTH_REQUIRED",
-        message: "Sign in before clearing AI chat history.",
+        message: "Нужно войти в аккаунт, чтобы очистить историю чатов с ИИ.",
       });
     }
 
@@ -37,7 +37,7 @@ export async function DELETE() {
     return createApiErrorResponse({
       status: 500,
       code: "AI_CHAT_HISTORY_CLEAR_FAILED",
-      message: "Unable to clear AI chat history.",
+      message: "Не удалось очистить историю чатов с ИИ.",
     });
   }
 }

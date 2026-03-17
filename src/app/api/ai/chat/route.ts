@@ -69,10 +69,10 @@ function buildProviderErrorMessage(error: unknown) {
     normalized.includes("payment required") ||
     normalized.includes("quota")
   ) {
-    return "AI-чат временно недоступен: внешний AI-провайдер ещё не активирован для live-запросов. История и профиль пользователя сохранены, но ответ сейчас сгенерировать нельзя.";
+    return "Чат с ИИ временно недоступен: внешний провайдер ещё не активирован для живых запросов. История и профиль пользователя сохранены, но ответ сейчас сгенерировать нельзя.";
   }
 
-  return "Не удалось получить ответ AI-чата.";
+  return "Не удалось получить ответ чата с ИИ.";
 }
 
 export async function POST(request: Request) {
@@ -81,7 +81,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 503,
         code: "AI_RUNTIME_NOT_CONFIGURED",
-        message: "AI runtime не настроен для AI-чата.",
+        message: "ИИ-контур пока не настроен для чата.",
       });
     }
 
@@ -95,7 +95,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 401,
         code: "UNAUTHORIZED",
-        message: "Нужно войти в аккаунт, чтобы открыть AI-чат.",
+        message: "Нужно войти в аккаунт, чтобы открыть чат с ИИ.",
       });
     }
 
@@ -242,7 +242,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 400,
         code: "AI_CHAT_INVALID_PAYLOAD",
-        message: "Запрос к AI-чату заполнен некорректно.",
+        message: "Запрос к чату с ИИ заполнен некорректно.",
         details: error.flatten(),
       });
     }

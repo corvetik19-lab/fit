@@ -43,10 +43,10 @@ function buildProviderErrorMessage(error: unknown) {
     normalized.includes("quota") ||
     normalized.includes("billing")
   ) {
-    return "Внешний AI-провайдер сейчас недоступен для анализа фото. Маршрут готов, но live-обработка изображений временно выключена до активации баланса.";
+    return "Внешний ИИ-провайдер сейчас недоступен для анализа фото. Маршрут готов, но обработка изображений временно выключена до активации баланса.";
   }
 
-  return "Не удалось выполнить AI-анализ фото блюда.";
+  return "Не удалось выполнить ИИ-анализ фото блюда.";
 }
 
 function buildUserChatMessage(notes: string | null) {
@@ -119,7 +119,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 503,
         code: "AI_RUNTIME_NOT_CONFIGURED",
-        message: "AI runtime не настроен для анализа фото.",
+        message: "ИИ-контур пока не настроен для анализа фото.",
       });
     }
 
@@ -132,7 +132,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 401,
         code: "UNAUTHORIZED",
-        message: "Нужно войти в аккаунт, чтобы использовать AI-анализ фото.",
+        message: "Нужно войти в аккаунт, чтобы использовать ИИ-анализ фото.",
       });
     }
 

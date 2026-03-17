@@ -43,7 +43,7 @@ export async function POST(
       return createApiErrorResponse({
         status: 404,
         code: "AI_PROPOSAL_NOT_FOUND",
-        message: "AI-предложение не найдено.",
+        message: "ИИ-предложение не найдено.",
       });
     }
 

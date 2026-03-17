@@ -51,8 +51,8 @@ export async function POST(request: Request) {
       reason:
         payload.reason ??
         (result.mode === "embeddings"
-          ? "Ручное обновление embeddings базы знаний"
-          : "Ручной reindex базы знаний"),
+          ? "Ручное обновление векторного индекса базы знаний"
+          : "Ручная переиндексация базы знаний"),
       payload: {
         embeddingsIndexed: result.embeddingsIndexed,
         indexedChunks: result.indexedChunks,
@@ -91,7 +91,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 400,
         code: "REINDEX_INVALID",
-        message: "Параметры reindex заполнены некорректно.",
+        message: "Параметры переиндексации заполнены некорректно.",
         details: error.flatten(),
       });
     }

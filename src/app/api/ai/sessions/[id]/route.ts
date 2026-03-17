@@ -36,7 +36,7 @@ export async function DELETE(_: Request, context: RouteContext) {
       return createApiErrorResponse({
         status: 401,
         code: "AUTH_REQUIRED",
-        message: "Sign in before deleting an AI chat.",
+        message: "Нужно войти в аккаунт, чтобы удалить выбранный чат с ИИ.",
       });
     }
 
@@ -50,7 +50,7 @@ export async function DELETE(_: Request, context: RouteContext) {
       return createApiErrorResponse({
         status: 400,
         code: "AI_CHAT_SESSION_INVALID",
-        message: "Некорректный идентификатор AI-чата.",
+        message: "Некорректный идентификатор чата с ИИ.",
         details: error.flatten(),
       });
     }
@@ -68,7 +68,7 @@ export async function DELETE(_: Request, context: RouteContext) {
     return createApiErrorResponse({
       status: 500,
       code: "AI_CHAT_SESSION_DELETE_FAILED",
-      message: "Unable to delete the selected AI chat.",
+      message: "Не удалось удалить выбранный чат с ИИ.",
     });
   }
 }

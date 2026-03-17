@@ -545,3 +545,10 @@
 - [x] Дожат flaky admin fallback regression: `src/app/admin/page.tsx` получил стабильные `data-testid` для degraded CTA-кнопок, а `tests/e2e/admin-app.spec.ts` больше не зависит от общего `href`-локатора на фоне shell/nav DOM.
 - [x] Tranche подтверждён baseline: `npx eslint ...admin-user-detail* src/app/admin/page.tsx tests/e2e/admin-app.spec.ts`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/admin-app.spec.ts --workers=1` -> `5 passed`, `npx playwright test tests/e2e/mobile-pwa-regressions.spec.ts --workers=1` -> `3 passed`, `npm run test:e2e:auth` -> `36 passed`.
 - [ ] Следующий sanitation/backend tranche: пройти remaining operator copy на оставшихся admin/user-facing surfaces и затем вернуться к `owner-only / idempotency / retrieval` audit по AI/data routes.
+
+## 2026-03-17 AI route copy sanitation addendum
+
+- [x] Полностью санирован user-facing copy в `src/app/api/ai/chat/route.ts`, `src/app/api/ai/assistant/route.ts`, `src/app/api/ai/meal-photo/route.ts`, `src/app/api/ai/meal-plan/route.ts`, `src/app/api/ai/workout-plan/route.ts`, `src/app/api/ai/reindex/route.ts`, `src/app/api/ai/sessions/route.ts`, `src/app/api/ai/sessions/[id]/route.ts`, `src/app/api/ai/proposals/[id]/apply/route.ts`, `src/app/api/ai/proposals/[id]/approve/route.ts`.
+- [x] Из AI API убраны английские сообщения и лишние технические формулировки вроде `AI runtime`, `live-запросы`, `AI-предложение`; пользовательская поверхность теперь везде говорит по-русски и понятнее разводит runtime/config ошибки.
+- [x] Tranche подтверждён baseline: `npx eslint ...src/app/api/ai/*`, `npm run typecheck`, `npm run build`, `npm run build:test`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1` -> `6 passed`.
+- [ ] Следующий AI/backend tranche: вернуться к `owner-only / idempotency / retrieval` audit по AI/data routes и добить remaining route-level ownership coverage.
