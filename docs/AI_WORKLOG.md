@@ -620,3 +620,10 @@
 - `src/app/api/ai/chat/route.ts`, `src/app/api/ai/assistant/route.ts`, `src/app/api/ai/meal-photo/route.ts` теперь отдают согласованные русские сообщения и явный `503 AI_PROVIDER_UNAVAILABLE` там, где сбой именно во внешнем провайдере или неготовой конфигурации.
 - `scripts/run-next-with-dist-dir.mjs` получил memory guard для `next build`, а новый `scripts/ensure-next-build.mjs` подключён в `pretest:e2e`, `pretest:e2e:auth`, `pretest:smoke`: smoke и auth e2e больше не делают лишний rebuild поверх уже готового `.next`.
 - Tranche подтверждён командами `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:smoke` -> `3 passed`, `npx playwright test tests/e2e/ai-workspace.spec.ts tests/e2e/api-contracts.spec.ts --workers=1` -> `8 passed`, `npm run test:e2e:auth` -> `36 passed`.
+
+### 2026-03-17 22:05 - Подтвердил retrieval по всей исторической базе пользователя
+
+- `src/lib/ai/knowledge-retrieval.ts` перевёл text/vector fallback на пагинацию по всей истории пользователя: больше нет скрытого свежего bias через `limit(400)` на embeddings и `limit(600)` на последние knowledge chunks.
+- Вынес чистые helper’ы `collectPaginatedRows`, `rankKnowledgeChunksByText`, `rankKnowledgeMatchesFromEmbeddingRows`, чтобы исторический retrieval был проверяемым без живого AI runtime и без внешнего embedding provider.
+- Добавил `tests/rls/retrieval-history.spec.ts`: suite подтверждает, что pager доходит дальше первых страниц, старый релевантный text chunk находится среди сотен новых нерелевантных записей, а старый релевантный embedding выигрывает в vector fallback после загрузки поздних страниц.
+- Tranche подтверждён командами `npx eslint src/lib/ai/knowledge-retrieval.ts tests/rls/retrieval-history.spec.ts`, `npm run test:rls` -> `4 passed`, `npm run typecheck`, `npm run build`.

@@ -217,7 +217,7 @@
 - [x] Развести runtime failure UX и provider configuration UX.
 - [x] Стабилизировать историю чатов, prompt library, web search toggle и image upload.
 - [ ] Прогнать assistant/retrieval/workout-plan/meal-plan/safety eval suites как quality gate.
-- [ ] Подтвердить retrieval по всей исторической базе пользователя, а не только по свежим данным.
+- [x] Подтвердить retrieval по всей исторической базе пользователя, а не только по свежим данным.
 
 ### Database / Supabase
 
@@ -596,4 +596,12 @@
 - [x] `src/app/api/ai/chat/route.ts`, `src/app/api/ai/assistant/route.ts`, `src/app/api/ai/meal-photo/route.ts` теперь отдают согласованные русские сообщения и отдельные `503 AI_PROVIDER_UNAVAILABLE` / `503 AI_RUNTIME_NOT_CONFIGURED` там, где проблема именно в конфигурации или внешнем провайдере.
 - [x] `scripts/run-next-with-dist-dir.mjs` получил memory guard для `next build`, а `scripts/ensure-next-build.mjs` + `package.json` убрали лишний повторный build перед `test:smoke` и `test:e2e:*`: тестовые команды теперь переиспользуют уже собранный `.next`, если он существует.
 - [x] Tranche подтверждён baseline-пакетом: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:smoke` -> `3 passed`, `npx playwright test tests/e2e/ai-workspace.spec.ts tests/e2e/api-contracts.spec.ts --workers=1` -> `8 passed`, `npm run test:e2e:auth` -> `36 passed`.
-- [ ] Следующий AI/backend tranche: подтверждать retrieval по всей исторической базе пользователя и затем закрывать минимальный AI quality gate (`assistant`, `retrieval`, `workout plan`, `meal plan`, `safety`).
+- [ ] Следующий AI/backend tranche: закрывать минимальный AI quality gate (`assistant`, `retrieval`, `workout plan`, `meal plan`, `safety`).
+
+## 2026-03-17 historical retrieval fallback addendum
+
+- [x] `src/lib/ai/knowledge-retrieval.ts` больше не ограничивает text/vector fallback первыми сотнями строк: и `knowledge_chunks`, и `knowledge_embeddings` теперь читаются пагинированно по всей истории пользователя, а не только по свежему хвосту.
+- [x] Из vector fallback убран скрытый bias на `limit(400)`, а из text fallback убран fresh-only bias на `order(created_at desc).limit(600)`; оба fallback пути теперь ранжируют весь paged result set.
+- [x] Добавлен прямой regression suite `tests/rls/retrieval-history.spec.ts`, который без внешнего AI-провайдера подтверждает три вещи: pager доходит дальше первых страниц, text fallback поднимает старый релевантный chunk, vector fallback поднимает старый релевантный embedding.
+- [x] Tranche подтверждён baseline-пакетом: `npx eslint src/lib/ai/knowledge-retrieval.ts tests/rls/retrieval-history.spec.ts`, `npm run test:rls` -> `4 passed`, `npm run typecheck`, `npm run build`.
+- [ ] Следующий AI/backend tranche: закрывать минимальный AI quality gate (`assistant`, `retrieval`, `workout plan`, `meal plan`, `safety`) и привязать его к release baseline.

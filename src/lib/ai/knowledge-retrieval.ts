@@ -13,6 +13,105 @@ import {
 } from "@/lib/ai/knowledge-model";
 import { logger } from "@/lib/logger";
 
+const KNOWLEDGE_FALLBACK_PAGE_SIZE = 200;
+const KNOWLEDGE_CHUNK_BATCH_SIZE = 200;
+
+export async function collectPaginatedRows<T>({
+  fetchPage,
+  pageSize = KNOWLEDGE_FALLBACK_PAGE_SIZE,
+}: {
+  fetchPage: (from: number, to: number) => Promise<T[]>;
+  pageSize?: number;
+}) {
+  const rows: T[] = [];
+
+  for (let pageIndex = 0; ; pageIndex += 1) {
+    const from = pageIndex * pageSize;
+    const to = from + pageSize - 1;
+    const page = await fetchPage(from, to);
+
+    if (!page.length) {
+      break;
+    }
+
+    rows.push(...page);
+
+    if (page.length < pageSize) {
+      break;
+    }
+  }
+
+  return rows;
+}
+
+function chunkArray<T>(items: T[], size: number) {
+  const chunks: T[][] = [];
+
+  for (let index = 0; index < items.length; index += size) {
+    chunks.push(items.slice(index, index + size));
+  }
+
+  return chunks;
+}
+
+export function rankKnowledgeChunksByText(
+  chunks: KnowledgeChunkRow[],
+  query: string,
+  limit: number,
+) {
+  return chunks
+    .map((chunk) => ({
+      id: chunk.id,
+      sourceType: chunk.source_type,
+      sourceId: chunk.source_id,
+      content: chunk.content,
+      metadata: chunk.metadata,
+      similarity: rankChunkByTokens(chunk, query),
+    }))
+    .filter((item) => item.similarity > 0)
+    .sort((left, right) => right.similarity - left.similarity)
+    .slice(0, limit);
+}
+
+export function rankKnowledgeMatchesFromEmbeddingRows({
+  chunksById,
+  embeddingRows,
+  limit,
+  queryEmbedding,
+}: {
+  chunksById: Map<string, KnowledgeChunkRow>;
+  embeddingRows: KnowledgeEmbeddingRow[];
+  limit: number;
+  queryEmbedding: number[];
+}) {
+  return embeddingRows
+    .map((row) => {
+      const chunk = chunksById.get(row.chunk_id);
+
+      if (!chunk) {
+        return null;
+      }
+
+      const candidateEmbedding = parseVector(row.embedding);
+
+      if (!candidateEmbedding.length || candidateEmbedding.length !== queryEmbedding.length) {
+        return null;
+      }
+
+      return {
+        id: chunk.id,
+        sourceType: chunk.source_type,
+        sourceId: chunk.source_id,
+        content: chunk.content,
+        metadata: chunk.metadata,
+        similarity: cosineSimilarity(queryEmbedding, candidateEmbedding),
+      } satisfies RetrievedKnowledgeItem;
+    })
+    .filter((item): item is RetrievedKnowledgeItem => Boolean(item))
+    .sort((left, right) => right.similarity - left.similarity)
+    .slice(0, limit);
+}
+
 async function retrieveKnowledgeMatchesViaRpc(
   supabase: SupabaseClient,
   queryEmbedding: number[],
@@ -90,63 +189,52 @@ async function retrieveKnowledgeMatchesWithFallback(
   queryEmbedding: number[],
   limit: number,
 ) {
-  const { data: embeddingData, error: embeddingError } = await supabase
-    .from("knowledge_embeddings")
-    .select("chunk_id, embedding")
-    .eq("user_id", userId)
-    .limit(400);
+  const embeddingRows = await collectPaginatedRows({
+    fetchPage: async (from, to) => {
+      const { data, error } = await supabase
+        .from("knowledge_embeddings")
+        .select("chunk_id, embedding")
+        .eq("user_id", userId)
+        .order("id", { ascending: true })
+        .range(from, to);
 
-  if (embeddingError) {
-    throw embeddingError;
-  }
+      if (error) {
+        throw error;
+      }
 
-  const embeddingRows = (embeddingData as KnowledgeEmbeddingRow[] | null) ?? [];
+      return (data as KnowledgeEmbeddingRow[] | null) ?? [];
+    },
+  });
 
   if (!embeddingRows.length) {
     return [] as RetrievedKnowledgeItem[];
   }
 
   const chunkIds = [...new Set(embeddingRows.map((row) => row.chunk_id))];
+  const chunkPages = await Promise.all(
+    chunkArray(chunkIds, KNOWLEDGE_CHUNK_BATCH_SIZE).map(async (chunkIdBatch) => {
+      const { data, error } = await supabase
+        .from("knowledge_chunks")
+        .select("id, source_type, source_id, content, metadata")
+        .eq("user_id", userId)
+        .in("id", chunkIdBatch);
 
-  const { data: chunkData, error: chunkError } = await supabase
-    .from("knowledge_chunks")
-    .select("id, source_type, source_id, content, metadata")
-    .eq("user_id", userId)
-    .in("id", chunkIds);
+      if (error) {
+        throw error;
+      }
 
-  if (chunkError) {
-    throw chunkError;
-  }
-
-  const chunks = (chunkData as KnowledgeChunkRow[] | null) ?? [];
+      return (data as KnowledgeChunkRow[] | null) ?? [];
+    }),
+  );
+  const chunks = chunkPages.flat();
   const chunksById = new Map(chunks.map((chunk) => [chunk.id, chunk]));
 
-  return embeddingRows
-    .map((row) => {
-      const chunk = chunksById.get(row.chunk_id);
-
-      if (!chunk) {
-        return null;
-      }
-
-      const candidateEmbedding = parseVector(row.embedding);
-
-      if (!candidateEmbedding.length || candidateEmbedding.length !== queryEmbedding.length) {
-        return null;
-      }
-
-      return {
-        id: chunk.id,
-        sourceType: chunk.source_type,
-        sourceId: chunk.source_id,
-        content: chunk.content,
-        metadata: chunk.metadata,
-        similarity: cosineSimilarity(queryEmbedding, candidateEmbedding),
-      } satisfies RetrievedKnowledgeItem;
-    })
-    .filter((item): item is RetrievedKnowledgeItem => Boolean(item))
-    .sort((left, right) => right.similarity - left.similarity)
-    .slice(0, limit);
+  return rankKnowledgeMatchesFromEmbeddingRows({
+    chunksById,
+    embeddingRows,
+    limit,
+    queryEmbedding,
+  });
 }
 
 async function retrieveKnowledgeMatchesViaTextFallback(
@@ -155,31 +243,24 @@ async function retrieveKnowledgeMatchesViaTextFallback(
   query: string,
   limit: number,
 ) {
-  const { data, error } = await supabase
-    .from("knowledge_chunks")
-    .select("id, source_type, source_id, content, metadata")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false })
-    .limit(600);
+  const chunks = await collectPaginatedRows({
+    fetchPage: async (from, to) => {
+      const { data, error } = await supabase
+        .from("knowledge_chunks")
+        .select("id, source_type, source_id, content, metadata")
+        .eq("user_id", userId)
+        .order("id", { ascending: true })
+        .range(from, to);
 
-  if (error) {
-    throw error;
-  }
+      if (error) {
+        throw error;
+      }
 
-  const chunks = (data as KnowledgeChunkRow[] | null) ?? [];
+      return (data as KnowledgeChunkRow[] | null) ?? [];
+    },
+  });
 
-  return chunks
-    .map((chunk) => ({
-      id: chunk.id,
-      sourceType: chunk.source_type,
-      sourceId: chunk.source_id,
-      content: chunk.content,
-      metadata: chunk.metadata,
-      similarity: rankChunkByTokens(chunk, query),
-    }))
-    .filter((item) => item.similarity > 0)
-    .sort((left, right) => right.similarity - left.similarity)
-    .slice(0, limit);
+  return rankKnowledgeChunksByText(chunks, query, limit);
 }
 
 export async function retrieveKnowledgeMatchesWithPipeline({
