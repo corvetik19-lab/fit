@@ -534,3 +534,11 @@
 - Повторный прогон `security` advisors подтвердил, что `rls_enabled_no_policy` полностью ушёл; в security backlog остались только platform-level warnings `extension_in_public` для `vector` и `auth_leaked_password_protection`.
 - После DB slice пришлось отдельно дожать flaky AI workspace test: в `tests/e2e/ai-workspace.spec.ts` создание шаблона теперь ждёт visible+enabled состояние кнопки внутри модалки, после чего full `npm run test:e2e:auth` снова зелёный (`36 passed`).
 - Tranche подтверждён командами `npm run verify:migrations`, `npm run test:rls`, `npx playwright test tests/e2e/ai-workspace.spec.ts --workers=1`, `npm run test:e2e:auth`, `npm run test:smoke`.
+
+### 2026-03-17 09:45 - Дожал workspace sanitation для dashboard, workouts и nutrition
+
+- Переписал `src/components/page-workspace.tsx` в чистом UTF-8 и добавил стабильные `data-testid` для mobile section-menu и visibility toggles.
+- Полностью санировал `src/components/dashboard-workspace.tsx`: hero, summary, AI-блок и mobile section-menu на `/dashboard` больше не показывают битую кириллицу.
+- Переписал `src/app/workouts/page.tsx` и `src/app/nutrition/page.tsx` в нормальный русский user-facing copy для badges, metrics, section labels и descriptions.
+- Обновил `tests/e2e/mobile-pwa-regressions.spec.ts`: mobile regression теперь опирается на стабильные test ids вместо старых текстовых селекторов и снова подтверждает `Dashboard / Workouts / Nutrition / Admin` на узком viewport.
+- Tranche подтверждён baseline-пакетом: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `36 passed`, `npm run test:smoke` -> `3 passed`.

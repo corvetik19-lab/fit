@@ -526,3 +526,13 @@
 - [x] После DDL повторно прогнаны advisors: `security` больше не содержит `rls_enabled_no_policy`, а remaining security backlog сужен до двух platform-level warning — `extension_in_public` для `vector` и `auth_leaked_password_protection`.
 - [x] Tranche подтверждён verification-пакетом: `npm run verify:migrations`, `npm run test:rls` -> `1 passed`, `npm run test:e2e:auth` -> `36 passed`, `npm run test:smoke` -> `3 passed`.
 - [ ] Следующий DB tranche: отдельно оформить policy по двум оставшимся platform-level warning (`vector` schema и leaked password protection) и решить, что из этого автоматизируется в repo, а что остаётся внешним release checklist для Supabase проекта.
+
+## 2026-03-17 workspace surface sanitation addendum
+
+- [x] `src/components/page-workspace.tsx` повторно санирован в чистый UTF-8: блоки `Настройка экрана`, `Разделы`, `Текущий раздел`, `Скрыть/Показать` больше не отдают mojibake на `Workouts` и `Nutrition`.
+- [x] В `page-workspace` добавлены стабильные `data-testid` для mobile section-trigger, mobile section-options и visibility toggles, чтобы mobile/PWA regression suite не зависел от copy.
+- [x] `src/components/dashboard-workspace.tsx` переписан в чистом UTF-8: hero, summary, AI context и section-menu на `/dashboard` теперь показывают нормальный русский текст и не держат битые строки в mobile PWA.
+- [x] `src/app/workouts/page.tsx` и `src/app/nutrition/page.tsx` снова отдают чистый user-facing copy для badges, title, metrics и section descriptions.
+- [x] `tests/e2e/mobile-pwa-regressions.spec.ts` переведён на новые stable selectors; regression suite подтверждает, что `Dashboard / Workouts / Nutrition / Admin` mobile surfaces остаются usable без overflow и без зависимости от старого mojibake.
+- [x] Tranche подтверждён baseline: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `36 passed`, `npm run test:smoke` -> `3 passed`.
+- [ ] Следующий sanitation/backend tranche: добить remaining mojibake и operator copy на оставшихся user-facing surfaces, затем вернуться к `owner-only / idempotency / retrieval` audit по AI/data routes.

@@ -85,11 +85,13 @@ function VisibilityButton({
   icon: Icon,
   label,
   onClick,
+  testId,
 }: {
   active: boolean;
   icon: typeof Eye;
   label: string;
   onClick: () => void;
+  testId?: string;
 }) {
   return (
     <button
@@ -99,6 +101,7 @@ function VisibilityButton({
           ? "border-accent/15 bg-[color-mix(in_srgb,var(--accent-soft)_68%,white)] text-foreground"
           : "border-border bg-white/80 text-foreground hover:bg-white"
       }`}
+      data-testid={testId}
       onClick={onClick}
       type="button"
     >
@@ -202,18 +205,21 @@ export function PageWorkspace({
               icon={hiddenBlocks.hero ? Eye : EyeOff}
               label={hiddenBlocks.hero ? "Показать обзор" : "Скрыть обзор"}
               onClick={() => toggleBlockVisibility("hero")}
+              testId="page-workspace-visibility-hero"
             />
             <VisibilityButton
               active={!hiddenBlocks.menu}
               icon={hiddenBlocks.menu ? LayoutPanelTop : EyeOff}
               label={hiddenBlocks.menu ? "Показать меню" : "Скрыть меню"}
               onClick={() => toggleBlockVisibility("menu")}
+              testId="page-workspace-visibility-menu"
             />
             <VisibilityButton
               active={!hiddenBlocks.section}
               icon={hiddenBlocks.section ? Eye : EyeOff}
               label={hiddenBlocks.section ? "Показать раздел" : "Скрыть раздел"}
               onClick={() => toggleBlockVisibility("section")}
+              testId="page-workspace-visibility-section"
             />
           </div>
         </div>
@@ -285,6 +291,7 @@ export function PageWorkspace({
             <button
               aria-expanded={isMobileMenuOpen}
               className="flex w-full items-center justify-between gap-3 rounded-3xl border border-border bg-white/82 px-4 py-3 text-left shadow-[0_18px_45px_-35px_rgba(20,97,75,0.25)] transition hover:bg-white"
+              data-testid="page-workspace-mobile-trigger"
               onClick={() => setIsMobileMenuOpen((current) => !current)}
               type="button"
             >
@@ -323,6 +330,7 @@ export function PageWorkspace({
                           ? "border-accent/20 bg-[color-mix(in_srgb,var(--accent-soft)_72%,white)] text-foreground"
                           : "border-transparent bg-white/72 text-foreground hover:bg-white"
                       }`}
+                      data-testid={`page-workspace-mobile-option-${section.key}`}
                       key={section.key}
                       onClick={() => handleSectionSelect(section.key)}
                       type="button"

@@ -60,17 +60,12 @@ test.describe("mobile pwa regressions", () => {
         await page.keyboard.press("Escape");
         await expect(drawer).toHaveAttribute("aria-hidden", "true");
 
-        const dashboardSectionTrigger = page
-          .getByRole("button")
-          .filter({ hasText: "Раздел дашборда" })
-          .first();
+        const dashboardSectionTrigger = page.getByTestId(
+          "dashboard-workspace-mobile-trigger",
+        );
         await expect(dashboardSectionTrigger).toBeVisible();
         await dashboardSectionTrigger.click();
-        await page
-          .getByRole("button")
-          .filter({ hasText: "Что коуч уже видит и какой следующий шаг" })
-          .first()
-          .click();
+        await page.getByTestId("dashboard-workspace-option-ai").click();
         await expect(dashboardSectionTrigger).toContainText("AI");
         await expectNoHorizontalOverflow(page, "dashboard section switch");
 
@@ -78,17 +73,12 @@ test.describe("mobile pwa regressions", () => {
         await page.waitForLoadState("networkidle");
         await page.waitForTimeout(300);
         await expectNoHorizontalOverflow(page, "/workouts");
-        const workoutsSectionTrigger = page
-          .getByRole("button")
-          .filter({ hasText: "Текущий раздел" })
-          .first();
+        const workoutsSectionTrigger = page.getByTestId(
+          "page-workspace-mobile-trigger",
+        );
         await expect(workoutsSectionTrigger).toBeVisible();
         await workoutsSectionTrigger.click();
-        await page
-          .getByRole("button")
-          .filter({ hasText: "Своя база и быстрые правки" })
-          .first()
-          .click();
+        await page.getByTestId("page-workspace-mobile-option-library").click();
         await expect(workoutsSectionTrigger).toContainText("Упражнения");
         await page.getByRole("button", { name: "Скрыть меню" }).click();
         await expect(
@@ -101,17 +91,12 @@ test.describe("mobile pwa regressions", () => {
         await page.waitForLoadState("networkidle");
         await page.waitForTimeout(300);
         await expectNoHorizontalOverflow(page, "/nutrition");
-        const nutritionSectionTrigger = page
-          .getByRole("button")
-          .filter({ hasText: "Текущий раздел" })
-          .first();
+        const nutritionSectionTrigger = page.getByTestId(
+          "page-workspace-mobile-trigger",
+        );
         await expect(nutritionSectionTrigger).toBeVisible();
         await nutritionSectionTrigger.click();
-        await page
-          .getByRole("button")
-          .filter({ hasText: "Продукты, рецепты и ручной лог" })
-          .first()
-          .click();
+        await page.getByTestId("page-workspace-mobile-option-log").click();
         await expect(nutritionSectionTrigger).toContainText("Журнал");
         await page.getByRole("button", { name: "Скрыть раздел" }).click();
         await expect(

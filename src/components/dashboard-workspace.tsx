@@ -251,8 +251,8 @@ export function DashboardWorkspace({
                 </p>
                 <p className="mt-2 text-sm leading-6 text-muted">
                   {aiContext.workoutInsights.completedDaysLast28} тренировок и{" "}
-                  {aiContext.workoutInsights.loggedSetsLast28} рабочих подходов
-                  за последние 28 дней.
+                  {aiContext.workoutInsights.loggedSetsLast28} рабочих подходов за
+                  последние 28 дней.
                 </p>
                 <p className="mt-3 text-sm font-medium text-foreground">
                   Средний рабочий объём:{" "}
@@ -322,6 +322,7 @@ export function DashboardWorkspace({
           <button
             aria-expanded={isMobileMenuOpen}
             className="flex w-full items-center justify-between gap-3 rounded-3xl border border-border bg-white/82 px-4 py-3 text-left shadow-[0_18px_45px_-35px_rgba(20,97,75,0.25)] transition hover:bg-white"
+            data-testid="dashboard-workspace-mobile-trigger"
             onClick={() => setIsMobileMenuOpen((current) => !current)}
             type="button"
           >
@@ -359,6 +360,7 @@ export function DashboardWorkspace({
                         ? "border-accent/20 bg-[color-mix(in_srgb,var(--accent-soft)_72%,white)] text-foreground"
                         : "border-transparent bg-white/72 text-foreground hover:bg-white"
                     }`}
+                    data-testid={`dashboard-workspace-option-${section.key}`}
                     key={section.key}
                     onClick={() => handleSectionSelect(section.key)}
                     type="button"
@@ -543,9 +545,7 @@ export function DashboardWorkspace({
                 </p>
                 <ul className="mt-3 grid gap-2 text-sm leading-6 text-muted">
                   <li>Собрать новую программу тренировок или питания.</li>
-                  <li>
-                    Запросить совет по прогрессии нагрузки и восстановлению.
-                  </li>
+                  <li>Запросить совет по прогрессии нагрузки и восстановлению.</li>
                   <li>Сразу применить готовое предложение в приложение.</li>
                 </ul>
               </article>
