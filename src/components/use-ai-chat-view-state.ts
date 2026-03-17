@@ -2,7 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import type { ChatMessage } from "@/components/ai-chat-panel-model";
+import type {
+  AiSurfaceNotice,
+  ChatMessage,
+} from "@/components/ai-chat-panel-model";
 
 type TranscriptMessage = {
   id: string;
@@ -18,7 +21,7 @@ export function useAiChatViewState({
   initialMessages: ChatMessage[];
   isBusy: boolean;
   messages: TranscriptMessage[];
-  notice: string | null;
+  notice: AiSurfaceNotice | null;
 }) {
   const scrollViewportRef = useRef<HTMLDivElement | null>(null);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
@@ -58,7 +61,7 @@ export function useAiChatViewState({
       top: viewport.scrollHeight,
       behavior: "smooth",
     });
-  }, [messages, isBusy, notice]);
+  }, [messages, isBusy, notice?.kind, notice?.message]);
 
   return {
     lastAssistantMessageId,

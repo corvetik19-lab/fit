@@ -35,6 +35,11 @@ const chatRequestSchema = z.object({
   message: z.string().trim().min(2).max(2000),
 });
 
+const aiChatProviderMessage =
+  "Сервис ИИ временно недоступен. Провайдер не активирован для чата и живых ответов.";
+const aiChatRuntimeMessage =
+  "Сервис ИИ временно не ответил. Попробуй ещё раз немного позже.";
+
 function buildSafetyFallback() {
   return [
     "Я не помогаю с опасными или экстремальными рекомендациями.",
@@ -59,20 +64,22 @@ function stringifyAiError(error: unknown) {
   }
 }
 
-function buildProviderErrorMessage(error: unknown) {
+function isProviderConfigurationFailure(error: unknown) {
   const normalized = stringifyAiError(error).toLowerCase();
 
-  if (
+  return (
     normalized.includes("credit card") ||
     normalized.includes("customer_verification_required") ||
     normalized.includes("insufficient credits") ||
     normalized.includes("payment required") ||
     normalized.includes("quota")
-  ) {
-    return "Чат с ИИ временно недоступен: внешний провайдер ещё не активирован для живых запросов. История и профиль пользователя сохранены, но ответ сейчас сгенерировать нельзя.";
-  }
+  );
+}
 
-  return "Не удалось получить ответ чата с ИИ.";
+function buildProviderErrorMessage(error: unknown) {
+  return isProviderConfigurationFailure(error)
+    ? aiChatProviderMessage
+    : aiChatRuntimeMessage;
 }
 
 export async function POST(request: Request) {
@@ -81,7 +88,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 503,
         code: "AI_RUNTIME_NOT_CONFIGURED",
-        message: "ИИ-контур пока не настроен для чата.",
+        message: "Сервис ИИ временно недоступен. Контур чата ещё не настроен.",
       });
     }
 
@@ -258,8 +265,10 @@ export async function POST(request: Request) {
     logger.error("ai chat route failed", { error });
 
     return createApiErrorResponse({
-      status: 502,
-      code: "AI_CHAT_FAILED",
+      status: isProviderConfigurationFailure(error) ? 503 : 502,
+      code: isProviderConfigurationFailure(error)
+        ? "AI_PROVIDER_UNAVAILABLE"
+        : "AI_CHAT_FAILED",
       message: buildProviderErrorMessage(error),
     });
   }

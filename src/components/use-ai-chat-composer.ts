@@ -2,6 +2,8 @@
 
 import { useCallback, type KeyboardEvent } from "react";
 
+import type { AiSurfaceNotice } from "@/components/ai-chat-panel-model";
+
 export function useAiChatComposer({
   accessAllowed,
   allowWebSearch,
@@ -28,7 +30,7 @@ export function useAiChatComposer({
   ) => void;
   sessionId: string | null;
   setDraft: (value: string) => void;
-  setNotice: (value: string | null) => void;
+  setNotice: (value: AiSurfaceNotice | null) => void;
 }) {
   const submitText = useCallback(
     (nextText?: string) => {

@@ -613,3 +613,10 @@
 - `tests/rls/ownership.spec.ts` теперь подтверждает, что владелец видит свой `knowledge_embeddings` row, а другой auth-user не видит его даже при точечном запросе по `id`.
 - После этого подпункт плана про owner-only доступ для `chat`, `sessions`, `retrieval`, `reindex` и `proposal apply` можно считать закрытым не только по route-level сценариям, но и по прямому retrieval storage layer.
 - Tranche подтверждён командами `npx eslint tests/rls tests/rls/helpers`, `npm run test:rls`, `npm run typecheck`, `npm run build`.
+
+### 2026-03-17 21:20 - Развёл AI runtime/config UX и убрал лишний повторный build в тестах
+
+- `src/components/ai-chat-panel-model.ts`, `src/components/ai-chat-notices.tsx`, `src/components/use-ai-chat-actions.ts`, `src/components/use-ai-chat-composer.ts`, `src/components/use-ai-chat-session-state.ts`, `src/components/use-ai-chat-view-state.ts`, `src/components/ai-chat-panel.tsx` перевёл на typed notice-модель: теперь AI surface отдельно показывает `сервис временно недоступен` для provider/config проблем и `повтори позже` для runtime сбоев.
+- `src/app/api/ai/chat/route.ts`, `src/app/api/ai/assistant/route.ts`, `src/app/api/ai/meal-photo/route.ts` теперь отдают согласованные русские сообщения и явный `503 AI_PROVIDER_UNAVAILABLE` там, где сбой именно во внешнем провайдере или неготовой конфигурации.
+- `scripts/run-next-with-dist-dir.mjs` получил memory guard для `next build`, а новый `scripts/ensure-next-build.mjs` подключён в `pretest:e2e`, `pretest:e2e:auth`, `pretest:smoke`: smoke и auth e2e больше не делают лишний rebuild поверх уже готового `.next`.
+- Tranche подтверждён командами `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:smoke` -> `3 passed`, `npx playwright test tests/e2e/ai-workspace.spec.ts tests/e2e/api-contracts.spec.ts --workers=1` -> `8 passed`, `npm run test:e2e:auth` -> `36 passed`.

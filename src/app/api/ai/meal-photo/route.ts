@@ -43,10 +43,10 @@ function buildProviderErrorMessage(error: unknown) {
     normalized.includes("quota") ||
     normalized.includes("billing")
   ) {
-    return "Внешний ИИ-провайдер сейчас недоступен для анализа фото. Маршрут готов, но обработка изображений временно выключена до активации баланса.";
+    return "Анализ фото временно недоступен. Провайдер не активирован для обработки изображений.";
   }
 
-  return "Не удалось выполнить ИИ-анализ фото блюда.";
+  return "Не удалось выполнить анализ фото прямо сейчас. Попробуй ещё раз немного позже.";
 }
 
 function buildUserChatMessage(notes: string | null) {
@@ -119,7 +119,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 503,
         code: "AI_RUNTIME_NOT_CONFIGURED",
-        message: "ИИ-контур пока не настроен для анализа фото.",
+        message: "Анализ фото временно недоступен. Контур обработки изображений ещё не настроен.",
       });
     }
 
@@ -260,8 +260,12 @@ export async function POST(request: Request) {
     }
 
     return createApiErrorResponse({
-      status: 502,
-      code: "MEAL_PHOTO_FAILED",
+      status: buildProviderErrorMessage(error).startsWith("Анализ фото временно недоступен")
+        ? 503
+        : 502,
+      code: buildProviderErrorMessage(error).startsWith("Анализ фото временно недоступен")
+        ? "AI_PROVIDER_UNAVAILABLE"
+        : "MEAL_PHOTO_FAILED",
       message: buildProviderErrorMessage(error),
     });
   }

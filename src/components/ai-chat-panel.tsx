@@ -15,6 +15,7 @@ import { useAiChatComposer } from "@/components/use-ai-chat-composer";
 import { useAiChatSessionState } from "@/components/use-ai-chat-session-state";
 import { useAiChatViewState } from "@/components/use-ai-chat-view-state";
 import {
+  classifyAiSurfaceErrorMessage,
   timeFormatter,
   type AiChatPanelProps,
 } from "@/components/ai-chat-panel-model";
@@ -100,6 +101,10 @@ export function AiChatPanel({
       api: "/api/ai/assistant",
     }),
   });
+  const errorNotice = useMemo(
+    () => classifyAiSurfaceErrorMessage(error?.message ?? null),
+    [error?.message],
+  );
 
   const isBusy = status === "submitted" || status === "streaming";
   const {
@@ -195,7 +200,7 @@ export function AiChatPanel({
       <AiChatNotices
         accessAllowed={access.allowed}
         accessReason={access.reason ?? null}
-        errorMessage={error?.message ?? null}
+        errorNotice={errorNotice}
         notice={notice}
       />
 

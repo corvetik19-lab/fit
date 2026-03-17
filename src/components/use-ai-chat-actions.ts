@@ -5,12 +5,33 @@ import { useState, type Dispatch, type SetStateAction } from "react";
 
 import {
   buildMealPhotoMarkdown,
+  classifyAiSurfaceErrorMessage,
+  createAiSurfaceNotice,
   toUiTextMessage,
   type AssistantProposalTarget,
+  type AiSurfaceNotice,
   type ChatMessage,
   type MealPhotoResponse,
 } from "@/components/ai-chat-panel-model";
 import type { FeatureAccessSnapshot } from "@/lib/billing-access";
+
+type ProposalActionResponse = {
+  message?: string;
+};
+
+type MealPhotoApiResponse = MealPhotoResponse & {
+  code?: string;
+};
+
+function resolveErrorNotice(
+  message: string,
+  fallbackMessage: string,
+): AiSurfaceNotice {
+  return (
+    classifyAiSurfaceErrorMessage(message || fallbackMessage) ??
+    createAiSurfaceNotice("runtime", fallbackMessage)
+  );
+}
 
 export function useAiChatActions({
   draft,
@@ -36,7 +57,7 @@ export function useAiChatActions({
   setDraft: Dispatch<SetStateAction<string>>;
   setMessageTimes: Dispatch<SetStateAction<Map<string, string>>>;
   setMessages: Dispatch<SetStateAction<UIMessage[]>>;
-  setNotice: Dispatch<SetStateAction<string | null>>;
+  setNotice: Dispatch<SetStateAction<AiSurfaceNotice | null>>;
   setSelectedImage: Dispatch<SetStateAction<File | null>>;
 }) {
   const [actionBusyKey, setActionBusyKey] = useState<string | null>(null);
@@ -53,25 +74,31 @@ export function useAiChatActions({
       const response = await fetch(`/api/ai/proposals/${target.proposalId}/${action}`, {
         method: "POST",
       });
-      const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+      const payload = (await response.json().catch(() => null)) as ProposalActionResponse | null;
+      const fallbackMessage =
+        "Не удалось выполнить действие с предложением. Попробуй ещё раз чуть позже.";
 
       if (!response.ok) {
-        throw new Error(payload?.message ?? "Не удалось выполнить действие с предложением.");
+        throw new Error(payload?.message ?? fallbackMessage);
       }
 
       setNotice(
-        action === "approve"
-          ? "Предложение подтверждено и готово к применению."
-          : target.proposalType === "workout_plan"
-            ? "План тренировок уже добавлен в приложение."
-            : "План питания уже добавлен в приложение.",
+        createAiSurfaceNotice(
+          "success",
+          action === "approve"
+            ? "Предложение подтверждено и готово к применению."
+            : target.proposalType === "workout_plan"
+              ? "План тренировок уже добавлен в приложение."
+              : "План питания уже добавлен в приложение.",
+        ),
       );
       onRefresh();
     } catch (proposalActionError) {
       setNotice(
-        proposalActionError instanceof Error
-          ? proposalActionError.message
-          : "Не удалось выполнить действие с предложением.",
+        resolveErrorNotice(
+          proposalActionError instanceof Error ? proposalActionError.message : "",
+          "Не удалось выполнить действие с предложением. Попробуй ещё раз чуть позже.",
+        ),
       );
     } finally {
       setActionBusyKey(null);
@@ -84,7 +111,12 @@ export function useAiChatActions({
     }
 
     if (!mealPhotoAccess.allowed) {
-      setNotice(mealPhotoAccess.reason ?? "Анализ фото еды сейчас недоступен.");
+      setNotice(
+        createAiSurfaceNotice(
+          "info",
+          mealPhotoAccess.reason ?? "Анализ фото еды сейчас недоступен.",
+        ),
+      );
       return;
     }
 
@@ -106,10 +138,12 @@ export function useAiChatActions({
         method: "POST",
         body: formData,
       });
-      const payload = (await response.json().catch(() => null)) as MealPhotoResponse | null;
+      const payload = (await response.json().catch(() => null)) as MealPhotoApiResponse | null;
+      const fallbackMessage =
+        "Не удалось разобрать фото. Попробуй другой кадр или повтори запрос чуть позже.";
 
       if (!response.ok || !payload?.data) {
-        throw new Error(payload?.message ?? "Не удалось разобрать фото. Попробуй другой кадр.");
+        throw new Error(payload?.message ?? fallbackMessage);
       }
 
       const resolvedSessionId = payload.session?.id ?? nextSessionId;
@@ -150,12 +184,18 @@ export function useAiChatActions({
 
       setDraft("");
       setSelectedImage(null);
-      setNotice("Фото разобрано. Теперь можно попросить рецепт, замену или план питания.");
+      setNotice(
+        createAiSurfaceNotice(
+          "success",
+          "Фото разобрано. Теперь можно попросить рецепт, замену или план питания.",
+        ),
+      );
     } catch (mealPhotoError) {
       setNotice(
-        mealPhotoError instanceof Error
-          ? mealPhotoError.message
-          : "Не удалось проанализировать фото.",
+        resolveErrorNotice(
+          mealPhotoError instanceof Error ? mealPhotoError.message : "",
+          "Не удалось проанализировать фото. Повтори попытку немного позже.",
+        ),
       );
     } finally {
       setIsAnalyzingImage(false);

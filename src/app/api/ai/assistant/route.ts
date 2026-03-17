@@ -108,20 +108,22 @@ function stringifyAssistantError(error: unknown) {
   }
 }
 
-function buildAssistantStreamErrorMessage(error: unknown) {
+function isAssistantProviderConfigurationFailure(error: unknown) {
   const normalized = stringifyAssistantError(error).toLowerCase();
 
-  if (
+  return (
     normalized.includes("credit card") ||
     normalized.includes("customer_verification_required") ||
     normalized.includes("ai gateway requires") ||
     normalized.includes("insufficient credits") ||
     normalized.includes("payment required")
-  ) {
-    return "ИИ-ассистент временно недоступен: внешний провайдер ещё не активирован для живых запросов. Доступ к твоим данным не нарушен, но ответ сейчас сгенерировать нельзя.";
-  }
+  );
+}
 
-  return "Не удалось получить ответ ИИ-ассистента. Попробуй ещё раз немного позже.";
+function buildAssistantStreamErrorMessage(error: unknown) {
+  return isAssistantProviderConfigurationFailure(error)
+    ? "Сервис ИИ временно недоступен. Провайдер не активирован для ассистента и живых ответов."
+    : "Сервис ИИ временно не ответил. Попробуй ещё раз немного позже.";
 }
 
 function getLastUserText(messages: UIMessage[]) {
@@ -270,7 +272,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 503,
         code: "AI_RUNTIME_NOT_CONFIGURED",
-        message: "ИИ-контур пока не настроен для ассистента.",
+        message: "Сервис ИИ временно недоступен. Контур ассистента ещё не настроен.",
       });
     }
 
@@ -653,9 +655,11 @@ export async function POST(request: Request) {
     logger.error("ai assistant route failed", { error });
 
     return createApiErrorResponse({
-      status: 500,
-      code: "AI_ASSISTANT_FAILED",
-      message: "Не удалось получить ответ ИИ-ассистента.",
+      status: isAssistantProviderConfigurationFailure(error) ? 503 : 502,
+      code: isAssistantProviderConfigurationFailure(error)
+        ? "AI_PROVIDER_UNAVAILABLE"
+        : "AI_ASSISTANT_FAILED",
+      message: buildAssistantStreamErrorMessage(error),
     });
   }
 }

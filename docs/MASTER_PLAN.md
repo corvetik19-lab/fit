@@ -214,7 +214,7 @@
 - [x] Санирован user-facing copy в `ai/chat`, `ai/reindex`, `ai/sessions/[id]`, `ai/proposals/[id]/apply`, `ai/proposals/[id]/approve`, чтобы AI surface не отдавал mojibake.
 - [x] Expected contract errors (`400/404` на invalid params и owner-scoped misses) больше не логируются как route-level `error` в contract-tested mutation routes и AI session routes.
 - [x] Подтвердить owner-only data access для chat, sessions, retrieval, reindex и proposal apply.
-- [ ] Развести runtime failure UX и provider configuration UX.
+- [x] Развести runtime failure UX и provider configuration UX.
 - [x] Стабилизировать историю чатов, prompt library, web search toggle и image upload.
 - [ ] Прогнать assistant/retrieval/workout-plan/meal-plan/safety eval suites как quality gate.
 - [ ] Подтвердить retrieval по всей исторической базе пользователя, а не только по свежим данным.
@@ -589,3 +589,11 @@
 - [x] Operator/internal API surface больше не отдает английские payload/update/queue/error сообщения и выровнен по русскому operator UX.
 - [x] Tranche подтверждён baseline-пакетом: `npx eslint ...`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `36 passed`.
 - [ ] Следующий backend tranche: возвращаться к owner-only / retrieval audit по оставшимся AI/data контурам и затем закрывать AI quality gate.
+
+## 2026-03-17 AI runtime UX and build reuse addendum
+
+- [x] `src/components/ai-chat-panel-model.ts`, `src/components/ai-chat-notices.tsx`, `src/components/use-ai-chat-actions.ts`, `src/components/use-ai-chat-composer.ts`, `src/components/use-ai-chat-session-state.ts`, `src/components/use-ai-chat-view-state.ts`, `src/components/ai-chat-panel.tsx` переведены на typed AI notice-модель, чтобы UI явно различал `provider/config` и `runtime` ошибки вместо одного общего красного баннера.
+- [x] `src/app/api/ai/chat/route.ts`, `src/app/api/ai/assistant/route.ts`, `src/app/api/ai/meal-photo/route.ts` теперь отдают согласованные русские сообщения и отдельные `503 AI_PROVIDER_UNAVAILABLE` / `503 AI_RUNTIME_NOT_CONFIGURED` там, где проблема именно в конфигурации или внешнем провайдере.
+- [x] `scripts/run-next-with-dist-dir.mjs` получил memory guard для `next build`, а `scripts/ensure-next-build.mjs` + `package.json` убрали лишний повторный build перед `test:smoke` и `test:e2e:*`: тестовые команды теперь переиспользуют уже собранный `.next`, если он существует.
+- [x] Tranche подтверждён baseline-пакетом: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:smoke` -> `3 passed`, `npx playwright test tests/e2e/ai-workspace.spec.ts tests/e2e/api-contracts.spec.ts --workers=1` -> `8 passed`, `npm run test:e2e:auth` -> `36 passed`.
+- [ ] Следующий AI/backend tranche: подтверждать retrieval по всей исторической базе пользователя и затем закрывать минимальный AI quality gate (`assistant`, `retrieval`, `workout plan`, `meal plan`, `safety`).

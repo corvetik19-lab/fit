@@ -2,6 +2,7 @@
 
 import { useState, type RefObject } from "react";
 
+import type { AiSurfaceNotice } from "@/components/ai-chat-panel-model";
 import type { AiChatSessionRow } from "@/lib/ai/chat";
 
 export function useAiChatSessionState({
@@ -18,7 +19,7 @@ export function useAiChatSessionState({
   const [sessionId, setSessionId] = useState(initialSessionId);
   const [sessionTitle, setSessionTitle] = useState(initialSessionTitle);
   const [draft, setDraft] = useState("");
-  const [notice, setNotice] = useState<string | null>(null);
+  const [notice, setNotice] = useState<AiSurfaceNotice | null>(null);
   const [isPromptLibraryOpen, setIsPromptLibraryOpen] = useState(false);
 
   function updateSessionUrl(nextSessionId: string | null) {

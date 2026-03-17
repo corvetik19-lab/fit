@@ -28,6 +28,7 @@ for (let index = 0; index < rawArgs.length; index += 1) {
 }
 
 const nextCommand = `npx next ${nextArgs.join(" ")}`;
+const isBuildCommand = nextArgs[0] === "build";
 
 if (!nextArgs.length) {
   console.error("Expected Next.js command arguments.");
@@ -39,6 +40,11 @@ const child = spawn(nextCommand, {
   shell: true,
   env: {
     ...process.env,
+    NODE_OPTIONS:
+      isBuildCommand &&
+      !(process.env.NODE_OPTIONS ?? "").includes("--max-old-space-size")
+        ? `${process.env.NODE_OPTIONS ?? ""} --max-old-space-size=8192`.trim()
+        : process.env.NODE_OPTIONS,
     NEXT_DIST_DIR: distDir,
   },
 });

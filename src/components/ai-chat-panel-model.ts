@@ -141,6 +141,52 @@ export type AiChatPanelProps = {
   onSessionTouched?: (session: AiChatSessionRow) => void;
 };
 
+export type AiSurfaceNoticeKind =
+  | "success"
+  | "info"
+  | "provider"
+  | "runtime";
+
+export type AiSurfaceNotice = {
+  kind: AiSurfaceNoticeKind;
+  message: string;
+};
+
+const providerConfigurationMarkers = [
+  "внешний ии-провайдер",
+  "провайдер не активирован",
+  "не настроен для чата",
+  "не настроен для ассистента",
+  "не настроен для анализа фото",
+  "обработка изображений временно выключена",
+  "сервис ии временно недоступен",
+  "анализ фото временно недоступен",
+];
+
+export function createAiSurfaceNotice(
+  kind: AiSurfaceNoticeKind,
+  message: string,
+): AiSurfaceNotice {
+  return { kind, message };
+}
+
+export function classifyAiSurfaceErrorMessage(
+  message: string | null,
+): AiSurfaceNotice | null {
+  if (!message?.trim()) {
+    return null;
+  }
+
+  const normalized = message.toLowerCase();
+  const kind = providerConfigurationMarkers.some((marker) =>
+    normalized.includes(marker),
+  )
+    ? "provider"
+    : "runtime";
+
+  return createAiSurfaceNotice(kind, message);
+}
+
 export const timeFormatter = new Intl.DateTimeFormat("ru-RU", {
   day: "2-digit",
   month: "2-digit",
