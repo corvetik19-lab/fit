@@ -608,7 +608,7 @@ test.describe("user-owned isolation", () => {
     });
     const userPage = await userContext.newPage();
     await navigateStable(userPage, "/ai", /\/ai$/);
-    await userPage.waitForLoadState("networkidle");
+    await expect(userPage.getByTestId("ai-chat-panel").first()).toBeVisible();
 
     const seededProposal = await ensureAiPlanProposal(userPage, {
       proposalType: "meal_plan",
@@ -619,7 +619,9 @@ test.describe("user-owned isolation", () => {
     });
     const adminPage = await adminContext.newPage();
     await navigateStable(adminPage, "/admin", /\/admin$/);
-    await adminPage.waitForLoadState("networkidle");
+    await expect(
+      adminPage.getByRole("link", { name: "Пользователи", exact: true }).first(),
+    ).toBeVisible();
 
     const [approveForeignProposalResult, applyForeignProposalResult] =
       await Promise.all([

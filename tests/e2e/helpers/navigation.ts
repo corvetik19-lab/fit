@@ -11,16 +11,22 @@ export async function navigateStable(
     try {
       await page.goto(targetPath, {
         waitUntil: "domcontentloaded",
-        timeout: 30_000,
+        timeout: 45_000,
       });
-      await page.waitForURL(targetUrl, { timeout: 30_000 });
+      await page.waitForURL(targetUrl, { timeout: 45_000 });
       return;
     } catch (error) {
       lastError = error;
 
-      if (!String(error).includes("ERR_ABORTED")) {
+      if (
+        attempt === 2 ||
+        (!String(error).includes("ERR_ABORTED") &&
+          !String(error).includes("Timeout"))
+      ) {
         throw error;
       }
+
+      await page.waitForTimeout(500);
     }
   }
 

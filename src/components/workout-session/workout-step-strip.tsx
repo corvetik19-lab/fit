@@ -45,6 +45,9 @@ export function WorkoutStepStrip({
                     ? "border-border bg-white/80 text-foreground hover:bg-white"
                     : "border-border/80 bg-slate-100/90 text-slate-400 opacity-90"
               }`}
+              data-complete={isExerciseStepComplete ? "true" : "false"}
+              data-locked={isStepUnlocked ? "false" : "true"}
+              data-testid={`workout-step-${index + 1}`}
               disabled={!isStepUnlocked}
               key={exercise.id}
               onClick={() => {

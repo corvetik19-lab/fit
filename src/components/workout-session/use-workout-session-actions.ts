@@ -20,6 +20,7 @@ import type {
 import {
   applyWorkoutDayExecution,
   applyWorkoutSetPerformance,
+  getFirstIncompleteExerciseIndex,
   isExerciseDraftReadyToSave,
   parseOptionalRpe,
   parseOptionalWeight,
@@ -55,6 +56,7 @@ export function useWorkoutSessionActions({
   setDay,
   setDayBodyWeightValue,
   setDaySessionNoteValue,
+  setActiveExerciseIndex,
   setEditableExerciseIds,
   setError,
   setIsPending,
@@ -95,6 +97,7 @@ export function useWorkoutSessionActions({
   setDay: (nextDay: WorkoutDayDetail) => void;
   setDayBodyWeightValue: (value: string) => void;
   setDaySessionNoteValue: (value: string) => void;
+  setActiveExerciseIndex: Dispatch<SetStateAction<number>>;
   setEditableExerciseIds: Dispatch<SetStateAction<Record<string, boolean>>>;
   setError: (value: string | null) => void;
   setIsPending: (value: boolean) => void;
@@ -451,6 +454,12 @@ export function useWorkoutSessionActions({
       }
 
       setDay(optimisticDay);
+      const nextExerciseIndex = getFirstIncompleteExerciseIndex(
+        optimisticDay.exercises,
+      );
+      if (nextExerciseIndex !== -1) {
+        setActiveExerciseIndex(nextExerciseIndex);
+      }
       setEditableExerciseIds((current) => ({
         ...current,
         [exercise.id]: false,
@@ -551,6 +560,7 @@ export function useWorkoutSessionActions({
       setDay,
       setEditableExerciseIds,
       setError,
+      setActiveExerciseIndex,
       setIsPending,
       setNotice,
     ],

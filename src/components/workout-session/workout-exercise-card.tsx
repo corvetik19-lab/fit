@@ -59,7 +59,12 @@ export function WorkoutExerciseCard({
   totalExercises: number;
 }) {
   return (
-    <article className="card p-4 sm:p-6">
+    <article
+      className="card p-4 sm:p-6"
+      data-complete={isExerciseComplete ? "true" : "false"}
+      data-editable={isExerciseEditable ? "true" : "false"}
+      data-testid={`workout-exercise-card-${index + 1}`}
+    >
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
@@ -81,6 +86,7 @@ export function WorkoutExerciseCard({
           {isExerciseComplete && !isExerciseEditable ? (
             <button
               className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
+              data-testid={`workout-exercise-edit-${index + 1}`}
               disabled={!dayIsLocked || isPending || isSyncing}
               onClick={() => onSetExerciseEditing(exercise.id, true)}
               type="button"
@@ -92,6 +98,7 @@ export function WorkoutExerciseCard({
           {isExerciseEditable ? (
             <button
               className="rounded-full bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+              data-testid={`workout-exercise-save-${index + 1}`}
               disabled={!dayIsLocked || isPending || isSyncing || !isExerciseReadyToSave}
               onClick={() => onSaveExercise(exercise)}
               type="button"
@@ -122,6 +129,7 @@ export function WorkoutExerciseCard({
                 Повторы
                 <select
                   className={inputClassName}
+                  data-testid={`workout-set-${set.id}-reps`}
                   disabled={!dayIsLocked || isPending || isSyncing || !isExerciseEditable}
                   onChange={(event) =>
                     setActualRepsBySetId((current) => ({
@@ -144,6 +152,7 @@ export function WorkoutExerciseCard({
                 Вес, кг
                 <input
                   className={inputClassName}
+                  data-testid={`workout-set-${set.id}-weight`}
                   disabled={!dayIsLocked || isPending || isSyncing || !isExerciseEditable}
                   inputMode="decimal"
                   onChange={(event) =>
@@ -161,6 +170,7 @@ export function WorkoutExerciseCard({
                 RPE
                 <select
                   className={inputClassName}
+                  data-testid={`workout-set-${set.id}-rpe`}
                   disabled={!dayIsLocked || isPending || isSyncing || !isExerciseEditable}
                   onChange={(event) =>
                     setActualRpeBySetId((current) => ({

@@ -124,8 +124,6 @@ export function WorkoutDaySession({
       );
       setDaySessionNoteValue(nextDay.session_note ?? "");
       applyTimerStateForDay(nextDay);
-      const nextExerciseIndex = getFirstIncompleteExerciseIndex(nextDay.exercises);
-      setActiveExerciseIndex(nextExerciseIndex === -1 ? 0 : nextExerciseIndex);
     },
     [applyTimerStateForDay],
   );
@@ -204,15 +202,6 @@ export function WorkoutDaySession({
     setActiveExerciseIndex((currentIndex) => {
       const maxUnlockedIndex = Math.max(0, unlockedExerciseCount - 1);
       const safeIndex = Math.min(currentIndex, maxUnlockedIndex);
-      const currentExercise = day.exercises[safeIndex];
-
-      if (
-        currentExercise &&
-        isCompletedWorkoutExercise(currentExercise) &&
-        safeIndex < maxUnlockedIndex
-      ) {
-        return safeIndex + 1;
-      }
 
       if (safeIndex < 0) {
         return 0;
@@ -256,6 +245,7 @@ export function WorkoutDaySession({
     setDay,
     setDayBodyWeightValue,
     setDaySessionNoteValue,
+    setActiveExerciseIndex,
     setEditableExerciseIds,
     setError,
     setIsPending,
@@ -299,6 +289,7 @@ export function WorkoutDaySession({
         {day.status === "planned" ? (
           <button
             className={primaryButtonClassName}
+            data-testid="workout-start-button"
             disabled={isPending || isSyncing || !day.is_locked}
             onClick={() => updateDayStatus("in_progress")}
             type="button"
@@ -310,6 +301,7 @@ export function WorkoutDaySession({
         {day.status === "in_progress" ? (
           <button
             className={primaryButtonClassName}
+            data-testid="workout-finish-button"
             disabled={isPending || isSyncing || !canFinishWorkout}
             onClick={() => completeWorkout()}
             type="button"
@@ -428,6 +420,7 @@ export function WorkoutDaySession({
               </button>
               <button
                 className="rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:bg-white/70"
+                data-testid="workout-regular-mode-button"
                 onClick={() => {
                   void returnToRegularMode();
                 }}
@@ -458,7 +451,13 @@ export function WorkoutDaySession({
 
             <div className="flex items-center gap-2">
               <button
+                aria-label={
+                  isTimerRunning
+                    ? "Поставить таймер на паузу"
+                    : "Запустить таймер тренировки"
+                }
                 className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border bg-white/85 text-foreground transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                data-testid="workout-timer-toggle"
                 disabled={!day.is_locked || isPending || isSyncing}
                 onClick={() => {
                   if (isTimerRunning) {
@@ -479,7 +478,9 @@ export function WorkoutDaySession({
                 )}
               </button>
               <button
+                aria-label="Сбросить таймер тренировки"
                 className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border bg-white/85 text-foreground transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                data-testid="workout-timer-reset"
                 disabled={
                   !day.is_locked ||
                   isPending ||

@@ -635,3 +635,12 @@
 - Дочистил AI gate тест `tests/ai-gate/ai-quality-gate.spec.ts`: assistant surface теперь доходит до provider/runtime notice вместо зависания на пустом transcript state.
 - Подтвердил общий baseline: `npm run lint`, `npm run typecheck`, `npm run build`, `npx eslint tests/ai-gate tests/e2e/helpers/ai.ts tests/e2e/helpers/auth.ts`, `npx playwright test tests/e2e/ai-workspace.spec.ts --workers=1` -> `2 passed`, `npm run test:e2e:auth` -> `36 passed`, `npm run test:smoke` -> `3 passed`.
 - `npm run test:ai-gate` теперь падает только на реальном внешнем блокере: `OpenRouter 402` по кредитам и `Voyage 403` по embeddings.
+
+### 2026-03-18 00:35 - Дожал regression-контур мобильной тренировки
+
+- В `src/components/workout-day-session.tsx` убрал принудительный возврат к первому незавершённому шагу при hydration: focus-mode теперь даёт открыть уже сохранённый шаг и нажать `Редактировать`, если нужно поправить упражнение.
+- В `src/components/workout-session/use-workout-session-actions.ts` автопереход на следующий шаг теперь делается в момент сохранения упражнения, а не глобальным эффектом после любого server snapshot.
+- Добавил стабильные `data-testid` на шаги, карточки упражнения, save/edit-кнопки и таймер в `src/components/workout-session/workout-step-strip.tsx`, `src/components/workout-session/workout-exercise-card.tsx`, `src/components/workout-day-session.tsx`.
+- Расширил тестовые helper'ы `tests/e2e/helpers/workouts.ts` и `tests/e2e/helpers/navigation.ts`, а также добавил новый сценарий `tests/e2e/workout-focus-flow.spec.ts`: теперь отдельным e2e подтверждены ordered-step flow, повторное редактирование сохранённого шага, сохранение времени при завершении и полный reset до стартового состояния.
+- Заодно убрал хрупкий `networkidle` из owner-isolation сценария `tests/e2e/ownership-isolation.spec.ts`, чтобы admin/user proposal isolation не флакал на лишнем сетевом шуме.
+- Tranche подтверждён командами `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth -- --reporter=line` -> `38 passed`.
