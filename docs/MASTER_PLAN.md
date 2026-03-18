@@ -11,6 +11,8 @@
 
 Этот файл — текущий production-hardening backlog проекта. Он отражает фактическое состояние репозитория на `2026-03-14`.
 
+Текущий прогресс execution checklist: `140 / 176` (`80%`).
+
 ## Текущая база
 
 - [x] Есть web-first PWA на `Next.js 16 + React 19 + TypeScript strict`.
@@ -124,7 +126,7 @@
 - [x] Вынести submit / composer helper слой из `src/components/ai-chat-panel.tsx`.
 - [x] Вынести view/media state из `src/components/ai-chat-panel.tsx`.
 - [x] Убрать mojibake из `src/lib/ai/plan-generation.ts` и `src/lib/ai/domain-policy.ts`.
-- [ ] Довести `knowledge.ts` и `ai-chat-panel.tsx` до финальной orchestrator-роли без смешения UI, retrieval, persistence и runtime plumbing.
+- [x] Довести `knowledge.ts` и `ai-chat-panel.tsx` до финальной orchestrator-роли без смешения UI, retrieval, persistence и runtime plumbing.
 
 ### Общий стандарт для крупных модулей
 

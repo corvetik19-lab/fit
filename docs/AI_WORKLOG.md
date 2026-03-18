@@ -662,3 +662,12 @@
 - `src/app/api/admin/users/[id]/route.ts` больше не зависит от `PLAYWRIGHT_TEST_HOOKS` для forced degraded snapshot: admin detail fallback regression теперь стабилен независимо от того, как именно поднят локальный test server.
 - Полностью переписал `tests/e2e/mobile-pwa-regressions.spec.ts` и `tests/e2e/ui-regressions.spec.ts` в чистом UTF-8 и добавил отдельную desktop-shell regression: проверяется полный top nav, сворачивание шапки и отсутствие hydration/render-loop regressions на user/admin surface.
 - Tranche подтверждён командами `npm run lint`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/admin-app.spec.ts tests/e2e/mobile-pwa-regressions.spec.ts tests/e2e/ui-regressions.spec.ts tests/e2e/ownership-isolation.spec.ts -g "AI chat history|admin app|mobile pwa regressions|ui regressions" --workers=1 --reporter=line` -> `13 passed`.
+
+### 2026-03-18 14:25 - Довёл AI chat и knowledge до orchestrator-паттерна
+
+- `src/components/use-ai-chat-web-search.ts` вынес hydration-safe `web search` storage state и toggle-логику из `src/components/ai-chat-panel.tsx`, так что сам чат больше не держит `useSyncExternalStore` plumbing внутри JSX-orchestrator слоя.
+- `src/components/use-ai-chat-session-recovery.ts` вынес stale-session recovery: сброс transcript state, повторный `createRemoteSession(...)` и safe retry на `AI_CHAT_SESSION_NOT_FOUND` больше не размазаны по `ai-chat-panel.tsx`.
+- `src/components/ai-chat-panel.tsx` теперь сводит только orchestration: toolbar/notices/transcript/composer + вызовы `useAiChatWebSearch`, `useAiChatSessionRecovery`, `useAiChatSessionState`, `useAiChatActions`, `useAiChatComposer`, `useAiChatViewState`.
+- `src/lib/ai/knowledge-runtime.ts` вынес `reindexUserKnowledgeBase(...)` и `ensureKnowledgeIndex(...)` из `src/lib/ai/knowledge.ts`; сам `knowledge.ts` теперь остался тонким facade для re-export и `retrieveKnowledgeMatches(...)`.
+- Пункт плана про финальную orchestrator-роль `knowledge.ts` и `ai-chat-panel.tsx` закрыт; общий прогресс execution checklist после tranche: `140 / 176` (`80%`).
+- Tranche подтверждён командами `npm run lint`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/ai-workspace.spec.ts tests/e2e/api-contracts.spec.ts --workers=1` -> `8 passed`, `npm run test:e2e:auth` -> `39 passed`, `npm run test:smoke` -> `3 passed`.

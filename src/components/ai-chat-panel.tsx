@@ -3,7 +3,7 @@
 import { DefaultChatTransport } from "ai";
 import { useChat } from "@ai-sdk/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useSyncExternalStore } from "react";
+import { useMemo, useRef } from "react";
 
 import { AiChatComposer } from "@/components/ai-chat-composer";
 import { AiChatNotices } from "@/components/ai-chat-notices";
@@ -12,46 +12,16 @@ import { AiChatTranscript } from "@/components/ai-chat-transcript";
 import { AiChatToolbar } from "@/components/ai-chat-toolbar";
 import { useAiChatActions } from "@/components/use-ai-chat-actions";
 import { useAiChatComposer } from "@/components/use-ai-chat-composer";
+import { useAiChatSessionRecovery } from "@/components/use-ai-chat-session-recovery";
 import { useAiChatSessionState } from "@/components/use-ai-chat-session-state";
 import { useAiChatViewState } from "@/components/use-ai-chat-view-state";
+import { useAiChatWebSearch } from "@/components/use-ai-chat-web-search";
 import {
   classifyAiSurfaceErrorMessage,
-  createAiSurfaceNotice,
   timeFormatter,
   type AiChatPanelProps,
 } from "@/components/ai-chat-panel-model";
 import { toUiMessages } from "@/lib/ai/chat";
-
-const subscribeToHydration = () => () => {};
-const WEB_SEARCH_STORAGE_KEY = "fit.ai.web-search";
-const WEB_SEARCH_EVENT = "fit:ai:web-search";
-
-function subscribeToWebSearch(callback: () => void) {
-  if (typeof window === "undefined") {
-    return () => {};
-  }
-
-  const handleChange = () => callback();
-  window.addEventListener("storage", handleChange);
-  window.addEventListener(WEB_SEARCH_EVENT, handleChange);
-
-  return () => {
-    window.removeEventListener("storage", handleChange);
-    window.removeEventListener(WEB_SEARCH_EVENT, handleChange);
-  };
-}
-
-function getWebSearchSnapshot() {
-  if (typeof window === "undefined") {
-    return false;
-  }
-
-  return window.sessionStorage.getItem(WEB_SEARCH_STORAGE_KEY) === "true";
-}
-
-function isMissingChatSessionError(message: string | null | undefined) {
-  return Boolean(message?.includes("AI_CHAT_SESSION_NOT_FOUND"));
-}
 
 export function AiChatPanel({
   access,
@@ -64,21 +34,7 @@ export function AiChatPanel({
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const composerRef = useRef<HTMLTextAreaElement | null>(null);
-  const pendingRetryRef = useRef<{ text: string; allowWebSearch: boolean } | null>(
-    null,
-  );
-  const missingSessionRetriedRef = useRef(false);
-
-  const isHydrated = useSyncExternalStore(
-    subscribeToHydration,
-    () => true,
-    () => false,
-  );
-  const allowWebSearch = useSyncExternalStore(
-    subscribeToWebSearch,
-    getWebSearchSnapshot,
-    () => false,
-  );
+  const { allowWebSearch, isHydrated, toggleWebSearch } = useAiChatWebSearch();
   const {
     createRemoteSession,
     draft,
@@ -121,7 +77,7 @@ export function AiChatPanel({
   });
   const errorNotice = useMemo(
     () =>
-      isMissingChatSessionError(error?.message)
+      error?.message?.includes("AI_CHAT_SESSION_NOT_FOUND")
         ? null
         : classifyAiSurfaceErrorMessage(error?.message ?? null),
     [error?.message],
@@ -159,96 +115,16 @@ export function AiChatPanel({
       setSelectedImage,
     });
   const isComposerBusy = isBusy || isAnalyzingImage;
-
-  useEffect(() => {
-    if (!isMissingChatSessionError(error?.message)) {
-      return;
-    }
-
-    const retryPayload = pendingRetryRef.current;
-    setMessages([]);
-    setSelectedImage(null);
-    resetLocalSessionState();
-    clearError();
-
-    if (retryPayload && !missingSessionRetriedRef.current) {
-      missingSessionRetriedRef.current = true;
-      pendingRetryRef.current = null;
-      setNotice(
-        createAiSurfaceNotice(
-          "info",
-          "Предыдущий чат больше недоступен. Создаю новый чат и повторяю запрос.",
-        ),
-      );
-
-      void (async () => {
-        try {
-          const nextSessionId = await createRemoteSession(retryPayload.text);
-
-          window.setTimeout(() => {
-            sendMessage(
-              { text: retryPayload.text },
-              {
-                body: {
-                  allowWebSearch: retryPayload.allowWebSearch,
-                  sessionId: nextSessionId,
-                },
-              },
-            );
-          }, 0);
-        } catch (sessionError) {
-          setNotice(
-            createAiSurfaceNotice(
-              "runtime",
-              sessionError instanceof Error
-                ? sessionError.message
-                : "Не удалось открыть новый AI-чат.",
-            ),
-          );
-        }
-      })();
-      return;
-    }
-
-    pendingRetryRef.current = null;
-    setNotice(
-      createAiSurfaceNotice(
-        "info",
-        "Предыдущий чат больше недоступен. Открыт новый пустой чат.",
-      ),
-    );
-  }, [
+  const { queueRetry, resetChat } = useAiChatSessionRecovery({
     clearError,
     createRemoteSession,
-    error?.message,
+    errorMessage: error?.message,
     resetLocalSessionState,
     sendMessage,
     setMessages,
     setNotice,
     setSelectedImage,
-  ]);
-
-  function resetChat() {
-    setMessages([]);
-    setSelectedImage(null);
-    resetLocalSessionState();
-    pendingRetryRef.current = null;
-    missingSessionRetriedRef.current = false;
-    clearError();
-  }
-
-  function toggleWebSearch() {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    const next = !allowWebSearch;
-    window.sessionStorage.setItem(
-      WEB_SEARCH_STORAGE_KEY,
-      next ? "true" : "false",
-    );
-    window.dispatchEvent(new Event(WEB_SEARCH_EVENT));
-  }
+  });
 
   const { handleComposerKeyDown, handleSubmit } = useAiChatComposer({
     accessAllowed: access.allowed,
@@ -258,11 +134,10 @@ export function AiChatPanel({
     draft,
     isComposerBusy,
     onBeforeSend: (text) => {
-      pendingRetryRef.current = {
+      queueRetry({
         text,
         allowWebSearch,
-      };
-      missingSessionRetriedRef.current = false;
+      });
     },
     selectedImage,
     sendMessage,
