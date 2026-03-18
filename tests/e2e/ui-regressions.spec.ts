@@ -51,6 +51,44 @@ test.describe("ui regressions", () => {
       }
     });
 
+    test("desktop shell keeps full top navigation readable", async ({ page }) => {
+      const regressionCapture = startClientRegressionCapture(page);
+
+      try {
+        await navigateStable(page, "/dashboard", /\/dashboard$/);
+
+        await page.evaluate(() => {
+          window.localStorage.removeItem("fit-app-shell-collapsed");
+          window.dispatchEvent(
+            new StorageEvent("storage", { key: "fit-app-shell-collapsed" }),
+          );
+        });
+        await page.reload();
+        await page.waitForLoadState("networkidle");
+
+        await expect(
+          page.getByRole("link", { name: "Тренировки" }),
+        ).toBeVisible();
+        await expect(
+          page.getByRole("link", { name: "Питание" }),
+        ).toBeVisible();
+        await expect(
+          page.getByRole("link", { name: "Настройки" }),
+        ).toBeVisible();
+
+        const collapseButton = page.getByRole("button", { name: "Свернуть" });
+        await expect(collapseButton).toBeVisible();
+        await collapseButton.click();
+        await expect(
+          page.getByRole("button", { name: "Развернуть верхнюю панель" }),
+        ).toBeVisible();
+
+        regressionCapture.assertNone();
+      } finally {
+        regressionCapture.stop();
+      }
+    });
+
     test("workout focus mode does not fall into excessive sync polling", async ({
       page,
     }) => {
@@ -112,6 +150,11 @@ test.describe("ui regressions", () => {
         await expect(page.locator("main")).toBeVisible();
         await page.waitForTimeout(1000);
 
+        await expect(page.getByRole("link", { name: "Админ" })).toBeVisible();
+        await expect(
+          page.getByRole("link", { name: "Пользователи" }),
+        ).toBeVisible();
+
         await navigateStable(page, "/admin/users", /\/admin\/users$/);
         const userCardLink = page.locator('a[href^="/admin/users/"]').first();
         await expect(userCardLink).toBeVisible();
@@ -122,22 +165,25 @@ test.describe("ui regressions", () => {
 
         await navigateStable(page, detailHref!, /\/admin\/users\/.+$/);
         await expect
-          .poll(async () => {
-            const detailHeadingVisible = await page
-              .locator('[data-testid="admin-user-detail-section-heading"]')
-              .isVisible()
-              .catch(() => false);
-            if (detailHeadingVisible) {
-              return "detail";
-            }
+          .poll(
+            async () => {
+              const detailHeadingVisible = await page
+                .locator('[data-testid="admin-user-detail-section-heading"]')
+                .isVisible()
+                .catch(() => false);
+              if (detailHeadingVisible) {
+                return "detail";
+              }
 
-            const degradedBannerVisible = await page
-              .locator('[data-testid="admin-user-detail-degraded-banner"]')
-              .isVisible()
-              .catch(() => false);
+              const degradedBannerVisible = await page
+                .locator('[data-testid="admin-user-detail-degraded-banner"]')
+                .isVisible()
+                .catch(() => false);
 
-            return degradedBannerVisible ? "degraded" : "pending";
-          }, { timeout: 15_000 })
+              return degradedBannerVisible ? "degraded" : "pending";
+            },
+            { timeout: 15_000 },
+          )
           .not.toBe("pending");
         await page.waitForTimeout(1000);
 

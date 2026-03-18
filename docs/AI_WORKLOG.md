@@ -653,3 +653,12 @@
 - Для тестового контура зафиксировал production-like build contract в `package.json`: `build`, `build:test` и `start:test` явно работают со стандартным `.next`, чтобы Playwright и Vercel не расходились по `distDir`.
 - Обновил `tests/e2e/mobile-pwa-regressions.spec.ts`: mobile regression теперь отдельно подтверждает admin workspace, section-menu и hide/show toggles на `/admin`.
 - Tranche подтверждён командами `npm run lint`, `npm run typecheck`, `npm run build`, `npm exec playwright test tests/e2e/admin-app.spec.ts tests/e2e/mobile-pwa-regressions.spec.ts --workers=1 --reporter=line` -> `8 passed`, `npm run test:e2e:auth` -> `38 passed`.
+
+### 2026-03-18 03:25 - Дожал shell и навигацию до production-паттерна
+
+- `src/components/app-shell-frame.tsx` полностью пересобран в чистом UTF-8: desktop header и compact header больше не отдают битую кириллицу, а collapsed-state остаётся читаемым и предсказуемым.
+- `src/components/app-shell-nav.tsx` теперь поднимает состояние burger-drawer наружу через `onDrawerOpenChange`, так что shell знает, когда mobile drawer действительно открыт.
+- `src/components/ai-assistant-widget.tsx` получил `hidden` contract и стабильный `data-testid` для floating launcher; в mobile shell AI-виджет теперь не мешает burger-menu и не перекрывает drawer.
+- `src/app/api/admin/users/[id]/route.ts` больше не зависит от `PLAYWRIGHT_TEST_HOOKS` для forced degraded snapshot: admin detail fallback regression теперь стабилен независимо от того, как именно поднят локальный test server.
+- Полностью переписал `tests/e2e/mobile-pwa-regressions.spec.ts` и `tests/e2e/ui-regressions.spec.ts` в чистом UTF-8 и добавил отдельную desktop-shell regression: проверяется полный top nav, сворачивание шапки и отсутствие hydration/render-loop regressions на user/admin surface.
+- Tranche подтверждён командами `npm run lint`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/admin-app.spec.ts tests/e2e/mobile-pwa-regressions.spec.ts tests/e2e/ui-regressions.spec.ts tests/e2e/ownership-isolation.spec.ts -g "AI chat history|admin app|mobile pwa regressions|ui regressions" --workers=1 --reporter=line` -> `13 passed`.

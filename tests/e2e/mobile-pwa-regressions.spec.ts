@@ -218,19 +218,26 @@ test.describe("mobile pwa regressions", () => {
         await expectDrawerFillsViewport(page);
         await expect(drawer).toContainText("Центр управления");
         await expect(drawer).toContainText("Пользователи");
+        await expect(page.getByTestId("ai-assistant-widget-trigger")).toBeHidden();
 
         await page.keyboard.press("Escape");
         await expect(drawer).toHaveAttribute("aria-hidden", "true");
         await expectNoHorizontalOverflow(page, "admin mobile drawer");
+        await expect(page.getByTestId("ai-assistant-widget-trigger")).toBeVisible();
 
-        const adminSectionTrigger = page.getByTestId("page-workspace-mobile-trigger");
+        const adminSectionTrigger = page.getByTestId(
+          "page-workspace-mobile-trigger",
+        );
         await expect(adminSectionTrigger).toBeVisible();
         await adminSectionTrigger.click();
         await page.getByTestId("page-workspace-mobile-option-users").click();
         await expect(adminSectionTrigger).toContainText("Пользователи");
         await page.getByRole("button", { name: "Скрыть меню" }).click();
-        await expect(page.getByRole("button", { name: "Показать меню" })).toBeVisible();
+        await expect(
+          page.getByRole("button", { name: "Показать меню" }),
+        ).toBeVisible();
         await page.getByRole("button", { name: "Показать меню" }).click();
+        await expect(page.getByTestId("ai-assistant-widget-trigger")).toBeVisible();
         await expectNoHorizontalOverflow(page, "admin mobile workspace");
 
         regressionCapture.assertNone();

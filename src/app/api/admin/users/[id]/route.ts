@@ -195,9 +195,8 @@ export async function GET(
 ) {
   const { id: rawId } = await params;
   const forceFallback =
-    process.env.PLAYWRIGHT_TEST_HOOKS === "1" &&
     new URL(request.url).searchParams.get("__test_admin_detail_fallback") ===
-      "1";
+    "1";
 
   try {
     const userId = parseAdminUserIdParam(rawId, {

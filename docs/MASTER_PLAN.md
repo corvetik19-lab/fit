@@ -142,9 +142,9 @@
 ### Shell и навигация
 
 - [x] Есть desktop и mobile shell.
-- [ ] Desktop top nav доведён до стабильного production-вида без визуальных регрессий.
-- [ ] Mobile burger drawer доведён до корректной работы без перекрытий, portal-глюков и hydration mismatch.
-- [ ] Убраны мешающие плавающие панели, оставлены только полезные действия.
+- [x] Desktop top nav доведён до стабильного production-вида без визуальных регрессий.
+- [x] Mobile burger drawer доведён до корректной работы без перекрытий, portal-глюков и hydration mismatch.
+- [x] Убраны мешающие плавающие панели, оставлены только полезные действия.
 - [x] Есть mobile/PWA regression suite для burger drawer, focus-mode и section-menu на узком viewport.
 - [x] Mobile/PWA regression suite стабилизирован against hydration timing и flaky selectors: shell drawer, focus-header и тяжёлый nutrition isolation flow больше не дают ложный красный на целевом mobile subset.
 

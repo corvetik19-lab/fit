@@ -18,6 +18,7 @@ import { AssistantMarkdown } from "@/components/assistant-markdown";
 import { AiPromptLibrary } from "@/components/ai-prompt-library";
 
 type AiAssistantWidgetProps = {
+  hidden?: boolean;
   initialMessages: Array<{
     id: string;
     session_id: string;
@@ -134,7 +135,7 @@ function formatProposalType(proposalType: "meal_plan" | "workout_plan") {
 }
 
 export function AiAssistantWidget(props: AiAssistantWidgetProps) {
-  const { viewer } = props;
+  const { hidden = false, viewer } = props;
   const router = useRouter();
   const composerRef = useRef<HTMLTextAreaElement | null>(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -165,6 +166,12 @@ export function AiAssistantWidget(props: AiAssistantWidgetProps) {
       document.body.style.overflow = previousOverflow;
     };
   }, [isOpen]);
+
+  useEffect(() => {
+    if (hidden) {
+      setIsOpen(false);
+    }
+  }, [hidden]);
 
   const isBusy = status === "submitted" || status === "streaming";
   const lastAssistantMessageId = useMemo(() => {
@@ -459,6 +466,7 @@ export function AiAssistantWidget(props: AiAssistantWidgetProps) {
         aria-expanded={isOpen}
         aria-label="Открыть AI-ассистента"
         className="fixed bottom-[calc(6.4rem+env(safe-area-inset-bottom))] right-4 z-40 inline-flex items-center gap-2 rounded-full bg-accent px-4 py-3 text-sm font-semibold text-white shadow-[0_20px_48px_-26px_rgba(20,97,75,0.65)] transition hover:opacity-92 sm:right-6 lg:bottom-6 lg:right-10"
+        data-testid="ai-assistant-widget-trigger"
         onClick={() => setIsOpen(true)}
         type="button"
       >

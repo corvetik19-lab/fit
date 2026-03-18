@@ -56,6 +56,7 @@ export function AppShellFrame({
     getServerSnapshot,
   );
   const [isMobile, setIsMobile] = useState(false);
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 1023px)");
@@ -78,7 +79,8 @@ export function AppShellFrame({
   const shouldUseCompactHeader =
     !immersive && !isMobile && (compactHeader || isCollapsed);
   const showMobileHeader = !immersive && isMobile;
-  const showAssistantWidget = Boolean(viewer) && !hideAssistantWidget;
+  const showAssistantWidget =
+    Boolean(viewer) && !hideAssistantWidget && !isMobileDrawerOpen;
 
   return (
     <div className="min-h-dvh">
@@ -86,7 +88,11 @@ export function AppShellFrame({
         <header className="fixed inset-x-0 top-0 z-30 px-4 pt-[calc(0.65rem+env(safe-area-inset-top))] sm:px-6 lg:hidden">
           <div className="mx-auto max-w-[1500px]">
             <div className="flex items-center gap-3 rounded-[1.5rem] border border-white/60 bg-[color-mix(in_srgb,var(--surface)_94%,white)] px-3 py-3 shadow-[0_18px_45px_rgba(24,22,19,0.08)] backdrop-blur-xl">
-              <AppShellNav minimal viewer={viewer} />
+              <AppShellNav
+                minimal
+                onDrawerOpenChange={setIsMobileDrawerOpen}
+                viewer={viewer}
+              />
               <div className="min-w-0 flex-1">
                 <p className="truncate font-mono text-[0.64rem] uppercase tracking-[0.22em] text-muted">
                   {eyebrow}
@@ -136,7 +142,10 @@ export function AppShellFrame({
                   ) : null}
                 </div>
 
-                <AppShellNav viewer={viewer} />
+                <AppShellNav
+                  onDrawerOpenChange={setIsMobileDrawerOpen}
+                  viewer={viewer}
+                />
               </div>
             </div>
           </div>
@@ -158,7 +167,10 @@ export function AppShellFrame({
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <AppShellNav viewer={viewer} />
+                  <AppShellNav
+                    onDrawerOpenChange={setIsMobileDrawerOpen}
+                    viewer={viewer}
+                  />
                   {!compactHeader ? (
                     <button
                       aria-expanded={false}
@@ -195,6 +207,7 @@ export function AppShellFrame({
 
       {showAssistantWidget ? (
         <AiAssistantWidget
+          hidden={isMobileDrawerOpen}
           initialMessages={[]}
           initialSessionId={null}
           viewer={{

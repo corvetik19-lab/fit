@@ -34,6 +34,7 @@ type PlatformAdminRole = "super_admin" | "support_admin" | "analyst" | null;
 type AppShellNavProps = {
   compact?: boolean;
   minimal?: boolean;
+  onDrawerOpenChange?: (isOpen: boolean) => void;
   viewer: {
     userId: string;
     email: string | null;
@@ -185,6 +186,7 @@ function DrawerRouteLink({
 export function AppShellNav({
   compact = false,
   minimal = false,
+  onDrawerOpenChange,
   viewer,
 }: AppShellNavProps) {
   const pathname = usePathname();
@@ -219,6 +221,11 @@ export function AppShellNav({
           : []),
       ]
     : [];
+
+  useEffect(() => {
+    onDrawerOpenChange?.(isDrawerOpen);
+    return () => onDrawerOpenChange?.(false);
+  }, [isDrawerOpen, onDrawerOpenChange]);
 
   useEffect(() => {
     if (!isDrawerOpen) {
