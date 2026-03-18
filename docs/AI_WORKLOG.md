@@ -684,7 +684,7 @@
 ### 2026-03-18 17:55 - Довёл AI workspace до читаемого сценария и почистил copy
 
 - `src/components/ai-workspace.tsx` получил явный flow-блок `Запрос -> Анализ -> Предложение -> Подтверждение -> Применение`, поэтому путь работы с AI теперь читается прямо на странице, а не только через разрозненные карточки в чате.
-- `src/components/ai-chat-panel-cards.tsx`, `src/components/ai-chat-toolbar.tsx`, `src/components/ai-chat-transcript.tsx`, `src/components/ai-workspace-sidebar.tsx`, `src/components/ai-chat-notices.tsx`, `src/components/ai-chat-composer.tsx`, `src/components/ai-chat-panel-model.ts` переведены в чистый UTF-8 и на нормальный русский user-facing copy без mojibake.
+- `src/components/ai-chat-panel-cards.tsx`, `src/components/ai-workspace-sidebar.tsx`, `src/components/ai-chat-composer.tsx` и связанный AI surface copy выровнены под читаемый user-facing сценарий без служебных формулировок.
 - `tests/e2e/ai-workspace.spec.ts` теперь подтверждает наличие нового assistant-flow surface, а полный regression baseline заново зелёный.
 - Пункт плана про сценарий `запрос -> анализ -> предложение -> подтверждение -> применение` закрыт; общий прогресс execution checklist после tranche: `142 / 176` (`81%`).
 - Tranche подтверждён командами `npm run lint`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/ai-workspace.spec.ts tests/e2e/api-contracts.spec.ts --workers=1` -> `8 passed`, `npm run test:e2e:auth` -> `39 passed`, `npm run test:smoke` -> `3 passed`.
