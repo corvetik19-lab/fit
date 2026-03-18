@@ -263,6 +263,67 @@ export async function seedRlsOwnershipFixture() {
     throw foodError;
   }
 
+  const { data: mealTemplateRow, error: mealTemplateError } = await supabase
+    .from("meal_templates")
+    .insert({
+      user_id: userId,
+      title: `RLS Meal Template ${seed}`,
+      payload: {
+        source: "rls_fixture",
+        items: [
+          {
+            foodId: foodRow.id,
+            foodNameSnapshot: `RLS Food ${seed}`,
+            servings: 1,
+            kcal: 220,
+            protein: 18,
+            fat: 7,
+            carbs: 24,
+          },
+        ],
+      },
+    })
+    .select("id")
+    .single();
+
+  if (mealTemplateError) {
+    throw mealTemplateError;
+  }
+
+  const { data: mealRow, error: mealError } = await supabase
+    .from("meals")
+    .insert({
+      user_id: userId,
+      source: "manual",
+      eaten_at: new Date("2035-01-01T08:00:00.000Z").toISOString(),
+    })
+    .select("id")
+    .single();
+
+  if (mealError) {
+    throw mealError;
+  }
+
+  const { data: mealItemRow, error: mealItemError } = await supabase
+    .from("meal_items")
+    .insert({
+      user_id: userId,
+      meal_id: mealRow.id,
+      food_id: foodRow.id,
+      food_name_snapshot: `RLS Food ${seed}`,
+      servings: 1,
+      kcal: 220,
+      protein: 18,
+      fat: 7,
+      carbs: 24,
+    })
+    .select("id")
+    .single();
+
+  if (mealItemError) {
+    throw mealItemError;
+  }
+
   const { data: programRow, error: programError } = await supabase
     .from("weekly_programs")
     .insert({
@@ -467,6 +528,9 @@ export async function seedRlsOwnershipFixture() {
     foodId: foodRow.id as string,
     knowledgeChunkId: knowledgeChunkRow.id as string,
     knowledgeEmbeddingId: knowledgeEmbeddingRow.id as string,
+    mealId: mealRow.id as string,
+    mealItemId: mealItemRow.id as string,
+    mealTemplateId: mealTemplateRow.id as string,
     programId: programRow.id as string,
     recipeId: recipeRow.id as string,
     userId,

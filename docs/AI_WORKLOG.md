@@ -702,3 +702,10 @@
 - `tests/e2e/workout-sync.spec.ts` получил отдельный direct-route regression: после заполнения сета повторный `PATCH /api/workout-days/[id]` со статусом `done` и повторный `POST /api/workout-days/[id]/reset` оба остаются `200` и возвращают тот же корректный snapshot.
 - Тестовый контракт теперь отдельно подтверждает, что direct workout mutation routes безопасно переживают повторные запросы, а не только `sync/push -> reset -> sync/pull` сценарий.
 - Tranche подтверждён командами `npm run lint`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/workout-sync.spec.ts -g "done and reset routes stay idempotent on repeated requests" --workers=1` -> `1 passed`, `npm run test:smoke` -> `3 passed`.
+
+### 2026-03-18 21:05 - Расширил direct RLS ownership на nutrition self-service слой
+
+- В `tests/rls/helpers/supabase-rls.ts` добавил fixture rows для `meal_templates`, `meals` и `meal_items`, seeded через service-role под обычного пользователя рядом с уже существующими `foods`, `recipes` и `workout_templates`.
+- `tests/rls/ownership.spec.ts` теперь напрямую подтверждает, что владелец видит свои `meal_templates`, `meals`, `meal_items`, а другой auth-user не видит их даже при точечном запросе по `id`.
+- Это добивает прямой row-level слой для nutrition self-service контура: owner-only подтверждён не только route-level e2e, но и raw Supabase client access tests.
+- Tranche подтверждён командами `npx eslint tests/rls tests/rls/helpers`, `npm run test:rls` -> `4 passed`, `npm run typecheck`, `npm run build`.

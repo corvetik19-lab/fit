@@ -630,3 +630,10 @@
 - [x] `tests/e2e/workout-sync.spec.ts` расширен regression-сценарием на повторные direct mutation routes: `PATCH /api/workout-days/[id]` со статусом `done` и `POST /api/workout-days/[id]/reset` теперь отдельно подтверждены как безопасные и идемпотентные при повторном вызове.
 - [x] Tranche подтверждён baseline-пакетом: `npm run lint`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/workout-sync.spec.ts -g "done and reset routes stay idempotent on repeated requests" --workers=1` -> `1 passed`, `npm run test:smoke` -> `3 passed`.
 - [ ] Следующий backend tranche: продолжить route-level audit по idempotency и race conditions на оставшихся workout/sync mutation flows, затем возвращаться к следующим незаблокированным AI/data и sanitation пунктам.
+
+## 2026-03-18 nutrition self-service RLS addendum
+
+- [x] `tests/rls/helpers/supabase-rls.ts` расширен fixture rows для `meal_templates`, `meals` и `meal_items`, seeded через service-role под обычного пользователя на том же owner-scoped nutrition контуре.
+- [x] `tests/rls/ownership.spec.ts` теперь напрямую подтверждает row-level изоляцию не только для `foods`, `recipes`, `workout_templates`, `ai_chat_*`, `export_jobs`, `deletion_requests`, `knowledge_*`, но и для `meal_templates`, `meals`, `meal_items`.
+- [x] Tranche подтверждён baseline-пакетом: `npx eslint tests/rls tests/rls/helpers`, `npm run test:rls` -> `4 passed`, `npm run typecheck`, `npm run build`.
+- [ ] Следующий backend tranche: продолжить direct owner-only / RLS audit по оставшимся user-scoped данным и затем вернуться к незакрытым route-level race/idempotency пунктам.
