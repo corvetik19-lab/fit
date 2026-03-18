@@ -203,16 +203,16 @@ test.describe("mobile pwa regressions", () => {
       "requires PLAYWRIGHT_ADMIN_EMAIL and PLAYWRIGHT_ADMIN_PASSWORD",
     );
 
-    test("root admin mobile drawer exposes operator routes without layout regressions", async ({
+    test("root admin mobile shell and admin workspace stay usable without layout regressions", async ({
       page,
     }) => {
       const regressionCapture = startClientRegressionCapture(page);
 
       try {
-        await navigateStable(page, "/admin/users", /\/admin\/users$/);
+        await navigateStable(page, "/admin", /\/admin$/);
         await page.waitForLoadState("networkidle");
         await page.waitForTimeout(300);
-        await expectNoHorizontalOverflow(page, "/admin/users");
+        await expectNoHorizontalOverflow(page, "/admin");
 
         const drawer = await openMobileDrawer(page);
         await expectDrawerFillsViewport(page);
@@ -222,6 +222,16 @@ test.describe("mobile pwa regressions", () => {
         await page.keyboard.press("Escape");
         await expect(drawer).toHaveAttribute("aria-hidden", "true");
         await expectNoHorizontalOverflow(page, "admin mobile drawer");
+
+        const adminSectionTrigger = page.getByTestId("page-workspace-mobile-trigger");
+        await expect(adminSectionTrigger).toBeVisible();
+        await adminSectionTrigger.click();
+        await page.getByTestId("page-workspace-mobile-option-users").click();
+        await expect(adminSectionTrigger).toContainText("Пользователи");
+        await page.getByRole("button", { name: "Скрыть меню" }).click();
+        await expect(page.getByRole("button", { name: "Показать меню" })).toBeVisible();
+        await page.getByRole("button", { name: "Показать меню" }).click();
+        await expectNoHorizontalOverflow(page, "admin mobile workspace");
 
         regressionCapture.assertNone();
       } finally {

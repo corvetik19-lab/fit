@@ -644,3 +644,12 @@
 - Расширил тестовые helper'ы `tests/e2e/helpers/workouts.ts` и `tests/e2e/helpers/navigation.ts`, а также добавил новый сценарий `tests/e2e/workout-focus-flow.spec.ts`: теперь отдельным e2e подтверждены ordered-step flow, повторное редактирование сохранённого шага, сохранение времени при завершении и полный reset до стартового состояния.
 - Заодно убрал хрупкий `networkidle` из owner-isolation сценария `tests/e2e/ownership-isolation.spec.ts`, чтобы admin/user proposal isolation не флакал на лишнем сетевом шуме.
 - Tranche подтверждён командами `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth -- --reporter=line` -> `38 passed`.
+
+### 2026-03-18 02:10 - Привёл admin в общий workspace-паттерн и убрал hydration-риск у section visibility
+
+- Вынес `/admin` в новый `src/components/admin-dashboard-workspace.tsx`: операторская главная теперь использует тот же workspace-подход, что `Dashboard`, `Workouts`, `Nutrition` и `Settings`, с секциями `Состояние`, `Очереди`, `Пользователи`, `ИИ` и `Главный доступ`.
+- `src/app/admin/page.tsx` стал server-side orchestrator'ом: загрузка данных осталась на странице, а сам heavy UI moved в выделенный workspace surface без giant inline markup.
+- `src/components/page-workspace.tsx` перевёл на hydration-safe чтение `localStorage`: состояние скрытия `обзора / меню / раздела` теперь поднимается только после mount и больше не даёт mismatch между серверным HTML и клиентом.
+- Для тестового контура зафиксировал production-like build contract в `package.json`: `build`, `build:test` и `start:test` явно работают со стандартным `.next`, чтобы Playwright и Vercel не расходились по `distDir`.
+- Обновил `tests/e2e/mobile-pwa-regressions.spec.ts`: mobile regression теперь отдельно подтверждает admin workspace, section-menu и hide/show toggles на `/admin`.
+- Tranche подтверждён командами `npm run lint`, `npm run typecheck`, `npm run build`, `npm exec playwright test tests/e2e/admin-app.spec.ts tests/e2e/mobile-pwa-regressions.spec.ts --workers=1 --reporter=line` -> `8 passed`, `npm run test:e2e:auth` -> `38 passed`.

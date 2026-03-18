@@ -128,15 +128,21 @@ export function PageWorkspace({
     () => getVisibilityStorageKey(storageKey),
     [storageKey],
   );
-  const [hiddenBlocks, setHiddenBlocks] = useState<HiddenBlocksState>(() => {
-    if (typeof window === "undefined" || !visibilityStorageKey) {
-      return defaultHiddenBlocks;
+  const [hiddenBlocks, setHiddenBlocks] =
+    useState<HiddenBlocksState>(defaultHiddenBlocks);
+  const [hasLoadedVisibility, setHasLoadedVisibility] = useState(false);
+
+  useEffect(() => {
+    if (!visibilityStorageKey) {
+      setHasLoadedVisibility(true);
+      return;
     }
 
     const savedState = window.localStorage.getItem(visibilityStorageKey);
 
     if (!savedState) {
-      return defaultHiddenBlocks;
+      setHasLoadedVisibility(true);
+      return;
     }
 
     try {
@@ -144,19 +150,20 @@ export function PageWorkspace({
         | (Partial<HiddenBlocksState> & { sections?: boolean })
         | null;
 
-      return {
+      setHiddenBlocks({
         hero: parsedState?.hero === true,
         menu: parsedState?.menu === true || parsedState?.sections === true,
         section: parsedState?.section === true,
-      };
+      });
     } catch {
       window.localStorage.removeItem(visibilityStorageKey);
-      return defaultHiddenBlocks;
+    } finally {
+      setHasLoadedVisibility(true);
     }
-  });
+  }, [visibilityStorageKey]);
 
   useEffect(() => {
-    if (!visibilityStorageKey) {
+    if (!visibilityStorageKey || !hasLoadedVisibility) {
       return;
     }
 
@@ -164,7 +171,7 @@ export function PageWorkspace({
       visibilityStorageKey,
       JSON.stringify(hiddenBlocks),
     );
-  }, [hiddenBlocks, visibilityStorageKey]);
+  }, [hasLoadedVisibility, hiddenBlocks, visibilityStorageKey]);
 
   const activeSection = useMemo(
     () =>
