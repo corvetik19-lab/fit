@@ -616,3 +616,10 @@
 - [x] Tranche подтверждён baseline-пакетом: `npm run lint`, `npm run typecheck`, `npm run build`, `npx eslint tests/ai-gate tests/e2e/helpers/ai.ts tests/e2e/helpers/auth.ts`, `npx playwright test tests/e2e/ai-workspace.spec.ts --workers=1` -> `2 passed`, `npm run test:e2e:auth` -> `36 passed`, `npm run test:smoke` -> `3 passed`.
 - [x] `npm run test:ai-gate` теперь падает не на внутреннем UI/session баге, а на реальном внешнем блокере: assistant, retrieval, meal plan, workout plan и safety упираются в `OpenRouter 402` по кредитам, а retrieval слой дополнительно логирует `Voyage 403` по embeddings.
 - [ ] Следующий AI/backend tranche: снять внешний blocker по `OpenRouter/Voyage` или продолжать следующие незаблокированные production tranche до момента, когда live AI providers будут готовы.
+
+## 2026-03-18 AI proposal idempotency addendum
+
+- [x] `src/lib/ai/proposal-actions.ts` теперь делает `approve` и `apply` идемпотентными: повторное подтверждение возвращает уже подтверждённый proposal без ошибки, а повторное применение отдаёт тот же applied-result и тот же applied meta вместо дублирования шаблонов или новой ошибки.
+- [x] `tests/e2e/api-contracts.spec.ts` расширен admin-only контрактом на повторные `POST /api/ai/proposals/[id]/approve` и `POST /api/ai/proposals/[id]/apply`; сценарий подтверждает, что второй запрос остаётся `200` и не меняет итоговый applied payload.
+- [x] Tranche подтверждён baseline-пакетом: `npm run lint`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1` -> `7 passed`, `npm run test:e2e:auth` -> `40 passed`, `npm run test:smoke` -> `3 passed`.
+- [ ] Следующий backend tranche: продолжить route-level audit по idempotency и race conditions на workout mutation flows, затем вернуться к следующим незаблокированным AI/data пунктам.

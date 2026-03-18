@@ -688,3 +688,10 @@
 - `tests/e2e/ai-workspace.spec.ts` теперь подтверждает наличие нового assistant-flow surface, а полный regression baseline заново зелёный.
 - Пункт плана про сценарий `запрос -> анализ -> предложение -> подтверждение -> применение` закрыт; общий прогресс execution checklist после tranche: `142 / 176` (`81%`).
 - Tranche подтверждён командами `npm run lint`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/ai-workspace.spec.ts tests/e2e/api-contracts.spec.ts --workers=1` -> `8 passed`, `npm run test:e2e:auth` -> `39 passed`, `npm run test:smoke` -> `3 passed`.
+
+### 2026-03-18 19:05 - Сделал AI proposal actions идемпотентными
+
+- В `src/lib/ai/proposal-actions.ts` перевёл `approveAiPlanProposal(...)` и `applyAiPlanProposal(...)` в идемпотентный режим: повторное подтверждение возвращает уже `approved` proposal, а повторное применение возвращает уже `applied` proposal и тот же applied meta без лишнего side effect.
+- Для applied proposals добавил единый helper `buildAppliedProposalMeta(...)`, чтобы и первый, и повторный `apply` отдавали одинаковый `mealTemplateIds` / `weeklyProgramId` payload вместо скрытого расхождения между первичным и повторным ответом.
+- `tests/e2e/api-contracts.spec.ts` расширен admin-only контрактом на повторные `approve/apply` вызовы; сценарий использует реальный seeded proposal и подтверждает, что второй запрос остаётся `200`, не дублирует побочный эффект и возвращает тот же applied result.
+- Tranche подтверждён командами `npm run lint`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1` -> `7 passed`, `npm run test:e2e:auth` -> `40 passed`, `npm run test:smoke` -> `3 passed`.

@@ -1,7 +1,11 @@
 import { expect, test } from "@playwright/test";
 
-import { hasAuthE2ECredentials } from "./helpers/auth";
-import { USER_STORAGE_STATE_PATH } from "./helpers/auth-state";
+import { hasAdminE2ECredentials, hasAuthE2ECredentials } from "./helpers/auth";
+import { ensureAiPlanProposal } from "./helpers/ai";
+import {
+  ADMIN_STORAGE_STATE_PATH,
+  USER_STORAGE_STATE_PATH,
+} from "./helpers/auth-state";
 import { fetchJson } from "./helpers/http";
 
 function buildAssistantMessages() {
@@ -305,6 +309,77 @@ test.describe("api contracts", () => {
     expect(workoutPlanResult.status).toBe(400);
     expect((workoutPlanResult.body as { code?: string } | null)?.code).toBe(
       "WORKOUT_PLAN_INVALID",
+    );
+  });
+
+});
+
+test.describe("api contracts with admin access", () => {
+  test.use({
+    storageState: ADMIN_STORAGE_STATE_PATH,
+  });
+
+  test.skip(
+    !hasAdminE2ECredentials(),
+    "requires PLAYWRIGHT_ADMIN_EMAIL and PLAYWRIGHT_ADMIN_PASSWORD",
+  );
+
+  test("proposal approve/apply actions stay idempotent on repeated requests", async ({
+    page,
+  }) => {
+    await page.goto("/ai");
+    await expect(page).toHaveURL(/\/ai$/);
+    await page.waitForLoadState("networkidle");
+
+    const proposal = await ensureAiPlanProposal(page, {
+      email: process.env.PLAYWRIGHT_ADMIN_EMAIL ?? undefined,
+      proposalType: "meal_plan",
+    });
+
+    const firstApprove = await fetchJson<{
+      data?: { status?: string };
+    }>(page, {
+      method: "POST",
+      url: `/api/ai/proposals/${proposal.proposalId}/approve`,
+    });
+
+    expect(firstApprove.status).toBe(200);
+    expect(firstApprove.body?.data?.status).toBe("approved");
+
+    const secondApprove = await fetchJson<{
+      data?: { status?: string };
+    }>(page, {
+      method: "POST",
+      url: `/api/ai/proposals/${proposal.proposalId}/approve`,
+    });
+
+    expect(secondApprove.status).toBe(200);
+    expect(secondApprove.body?.data?.status).toBe("approved");
+
+    const firstApply = await fetchJson<{
+      data?: { status?: string };
+      meta?: { mealTemplateIds?: string[] };
+    }>(page, {
+      method: "POST",
+      url: `/api/ai/proposals/${proposal.proposalId}/apply`,
+    });
+
+    expect(firstApply.status).toBe(200);
+    expect(firstApply.body?.data?.status).toBe("applied");
+    expect(firstApply.body?.meta?.mealTemplateIds?.length ?? 0).toBeGreaterThan(0);
+
+    const secondApply = await fetchJson<{
+      data?: { status?: string };
+      meta?: { mealTemplateIds?: string[] };
+    }>(page, {
+      method: "POST",
+      url: `/api/ai/proposals/${proposal.proposalId}/apply`,
+    });
+
+    expect(secondApply.status).toBe(200);
+    expect(secondApply.body?.data?.status).toBe("applied");
+    expect(secondApply.body?.meta?.mealTemplateIds ?? []).toEqual(
+      firstApply.body?.meta?.mealTemplateIds ?? [],
     );
   });
 });

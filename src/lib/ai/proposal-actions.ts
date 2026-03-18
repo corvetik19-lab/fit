@@ -471,6 +471,13 @@ export async function approveAiPlanProposal(
     );
   }
 
+  if (proposal.status === "approved") {
+    return {
+      proposal,
+      preview: buildAiPlanProposalPreview(proposal),
+    };
+  }
+
   if (proposal.status === "applied") {
     throw new AiProposalActionError(
       409,
@@ -495,6 +502,27 @@ export async function approveAiPlanProposal(
   };
 }
 
+function buildAppliedProposalMeta(proposal: AiPlanProposalRow) {
+  const payload = proposal.payload as {
+    appliedMealTemplateIds?: string[];
+    appliedWeekStartDate?: string;
+    appliedWeeklyProgramId?: string;
+  };
+
+  if (proposal.proposal_type === "workout_plan") {
+    return {
+      appliedEntity: "weekly_program" as const,
+      weeklyProgramId: payload.appliedWeeklyProgramId ?? null,
+      weekStartDate: payload.appliedWeekStartDate ?? null,
+    };
+  }
+
+  return {
+    appliedEntity: "meal_templates" as const,
+    mealTemplateIds: payload.appliedMealTemplateIds ?? [],
+  };
+}
+
 export async function applyAiPlanProposal(
   supabase: SupabaseClient,
   input: {
@@ -513,11 +541,11 @@ export async function applyAiPlanProposal(
   }
 
   if (proposal.status === "applied") {
-    throw new AiProposalActionError(
-      409,
-      "AI_PROPOSAL_ALREADY_APPLIED",
-      "AI-предложение уже применено.",
-    );
+    return {
+      proposal,
+      preview: buildAiPlanProposalPreview(proposal),
+      meta: buildAppliedProposalMeta(proposal),
+    };
   }
 
   if (proposal.proposal_type === "workout_plan") {
