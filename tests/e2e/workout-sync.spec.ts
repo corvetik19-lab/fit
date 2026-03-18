@@ -307,6 +307,107 @@ test.describe("workout sync contracts", () => {
     expectResetSnapshot(secondResetPull.body?.data?.snapshot);
   });
 
+  test("done and reset routes stay idempotent on repeated requests", async ({
+    page,
+  }) => {
+    await page.goto("/dashboard");
+    await expect(page).toHaveURL(/\/dashboard$/);
+    await page.waitForLoadState("networkidle");
+
+    const seededDay = await createLockedWorkoutDay(page, "route-idempotency");
+
+    const setUpdate = await fetchJson<{
+      data?: {
+        actual_reps?: number | null;
+        actual_weight_kg?: number | null;
+        actual_rpe?: number | null;
+      };
+    }>(page, {
+      method: "PATCH",
+      url: `/api/workout-sets/${seededDay.setId}`,
+      body: {
+        actualReps: 8,
+        actualWeightKg: 60,
+        actualRpe: 8,
+      },
+    });
+
+    expect(setUpdate.status).toBe(200);
+    expect(setUpdate.body?.data?.actual_reps).toBe(8);
+    expect(setUpdate.body?.data?.actual_weight_kg).toBe(60);
+    expect(setUpdate.body?.data?.actual_rpe).toBe(8);
+
+    const firstDone = await fetchJson<{
+      data?: {
+        id?: string;
+        status?: string;
+        body_weight_kg?: number | null;
+        session_duration_seconds?: number | null;
+      };
+    }>(page, {
+      method: "PATCH",
+      url: `/api/workout-days/${seededDay.dayId}`,
+      body: {
+        status: "done",
+        bodyWeightKg: 80,
+        sessionDurationSeconds: 1800,
+      },
+    });
+
+    expect(firstDone.status).toBe(200);
+    expect(firstDone.body?.data?.status).toBe("done");
+    expect(firstDone.body?.data?.body_weight_kg).toBe(80);
+    expect(firstDone.body?.data?.session_duration_seconds).toBe(1800);
+
+    const secondDone = await fetchJson<{
+      data?: {
+        id?: string;
+        status?: string;
+        body_weight_kg?: number | null;
+        session_duration_seconds?: number | null;
+      };
+    }>(page, {
+      method: "PATCH",
+      url: `/api/workout-days/${seededDay.dayId}`,
+      body: {
+        status: "done",
+        bodyWeightKg: 80,
+        sessionDurationSeconds: 1800,
+      },
+    });
+
+    expect(secondDone.status).toBe(200);
+    expect(secondDone.body?.data?.id).toBe(firstDone.body?.data?.id);
+    expect(secondDone.body?.data?.status).toBe("done");
+    expect(secondDone.body?.data?.body_weight_kg).toBe(80);
+    expect(secondDone.body?.data?.session_duration_seconds).toBe(1800);
+
+    const firstReset = await fetchJson<{
+      data?: WorkoutDaySyncSnapshot;
+    }>(page, {
+      method: "POST",
+      url: `/api/workout-days/${seededDay.dayId}/reset`,
+    });
+
+    expect(firstReset.status).toBe(200);
+    expectResetSnapshot(firstReset.body?.data);
+
+    const secondReset = await fetchJson<{
+      data?: WorkoutDaySyncSnapshot;
+    }>(page, {
+      method: "POST",
+      url: `/api/workout-days/${seededDay.dayId}/reset`,
+    });
+
+    expect(secondReset.status).toBe(200);
+    expectResetSnapshot(secondReset.body?.data);
+
+    const pullResult = await pullWorkoutDaySnapshot(page, seededDay.dayId);
+
+    expect(pullResult.status).toBe(200);
+    expectResetSnapshot(pullResult.body?.data?.snapshot);
+  });
+
   test("reset action clears stale local cache and queued mutations", async ({
     page,
   }) => {

@@ -10,7 +10,7 @@
     "start:test": "node scripts/run-next-with-dist-dir.mjs start --dist-dir=.next --hostname 127.0.0.1 --port 3100",
     "smoke:server": "npm run start:test",
     "lint": "eslint src next.config.ts eslint.config.mjs postcss.config.mjs",
-    "typecheck": "node scripts/run-next-with-dist-dir.mjs typegen --dist-dir=.next_build && npx tsc -p tsconfig.json --noEmit --incremental false",
+    "typecheck": "node scripts/run-next-with-dist-dir.mjs typegen --dist-dir=.next && npx tsc -p tsconfig.json --noEmit --incremental false",
     "verify:migrations": "powershell -ExecutionPolicy Bypass -File scripts/verify-migrations.ps1",
     "verify:advisors": "powershell -ExecutionPolicy Bypass -File scripts/verify-advisors.ps1",
     "pretest:e2e": "node scripts/ensure-next-build.mjs",

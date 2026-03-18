@@ -695,3 +695,10 @@
 - Для applied proposals добавил единый helper `buildAppliedProposalMeta(...)`, чтобы и первый, и повторный `apply` отдавали одинаковый `mealTemplateIds` / `weeklyProgramId` payload вместо скрытого расхождения между первичным и повторным ответом.
 - `tests/e2e/api-contracts.spec.ts` расширен admin-only контрактом на повторные `approve/apply` вызовы; сценарий использует реальный seeded proposal и подтверждает, что второй запрос остаётся `200`, не дублирует побочный эффект и возвращает тот же applied result.
 - Tranche подтверждён командами `npm run lint`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1` -> `7 passed`, `npm run test:e2e:auth` -> `40 passed`, `npm run test:smoke` -> `3 passed`.
+
+### 2026-03-18 20:10 - Восстановил стабильный typecheck и добавил regression на повторные done/reset
+
+- В `package.json` перевёл `typecheck` обратно на стандартный `.next`, а из `tsconfig.json` убрал legacy include-пути `.next_build/types/**/*.ts` и `.next_build/dev/types/**/*.ts`: baseline снова проходит за один запуск без `TS6053` на отсутствующих route types.
+- `tests/e2e/workout-sync.spec.ts` получил отдельный direct-route regression: после заполнения сета повторный `PATCH /api/workout-days/[id]` со статусом `done` и повторный `POST /api/workout-days/[id]/reset` оба остаются `200` и возвращают тот же корректный snapshot.
+- Тестовый контракт теперь отдельно подтверждает, что direct workout mutation routes безопасно переживают повторные запросы, а не только `sync/push -> reset -> sync/pull` сценарий.
+- Tranche подтверждён командами `npm run lint`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/workout-sync.spec.ts -g "done and reset routes stay idempotent on repeated requests" --workers=1` -> `1 passed`, `npm run test:smoke` -> `3 passed`.

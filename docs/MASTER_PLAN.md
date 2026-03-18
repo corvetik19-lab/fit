@@ -623,3 +623,10 @@
 - [x] `tests/e2e/api-contracts.spec.ts` расширен admin-only контрактом на повторные `POST /api/ai/proposals/[id]/approve` и `POST /api/ai/proposals/[id]/apply`; сценарий подтверждает, что второй запрос остаётся `200` и не меняет итоговый applied payload.
 - [x] Tranche подтверждён baseline-пакетом: `npm run lint`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1` -> `7 passed`, `npm run test:e2e:auth` -> `40 passed`, `npm run test:smoke` -> `3 passed`.
 - [ ] Следующий backend tranche: продолжить route-level audit по idempotency и race conditions на workout mutation flows, затем вернуться к следующим незаблокированным AI/data пунктам.
+
+## 2026-03-18 workout idempotency and typecheck contract addendum
+
+- [x] `package.json` и `tsconfig.json` снова согласованы по одному `distDir`: `typecheck` теперь генерирует route types в стандартный `.next`, а `tsconfig` больше не зависит от устаревшего `.next_build/types`, из-за которого gate снова падал на `TS6053`.
+- [x] `tests/e2e/workout-sync.spec.ts` расширен regression-сценарием на повторные direct mutation routes: `PATCH /api/workout-days/[id]` со статусом `done` и `POST /api/workout-days/[id]/reset` теперь отдельно подтверждены как безопасные и идемпотентные при повторном вызове.
+- [x] Tranche подтверждён baseline-пакетом: `npm run lint`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/workout-sync.spec.ts -g "done and reset routes stay idempotent on repeated requests" --workers=1` -> `1 passed`, `npm run test:smoke` -> `3 passed`.
+- [ ] Следующий backend tranche: продолжить route-level audit по idempotency и race conditions на оставшихся workout/sync mutation flows, затем возвращаться к следующим незаблокированным AI/data и sanitation пунктам.
