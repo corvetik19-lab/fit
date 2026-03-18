@@ -21,7 +21,8 @@ function ProposalStatusPill({
 }) {
   return (
     <span className="pill">
-      {proposalType === "workout_plan" ? "Тренировки" : "Питание"} · {formatProposalStatus(status)}
+      {proposalType === "workout_plan" ? "Тренировки" : "Питание"} ·{" "}
+      {formatProposalStatus(status)}
     </span>
   );
 }
@@ -45,7 +46,7 @@ export function ProposalToolCard({
   state: string;
 }) {
   if (state === "input-streaming" || state === "input-available") {
-    return <LoadingToolCard text="Собираю новый план..." />;
+    return <LoadingToolCard text="Собираю новый черновик плана..." />;
   }
 
   if (!output) {
@@ -56,12 +57,15 @@ export function ProposalToolCard({
     <div className="rounded-3xl border border-border bg-white/90 p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-foreground">{output.title}</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="pill">Шаг 3 · Черновик</span>
+            <span className="pill">
+              {output.proposalType === "workout_plan" ? "Тренировки" : "Питание"}
+            </span>
+          </div>
+          <p className="mt-3 text-sm font-semibold text-foreground">{output.title}</p>
           <p className="mt-1 text-sm leading-6 text-muted">{output.description}</p>
         </div>
-        <span className="pill">
-          {output.proposalType === "workout_plan" ? "Тренировки" : "Питание"}
-        </span>
       </div>
 
       {output.highlights.length ? (
@@ -73,7 +77,8 @@ export function ProposalToolCard({
       ) : null}
 
       <p className="mt-4 text-sm leading-6 text-muted">
-        Черновик уже сохранён. Его можно подтвердить или применить прямо в этом чате.
+        Черновик уже сохранён. Следующий шаг: подтвердить его или сразу
+        применить прямо из этого чата.
       </p>
     </div>
   );
@@ -96,7 +101,9 @@ export function SearchToolCard({
 
   return (
     <div className="rounded-3xl border border-border bg-white/90 p-4">
-      <p className="text-sm font-semibold text-foreground">Поиск в интернете: {output.query}</p>
+      <p className="text-sm font-semibold text-foreground">
+        Поиск в интернете: {output.query}
+      </p>
       <div className="mt-3 grid gap-3">
         {output.results.length ? (
           output.results.map((result) => (
@@ -146,9 +153,12 @@ export function ProposalListToolCard({
     <div className="rounded-3xl border border-border bg-white/90 p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-sm font-semibold text-foreground">Последние предложения</p>
+          <p className="text-sm font-semibold text-foreground">
+            Шаг 4 · Проверка черновиков
+          </p>
           <p className="mt-1 text-sm leading-6 text-muted">
-            Ниже можно быстро выбрать черновик и сразу применить его.
+            Ниже можно быстро выбрать сохранённый черновик и перейти к
+            подтверждению или применению.
           </p>
         </div>
         <span className="pill">{output.count}</span>
@@ -168,7 +178,10 @@ export function ProposalListToolCard({
                     {`Сохранённый ${formatProposalType(item.proposalType)}-план.`}
                   </p>
                 </div>
-                <ProposalStatusPill proposalType={item.proposalType} status={item.status} />
+                <ProposalStatusPill
+                  proposalType={item.proposalType}
+                  status={item.status}
+                />
               </div>
               <p className="mt-2 text-sm leading-6 text-muted">
                 {item.status === "applied"
@@ -191,7 +204,9 @@ export function ProposalListToolCard({
                     }
                     type="button"
                   >
-                    {actionBusyKey === `approve:${item.proposalId}` ? "Подтверждаю..." : "Подтвердить"}
+                    {actionBusyKey === `approve:${item.proposalId}`
+                      ? "Подтверждаю..."
+                      : "Подтвердить"}
                   </button>
                 ) : null}
 
@@ -207,12 +222,16 @@ export function ProposalListToolCard({
                     }
                     type="button"
                   >
-                    {actionBusyKey === `apply:${item.proposalId}` ? "Применяю..." : "Применить"}
+                    {actionBusyKey === `apply:${item.proposalId}`
+                      ? "Применяю..."
+                      : "Применить"}
                   </button>
                 ) : (
                   <Link
                     className="rounded-full border border-border bg-white/80 px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white"
-                    href={item.proposalType === "workout_plan" ? "/workouts" : "/nutrition"}
+                    href={
+                      item.proposalType === "workout_plan" ? "/workouts" : "/nutrition"
+                    }
                   >
                     Открыть раздел
                   </Link>
@@ -244,7 +263,11 @@ export function ProposalActionToolCard({
   if (state === "input-streaming" || state === "input-available") {
     return (
       <LoadingToolCard
-        text={variant === "approve" ? "Подтверждаю предложение..." : "Применяю предложение..."}
+        text={
+          variant === "approve"
+            ? "Подтверждаю предложение..."
+            : "Применяю предложение..."
+        }
       />
     );
   }
@@ -257,10 +280,20 @@ export function ProposalActionToolCard({
     <div className="rounded-3xl border border-border bg-white/90 p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-foreground">{output.title}</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="pill">
+              {variant === "approve"
+                ? "Шаг 4 · Подтверждение"
+                : "Шаг 5 · Применение"}
+            </span>
+          </div>
+          <p className="mt-3 text-sm font-semibold text-foreground">{output.title}</p>
           <p className="mt-1 text-sm leading-6 text-muted">{output.summary}</p>
         </div>
-        <ProposalStatusPill proposalType={output.proposalType} status={output.status} />
+        <ProposalStatusPill
+          proposalType={output.proposalType}
+          status={output.status}
+        />
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
@@ -276,7 +309,9 @@ export function ProposalActionToolCard({
             }
             type="button"
           >
-            {actionBusyKey === `apply:${output.proposalId}` ? "Применяю..." : "Применить"}
+            {actionBusyKey === `apply:${output.proposalId}`
+              ? "Применяю..."
+              : "Применить"}
           </button>
         ) : null}
 

@@ -2,8 +2,15 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Brain, ChevronLeft, ClipboardList, History, Sparkles } from "lucide-react";
-import { useEffect, useState } from "react";
+import {
+  Brain,
+  CheckCircle2,
+  ChevronLeft,
+  ClipboardList,
+  History,
+  Sparkles,
+} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
 import { AiChatPanel } from "@/components/ai-chat-panel";
 import { AiWorkspaceSidebar } from "@/components/ai-workspace-sidebar";
@@ -15,6 +22,7 @@ import { mealPlanSchema, workoutPlanSchema } from "@/lib/ai/schemas";
 import type { FeatureAccessSnapshot } from "@/lib/billing-access";
 
 type WorkspaceSectionKey = "history" | "context" | "plans";
+type AssistantFlowKey = "request" | "analysis" | "proposal" | "approve" | "apply";
 
 type AiWorkspaceProps = {
   chatAccess: FeatureAccessSnapshot;
@@ -36,20 +44,52 @@ const sectionMeta: Array<{
   {
     key: "history",
     label: "История",
-    description: "Сохранённые переписки",
+    description: "Сохранённые диалоги и быстрый возврат к прошлым сессиям.",
     icon: History,
   },
   {
     key: "context",
     label: "Контекст",
-    description: "Что AI учитывает в ответах",
+    description: "Факты и сигналы, на которые AI опирается в ответах.",
     icon: Brain,
   },
   {
     key: "plans",
     label: "Планы",
-    description: "Черновики и применение",
+    description: "Черновики, подтверждение и применение готовых предложений.",
     icon: ClipboardList,
+  },
+];
+
+const assistantFlowSteps: Array<{
+  description: string;
+  key: AssistantFlowKey;
+  label: string;
+}> = [
+  {
+    key: "request",
+    label: "Запрос",
+    description: "Сформулируйте задачу или приложите фото еды.",
+  },
+  {
+    key: "analysis",
+    label: "Анализ",
+    description: "AI учитывает историю, факты и текущий контекст.",
+  },
+  {
+    key: "proposal",
+    label: "Предложение",
+    description: "Формируется черновик плана или конкретный разбор.",
+  },
+  {
+    key: "approve",
+    label: "Подтверждение",
+    description: "Проверьте черновик и утвердите нужный вариант.",
+  },
+  {
+    key: "apply",
+    label: "Применение",
+    description: "План переносится в тренировки или питание.",
   },
 ];
 
@@ -127,6 +167,132 @@ function parseProposalSummary(proposal: AiPlanProposalRow) {
     .join(" · ");
 }
 
+function getCurrentFlowStep(
+  messagesCount: number,
+  proposals: AiPlanProposalRow[],
+): AssistantFlowKey {
+  if (proposals.some((proposal) => proposal.status === "applied")) {
+    return "apply";
+  }
+
+  if (proposals.some((proposal) => proposal.status === "approved")) {
+    return "approve";
+  }
+
+  if (proposals.some((proposal) => proposal.status === "draft")) {
+    return "proposal";
+  }
+
+  if (messagesCount > 0) {
+    return "analysis";
+  }
+
+  return "request";
+}
+
+function getFlowStepState(step: AssistantFlowKey, current: AssistantFlowKey) {
+  const currentIndex = assistantFlowSteps.findIndex((item) => item.key === current);
+  const stepIndex = assistantFlowSteps.findIndex((item) => item.key === step);
+
+  if (stepIndex < currentIndex) {
+    return "done";
+  }
+
+  if (stepIndex === currentIndex) {
+    return "active";
+  }
+
+  return "pending";
+}
+
+function getNextFlowHint(current: AssistantFlowKey) {
+  switch (current) {
+    case "request":
+      return "Сформулируйте задачу слева, чтобы AI начал анализ.";
+    case "analysis":
+      return "Дождитесь ответа или черновика плана в чате.";
+    case "proposal":
+      return "Откройте раздел «Планы» или используйте карточки в чате для подтверждения.";
+    case "approve":
+      return "После подтверждения примените план в приложение одним нажатием.";
+    case "apply":
+      return "Готово: откройте тренировки или питание и работайте с применённым планом.";
+    default:
+      return "";
+  }
+}
+
+function FlowCard({
+  currentStep,
+}: {
+  currentStep: AssistantFlowKey;
+}) {
+  const currentMeta =
+    assistantFlowSteps.find((step) => step.key === currentStep) ?? assistantFlowSteps[0];
+
+  return (
+    <section
+      className="rounded-3xl border border-border bg-white/70 p-4 sm:p-5"
+      data-testid="ai-assistant-flow"
+    >
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
+            Сценарий AI
+          </p>
+          <h2 className="mt-2 text-lg font-semibold text-foreground">
+            От запроса до применения
+          </h2>
+        </div>
+        <span className="pill">Сейчас: {currentMeta.label}</span>
+      </div>
+
+      <div className="mt-4 grid gap-3 xl:grid-cols-5">
+        {assistantFlowSteps.map((step, index) => {
+          const state = getFlowStepState(step.key, currentStep);
+          const isDone = state === "done";
+          const isActive = state === "active";
+
+          return (
+            <article
+              className={`rounded-2xl border px-4 py-4 text-sm ${
+                isActive
+                  ? "border-accent/40 bg-accent/10"
+                  : isDone
+                    ? "border-emerald-300/60 bg-emerald-50/90"
+                    : "border-border bg-white/80"
+              }`}
+              data-flow-state={state}
+              key={step.key}
+            >
+              <div className="flex items-center gap-2">
+                <span
+                  className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold ${
+                    isActive
+                      ? "bg-accent text-white"
+                      : isDone
+                        ? "bg-emerald-600 text-white"
+                        : "bg-slate-200 text-slate-700"
+                  }`}
+                >
+                  {isDone ? <CheckCircle2 size={14} strokeWidth={2.2} /> : index + 1}
+                </span>
+                <p className="font-semibold text-foreground">{step.label}</p>
+              </div>
+              <p className="mt-3 leading-6 text-muted">{step.description}</p>
+            </article>
+          );
+        })}
+      </div>
+
+      <div className="mt-4 rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-muted">
+        <span className="font-semibold text-foreground">Следующий шаг.</span>{" "}
+        {getNextFlowHint(currentStep)}
+      </div>
+    </section>
+  );
+}
+
 function PlansSection({ proposals }: { proposals: AiPlanProposalRow[] }) {
   return (
     <PanelCard caption="Планы" title="Черновики и применение">
@@ -145,9 +311,7 @@ function PlansSection({ proposals }: { proposals: AiPlanProposalRow[] }) {
                         ? "Питание"
                         : "Тренировки"}
                     </span>
-                    <span className="pill">
-                      {formatProposalStatus(proposal.status)}
-                    </span>
+                    <span className="pill">{formatProposalStatus(proposal.status)}</span>
                   </div>
                   <p className="mt-3 text-base font-semibold text-foreground">
                     {parseProposalTitle(proposal)}
@@ -165,7 +329,7 @@ function PlansSection({ proposals }: { proposals: AiPlanProposalRow[] }) {
               <div className="mt-4 flex flex-wrap gap-2">
                 {proposal.status !== "applied" ? (
                   <span className="rounded-full bg-accent px-3 py-1.5 text-xs font-semibold text-white">
-                    Применить можно прямо из чата
+                    Можно подтвердить или применить прямо из чата
                   </span>
                 ) : (
                   <Link
@@ -184,7 +348,7 @@ function PlansSection({ proposals }: { proposals: AiPlanProposalRow[] }) {
           ))
         ) : (
           <div className="rounded-3xl border border-dashed border-border bg-white/70 px-4 py-6 text-sm leading-6 text-muted">
-            Здесь появятся черновики программ, которые AI соберёт по твоему
+            Здесь появятся черновики программ, которые AI соберёт по вашему
             запросу.
           </div>
         )}
@@ -218,6 +382,11 @@ export function AiWorkspace({
   useEffect(() => {
     setActiveChatSessionId(initialSessionId);
   }, [initialSessionId]);
+
+  const currentFlowStep = useMemo(
+    () => getCurrentFlowStep(initialMessages.length, proposals),
+    [initialMessages.length, proposals],
+  );
 
   function upsertSession(session: AiChatSessionRow) {
     setActiveChatSessionId(session.id);
@@ -353,6 +522,8 @@ export function AiWorkspace({
           Свернуть чат
         </button>
       </div>
+
+      <FlowCard currentStep={currentFlowStep} />
 
       <div className="grid gap-3">
         <div className="flex items-center gap-2 overflow-x-auto pb-1">

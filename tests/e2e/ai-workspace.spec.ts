@@ -101,6 +101,9 @@ test.describe("ai workspace", () => {
     await expect(
       chatPanel.locator('[data-testid="ai-chat-composer"]'),
     ).toBeVisible();
+    await expect(page.locator('[data-testid="ai-assistant-flow"]')).toContainText(
+      "От запроса до применения",
+    );
 
     const webSearchToggle = chatPanel
       .locator('[data-testid="ai-chat-toolbar"]')
