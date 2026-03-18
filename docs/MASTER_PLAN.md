@@ -633,7 +633,14 @@
 
 ## 2026-03-18 nutrition self-service RLS addendum
 
-- [x] `tests/rls/helpers/supabase-rls.ts` расширен fixture rows для `meal_templates`, `meals` и `meal_items`, seeded через service-role под обычного пользователя на том же owner-scoped nutrition контуре.
-- [x] `tests/rls/ownership.spec.ts` теперь напрямую подтверждает row-level изоляцию не только для `foods`, `recipes`, `workout_templates`, `ai_chat_*`, `export_jobs`, `deletion_requests`, `knowledge_*`, но и для `meal_templates`, `meals`, `meal_items`.
+- [x] `tests/rls/helpers/supabase-rls.ts` расширен fixture rows для `meal_templates`, `meals`, `meal_items`, `recipe_items` и `daily_nutrition_summaries`, seeded через service-role под обычного пользователя на том же owner-scoped nutrition контуре.
+- [x] `tests/rls/ownership.spec.ts` теперь напрямую подтверждает row-level изоляцию не только для `foods`, `recipes`, `workout_templates`, `ai_chat_*`, `export_jobs`, `deletion_requests`, `knowledge_*`, но и для `meal_templates`, `meals`, `meal_items`, `recipe_items`, `daily_nutrition_summaries`.
 - [x] Tranche подтверждён baseline-пакетом: `npx eslint tests/rls tests/rls/helpers`, `npm run test:rls` -> `4 passed`, `npm run typecheck`, `npm run build`.
 - [ ] Следующий backend tranche: продолжить direct owner-only / RLS audit по оставшимся user-scoped данным и затем вернуться к незакрытым route-level race/idempotency пунктам.
+
+## 2026-03-18 final typecheck runner addendum
+
+- [x] `scripts/typecheck-stable.mjs` переведён на реальный stable contract: сначала `npx next typegen`, затем проверка полноты route-type wrappers, и если `typegen` не построил весь `app`-дерево типов, автоматический fallback на `npm run build`, после чего уже запускается `tsc`.
+- [x] `package.json` теперь использует этот runner в `typecheck`, так что baseline снова проходит одним запуском даже после полного удаления `.next/types`, без ручного второго прогона.
+- [x] Tranche подтверждён чистым сценарием: удаление `.next/types` через Node, затем `npm run typecheck` -> успешно; дальше baseline подтверждён `npx eslint tests/rls tests/rls/helpers`, `npm run test:rls` -> `4 passed`, `npm run build`.
+- [ ] Следующий engineering tranche: продолжить незаблокированные backend/RLS/route-level hardening slices, не теряя одношаговый quality-gate contract.

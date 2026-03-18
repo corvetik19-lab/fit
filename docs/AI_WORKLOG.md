@@ -705,7 +705,14 @@
 
 ### 2026-03-18 21:05 - Расширил direct RLS ownership на nutrition self-service слой
 
-- В `tests/rls/helpers/supabase-rls.ts` добавил fixture rows для `meal_templates`, `meals` и `meal_items`, seeded через service-role под обычного пользователя рядом с уже существующими `foods`, `recipes` и `workout_templates`.
-- `tests/rls/ownership.spec.ts` теперь напрямую подтверждает, что владелец видит свои `meal_templates`, `meals`, `meal_items`, а другой auth-user не видит их даже при точечном запросе по `id`.
+- В `tests/rls/helpers/supabase-rls.ts` добавил fixture rows для `meal_templates`, `meals`, `meal_items`, а затем расширил этот же слой до `recipe_items` и `daily_nutrition_summaries`.
+- `tests/rls/ownership.spec.ts` теперь напрямую подтверждает, что владелец видит свои `meal_templates`, `meals`, `meal_items`, `recipe_items`, `daily_nutrition_summaries`, а другой auth-user не видит их даже при точечном запросе по `id`.
 - Это добивает прямой row-level слой для nutrition self-service контура: owner-only подтверждён не только route-level e2e, но и raw Supabase client access tests.
 - Tranche подтверждён командами `npx eslint tests/rls tests/rls/helpers`, `npm run test:rls` -> `4 passed`, `npm run typecheck`, `npm run build`.
+
+### 2026-03-18 22:20 - Довёл typecheck до реально стабильного one-run контракта
+
+- Первый фикс с простым переводом `typecheck` на `.next` оказался недостаточным: `next typegen` не строил полный `app`-набор route wrappers после чистого удаления `.next/types`, из-за чего `tsc` продолжал ловить `TS6053`.
+- Для этого добавил `scripts/typecheck-stable.mjs`: runner сначала запускает `npx next typegen`, потом проверяет, действительно ли появились route wrappers в `.next/types/app/...`, и если нет — автоматически догоняет их через `npm run build`, а уже затем запускает `tsc`.
+- После этого `package.json` переведён на новый runner, и baseline подтверждён честным сценарием с удалением `.next/types` через Node и последующим одним `npm run typecheck` без ручного повтора.
+- Tranche подтверждён командами `node -e \"fs.rmSync('.next/types', ...)\"`, `npm run typecheck`, `npx eslint tests/rls tests/rls/helpers`, `npm run test:rls` -> `4 passed`, `npm run build`.

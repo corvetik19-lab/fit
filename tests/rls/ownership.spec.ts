@@ -105,6 +105,18 @@ test.describe("rls ownership", () => {
       expect(ownMealItemRows?.[0]?.meal_id).toBe(fixture.mealId);
       expect(ownMealItemRows?.[0]?.food_id).toBe(fixture.foodId);
 
+      const { data: ownNutritionSummaryRows, error: ownNutritionSummaryError } =
+        await regularUser.client
+          .from("daily_nutrition_summaries")
+          .select("id, user_id, kcal")
+          .eq("id", fixture.nutritionSummaryId);
+
+      expect(ownNutritionSummaryError).toBeNull();
+      expect(ownNutritionSummaryRows).toHaveLength(1);
+      expect(ownNutritionSummaryRows?.[0]?.id).toBe(fixture.nutritionSummaryId);
+      expect(ownNutritionSummaryRows?.[0]?.user_id).toBe(fixture.userId);
+      expect(ownNutritionSummaryRows?.[0]?.kcal).toBe(220);
+
       const { data: ownRecipeRows, error: ownRecipeError } = await regularUser.client
         .from("recipes")
         .select("id, user_id, title")
@@ -114,6 +126,18 @@ test.describe("rls ownership", () => {
       expect(ownRecipeRows).toHaveLength(1);
       expect(ownRecipeRows?.[0]?.id).toBe(fixture.recipeId);
       expect(ownRecipeRows?.[0]?.user_id).toBe(fixture.userId);
+
+      const { data: ownRecipeItemRows, error: ownRecipeItemError } = await regularUser.client
+        .from("recipe_items")
+        .select("id, user_id, recipe_id, food_id")
+        .eq("id", fixture.recipeItemId);
+
+      expect(ownRecipeItemError).toBeNull();
+      expect(ownRecipeItemRows).toHaveLength(1);
+      expect(ownRecipeItemRows?.[0]?.id).toBe(fixture.recipeItemId);
+      expect(ownRecipeItemRows?.[0]?.user_id).toBe(fixture.userId);
+      expect(ownRecipeItemRows?.[0]?.recipe_id).toBe(fixture.recipeId);
+      expect(ownRecipeItemRows?.[0]?.food_id).toBe(fixture.foodId);
 
       const { data: ownWorkoutTemplateRows, error: ownWorkoutTemplateError } =
         await regularUser.client
@@ -301,6 +325,15 @@ test.describe("rls ownership", () => {
       expect(hiddenMealItemError).toBeNull();
       expect(hiddenMealItemRows).toEqual([]);
 
+      const { data: hiddenNutritionSummaryRows, error: hiddenNutritionSummaryError } =
+        await adminUser.client
+          .from("daily_nutrition_summaries")
+          .select("id")
+          .eq("id", fixture.nutritionSummaryId);
+
+      expect(hiddenNutritionSummaryError).toBeNull();
+      expect(hiddenNutritionSummaryRows).toEqual([]);
+
       const { data: hiddenRecipeRows, error: hiddenRecipeError } = await adminUser.client
         .from("recipes")
         .select("id")
@@ -308,6 +341,15 @@ test.describe("rls ownership", () => {
 
       expect(hiddenRecipeError).toBeNull();
       expect(hiddenRecipeRows).toEqual([]);
+
+      const { data: hiddenRecipeItemRows, error: hiddenRecipeItemError } =
+        await adminUser.client
+          .from("recipe_items")
+          .select("id")
+          .eq("id", fixture.recipeItemId);
+
+      expect(hiddenRecipeItemError).toBeNull();
+      expect(hiddenRecipeItemRows).toEqual([]);
 
       const { data: hiddenWorkoutTemplateRows, error: hiddenWorkoutTemplateError } =
         await adminUser.client

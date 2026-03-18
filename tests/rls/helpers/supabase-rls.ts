@@ -324,6 +324,28 @@ export async function seedRlsOwnershipFixture() {
     throw mealItemError;
   }
 
+  const { data: nutritionSummaryRow, error: nutritionSummaryError } = await supabase
+    .from("daily_nutrition_summaries")
+    .upsert(
+      {
+        user_id: userId,
+        summary_date: weekWindow.weekStartDate,
+        kcal: 220,
+        protein: 18,
+        fat: 7,
+        carbs: 24,
+      },
+      {
+        onConflict: "user_id,summary_date",
+      },
+    )
+    .select("id")
+    .single();
+
+  if (nutritionSummaryError) {
+    throw nutritionSummaryError;
+  }
+
   const { data: programRow, error: programError } = await supabase
     .from("weekly_programs")
     .insert({
@@ -387,7 +409,9 @@ export async function seedRlsOwnershipFixture() {
     throw recipeError;
   }
 
-  const { error: recipeItemError } = await supabase.from("recipe_items").insert({
+  const { data: recipeItemRow, error: recipeItemError } = await supabase
+    .from("recipe_items")
+    .insert({
     user_id: userId,
     recipe_id: recipeRow.id,
     food_id: foodRow.id,
@@ -397,7 +421,9 @@ export async function seedRlsOwnershipFixture() {
     protein: 18,
     fat: 7,
     carbs: 24,
-  });
+    })
+    .select("id")
+    .single();
 
   if (recipeItemError) {
     throw recipeItemError;
@@ -531,8 +557,10 @@ export async function seedRlsOwnershipFixture() {
     mealId: mealRow.id as string,
     mealItemId: mealItemRow.id as string,
     mealTemplateId: mealTemplateRow.id as string,
+    nutritionSummaryId: nutritionSummaryRow.id as string,
     programId: programRow.id as string,
     recipeId: recipeRow.id as string,
+    recipeItemId: recipeItemRow.id as string,
     userId,
     userProposalId: userProposalRow.id as string,
     workoutTemplateId: workoutTemplateRow.id as string,
