@@ -671,3 +671,12 @@
 - `src/lib/ai/knowledge-runtime.ts` вынес `reindexUserKnowledgeBase(...)` и `ensureKnowledgeIndex(...)` из `src/lib/ai/knowledge.ts`; сам `knowledge.ts` теперь остался тонким facade для re-export и `retrieveKnowledgeMatches(...)`.
 - Пункт плана про финальную orchestrator-роль `knowledge.ts` и `ai-chat-panel.tsx` закрыт; общий прогресс execution checklist после tranche: `140 / 176` (`80%`).
 - Tranche подтверждён командами `npm run lint`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/ai-workspace.spec.ts tests/e2e/api-contracts.spec.ts --workers=1` -> `8 passed`, `npm run test:e2e:auth` -> `39 passed`, `npm run test:smoke` -> `3 passed`.
+
+### 2026-03-18 15:20 - Довёл workout day screen до orchestrator-паттерна
+
+- `src/components/workout-session/workout-status-actions.tsx` вынес action-bar статусов (`Начать`, `Завершить`, `Синхр.`, `Обнулить`) из `src/components/workout-day-session.tsx`, так что day-screen больше не держит внутри business-aware button JSX.
+- `src/components/workout-session/workout-day-notices.tsx` вынес offline/lock/error/notice surface из `workout-day-session.tsx`; предупреждения и sync notices теперь живут отдельно от orchestration state.
+- `src/components/workout-session/workout-focus-header.tsx` вынес мобильный focus-header: таймер, collapse toggle, regular-mode CTA, progress pills и compact action area больше не смешаны с sync/persistence logic в основном экране.
+- `src/components/workout-day-session.tsx` после этого стал ближе к реальной orchestrator-роли: он собирает derived state, sync/actions/timer hooks и композицию через `WorkoutDayOverviewCard`, `WorkoutDayContextCard`, `WorkoutFocusHeader`, `WorkoutDayNotices`, `WorkoutStatusActions`, `WorkoutExerciseCard`.
+- Пункт плана про финальную orchestrator-роль `workout-day-session.tsx` закрыт; общий прогресс execution checklist после tranche: `141 / 176` (`80%`).
+- Tranche подтверждён командами `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `39 passed`, `npm run test:smoke` -> `3 passed`.

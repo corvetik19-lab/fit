@@ -11,7 +11,7 @@
 
 Этот файл — текущий production-hardening backlog проекта. Он отражает фактическое состояние репозитория на `2026-03-14`.
 
-Текущий прогресс execution checklist: `140 / 176` (`80%`).
+Текущий прогресс execution checklist: `141 / 176` (`80%`).
 
 ## Текущая база
 
@@ -87,7 +87,7 @@
 - [x] Вынести save/status/reset action-слой в `use-workout-session-actions.ts`.
 - [x] Вынести step-strip и exercise-card UI в отдельные модули.
 - [x] Вынести non-focus overview и day-context surface в отдельные модули.
-- [ ] Довести `workout-day-session.tsx` до окончательной orchestrator-роли без смешения UI, sync, persistence и доменных правил.
+- [x] Довести `workout-day-session.tsx` до окончательной orchestrator-роли без смешения UI, sync, persistence и доменных правил.
 
 ### Dashboard analytics
 
