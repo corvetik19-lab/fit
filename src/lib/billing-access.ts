@@ -234,9 +234,10 @@ function buildFeatureAccess(
     description: config.description,
     allowed: true,
     reason: null,
-    source: subscriptionActive && config.requiresSubscription
-      ? "subscription"
-      : "default",
+    source:
+      subscriptionActive && config.requiresSubscription
+        ? "subscription"
+        : "default",
     usage,
   };
 }
@@ -249,7 +250,9 @@ export async function readUserBillingAccess(
   },
 ): Promise<UserBillingAccessSnapshot> {
   const featureKeys = Object.values(BILLING_FEATURE_KEYS);
-  const metricKeys = Object.values(FEATURE_CONFIG).map((feature) => feature.metricKey);
+  const metricKeys = Object.values(FEATURE_CONFIG).map(
+    (feature) => feature.metricKey,
+  );
 
   const [subscriptionResult, entitlementsResult, usageCountersResult] =
     await Promise.all([
@@ -285,7 +288,8 @@ export async function readUserBillingAccess(
     throw usageCountersResult.error;
   }
 
-  const subscription = (subscriptionResult.data as SubscriptionRow | null) ?? null;
+  const subscription =
+    (subscriptionResult.data as SubscriptionRow | null) ?? null;
   const entitlementsByFeature = new Map(
     ((entitlementsResult.data as EntitlementRow[] | null) ?? []).map((row) => [
       row.feature_key,
@@ -293,10 +297,9 @@ export async function readUserBillingAccess(
     ]),
   );
   const usageByMetric = new Map(
-    ((usageCountersResult.data as UsageCounterRow[] | null) ?? []).map((row) => [
-      row.metric_key,
-      row,
-    ]),
+    ((usageCountersResult.data as UsageCounterRow[] | null) ?? []).map(
+      (row) => [row.metric_key, row],
+    ),
   );
 
   if (isPrimarySuperAdminEmail(options?.email)) {

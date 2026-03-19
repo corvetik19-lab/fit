@@ -762,3 +762,9 @@
 - `tests/e2e/api-contracts.spec.ts` расширен двумя контрактами: unauthenticated billing/settings routes остаются auth-first (`401 AUTH_REQUIRED`), а invalid payload на `POST /api/settings/billing` даёт `400 SETTINGS_BILLING_INVALID`.
 - В `tests/e2e/helpers/auth.ts` добавлен более устойчивый `waitForSubmitButtonReady(...)`, чтобы Playwright auth bootstrap не флакал из-за delayed React-controlled form state.
 - Tranche подтверждён командами `npx eslint src/app/api/billing/checkout/route.ts src/app/api/billing/checkout/reconcile/route.ts src/app/api/billing/portal/route.ts src/app/api/billing/webhook/stripe/route.ts src/app/api/settings/billing/route.ts tests/e2e/api-contracts.spec.ts tests/e2e/helpers/auth.ts`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1` -> `8 passed`.
+
+### 2026-03-19 17:30 - Санировал shared billing access copy
+
+- `src/lib/billing-access.ts` переведён в чистый UTF-8 на уровне общего feature-config словаря, deny-reason текстов и `FEATURE_ACCESS_DENIED` copy; shared billing snapshot больше не тянет mojibake в `/settings`, `/ai`, `/nutrition` и другие поверхности, которые читают общий access слой.
+- Логика доступа, fallback и usage counters не менялась: tranche ограничен shared user-facing copy и форматированием billing layer.
+- Tranche подтверждён командами `npx eslint src/lib/billing-access.ts`, `npm run typecheck`, `npm run build`. Дополнительно содержимое файла перепроверено прямым поиском по нормальным русским строкам, чтобы исключить ложный PowerShell misrender.

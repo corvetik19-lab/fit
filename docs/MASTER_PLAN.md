@@ -690,3 +690,10 @@
 - [x] `tests/e2e/api-contracts.spec.ts` расширен unauthenticated billing/settings contracts и invalid payload покрытием для `POST /api/settings/billing`; `tests/e2e/helpers/auth.ts` получил устойчивый `waitForSubmitButtonReady(...)` для Playwright auth bootstrap.
 - [x] Tranche подтверждён baseline-пакетом: `npx eslint src/app/api/billing/checkout/route.ts src/app/api/billing/checkout/reconcile/route.ts src/app/api/billing/portal/route.ts src/app/api/billing/webhook/stripe/route.ts src/app/api/settings/billing/route.ts tests/e2e/api-contracts.spec.ts tests/e2e/helpers/auth.ts`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1` -> `8 passed`.
 - [ ] Следующий billing/backend tranche: дочистить remaining mojibake в shared billing/AI dictionaries и продолжить route-handler audit по owner-only/idempotency/retrieval контурам.
+
+## 2026-03-19 shared billing access sanitation addendum
+
+- [x] `src/lib/billing-access.ts` переведён в чистый UTF-8 на уровне общего feature-config словаря, deny-reason текстов и `FEATURE_ACCESS_DENIED` copy; shared billing snapshot больше не тянет mojibake в `/settings`, `/ai`, `/nutrition` и другие поверхности, которые читают общий access слой.
+- [x] Tranche не меняет access/fallback/usage-counter контракты и ограничен shared user-facing copy плюс форматированием billing layer.
+- [x] Tranche подтверждён пакетами `npx eslint src/lib/billing-access.ts`, `npm run typecheck`, `npm run build`; содержимое файла отдельно перепроверено прямым поиском по нормальным русским строкам, чтобы отсеять ложный PowerShell misrender.
+- [ ] Следующий sanitation/backend tranche: забирать remaining mojibake в shared AI dictionaries (`proposal-actions`, AI summaries и related preview/error copy), затем возвращаться к route-handler audit.
