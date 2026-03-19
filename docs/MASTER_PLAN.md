@@ -723,3 +723,12 @@
 - [x] `src/app/api/settings/data/export/[id]/download/route.ts` тоже переведён на общий self-service слой: owner-only lookup export job, archive build и download audit log теперь идут через `src/lib/settings-self-service.ts`, а route handler остался transport-обёрткой.
 - [x] Tranche подтверждён пакетами `npx eslint src/lib/billing-self-service.ts src/lib/settings-self-service.ts src/app/api/billing/checkout/route.ts src/app/api/billing/checkout/reconcile/route.ts src/app/api/billing/portal/route.ts src/app/api/settings/data/export/[id]/download/route.ts`, `npm run typecheck`, `npm run build`.
 - [ ] Следующий backend tranche: продолжать route/lib extraction и owner-only/idempotency audit на remaining self-service и AI/data handlers.
+
+## 2026-03-19 nutrition write-model extraction addendum
+
+- [x] Общая owner-scoped nutrition write-логика для `recipes`, `meal templates` и `meals` вынесена в `src/lib/nutrition/nutrition-write-model.ts`: загрузка продуктов по `user_id`, проверка missing-food ids, расчёт macro snapshots и подготовка payload для `recipe_items`, `meal_items` и template `payload.items` больше не дублируются в трёх route handlers.
+- [x] `src/app/api/recipes/route.ts`, `src/app/api/meal-templates/route.ts` и `src/app/api/meals/route.ts` стали заметно тоньше: в handlers остались auth, schema parse, insert/delete orchestration и API response shape, а reusable nutrition domain rules уехали в `lib`.
+- [x] Заодно из этих create-routes убран remaining mojibake в user-facing copy, а `meals` create-path теперь откатывает созданную `meal` запись, если вставка `meal_items` не удалась, чтобы route не оставлял сиротскую строку без item payload.
+- [x] Tranche подтверждён пакетами `npx eslint src/lib/nutrition/nutrition-write-model.ts src/app/api/recipes/route.ts src/app/api/meal-templates/route.ts src/app/api/meals/route.ts`, `npm run typecheck`, `npm run build`.
+- [x] Повторные browser-suite прогоны на этой машине снова упёрлись в локальный Playwright timeout (`npm run test:e2e:auth`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1`, `npm run test:smoke`), поэтому для этого tranche зафиксирован compile/type baseline без дополнительного browser green run.
+- [ ] Следующий backend tranche: продолжать route/lib extraction и owner-only/idempotency audit на remaining nutrition/AI/data handlers, пока основной пункт про доменные правила вне route handlers не будет закрыт целиком.

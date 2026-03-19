@@ -2,6 +2,12 @@ import { z } from "zod";
 
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import { logger } from "@/lib/logger";
+import {
+  buildNutritionItemSnapshots,
+  buildRecipeItemInsertPayload,
+  getMissingNutritionFoodIds,
+  loadOwnedNutritionFoods,
+} from "@/lib/nutrition/nutrition-write-model";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 const recipeCreateSchema = z.object({
@@ -35,24 +41,18 @@ export async function POST(request: Request) {
     }
 
     const payload = recipeCreateSchema.parse(await request.json());
-    const uniqueFoodIds = [...new Set(payload.items.map((item) => item.foodId))];
-    const { data: foods, error: foodsError } = await supabase
-      .from("foods")
-      .select("id, name, kcal, protein, fat, carbs")
-      .eq("user_id", user.id)
-      .in("id", uniqueFoodIds);
+    const { foodsById, uniqueFoodIds } = await loadOwnedNutritionFoods(
+      supabase,
+      user.id,
+      payload.items,
+    );
+    const missingFoodIds = getMissingNutritionFoodIds(uniqueFoodIds, foodsById);
 
-    if (foodsError) {
-      throw foodsError;
-    }
-
-    const foodsById = new Map((foods ?? []).map((food) => [food.id, food]));
-
-    if (foodsById.size !== uniqueFoodIds.length) {
+    if (missingFoodIds.length) {
       return createApiErrorResponse({
         status: 400,
         code: "RECIPE_CREATE_MISSING_FOOD",
-        message: "Один или несколько продуктов рецепта не найдены.",
+        message: "Один или несколько продуктов для рецепта не найдены.",
       });
     }
 
@@ -71,25 +71,12 @@ export async function POST(request: Request) {
       throw recipeError;
     }
 
-    const recipeItemsPayload = payload.items.map((item) => {
-      const food = foodsById.get(item.foodId);
-
-      if (!food) {
-        throw new Error(`Food ${item.foodId} was not found during recipe insert.`);
-      }
-
-      return {
-        user_id: user.id,
-        recipe_id: recipe.id,
-        food_id: food.id,
-        food_name_snapshot: food.name,
-        servings: Number(item.servings.toFixed(2)),
-        kcal: Math.round(Number(food.kcal ?? 0) * item.servings),
-        protein: Number((Number(food.protein ?? 0) * item.servings).toFixed(2)),
-        fat: Number((Number(food.fat ?? 0) * item.servings).toFixed(2)),
-        carbs: Number((Number(food.carbs ?? 0) * item.servings).toFixed(2)),
-      };
-    });
+    const itemSnapshots = buildNutritionItemSnapshots(payload.items, foodsById);
+    const recipeItemsPayload = buildRecipeItemInsertPayload(
+      user.id,
+      recipe.id,
+      itemSnapshots,
+    );
 
     const { error: recipeItemsError } = await supabase
       .from("recipe_items")

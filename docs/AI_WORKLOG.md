@@ -795,3 +795,12 @@
 - Проверка зелёная: `npx eslint src/lib/billing-self-service.ts src/lib/settings-self-service.ts src/app/api/billing/checkout/route.ts src/app/api/billing/checkout/reconcile/route.ts src/app/api/billing/portal/route.ts src/app/api/settings/data/export/[id]/download/route.ts`, `npm run typecheck`, `npm run build`.
 - Попытка локально прогнать короткий Playwright API contract slice упёрлась в локальный browser-runner timeout этой машины, поэтому для этого tranche я фиксировал baseline по compile/lint gates без дополнительного browser-suite.
 - Общий прогресс execution checklist остаётся `144 / 176` (`82%`): slice уменьшает backend duplication и route-handler drift, но не закрывает следующий основной checkbox целиком.
+
+### 2026-03-19 22:10 - Вынес nutrition write-model из create routes
+
+- Добавил `src/lib/nutrition/nutrition-write-model.ts` и перенёс туда общий owner-scoped nutrition write-layer: загрузку `foods` по `user_id`, проверку missing-food ids, расчёт macro snapshots и подготовку payload для `recipe_items`, `meal_items` и template `payload.items`.
+- `src/app/api/recipes/route.ts`, `src/app/api/meal-templates/route.ts` и `src/app/api/meals/route.ts` стали тоньше и больше не дублируют один и тот же `foods -> macros -> payload` код в каждом handler.
+- Одновременно санировал user-facing copy в этих create-routes и добавил rollback для `meals`: если вставка `meal_items` падает, временно созданная `meals` строка теперь удаляется, чтобы не оставлять несогласованное состояние.
+- Кодовые проверки зелёные: `npx eslint src/lib/nutrition/nutrition-write-model.ts src/app/api/recipes/route.ts src/app/api/meal-templates/route.ts src/app/api/meals/route.ts`, `npm run typecheck`, `npm run build`.
+- Повторные browser suites (`npm run test:e2e:auth`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1`, `npm run test:smoke`) на этой машине снова упёрлись в локальный timeout runner'а, поэтому tranche зафиксирован по compile/type baseline без нового browser green run.
+- Общий прогресс execution checklist остаётся `144 / 176` (`82%`): slice уменьшает backend duplication, но не закрывает отдельный основной checkbox целиком.
