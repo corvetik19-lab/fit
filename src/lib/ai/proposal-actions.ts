@@ -98,14 +98,14 @@ function extractRequestSummary(proposal: AiPlanProposalRow) {
   const request = payload.request;
 
   if (!request) {
-    return "запрос сохранен без подробностей";
+    return "запрос сохранён без подробностей";
   }
 
   if (proposal.proposal_type === "meal_plan") {
     return [
       `цель ${formatGoal(request.goal).toLowerCase()}`,
       request.kcalTarget ? `${request.kcalTarget} ккал` : null,
-      request.mealsPerDay ? `${request.mealsPerDay} приемов пищи` : null,
+      request.mealsPerDay ? `${request.mealsPerDay} приёмов пищи` : null,
     ]
       .filter(Boolean)
       .join(" · ");
@@ -132,17 +132,17 @@ function extractTimeline(proposal: AiPlanProposalRow) {
   if (payload.appliedAt) {
     if (proposal.proposal_type === "meal_plan") {
       const templateCount = payload.appliedMealTemplateIds?.length ?? 0;
-      return `уже применен; создано шаблонов питания: ${templateCount}`;
+      return `уже применён; создано шаблонов питания: ${templateCount}`;
     }
 
-    return `уже применен; неделя стартует ${payload.appliedWeekStartDate ?? "в ближайшее окно"}`;
+    return `уже применён; неделя стартует ${payload.appliedWeekStartDate ?? "в ближайшее окно"}`;
   }
 
   if (payload.approvedAt || proposal.status === "approved") {
-    return "подтвержден и готов к применению";
+    return "подтверждён и готов к применению";
   }
 
-  return "черновик, ждет подтверждения или применения";
+  return "черновик, ждёт подтверждения или применения";
 }
 
 export function buildAiPlanProposalPreview(

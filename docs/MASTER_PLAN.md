@@ -746,3 +746,10 @@
 - [x] Food create payload теперь тоже собирается через `src/lib/nutrition/nutrition-self-service.ts`: helper `buildFoodCreateData(...)` держит rounding и barcode normalization вне route handler, а сам handler остаётся transport-обёрткой.
 - [x] Tranche подтверждён пакетами `npx eslint src/lib/nutrition/nutrition-self-service.ts src/app/api/foods/route.ts`, `npm run typecheck`, `npm run build`.
 - [ ] Следующий backend tranche: переходить от nutrition self-service к remaining AI/data route/lib extraction и owner-only/idempotency audit.
+
+## 2026-03-19 shared AI copy sanitation addendum
+
+- [x] `src/lib/ai/chat.ts` переведён в чистый UTF-8: shared session errors больше не тянут битый copy в AI history и session recovery surface.
+- [x] `src/lib/ai/proposal-actions.ts` полностью санирован в чистый UTF-8: preview titles, request summaries, timelines, owner-only errors и applied/approved copy больше не отдают mojibake в assistant flow и proposal studio.
+- [x] Tranche подтверждён пакетами `npx eslint src/lib/ai/chat.ts src/lib/ai/proposal-actions.ts`, `npm run typecheck`, `npm run build`.
+- [ ] Следующий AI/backend tranche: вынести и санировать remaining shared runtime/guardrail copy из `ai/chat` и `ai/assistant`, затем продолжать route/lib extraction и owner-only/idempotency audit.

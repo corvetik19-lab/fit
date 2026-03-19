@@ -819,3 +819,11 @@
 - В `src/lib/nutrition/nutrition-self-service.ts` добавил `buildFoodCreateData(...)`, чтобы food create-path использовал тот же shared normalization слой, что и `[id]` update/delete handlers.
 - Проверка зелёная: `npx eslint src/lib/nutrition/nutrition-self-service.ts src/app/api/foods/route.ts`, `npm run typecheck`, `npm run build`.
 - Общий прогресс execution checklist остаётся `144 / 176` (`82%`): slice добивает nutrition self-service sanitation, но не закрывает следующий основной checkbox целиком.
+
+### 2026-03-19 23:20 - Санировал shared AI chat и proposal copy
+
+- Полностью переписал `src/lib/ai/chat.ts` в чистом UTF-8: shared session-not-found errors теперь не тянут битый copy в AI history, session restore и delete flow.
+- Полностью переписал `src/lib/ai/proposal-actions.ts` в чистом UTF-8: preview titles, request summaries, timelines, owner-only errors и applied/approved messages больше не отдают mojibake в assistant flow и proposal studio.
+- Логика proposal actions и AI chat state не менялась; tranche ограничен shared copy sanitation и сохранением текущих owner-only/idempotent contracts.
+- Проверка зелёная: `npx eslint src/lib/ai/chat.ts src/lib/ai/proposal-actions.ts`, `npm run typecheck`, `npm run build`.
+- Общий прогресс execution checklist остаётся `144 / 176` (`82%`): slice закрывает remaining shared AI copy backlog, но не закрывает следующий основной checkbox целиком.
