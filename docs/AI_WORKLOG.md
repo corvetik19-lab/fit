@@ -812,3 +812,10 @@
 - Заодно полностью перевёл эти route handlers в чистый UTF-8, чтобы remaining mojibake не висел в nutrition self-service surface.
 - Проверка зелёная: `npx eslint src/lib/nutrition/nutrition-self-service.ts src/app/api/foods/[id]/route.ts src/app/api/recipes/[id]/route.ts src/app/api/meal-templates/[id]/route.ts src/app/api/meals/[id]/route.ts`, `npm run typecheck`, `npm run build`.
 - Общий прогресс execution checklist остаётся `144 / 176` (`82%`): slice уменьшает backend duplication и sanitation backlog, но не закрывает отдельный основной checkbox целиком.
+
+### 2026-03-19 22:55 - Дочистил foods list/create surface
+
+- В `src/app/api/foods/route.ts` убрал remaining mojibake и перевёл list/create copy в чистый UTF-8.
+- В `src/lib/nutrition/nutrition-self-service.ts` добавил `buildFoodCreateData(...)`, чтобы food create-path использовал тот же shared normalization слой, что и `[id]` update/delete handlers.
+- Проверка зелёная: `npx eslint src/lib/nutrition/nutrition-self-service.ts src/app/api/foods/route.ts`, `npm run typecheck`, `npm run build`.
+- Общий прогресс execution checklist остаётся `144 / 176` (`82%`): slice добивает nutrition self-service sanitation, но не закрывает следующий основной checkbox целиком.

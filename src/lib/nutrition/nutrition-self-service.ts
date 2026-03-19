@@ -13,6 +13,28 @@ type NutritionFoodUpdateInput = {
   barcode?: string | null;
 };
 
+type NutritionFoodCreateInput = {
+  name: string;
+  kcal: number;
+  protein: number;
+  fat: number;
+  carbs: number;
+  barcode?: string | null;
+};
+
+export function buildFoodCreateData(userId: string, payload: NutritionFoodCreateInput) {
+  return {
+    user_id: userId,
+    source: "custom" as const,
+    name: payload.name,
+    kcal: payload.kcal,
+    protein: Number(payload.protein.toFixed(2)),
+    fat: Number(payload.fat.toFixed(2)),
+    carbs: Number(payload.carbs.toFixed(2)),
+    barcode: payload.barcode?.trim() || null,
+  };
+}
+
 export function buildFoodUpdateData(payload: NutritionFoodUpdateInput) {
   const updateData: Record<string, unknown> = {};
 

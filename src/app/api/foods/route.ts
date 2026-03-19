@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import { logger } from "@/lib/logger";
+import { buildFoodCreateData } from "@/lib/nutrition/nutrition-self-service";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 const foodCreateSchema = z.object({
@@ -69,16 +70,7 @@ export async function POST(request: Request) {
 
     const { data, error } = await supabase
       .from("foods")
-      .insert({
-        user_id: user.id,
-        source: "custom",
-        name: payload.name,
-        kcal: payload.kcal,
-        protein: Number(payload.protein.toFixed(2)),
-        fat: Number(payload.fat.toFixed(2)),
-        carbs: Number(payload.carbs.toFixed(2)),
-        barcode: payload.barcode?.trim() || null,
-      })
+      .insert(buildFoodCreateData(user.id, payload))
       .select("id, name, source, kcal, protein, fat, carbs, barcode, created_at, updated_at")
       .single();
 

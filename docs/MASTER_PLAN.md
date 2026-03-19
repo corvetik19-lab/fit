@@ -739,3 +739,10 @@
 - [x] `src/app/api/foods/[id]/route.ts`, `src/app/api/recipes/[id]/route.ts`, `src/app/api/meal-templates/[id]/route.ts` и `src/app/api/meals/[id]/route.ts` переведены на тонкий transport-слой с чистым UTF-8 copy: auth, Zod validation и API response shape остались в handlers, а reusable nutrition domain rules живут в `lib`.
 - [x] Tranche подтверждён пакетами `npx eslint src/lib/nutrition/nutrition-self-service.ts src/app/api/foods/[id]/route.ts src/app/api/recipes/[id]/route.ts src/app/api/meal-templates/[id]/route.ts src/app/api/meals/[id]/route.ts`, `npm run typecheck`, `npm run build`.
 - [ ] Следующий backend tranche: продолжать route/lib extraction и owner-only/idempotency audit на remaining nutrition/AI/data handlers, пока основной пункт про доменные правила вне route handlers не будет закрыт целиком.
+
+## 2026-03-19 foods list/create sanitation addendum
+
+- [x] `src/app/api/foods/route.ts` переведён на чистый UTF-8 и больше не тянет mojibake в nutrition catalog surface.
+- [x] Food create payload теперь тоже собирается через `src/lib/nutrition/nutrition-self-service.ts`: helper `buildFoodCreateData(...)` держит rounding и barcode normalization вне route handler, а сам handler остаётся transport-обёрткой.
+- [x] Tranche подтверждён пакетами `npx eslint src/lib/nutrition/nutrition-self-service.ts src/app/api/foods/route.ts`, `npm run typecheck`, `npm run build`.
+- [ ] Следующий backend tranche: переходить от nutrition self-service к remaining AI/data route/lib extraction и owner-only/idempotency audit.
