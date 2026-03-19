@@ -148,9 +148,7 @@ export function AdminAiEvalRuns({
       const payload = await readJsonSafely(response);
 
       if (!response.ok) {
-        setError(
-          payload?.message ?? "Не удалось поставить AI-проверку в очередь.",
-        );
+        setError(payload?.message ?? "Не удалось поставить AI-проверку в очередь.");
         return;
       }
 
@@ -191,8 +189,7 @@ export function AdminAiEvalRuns({
 
       if (!response.ok) {
         setError(
-          payload?.message ??
-            "Не удалось поставить плановую AI-проверку в очередь.",
+          payload?.message ?? "Не удалось поставить плановую AI-проверку в очередь.",
         );
         return;
       }
@@ -335,9 +332,7 @@ export function AdminAiEvalRuns({
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="space-y-1">
                     <p className="font-semibold text-foreground">{run.label}</p>
-                    <p className="text-muted">
-                      Набор: {getSuiteLabel(run.summary?.suite)}
-                    </p>
+                    <p className="text-muted">Набор: {getSuiteLabel(run.summary?.suite)}</p>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <span className="pill">{formatStatus(run.status)}</span>

@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 import { createApiErrorResponse } from "@/lib/api/error-response";
-import { queueAiEvalRun } from "@/lib/ai/eval-runs";
 import { isAdminAccessError, requireAdminRouteAccess } from "@/lib/admin-auth";
+import { queueAiEvalRun } from "@/lib/ai/eval-runs";
 import { AI_EVAL_SUITES } from "@/lib/ai/eval-suites";
 import { logger } from "@/lib/logger";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
@@ -33,16 +33,18 @@ export async function POST(request: Request) {
     });
     const data = queuedRun.data;
 
-    const { error: auditError } = await adminSupabase.from("admin_audit_logs").insert({
-      actor_user_id: user.id,
-      action: "queue_ai_eval_run",
-      reason: "manual admin request",
-      payload: {
-        runId: data.id,
-        modelId,
-        suite,
-      },
-    });
+    const { error: auditError } = await adminSupabase
+      .from("admin_audit_logs")
+      .insert({
+        actor_user_id: user.id,
+        action: "queue_ai_eval_run",
+        reason: "manual admin request",
+        payload: {
+          runId: data.id,
+          modelId,
+          suite,
+        },
+      });
 
     if (auditError) {
       throw auditError;
@@ -51,7 +53,7 @@ export async function POST(request: Request) {
     return Response.json({
       data: {
         ...data,
-        message: "AI eval run поставлен в очередь.",
+        message: "AI-проверка поставлена в очередь.",
       },
     });
   } catch (error) {
@@ -69,7 +71,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 400,
         code: "AI_EVAL_RUN_INVALID",
-        message: "Параметры AI eval заполнены некорректно.",
+        message: "Параметры AI-проверки заполнены некорректно.",
         details: error.flatten(),
       });
     }
@@ -77,7 +79,7 @@ export async function POST(request: Request) {
     return createApiErrorResponse({
       status: 500,
       code: "AI_EVAL_RUN_FAILED",
-      message: "Не удалось поставить AI eval в очередь.",
+      message: "Не удалось поставить AI-проверку в очередь.",
     });
   }
 }

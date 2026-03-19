@@ -753,3 +753,11 @@
 - [x] `src/lib/ai/proposal-actions.ts` полностью санирован в чистый UTF-8: preview titles, request summaries, timelines, owner-only errors и applied/approved copy больше не отдают mojibake в assistant flow и proposal studio.
 - [x] Tranche подтверждён пакетами `npx eslint src/lib/ai/chat.ts src/lib/ai/proposal-actions.ts`, `npm run typecheck`, `npm run build`.
 - [ ] Следующий AI/backend tranche: вынести и санировать remaining shared runtime/guardrail copy из `ai/chat` и `ai/assistant`, затем продолжать route/lib extraction и owner-only/idempotency audit.
+
+## 2026-03-19 AI eval surface sanitation addendum
+
+- [x] `src/lib/ai/eval-suites.ts` и `src/lib/ai/eval-runs.ts` переведены в чистый UTF-8: shared labels прогонов, quality-suite словарь и default labels больше не тянут mojibake в admin AI eval surface и плановые cron-запуски.
+- [x] `src/app/api/admin/ai-evals/route.ts`, `src/app/api/admin/ai-evals/run/route.ts` и `src/app/api/internal/jobs/ai-evals-schedule/route.ts` переведены на чистый user-facing copy без изменения route contracts.
+- [x] `src/components/admin-ai-eval-runs.tsx` полностью санирован: статусы, notices, пустые состояния и quick-run surface больше не отдают битую кириллицу оператору.
+- [x] Tranche подтверждён пакетами `npx eslint src/lib/ai/eval-suites.ts src/lib/ai/eval-runs.ts src/app/api/admin/ai-evals/route.ts src/app/api/admin/ai-evals/run/route.ts src/app/api/internal/jobs/ai-evals-schedule/route.ts src/components/admin-ai-eval-runs.tsx`, `npm run typecheck`, `npm run build`.
+- [ ] Следующий AI/backend tranche: продолжать remaining shared runtime/guardrail sanitation в `ai/chat` и `ai/assistant`, затем возвращаться к route/lib extraction и owner-only/idempotency audit.

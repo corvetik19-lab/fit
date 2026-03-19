@@ -827,3 +827,11 @@
 - Логика proposal actions и AI chat state не менялась; tranche ограничен shared copy sanitation и сохранением текущих owner-only/idempotent contracts.
 - Проверка зелёная: `npx eslint src/lib/ai/chat.ts src/lib/ai/proposal-actions.ts`, `npm run typecheck`, `npm run build`.
 - Общий прогресс execution checklist остаётся `144 / 176` (`82%`): slice закрывает remaining shared AI copy backlog, но не закрывает следующий основной checkbox целиком.
+
+### 2026-03-19 23:45 - Санировал AI eval surface
+
+- `src/lib/ai/eval-suites.ts` и `src/lib/ai/eval-runs.ts` переписаны в чистом UTF-8: названия наборов проверок, shared labels ручных и плановых запусков больше не отдают битую кириллицу.
+- `src/app/api/admin/ai-evals/route.ts`, `src/app/api/admin/ai-evals/run/route.ts` и `src/app/api/internal/jobs/ai-evals-schedule/route.ts` теперь возвращают нормальный operator-facing copy без изменения API contracts.
+- `src/components/admin-ai-eval-runs.tsx` полностью санирован: статусы, notices, quick-run block и пустое состояние снова читаются нормально на русском языке.
+- Проверка зелёная: `npx eslint src/lib/ai/eval-suites.ts src/lib/ai/eval-runs.ts src/app/api/admin/ai-evals/route.ts src/app/api/admin/ai-evals/run/route.ts src/app/api/internal/jobs/ai-evals-schedule/route.ts src/components/admin-ai-eval-runs.tsx`, `npm run typecheck`, `npm run build`.
+- Общий прогресс execution checklist остаётся `144 / 176` (`82%`): tranche сокращает sanitation backlog AI/admin surface, но не закрывает отдельный основной checkbox целиком.
