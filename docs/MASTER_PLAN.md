@@ -761,3 +761,10 @@
 - [x] `src/components/admin-ai-eval-runs.tsx` полностью санирован: статусы, notices, пустые состояния и quick-run surface больше не отдают битую кириллицу оператору.
 - [x] Tranche подтверждён пакетами `npx eslint src/lib/ai/eval-suites.ts src/lib/ai/eval-runs.ts src/app/api/admin/ai-evals/route.ts src/app/api/admin/ai-evals/run/route.ts src/app/api/internal/jobs/ai-evals-schedule/route.ts src/components/admin-ai-eval-runs.tsx`, `npm run typecheck`, `npm run build`.
 - [ ] Следующий AI/backend tranche: продолжать remaining shared runtime/guardrail sanitation в `ai/chat` и `ai/assistant`, затем возвращаться к route/lib extraction и owner-only/idempotency audit.
+
+## 2026-03-19 AI chat runtime copy extraction addendum
+
+- [x] Общий user-facing copy для `ai/chat` вынесен в `src/lib/ai/chat-runtime-copy.ts`: сообщения о неготовом runtime, auth-required, invalid payload, provider/runtime failures и safety fallback больше не размазаны по route handler.
+- [x] `src/app/api/ai/chat/route.ts` переведён на тонкий transport-слой с чистым UTF-8 copy: auth/runtime gates, safety fallback и provider error message идут через shared helper без изменения owner-only, billing и retrieval контрактов.
+- [x] Tranche подтверждён пакетами `npx eslint src/lib/ai/chat-runtime-copy.ts src/app/api/ai/chat/route.ts`, `npm run typecheck`, `npm run build`.
+- [ ] Следующий AI/backend tranche: продолжать remaining runtime/guardrail sanitation в `ai/assistant`, затем возвращаться к route/lib extraction и owner-only/idempotency audit.

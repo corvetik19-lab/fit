@@ -835,3 +835,10 @@
 - `src/components/admin-ai-eval-runs.tsx` полностью санирован: статусы, notices, quick-run block и пустое состояние снова читаются нормально на русском языке.
 - Проверка зелёная: `npx eslint src/lib/ai/eval-suites.ts src/lib/ai/eval-runs.ts src/app/api/admin/ai-evals/route.ts src/app/api/admin/ai-evals/run/route.ts src/app/api/internal/jobs/ai-evals-schedule/route.ts src/components/admin-ai-eval-runs.tsx`, `npm run typecheck`, `npm run build`.
 - Общий прогресс execution checklist остаётся `144 / 176` (`82%`): tranche сокращает sanitation backlog AI/admin surface, но не закрывает отдельный основной checkbox целиком.
+
+### 2026-03-20 00:05 - Вынес shared runtime copy из ai/chat
+
+- Добавил `src/lib/ai/chat-runtime-copy.ts`: shared user-facing copy для `ai/chat` теперь живёт вне route handler и включает not-configured/auth-invalid/provider/runtime/safety сообщения в чистом UTF-8.
+- `src/app/api/ai/chat/route.ts` переведён на этот helper без изменения owner-only, billing, retrieval и session contracts: route остался transport-слоем, а shared runtime copy больше не дублируется внутри handler.
+- Проверка зелёная: `npx eslint src/lib/ai/chat-runtime-copy.ts src/app/api/ai/chat/route.ts`, `npm run typecheck`, `npm run build`.
+- Общий прогресс execution checklist остаётся `144 / 176` (`82%`): tranche продолжает route/lib extraction и sanitation wave, но не закрывает следующий основной checkbox целиком.

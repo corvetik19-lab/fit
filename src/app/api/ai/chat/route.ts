@@ -13,6 +13,13 @@ import {
   buildSportsDomainSystemPrompt,
   detectAssistantGuardrail,
 } from "@/lib/ai/domain-policy";
+import {
+  AI_CHAT_INVALID_PAYLOAD_MESSAGE,
+  AI_CHAT_NOT_CONFIGURED_MESSAGE,
+  AI_CHAT_UNAUTHORIZED_MESSAGE,
+  buildAiChatProviderErrorMessage,
+  buildAiChatSafetyFallback,
+} from "@/lib/ai/chat-runtime-copy";
 import { models } from "@/lib/ai/gateway";
 import { retrieveKnowledgeMatches } from "@/lib/ai/knowledge";
 import { isAiProviderConfigurationFailure } from "@/lib/ai/runtime-errors";
@@ -36,32 +43,13 @@ const chatRequestSchema = z.object({
   message: z.string().trim().min(2).max(2000),
 });
 
-const aiChatProviderMessage =
-  "Сервис ИИ временно недоступен. Провайдер не активирован для чата и живых ответов.";
-const aiChatRuntimeMessage =
-  "Сервис ИИ временно не ответил. Попробуй ещё раз немного позже.";
-
-function buildSafetyFallback() {
-  return [
-    "Я не помогаю с опасными или экстремальными рекомендациями.",
-    "Если вопрос касается сильного дефицита, обезвоживания, выраженной боли или медицинских симптомов, безопаснее получить очную консультацию врача.",
-    "Я могу помочь только с более безопасным и реалистичным планом по тренировкам, питанию и восстановлению.",
-  ].join(" ");
-}
-
-function buildProviderErrorMessage(error: unknown) {
-  return isAiProviderConfigurationFailure(error)
-    ? aiChatProviderMessage
-    : aiChatRuntimeMessage;
-}
-
 export async function POST(request: Request) {
   try {
     if (!hasAiRuntimeEnv()) {
       return createApiErrorResponse({
         status: 503,
         code: "AI_RUNTIME_NOT_CONFIGURED",
-        message: "Сервис ИИ временно недоступен. Контур чата ещё не настроен.",
+        message: AI_CHAT_NOT_CONFIGURED_MESSAGE,
       });
     }
 
@@ -75,7 +63,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 401,
         code: "UNAUTHORIZED",
-        message: "Нужно войти в аккаунт, чтобы открыть чат с ИИ.",
+        message: AI_CHAT_UNAUTHORIZED_MESSAGE,
       });
     }
 
@@ -106,7 +94,7 @@ export async function POST(request: Request) {
     });
 
     if (hasRiskyIntent(body.message)) {
-      const safeReply = buildSafetyFallback();
+      const safeReply = buildAiChatSafetyFallback();
       const assistantMessage = await createAiChatMessage(supabase, {
         userId: user.id,
         sessionId: session.id,
@@ -222,7 +210,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 400,
         code: "AI_CHAT_INVALID_PAYLOAD",
-        message: "Запрос к чату с ИИ заполнен некорректно.",
+        message: AI_CHAT_INVALID_PAYLOAD_MESSAGE,
         details: error.flatten(),
       });
     }
@@ -242,7 +230,7 @@ export async function POST(request: Request) {
       code: isAiProviderConfigurationFailure(error)
         ? "AI_PROVIDER_UNAVAILABLE"
         : "AI_CHAT_FAILED",
-      message: buildProviderErrorMessage(error),
+      message: buildAiChatProviderErrorMessage(error),
     });
   }
 }
