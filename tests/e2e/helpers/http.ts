@@ -23,7 +23,7 @@ export async function fetchJson<T = unknown>(
   page: Page,
   input: {
     body?: unknown;
-    method: "DELETE" | "GET" | "PATCH" | "POST";
+    method: "DELETE" | "GET" | "PATCH" | "POST" | "PUT";
     url: string;
   },
 ) {

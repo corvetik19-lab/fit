@@ -48,8 +48,6 @@ export async function PUT(request: Request) {
 
     return Response.json({ data });
   } catch (error) {
-    logger.error("nutrition targets route failed", { error });
-
     if (error instanceof z.ZodError) {
       return createApiErrorResponse({
         status: 400,
@@ -58,6 +56,8 @@ export async function PUT(request: Request) {
         details: error.flatten(),
       });
     }
+
+    logger.error("nutrition targets route failed", { error });
 
     return createApiErrorResponse({
       status: 500,

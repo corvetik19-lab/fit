@@ -346,6 +346,75 @@ export async function seedRlsOwnershipFixture() {
     throw nutritionSummaryError;
   }
 
+  const { data: goalRow, error: goalError } = await supabase
+    .from("goals")
+    .insert({
+      user_id: userId,
+      goal_type: "maintenance",
+      target_weight_kg: 76.5,
+      weekly_training_days: 4,
+    })
+    .select("id")
+    .single();
+
+  if (goalError) {
+    throw goalError;
+  }
+
+  const { data: nutritionGoalRow, error: nutritionGoalError } = await supabase
+    .from("nutrition_goals")
+    .insert({
+      user_id: userId,
+      goal_type: "maintenance",
+      kcal_target: 2200,
+      protein_target: 160,
+      fat_target: 70,
+      carbs_target: 240,
+      effective_from: weekWindow.weekStartDate,
+    })
+    .select("id")
+    .single();
+
+  if (nutritionGoalError) {
+    throw nutritionGoalError;
+  }
+
+  const { data: nutritionProfileRow, error: nutritionProfileError } = await supabase
+    .from("nutrition_profiles")
+    .upsert(
+      {
+        user_id: userId,
+        kcal_target: 2200,
+        protein_target: 160,
+        fat_target: 70,
+        carbs_target: 240,
+      },
+      {
+        onConflict: "user_id",
+      },
+    )
+    .select("id")
+    .single();
+
+  if (nutritionProfileError) {
+    throw nutritionProfileError;
+  }
+
+  const { data: bodyMetricRow, error: bodyMetricError } = await supabase
+    .from("body_metrics")
+    .insert({
+      user_id: userId,
+      weight_kg: 76.8,
+      body_fat_pct: 17.4,
+      measured_at: new Date("2035-01-02T09:00:00.000Z").toISOString(),
+    })
+    .select("id")
+    .single();
+
+  if (bodyMetricError) {
+    throw bodyMetricError;
+  }
+
   const { data: programRow, error: programError } = await supabase
     .from("weekly_programs")
     .insert({
@@ -548,6 +617,8 @@ export async function seedRlsOwnershipFixture() {
     contextSnapshotId: contextSnapshotRow.id as string,
     adminProposalId: adminProposalRow.id as string,
     adminUserId,
+    bodyMetricId: bodyMetricRow.id as string,
+    goalId: goalRow.id as string,
     deletionRequestId: deletionRequestRow.id as string,
     exerciseId: exerciseRow.id as string,
     exportJobId: exportJobRow.id as string,
@@ -557,6 +628,8 @@ export async function seedRlsOwnershipFixture() {
     mealId: mealRow.id as string,
     mealItemId: mealItemRow.id as string,
     mealTemplateId: mealTemplateRow.id as string,
+    nutritionGoalId: nutritionGoalRow.id as string,
+    nutritionProfileId: nutritionProfileRow.id as string,
     nutritionSummaryId: nutritionSummaryRow.id as string,
     programId: programRow.id as string,
     recipeId: recipeRow.id as string,

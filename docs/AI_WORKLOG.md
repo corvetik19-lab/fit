@@ -716,3 +716,10 @@
 - Для этого добавил `scripts/typecheck-stable.mjs`: runner сначала запускает `npx next typegen`, потом проверяет, действительно ли появились route wrappers в `.next/types/app/...`, и если нет — автоматически догоняет их через `npm run build`, а уже затем запускает `tsc`.
 - После этого `package.json` переведён на новый runner, и baseline подтверждён честным сценарием с удалением `.next/types` через Node и последующим одним `npm run typecheck` без ручного повтора.
 - Tranche подтверждён командами `node -e \"fs.rmSync('.next/types', ...)\"`, `npm run typecheck`, `npx eslint tests/rls tests/rls/helpers`, `npm run test:rls` -> `4 passed`, `npm run build`.
+
+### 2026-03-19 00:40 - Дожал nutrition targets contract и прямой RLS для профиля питания
+
+- В `src/app/api/nutrition/targets/route.ts` перенёс обработку `ZodError` до unexpected logger-ветки: ожидаемо невалидный payload на `PUT /api/nutrition/targets` теперь даёт явный `400 NUTRITION_TARGETS_INVALID` без лишнего route-level `logger.error`.
+- В `tests/e2e/api-contracts.spec.ts` добавил invalid-payload контракт для nutrition targets, а `tests/e2e/helpers/http.ts` расширил общим `PUT`-методом.
+- В `tests/rls/helpers/supabase-rls.ts` и `tests/rls/ownership.spec.ts` расширил прямой owner-only coverage до `goals`, `nutrition_goals`, `nutrition_profiles`, `body_metrics`, чтобы nutrition/body/self-profile слой был подтверждён не только route-level e2e, но и raw Supabase client access тестами.
+- Проверка зелёная: `npx eslint src/app/api/nutrition/targets/route.ts tests/e2e/api-contracts.spec.ts tests/e2e/helpers/http.ts tests/rls/helpers/supabase-rls.ts tests/rls/ownership.spec.ts`, `npm run test:rls` -> `4 passed`, `npm run typecheck`, `npm run build`, `npm run test:smoke` -> `3 passed`, `npm run test:e2e:auth` -> `41 passed`.

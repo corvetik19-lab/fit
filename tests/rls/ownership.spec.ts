@@ -60,6 +60,59 @@ test.describe("rls ownership", () => {
       expect(hiddenProgramError).toBeNull();
       expect(hiddenProgramRows).toEqual([]);
 
+      const { data: ownGoalRows, error: ownGoalError } = await regularUser.client
+        .from("goals")
+        .select("id, user_id, goal_type, weekly_training_days")
+        .eq("id", fixture.goalId);
+
+      expect(ownGoalError).toBeNull();
+      expect(ownGoalRows).toHaveLength(1);
+      expect(ownGoalRows?.[0]?.id).toBe(fixture.goalId);
+      expect(ownGoalRows?.[0]?.user_id).toBe(fixture.userId);
+      expect(ownGoalRows?.[0]?.goal_type).toBe("maintenance");
+      expect(ownGoalRows?.[0]?.weekly_training_days).toBe(4);
+
+      const { data: ownNutritionGoalRows, error: ownNutritionGoalError } =
+        await regularUser.client
+          .from("nutrition_goals")
+          .select("id, user_id, kcal_target, protein_target")
+          .eq("id", fixture.nutritionGoalId);
+
+      expect(ownNutritionGoalError).toBeNull();
+      expect(ownNutritionGoalRows).toHaveLength(1);
+      expect(ownNutritionGoalRows?.[0]?.id).toBe(fixture.nutritionGoalId);
+      expect(ownNutritionGoalRows?.[0]?.user_id).toBe(fixture.userId);
+      expect(ownNutritionGoalRows?.[0]?.kcal_target).toBe(2200);
+      expect(ownNutritionGoalRows?.[0]?.protein_target).toBe(160);
+
+      const { data: ownNutritionProfileRows, error: ownNutritionProfileError } =
+        await regularUser.client
+          .from("nutrition_profiles")
+          .select("id, user_id, kcal_target, protein_target, fat_target, carbs_target")
+          .eq("id", fixture.nutritionProfileId);
+
+      expect(ownNutritionProfileError).toBeNull();
+      expect(ownNutritionProfileRows).toHaveLength(1);
+      expect(ownNutritionProfileRows?.[0]?.id).toBe(fixture.nutritionProfileId);
+      expect(ownNutritionProfileRows?.[0]?.user_id).toBe(fixture.userId);
+      expect(ownNutritionProfileRows?.[0]?.kcal_target).toBe(2200);
+      expect(ownNutritionProfileRows?.[0]?.protein_target).toBe(160);
+      expect(ownNutritionProfileRows?.[0]?.fat_target).toBe(70);
+      expect(ownNutritionProfileRows?.[0]?.carbs_target).toBe(240);
+
+      const { data: ownBodyMetricRows, error: ownBodyMetricError } =
+        await regularUser.client
+          .from("body_metrics")
+          .select("id, user_id, weight_kg, body_fat_pct")
+          .eq("id", fixture.bodyMetricId);
+
+      expect(ownBodyMetricError).toBeNull();
+      expect(ownBodyMetricRows).toHaveLength(1);
+      expect(ownBodyMetricRows?.[0]?.id).toBe(fixture.bodyMetricId);
+      expect(ownBodyMetricRows?.[0]?.user_id).toBe(fixture.userId);
+      expect(Number(ownBodyMetricRows?.[0]?.weight_kg)).toBe(76.8);
+      expect(Number(ownBodyMetricRows?.[0]?.body_fat_pct)).toBe(17.4);
+
       const { data: ownFoodRows, error: ownFoodError } = await regularUser.client
         .from("foods")
         .select("id, user_id, source, name")
@@ -292,6 +345,41 @@ test.describe("rls ownership", () => {
       expect(hiddenKnowledgeEmbeddingError).toBeNull();
       expect(hiddenKnowledgeEmbeddingRows).toEqual([]);
 
+      const { data: hiddenGoalRows, error: hiddenGoalError } = await adminUser.client
+        .from("goals")
+        .select("id")
+        .eq("id", fixture.goalId);
+
+      expect(hiddenGoalError).toBeNull();
+      expect(hiddenGoalRows).toEqual([]);
+
+      const { data: hiddenNutritionGoalRows, error: hiddenNutritionGoalError } =
+        await adminUser.client
+          .from("nutrition_goals")
+          .select("id")
+          .eq("id", fixture.nutritionGoalId);
+
+      expect(hiddenNutritionGoalError).toBeNull();
+      expect(hiddenNutritionGoalRows).toEqual([]);
+
+      const { data: hiddenNutritionProfileRows, error: hiddenNutritionProfileError } =
+        await adminUser.client
+          .from("nutrition_profiles")
+          .select("id")
+          .eq("id", fixture.nutritionProfileId);
+
+      expect(hiddenNutritionProfileError).toBeNull();
+      expect(hiddenNutritionProfileRows).toEqual([]);
+
+      const { data: hiddenBodyMetricRows, error: hiddenBodyMetricError } =
+        await adminUser.client
+          .from("body_metrics")
+          .select("id")
+          .eq("id", fixture.bodyMetricId);
+
+      expect(hiddenBodyMetricError).toBeNull();
+      expect(hiddenBodyMetricRows).toEqual([]);
+
       const { data: hiddenFoodRows, error: hiddenFoodError } = await adminUser.client
         .from("foods")
         .select("id")
@@ -360,22 +448,77 @@ test.describe("rls ownership", () => {
       expect(hiddenWorkoutTemplateError).toBeNull();
       expect(hiddenWorkoutTemplateRows).toEqual([]);
 
-      const { data: foreignUpdateRows, error: foreignUpdateError } = await adminUser.client
-        .from("ai_plan_proposals")
-        .update({
-          status: "approved",
-        })
-        .eq("id", fixture.userProposalId)
-        .select("id, status");
+      const { data: foreignProposalUpdateRows, error: foreignProposalUpdateError } =
+        await adminUser.client
+          .from("ai_plan_proposals")
+          .update({
+            status: "approved",
+          })
+          .eq("id", fixture.userProposalId)
+          .select("id, status");
 
-      expect(foreignUpdateError).toBeNull();
-      expect(foreignUpdateRows).toEqual([]);
+      expect(foreignProposalUpdateError).toBeNull();
+      expect(foreignProposalUpdateRows).toEqual([]);
+
+      const {
+        data: foreignNutritionProfileUpdateRows,
+        error: foreignNutritionProfileUpdateError,
+      } = await adminUser.client
+        .from("nutrition_profiles")
+        .update({
+          kcal_target: 9999,
+        })
+        .eq("id", fixture.nutritionProfileId)
+        .select("id, kcal_target");
+
+      expect(foreignNutritionProfileUpdateError).toBeNull();
+      expect(foreignNutritionProfileUpdateRows).toEqual([]);
+
+      const {
+        data: foreignBodyMetricUpdateRows,
+        error: foreignBodyMetricUpdateError,
+      } = await adminUser.client
+        .from("body_metrics")
+        .update({
+          weight_kg: 99.9,
+        })
+        .eq("id", fixture.bodyMetricId)
+        .select("id, weight_kg");
+
+      expect(foreignBodyMetricUpdateError).toBeNull();
+      expect(foreignBodyMetricUpdateRows).toEqual([]);
 
       const proposalAfterForeignUpdate = await readProposalStatus(fixture.userProposalId);
 
       expect(proposalAfterForeignUpdate?.id).toBe(fixture.userProposalId);
       expect(proposalAfterForeignUpdate?.user_id).toBe(fixture.userId);
       expect(proposalAfterForeignUpdate?.status).toBe("draft");
+
+      const {
+        data: nutritionProfileAfterForeignUpdate,
+        error: nutritionProfileAfterForeignUpdateError,
+      } = await regularUser.client
+        .from("nutrition_profiles")
+        .select("id, kcal_target")
+        .eq("id", fixture.nutritionProfileId)
+        .maybeSingle();
+
+      expect(nutritionProfileAfterForeignUpdateError).toBeNull();
+      expect(nutritionProfileAfterForeignUpdate?.id).toBe(fixture.nutritionProfileId);
+      expect(nutritionProfileAfterForeignUpdate?.kcal_target).toBe(2200);
+
+      const {
+        data: bodyMetricAfterForeignUpdate,
+        error: bodyMetricAfterForeignUpdateError,
+      } = await regularUser.client
+        .from("body_metrics")
+        .select("id, weight_kg")
+        .eq("id", fixture.bodyMetricId)
+        .maybeSingle();
+
+      expect(bodyMetricAfterForeignUpdateError).toBeNull();
+      expect(bodyMetricAfterForeignUpdate?.id).toBe(fixture.bodyMetricId);
+      expect(Number(bodyMetricAfterForeignUpdate?.weight_kg)).toBe(76.8);
     } finally {
       await signOutRlsUser(regularUser.client);
       await signOutRlsUser(adminUser.client);

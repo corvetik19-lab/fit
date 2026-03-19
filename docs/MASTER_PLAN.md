@@ -644,3 +644,11 @@
 - [x] `package.json` теперь использует этот runner в `typecheck`, так что baseline снова проходит одним запуском даже после полного удаления `.next/types`, без ручного второго прогона.
 - [x] Tranche подтверждён чистым сценарием: удаление `.next/types` через Node, затем `npm run typecheck` -> успешно; дальше baseline подтверждён `npx eslint tests/rls tests/rls/helpers`, `npm run test:rls` -> `4 passed`, `npm run build`.
 - [ ] Следующий engineering tranche: продолжить незаблокированные backend/RLS/route-level hardening slices, не теряя одношаговый quality-gate contract.
+
+## 2026-03-19 nutrition targets и remaining nutrition-profile RLS addendum
+
+- [x] `src/app/api/nutrition/targets/route.ts` теперь обрабатывает ожидаемый `ZodError` до unexpected-failure logging: невалидный payload на `PUT /api/nutrition/targets` возвращает явный `400 NUTRITION_TARGETS_INVALID` без noisy route-level `logger.error`.
+- [x] `tests/e2e/api-contracts.spec.ts` расширен invalid-payload контрактом для `PUT /api/nutrition/targets`, а `tests/e2e/helpers/http.ts` поддерживает `PUT` в общем request helper'е.
+- [x] `tests/rls/helpers/supabase-rls.ts` и `tests/rls/ownership.spec.ts` расширены direct owner-scoped покрытием для remaining nutrition/body/self-profile таблиц: `goals`, `nutrition_goals`, `nutrition_profiles`, `body_metrics`.
+- [x] Tranche подтверждён baseline-пакетом: `npx eslint src/app/api/nutrition/targets/route.ts tests/e2e/api-contracts.spec.ts tests/e2e/helpers/http.ts tests/rls/helpers/supabase-rls.ts tests/rls/ownership.spec.ts`, `npm run test:rls` -> `4 passed`, `npm run typecheck`, `npm run build`, `npm run test:smoke` -> `3 passed`, `npm run test:e2e:auth` -> `41 passed`.
+- [ ] Следующий backend tranche: продолжить оставшийся route-handler audit по owner-only/idempotency/race conditions и добивать незакрытые AI/data hardening пункты.

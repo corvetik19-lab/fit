@@ -55,6 +55,7 @@ test.describe("api contracts", () => {
       invalidRecipeDelete,
       invalidMealDelete,
       invalidMealTemplateDelete,
+      invalidNutritionTargetsPayload,
     ] = await Promise.all([
       fetchJson(page, {
         method: "PATCH",
@@ -116,6 +117,16 @@ test.describe("api contracts", () => {
       fetchJson(page, {
         method: "DELETE",
         url: "/api/meal-templates/not-a-uuid",
+      }),
+      fetchJson(page, {
+        method: "PUT",
+        url: "/api/nutrition/targets",
+        body: {
+          kcalTarget: -100,
+          proteinTarget: 160,
+          fatTarget: 70.5,
+          carbsTarget: null,
+        },
       }),
     ]);
 
@@ -188,6 +199,11 @@ test.describe("api contracts", () => {
     expect((invalidMealTemplateDelete.body as { code?: string } | null)?.code).toBe(
       "MEAL_TEMPLATE_DELETE_INVALID",
     );
+
+    expect(invalidNutritionTargetsPayload.status).toBe(400);
+    expect(
+      (invalidNutritionTargetsPayload.body as { code?: string } | null)?.code,
+    ).toBe("NUTRITION_TARGETS_INVALID");
   });
 
   test("owner-scoped AI session delete returns 404 for unknown valid session id", async ({
