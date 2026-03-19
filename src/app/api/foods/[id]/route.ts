@@ -2,6 +2,10 @@ import { z } from "zod";
 
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import { logger } from "@/lib/logger";
+import {
+  buildFoodUpdateData,
+  deleteOwnedNutritionEntity,
+} from "@/lib/nutrition/nutrition-self-service";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 const foodUpdateSchema = z.object({
@@ -37,31 +41,7 @@ export async function PATCH(
 
     const payload = foodUpdateSchema.parse(await request.json());
     const { id } = paramsSchema.parse(await params);
-    const updateData: Record<string, unknown> = {};
-
-    if (payload.name !== undefined) {
-      updateData.name = payload.name;
-    }
-
-    if (payload.kcal !== undefined) {
-      updateData.kcal = payload.kcal;
-    }
-
-    if (payload.protein !== undefined) {
-      updateData.protein = Number(payload.protein.toFixed(2));
-    }
-
-    if (payload.fat !== undefined) {
-      updateData.fat = Number(payload.fat.toFixed(2));
-    }
-
-    if (payload.carbs !== undefined) {
-      updateData.carbs = Number(payload.carbs.toFixed(2));
-    }
-
-    if (payload.barcode !== undefined) {
-      updateData.barcode = payload.barcode?.trim() || null;
-    }
+    const updateData = buildFoodUpdateData(payload);
 
     if (!Object.keys(updateData).length) {
       return createApiErrorResponse({
@@ -131,17 +111,7 @@ export async function DELETE(
     }
 
     const { id } = paramsSchema.parse(await params);
-    const { data, error } = await supabase
-      .from("foods")
-      .delete()
-      .eq("id", id)
-      .eq("user_id", user.id)
-      .select("id")
-      .maybeSingle();
-
-    if (error) {
-      throw error;
-    }
+    const data = await deleteOwnedNutritionEntity(supabase, "foods", user.id, id);
 
     if (!data) {
       return createApiErrorResponse({

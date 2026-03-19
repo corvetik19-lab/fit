@@ -804,3 +804,11 @@
 - Кодовые проверки зелёные: `npx eslint src/lib/nutrition/nutrition-write-model.ts src/app/api/recipes/route.ts src/app/api/meal-templates/route.ts src/app/api/meals/route.ts`, `npm run typecheck`, `npm run build`.
 - Повторные browser suites (`npm run test:e2e:auth`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1`, `npm run test:smoke`) на этой машине снова упёрлись в локальный timeout runner'а, поэтому tranche зафиксирован по compile/type baseline без нового browser green run.
 - Общий прогресс execution checklist остаётся `144 / 176` (`82%`): slice уменьшает backend duplication, но не закрывает отдельный основной checkbox целиком.
+
+### 2026-03-19 22:35 - Вынес nutrition self-service delete/update слой из [id] routes
+
+- Добавил `src/lib/nutrition/nutrition-self-service.ts` и перенёс туда общий nutrition self-service слой: generic owner-scoped delete helper, `meal` delete с пересчётом дневной summary и build helper для `foods` update payload.
+- `src/app/api/foods/[id]/route.ts`, `src/app/api/recipes/[id]/route.ts`, `src/app/api/meal-templates/[id]/route.ts` и `src/app/api/meals/[id]/route.ts` теперь ближе к transport-слою и больше не дублируют один и тот же owner-check/delete/update plumbing.
+- Заодно полностью перевёл эти route handlers в чистый UTF-8, чтобы remaining mojibake не висел в nutrition self-service surface.
+- Проверка зелёная: `npx eslint src/lib/nutrition/nutrition-self-service.ts src/app/api/foods/[id]/route.ts src/app/api/recipes/[id]/route.ts src/app/api/meal-templates/[id]/route.ts src/app/api/meals/[id]/route.ts`, `npm run typecheck`, `npm run build`.
+- Общий прогресс execution checklist остаётся `144 / 176` (`82%`): slice уменьшает backend duplication и sanitation backlog, но не закрывает отдельный основной checkbox целиком.

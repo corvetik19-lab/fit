@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import { logger } from "@/lib/logger";
-import { recalculateDailyNutritionSummary } from "@/lib/nutrition/meal-logging";
+import { deleteOwnedMealAndRecalculateSummary } from "@/lib/nutrition/nutrition-self-service";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 const mealDeleteSchema = z.object({
@@ -33,18 +33,14 @@ export async function DELETE(
 
     const payload = mealDeleteSchema.parse(await request.json());
     const { id } = paramsSchema.parse(await params);
-    const { data: meal, error: mealLookupError } = await supabase
-      .from("meals")
-      .select("id")
-      .eq("id", id)
-      .eq("user_id", user.id)
-      .maybeSingle();
+    const result = await deleteOwnedMealAndRecalculateSummary(
+      supabase,
+      user.id,
+      id,
+      payload.summaryDate,
+    );
 
-    if (mealLookupError) {
-      throw mealLookupError;
-    }
-
-    if (!meal) {
+    if (!result) {
       return createApiErrorResponse({
         status: 404,
         code: "MEAL_NOT_FOUND",
@@ -52,23 +48,7 @@ export async function DELETE(
       });
     }
 
-    const { error: deleteError } = await supabase
-      .from("meals")
-      .delete()
-      .eq("id", id)
-      .eq("user_id", user.id);
-
-    if (deleteError) {
-      throw deleteError;
-    }
-
-    const summary = await recalculateDailyNutritionSummary(
-      supabase,
-      user.id,
-      payload.summaryDate,
-    );
-
-    return Response.json({ data: { summary } });
+    return Response.json({ data: { summary: result.summary } });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return createApiErrorResponse({

@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import { logger } from "@/lib/logger";
+import { deleteOwnedNutritionEntity } from "@/lib/nutrition/nutrition-self-service";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 const paramsSchema = z.object({
@@ -27,17 +28,7 @@ export async function DELETE(
     }
 
     const { id } = paramsSchema.parse(await params);
-    const { data, error } = await supabase
-      .from("recipes")
-      .delete()
-      .eq("id", id)
-      .eq("user_id", user.id)
-      .select("id")
-      .maybeSingle();
-
-    if (error) {
-      throw error;
-    }
+    const data = await deleteOwnedNutritionEntity(supabase, "recipes", user.id, id);
 
     if (!data) {
       return createApiErrorResponse({
