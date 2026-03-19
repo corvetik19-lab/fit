@@ -64,17 +64,6 @@ async function writeAuditLog(
 
 export async function POST(request: Request) {
   try {
-    if (!hasStripeCheckoutEnv()) {
-      return createApiErrorResponse({
-        status: 503,
-        code: "STRIPE_CHECKOUT_NOT_CONFIGURED",
-        message: "Stripe checkout пока не настроен.",
-        details: {
-          missing: getMissingStripeCheckoutEnv(),
-        },
-      });
-    }
-
     const supabase = await createServerSupabaseClient();
     const {
       data: { user },
@@ -85,6 +74,17 @@ export async function POST(request: Request) {
         status: 401,
         code: "AUTH_REQUIRED",
         message: "Нужно войти в аккаунт, чтобы подтвердить оплату.",
+      });
+    }
+
+    if (!hasStripeCheckoutEnv()) {
+      return createApiErrorResponse({
+        status: 503,
+        code: "STRIPE_CHECKOUT_NOT_CONFIGURED",
+        message: "Stripe Checkout пока не настроен.",
+        details: {
+          missing: getMissingStripeCheckoutEnv(),
+        },
       });
     }
 
@@ -152,8 +152,6 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
-    logger.error("stripe checkout reconcile route failed", { error });
-
     if (error instanceof z.ZodError) {
       return createApiErrorResponse({
         status: 400,
@@ -163,10 +161,12 @@ export async function POST(request: Request) {
       });
     }
 
+    logger.error("stripe checkout reconcile route failed", { error });
+
     return createApiErrorResponse({
       status: 500,
       code: "STRIPE_CHECKOUT_RECONCILE_FAILED",
-      message: "Не удалось подтвердить возврат из Stripe checkout.",
+      message: "Не удалось подтвердить возврат из Stripe Checkout.",
     });
   }
 }

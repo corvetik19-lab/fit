@@ -1,4 +1,5 @@
 import { createApiErrorResponse } from "@/lib/api/error-response";
+import { getMissingStripePortalEnv, hasStripePortalEnv } from "@/lib/env";
 import { logger } from "@/lib/logger";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -16,6 +17,17 @@ export async function POST(request: Request) {
         status: 401,
         code: "AUTH_REQUIRED",
         message: "Нужно войти в аккаунт, чтобы открыть платёжный кабинет.",
+      });
+    }
+
+    if (!hasStripePortalEnv()) {
+      return createApiErrorResponse({
+        status: 503,
+        code: "STRIPE_PORTAL_NOT_CONFIGURED",
+        message: "Stripe Billing Portal пока не настроен.",
+        details: {
+          missing: getMissingStripePortalEnv(),
+        },
       });
     }
 
@@ -59,7 +71,7 @@ export async function POST(request: Request) {
     return createApiErrorResponse({
       status: 500,
       code: "STRIPE_PORTAL_FAILED",
-      message: "Не удалось открыть Stripe billing portal.",
+      message: "Не удалось открыть Stripe Billing Portal.",
     });
   }
 }

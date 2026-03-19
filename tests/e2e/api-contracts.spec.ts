@@ -6,6 +6,7 @@ import {
   ADMIN_STORAGE_STATE_PATH,
   USER_STORAGE_STATE_PATH,
 } from "./helpers/auth-state";
+import { navigateStable } from "./helpers/navigation";
 import { fetchJson } from "./helpers/http";
 
 function buildAssistantMessages() {
@@ -23,11 +24,82 @@ function buildAssistantMessages() {
   ];
 }
 
-test.use({
-  storageState: USER_STORAGE_STATE_PATH,
+test.describe("api contracts without auth", () => {
+  test.use({
+    storageState: { cookies: [], origins: [] },
+  });
+
+  test("billing and settings routes stay auth-first for anonymous requests", async ({
+    page,
+  }) => {
+    await page.context().clearCookies();
+
+    const [
+      checkoutResult,
+      reconcileResult,
+      portalResult,
+      settingsBillingGetResult,
+      settingsBillingPostResult,
+    ] = await Promise.all([
+      fetchJson(page, {
+        method: "POST",
+        url: "/api/billing/checkout",
+      }),
+      fetchJson(page, {
+        method: "POST",
+        url: "/api/billing/checkout/reconcile",
+        body: { sessionId: "test-session" },
+      }),
+      fetchJson(page, {
+        method: "POST",
+        url: "/api/billing/portal",
+      }),
+      fetchJson(page, {
+        method: "GET",
+        url: "/api/settings/billing",
+      }),
+      fetchJson(page, {
+        method: "POST",
+        url: "/api/settings/billing",
+        body: {
+          action: "request_access_review",
+          feature_keys: ["ai_chat"],
+        },
+      }),
+    ]);
+
+    expect(checkoutResult.status).toBe(401);
+    expect((checkoutResult.body as { code?: string } | null)?.code).toBe(
+      "AUTH_REQUIRED",
+    );
+
+    expect(reconcileResult.status).toBe(401);
+    expect((reconcileResult.body as { code?: string } | null)?.code).toBe(
+      "AUTH_REQUIRED",
+    );
+
+    expect(portalResult.status).toBe(401);
+    expect((portalResult.body as { code?: string } | null)?.code).toBe(
+      "AUTH_REQUIRED",
+    );
+
+    expect(settingsBillingGetResult.status).toBe(401);
+    expect((settingsBillingGetResult.body as { code?: string } | null)?.code).toBe(
+      "AUTH_REQUIRED",
+    );
+
+    expect(settingsBillingPostResult.status).toBe(401);
+    expect((settingsBillingPostResult.body as { code?: string } | null)?.code).toBe(
+      "AUTH_REQUIRED",
+    );
+  });
 });
 
 test.describe("api contracts", () => {
+  test.use({
+    storageState: USER_STORAGE_STATE_PATH,
+  });
+
   test.describe.configure({ timeout: 60_000 });
 
   test.skip(
@@ -36,8 +108,7 @@ test.describe("api contracts", () => {
   );
 
   test("authenticated invalid route params return explicit 400s", async ({ page }) => {
-    await page.goto("/dashboard");
-    await expect(page).toHaveURL(/\/dashboard$/);
+    await navigateStable(page, "/dashboard", /\/dashboard$/);
     await page.waitForLoadState("networkidle");
 
     const [
@@ -56,6 +127,7 @@ test.describe("api contracts", () => {
       invalidMealDelete,
       invalidMealTemplateDelete,
       invalidNutritionTargetsPayload,
+      invalidSettingsBillingPayload,
     ] = await Promise.all([
       fetchJson(page, {
         method: "PATCH",
@@ -126,6 +198,14 @@ test.describe("api contracts", () => {
           proteinTarget: 160,
           fatTarget: 70.5,
           carbsTarget: null,
+        },
+      }),
+      fetchJson(page, {
+        method: "POST",
+        url: "/api/settings/billing",
+        body: {
+          action: "request_access_review",
+          feature_keys: [],
         },
       }),
     ]);
@@ -204,6 +284,11 @@ test.describe("api contracts", () => {
     expect(
       (invalidNutritionTargetsPayload.body as { code?: string } | null)?.code,
     ).toBe("NUTRITION_TARGETS_INVALID");
+
+    expect(invalidSettingsBillingPayload.status).toBe(400);
+    expect(
+      (invalidSettingsBillingPayload.body as { code?: string } | null)?.code,
+    ).toBe("SETTINGS_BILLING_INVALID");
   });
 
   test("owner-scoped AI session delete returns 404 for unknown valid session id", async ({

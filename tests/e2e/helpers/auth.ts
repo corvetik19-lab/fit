@@ -82,6 +82,51 @@ async function setFieldValue(locator: ReturnType<Page["locator"]>, value: string
   await locator.blur().catch(() => undefined);
 }
 
+async function waitForSubmitButtonReady(page: Page) {
+  const submitSelector = 'button[type="submit"]';
+  const emailSelector = 'input[type="email"]';
+  const passwordSelector = 'input[type="password"]';
+
+  try {
+    await page.waitForFunction(
+      ({ emailSelector: nextEmailSelector, passwordSelector: nextPasswordSelector, submitSelector: nextSubmitSelector }) => {
+        const emailInput = document.querySelector<HTMLInputElement>(nextEmailSelector);
+        const passwordInput =
+          document.querySelector<HTMLInputElement>(nextPasswordSelector);
+        const submitButton =
+          document.querySelector<HTMLButtonElement>(nextSubmitSelector);
+
+        return Boolean(
+          emailInput?.value.trim() &&
+            passwordInput?.value.trim() &&
+            submitButton &&
+            !submitButton.disabled,
+        );
+      },
+      { emailSelector, passwordSelector, submitSelector },
+      { timeout: 10_000 },
+    );
+    return;
+  } catch {
+    await page.locator(emailSelector).evaluate((element) => {
+      const input = element as HTMLInputElement;
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+      input.dispatchEvent(new Event("blur", { bubbles: true }));
+    });
+    await page.locator(passwordSelector).evaluate((element) => {
+      const input = element as HTMLInputElement;
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+      input.dispatchEvent(new Event("blur", { bubbles: true }));
+    });
+  }
+
+  await expect(page.locator(submitSelector).first()).toBeEnabled({
+    timeout: 10_000,
+  });
+}
+
 async function waitForPostAuthRoute(page: Page) {
   try {
     await page.waitForURL(/\/(dashboard|onboarding)/, {
@@ -127,7 +172,7 @@ async function signInWithCredentials(page: Page, credentials: AuthCredentials) {
 
   await setFieldValue(emailField, credentials.email);
   await setFieldValue(passwordField, credentials.password);
-  await expect(submitButton).toBeEnabled({ timeout: 10_000 });
+  await waitForSubmitButtonReady(page);
 
   await submitButton.click();
   await waitForPostAuthRoute(page);

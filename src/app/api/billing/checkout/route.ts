@@ -37,17 +37,6 @@ async function writeAuditLog(
 
 export async function POST(request: Request) {
   try {
-    if (!hasStripeCheckoutEnv()) {
-      return createApiErrorResponse({
-        status: 503,
-        code: "STRIPE_CHECKOUT_NOT_CONFIGURED",
-        message: "Stripe checkout пока не настроен.",
-        details: {
-          missing: getMissingStripeCheckoutEnv(),
-        },
-      });
-    }
-
     const supabase = await createServerSupabaseClient();
     const {
       data: { user },
@@ -58,6 +47,17 @@ export async function POST(request: Request) {
         status: 401,
         code: "AUTH_REQUIRED",
         message: "Нужно войти в аккаунт, чтобы начать оплату.",
+      });
+    }
+
+    if (!hasStripeCheckoutEnv()) {
+      return createApiErrorResponse({
+        status: 503,
+        code: "STRIPE_CHECKOUT_NOT_CONFIGURED",
+        message: "Stripe Checkout пока не настроен.",
+        details: {
+          missing: getMissingStripeCheckoutEnv(),
+        },
       });
     }
 
@@ -77,6 +77,7 @@ export async function POST(request: Request) {
       fullName: profile?.full_name ?? null,
       userId: user.id,
     });
+
     const stripe = getStripeClient();
     const session = await stripe.checkout.sessions.create({
       allow_promotion_codes: true,
@@ -99,8 +100,7 @@ export async function POST(request: Request) {
           userId: user.id,
         },
       },
-      success_url:
-        `${resolveRequestOrigin(request)}/settings?billing=success&session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${resolveRequestOrigin(request)}/settings?billing=success&session_id={CHECKOUT_SESSION_ID}`,
     });
 
     await writeAuditLog(user.id, {
@@ -122,7 +122,7 @@ export async function POST(request: Request) {
     return createApiErrorResponse({
       status: 500,
       code: "STRIPE_CHECKOUT_FAILED",
-      message: "Не удалось запустить Stripe checkout.",
+      message: "Не удалось запустить Stripe Checkout.",
     });
   }
 }

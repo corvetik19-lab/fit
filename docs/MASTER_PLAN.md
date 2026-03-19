@@ -681,3 +681,12 @@
 - [x] Fixture billing rows сделаны идемпотентными через `upsert` по уникальным ключам `entitlements(user_id, feature_key)` и `usage_counters(user_id, metric_key, metric_window)`, поэтому `test:rls` больше не флакает на накопленных данных прошлых прогонов.
 - [x] Tranche подтверждён baseline-пакетом: `npx eslint tests/rls/helpers/supabase-rls.ts tests/rls/ownership.spec.ts`, `npm run test:rls` -> `4 passed`, `npm run typecheck`, `npm run build`.
 - [ ] Следующий backend tranche: возвращаться к remaining route-level audit и добивать прямой database audit на оставшихся user-scoped/admin-scoped таблицах.
+
+## 2026-03-19 billing auth-first contract addendum
+
+- [x] `src/app/api/billing/checkout/route.ts`, `src/app/api/billing/checkout/reconcile/route.ts`, `src/app/api/billing/portal/route.ts`, `src/app/api/settings/billing/route.ts` теперь строго auth-first: anonymous requests получают `401 AUTH_REQUIRED` до любых Stripe/env checks.
+- [x] `src/app/api/billing/checkout/reconcile/route.ts` и `src/app/api/settings/billing/route.ts` обрабатывают ожидаемый `ZodError` до unexpected logger-ветки, поэтому invalid payload даёт явный `400` без noisy route-level error logging.
+- [x] User-facing copy в `src/app/api/billing/webhook/stripe/route.ts` и всём текущем billing/settings tranche переведён в чистый UTF-8; auth/config/error messages больше не отдают битую кириллицу.
+- [x] `tests/e2e/api-contracts.spec.ts` расширен unauthenticated billing/settings contracts и invalid payload покрытием для `POST /api/settings/billing`; `tests/e2e/helpers/auth.ts` получил устойчивый `waitForSubmitButtonReady(...)` для Playwright auth bootstrap.
+- [x] Tranche подтверждён baseline-пакетом: `npx eslint src/app/api/billing/checkout/route.ts src/app/api/billing/checkout/reconcile/route.ts src/app/api/billing/portal/route.ts src/app/api/billing/webhook/stripe/route.ts src/app/api/settings/billing/route.ts tests/e2e/api-contracts.spec.ts tests/e2e/helpers/auth.ts`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1` -> `8 passed`.
+- [ ] Следующий billing/backend tranche: дочистить remaining mojibake в shared billing/AI dictionaries и продолжить route-handler audit по owner-only/idempotency/retrieval контурам.

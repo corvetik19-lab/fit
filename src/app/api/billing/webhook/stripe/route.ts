@@ -33,11 +33,7 @@ function getCustomerId(
 }
 
 function getSubscriptionId(
-  subscription:
-    | string
-    | Stripe.Subscription
-    | null
-    | undefined,
+  subscription: string | Stripe.Subscription | null | undefined,
 ) {
   if (!subscription) {
     return null;
@@ -58,7 +54,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 503,
         code: "STRIPE_WEBHOOK_NOT_CONFIGURED",
-        message: "Stripe webhook is not configured yet.",
+        message: "Stripe webhook пока не настроен.",
         details: {
           missing: getMissingStripeWebhookEnv(),
         },
@@ -71,7 +67,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 400,
         code: "STRIPE_SIGNATURE_MISSING",
-        message: "Stripe signature header is missing.",
+        message: "Заголовок Stripe Signature не передан.",
       });
     }
 
@@ -92,7 +88,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 400,
         code: "STRIPE_WEBHOOK_INVALID_SIGNATURE",
-        message: "Stripe webhook signature verification failed.",
+        message: "Не удалось проверить подпись Stripe webhook.",
       });
     }
 

@@ -753,3 +753,12 @@
 - Подтверждено, что используемые `public`-таблицы находятся под `RLS`, ключевые owner-only и deny-all policies зафиксированы, а query paths для `sync`, `workout`, `knowledge`, `admin`, `billing` обеспечены индексами.
 - По security advisors остались только platform-level residuals: `vector` extension в `public` и выключенная `leaked password protection`; по performance advisors остались только `unused_index` info без блокирующих missing-index warning.
 - В `docs/MASTER_PLAN.md` закрыты два основных DB-пункта: полный аудит схемы/RLS/RPC/index-path через MCP и отдельная проверка query paths/индексов для критических контуров. Общий прогресс execution checklist после tranche: `144 / 176` (`82%`).
+
+### 2026-03-19 16:55 - Дожал auth-first billing contracts и invalid payload coverage
+
+- `src/app/api/billing/checkout/route.ts`, `src/app/api/billing/checkout/reconcile/route.ts`, `src/app/api/billing/portal/route.ts`, `src/app/api/settings/billing/route.ts` теперь жёстко auth-first: анонимный запрос получает `401 AUTH_REQUIRED` до любых Stripe/env checks.
+- В `src/app/api/billing/checkout/reconcile/route.ts` и `src/app/api/settings/billing/route.ts` ожидаемый `ZodError` теперь возвращает явный `400` до unexpected logger-ветки, поэтому invalid payload больше не шумит как route-level failure.
+- `src/app/api/billing/webhook/stripe/route.ts` и весь billing/settings surface в этом tranche переведены в чистый UTF-8: user-facing auth/config/error copy больше не отдаёт битую кириллицу.
+- `tests/e2e/api-contracts.spec.ts` расширен двумя контрактами: unauthenticated billing/settings routes остаются auth-first (`401 AUTH_REQUIRED`), а invalid payload на `POST /api/settings/billing` даёт `400 SETTINGS_BILLING_INVALID`.
+- В `tests/e2e/helpers/auth.ts` добавлен более устойчивый `waitForSubmitButtonReady(...)`, чтобы Playwright auth bootstrap не флакал из-за delayed React-controlled form state.
+- Tranche подтверждён командами `npx eslint src/app/api/billing/checkout/route.ts src/app/api/billing/checkout/reconcile/route.ts src/app/api/billing/portal/route.ts src/app/api/billing/webhook/stripe/route.ts src/app/api/settings/billing/route.ts tests/e2e/api-contracts.spec.ts tests/e2e/helpers/auth.ts`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1` -> `8 passed`.
