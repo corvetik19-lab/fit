@@ -12,6 +12,8 @@ test.describe("rls ownership", () => {
   test.skip(!hasRlsTestEnv(), "requires Supabase auth and service-role env for RLS tests");
 
   test("direct Supabase clients only see and mutate their own user-scoped rows", async () => {
+    test.setTimeout(60_000);
+
     const fixture = await seedRlsOwnershipFixture();
     const regularUser = await signInAsRlsUser("user");
     const adminUser = await signInAsRlsUser("admin");

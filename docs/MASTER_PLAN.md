@@ -697,3 +697,12 @@
 - [x] Tranche не меняет access/fallback/usage-counter контракты и ограничен shared user-facing copy плюс форматированием billing layer.
 - [x] Tranche подтверждён пакетами `npx eslint src/lib/billing-access.ts`, `npm run typecheck`, `npm run build`; содержимое файла отдельно перепроверено прямым поиском по нормальным русским строкам, чтобы отсеять ложный PowerShell misrender.
 - [ ] Следующий sanitation/backend tranche: забирать remaining mojibake в shared AI dictionaries (`proposal-actions`, AI summaries и related preview/error copy), затем возвращаться к route-handler audit.
+
+## 2026-03-19 settings surface decomposition addendum
+
+- [x] `src/lib/settings-data-server.ts` разгружен до server-data orchestration роли: pure snapshot factories, audit-action constants и mapper/formatter helpers вынесены в `src/lib/settings-data-server-model.ts`.
+- [x] `src/components/settings-billing-center.tsx` переведён на вынесенный formatter/model слой `src/components/settings-billing-center-model.ts`, поэтому billing screen больше не держит внутри себя date/status/feature/timeline helper-логику.
+- [x] `src/components/settings-data-center.tsx` переведён на вынесенный formatter/model слой `src/components/settings-data-center-model.ts`, поэтому export/deletion surface тоже ближе к orchestrator-роли вместо смеси JSX и derive helper-функций.
+- [x] `tests/rls/ownership.spec.ts` получил `test.setTimeout(60_000)`, потому что прямой RLS-suite уже покрывает гораздо больше owner-scoped таблиц и перестал стабильно укладываться в старые `30s`.
+- [x] Tranche подтверждён baseline-пакетом: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:rls` -> `4 passed`.
+- [ ] Следующий architecture/backend tranche: продолжать разносить remaining heavy settings/data surfaces и возвращаться к оставшемуся route-handler audit по owner-only/idempotency/race conditions.

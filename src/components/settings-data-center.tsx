@@ -2,174 +2,23 @@
 
 import { startTransition, useState } from "react";
 
+import {
+  formatSettingsDataDateTime,
+  getDeletionNextStep,
+  getDeletionStatusLabel,
+  getExportNextStep,
+  getExportStatusLabel,
+  getSettingsDataActorLabel,
+  getSettingsDataKindLabel,
+  getSettingsDataStatusTone,
+  getSettingsDataTimelineTone,
+  settingsDataInputClassName,
+} from "@/components/settings-data-center-model";
 import type { SettingsDataSnapshot } from "@/lib/settings-data";
 
 type SettingsDataCenterProps = {
   initialSnapshot: SettingsDataSnapshot;
 };
-
-const inputClassName =
-  "w-full rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15";
-
-const dateFormatter = new Intl.DateTimeFormat("ru-RU", {
-  day: "2-digit",
-  month: "2-digit",
-  year: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-});
-
-function formatDateTime(value: string | null | undefined) {
-  if (!value) {
-    return "нет данных";
-  }
-
-  return dateFormatter.format(new Date(value));
-}
-
-function getExportStatusLabel(
-  status: SettingsDataSnapshot["exportJobs"][number]["status"],
-) {
-  switch (status) {
-    case "queued":
-      return "в очереди";
-    case "processing":
-      return "собирается";
-    case "completed":
-      return "готов";
-    case "failed":
-      return "ошибка";
-    default:
-      return status;
-  }
-}
-
-function getDeletionStatusLabel(
-  status: NonNullable<SettingsDataSnapshot["deletionRequest"]>["status"],
-) {
-  switch (status) {
-    case "queued":
-      return "в очереди";
-    case "holding":
-      return "на удержании";
-    case "completed":
-      return "завершен";
-    case "canceled":
-      return "отменен";
-    default:
-      return status;
-  }
-}
-
-function getStatusTone(status: string) {
-  switch (status) {
-    case "completed":
-      return "bg-emerald-50 text-emerald-700";
-    case "failed":
-      return "bg-red-50 text-red-700";
-    case "holding":
-      return "bg-amber-50 text-amber-700";
-    case "processing":
-      return "bg-sky-50 text-sky-700";
-    case "queued":
-      return "bg-stone-100 text-stone-700";
-    case "canceled":
-      return "bg-white/80 text-muted";
-    default:
-      return "bg-white/80 text-foreground";
-  }
-}
-
-function getTimelineTone(tone: SettingsDataSnapshot["privacyEvents"][number]["tone"]) {
-  switch (tone) {
-    case "success":
-      return "border-emerald-200 bg-emerald-50/70";
-    case "warning":
-      return "border-amber-200 bg-amber-50/70";
-    case "danger":
-      return "border-red-200 bg-red-50/70";
-    default:
-      return "border-border/70 bg-white/80";
-  }
-}
-
-function getActorLabel(
-  actorScope: SettingsDataSnapshot["privacyEvents"][number]["actorScope"],
-) {
-  switch (actorScope) {
-    case "you":
-      return "Вы";
-    case "support":
-      return "Поддержка";
-    case "system":
-      return "Система";
-    default:
-      return actorScope;
-  }
-}
-
-function getKindLabel(kind: SettingsDataSnapshot["privacyEvents"][number]["kind"]) {
-  return kind === "export" ? "Выгрузка" : "Удаление";
-}
-
-function getHoldRemainingLabel(holdUntil: string | null | undefined) {
-  if (!holdUntil) {
-    return "Срок hold пока не определён.";
-  }
-
-  const diff = new Date(holdUntil).getTime() - Date.now();
-
-  if (diff <= 0) {
-    return "Срок hold уже истёк, ожидается следующий шаг обработки.";
-  }
-
-  const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
-  return `До следующего шага остаётся примерно ${days} дн.`;
-}
-
-function getExportNextStep(snapshot: SettingsDataSnapshot) {
-  const latestExport = snapshot.exportJobs[0];
-
-  if (!latestExport) {
-    return "Когда понадобится архив, запроси выгрузку и система соберёт ZIP автоматически.";
-  }
-
-  if (latestExport.status === "queued") {
-    return "Запрос стоит в очереди. Следующий шаг: сервер начнёт собирать архив.";
-  }
-
-  if (latestExport.status === "processing") {
-    return "Архив сейчас собирается. После завершения появится кнопка скачивания ZIP.";
-  }
-
-  if (latestExport.status === "completed") {
-    return "Архив готов. Его можно скачать прямо на это устройство.";
-  }
-
-  return "Последняя сборка завершилась ошибкой. Можно повторно запросить новый экспорт.";
-}
-
-function getDeletionNextStep(snapshot: SettingsDataSnapshot) {
-  const deletionRequest = snapshot.deletionRequest;
-
-  if (!deletionRequest) {
-    return "Если потребуется удалить аккаунт, сначала будет создан hold-период на 14 дней.";
-  }
-
-  if (deletionRequest.status === "holding") {
-    return getHoldRemainingLabel(deletionRequest.holdUntil);
-  }
-
-  if (deletionRequest.status === "queued") {
-    return "Запрос ожидает перевода в hold или следующий этап обработки.";
-  }
-
-  if (deletionRequest.status === "completed") {
-    return "Процесс удаления уже продвинулся дальше периода удержания. Детали смотри в истории ниже.";
-  }
-
-  return "Активный процесс удаления остановлен. При необходимости можно создать новый запрос.";
-}
 
 async function readJsonSafely(response: Response) {
   return (await response.json().catch(() => null)) as
@@ -282,7 +131,7 @@ export function SettingsDataCenter({
               </p>
             </div>
             <span
-              className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusTone(latestExport?.status ?? "queued")}`}
+              className={`rounded-full px-3 py-1 text-xs font-semibold ${getSettingsDataStatusTone(latestExport?.status ?? "queued")}`}
             >
               {latestExport
                 ? getExportStatusLabel(latestExport.status)
@@ -292,7 +141,7 @@ export function SettingsDataCenter({
 
           <div className="mt-4 grid gap-3 text-sm text-muted">
             <div className="rounded-2xl border border-border/70 bg-white/80 px-4 py-3">
-              <p>Последнее обновление: {formatDateTime(latestExport?.updatedAt)}</p>
+              <p>Последнее обновление: {formatSettingsDataDateTime(latestExport?.updatedAt)}</p>
               <p className="mt-1">{getExportNextStep(snapshot)}</p>
             </div>
 
@@ -337,13 +186,13 @@ export function SettingsDataCenter({
                       Экспорт {job.id.slice(0, 8)}
                     </p>
                     <span
-                      className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusTone(job.status)}`}
+                      className={`rounded-full px-3 py-1 text-xs font-semibold ${getSettingsDataStatusTone(job.status)}`}
                     >
                       {getExportStatusLabel(job.status)}
                     </span>
                   </div>
                   <p className="mt-2 text-xs text-muted">
-                    Создан: {formatDateTime(job.createdAt)}
+                    Создан: {formatSettingsDataDateTime(job.createdAt)}
                   </p>
                   {job.status === "completed" ? (
                     <a
@@ -375,7 +224,7 @@ export function SettingsDataCenter({
               </p>
             </div>
             <span
-              className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusTone(snapshot.deletionRequest?.status ?? "canceled")}`}
+              className={`rounded-full px-3 py-1 text-xs font-semibold ${getSettingsDataStatusTone(snapshot.deletionRequest?.status ?? "canceled")}`}
             >
               {snapshot.deletionRequest
                 ? getDeletionStatusLabel(snapshot.deletionRequest.status)
@@ -386,7 +235,7 @@ export function SettingsDataCenter({
           <div className="mt-4 rounded-2xl border border-border/70 bg-white/80 px-4 py-3 text-sm text-muted">
             <p>
               Активный hold до:{" "}
-              {formatDateTime(snapshot.deletionRequest?.holdUntil)}
+              {formatSettingsDataDateTime(snapshot.deletionRequest?.holdUntil)}
             </p>
             <p className="mt-1">{getDeletionNextStep(snapshot)}</p>
           </div>
@@ -394,7 +243,7 @@ export function SettingsDataCenter({
           <label className="mt-4 grid gap-2 text-sm text-muted">
             Причина удаления
             <textarea
-              className={`${inputClassName} min-h-24 resize-y`}
+              className={`${settingsDataInputClassName} min-h-24 resize-y`}
               onChange={(event) => setDeletionReason(event.target.value)}
               placeholder="Например: хочу полностью удалить все данные из сервиса"
               value={deletionReason}
@@ -456,20 +305,20 @@ export function SettingsDataCenter({
           {snapshot.privacyEvents.length ? (
             snapshot.privacyEvents.map((event) => (
               <div
-                className={`rounded-2xl border px-4 py-3 ${getTimelineTone(event.tone)}`}
+                className={`rounded-2xl border px-4 py-3 ${getSettingsDataTimelineTone(event.tone)}`}
                 key={event.id}
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="rounded-full bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
-                      {getKindLabel(event.kind)}
+                      {getSettingsDataKindLabel(event.kind)}
                     </span>
                     <span className="rounded-full bg-white/80 px-3 py-1 text-[11px] font-semibold text-foreground">
-                      {getActorLabel(event.actorScope)}
+                      {getSettingsDataActorLabel(event.actorScope)}
                     </span>
                   </div>
                   <span className="text-xs text-muted">
-                    {formatDateTime(event.createdAt)}
+                    {formatSettingsDataDateTime(event.createdAt)}
                   </span>
                 </div>
 

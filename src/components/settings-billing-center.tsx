@@ -3,6 +3,22 @@
 import { useSearchParams } from "next/navigation";
 import { startTransition, useCallback, useEffect, useMemo, useState } from "react";
 
+import {
+  CHECKOUT_RETURN_RETRY_DELAYS_MS,
+  formatAccessSource,
+  formatActorScope,
+  formatEventKind,
+  formatFeatureKey,
+  formatReviewStatus,
+  formatSettingsDateTime,
+  formatStripePaymentStatus,
+  formatStripeSessionStatus,
+  formatSubscriptionProvider,
+  formatSubscriptionStatus,
+  getStatusTone,
+  getTimelineTone,
+  settingsBillingInputClassName,
+} from "@/components/settings-billing-center-model";
 import type { UserBillingAccessSnapshot } from "@/lib/billing-access";
 import type { SettingsDataSnapshot } from "@/lib/settings-data";
 
@@ -31,168 +47,6 @@ type BillingReturnNotice = {
   title: string;
   tone: "success" | "warning";
 };
-
-const CHECKOUT_RETURN_RETRY_DELAYS_MS = [2500, 5000, 8000] as const;
-
-const inputClassName =
-  "w-full rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15";
-
-const dateFormatter = new Intl.DateTimeFormat("ru-RU", {
-  day: "2-digit",
-  month: "2-digit",
-  year: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-});
-
-function formatDateTime(value: string | null | undefined) {
-  if (!value) {
-    return "нет данных";
-  }
-
-  return dateFormatter.format(new Date(value));
-}
-
-function formatAccessSource(value: string) {
-  switch (value) {
-    case "subscription":
-      return "по подписке";
-    case "entitlement":
-      return "открыто вручную";
-    case "privileged":
-      return "корневой доступ";
-    default:
-      return "базовый доступ";
-  }
-}
-
-function formatSubscriptionStatus(
-  status: string | null,
-  isPrivilegedAccess: boolean,
-) {
-  if (isPrivilegedAccess) {
-    return "полный доступ super-admin";
-  }
-
-  return status ?? "нет";
-}
-
-function formatSubscriptionProvider(
-  provider: string | null,
-  isPrivilegedAccess: boolean,
-) {
-  if (isPrivilegedAccess) {
-    return "встроенный административный доступ";
-  }
-
-  return provider ?? "не задан";
-}
-
-function formatReviewStatus(value: string) {
-  switch (value) {
-    case "queued":
-      return "в очереди";
-    case "completed":
-      return "обработан";
-    case "failed":
-      return "ошибка";
-    default:
-      return value;
-  }
-}
-
-function getStatusTone(value: string) {
-  switch (value) {
-    case "completed":
-      return "bg-emerald-50 text-emerald-700";
-    case "failed":
-      return "bg-red-50 text-red-700";
-    case "queued":
-      return "bg-amber-50 text-amber-700";
-    default:
-      return "bg-white/80 text-foreground";
-  }
-}
-
-function getTimelineTone(value: SettingsDataSnapshot["billingEvents"][number]["tone"]) {
-  switch (value) {
-    case "success":
-      return "border-emerald-200 bg-emerald-50/70";
-    case "warning":
-      return "border-amber-200 bg-amber-50/70";
-    case "danger":
-      return "border-red-200 bg-red-50/70";
-    default:
-      return "border-border/70 bg-white/80";
-  }
-}
-
-function formatActorScope(value: SettingsDataSnapshot["billingEvents"][number]["actorScope"]) {
-  switch (value) {
-    case "you":
-      return "Вы";
-    case "support":
-      return "Поддержка";
-    case "system":
-      return "Система";
-    default:
-      return value;
-  }
-}
-
-function formatEventKind(value: SettingsDataSnapshot["billingEvents"][number]["kind"]) {
-  switch (value) {
-    case "subscription":
-      return "Подписка";
-    case "entitlement":
-      return "Доступ";
-    case "request":
-      return "Запрос";
-    default:
-      return value;
-  }
-}
-
-function formatFeatureKey(value: string) {
-  switch (value) {
-    case "ai_chat":
-      return "AI-чат";
-    case "meal_plan":
-      return "AI-план питания";
-    case "workout_plan":
-      return "AI-план тренировок";
-    case "meal_photo":
-      return "AI-анализ фото еды";
-    default:
-      return value.replaceAll("_", " ");
-  }
-}
-
-function formatStripePaymentStatus(value: string | null | undefined) {
-  switch (value) {
-    case "paid":
-      return "оплачен";
-    case "unpaid":
-      return "не оплачен";
-    case "no_payment_required":
-      return "оплата не требуется";
-    default:
-      return value ?? "неизвестно";
-  }
-}
-
-function formatStripeSessionStatus(value: string | null | undefined) {
-  switch (value) {
-    case "complete":
-      return "завершён";
-    case "open":
-      return "открыт";
-    case "expired":
-      return "истёк";
-    default:
-      return value ?? "неизвестно";
-  }
-}
 
 async function readJsonSafely(response: Response) {
   return (await response.json().catch(() => null)) as
@@ -671,13 +525,13 @@ export function SettingsBillingCenter({
                 <p>
                   Период до:{" "}
                   <span className="text-foreground">
-                    {formatDateTime(access.subscription.currentPeriodEnd)}
+                    {formatSettingsDateTime(access.subscription.currentPeriodEnd)}
                   </span>
                 </p>
                 <p className="mt-1">
                   Обновлено:{" "}
                   <span className="text-foreground">
-                    {formatDateTime(access.subscription.updatedAt)}
+                    {formatSettingsDateTime(access.subscription.updatedAt)}
                   </span>
                 </p>
               </div>
@@ -760,7 +614,7 @@ export function SettingsBillingCenter({
                         ? ` / ${feature.usage.limit}`
                         : ""}
                     </p>
-                    <p>Следующее обновление лимита: {formatDateTime(feature.usage.resetAt)}</p>
+                    <p>Следующее обновление лимита: {formatSettingsDateTime(feature.usage.resetAt)}</p>
                     {feature.reason ? (
                       <p className="text-amber-700">{feature.reason}</p>
                     ) : null}
@@ -797,7 +651,7 @@ export function SettingsBillingCenter({
                 <p>
                   Последний запрос:{" "}
                   <span className="text-foreground">
-                    {formatDateTime(activeReviewRequest.createdAt)}
+                    {formatSettingsDateTime(activeReviewRequest.createdAt)}
                   </span>
                 </p>
                 <p className="mt-1">
@@ -845,7 +699,7 @@ export function SettingsBillingCenter({
                 <label className="mt-4 grid gap-2 text-sm text-muted">
                   Комментарий
                   <textarea
-                    className={`${inputClassName} min-h-24 resize-y`}
+                    className={`${settingsBillingInputClassName} min-h-24 resize-y`}
                     onChange={(event) => setNote(event.target.value)}
                     placeholder="Например: нужен доступ к AI-плану тренировок для следующей недели"
                     value={note}
@@ -910,7 +764,7 @@ export function SettingsBillingCenter({
                         </span>
                       </div>
                       <span className="text-xs text-muted">
-                        {formatDateTime(event.createdAt)}
+                        {formatSettingsDateTime(event.createdAt)}
                       </span>
                     </div>
 

@@ -768,3 +768,12 @@
 - `src/lib/billing-access.ts` переведён в чистый UTF-8 на уровне общего feature-config словаря, deny-reason текстов и `FEATURE_ACCESS_DENIED` copy; shared billing snapshot больше не тянет mojibake в `/settings`, `/ai`, `/nutrition` и другие поверхности, которые читают общий access слой.
 - Логика доступа, fallback и usage counters не менялась: tranche ограничен shared user-facing copy и форматированием billing layer.
 - Tranche подтверждён командами `npx eslint src/lib/billing-access.ts`, `npm run typecheck`, `npm run build`. Дополнительно содержимое файла перепроверено прямым поиском по нормальным русским строкам, чтобы исключить ложный PowerShell misrender.
+
+### 2026-03-19 19:05 - Разнёс heavy settings surfaces на model/helper слои
+
+- `src/lib/settings-data-server.ts` разгружен до server-data orchestration роли: snapshot factory, audit-action constants и mapper/formatter helpers вынесены в `src/lib/settings-data-server-model.ts`.
+- `src/components/settings-billing-center.tsx` переведён на вынесенный formatter/model слой `src/components/settings-billing-center-model.ts`, поэтому billing screen больше не держит внутри себя pure date/status/feature/timeline helper-логику.
+- `src/components/settings-data-center.tsx` переведён на вынесенный formatter/model слой `src/components/settings-data-center-model.ts`, чтобы export/deletion surface тоже был ближе к orchestrator-роли, а не к смеси JSX и derive helper-функций.
+- В `tests/rls/ownership.spec.ts` поднял timeout до `60_000`, потому что direct owner-only suite после всех последних расширений уже не помещался в старый `30s`, хотя по логике оставался зелёным.
+- Проверка зелёная: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:rls` -> `4 passed`.
+- Общий прогресс execution checklist не изменился и остаётся `144 / 176` (`82%`): tranche уменьшает архитектурный и maintenance-риск, но не закрывает отдельный основной checkbox целиком.
