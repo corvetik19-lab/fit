@@ -12,7 +12,11 @@ import {
   getDefaultDeletionHoldUntil,
   type SettingsDataSnapshot,
 } from "@/lib/settings-data";
-import { loadSettingsDataSnapshotOrFallback } from "@/lib/settings-data-server";
+import {
+  buildUserDataExportBundle,
+  loadSettingsDataSnapshotOrFallback,
+} from "@/lib/settings-data-server";
+import { buildUserDataExportArchive } from "@/lib/settings-export-archive";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -28,6 +32,22 @@ export type SettingsBillingCenterData = {
   access: Awaited<ReturnType<typeof readUserBillingAccessOrFallback>>;
   snapshot: SettingsDataSnapshot;
 };
+
+type SettingsActionFailure = {
+  code: string;
+  details?: unknown;
+  message: string;
+  status: number;
+};
+
+type SettingsActionResult<T> =
+  | {
+      data: T;
+      ok: true;
+    }
+  | ({
+      ok: false;
+    } & SettingsActionFailure);
 
 export async function getAuthenticatedSettingsContext(): Promise<AuthenticatedSettingsContext | null> {
   const supabase = await createServerSupabaseClient();
@@ -303,4 +323,75 @@ export async function requestSettingsBillingAccessReview(input: {
   });
 
   return { ok: true as const };
+}
+
+export async function buildSettingsExportDownload(input: {
+  exportId: string;
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>;
+  user: {
+    email?: string | null;
+    id: string;
+  };
+}): Promise<
+  SettingsActionResult<{
+    archive: Uint8Array;
+    filename: string;
+    format: string;
+  }>
+> {
+  const { data: exportJob, error: exportJobError } = await input.supabase
+    .from("export_jobs")
+    .select("id, status, format")
+    .eq("id", input.exportId)
+    .eq("user_id", input.user.id)
+    .maybeSingle();
+
+  if (exportJobError) {
+    throw exportJobError;
+  }
+
+  if (!exportJob) {
+    return {
+      ok: false,
+      status: 404,
+      code: "SETTINGS_EXPORT_NOT_FOUND",
+      message: "Выгрузка не найдена.",
+    };
+  }
+
+  if (exportJob.status !== "completed") {
+    return {
+      ok: false,
+      status: 409,
+      code: "SETTINGS_EXPORT_NOT_READY",
+      message: "Выгрузка ещё не готова к скачиванию.",
+    };
+  }
+
+  const adminSupabase = createAdminSupabaseClient();
+  const exportBundle = await buildUserDataExportBundle(adminSupabase, {
+    userEmail: input.user.email ?? null,
+    userId: input.user.id,
+  });
+  const archive = buildUserDataExportArchive(exportBundle);
+
+  await writeSettingsAuditLog({
+    action: "user_downloaded_export",
+    payload: {
+      exportJobId: exportJob.id,
+    },
+    reason: "self-service data export download",
+    userId: input.user.id,
+  });
+
+  const dayStamp = new Date().toISOString().slice(0, 10);
+
+  return {
+    ok: true,
+    data: {
+      archive,
+      filename: `fit-data-export-${dayStamp}.zip`,
+      format: exportJob.format,
+    },
+  };
 }

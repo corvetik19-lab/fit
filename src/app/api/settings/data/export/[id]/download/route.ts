@@ -1,41 +1,15 @@
 import { z } from "zod";
 
 import { createApiErrorResponse } from "@/lib/api/error-response";
+import {
+  buildSettingsExportDownload,
+  getAuthenticatedSettingsContext,
+} from "@/lib/settings-self-service";
 import { logger } from "@/lib/logger";
-import { buildUserDataExportBundle } from "@/lib/settings-data-server";
-import { buildUserDataExportArchive } from "@/lib/settings-export-archive";
-import { createAdminSupabaseClient } from "@/lib/supabase/admin";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 const paramsSchema = z.object({
   id: z.string().uuid(),
 });
-
-async function writeDownloadAuditLog(exportJobId: string, userId: string) {
-  try {
-    const adminSupabase = createAdminSupabaseClient();
-
-    const { error } = await adminSupabase.from("admin_audit_logs").insert({
-      action: "user_downloaded_export",
-      actor_user_id: userId,
-      payload: {
-        exportJobId,
-      },
-      reason: "self-service data export download",
-      target_user_id: userId,
-    });
-
-    if (error) {
-      throw error;
-    }
-  } catch (error) {
-    logger.warn("settings export download audit log failed", {
-      error,
-      exportJobId,
-      userId,
-    });
-  }
-}
 
 export async function GET(
   _request: Request,
@@ -43,12 +17,9 @@ export async function GET(
 ) {
   try {
     const { id } = paramsSchema.parse(await params);
-    const supabase = await createServerSupabaseClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const context = await getAuthenticatedSettingsContext();
 
-    if (!user) {
+    if (!context) {
       return createApiErrorResponse({
         status: 401,
         code: "AUTH_REQUIRED",
@@ -56,50 +27,29 @@ export async function GET(
       });
     }
 
-    const { data: exportJob, error: exportJobError } = await supabase
-      .from("export_jobs")
-      .select("id, status, format")
-      .eq("id", id)
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    if (exportJobError) {
-      throw exportJobError;
-    }
-
-    if (!exportJob) {
-      return createApiErrorResponse({
-        status: 404,
-        code: "SETTINGS_EXPORT_NOT_FOUND",
-        message: "Выгрузка не найдена.",
-      });
-    }
-
-    if (exportJob.status !== "completed") {
-      return createApiErrorResponse({
-        status: 409,
-        code: "SETTINGS_EXPORT_NOT_READY",
-        message: "Выгрузка ещё не готова к скачиванию.",
-      });
-    }
-
-    const adminSupabase = createAdminSupabaseClient();
-    const exportBundle = await buildUserDataExportBundle(adminSupabase, {
-      userEmail: user.email ?? null,
-      userId: user.id,
+    const result = await buildSettingsExportDownload({
+      exportId: id,
+      supabase: context.supabase,
+      user: context.user,
     });
-    const archive = buildUserDataExportArchive(exportBundle);
 
-    await writeDownloadAuditLog(exportJob.id, user.id);
+    if (!result.ok) {
+      return createApiErrorResponse({
+        status: result.status,
+        code: result.code,
+        message: result.message,
+        details: result.details,
+      });
+    }
 
-    const dayStamp = new Date().toISOString().slice(0, 10);
+    const archiveBytes = Uint8Array.from(result.data.archive);
 
-    return new Response(archive, {
+    return new Response(archiveBytes.buffer, {
       headers: {
         "Cache-Control": "no-store",
-        "Content-Disposition": `attachment; filename="fit-data-export-${dayStamp}.zip"`,
+        "Content-Disposition": `attachment; filename="${result.data.filename}"`,
         "Content-Type": "application/zip",
-        "X-Export-Format": exportJob.format,
+        "X-Export-Format": result.data.format,
       },
     });
   } catch (error) {
