@@ -1,66 +1,16 @@
 import { z } from "zod";
 
-import { readUserBillingAccess } from "@/lib/billing-access";
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import {
-  getMissingStripeCheckoutEnv,
-  hasStripeCheckoutEnv,
-} from "@/lib/env";
+  createBillingActionErrorResponse,
+  reconcileStripeCheckoutReturnForUser,
+} from "@/lib/billing-self-service";
 import { logger } from "@/lib/logger";
-import { loadSettingsDataSnapshot } from "@/lib/settings-data-server";
-import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import {
-  getStripeClient,
-  reconcileStripeCheckoutSession,
-} from "@/lib/stripe-billing";
 
 const reconcileCheckoutSchema = z.object({
   sessionId: z.string().trim().min(1).max(255),
 });
-
-async function loadBillingCenterData(
-  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
-  userId: string,
-  userEmail?: string | null,
-) {
-  const [snapshot, access] = await Promise.all([
-    loadSettingsDataSnapshot(supabase, userId),
-    readUserBillingAccess(supabase, userId, {
-      email: userEmail,
-    }),
-  ]);
-
-  return {
-    access,
-    snapshot,
-  };
-}
-
-async function writeAuditLog(
-  actorUserId: string,
-  payload: Record<string, unknown>,
-) {
-  try {
-    const adminSupabase = createAdminSupabaseClient();
-    const { error } = await adminSupabase.from("admin_audit_logs").insert({
-      action: "user_reconciled_stripe_checkout_return",
-      actor_user_id: actorUserId,
-      payload,
-      reason: "self-service stripe checkout return reconcile",
-      target_user_id: actorUserId,
-    });
-
-    if (error) {
-      throw error;
-    }
-  } catch (error) {
-    logger.warn("stripe checkout return reconcile audit log failed", {
-      actorUserId,
-      error,
-    });
-  }
-}
 
 export async function POST(request: Request) {
   try {
@@ -77,79 +27,22 @@ export async function POST(request: Request) {
       });
     }
 
-    if (!hasStripeCheckoutEnv()) {
-      return createApiErrorResponse({
-        status: 503,
-        code: "STRIPE_CHECKOUT_NOT_CONFIGURED",
-        message: "Stripe Checkout пока не настроен.",
-        details: {
-          missing: getMissingStripeCheckoutEnv(),
-        },
-      });
-    }
-
     const payload = reconcileCheckoutSchema.parse(
       await request.json().catch(() => ({})),
     );
-    const stripe = getStripeClient();
-    const checkoutSession = await stripe.checkout.sessions.retrieve(
-      payload.sessionId,
-    );
-    const resolvedUserId =
-      checkoutSession.client_reference_id ??
-      checkoutSession.metadata?.userId ??
-      null;
 
-    if (resolvedUserId !== user.id) {
-      return createApiErrorResponse({
-        status: 403,
-        code: "STRIPE_CHECKOUT_SESSION_FORBIDDEN",
-        message: "Эта Stripe-сессия оплаты не относится к текущему пользователю.",
-      });
-    }
-
-    if (checkoutSession.status !== "complete") {
-      const data = await loadBillingCenterData(supabase, user.id, user.email);
-
-      return Response.json({
-        data: {
-          ...data,
-          checkoutReturn: {
-            checkoutSessionId: checkoutSession.id,
-            paymentStatus: checkoutSession.payment_status,
-            reconciled: false,
-            sessionStatus: checkoutSession.status,
-          },
-        },
-      });
-    }
-
-    const adminSupabase = createAdminSupabaseClient();
-    const reconciliation = await reconcileStripeCheckoutSession(
-      adminSupabase,
-      checkoutSession,
-      null,
-    );
-
-    await writeAuditLog(user.id, {
-      checkoutSessionId: checkoutSession.id,
-      paymentStatus: checkoutSession.payment_status,
-      reconciled: Boolean(reconciliation),
-      sessionStatus: checkoutSession.status,
+    const result = await reconcileStripeCheckoutReturnForUser({
+      sessionId: payload.sessionId,
+      supabase,
+      user,
     });
 
-    const data = await loadBillingCenterData(supabase, user.id, user.email);
+    if (!result.ok) {
+      return createBillingActionErrorResponse(result);
+    }
 
     return Response.json({
-      data: {
-        ...data,
-        checkoutReturn: {
-          checkoutSessionId: checkoutSession.id,
-          paymentStatus: checkoutSession.payment_status,
-          reconciled: Boolean(reconciliation),
-          sessionStatus: checkoutSession.status,
-        },
-      },
+      data: result.data,
     });
   } catch (error) {
     if (error instanceof z.ZodError) {

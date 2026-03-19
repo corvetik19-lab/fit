@@ -785,3 +785,12 @@
 - Это уменьшает дублирование между route handlers и `lib` в одном из самых тяжёлых self-service контуров и двигает открытый основной пункт по domain-rule extraction.
 - Проверка зелёная: `npx eslint src/lib/settings-self-service.ts src/app/api/settings/data/route.ts src/app/api/settings/billing/route.ts`, `npm run build`, `npm run typecheck`.
 - Общий прогресс execution checklist остаётся `144 / 176` (`82%`): slice уменьшает architectural drift, но не закрывает отдельный основной checkbox целиком.
+
+### 2026-03-19 21:00 - Вынес billing self-service доменную логику из checkout routes
+
+- Добавил `src/lib/billing-self-service.ts` и перенёс туда Stripe self-service слой для `checkout / reconcile / portal`: env guards, customer lookup, checkout session creation, checkout reconcile, portal session creation и self-service audit logging.
+- `src/app/api/billing/checkout/route.ts`, `src/app/api/billing/checkout/reconcile/route.ts`, `src/app/api/billing/portal/route.ts` теперь ближе к transport-слою: auth, Zod validation и response shape остаются в handlers, а бизнес-логика и side-effects живут в `lib`.
+- Заодно полностью убран remaining mojibake из `billing/portal` и синхронизирован user-facing billing copy вокруг self-service Stripe flow.
+- Проверка зелёная: `npx eslint src/lib/billing-self-service.ts src/app/api/billing/checkout/route.ts src/app/api/billing/checkout/reconcile/route.ts src/app/api/billing/portal/route.ts`, `npm run typecheck`, `npm run build`.
+- Попытка локально прогнать короткий Playwright API contract slice упёрлась в локальный browser-runner timeout этой машины, поэтому для этого tranche я фиксировал baseline по compile/lint gates без дополнительного browser-suite.
+- Общий прогресс execution checklist остаётся `144 / 176` (`82%`): slice уменьшает backend duplication и route-handler drift, но не закрывает следующий основной checkbox целиком.

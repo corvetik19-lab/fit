@@ -1,9 +1,10 @@
 import { createApiErrorResponse } from "@/lib/api/error-response";
-import { getMissingStripePortalEnv, hasStripePortalEnv } from "@/lib/env";
+import {
+  createBillingActionErrorResponse,
+  createStripePortalSessionForUser,
+} from "@/lib/billing-self-service";
 import { logger } from "@/lib/logger";
-import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { getStripeClient, resolveRequestOrigin } from "@/lib/stripe-billing";
 
 export async function POST(request: Request) {
   try {
@@ -20,50 +21,17 @@ export async function POST(request: Request) {
       });
     }
 
-    if (!hasStripePortalEnv()) {
-      return createApiErrorResponse({
-        status: 503,
-        code: "STRIPE_PORTAL_NOT_CONFIGURED",
-        message: "Stripe Billing Portal пока не настроен.",
-        details: {
-          missing: getMissingStripePortalEnv(),
-        },
-      });
-    }
-
-    const adminSupabase = createAdminSupabaseClient();
-    const { data: subscription, error: subscriptionError } = await adminSupabase
-      .from("subscriptions")
-      .select("provider_customer_id, provider")
-      .eq("user_id", user.id)
-      .eq("provider", "stripe")
-      .not("provider_customer_id", "is", null)
-      .order("updated_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (subscriptionError) {
-      throw subscriptionError;
-    }
-
-    if (!subscription?.provider_customer_id) {
-      return createApiErrorResponse({
-        status: 409,
-        code: "STRIPE_PORTAL_UNAVAILABLE",
-        message: "Для этого аккаунта ещё не привязан Stripe customer.",
-      });
-    }
-
-    const stripe = getStripeClient();
-    const session = await stripe.billingPortal.sessions.create({
-      customer: subscription.provider_customer_id,
-      return_url: `${resolveRequestOrigin(request)}/settings?billing=portal`,
+    const result = await createStripePortalSessionForUser({
+      request,
+      userId: user.id,
     });
 
+    if (!result.ok) {
+      return createBillingActionErrorResponse(result);
+    }
+
     return Response.json({
-      data: {
-        url: session.url,
-      },
+      data: result.data,
     });
   } catch (error) {
     logger.error("stripe billing portal route failed", { error });

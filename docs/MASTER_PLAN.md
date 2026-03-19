@@ -714,3 +714,11 @@
 - [x] Это уменьшает дублирование между route handlers и `lib` на одном из самых тяжёлых self-service контуров и двигает открытый основной пункт про разнос доменных правил из handler-слоя.
 - [x] Tranche подтверждён baseline-пакетом: `npx eslint src/lib/settings-self-service.ts src/app/api/settings/data/route.ts src/app/api/settings/billing/route.ts`, `npm run build`, `npm run typecheck`.
 - [ ] Следующий backend tranche: продолжать route/lib extraction и owner-only/idempotency audit на remaining self-service и AI/data handlers.
+
+## 2026-03-19 billing self-service lib extraction addendum
+
+- [x] Доменные self-service правила для `src/app/api/billing/checkout/route.ts`, `src/app/api/billing/checkout/reconcile/route.ts` и `src/app/api/billing/portal/route.ts` вынесены в `src/lib/billing-self-service.ts`: Stripe env checks, customer lookup, checkout session creation, checkout reconcile, portal session creation и self-service audit logging больше не живут внутри route handlers.
+- [x] Все три billing routes теперь ближе к transport-слою: auth, payload validation и API response shape остаются в route handler, а бизнес-логика и side-effects живут в `lib`.
+- [x] Заодно полностью убран remaining mojibake из user-facing copy в `billing/portal`, а billing self-service error messages в новом helper-слое зафиксированы в чистом UTF-8.
+- [x] Tranche подтверждён пакетами `npx eslint src/lib/billing-self-service.ts src/app/api/billing/checkout/route.ts src/app/api/billing/checkout/reconcile/route.ts src/app/api/billing/portal/route.ts`, `npm run typecheck`, `npm run build`.
+- [ ] Следующий backend tranche: продолжать route/lib extraction и owner-only/idempotency audit на remaining self-service и AI/data handlers.
