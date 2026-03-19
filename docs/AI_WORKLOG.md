@@ -744,3 +744,12 @@
 - В `tests/rls/ownership.spec.ts` расширил direct checks: владелец видит свои `workout_day / workout_exercise / workout_set`, другой auth-user не видит их и не может обновить чужой `workout_set`.
 - Заодно сделал billing fixture идемпотентным через `upsert` для `entitlements` и `usage_counters`, чтобы `test:rls` не падал на накопленных уникальных ключах предыдущих прогонов.
 - Проверка зелёная: `npx eslint tests/rls/helpers/supabase-rls.ts tests/rls/ownership.spec.ts`, `npm run test:rls` -> `4 passed`, `npm run typecheck`, `npm run build`.
+
+### 2026-03-19 05:05 - Зафиксировал полный Supabase DB audit и закрыл DB checklist пункты
+
+- Собрал свежий MCP-снимок базы через `list_tables`, `get_advisors`, прямые SQL-запросы к `pg_indexes`, `pg_policies` и `information_schema.routines`, чтобы закрыть DB checklist не “по памяти”, а по актуальному состоянию проекта.
+- Добавил `docs/DB_AUDIT.md` как source of truth по схеме, RLS, RPC, owner/deny-all policies, индексным путям и остаткам Supabase advisors для `fit`.
+- В `docs/README.md` и `docs/BACKEND.md` добавил явные ссылки на новый audit-doc, чтобы DB-срез был частью рабочей handoff-документации, а не отдельной временной заметкой.
+- Подтверждено, что используемые `public`-таблицы находятся под `RLS`, ключевые owner-only и deny-all policies зафиксированы, а query paths для `sync`, `workout`, `knowledge`, `admin`, `billing` обеспечены индексами.
+- По security advisors остались только platform-level residuals: `vector` extension в `public` и выключенная `leaked password protection`; по performance advisors остались только `unused_index` info без блокирующих missing-index warning.
+- В `docs/MASTER_PLAN.md` закрыты два основных DB-пункта: полный аудит схемы/RLS/RPC/index-path через MCP и отдельная проверка query paths/индексов для критических контуров. Общий прогресс execution checklist после tranche: `144 / 176` (`82%`).

@@ -11,6 +11,7 @@
 - `RELEASE_CHECKLIST.md` — релизный чеклист для merge, deploy и post-deploy smoke.
 - `PROD_READY.md` — критерии production-ready состояния: automated gates, manual acceptance, env readiness и release blockers.
 - `BUILD_WARNINGS.md` — реестр известных допустимых build warnings и правила эскалации.
+- `DB_AUDIT.md` — актуальный аудит Supabase-схемы, RLS, RPC, advisors и индексных путей.
 - `FRONTEND.md` — состояние фронтенда, shell, UX-срезов и клиентских контрактов.
 - `BACKEND.md` — backend-контракты, Supabase, маршруты, RLS и server-side потоки.
 - `AI_STACK.md` — технический стек AI, модели, runtime и retrieval-слой.

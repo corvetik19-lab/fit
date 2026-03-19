@@ -11,7 +11,7 @@
 
 Этот файл — текущий production-hardening backlog проекта. Он отражает фактическое состояние репозитория на `2026-03-14`.
 
-Текущий прогресс execution checklist: `142 / 176` (`81%`).
+Текущий прогресс execution checklist: `144 / 176` (`82%`).
 
 ## Текущая база
 
@@ -223,9 +223,9 @@
 
 ### Database / Supabase
 
-- [ ] Провести полный аудит схемы, RLS, RPC, cron-related функций и индексных путей через Supabase MCP.
+- [x] Провести полный аудит схемы, RLS, RPC, cron-related функций и индексных путей через Supabase MCP.
 - [x] После DDL-изменений запускать advisors `security` и `performance` как обязательную проверку.
-- [ ] Проверить query paths и индексы для `sync`, `workout`, `knowledge`, `admin`, `billing`.
+- [x] Проверить query paths и индексы для `sync`, `workout`, `knowledge`, `admin`, `billing`.
 
 ### Observability
 
@@ -478,6 +478,13 @@
 
 - [x] На текущем Windows/Next.js 16 стеке custom `NEXT_DIST_DIR` для `next build` даёт `spawn EPERM`, поэтому `build:test` и `start:test` возвращены на стандартный `.next`.
 - [x] Изоляция не потеряна полностью: `typecheck` по-прежнему использует отдельный `.next_build`, а e2e/smoke сервер остаётся на выделенном порту `3100`.
+
+## 2026-03-19 DB audit addendum
+
+- [x] Через Supabase MCP зафиксирован полный снимок repo-controlled DB-контура: `list_tables`, `security/performance advisors`, `pg_indexes`, `pg_policies`, `information_schema.routines`.
+- [x] Подтверждено, что все используемые `public`-таблицы приложения находятся под `RLS`, а ключевые owner-only и deny-all policy-паттерны совпадают с route-level и direct `test:rls` покрытием.
+- [x] Подтверждены индексные пути для `sync`, `workout`, `knowledge`, `admin` и `billing`; missing-index backlog по этим контурам уже закрыт corrective migrations, а в advisors остались только `unused_index` info.
+- [x] Актуальный результат аудита вынесен в `docs/DB_AUDIT.md`, а platform-level residuals по `vector` в `public` и `leaked password protection` формализованы как отдельные release steps, а не как неясный хвост.
 - [x] После rollback test-build контура baseline снова зелёный локально: `build`, `test:smoke`, `test:rls`, `test:e2e:auth`.
 
 ## 2026-03-16 frontend docs sanitation addendum
