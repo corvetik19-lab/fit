@@ -777,3 +777,11 @@
 - В `tests/rls/ownership.spec.ts` поднял timeout до `60_000`, потому что direct owner-only suite после всех последних расширений уже не помещался в старый `30s`, хотя по логике оставался зелёным.
 - Проверка зелёная: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:rls` -> `4 passed`.
 - Общий прогресс execution checklist не изменился и остаётся `144 / 176` (`82%`): tranche уменьшает архитектурный и maintenance-риск, но не закрывает отдельный основной checkbox целиком.
+
+### 2026-03-19 20:10 - Вынес settings self-service доменную логику из route handlers
+
+- Добавил `src/lib/settings-self-service.ts` и перенёс туда общий auth-context, audit logging, `queue export`, `request/cancel deletion`, `load billing center data`, `request billing access review`.
+- `src/app/api/settings/data/route.ts` и `src/app/api/settings/billing/route.ts` теперь ближе к transport-слою: HTTP-валидация и API responses остались в route handlers, а доменная self-service логика живёт в `lib`.
+- Это уменьшает дублирование между route handlers и `lib` в одном из самых тяжёлых self-service контуров и двигает открытый основной пункт по domain-rule extraction.
+- Проверка зелёная: `npx eslint src/lib/settings-self-service.ts src/app/api/settings/data/route.ts src/app/api/settings/billing/route.ts`, `npm run build`, `npm run typecheck`.
+- Общий прогресс execution checklist остаётся `144 / 176` (`82%`): slice уменьшает architectural drift, но не закрывает отдельный основной checkbox целиком.

@@ -1,18 +1,15 @@
 import { z } from "zod";
 
 import { createApiErrorResponse } from "@/lib/api/error-response";
-import {
-  PRIMARY_SUPER_ADMIN_EMAIL,
-  isPrimarySuperAdminEmail,
-} from "@/lib/admin-permissions";
 import { logger } from "@/lib/logger";
-import {
-  DATA_EXPORT_FORMAT,
-  getDefaultDeletionHoldUntil,
-} from "@/lib/settings-data";
+import { DATA_EXPORT_FORMAT } from "@/lib/settings-data";
 import { loadSettingsDataSnapshotOrFallback } from "@/lib/settings-data-server";
-import { createAdminSupabaseClient } from "@/lib/supabase/admin";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import {
+  cancelSettingsDeletion,
+  getAuthenticatedSettingsContext,
+  queueSettingsDataExport,
+  requestSettingsDeletion,
+} from "@/lib/settings-self-service";
 
 const settingsDataActionSchema = z.discriminatedUnion("action", [
   z.object({
@@ -24,47 +21,6 @@ const settingsDataActionSchema = z.discriminatedUnion("action", [
     reason: z.string().trim().max(300).optional(),
   }),
 ]);
-
-async function getAuthenticatedSettingsContext() {
-  const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return null;
-  }
-
-  return { supabase, user };
-}
-
-async function writeAuditLog(
-  action: string,
-  userId: string,
-  payload: Record<string, unknown>,
-) {
-  try {
-    const adminSupabase = createAdminSupabaseClient();
-
-    const { error } = await adminSupabase.from("admin_audit_logs").insert({
-      action,
-      actor_user_id: userId,
-      payload,
-      reason: "self-service settings action",
-      target_user_id: userId,
-    });
-
-    if (error) {
-      throw error;
-    }
-  } catch (error) {
-    logger.warn("settings data audit log failed", {
-      action,
-      error,
-      userId,
-    });
-  }
-}
 
 export async function GET() {
   try {
@@ -110,80 +66,35 @@ export async function POST(request: Request) {
     const payload = settingsDataActionSchema.parse(await request.json());
 
     if (payload.action === "queue_export") {
-      const { data: activeExportJob, error: activeExportError } =
-        await context.supabase
-          .from("export_jobs")
-          .select("id, status")
-          .eq("user_id", context.user.id)
-          .in("status", ["queued", "processing"])
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
+      const exportResult = await queueSettingsDataExport(
+        context.supabase,
+        context.user.id,
+        payload.format,
+      );
 
-      if (activeExportError) {
-        throw activeExportError;
-      }
-
-      if (activeExportJob) {
+      if (!exportResult.ok) {
         return createApiErrorResponse({
-          status: 409,
-          code: "SETTINGS_EXPORT_ALREADY_ACTIVE",
-          message:
-            "У тебя уже есть активная выгрузка. Дождись её завершения перед новым запросом.",
+          status: exportResult.status,
+          code: exportResult.code,
+          message: exportResult.message,
         });
       }
-
-      const { error: queueExportError } = await context.supabase
-        .from("export_jobs")
-        .insert({
-          format: payload.format ?? DATA_EXPORT_FORMAT,
-          requested_by: context.user.id,
-          status: "queued",
-          user_id: context.user.id,
-        });
-
-      if (queueExportError) {
-        throw queueExportError;
-      }
-
-      await writeAuditLog("user_requested_export", context.user.id, {
-        format: payload.format ?? DATA_EXPORT_FORMAT,
-      });
     }
 
     if (payload.action === "request_deletion") {
-      if (isPrimarySuperAdminEmail(context.user.email ?? null)) {
+      const deletionResult = await requestSettingsDeletion(context.supabase, {
+        reason: payload.reason,
+        userEmail: context.user.email,
+        userId: context.user.id,
+      });
+
+      if (!deletionResult.ok) {
         return createApiErrorResponse({
-          status: 403,
-          code: "PRIMARY_SUPER_ADMIN_PROTECTED",
-          message: `Основной супер-админ ${PRIMARY_SUPER_ADMIN_EMAIL} не может запустить удаление аккаунта.`,
+          status: deletionResult.status,
+          code: deletionResult.code,
+          message: deletionResult.message,
         });
       }
-
-      const holdUntil = getDefaultDeletionHoldUntil();
-
-      const { error: deletionRequestError } = await context.supabase
-        .from("deletion_requests")
-        .upsert(
-          {
-            hold_until: holdUntil,
-            requested_by: context.user.id,
-            status: "holding",
-            user_id: context.user.id,
-          },
-          {
-            onConflict: "user_id",
-          },
-        );
-
-      if (deletionRequestError) {
-        throw deletionRequestError;
-      }
-
-      await writeAuditLog("user_requested_deletion", context.user.id, {
-        holdUntil,
-        reason: payload.reason ?? null,
-      });
     }
 
     const snapshot = await loadSettingsDataSnapshotOrFallback(
@@ -226,32 +137,18 @@ export async function DELETE() {
       });
     }
 
-    const { data, error } = await context.supabase
-      .from("deletion_requests")
-      .update({
-        requested_by: context.user.id,
-        status: "canceled",
-      })
-      .eq("user_id", context.user.id)
-      .in("status", ["queued", "holding"])
-      .select("id")
-      .maybeSingle();
+    const cancelResult = await cancelSettingsDeletion(
+      context.supabase,
+      context.user.id,
+    );
 
-    if (error) {
-      throw error;
-    }
-
-    if (!data) {
+    if (!cancelResult.ok) {
       return createApiErrorResponse({
-        status: 404,
-        code: "SETTINGS_DELETION_NOT_FOUND",
-        message: "Активный запрос на удаление не найден.",
+        status: cancelResult.status,
+        code: cancelResult.code,
+        message: cancelResult.message,
       });
     }
-
-    await writeAuditLog("user_canceled_deletion", context.user.id, {
-      deletionRequestId: data.id,
-    });
 
     const snapshot = await loadSettingsDataSnapshotOrFallback(
       context.supabase,

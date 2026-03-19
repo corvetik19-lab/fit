@@ -706,3 +706,11 @@
 - [x] `tests/rls/ownership.spec.ts` получил `test.setTimeout(60_000)`, потому что прямой RLS-suite уже покрывает гораздо больше owner-scoped таблиц и перестал стабильно укладываться в старые `30s`.
 - [x] Tranche подтверждён baseline-пакетом: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:rls` -> `4 passed`.
 - [ ] Следующий architecture/backend tranche: продолжать разносить remaining heavy settings/data surfaces и возвращаться к оставшемуся route-handler audit по owner-only/idempotency/race conditions.
+
+## 2026-03-19 settings self-service lib extraction addendum
+
+- [x] Доменные self-service правила для `/api/settings/data` вынесены из route handler в `src/lib/settings-self-service.ts`: auth-context lookup, audit logging, queue export, request deletion, cancel deletion больше не живут вперемешку с HTTP-ответами.
+- [x] Доменные self-service правила для `/api/settings/billing` тоже вынесены в `src/lib/settings-self-service.ts`: загрузка billing center data и queue billing access review теперь идут через единый lib-слой, а route handler остаётся тонкой transport-обёрткой.
+- [x] Это уменьшает дублирование между route handlers и `lib` на одном из самых тяжёлых self-service контуров и двигает открытый основной пункт про разнос доменных правил из handler-слоя.
+- [x] Tranche подтверждён baseline-пакетом: `npx eslint src/lib/settings-self-service.ts src/app/api/settings/data/route.ts src/app/api/settings/billing/route.ts`, `npm run build`, `npm run typecheck`.
+- [ ] Следующий backend tranche: продолжать route/lib extraction и owner-only/idempotency audit на remaining self-service и AI/data handlers.

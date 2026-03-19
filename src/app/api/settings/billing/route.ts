@@ -3,12 +3,13 @@ import { z } from "zod";
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import {
   BILLING_FEATURE_KEYS,
-  readUserBillingAccessOrFallback,
 } from "@/lib/billing-access";
 import { logger } from "@/lib/logger";
-import { loadSettingsDataSnapshotOrFallback } from "@/lib/settings-data-server";
-import { createAdminSupabaseClient } from "@/lib/supabase/admin";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import {
+  getAuthenticatedSettingsContext,
+  loadSettingsBillingCenterData,
+  requestSettingsBillingAccessReview,
+} from "@/lib/settings-self-service";
 
 const billingFeatureKeySchema = z.enum([
   BILLING_FEATURE_KEYS.aiChat,
@@ -23,64 +24,6 @@ const settingsBillingActionSchema = z.object({
   note: z.string().trim().max(300).optional(),
 });
 
-async function getAuthenticatedSettingsContext() {
-  const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return null;
-  }
-
-  return { supabase, user };
-}
-
-async function writeAuditLog(
-  action: string,
-  userId: string,
-  payload: Record<string, unknown>,
-) {
-  try {
-    const adminSupabase = createAdminSupabaseClient();
-    const { error } = await adminSupabase.from("admin_audit_logs").insert({
-      action,
-      actor_user_id: userId,
-      payload,
-      reason: "self-service settings billing action",
-      target_user_id: userId,
-    });
-
-    if (error) {
-      throw error;
-    }
-  } catch (error) {
-    logger.warn("settings billing audit log failed", {
-      action,
-      error,
-      userId,
-    });
-  }
-}
-
-async function loadBillingCenterData(
-  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
-  userId: string,
-  userEmail?: string | null,
-) {
-  const [snapshot, access] = await Promise.all([
-    loadSettingsDataSnapshotOrFallback(supabase, userId),
-    readUserBillingAccessOrFallback(supabase, userId, {
-      email: userEmail,
-    }),
-  ]);
-
-  return {
-    access,
-    snapshot,
-  };
-}
-
 export async function GET() {
   try {
     const context = await getAuthenticatedSettingsContext();
@@ -93,7 +36,7 @@ export async function GET() {
       });
     }
 
-    const data = await loadBillingCenterData(
+    const data = await loadSettingsBillingCenterData(
       context.supabase,
       context.user.id,
       context.user.email,
@@ -126,58 +69,21 @@ export async function POST(request: Request) {
     const payload = settingsBillingActionSchema.parse(
       await request.json().catch(() => ({})),
     );
-    const adminSupabase = createAdminSupabaseClient();
-    const requestedFeatures = [...new Set(payload.feature_keys)];
-
-    const { data: activeReviewRequest, error: activeReviewRequestError } =
-      await adminSupabase
-        .from("support_actions")
-        .select("id, status")
-        .eq("target_user_id", context.user.id)
-        .eq("action", "billing_access_review")
-        .eq("status", "queued")
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-    if (activeReviewRequestError) {
-      throw activeReviewRequestError;
-    }
-
-    if (activeReviewRequest) {
-      return createApiErrorResponse({
-        status: 409,
-        code: "SETTINGS_BILLING_REVIEW_ALREADY_ACTIVE",
-        message:
-          "У тебя уже есть активный запрос на проверку доступа. Дождись обработки текущего обращения.",
-      });
-    }
-
-    const { error: reviewRequestError } = await adminSupabase
-      .from("support_actions")
-      .insert({
-        action: "billing_access_review",
-        actor_user_id: context.user.id,
-        payload: {
-          note: payload.note ?? null,
-          requestedFeatures,
-          requestOrigin: "settings_billing_center",
-          source: "self_service",
-        },
-        status: "queued",
-        target_user_id: context.user.id,
-      });
-
-    if (reviewRequestError) {
-      throw reviewRequestError;
-    }
-
-    await writeAuditLog("user_requested_billing_access_review", context.user.id, {
-      note: payload.note ?? null,
-      requestedFeatures,
+    const reviewResult = await requestSettingsBillingAccessReview({
+      note: payload.note,
+      requestedFeatures: payload.feature_keys,
+      userId: context.user.id,
     });
 
-    const data = await loadBillingCenterData(
+    if (!reviewResult.ok) {
+      return createApiErrorResponse({
+        status: reviewResult.status,
+        code: reviewResult.code,
+        message: reviewResult.message,
+      });
+    }
+
+    const data = await loadSettingsBillingCenterData(
       context.supabase,
       context.user.id,
       context.user.email,
