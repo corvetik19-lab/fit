@@ -723,3 +723,10 @@
 - В `tests/e2e/api-contracts.spec.ts` добавил invalid-payload контракт для nutrition targets, а `tests/e2e/helpers/http.ts` расширил общим `PUT`-методом.
 - В `tests/rls/helpers/supabase-rls.ts` и `tests/rls/ownership.spec.ts` расширил прямой owner-only coverage до `goals`, `nutrition_goals`, `nutrition_profiles`, `body_metrics`, чтобы nutrition/body/self-profile слой был подтверждён не только route-level e2e, но и raw Supabase client access тестами.
 - Проверка зелёная: `npx eslint src/app/api/nutrition/targets/route.ts tests/e2e/api-contracts.spec.ts tests/e2e/helpers/http.ts tests/rls/helpers/supabase-rls.ts tests/rls/ownership.spec.ts`, `npm run test:rls` -> `4 passed`, `npm run typecheck`, `npm run build`, `npm run test:smoke` -> `3 passed`, `npm run test:e2e:auth` -> `41 passed`.
+
+### 2026-03-19 02:05 - Расширил direct RLS на профили, метрики и AI memory
+
+- В `tests/rls/helpers/supabase-rls.ts` добавил fixture rows для `profiles`, `onboarding_profiles`, `daily_metrics`, `period_metric_snapshots`, `user_memory_facts`, `ai_safety_events`, чтобы тестовый owner-only слой покрывал уже и профильный/агрегатный/AI-memory контур.
+- В `tests/rls/ownership.spec.ts` расширил прямые проверки видимости и blocked-update сценарии: другой auth-user теперь подтверждённо не видит и не может менять `profiles`, `onboarding_profiles`, `daily_metrics`, `period_metric_snapshots`, `user_memory_facts`, `ai_safety_events`.
+- Это уменьшает реальный хвост по database audit: RLS теперь подтверждён не только route-level e2e и nutrition/workout assets, но и на нескольких ключевых user-scoped таблицах, из которых читаются `viewer`, onboarding, dashboard aggregates и AI context.
+- Проверка зелёная: `npx eslint tests/rls/helpers/supabase-rls.ts tests/rls/ownership.spec.ts`, `npm run test:rls` -> `4 passed`, `npm run typecheck`, `npm run build`.

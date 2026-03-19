@@ -113,6 +113,85 @@ test.describe("rls ownership", () => {
       expect(Number(ownBodyMetricRows?.[0]?.weight_kg)).toBe(76.8);
       expect(Number(ownBodyMetricRows?.[0]?.body_fat_pct)).toBe(17.4);
 
+      const { data: ownProfileRows, error: ownProfileError } = await regularUser.client
+        .from("profiles")
+        .select("id, user_id, full_name")
+        .eq("id", fixture.profileId);
+
+      expect(ownProfileError).toBeNull();
+      expect(ownProfileRows).toHaveLength(1);
+      expect(ownProfileRows?.[0]?.id).toBe(fixture.profileId);
+      expect(ownProfileRows?.[0]?.user_id).toBe(fixture.userId);
+      expect(ownProfileRows?.[0]?.full_name).toContain("RLS User");
+
+      const { data: ownOnboardingProfileRows, error: ownOnboardingProfileError } =
+        await regularUser.client
+          .from("onboarding_profiles")
+          .select("id, user_id, fitness_level, height_cm")
+          .eq("id", fixture.onboardingProfileId);
+
+      expect(ownOnboardingProfileError).toBeNull();
+      expect(ownOnboardingProfileRows).toHaveLength(1);
+      expect(ownOnboardingProfileRows?.[0]?.id).toBe(fixture.onboardingProfileId);
+      expect(ownOnboardingProfileRows?.[0]?.user_id).toBe(fixture.userId);
+      expect(ownOnboardingProfileRows?.[0]?.fitness_level).toBe("intermediate");
+      expect(ownOnboardingProfileRows?.[0]?.height_cm).toBe(182);
+
+      const { data: ownDailyMetricsRows, error: ownDailyMetricsError } =
+        await regularUser.client
+          .from("daily_metrics")
+          .select("id, user_id, workout_count, total_reps")
+          .eq("id", fixture.dailyMetricsId);
+
+      expect(ownDailyMetricsError).toBeNull();
+      expect(ownDailyMetricsRows).toHaveLength(1);
+      expect(ownDailyMetricsRows?.[0]?.id).toBe(fixture.dailyMetricsId);
+      expect(ownDailyMetricsRows?.[0]?.user_id).toBe(fixture.userId);
+      expect(ownDailyMetricsRows?.[0]?.workout_count).toBe(1);
+      expect(ownDailyMetricsRows?.[0]?.total_reps).toBe(32);
+
+      const {
+        data: ownPeriodMetricSnapshotRows,
+        error: ownPeriodMetricSnapshotError,
+      } = await regularUser.client
+        .from("period_metric_snapshots")
+        .select("id, user_id, period_key")
+        .eq("id", fixture.periodMetricSnapshotId);
+
+      expect(ownPeriodMetricSnapshotError).toBeNull();
+      expect(ownPeriodMetricSnapshotRows).toHaveLength(1);
+      expect(ownPeriodMetricSnapshotRows?.[0]?.id).toBe(
+        fixture.periodMetricSnapshotId,
+      );
+      expect(ownPeriodMetricSnapshotRows?.[0]?.user_id).toBe(fixture.userId);
+      expect(ownPeriodMetricSnapshotRows?.[0]?.period_key).toContain("week:");
+
+      const { data: ownUserMemoryFactRows, error: ownUserMemoryFactError } =
+        await regularUser.client
+          .from("user_memory_facts")
+          .select("id, user_id, fact_type, content")
+          .eq("id", fixture.userMemoryFactId);
+
+      expect(ownUserMemoryFactError).toBeNull();
+      expect(ownUserMemoryFactRows).toHaveLength(1);
+      expect(ownUserMemoryFactRows?.[0]?.id).toBe(fixture.userMemoryFactId);
+      expect(ownUserMemoryFactRows?.[0]?.user_id).toBe(fixture.userId);
+      expect(ownUserMemoryFactRows?.[0]?.fact_type).toBe("preference");
+      expect(ownUserMemoryFactRows?.[0]?.content).toContain("RLS memory fact");
+
+      const { data: ownAiSafetyEventRows, error: ownAiSafetyEventError } =
+        await regularUser.client
+          .from("ai_safety_events")
+          .select("id, user_id, route_key, action")
+          .eq("id", fixture.aiSafetyEventId);
+
+      expect(ownAiSafetyEventError).toBeNull();
+      expect(ownAiSafetyEventRows).toHaveLength(1);
+      expect(ownAiSafetyEventRows?.[0]?.id).toBe(fixture.aiSafetyEventId);
+      expect(ownAiSafetyEventRows?.[0]?.user_id).toBe(fixture.userId);
+      expect(ownAiSafetyEventRows?.[0]?.route_key).toBe("assistant");
+      expect(ownAiSafetyEventRows?.[0]?.action).toBe("blocked_response");
+
       const { data: ownFoodRows, error: ownFoodError } = await regularUser.client
         .from("foods")
         .select("id, user_id, source, name")
@@ -380,6 +459,63 @@ test.describe("rls ownership", () => {
       expect(hiddenBodyMetricError).toBeNull();
       expect(hiddenBodyMetricRows).toEqual([]);
 
+      const { data: hiddenProfileRows, error: hiddenProfileError } = await adminUser.client
+        .from("profiles")
+        .select("id")
+        .eq("id", fixture.profileId);
+
+      expect(hiddenProfileError).toBeNull();
+      expect(hiddenProfileRows).toEqual([]);
+
+      const {
+        data: hiddenOnboardingProfileRows,
+        error: hiddenOnboardingProfileError,
+      } = await adminUser.client
+        .from("onboarding_profiles")
+        .select("id")
+        .eq("id", fixture.onboardingProfileId);
+
+      expect(hiddenOnboardingProfileError).toBeNull();
+      expect(hiddenOnboardingProfileRows).toEqual([]);
+
+      const { data: hiddenDailyMetricsRows, error: hiddenDailyMetricsError } =
+        await adminUser.client
+          .from("daily_metrics")
+          .select("id")
+          .eq("id", fixture.dailyMetricsId);
+
+      expect(hiddenDailyMetricsError).toBeNull();
+      expect(hiddenDailyMetricsRows).toEqual([]);
+
+      const {
+        data: hiddenPeriodMetricSnapshotRows,
+        error: hiddenPeriodMetricSnapshotError,
+      } = await adminUser.client
+        .from("period_metric_snapshots")
+        .select("id")
+        .eq("id", fixture.periodMetricSnapshotId);
+
+      expect(hiddenPeriodMetricSnapshotError).toBeNull();
+      expect(hiddenPeriodMetricSnapshotRows).toEqual([]);
+
+      const { data: hiddenUserMemoryFactRows, error: hiddenUserMemoryFactError } =
+        await adminUser.client
+          .from("user_memory_facts")
+          .select("id")
+          .eq("id", fixture.userMemoryFactId);
+
+      expect(hiddenUserMemoryFactError).toBeNull();
+      expect(hiddenUserMemoryFactRows).toEqual([]);
+
+      const { data: hiddenAiSafetyEventRows, error: hiddenAiSafetyEventError } =
+        await adminUser.client
+          .from("ai_safety_events")
+          .select("id")
+          .eq("id", fixture.aiSafetyEventId);
+
+      expect(hiddenAiSafetyEventError).toBeNull();
+      expect(hiddenAiSafetyEventRows).toEqual([]);
+
       const { data: hiddenFoodRows, error: hiddenFoodError } = await adminUser.client
         .from("foods")
         .select("id")
@@ -488,6 +624,60 @@ test.describe("rls ownership", () => {
       expect(foreignBodyMetricUpdateError).toBeNull();
       expect(foreignBodyMetricUpdateRows).toEqual([]);
 
+      const { data: foreignProfileUpdateRows, error: foreignProfileUpdateError } =
+        await adminUser.client
+          .from("profiles")
+          .update({
+            full_name: "foreign overwrite",
+          })
+          .eq("id", fixture.profileId)
+          .select("id, full_name");
+
+      expect(foreignProfileUpdateError).toBeNull();
+      expect(foreignProfileUpdateRows).toEqual([]);
+
+      const {
+        data: foreignOnboardingProfileUpdateRows,
+        error: foreignOnboardingProfileUpdateError,
+      } = await adminUser.client
+        .from("onboarding_profiles")
+        .update({
+          fitness_level: "advanced",
+        })
+        .eq("id", fixture.onboardingProfileId)
+        .select("id, fitness_level");
+
+      expect(foreignOnboardingProfileUpdateError).toBeNull();
+      expect(foreignOnboardingProfileUpdateRows).toEqual([]);
+
+      const {
+        data: foreignDailyMetricsUpdateRows,
+        error: foreignDailyMetricsUpdateError,
+      } = await adminUser.client
+        .from("daily_metrics")
+        .update({
+          workout_count: 99,
+        })
+        .eq("id", fixture.dailyMetricsId)
+        .select("id, workout_count");
+
+      expect(foreignDailyMetricsUpdateError).toBeNull();
+      expect(foreignDailyMetricsUpdateRows).toEqual([]);
+
+      const {
+        data: foreignUserMemoryFactUpdateRows,
+        error: foreignUserMemoryFactUpdateError,
+      } = await adminUser.client
+        .from("user_memory_facts")
+        .update({
+          content: "foreign overwrite",
+        })
+        .eq("id", fixture.userMemoryFactId)
+        .select("id, content");
+
+      expect(foreignUserMemoryFactUpdateError).toBeNull();
+      expect(foreignUserMemoryFactUpdateRows).toEqual([]);
+
       const proposalAfterForeignUpdate = await readProposalStatus(fixture.userProposalId);
 
       expect(proposalAfterForeignUpdate?.id).toBe(fixture.userProposalId);
@@ -519,6 +709,62 @@ test.describe("rls ownership", () => {
       expect(bodyMetricAfterForeignUpdateError).toBeNull();
       expect(bodyMetricAfterForeignUpdate?.id).toBe(fixture.bodyMetricId);
       expect(Number(bodyMetricAfterForeignUpdate?.weight_kg)).toBe(76.8);
+
+      const { data: profileAfterForeignUpdate, error: profileAfterForeignUpdateError } =
+        await regularUser.client
+          .from("profiles")
+          .select("id, full_name")
+          .eq("id", fixture.profileId)
+          .maybeSingle();
+
+      expect(profileAfterForeignUpdateError).toBeNull();
+      expect(profileAfterForeignUpdate?.id).toBe(fixture.profileId);
+      expect(profileAfterForeignUpdate?.full_name).toContain("RLS User");
+
+      const {
+        data: onboardingProfileAfterForeignUpdate,
+        error: onboardingProfileAfterForeignUpdateError,
+      } = await regularUser.client
+        .from("onboarding_profiles")
+        .select("id, fitness_level")
+        .eq("id", fixture.onboardingProfileId)
+        .maybeSingle();
+
+      expect(onboardingProfileAfterForeignUpdateError).toBeNull();
+      expect(onboardingProfileAfterForeignUpdate?.id).toBe(
+        fixture.onboardingProfileId,
+      );
+      expect(onboardingProfileAfterForeignUpdate?.fitness_level).toBe(
+        "intermediate",
+      );
+
+      const {
+        data: dailyMetricsAfterForeignUpdate,
+        error: dailyMetricsAfterForeignUpdateError,
+      } = await regularUser.client
+        .from("daily_metrics")
+        .select("id, workout_count")
+        .eq("id", fixture.dailyMetricsId)
+        .maybeSingle();
+
+      expect(dailyMetricsAfterForeignUpdateError).toBeNull();
+      expect(dailyMetricsAfterForeignUpdate?.id).toBe(fixture.dailyMetricsId);
+      expect(dailyMetricsAfterForeignUpdate?.workout_count).toBe(1);
+
+      const {
+        data: userMemoryFactAfterForeignUpdate,
+        error: userMemoryFactAfterForeignUpdateError,
+      } = await regularUser.client
+        .from("user_memory_facts")
+        .select("id, content")
+        .eq("id", fixture.userMemoryFactId)
+        .maybeSingle();
+
+      expect(userMemoryFactAfterForeignUpdateError).toBeNull();
+      expect(userMemoryFactAfterForeignUpdate?.id).toBe(fixture.userMemoryFactId);
+      expect(userMemoryFactAfterForeignUpdate?.content).toContain(
+        "RLS memory fact",
+      );
     } finally {
       await signOutRlsUser(regularUser.client);
       await signOutRlsUser(adminUser.client);

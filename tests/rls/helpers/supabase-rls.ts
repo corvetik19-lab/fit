@@ -415,6 +415,125 @@ export async function seedRlsOwnershipFixture() {
     throw bodyMetricError;
   }
 
+  const { data: profileRow, error: profileError } = await supabase
+    .from("profiles")
+    .upsert(
+      {
+        id: userId,
+        user_id: userId,
+        full_name: `RLS User ${seed}`,
+        avatar_url: `https://example.com/avatar-${seed}.png`,
+      },
+      {
+        onConflict: "user_id",
+      },
+    )
+    .select("id")
+    .single();
+
+  if (profileError) {
+    throw profileError;
+  }
+
+  const { data: onboardingProfileRow, error: onboardingProfileError } =
+    await supabase
+      .from("onboarding_profiles")
+      .upsert(
+        {
+          user_id: userId,
+          age: 31,
+          sex: "male",
+          height_cm: 182,
+          weight_kg: 76.8,
+          fitness_level: "intermediate",
+          equipment: ["barbell", "dumbbells"],
+          injuries: [],
+          dietary_preferences: ["high_protein"],
+        },
+        {
+          onConflict: "user_id",
+        },
+      )
+      .select("id")
+      .single();
+
+  if (onboardingProfileError) {
+    throw onboardingProfileError;
+  }
+
+  const { data: dailyMetricsRow, error: dailyMetricsError } = await supabase
+    .from("daily_metrics")
+    .insert({
+      user_id: userId,
+      metric_date: weekWindow.weekStartDate,
+      workout_count: 1,
+      total_reps: 32,
+      total_kcal: 220,
+      adherence_score: 0.82,
+    })
+    .select("id")
+    .single();
+
+  if (dailyMetricsError) {
+    throw dailyMetricsError;
+  }
+
+  const { data: periodMetricSnapshotRow, error: periodMetricSnapshotError } =
+    await supabase
+      .from("period_metric_snapshots")
+      .insert({
+        user_id: userId,
+        period_key: `week:${weekWindow.weekStartDate}`,
+        period_start: weekWindow.weekStartDate,
+        period_end: weekWindow.weekEndDate,
+        payload: {
+          source: "rls_fixture",
+          workouts: 1,
+          kcal: 220,
+        },
+      })
+      .select("id")
+      .single();
+
+  if (periodMetricSnapshotError) {
+    throw periodMetricSnapshotError;
+  }
+
+  const { data: userMemoryFactRow, error: userMemoryFactError } = await supabase
+    .from("user_memory_facts")
+    .insert({
+      user_id: userId,
+      fact_type: "preference",
+      content: `RLS memory fact ${seed}`,
+      source: "rls_fixture",
+      confidence: 0.91,
+    })
+    .select("id")
+    .single();
+
+  if (userMemoryFactError) {
+    throw userMemoryFactError;
+  }
+
+  const { data: aiSafetyEventRow, error: aiSafetyEventError } = await supabase
+    .from("ai_safety_events")
+    .insert({
+      user_id: userId,
+      route_key: "assistant",
+      action: "blocked_response",
+      prompt_excerpt: `RLS safety event ${seed}`,
+      payload: {
+        source: "rls_fixture",
+        severity: "medium",
+      },
+    })
+    .select("id")
+    .single();
+
+  if (aiSafetyEventError) {
+    throw aiSafetyEventError;
+  }
+
   const { data: programRow, error: programError } = await supabase
     .from("weekly_programs")
     .insert({
@@ -617,7 +736,9 @@ export async function seedRlsOwnershipFixture() {
     contextSnapshotId: contextSnapshotRow.id as string,
     adminProposalId: adminProposalRow.id as string,
     adminUserId,
+    aiSafetyEventId: aiSafetyEventRow.id as string,
     bodyMetricId: bodyMetricRow.id as string,
+    dailyMetricsId: dailyMetricsRow.id as string,
     goalId: goalRow.id as string,
     deletionRequestId: deletionRequestRow.id as string,
     exerciseId: exerciseRow.id as string,
@@ -631,10 +752,14 @@ export async function seedRlsOwnershipFixture() {
     nutritionGoalId: nutritionGoalRow.id as string,
     nutritionProfileId: nutritionProfileRow.id as string,
     nutritionSummaryId: nutritionSummaryRow.id as string,
+    onboardingProfileId: onboardingProfileRow.id as string,
+    periodMetricSnapshotId: periodMetricSnapshotRow.id as string,
+    profileId: profileRow.id as string,
     programId: programRow.id as string,
     recipeId: recipeRow.id as string,
     recipeItemId: recipeItemRow.id as string,
     userId,
+    userMemoryFactId: userMemoryFactRow.id as string,
     userProposalId: userProposalRow.id as string,
     workoutTemplateId: workoutTemplateRow.id as string,
   };

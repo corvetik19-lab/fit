@@ -652,3 +652,10 @@
 - [x] `tests/rls/helpers/supabase-rls.ts` и `tests/rls/ownership.spec.ts` расширены direct owner-scoped покрытием для remaining nutrition/body/self-profile таблиц: `goals`, `nutrition_goals`, `nutrition_profiles`, `body_metrics`.
 - [x] Tranche подтверждён baseline-пакетом: `npx eslint src/app/api/nutrition/targets/route.ts tests/e2e/api-contracts.spec.ts tests/e2e/helpers/http.ts tests/rls/helpers/supabase-rls.ts tests/rls/ownership.spec.ts`, `npm run test:rls` -> `4 passed`, `npm run typecheck`, `npm run build`, `npm run test:smoke` -> `3 passed`, `npm run test:e2e:auth` -> `41 passed`.
 - [ ] Следующий backend tranche: продолжить оставшийся route-handler audit по owner-only/idempotency/race conditions и добивать незакрытые AI/data hardening пункты.
+
+## 2026-03-19 profile metrics и AI memory RLS addendum
+
+- [x] `tests/rls/helpers/supabase-rls.ts` расширен fixture rows для `profiles`, `onboarding_profiles`, `daily_metrics`, `period_metric_snapshots`, `user_memory_facts`, `ai_safety_events`, чтобы прямой owner-only слой покрывал уже не только workout/nutrition assets, но и профильный, агрегатный и AI-memory контур.
+- [x] `tests/rls/ownership.spec.ts` теперь подтверждает, что владелец видит свои `profiles`, `onboarding_profiles`, `daily_metrics`, `period_metric_snapshots`, `user_memory_facts`, `ai_safety_events`, а другой auth-user не видит и не может обновить эти строки точечными `update`.
+- [x] Tranche подтверждён baseline-пакетом: `npx eslint tests/rls/helpers/supabase-rls.ts tests/rls/ownership.spec.ts`, `npm run test:rls` -> `4 passed`, `npm run typecheck`, `npm run build`.
+- [ ] Следующий backend tranche: продолжить route-level owner-only audit по оставшимся self-service/AI/data handlers и дальше добивать общий database audit через Supabase MCP.
