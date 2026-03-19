@@ -577,12 +577,17 @@ export async function seedRlsOwnershipFixture() {
 
   const { data: entitlementRow, error: entitlementError } = await supabase
     .from("entitlements")
-    .insert({
-      user_id: userId,
-      feature_key: "meal_photo",
-      limit_value: 100,
-      is_enabled: true,
-    })
+    .upsert(
+      {
+        user_id: userId,
+        feature_key: "meal_photo",
+        limit_value: 100,
+        is_enabled: true,
+      },
+      {
+        onConflict: "user_id,feature_key",
+      },
+    )
     .select("id")
     .single();
 
@@ -592,13 +597,18 @@ export async function seedRlsOwnershipFixture() {
 
   const { data: usageCounterRow, error: usageCounterError } = await supabase
     .from("usage_counters")
-    .insert({
-      user_id: userId,
-      metric_key: "ai_messages",
-      metric_window: "monthly",
-      usage_count: 7,
-      reset_at: currentPeriodEnd,
-    })
+    .upsert(
+      {
+        user_id: userId,
+        metric_key: "ai_messages",
+        metric_window: "monthly",
+        usage_count: 7,
+        reset_at: currentPeriodEnd,
+      },
+      {
+        onConflict: "user_id,metric_key,metric_window",
+      },
+    )
     .select("id")
     .single();
 
@@ -621,6 +631,62 @@ export async function seedRlsOwnershipFixture() {
 
   if (programError) {
     throw programError;
+  }
+
+  const { data: workoutDayRow, error: workoutDayError } = await supabase
+    .from("workout_days")
+    .insert({
+      user_id: userId,
+      weekly_program_id: programRow.id,
+      day_of_week: 1,
+      status: "planned",
+      body_weight_kg: 76.8,
+      session_note: `RLS workout day ${seed}`,
+      session_duration_seconds: 0,
+    })
+    .select("id")
+    .single();
+
+  if (workoutDayError) {
+    throw workoutDayError;
+  }
+
+  const { data: workoutExerciseRow, error: workoutExerciseError } =
+    await supabase
+      .from("workout_exercises")
+      .insert({
+        user_id: userId,
+        workout_day_id: workoutDayRow.id,
+        exercise_library_id: exerciseRow.id,
+        exercise_title_snapshot: `RLS Exercise ${seed}`,
+        sets_count: 1,
+        sort_order: 1,
+      })
+      .select("id")
+      .single();
+
+  if (workoutExerciseError) {
+    throw workoutExerciseError;
+  }
+
+  const { data: workoutSetRow, error: workoutSetError } = await supabase
+    .from("workout_sets")
+    .insert({
+      user_id: userId,
+      workout_exercise_id: workoutExerciseRow.id,
+      set_number: 1,
+      planned_reps: 8,
+      planned_reps_min: 8,
+      planned_reps_max: 10,
+      actual_reps: 8,
+      actual_weight_kg: 60,
+      actual_rpe: 8,
+    })
+    .select("id")
+    .single();
+
+  if (workoutSetError) {
+    throw workoutSetError;
   }
 
   const { data: workoutTemplateRow, error: workoutTemplateError } = await supabase
@@ -836,6 +902,9 @@ export async function seedRlsOwnershipFixture() {
     userId,
     userMemoryFactId: userMemoryFactRow.id as string,
     userProposalId: userProposalRow.id as string,
+    workoutDayId: workoutDayRow.id as string,
+    workoutExerciseId: workoutExerciseRow.id as string,
+    workoutSetId: workoutSetRow.id as string,
     usageCounterId: usageCounterRow.id as string,
     workoutTemplateId: workoutTemplateRow.id as string,
   };

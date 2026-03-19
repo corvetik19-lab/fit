@@ -60,6 +60,47 @@ test.describe("rls ownership", () => {
       expect(hiddenProgramError).toBeNull();
       expect(hiddenProgramRows).toEqual([]);
 
+      const { data: ownWorkoutDayRows, error: ownWorkoutDayError } =
+        await regularUser.client
+          .from("workout_days")
+          .select("id, user_id, status, day_of_week")
+          .eq("id", fixture.workoutDayId);
+
+      expect(ownWorkoutDayError).toBeNull();
+      expect(ownWorkoutDayRows).toHaveLength(1);
+      expect(ownWorkoutDayRows?.[0]?.id).toBe(fixture.workoutDayId);
+      expect(ownWorkoutDayRows?.[0]?.user_id).toBe(fixture.userId);
+      expect(ownWorkoutDayRows?.[0]?.status).toBe("planned");
+      expect(ownWorkoutDayRows?.[0]?.day_of_week).toBe(1);
+
+      const { data: ownWorkoutExerciseRows, error: ownWorkoutExerciseError } =
+        await regularUser.client
+          .from("workout_exercises")
+          .select("id, user_id, workout_day_id, sets_count")
+          .eq("id", fixture.workoutExerciseId);
+
+      expect(ownWorkoutExerciseError).toBeNull();
+      expect(ownWorkoutExerciseRows).toHaveLength(1);
+      expect(ownWorkoutExerciseRows?.[0]?.id).toBe(fixture.workoutExerciseId);
+      expect(ownWorkoutExerciseRows?.[0]?.user_id).toBe(fixture.userId);
+      expect(ownWorkoutExerciseRows?.[0]?.workout_day_id).toBe(fixture.workoutDayId);
+      expect(ownWorkoutExerciseRows?.[0]?.sets_count).toBe(1);
+
+      const { data: ownWorkoutSetRows, error: ownWorkoutSetError } =
+        await regularUser.client
+          .from("workout_sets")
+          .select("id, user_id, workout_exercise_id, actual_reps")
+          .eq("id", fixture.workoutSetId);
+
+      expect(ownWorkoutSetError).toBeNull();
+      expect(ownWorkoutSetRows).toHaveLength(1);
+      expect(ownWorkoutSetRows?.[0]?.id).toBe(fixture.workoutSetId);
+      expect(ownWorkoutSetRows?.[0]?.user_id).toBe(fixture.userId);
+      expect(ownWorkoutSetRows?.[0]?.workout_exercise_id).toBe(
+        fixture.workoutExerciseId,
+      );
+      expect(ownWorkoutSetRows?.[0]?.actual_reps).toBe(8);
+
       const { data: ownGoalRows, error: ownGoalError } = await regularUser.client
         .from("goals")
         .select("id, user_id, goal_type, weekly_training_days")
@@ -680,6 +721,35 @@ test.describe("rls ownership", () => {
       expect(hiddenWorkoutTemplateError).toBeNull();
       expect(hiddenWorkoutTemplateRows).toEqual([]);
 
+      const { data: hiddenWorkoutDayRows, error: hiddenWorkoutDayError } =
+        await adminUser.client
+          .from("workout_days")
+          .select("id")
+          .eq("id", fixture.workoutDayId);
+
+      expect(hiddenWorkoutDayError).toBeNull();
+      expect(hiddenWorkoutDayRows).toEqual([]);
+
+      const {
+        data: hiddenWorkoutExerciseRows,
+        error: hiddenWorkoutExerciseError,
+      } = await adminUser.client
+        .from("workout_exercises")
+        .select("id")
+        .eq("id", fixture.workoutExerciseId);
+
+      expect(hiddenWorkoutExerciseError).toBeNull();
+      expect(hiddenWorkoutExerciseRows).toEqual([]);
+
+      const { data: hiddenWorkoutSetRows, error: hiddenWorkoutSetError } =
+        await adminUser.client
+          .from("workout_sets")
+          .select("id")
+          .eq("id", fixture.workoutSetId);
+
+      expect(hiddenWorkoutSetError).toBeNull();
+      expect(hiddenWorkoutSetRows).toEqual([]);
+
       const { data: foreignProposalUpdateRows, error: foreignProposalUpdateError } =
         await adminUser.client
           .from("ai_plan_proposals")
@@ -788,6 +858,20 @@ test.describe("rls ownership", () => {
       expect(foreignUsageCounterUpdateError).toBeNull();
       expect(foreignUsageCounterUpdateRows).toEqual([]);
 
+      const {
+        data: foreignWorkoutSetUpdateRows,
+        error: foreignWorkoutSetUpdateError,
+      } = await adminUser.client
+        .from("workout_sets")
+        .update({
+          actual_reps: 12,
+        })
+        .eq("id", fixture.workoutSetId)
+        .select("id, actual_reps");
+
+      expect(foreignWorkoutSetUpdateError).toBeNull();
+      expect(foreignWorkoutSetUpdateRows).toEqual([]);
+
       const proposalAfterForeignUpdate = await readProposalStatus(fixture.userProposalId);
 
       expect(proposalAfterForeignUpdate?.id).toBe(fixture.userProposalId);
@@ -888,6 +972,19 @@ test.describe("rls ownership", () => {
       expect(usageCounterAfterForeignUpdateError).toBeNull();
       expect(usageCounterAfterForeignUpdate?.id).toBe(fixture.usageCounterId);
       expect(Number(usageCounterAfterForeignUpdate?.usage_count)).toBe(7);
+
+      const {
+        data: workoutSetAfterForeignUpdate,
+        error: workoutSetAfterForeignUpdateError,
+      } = await regularUser.client
+        .from("workout_sets")
+        .select("id, actual_reps")
+        .eq("id", fixture.workoutSetId)
+        .maybeSingle();
+
+      expect(workoutSetAfterForeignUpdateError).toBeNull();
+      expect(workoutSetAfterForeignUpdate?.id).toBe(fixture.workoutSetId);
+      expect(workoutSetAfterForeignUpdate?.actual_reps).toBe(8);
     } finally {
       await signOutRlsUser(regularUser.client);
       await signOutRlsUser(adminUser.client);

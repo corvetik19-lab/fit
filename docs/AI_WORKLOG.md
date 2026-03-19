@@ -737,3 +737,10 @@
 - В `tests/rls/ownership.spec.ts` расширил owner-only проверки: владелец видит свои billing rows, другой auth-user не видит их и не может точечно обновить `usage_counters`.
 - Это снижает остаток по database/billing audit: user-scoped billing данные теперь покрыты не только route guards, но и прямой RLS-проверкой.
 - Проверка зелёная: `npx eslint tests/rls/helpers/supabase-rls.ts tests/rls/ownership.spec.ts`, `npm run test:rls` -> `4 passed`, `npm run typecheck`, `npm run build`.
+
+### 2026-03-19 03:15 - Довёл direct RLS до workout execution rows
+
+- В `tests/rls/helpers/supabase-rls.ts` добавил fixture rows для `workout_days`, `workout_exercises`, `workout_sets`, чтобы owner-only suite покрывал уже и фактическое выполнение тренировки, а не только `weekly_programs` и `workout_templates`.
+- В `tests/rls/ownership.spec.ts` расширил direct checks: владелец видит свои `workout_day / workout_exercise / workout_set`, другой auth-user не видит их и не может обновить чужой `workout_set`.
+- Заодно сделал billing fixture идемпотентным через `upsert` для `entitlements` и `usage_counters`, чтобы `test:rls` не падал на накопленных уникальных ключах предыдущих прогонов.
+- Проверка зелёная: `npx eslint tests/rls/helpers/supabase-rls.ts tests/rls/ownership.spec.ts`, `npm run test:rls` -> `4 passed`, `npm run typecheck`, `npm run build`.

@@ -666,3 +666,11 @@
 - [x] `tests/rls/ownership.spec.ts` теперь напрямую подтверждает, что владелец видит свои billing rows, а другой auth-user не видит и не может обновить хотя бы `usage_counters` точечным `update`.
 - [x] Tranche подтверждён baseline-пакетом: `npx eslint tests/rls/helpers/supabase-rls.ts tests/rls/ownership.spec.ts`, `npm run test:rls` -> `4 passed`, `npm run typecheck`, `npm run build`.
 - [ ] Следующий backend tranche: продолжить remaining route-level audit и добивать прямой database audit по оставшимся user-scoped/admin-scoped контурам.
+
+## 2026-03-19 workout execution RLS addendum
+
+- [x] `tests/rls/helpers/supabase-rls.ts` расширен fixture rows для `workout_days`, `workout_exercises`, `workout_sets`, поэтому прямой owner-only suite теперь покрывает и execution-цепочку тренировки, а не только program/template слой.
+- [x] `tests/rls/ownership.spec.ts` теперь подтверждает, что владелец видит свои workout execution rows, другой auth-user не видит их и не может точечно обновить чужой `workout_set`.
+- [x] Fixture billing rows сделаны идемпотентными через `upsert` по уникальным ключам `entitlements(user_id, feature_key)` и `usage_counters(user_id, metric_key, metric_window)`, поэтому `test:rls` больше не флакает на накопленных данных прошлых прогонов.
+- [x] Tranche подтверждён baseline-пакетом: `npx eslint tests/rls/helpers/supabase-rls.ts tests/rls/ownership.spec.ts`, `npm run test:rls` -> `4 passed`, `npm run typecheck`, `npm run build`.
+- [ ] Следующий backend tranche: возвращаться к remaining route-level audit и добивать прямой database audit на оставшихся user-scoped/admin-scoped таблицах.
