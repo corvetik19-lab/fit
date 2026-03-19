@@ -768,3 +768,10 @@
 - [x] `src/app/api/ai/chat/route.ts` переведён на тонкий transport-слой с чистым UTF-8 copy: auth/runtime gates, safety fallback и provider error message идут через shared helper без изменения owner-only, billing и retrieval контрактов.
 - [x] Tranche подтверждён пакетами `npx eslint src/lib/ai/chat-runtime-copy.ts src/app/api/ai/chat/route.ts`, `npm run typecheck`, `npm run build`.
 - [ ] Следующий AI/backend tranche: продолжать remaining runtime/guardrail sanitation в `ai/assistant`, затем возвращаться к route/lib extraction и owner-only/idempotency audit.
+
+## 2026-03-20 AI plan route copy extraction addendum
+
+- [x] Общий user-facing copy для `ai/meal-plan` и `ai/workout-plan` вынесен в `src/lib/ai/plan-route-copy.ts`: auth-required, runtime-not-configured, invalid payload и provider/runtime failure messages больше не дублируются между двумя route handlers.
+- [x] `src/app/api/ai/meal-plan/route.ts` и `src/app/api/ai/workout-plan/route.ts` переведены на тонкий transport-слой с чистым UTF-8 copy, а safety/provider messaging для AI plan generation теперь идёт через shared helper.
+- [x] Tranche подтверждён пакетами `npx eslint src/lib/ai/plan-route-copy.ts src/app/api/ai/meal-plan/route.ts src/app/api/ai/workout-plan/route.ts`, `npm run typecheck`, `npm run build`.
+- [ ] Следующий AI/backend tranche: продолжать remaining runtime/guardrail sanitation в `ai/assistant`, затем возвращаться к route/lib extraction и owner-only/idempotency audit.

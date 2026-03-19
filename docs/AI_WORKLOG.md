@@ -842,3 +842,10 @@
 - `src/app/api/ai/chat/route.ts` переведён на этот helper без изменения owner-only, billing, retrieval и session contracts: route остался transport-слоем, а shared runtime copy больше не дублируется внутри handler.
 - Проверка зелёная: `npx eslint src/lib/ai/chat-runtime-copy.ts src/app/api/ai/chat/route.ts`, `npm run typecheck`, `npm run build`.
 - Общий прогресс execution checklist остаётся `144 / 176` (`82%`): tranche продолжает route/lib extraction и sanitation wave, но не закрывает следующий основной checkbox целиком.
+
+### 2026-03-20 00:20 - Вынес shared copy из AI plan routes
+
+- Добавил `src/lib/ai/plan-route-copy.ts`: общий user-facing copy для `ai/meal-plan` и `ai/workout-plan` теперь живёт в одном helper слое и включает auth/runtime/invalid/provider/safety сообщения в чистом UTF-8.
+- `src/app/api/ai/meal-plan/route.ts` и `src/app/api/ai/workout-plan/route.ts` переведены на этот helper без изменения owner-only, billing и generation contracts: handlers остались transport-обёртками вокруг plan generation flow.
+- Проверка зелёная: `npx eslint src/lib/ai/plan-route-copy.ts src/app/api/ai/meal-plan/route.ts src/app/api/ai/workout-plan/route.ts`, `npm run typecheck`, `npm run build`.
+- Общий прогресс execution checklist остаётся `144 / 176` (`82%`): tranche сокращает AI route duplication и sanitation backlog, но не закрывает следующий основной checkbox целиком.

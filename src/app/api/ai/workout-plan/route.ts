@@ -1,6 +1,12 @@
 import { z } from "zod";
 
 import { generateWorkoutPlanProposalForUser } from "@/lib/ai/plan-generation";
+import {
+  buildAiPlanProviderErrorMessage,
+  getAiPlanAuthMessage,
+  getAiPlanInvalidMessage,
+  getAiPlanNotConfiguredMessage,
+} from "@/lib/ai/plan-route-copy";
 import { isAiProviderConfigurationFailure } from "@/lib/ai/runtime-errors";
 import { workoutPlanRequestSchema } from "@/lib/ai/schemas";
 import { createApiErrorResponse } from "@/lib/api/error-response";
@@ -25,8 +31,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 401,
         code: "UNAUTHORIZED",
-        message:
-          "Нужно войти в аккаунт, чтобы генерировать тренировочные планы через AI.",
+        message: getAiPlanAuthMessage("workout"),
       });
     }
 
@@ -38,7 +43,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 503,
         code: "AI_RUNTIME_NOT_CONFIGURED",
-        message: "AI-контур для тренировочных планов пока не настроен.",
+        message: getAiPlanNotConfiguredMessage("workout"),
       });
     }
 
@@ -70,7 +75,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 400,
         code: "WORKOUT_PLAN_INVALID",
-        message: "Параметры тренировочного плана заполнены некорректно.",
+        message: getAiPlanInvalidMessage("workout"),
         details: error.flatten(),
       });
     }
@@ -82,9 +87,7 @@ export async function POST(request: Request) {
       code: isAiProviderConfigurationFailure(error)
         ? "AI_PROVIDER_UNAVAILABLE"
         : "WORKOUT_PLAN_FAILED",
-      message: isAiProviderConfigurationFailure(error)
-        ? "Сервис AI временно недоступен. Провайдер не активирован для генерации тренировочных планов."
-        : "Не удалось сгенерировать предложение тренировочного плана.",
+      message: buildAiPlanProviderErrorMessage("workout", error),
     });
   }
 }

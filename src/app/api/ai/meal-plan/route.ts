@@ -1,6 +1,13 @@
 import { z } from "zod";
 
 import { generateMealPlanProposalForUser } from "@/lib/ai/plan-generation";
+import {
+  AI_MEAL_PLAN_SAFETY_MESSAGE,
+  buildAiPlanProviderErrorMessage,
+  getAiPlanAuthMessage,
+  getAiPlanInvalidMessage,
+  getAiPlanNotConfiguredMessage,
+} from "@/lib/ai/plan-route-copy";
 import { isAiProviderConfigurationFailure } from "@/lib/ai/runtime-errors";
 import { mealPlanRequestSchema } from "@/lib/ai/schemas";
 import { createApiErrorResponse } from "@/lib/api/error-response";
@@ -26,8 +33,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 401,
         code: "UNAUTHORIZED",
-        message:
-          "Нужно войти в аккаунт, чтобы генерировать планы питания через AI.",
+        message: getAiPlanAuthMessage("meal"),
       });
     }
 
@@ -39,7 +45,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 503,
         code: "AI_RUNTIME_NOT_CONFIGURED",
-        message: "AI-контур для планов питания пока не настроен.",
+        message: getAiPlanNotConfiguredMessage("meal"),
       });
     }
 
@@ -56,8 +62,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 400,
         code: "AI_SAFETY_BLOCK",
-        message:
-          "Комментарий к плану питания вышел за безопасный контур приложения.",
+        message: AI_MEAL_PLAN_SAFETY_MESSAGE,
       });
     }
 
@@ -76,7 +81,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 400,
         code: "MEAL_PLAN_INVALID",
-        message: "Параметры плана питания заполнены некорректно.",
+        message: getAiPlanInvalidMessage("meal"),
         details: error.flatten(),
       });
     }
@@ -88,9 +93,7 @@ export async function POST(request: Request) {
       code: isAiProviderConfigurationFailure(error)
         ? "AI_PROVIDER_UNAVAILABLE"
         : "MEAL_PLAN_FAILED",
-      message: isAiProviderConfigurationFailure(error)
-        ? "Сервис AI временно недоступен. Провайдер не активирован для генерации планов питания."
-        : "Не удалось сгенерировать предложение плана питания.",
+      message: buildAiPlanProviderErrorMessage("meal", error),
     });
   }
 }
