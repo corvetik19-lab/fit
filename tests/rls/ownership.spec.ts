@@ -192,6 +192,64 @@ test.describe("rls ownership", () => {
       expect(ownAiSafetyEventRows?.[0]?.route_key).toBe("assistant");
       expect(ownAiSafetyEventRows?.[0]?.action).toBe("blocked_response");
 
+      const { data: ownSubscriptionRows, error: ownSubscriptionError } =
+        await regularUser.client
+          .from("subscriptions")
+          .select("id, user_id, status, provider")
+          .eq("id", fixture.subscriptionId);
+
+      expect(ownSubscriptionError).toBeNull();
+      expect(ownSubscriptionRows).toHaveLength(1);
+      expect(ownSubscriptionRows?.[0]?.id).toBe(fixture.subscriptionId);
+      expect(ownSubscriptionRows?.[0]?.user_id).toBe(fixture.userId);
+      expect(ownSubscriptionRows?.[0]?.status).toBe("active");
+      expect(ownSubscriptionRows?.[0]?.provider).toBe("stripe");
+
+      const {
+        data: ownSubscriptionEventRows,
+        error: ownSubscriptionEventError,
+      } = await regularUser.client
+        .from("subscription_events")
+        .select("id, user_id, subscription_id, event_type")
+        .eq("id", fixture.subscriptionEventId);
+
+      expect(ownSubscriptionEventError).toBeNull();
+      expect(ownSubscriptionEventRows).toHaveLength(1);
+      expect(ownSubscriptionEventRows?.[0]?.id).toBe(fixture.subscriptionEventId);
+      expect(ownSubscriptionEventRows?.[0]?.user_id).toBe(fixture.userId);
+      expect(ownSubscriptionEventRows?.[0]?.subscription_id).toBe(
+        fixture.subscriptionId,
+      );
+      expect(ownSubscriptionEventRows?.[0]?.event_type).toBe(
+        "customer.subscription.updated",
+      );
+
+      const { data: ownEntitlementRows, error: ownEntitlementError } =
+        await regularUser.client
+          .from("entitlements")
+          .select("id, user_id, feature_key, is_enabled")
+          .eq("id", fixture.entitlementId);
+
+      expect(ownEntitlementError).toBeNull();
+      expect(ownEntitlementRows).toHaveLength(1);
+      expect(ownEntitlementRows?.[0]?.id).toBe(fixture.entitlementId);
+      expect(ownEntitlementRows?.[0]?.user_id).toBe(fixture.userId);
+      expect(ownEntitlementRows?.[0]?.feature_key).toBe("meal_photo");
+      expect(ownEntitlementRows?.[0]?.is_enabled).toBe(true);
+
+      const { data: ownUsageCounterRows, error: ownUsageCounterError } =
+        await regularUser.client
+          .from("usage_counters")
+          .select("id, user_id, metric_key, usage_count")
+          .eq("id", fixture.usageCounterId);
+
+      expect(ownUsageCounterError).toBeNull();
+      expect(ownUsageCounterRows).toHaveLength(1);
+      expect(ownUsageCounterRows?.[0]?.id).toBe(fixture.usageCounterId);
+      expect(ownUsageCounterRows?.[0]?.user_id).toBe(fixture.userId);
+      expect(ownUsageCounterRows?.[0]?.metric_key).toBe("ai_messages");
+      expect(Number(ownUsageCounterRows?.[0]?.usage_count)).toBe(7);
+
       const { data: ownFoodRows, error: ownFoodError } = await regularUser.client
         .from("foods")
         .select("id, user_id, source, name")
@@ -516,6 +574,44 @@ test.describe("rls ownership", () => {
       expect(hiddenAiSafetyEventError).toBeNull();
       expect(hiddenAiSafetyEventRows).toEqual([]);
 
+      const { data: hiddenSubscriptionRows, error: hiddenSubscriptionError } =
+        await adminUser.client
+          .from("subscriptions")
+          .select("id")
+          .eq("id", fixture.subscriptionId);
+
+      expect(hiddenSubscriptionError).toBeNull();
+      expect(hiddenSubscriptionRows).toEqual([]);
+
+      const {
+        data: hiddenSubscriptionEventRows,
+        error: hiddenSubscriptionEventError,
+      } = await adminUser.client
+        .from("subscription_events")
+        .select("id")
+        .eq("id", fixture.subscriptionEventId);
+
+      expect(hiddenSubscriptionEventError).toBeNull();
+      expect(hiddenSubscriptionEventRows).toEqual([]);
+
+      const { data: hiddenEntitlementRows, error: hiddenEntitlementError } =
+        await adminUser.client
+          .from("entitlements")
+          .select("id")
+          .eq("id", fixture.entitlementId);
+
+      expect(hiddenEntitlementError).toBeNull();
+      expect(hiddenEntitlementRows).toEqual([]);
+
+      const { data: hiddenUsageCounterRows, error: hiddenUsageCounterError } =
+        await adminUser.client
+          .from("usage_counters")
+          .select("id")
+          .eq("id", fixture.usageCounterId);
+
+      expect(hiddenUsageCounterError).toBeNull();
+      expect(hiddenUsageCounterRows).toEqual([]);
+
       const { data: hiddenFoodRows, error: hiddenFoodError } = await adminUser.client
         .from("foods")
         .select("id")
@@ -678,6 +774,20 @@ test.describe("rls ownership", () => {
       expect(foreignUserMemoryFactUpdateError).toBeNull();
       expect(foreignUserMemoryFactUpdateRows).toEqual([]);
 
+      const {
+        data: foreignUsageCounterUpdateRows,
+        error: foreignUsageCounterUpdateError,
+      } = await adminUser.client
+        .from("usage_counters")
+        .update({
+          usage_count: 999,
+        })
+        .eq("id", fixture.usageCounterId)
+        .select("id, usage_count");
+
+      expect(foreignUsageCounterUpdateError).toBeNull();
+      expect(foreignUsageCounterUpdateRows).toEqual([]);
+
       const proposalAfterForeignUpdate = await readProposalStatus(fixture.userProposalId);
 
       expect(proposalAfterForeignUpdate?.id).toBe(fixture.userProposalId);
@@ -765,6 +875,19 @@ test.describe("rls ownership", () => {
       expect(userMemoryFactAfterForeignUpdate?.content).toContain(
         "RLS memory fact",
       );
+
+      const {
+        data: usageCounterAfterForeignUpdate,
+        error: usageCounterAfterForeignUpdateError,
+      } = await regularUser.client
+        .from("usage_counters")
+        .select("id, usage_count")
+        .eq("id", fixture.usageCounterId)
+        .maybeSingle();
+
+      expect(usageCounterAfterForeignUpdateError).toBeNull();
+      expect(usageCounterAfterForeignUpdate?.id).toBe(fixture.usageCounterId);
+      expect(Number(usageCounterAfterForeignUpdate?.usage_count)).toBe(7);
     } finally {
       await signOutRlsUser(regularUser.client);
       await signOutRlsUser(adminUser.client);

@@ -730,3 +730,10 @@
 - В `tests/rls/ownership.spec.ts` расширил прямые проверки видимости и blocked-update сценарии: другой auth-user теперь подтверждённо не видит и не может менять `profiles`, `onboarding_profiles`, `daily_metrics`, `period_metric_snapshots`, `user_memory_facts`, `ai_safety_events`.
 - Это уменьшает реальный хвост по database audit: RLS теперь подтверждён не только route-level e2e и nutrition/workout assets, но и на нескольких ключевых user-scoped таблицах, из которых читаются `viewer`, onboarding, dashboard aggregates и AI context.
 - Проверка зелёная: `npx eslint tests/rls/helpers/supabase-rls.ts tests/rls/ownership.spec.ts`, `npm run test:rls` -> `4 passed`, `npm run typecheck`, `npm run build`.
+
+### 2026-03-19 02:40 - Закрыл прямой RLS на billing user tables
+
+- В `tests/rls/helpers/supabase-rls.ts` добавил fixture rows для `subscriptions`, `subscription_events`, `entitlements`, `usage_counters`, чтобы billing user-scoped слой тоже был подтверждён direct Supabase client access тестами.
+- В `tests/rls/ownership.spec.ts` расширил owner-only проверки: владелец видит свои billing rows, другой auth-user не видит их и не может точечно обновить `usage_counters`.
+- Это снижает остаток по database/billing audit: user-scoped billing данные теперь покрыты не только route guards, но и прямой RLS-проверкой.
+- Проверка зелёная: `npx eslint tests/rls/helpers/supabase-rls.ts tests/rls/ownership.spec.ts`, `npm run test:rls` -> `4 passed`, `npm run typecheck`, `npm run build`.

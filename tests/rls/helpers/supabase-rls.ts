@@ -534,6 +534,78 @@ export async function seedRlsOwnershipFixture() {
     throw aiSafetyEventError;
   }
 
+  const currentPeriodStart = new Date("2035-01-01T00:00:00.000Z").toISOString();
+  const currentPeriodEnd = new Date("2035-02-01T00:00:00.000Z").toISOString();
+
+  const { data: subscriptionRow, error: subscriptionError } = await supabase
+    .from("subscriptions")
+    .insert({
+      user_id: userId,
+      provider: "stripe",
+      provider_subscription_id: `sub_rls_${seed}`,
+      provider_customer_id: `cus_rls_${seed}`,
+      status: "active",
+      current_period_start: currentPeriodStart,
+      current_period_end: currentPeriodEnd,
+    })
+    .select("id")
+    .single();
+
+  if (subscriptionError) {
+    throw subscriptionError;
+  }
+
+  const { data: subscriptionEventRow, error: subscriptionEventError } =
+    await supabase
+      .from("subscription_events")
+      .insert({
+        user_id: userId,
+        subscription_id: subscriptionRow.id,
+        provider_event_id: `evt_rls_${seed}`,
+        event_type: "customer.subscription.updated",
+        payload: {
+          source: "rls_fixture",
+          status: "active",
+        },
+      })
+      .select("id")
+      .single();
+
+  if (subscriptionEventError) {
+    throw subscriptionEventError;
+  }
+
+  const { data: entitlementRow, error: entitlementError } = await supabase
+    .from("entitlements")
+    .insert({
+      user_id: userId,
+      feature_key: "meal_photo",
+      limit_value: 100,
+      is_enabled: true,
+    })
+    .select("id")
+    .single();
+
+  if (entitlementError) {
+    throw entitlementError;
+  }
+
+  const { data: usageCounterRow, error: usageCounterError } = await supabase
+    .from("usage_counters")
+    .insert({
+      user_id: userId,
+      metric_key: "ai_messages",
+      metric_window: "monthly",
+      usage_count: 7,
+      reset_at: currentPeriodEnd,
+    })
+    .select("id")
+    .single();
+
+  if (usageCounterError) {
+    throw usageCounterError;
+  }
+
   const { data: programRow, error: programError } = await supabase
     .from("weekly_programs")
     .insert({
@@ -741,6 +813,7 @@ export async function seedRlsOwnershipFixture() {
     dailyMetricsId: dailyMetricsRow.id as string,
     goalId: goalRow.id as string,
     deletionRequestId: deletionRequestRow.id as string,
+    entitlementId: entitlementRow.id as string,
     exerciseId: exerciseRow.id as string,
     exportJobId: exportJobRow.id as string,
     foodId: foodRow.id as string,
@@ -758,9 +831,12 @@ export async function seedRlsOwnershipFixture() {
     programId: programRow.id as string,
     recipeId: recipeRow.id as string,
     recipeItemId: recipeItemRow.id as string,
+    subscriptionEventId: subscriptionEventRow.id as string,
+    subscriptionId: subscriptionRow.id as string,
     userId,
     userMemoryFactId: userMemoryFactRow.id as string,
     userProposalId: userProposalRow.id as string,
+    usageCounterId: usageCounterRow.id as string,
     workoutTemplateId: workoutTemplateRow.id as string,
   };
 }

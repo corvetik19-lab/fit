@@ -659,3 +659,10 @@
 - [x] `tests/rls/ownership.spec.ts` теперь подтверждает, что владелец видит свои `profiles`, `onboarding_profiles`, `daily_metrics`, `period_metric_snapshots`, `user_memory_facts`, `ai_safety_events`, а другой auth-user не видит и не может обновить эти строки точечными `update`.
 - [x] Tranche подтверждён baseline-пакетом: `npx eslint tests/rls/helpers/supabase-rls.ts tests/rls/ownership.spec.ts`, `npm run test:rls` -> `4 passed`, `npm run typecheck`, `npm run build`.
 - [ ] Следующий backend tranche: продолжить route-level owner-only audit по оставшимся self-service/AI/data handlers и дальше добивать общий database audit через Supabase MCP.
+
+## 2026-03-19 billing RLS ownership addendum
+
+- [x] `tests/rls/helpers/supabase-rls.ts` расширен fixture rows для billing user-scoped таблиц: `subscriptions`, `subscription_events`, `entitlements`, `usage_counters`.
+- [x] `tests/rls/ownership.spec.ts` теперь напрямую подтверждает, что владелец видит свои billing rows, а другой auth-user не видит и не может обновить хотя бы `usage_counters` точечным `update`.
+- [x] Tranche подтверждён baseline-пакетом: `npx eslint tests/rls/helpers/supabase-rls.ts tests/rls/ownership.spec.ts`, `npm run test:rls` -> `4 passed`, `npm run typecheck`, `npm run build`.
+- [ ] Следующий backend tranche: продолжить remaining route-level audit и добивать прямой database audit по оставшимся user-scoped/admin-scoped контурам.
