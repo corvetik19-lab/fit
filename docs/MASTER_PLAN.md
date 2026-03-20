@@ -839,3 +839,10 @@
 - [x] `src/app/api/admin/users/[id]/billing/route.ts`, `src/app/api/admin/users/[id]/billing/reconcile/route.ts` и `src/app/api/admin/users/bulk/route.ts` переведены на эти helper'ы: billing single-user и bulk flows больше не дублируют один и тот же audit/event plumbing.
 - [x] Tranche подтверждён пакетами `npx eslint src/lib/admin-billing.ts src/app/api/admin/users/[id]/billing/route.ts src/app/api/admin/users/[id]/billing/reconcile/route.ts src/app/api/admin/users/bulk/route.ts`, `npm run typecheck`, `npm run build`.
 - [ ] Следующий backend tranche: проверить, достаточно ли уже закрыт основной пункт про route/lib duplication, и если нет — добирать оставшиеся admin/self-service/AI handlers.
+
+## 2026-03-20 admin mutation contract coverage addendum
+
+- [x] `tests/e2e/api-contracts.spec.ts` расширен admin-only contract test на invalid target ids для `admin/users/[id]/export`, `deletion`, `support-action`, `suspend`, `restore`, `billing`, `billing/reconcile` и `role`.
+- [x] Теперь route-handler audit явно подтверждает, что эти admin mutation routes режут невалидный `userId` на уровне `400 ..._TARGET_INVALID` до любых side effects и не падают в общий `500`.
+- [x] Tranche подтверждён baseline-пакетом: `npx eslint tests/e2e/api-contracts.spec.ts`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1` -> `9 passed`.
+- [ ] Следующий backend tranche: решить, можно ли уже закрыть основной route-handler audit пункт по validation/owner-only/idempotency для covered admin and AI/data routes, или нужен ещё один coverage/fix slice.

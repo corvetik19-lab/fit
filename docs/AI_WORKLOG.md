@@ -913,3 +913,10 @@
 - `src/app/api/admin/users/[id]/billing/route.ts`, `src/app/api/admin/users/[id]/billing/reconcile/route.ts` и `src/app/api/admin/users/bulk/route.ts` переведены на этот shared billing audit/event слой без изменения owner/admin contracts.
 - Проверка зелёная: `npx eslint src/lib/admin-billing.ts src/app/api/admin/users/[id]/billing/route.ts src/app/api/admin/users/[id]/billing/reconcile/route.ts src/app/api/admin/users/bulk/route.ts`, `npm run typecheck`, `npm run build`.
 - Общий прогресс execution checklist остаётся `144 / 176` (`82%`): tranche продолжает route/lib extraction в admin/billing surface, но не закрывает следующий основной checkbox целиком.
+
+### 2026-03-20 03:50 - Расширил admin mutation contract coverage
+
+- `tests/e2e/api-contracts.spec.ts` получил отдельный admin-only контракт для invalid target ids на `admin/users/[id]/export`, `deletion`, `support-action`, `suspend`, `restore`, `billing`, `billing/reconcile` и `role`.
+- Это подтверждает route-handler audit по validation path: admin mutation routes отдают ожидаемые `400 ..._TARGET_INVALID` и не доходят до side effects при битом `userId`.
+- Проверка зелёная: `npx eslint tests/e2e/api-contracts.spec.ts`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1` -> `9 passed`.
+- Общий прогресс execution checklist остаётся `144 / 176` (`82%`): tranche двигает открытый route-handler audit пункт, но пока не закрывает его целиком.

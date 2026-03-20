@@ -425,6 +425,127 @@ test.describe("api contracts with admin access", () => {
     "requires PLAYWRIGHT_ADMIN_EMAIL and PLAYWRIGHT_ADMIN_PASSWORD",
   );
 
+  test("admin mutation routes reject invalid target ids before side effects", async ({
+    page,
+  }) => {
+    await page.goto("/admin");
+    await expect(page).toHaveURL(/\/admin$/);
+    await page.waitForLoadState("networkidle");
+
+    const [
+      invalidExport,
+      invalidDeletionQueue,
+      invalidDeletionCancel,
+      invalidSupportAction,
+      invalidSuspend,
+      invalidRestore,
+      invalidBilling,
+      invalidBillingReconcile,
+      invalidRolePatch,
+      invalidRoleDelete,
+    ] = await Promise.all([
+      fetchJson(page, {
+        method: "POST",
+        url: "/api/admin/users/not-a-uuid/export",
+        body: { format: "json_csv_zip" },
+      }),
+      fetchJson(page, {
+        method: "POST",
+        url: "/api/admin/users/not-a-uuid/deletion",
+        body: { reason: "test" },
+      }),
+      fetchJson(page, {
+        method: "DELETE",
+        url: "/api/admin/users/not-a-uuid/deletion",
+        body: { reason: "test" },
+      }),
+      fetchJson(page, {
+        method: "POST",
+        url: "/api/admin/users/not-a-uuid/support-action",
+        body: { action: "resync_user_context" },
+      }),
+      fetchJson(page, {
+        method: "POST",
+        url: "/api/admin/users/not-a-uuid/suspend",
+        body: { reason: "test" },
+      }),
+      fetchJson(page, {
+        method: "POST",
+        url: "/api/admin/users/not-a-uuid/restore",
+        body: { reason: "test" },
+      }),
+      fetchJson(page, {
+        method: "POST",
+        url: "/api/admin/users/not-a-uuid/billing",
+        body: { action: "grant_trial", duration_days: 14 },
+      }),
+      fetchJson(page, {
+        method: "POST",
+        url: "/api/admin/users/not-a-uuid/billing/reconcile",
+      }),
+      fetchJson(page, {
+        method: "PATCH",
+        url: "/api/admin/users/not-a-uuid/role",
+        body: { role: "support_admin" },
+      }),
+      fetchJson(page, {
+        method: "DELETE",
+        url: "/api/admin/users/not-a-uuid/role",
+        body: { reason: "test" },
+      }),
+    ]);
+
+    expect(invalidExport.status).toBe(400);
+    expect((invalidExport.body as { code?: string } | null)?.code).toBe(
+      "ADMIN_EXPORT_TARGET_INVALID",
+    );
+
+    expect(invalidDeletionQueue.status).toBe(400);
+    expect((invalidDeletionQueue.body as { code?: string } | null)?.code).toBe(
+      "ADMIN_DELETION_TARGET_INVALID",
+    );
+
+    expect(invalidDeletionCancel.status).toBe(400);
+    expect((invalidDeletionCancel.body as { code?: string } | null)?.code).toBe(
+      "ADMIN_DELETION_TARGET_INVALID",
+    );
+
+    expect(invalidSupportAction.status).toBe(400);
+    expect((invalidSupportAction.body as { code?: string } | null)?.code).toBe(
+      "ADMIN_SUPPORT_ACTION_TARGET_INVALID",
+    );
+
+    expect(invalidSuspend.status).toBe(400);
+    expect((invalidSuspend.body as { code?: string } | null)?.code).toBe(
+      "ADMIN_SUSPEND_TARGET_INVALID",
+    );
+
+    expect(invalidRestore.status).toBe(400);
+    expect((invalidRestore.body as { code?: string } | null)?.code).toBe(
+      "ADMIN_RESTORE_TARGET_INVALID",
+    );
+
+    expect(invalidBilling.status).toBe(400);
+    expect((invalidBilling.body as { code?: string } | null)?.code).toBe(
+      "ADMIN_BILLING_TARGET_INVALID",
+    );
+
+    expect(invalidBillingReconcile.status).toBe(400);
+    expect(
+      (invalidBillingReconcile.body as { code?: string } | null)?.code,
+    ).toBe("ADMIN_BILLING_RECONCILE_TARGET_INVALID");
+
+    expect(invalidRolePatch.status).toBe(400);
+    expect((invalidRolePatch.body as { code?: string } | null)?.code).toBe(
+      "ADMIN_ROLE_TARGET_INVALID",
+    );
+
+    expect(invalidRoleDelete.status).toBe(400);
+    expect((invalidRoleDelete.body as { code?: string } | null)?.code).toBe(
+      "ADMIN_ROLE_TARGET_INVALID",
+    );
+  });
+
   test("proposal approve/apply actions stay idempotent on repeated requests", async ({
     page,
   }) => {
