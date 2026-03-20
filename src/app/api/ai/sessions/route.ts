@@ -1,36 +1,31 @@
 import { z } from "zod";
 
 import { createAiChatSession, deleteAllAiChatSessions } from "@/lib/ai/chat";
+import {
+  AI_CHAT_NEW_SESSION_TITLE,
+  AI_CHAT_SESSION_CLEAR_AUTH_MESSAGE,
+  AI_CHAT_SESSION_CLEAR_FAILED_MESSAGE,
+  AI_CHAT_SESSION_CREATE_AUTH_MESSAGE,
+  AI_CHAT_SESSION_CREATE_FAILED_MESSAGE,
+  AI_CHAT_SESSION_INVALID_CREATE_MESSAGE,
+  getAiSessionRouteContext,
+} from "@/lib/ai/session-route-helpers";
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import { logger } from "@/lib/logger";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 const createSessionSchema = z.object({
   titleSeed: z.string().trim().min(1).max(240).optional(),
 });
 
-async function getAuthenticatedContext() {
-  const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return null;
-  }
-
-  return { supabase, user };
-}
-
 export async function POST(request: Request) {
   try {
-    const context = await getAuthenticatedContext();
+    const context = await getAiSessionRouteContext();
 
     if (!context) {
       return createApiErrorResponse({
         status: 401,
         code: "AUTH_REQUIRED",
-        message: "Нужно войти в аккаунт, чтобы создать новый AI-чат.",
+        message: AI_CHAT_SESSION_CREATE_AUTH_MESSAGE,
       });
     }
 
@@ -40,7 +35,7 @@ export async function POST(request: Request) {
     const session = await createAiChatSession(
       context.supabase,
       context.user.id,
-      body.titleSeed ?? "Новый чат",
+      body.titleSeed ?? AI_CHAT_NEW_SESSION_TITLE,
     );
 
     return Response.json({ data: { session } });
@@ -49,7 +44,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 400,
         code: "AI_CHAT_SESSION_INVALID",
-        message: "Параметры нового AI-чата заполнены некорректно.",
+        message: AI_CHAT_SESSION_INVALID_CREATE_MESSAGE,
         details: error.flatten(),
       });
     }
@@ -59,20 +54,20 @@ export async function POST(request: Request) {
     return createApiErrorResponse({
       status: 500,
       code: "AI_CHAT_SESSION_CREATE_FAILED",
-      message: "Не удалось создать новый AI-чат.",
+      message: AI_CHAT_SESSION_CREATE_FAILED_MESSAGE,
     });
   }
 }
 
 export async function DELETE() {
   try {
-    const context = await getAuthenticatedContext();
+    const context = await getAiSessionRouteContext();
 
     if (!context) {
       return createApiErrorResponse({
         status: 401,
         code: "AUTH_REQUIRED",
-        message: "Нужно войти в аккаунт, чтобы очистить историю чатов с ИИ.",
+        message: AI_CHAT_SESSION_CLEAR_AUTH_MESSAGE,
       });
     }
 
@@ -85,7 +80,7 @@ export async function DELETE() {
     return createApiErrorResponse({
       status: 500,
       code: "AI_CHAT_HISTORY_CLEAR_FAILED",
-      message: "Не удалось очистить историю чатов с ИИ.",
+      message: AI_CHAT_SESSION_CLEAR_FAILED_MESSAGE,
     });
   }
 }

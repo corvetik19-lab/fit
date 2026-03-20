@@ -790,3 +790,10 @@
 - [x] `src/app/api/ai/meal-photo/route.ts` переведён на этот helper без изменения owner-only, billing, image-processing и chat-session contracts: route остался transport-слоем вокруг vision flow.
 - [x] Tranche подтверждён пакетами `npx eslint src/lib/ai/meal-photo-runtime-copy.ts src/app/api/ai/meal-photo/route.ts`, `npm run typecheck`, `npm run build`.
 - [ ] Следующий AI/backend tranche: продолжать remaining route/lib extraction и owner-only/idempotency audit по AI/data handlers.
+
+## 2026-03-20 AI session route helper extraction addendum
+
+- [x] Общий auth-context и user-facing copy для `src/app/api/ai/sessions/route.ts` и `src/app/api/ai/sessions/[id]/route.ts` вынесены в `src/lib/ai/session-route-helpers.ts`: auth-required, invalid-id, create/delete/clear failed messages и default title нового чата больше не дублируются между двумя route handlers.
+- [x] Оба route handler теперь ближе к transport-слою: session auth bootstrap и shared copy идут через helper, а delete-route дополнительно синхронизирован в чистом UTF-8 без изменения owner-only contracts.
+- [x] Tranche подтверждён пакетами `npx eslint src/lib/ai/session-route-helpers.ts src/app/api/ai/sessions/route.ts src/app/api/ai/sessions/[id]/route.ts`, `npm run typecheck`, `npm run build`.
+- [ ] Следующий AI/backend tranche: продолжать remaining route/lib extraction и owner-only/idempotency audit по AI/data handlers.

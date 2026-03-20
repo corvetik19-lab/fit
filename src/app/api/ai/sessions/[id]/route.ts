@@ -1,9 +1,14 @@
 import { z } from "zod";
 
 import { deleteAiChatSession, isAiChatSessionError } from "@/lib/ai/chat";
+import {
+  AI_CHAT_SESSION_DELETE_AUTH_MESSAGE,
+  AI_CHAT_SESSION_DELETE_FAILED_MESSAGE,
+  AI_CHAT_SESSION_INVALID_ID_MESSAGE,
+  getAiSessionRouteContext,
+} from "@/lib/ai/session-route-helpers";
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import { logger } from "@/lib/logger";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 type RouteContext = {
   params: Promise<{
@@ -15,28 +20,15 @@ const paramsSchema = z.object({
   id: z.string().uuid(),
 });
 
-async function getAuthenticatedContext() {
-  const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return null;
-  }
-
-  return { supabase, user };
-}
-
 export async function DELETE(_: Request, context: RouteContext) {
   try {
-    const authContext = await getAuthenticatedContext();
+    const authContext = await getAiSessionRouteContext();
 
     if (!authContext) {
       return createApiErrorResponse({
         status: 401,
         code: "AUTH_REQUIRED",
-        message: "Нужно войти в аккаунт, чтобы удалить выбранный чат с ИИ.",
+        message: AI_CHAT_SESSION_DELETE_AUTH_MESSAGE,
       });
     }
 
@@ -50,7 +42,7 @@ export async function DELETE(_: Request, context: RouteContext) {
       return createApiErrorResponse({
         status: 400,
         code: "AI_CHAT_SESSION_INVALID",
-        message: "Некорректный идентификатор чата с ИИ.",
+        message: AI_CHAT_SESSION_INVALID_ID_MESSAGE,
         details: error.flatten(),
       });
     }
@@ -68,7 +60,7 @@ export async function DELETE(_: Request, context: RouteContext) {
     return createApiErrorResponse({
       status: 500,
       code: "AI_CHAT_SESSION_DELETE_FAILED",
-      message: "Не удалось удалить выбранный чат с ИИ.",
+      message: AI_CHAT_SESSION_DELETE_FAILED_MESSAGE,
     });
   }
 }

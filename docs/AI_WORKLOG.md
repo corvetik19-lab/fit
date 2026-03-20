@@ -864,3 +864,10 @@
 - `src/app/api/ai/meal-photo/route.ts` переведён на этот helper без изменения owner-only, billing, image-processing и chat-session contracts: route остался transport-обёрткой вокруг meal-photo vision flow.
 - Проверка зелёная: `npx eslint src/lib/ai/meal-photo-runtime-copy.ts src/app/api/ai/meal-photo/route.ts`, `npm run typecheck`, `npm run build`.
 - Общий прогресс execution checklist остаётся `144 / 176` (`82%`): tranche продолжает AI route/lib extraction и sanitation wave, но не закрывает следующий основной checkbox целиком.
+
+### 2026-03-20 01:20 - Вынес shared helper из AI session routes
+
+- Добавил `src/lib/ai/session-route-helpers.ts`: общий auth-context и user-facing copy для `ai/sessions` и `ai/sessions/[id]` теперь живут вне route handlers и покрывают create/delete/clear auth, invalid id и default title нового чата.
+- `src/app/api/ai/sessions/route.ts` и `src/app/api/ai/sessions/[id]/route.ts` переведены на этот helper без изменения owner-only session contracts: handlers стали тоньше, а delete-route дополнительно синхронизирован в чистом UTF-8.
+- Проверка зелёная: `npx eslint src/lib/ai/session-route-helpers.ts src/app/api/ai/sessions/route.ts src/app/api/ai/sessions/[id]/route.ts`, `npm run typecheck`, `npm run build`.
+- Общий прогресс execution checklist остаётся `144 / 176` (`82%`): tranche продолжает AI route/lib extraction, но не закрывает следующий основной checkbox целиком.
