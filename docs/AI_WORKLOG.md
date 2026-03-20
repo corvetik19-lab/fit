@@ -1047,6 +1047,13 @@
 - Проверка зелёная: `npm run lint -- --quiet src/app/api/weekly-programs/route.ts src/app/api/exercises/route.ts src/app/api/foods/route.ts src/app/api/recipes/route.ts src/app/api/meal-templates/route.ts src/app/api/meals/route.ts tests/e2e/api-contracts.spec.ts`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1` -> `13 passed`.
 - Общий прогресс execution checklist остаётся `146 / 176` (`83%`): tranche продолжает большой backend audit по validation/owner-only/idempotency, но ещё не закрывает основной checkbox целиком.
 
+### 2026-03-21 05:05 - Дочистил workout sync transport contracts
+
+- `src/app/api/sync/pull/route.ts`, `src/app/api/sync/push/route.ts`, `src/app/api/workout-days/[id]/route.ts` и `src/app/api/workout-days/[id]/reset/route.ts` переведены в чистый UTF-8: auth, validation, duplicate mutation, not-found и failure copy больше не держит mojibake в workout sync transport surface.
+- `tests/e2e/api-contracts.spec.ts` расширен invalid transport-contracts для `POST /api/sync/push`, `GET /api/sync/pull` и payload-level `PATCH /api/workout-days/{id}`: sync/day routes теперь тоже подтверждены predictable `400` baseline без noisy route-level error logging.
+- Проверка зелёная: `npm run lint -- --quiet src/app/api/sync/pull/route.ts src/app/api/sync/push/route.ts src/app/api/workout-days/[id]/route.ts src/app/api/workout-days/[id]/reset/route.ts tests/e2e/api-contracts.spec.ts`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1` -> `13 passed`.
+- Общий прогресс execution checklist остаётся `146 / 176` (`83%`): tranche продолжает большой backend audit по validation/owner-only/idempotency, но ещё не закрывает основной checkbox целиком.
+
 ### 2026-03-20 04:20 - Закрыл основной checkbox по route/lib duplication
 
 - После серии extraction tranche по `settings`, `nutrition`, `billing`, `AI` и `admin` mutation routes основной checklist-пункт `Доменные правила больше не дублируются между route handlers и lib` закрыт в `docs/MASTER_PLAN.md`.

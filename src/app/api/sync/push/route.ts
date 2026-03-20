@@ -89,7 +89,8 @@ export async function POST(request: Request) {
             id: mutation.id,
             status: "rejected",
             code: "SYNC_MUTATION_DUPLICATE",
-            message: "Повторяющиеся идентификаторы офлайн-изменений в одном пакете недопустимы.",
+            message:
+              "Повторяющиеся идентификаторы офлайн-изменений в одном пакете недопустимы.",
           });
           continue;
         }

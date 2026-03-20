@@ -160,6 +160,9 @@ test.describe("api contracts", () => {
       invalidSettingsDataPayload,
       invalidStripeCheckoutReconcilePayload,
       invalidOnboardingPayload,
+      invalidSyncPullParams,
+      invalidSyncPushPayload,
+      invalidWorkoutDayPayload,
       invalidWeeklyProgramClonePayload,
       invalidWeeklyProgramCreatePayload,
       invalidExerciseCreatePayload,
@@ -278,6 +281,36 @@ test.describe("api contracts", () => {
           targetWeightKg: 20,
           weeklyTrainingDays: 0,
         },
+      }),
+      fetchJson(page, {
+        method: "GET",
+        url: "/api/sync/pull?scope=workout_day&dayId=not-a-uuid",
+      }),
+      fetchJson(page, {
+        method: "POST",
+        url: "/api/sync/push",
+        body: {
+          mutations: [
+            {
+              id: "mutation-1",
+              entity: "workout_day_execution",
+              op: "update",
+              payload: {
+                dayId: "not-a-uuid",
+                status: "planned",
+                bodyWeightKg: null,
+                sessionNote: null,
+                sessionDurationSeconds: null,
+              },
+              createdAt: "2026-03-21T00:00:00.000Z",
+            },
+          ],
+        },
+      }),
+      fetchJson(page, {
+        method: "PATCH",
+        url: `/api/workout-days/${crypto.randomUUID()}`,
+        body: {},
       }),
       fetchJson(page, {
         method: "POST",
@@ -444,6 +477,21 @@ test.describe("api contracts", () => {
     expect(invalidOnboardingPayload.status).toBe(400);
     expect((invalidOnboardingPayload.body as { code?: string } | null)?.code).toBe(
       "ONBOARDING_PAYLOAD_INVALID",
+    );
+
+    expect(invalidSyncPullParams.status).toBe(400);
+    expect((invalidSyncPullParams.body as { code?: string } | null)?.code).toBe(
+      "SYNC_PULL_INVALID",
+    );
+
+    expect(invalidSyncPushPayload.status).toBe(400);
+    expect((invalidSyncPushPayload.body as { code?: string } | null)?.code).toBe(
+      "SYNC_PUSH_INVALID",
+    );
+
+    expect(invalidWorkoutDayPayload.status).toBe(400);
+    expect((invalidWorkoutDayPayload.body as { code?: string } | null)?.code).toBe(
+      "WORKOUT_DAY_UPDATE_INVALID",
     );
 
     expect(invalidWeeklyProgramClonePayload.status).toBe(400);

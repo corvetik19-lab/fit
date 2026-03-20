@@ -49,17 +49,12 @@ export async function PATCH(
     const { id } = paramsSchema.parse(await params);
     const payload = workoutDayUpdateSchema.parse(await request.json());
 
-    const result = await updateWorkoutDayExecution(
-      supabase,
-      user.id,
-      id,
-      {
-        status: payload.status,
-        bodyWeightKg: payload.bodyWeightKg,
-        sessionNote: payload.sessionNote,
-        sessionDurationSeconds: payload.sessionDurationSeconds,
-      },
-    );
+    const result = await updateWorkoutDayExecution(supabase, user.id, id, {
+      status: payload.status,
+      bodyWeightKg: payload.bodyWeightKg,
+      sessionNote: payload.sessionNote,
+      sessionDurationSeconds: payload.sessionDurationSeconds,
+    });
 
     if (result.error) {
       return createApiErrorResponse(result.error);
