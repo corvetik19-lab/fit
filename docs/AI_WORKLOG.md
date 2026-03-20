@@ -987,6 +987,16 @@
 - Проверка зелёная: `npx eslint src/app/api/admin/users/bulk/route.ts src/app/api/admin/operations/[kind]/[id]/route.ts src/app/api/admin/users/[id]/route.ts src/app/api/admin/users/[id]/role/route.ts tests/e2e/api-contracts.spec.ts`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1` -> `11 passed`.
 - Общий прогресс execution checklist остается `146 / 176` (`83%`): tranche продолжает большой backend audit по validation/owner-only/idempotency, но ещё не закрывает основной checkbox целиком.
 
+### 2026-03-21 00:35 - Дожал bootstrap, webhook и billing-reconcile contracts
+
+- `src/app/api/admin/bootstrap/route.ts`, `src/app/api/billing/webhook/stripe/route.ts` и `src/app/api/internal/jobs/billing-reconcile/route.ts` переведены в чистый UTF-8: auth/bootstrap, Stripe webhook и billing reconcile job больше не держат английский или битый transport copy.
+- `src/app/api/admin/bootstrap/route.ts` больше не пишет noisy `logger.error` на ожидаемом `ZodError`: validation path `ADMIN_BOOTSTRAP_PAYLOAD_INVALID` теперь режется до unexpected-failure logging.
+- `src/app/api/internal/jobs/billing-reconcile/route.ts` теперь парсит query до env-gate: invalid `userId` подтверждён как `400 BILLING_RECONCILE_JOB_INVALID`, а не маскируется `503 STRIPE_BILLING_RECONCILE_NOT_CONFIGURED`.
+- `tests/e2e/api-contracts.spec.ts` расширен transport-контрактами: anonymous `POST /api/admin/bootstrap` -> `401 AUTH_REQUIRED`, anonymous `POST /api/billing/webhook/stripe` подтверждён как `400 STRIPE_SIGNATURE_MISSING` или `503 STRIPE_WEBHOOK_NOT_CONFIGURED` в зависимости от env.
+- `tests/e2e/internal-jobs.spec.ts` расширен validation-контрактом для `POST /api/internal/jobs/billing-reconcile?userId=not-a-uuid` -> `400 BILLING_RECONCILE_JOB_INVALID`.
+- Проверка зелёная: `npx eslint src/app/api/admin/bootstrap/route.ts src/app/api/billing/webhook/stripe/route.ts src/app/api/internal/jobs/billing-reconcile/route.ts tests/e2e/api-contracts.spec.ts tests/e2e/internal-jobs.spec.ts`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/api-contracts.spec.ts tests/e2e/internal-jobs.spec.ts --workers=1` -> `13 passed`.
+- Общий прогресс execution checklist остается `146 / 176` (`83%`): tranche продолжает большой backend audit по validation/owner-only/idempotency, но ещё не закрывает основной checkbox целиком.
+
 ### 2026-03-20 04:20 - Закрыл основной checkbox по route/lib duplication
 
 - После серии extraction tranche по `settings`, `nutrition`, `billing`, `AI` и `admin` mutation routes основной checklist-пункт `Доменные правила больше не дублируются между route handlers и lib` закрыт в `docs/MASTER_PLAN.md`.

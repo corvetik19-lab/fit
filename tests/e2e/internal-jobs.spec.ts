@@ -93,6 +93,7 @@ test.describe("internal jobs contracts", () => {
         nutritionSummaries,
         knowledgeReindex,
         scheduledAiEvals,
+        billingReconcile,
       ] = await Promise.all([
         fetchJson(page, {
           method: "POST",
@@ -109,6 +110,10 @@ test.describe("internal jobs contracts", () => {
         fetchJson(page, {
           method: "POST",
           url: "/api/internal/jobs/ai-evals-schedule?suite=not-a-suite",
+        }),
+        fetchJson(page, {
+          method: "POST",
+          url: "/api/internal/jobs/billing-reconcile?userId=not-a-uuid",
         }),
       ]);
 
@@ -130,6 +135,11 @@ test.describe("internal jobs contracts", () => {
       expect(scheduledAiEvals.status).toBe(400);
       expect((scheduledAiEvals.body as { code?: string } | null)?.code).toBe(
         "SCHEDULED_AI_EVAL_INVALID",
+      );
+
+      expect(billingReconcile.status).toBe(400);
+      expect((billingReconcile.body as { code?: string } | null)?.code).toBe(
+        "BILLING_RECONCILE_JOB_INVALID",
       );
     });
   });

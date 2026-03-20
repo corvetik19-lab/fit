@@ -1,47 +1,53 @@
 import { createApiErrorResponse } from "@/lib/api/error-response";
-import {
-  getMissingStripePortalEnv,
-  hasStripePortalEnv,
-} from "@/lib/env";
+import { getMissingStripePortalEnv, hasStripePortalEnv } from "@/lib/env";
 import {
   isInternalJobParamError,
-  parsePositiveInt,
   parseOptionalUuidParam,
+  parsePositiveInt,
   requireInternalAdminJobAccess,
 } from "@/lib/internal-jobs";
 import { logger } from "@/lib/logger";
-import {
-  reconcileStripeSubscriptionForUser,
-} from "@/lib/stripe-billing";
+import { reconcileStripeSubscriptionForUser } from "@/lib/stripe-billing";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
 export const maxDuration = 60;
 
-async function resolveBillingTargetUserIds(request: Request) {
+function parseBillingReconcileRequest(request: Request) {
   const { searchParams } = new URL(request.url);
   const explicitUserId = parseOptionalUuidParam(
     searchParams.get("userId"),
     "userId",
   );
-
-  if (explicitUserId) {
-    return [explicitUserId];
-  }
-
   const limit = parsePositiveInt(
     searchParams.get("limit"),
     DEFAULT_LIMIT,
     MAX_LIMIT,
   );
+
+  return {
+    explicitUserId,
+    limit,
+  };
+}
+
+async function resolveBillingTargetUserIds(params: {
+  explicitUserId: string | null;
+  limit: number;
+}) {
+  if (params.explicitUserId) {
+    const explicitUserId = params.explicitUserId;
+    return [explicitUserId];
+  }
+
   const supabase = createAdminSupabaseClient();
   const { data, error } = await supabase
     .from("subscriptions")
     .select("user_id, provider_subscription_id, provider_customer_id, updated_at")
     .eq("provider", "stripe")
     .order("updated_at", { ascending: false })
-    .limit(limit * 4);
+    .limit(params.limit * 4);
 
   if (error) {
     throw error;
@@ -64,7 +70,7 @@ async function resolveBillingTargetUserIds(request: Request) {
     seen.add(userId);
     userIds.push(userId);
 
-    if (userIds.length >= limit) {
+    if (userIds.length >= params.limit) {
       break;
     }
   }
@@ -124,7 +130,7 @@ async function reconcileBillingForUsers(
 
       if (!reconciliation) {
         const message =
-          "No linked Stripe subscription could be resolved for this user.";
+          "Для этого пользователя не удалось определить связанную Stripe-подписку.";
 
         await recordBillingReconcileResult({
           actorUserId: options.actorUserId,
@@ -151,6 +157,7 @@ async function reconcileBillingForUsers(
         details: {
           currentPeriodEnd: reconciliation.subscription.current_period_end,
           currentPeriodStart: reconciliation.subscription.current_period_start,
+          lookupSource: reconciliation.source,
           outcome: "reconciled",
           previousPeriodEnd:
             reconciliation.previousSubscription?.current_period_end ?? null,
@@ -159,7 +166,6 @@ async function reconcileBillingForUsers(
             reconciliation.subscription.provider_customer_id ?? null,
           providerSubscriptionId:
             reconciliation.subscription.provider_subscription_id ?? null,
-          lookupSource: reconciliation.source,
           status: reconciliation.subscription.status,
           stripeSubscriptionId: reconciliation.stripeSubscriptionId,
           subscriptionId: reconciliation.subscription.id,
@@ -185,7 +191,7 @@ async function reconcileBillingForUsers(
       const message =
         error instanceof Error
           ? error.message
-          : "Unexpected billing reconciliation failure.";
+          : "Непредвиденная ошибка сверки биллинга.";
 
       try {
         await recordBillingReconcileResult({
@@ -231,18 +237,20 @@ async function handleRequest(request: Request) {
   }
 
   try {
+    const query = parseBillingReconcileRequest(request);
+
     if (!hasStripePortalEnv()) {
       return createApiErrorResponse({
         status: 503,
         code: "STRIPE_BILLING_RECONCILE_NOT_CONFIGURED",
-        message: "Stripe billing reconciliation is not configured yet.",
+        message: "Сверка Stripe billing пока не настроена.",
         details: {
           missing: getMissingStripePortalEnv(),
         },
       });
     }
 
-    const userIds = await resolveBillingTargetUserIds(request);
+    const userIds = await resolveBillingTargetUserIds(query);
     const results = await reconcileBillingForUsers(userIds, {
       actorUserId: access.actorUserId,
       source: access.source,
@@ -261,8 +269,8 @@ async function handleRequest(request: Request) {
       },
       message:
         errorCount > 0
-          ? "Billing reconciliation job completed with partial failures."
-          : "Billing reconciliation job completed successfully.",
+          ? "Сверка billing завершилась с частичными ошибками."
+          : "Сверка billing завершилась успешно.",
     });
   } catch (error) {
     if (isInternalJobParamError(error)) {

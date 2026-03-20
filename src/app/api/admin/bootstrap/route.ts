@@ -1,11 +1,14 @@
 import { z } from "zod";
 
 import { createApiErrorResponse } from "@/lib/api/error-response";
-import { PRIMARY_SUPER_ADMIN_EMAIL, isPrimarySuperAdminEmail } from "@/lib/admin-permissions";
+import {
+  PRIMARY_SUPER_ADMIN_EMAIL,
+  isPrimarySuperAdminEmail,
+} from "@/lib/admin-permissions";
+import { serverEnv } from "@/lib/env";
 import { logger } from "@/lib/logger";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { serverEnv } from "@/lib/env";
 
 const bootstrapSchema = z.object({
   token: z.string().min(1),
@@ -32,7 +35,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 503,
         code: "ADMIN_BOOTSTRAP_NOT_CONFIGURED",
-        message: "ADMIN_BOOTSTRAP_TOKEN is not configured.",
+        message: "Токен bootstrap для админ-доступа пока не настроен.",
       });
     }
 
@@ -40,7 +43,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 403,
         code: "ADMIN_BOOTSTRAP_DENIED",
-        message: "Bootstrap token заполнен некорректно.",
+        message: "Токен bootstrap заполнен некорректно.",
       });
     }
 
@@ -92,8 +95,6 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
-    logger.error("admin bootstrap route failed", { error });
-
     if (error instanceof z.ZodError) {
       return createApiErrorResponse({
         status: 400,
@@ -102,6 +103,8 @@ export async function POST(request: Request) {
         details: error.flatten(),
       });
     }
+
+    logger.error("admin bootstrap route failed", { error });
 
     return createApiErrorResponse({
       status: 500,

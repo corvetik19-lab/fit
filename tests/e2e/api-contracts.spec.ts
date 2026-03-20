@@ -40,12 +40,24 @@ test.describe("api contracts without auth", () => {
     await page.context().clearCookies();
 
     const [
+      bootstrapResult,
+      webhookResult,
       checkoutResult,
       reconcileResult,
       portalResult,
       settingsBillingGetResult,
       settingsBillingPostResult,
     ] = await Promise.all([
+      fetchJson(page, {
+        method: "POST",
+        url: "/api/admin/bootstrap",
+        body: { token: "test" },
+      }),
+      fetchJson(page, {
+        method: "POST",
+        url: "/api/billing/webhook/stripe",
+        body: {},
+      }),
       fetchJson(page, {
         method: "POST",
         url: "/api/billing/checkout",
@@ -77,6 +89,16 @@ test.describe("api contracts without auth", () => {
     expect((checkoutResult.body as { code?: string } | null)?.code).toBe(
       "AUTH_REQUIRED",
     );
+
+    expect(bootstrapResult.status).toBe(401);
+    expect((bootstrapResult.body as { code?: string } | null)?.code).toBe(
+      "AUTH_REQUIRED",
+    );
+
+    expect([400, 503]).toContain(webhookResult.status);
+    expect(
+      (webhookResult.body as { code?: string } | null)?.code,
+    ).toMatch(/^(STRIPE_SIGNATURE_MISSING|STRIPE_WEBHOOK_NOT_CONFIGURED)$/);
 
     expect(reconcileResult.status).toBe(401);
     expect((reconcileResult.body as { code?: string } | null)?.code).toBe(
