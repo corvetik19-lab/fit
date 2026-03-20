@@ -1,6 +1,11 @@
 import { z } from "zod";
 
 import { reindexUserKnowledgeBase } from "@/lib/ai/knowledge";
+import {
+  formatKnowledgeReindexMessage,
+  recordKnowledgeReindexAuditLog,
+  recordKnowledgeReindexSupportAction,
+} from "@/lib/ai/knowledge-reindex-admin";
 import { isAdminAccessError, requireAdminRouteAccess } from "@/lib/admin-auth";
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import { logger } from "@/lib/logger";
@@ -23,59 +28,45 @@ export async function POST(request: Request) {
       mode: payload.mode ?? "full",
     });
 
-    const { data: supportAction, error: supportActionError } = await adminSupabase
-      .from("support_actions")
-      .insert({
-        actor_user_id: user.id,
-        target_user_id: targetUserId,
-        action: "reindex_knowledge",
-        status: "completed",
-        payload: {
-          embeddingsIndexed: result.embeddingsIndexed,
-          indexedChunks: result.indexedChunks,
-          mode: result.mode,
-          searchMode: result.searchMode,
-        },
-      })
-      .select("id, action, status, created_at, payload")
-      .single();
-
-    if (supportActionError) {
-      throw supportActionError;
-    }
-
-    const { error: auditError } = await adminSupabase.from("admin_audit_logs").insert({
-      actor_user_id: user.id,
-      target_user_id: targetUserId,
-      action: "reindex_knowledge",
-      reason:
-        payload.reason ??
-        (result.mode === "embeddings"
-          ? "Ручное обновление векторного индекса базы знаний"
-          : "Ручная переиндексация базы знаний"),
-      payload: {
+    const supportAction = await recordKnowledgeReindexSupportAction({
+      actorUserId: user.id,
+      details: {
         embeddingsIndexed: result.embeddingsIndexed,
         indexedChunks: result.indexedChunks,
         mode: result.mode,
         searchMode: result.searchMode,
-        supportActionId: supportAction.id,
       },
+      source: "admin",
+      status: "completed",
+      supabase: adminSupabase,
+      targetUserId,
+      withRecord: true,
     });
 
-    if (auditError) {
-      throw auditError;
-    }
-
-    const message =
-      result.mode === "embeddings"
-        ? `Эмбеддинги обновлены. Чанков в базе знаний: ${result.indexedChunks}, векторов пересобрано: ${result.embeddingsIndexed}.`
-        : `База знаний переиндексирована. Индексировано чанков: ${result.indexedChunks}.`;
+    await recordKnowledgeReindexAuditLog({
+      actorUserId: user.id,
+      details: {
+        embeddingsIndexed: result.embeddingsIndexed,
+        indexedChunks: result.indexedChunks,
+        mode: result.mode,
+        searchMode: result.searchMode,
+      },
+      reason: payload.reason,
+      supabase: adminSupabase,
+      supportActionId: supportAction.id,
+      targetUserId,
+    });
 
     return Response.json({
       data: {
         ...supportAction,
         indexedChunks: result.indexedChunks,
-        message,
+        message: formatKnowledgeReindexMessage({
+          embeddingsIndexed: result.embeddingsIndexed,
+          indexedChunks: result.indexedChunks,
+          mode: result.mode,
+          searchMode: result.searchMode,
+        }),
       },
     });
   } catch (error) {

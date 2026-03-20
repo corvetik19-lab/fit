@@ -1,4 +1,9 @@
 import { reindexUserKnowledgeBase } from "@/lib/ai/knowledge";
+import {
+  parseKnowledgeReindexMode,
+  recordKnowledgeReindexSupportAction,
+  type KnowledgeReindexMode,
+} from "@/lib/ai/knowledge-reindex-admin";
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import {
   isInternalJobParamError,
@@ -11,49 +16,6 @@ import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 50;
 export const maxDuration = 60;
-
-type KnowledgeReindexMode = "embeddings" | "full";
-
-function parseMode(value: string | null): KnowledgeReindexMode {
-  return value === "full" ? "full" : "embeddings";
-}
-
-async function recordKnowledgeReindexResult(params: {
-  actorUserId: string | null;
-  details:
-    | {
-        embeddingsIndexed: number;
-        indexedChunks: number;
-        mode: KnowledgeReindexMode;
-        searchMode: "text" | "vector";
-      }
-    | {
-        message: string;
-        mode: KnowledgeReindexMode;
-      };
-  source: "admin" | "cron";
-  status: "completed" | "failed";
-  supabase: ReturnType<typeof createAdminSupabaseClient>;
-  targetUserId: string;
-}) {
-  const { actorUserId, details, source, status, supabase, targetUserId } = params;
-
-  const { error } = await supabase.from("support_actions").insert({
-    actor_user_id: actorUserId,
-    target_user_id: targetUserId,
-    action: "reindex_knowledge",
-    status,
-    payload: {
-      ...details,
-      jobType: "scheduled_knowledge_reindex",
-      source,
-    },
-  });
-
-  if (error) {
-    throw error;
-  }
-}
 
 async function reindexKnowledgeForUsers(
   userIds: string[],
@@ -79,7 +41,7 @@ async function reindexKnowledgeForUsers(
         mode: options.mode,
       });
 
-      await recordKnowledgeReindexResult({
+      await recordKnowledgeReindexSupportAction({
         actorUserId: options.actorUserId,
         details: {
           embeddingsIndexed: result.embeddingsIndexed,
@@ -113,7 +75,7 @@ async function reindexKnowledgeForUsers(
           : "Unexpected knowledge reindex job failure.";
 
       try {
-        await recordKnowledgeReindexResult({
+        await recordKnowledgeReindexSupportAction({
           actorUserId: options.actorUserId,
           details: {
             message,
@@ -154,7 +116,7 @@ async function handleRequest(request: Request) {
 
   try {
     const { searchParams } = new URL(request.url);
-    const mode = parseMode(searchParams.get("mode"));
+    const mode = parseKnowledgeReindexMode(searchParams.get("mode"));
     const userIds = await resolveTargetUserIds(request, {
       defaultLimit: DEFAULT_LIMIT,
       maxLimit: MAX_LIMIT,

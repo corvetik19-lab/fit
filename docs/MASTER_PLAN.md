@@ -804,3 +804,10 @@
 - [x] Оба proposal routes теперь ближе к transport-слою: в handlers остались только route-specific action calls (`applyAiPlanProposal` и `approveAiPlanProposal`), feature denied response и error mapping, а shared route access plumbing живёт в helper-слое.
 - [x] Tranche подтверждён пакетами `npx eslint src/lib/ai/proposal-route-helpers.ts src/app/api/ai/proposals/[id]/apply/route.ts src/app/api/ai/proposals/[id]/approve/route.ts`, `npm run typecheck`, `npm run build`.
 - [ ] Следующий AI/backend tranche: продолжать remaining route/lib extraction и owner-only/idempotency audit по AI/data handlers.
+
+## 2026-03-20 knowledge reindex admin helper extraction addendum
+
+- [x] Общий parse/logging слой для `src/app/api/ai/reindex/route.ts` и `src/app/api/internal/jobs/knowledge-reindex/route.ts` вынесен в `src/lib/ai/knowledge-reindex-admin.ts`: parse mode, support action logging, audit logging и форматирование success message больше не живут в route handlers.
+- [x] `src/app/api/ai/reindex/route.ts` и `src/app/api/internal/jobs/knowledge-reindex/route.ts` теперь ближе к transport/orchestration роли: route-level auth, validation и response shape остались в handlers, а shared reindex admin/job plumbing живёт в helper-слое.
+- [x] Tranche подтверждён пакетами `npx eslint src/lib/ai/knowledge-reindex-admin.ts src/app/api/ai/reindex/route.ts src/app/api/internal/jobs/knowledge-reindex/route.ts`, `npm run typecheck`, `npm run build`.
+- [ ] Следующий AI/backend tranche: продолжать remaining route/lib extraction и owner-only/idempotency audit по AI/data handlers.

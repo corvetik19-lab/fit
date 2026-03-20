@@ -878,3 +878,10 @@
 - `src/app/api/ai/proposals/[id]/apply/route.ts` и `src/app/api/ai/proposals/[id]/approve/route.ts` переведены на этот helper без изменения owner-only proposal contracts: route handlers теперь ближе к transport-слою и держат только route-specific action call и error mapping.
 - Проверка зелёная: `npx eslint src/lib/ai/proposal-route-helpers.ts src/app/api/ai/proposals/[id]/apply/route.ts src/app/api/ai/proposals/[id]/approve/route.ts`, `npm run typecheck`, `npm run build`.
 - Общий прогресс execution checklist остаётся `144 / 176` (`82%`): tranche продолжает AI route/lib extraction, но не закрывает следующий основной checkbox целиком.
+
+### 2026-03-20 02:15 - Вынес shared helper из knowledge reindex routes
+
+- Добавил `src/lib/ai/knowledge-reindex-admin.ts`: общий parse/logging слой для ручного `ai/reindex` и internal `knowledge-reindex` jobs теперь живёт вне route handlers и покрывает parse mode, support action logging, audit logging и форматирование итогового success message.
+- `src/app/api/ai/reindex/route.ts` и `src/app/api/internal/jobs/knowledge-reindex/route.ts` переведены на этот helper без изменения owner-only/admin-job contracts: route handlers стали тоньше и держат только auth, validation, orchestration и response shape.
+- Проверка зелёная: `npx eslint src/lib/ai/knowledge-reindex-admin.ts src/app/api/ai/reindex/route.ts src/app/api/internal/jobs/knowledge-reindex/route.ts`, `npm run typecheck`, `npm run build`.
+- Общий прогресс execution checklist остаётся `144 / 176` (`82%`): tranche продолжает AI/data route extraction, но не закрывает следующий основной checkbox целиком.
