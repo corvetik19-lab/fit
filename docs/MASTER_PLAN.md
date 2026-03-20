@@ -11,7 +11,7 @@
 
 Этот файл — текущий production-hardening backlog проекта. Он отражает фактическое состояние репозитория на `2026-03-14`.
 
-Текущий прогресс execution checklist: `160 / 176` (`91%`).
+Текущий прогресс execution checklist: `161 / 176` (`91%`).
 
 ## Текущая база
 
@@ -278,7 +278,7 @@
 ### Release process
 
 - [x] Формализовать release checklist для web/PWA.
-- [ ] Ввести staging-like verification для Stripe и AI runtime.
+- [x] Ввести staging-like verification для Stripe и AI runtime.
 - [x] Зафиксировать критерий `prod-ready` как набор automated + manual acceptance checks, а не только локальную сборку.
 
 ## Волна 6. Android / TWA
@@ -1042,3 +1042,11 @@
 - [x] Повторный поиск по `src/` и `docs/` (включая локальный `docs/AI_EXPLAINED.md`) не нашёл характерных mojibake-маркеров вроде `Рџ`, `РЎ`, `СЃ`, `С‚`, `РµР`.
 - [x] Локальный dirty файл `docs/AI_EXPLAINED.md` отдельно triaged без правки содержимого: он не попадает в коммиты slice-работ и не блокирует shipped documentation surface.
 - [x] После этого закрыт волновой пункт `Отдельно провести triage локального docs/AI_EXPLAINED.md и завершить sanitation-wave документации`, а верхнеуровневый статус документации переведён в санированное состояние.
+
+## 2026-03-21 staging runtime verification addendum
+
+- [x] Добавлен единый release harness `npm run verify:staging-runtime`: он делает preflight по AI/Stripe env и auth-credentials, запускает `npm run test:ai-gate` и `npm run test:billing-gate` только для реально готовых контуров и явно печатает skip/blocker причины для остальных.
+- [x] Добавлен `tests/billing-gate/billing-runtime-gate.spec.ts`: staging-like billing suite подтверждает, что при готовом `STRIPE_SECRET_KEY` и `STRIPE_PREMIUM_MONTHLY_PRICE_ID` self-service billing surface может поднять live Stripe Checkout session.
+- [x] `package.json`, `docs/PROD_READY.md` и `docs/RELEASE_CHECKLIST.md` синхронизированы: в проекте теперь есть формальный command-level вход для staging-like verification billing/AI runtime, а не только разрозненные suites.
+- [x] Локальная verification-связка подтверждена пакетами `npx eslint scripts/verify-staging-runtime.mjs tests/billing-gate/billing-runtime-gate.spec.ts`, `npm run build`, `npm run typecheck`, `npm run test:billing-gate` -> `1 skipped`, `npm run verify:staging-runtime` -> явный blocker-report (`AI provider unavailable`, `Stripe env missing`) вместо молчаливого отсутствия процесса.
+- [x] После этого закрыт основной checklist-пункт `Ввести staging-like verification для Stripe и AI runtime`; live rollout и AI quality gate по-прежнему остаются отдельными внешними блокерами.

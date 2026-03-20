@@ -20,6 +20,7 @@
 - [ ] Подтверждены `OPENROUTER_API_KEY` и `VOYAGE_API_KEY`, если выкатывается AI runtime
 - [ ] Подтверждены `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN`
 - [ ] Подтверждены `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PREMIUM_MONTHLY_PRICE_ID`, если затронут billing
+- [ ] Если менялись AI runtime или billing runtime контуры, прогнан `npm run verify:staging-runtime`
 - [ ] После DDL-изменений применены миграции и проверены advisors `security` и `performance`
 - [ ] Для Supabase-проекта отдельно проверены platform-level пункты:
   - leaked password protection включён

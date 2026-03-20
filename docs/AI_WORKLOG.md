@@ -974,6 +974,15 @@
 - Этим закрыт оставшийся волновой sanitation-пункт и верхнеуровневый статус документации переведён в санированное состояние.
 - Общий прогресс execution checklist вырос до `160 / 176` (`91%`).
 
+### 2026-03-21 11:40 - Ввёл staging-like verification для AI и billing runtime
+
+- Добавил `npm run verify:staging-runtime`: единый release harness теперь сам проверяет readiness по AI/Stripe env и auth-credentials, запускает `test:ai-gate` и `test:billing-gate` только для реально готовых контуров и печатает явные blocker-причины для остальных.
+- Добавил `tests/billing-gate/billing-runtime-gate.spec.ts`: staging-like billing suite умеет подтвердить bootstrapping live Stripe Checkout session, когда готовы `STRIPE_SECRET_KEY` и `STRIPE_PREMIUM_MONTHLY_PRICE_ID`.
+- `docs/PROD_READY.md` и `docs/RELEASE_CHECKLIST.md` синхронизированы с новым command-level gate, так что staging-like verification теперь оформлен как официальный release шаг, а не как разовая ручная договорённость.
+- Проверка зелёная по коду и harness-обвязке: `npx eslint scripts/verify-staging-runtime.mjs tests/billing-gate/billing-runtime-gate.spec.ts`, `npm run build`, `npm run typecheck`, `npm run test:billing-gate` -> `1 skipped`.
+- `npm run verify:staging-runtime` в текущем окружении отрабатывает как и задумано: явно показывает внешний blocker (`AI provider unavailable`, `Stripe env missing`) вместо молчаливого отсутствия процесса.
+- Общий прогресс execution checklist вырос до `161 / 176` (`91%`).
+
 ### 2026-03-20 18:55 - Вынес self-service orchestration из settings data center
 
 - Добавил `src/components/use-settings-data-center-state.ts`: refresh snapshot, queue export, request/cancel deletion, success/error state и derived flags для settings data center теперь живут вне JSX.

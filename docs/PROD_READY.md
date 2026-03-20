@@ -23,6 +23,7 @@
 
 - `npm run test:rls` - если менялся auth, RLS, owner-only или self-service контур
 - `npm run test:e2e:auth` - если менялись пользовательские сценарии, shell, API contracts, AI/admin UX
+- `npm run verify:staging-runtime` - если менялись AI runtime или billing runtime контуры и нужно прогнать staging-like preflight для live secrets
 - `npm run verify:migrations` - если менялись `supabase/migrations`
 
 ### Что считается провалом automated gates
