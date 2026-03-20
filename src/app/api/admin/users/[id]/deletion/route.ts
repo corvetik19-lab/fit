@@ -30,7 +30,7 @@ export async function POST(
     const { id: rawId } = await params;
     const id = parseAdminUserIdParam(rawId, {
       code: "ADMIN_DELETION_TARGET_INVALID",
-      message: "Target user id is invalid.",
+      message: "Идентификатор целевого пользователя заполнен некорректно.",
     });
     const payload = deletionRequestSchema.parse(
       await request.json().catch(() => ({})),
@@ -41,7 +41,7 @@ export async function POST(
 
     const data = await holdAdminDeletionRequest({
       actorUserId: user.id,
-      auditReason: payload.reason ?? "manual deletion hold request",
+      auditReason: payload.reason ?? "ручная постановка удаления на удержание",
       supabase: adminSupabase,
       targetUserId: id,
     });
@@ -109,7 +109,7 @@ export async function DELETE(
     const { id: rawId } = await params;
     const id = parseAdminUserIdParam(rawId, {
       code: "ADMIN_DELETION_TARGET_INVALID",
-      message: "Target user id is invalid.",
+      message: "Идентификатор целевого пользователя заполнен некорректно.",
     });
     const payload = deletionRequestSchema.parse(
       await request.json().catch(() => ({})),
@@ -120,7 +120,7 @@ export async function DELETE(
 
     const data = await cancelAdminDeletionRequest({
       actorUserId: user.id,
-      auditReason: payload.reason ?? "manual deletion cancel request",
+      auditReason: payload.reason ?? "ручная отмена запроса на удаление",
       supabase: adminSupabase,
       targetUserId: id,
     });
@@ -129,7 +129,7 @@ export async function DELETE(
       return createApiErrorResponse({
         status: 404,
         code: "ADMIN_DELETION_NOT_FOUND",
-        message: "Deletion request was not found.",
+        message: "Запрос на удаление не найден.",
       });
     }
 

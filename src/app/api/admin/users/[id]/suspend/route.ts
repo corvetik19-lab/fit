@@ -27,7 +27,7 @@ export async function POST(
     const { id: rawId } = await params;
     const id = parseAdminUserIdParam(rawId, {
       code: "ADMIN_SUSPEND_TARGET_INVALID",
-      message: "Target user id is invalid.",
+      message: "Идентификатор целевого пользователя заполнен некорректно.",
     });
     const payload = suspendSchema.parse(await request.json().catch(() => ({})));
     const adminSupabase = createAdminSupabaseClient();
@@ -37,7 +37,7 @@ export async function POST(
     const data = await queueAdminSupportAction({
       action: "suspend_user",
       actorUserId: user.id,
-      auditReason: payload.reason ?? "manual suspend request",
+      auditReason: payload.reason ?? "ручной запрос на блокировку",
       payload: {
         source: "admin-api",
       },

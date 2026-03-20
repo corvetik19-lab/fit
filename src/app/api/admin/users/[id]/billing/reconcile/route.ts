@@ -18,7 +18,7 @@ export async function POST(
     const { id: rawId } = await params;
     const id = parseAdminUserIdParam(rawId, {
       code: "ADMIN_BILLING_RECONCILE_TARGET_INVALID",
-      message: "Target user id is invalid.",
+      message: "Идентификатор целевого пользователя заполнен некорректно.",
     });
     const adminSupabase = createAdminSupabaseClient();
     const reconciliation = await reconcileStripeSubscriptionForUser(
@@ -50,7 +50,7 @@ export async function POST(
         stripeSubscriptionId: reconciliation.stripeSubscriptionId,
         subscriptionId: reconciliation.subscription.id,
       },
-      reason: "manual stripe reconcile",
+      reason: "ручная сверка Stripe-подписки",
       targetUserId: id,
     });
 

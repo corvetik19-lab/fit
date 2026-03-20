@@ -997,6 +997,14 @@
 - Проверка зелёная: `npx eslint src/app/api/admin/bootstrap/route.ts src/app/api/billing/webhook/stripe/route.ts src/app/api/internal/jobs/billing-reconcile/route.ts tests/e2e/api-contracts.spec.ts tests/e2e/internal-jobs.spec.ts`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/api-contracts.spec.ts tests/e2e/internal-jobs.spec.ts --workers=1` -> `13 passed`.
 - Общий прогресс execution checklist остается `146 / 176` (`83%`): tranche продолжает большой backend audit по validation/owner-only/idempotency, но ещё не закрывает основной checkbox целиком.
 
+### 2026-03-21 01:10 - Дожал admin mutation payload contracts
+
+- `src/app/api/admin/users/[id]/billing/route.ts`, `billing/reconcile/route.ts`, `deletion/route.ts`, `export/route.ts`, `restore/route.ts`, `support-action/route.ts`, `suspend/route.ts` дочищены до чистого UTF-8: target-id, validation и failure copy больше не держат английские или битые transport messages.
+- Default audit reasons для этих admin mutation handlers переведены на русский, чтобы operator-visible history больше не показывала английские `manual ... request` хвосты.
+- `tests/e2e/api-contracts.spec.ts` расширен invalid-payload контрактами для admin queue routes: `ADMIN_DELETION_INVALID`, `ADMIN_EXPORT_INVALID`, `ADMIN_RESTORE_INVALID`, `ADMIN_SUPPORT_ACTION_INVALID`, `ADMIN_SUSPEND_INVALID`.
+- Проверка зелёная: `npx eslint src/app/api/admin/users/[id]/billing/route.ts src/app/api/admin/users/[id]/billing/reconcile/route.ts src/app/api/admin/users/[id]/deletion/route.ts src/app/api/admin/users/[id]/export/route.ts src/app/api/admin/users/[id]/restore/route.ts src/app/api/admin/users/[id]/support-action/route.ts src/app/api/admin/users/[id]/suspend/route.ts tests/e2e/api-contracts.spec.ts`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1` -> `12 passed`.
+- Общий прогресс execution checklist остается `146 / 176` (`83%`): tranche продолжает большой backend audit по validation/owner-only/idempotency, но ещё не закрывает основной checkbox целиком.
+
 ### 2026-03-20 04:20 - Закрыл основной checkbox по route/lib duplication
 
 - После серии extraction tranche по `settings`, `nutrition`, `billing`, `AI` и `admin` mutation routes основной checklist-пункт `Доменные правила больше не дублируются между route handlers и lib` закрыт в `docs/MASTER_PLAN.md`.

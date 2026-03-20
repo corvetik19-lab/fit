@@ -39,7 +39,7 @@ const billingActionSchema = z
     ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "feature_key is required for entitlement actions.",
+        message: "Для действий с entitlement нужно указать feature_key.",
         path: ["feature_key"],
       });
     }
@@ -54,7 +54,7 @@ export async function POST(
     const { id: rawId } = await params;
     const id = parseAdminUserIdParam(rawId, {
       code: "ADMIN_BILLING_TARGET_INVALID",
-      message: "Target user id is invalid.",
+      message: "Идентификатор целевого пользователя заполнен некорректно.",
     });
     const payload = billingActionSchema.parse(
       await request.json().catch(() => ({})),
@@ -131,7 +131,7 @@ export async function POST(
       action: `admin_${payload.action}`,
       actorUserId: user.id,
       payload: auditPayload,
-      reason: payload.reason ?? `manual ${payload.action}`,
+      reason: payload.reason ?? `ручное billing-действие: ${payload.action}`,
       targetUserId: id,
     });
 
@@ -173,7 +173,7 @@ export async function POST(
     return createApiErrorResponse({
       status: 500,
       code: "ADMIN_BILLING_FAILED",
-      message: "Не удалось обновить биллинг или entitlement-состояние.",
+      message: "Не удалось обновить биллинг или состояние entitlement.",
     });
   }
 }

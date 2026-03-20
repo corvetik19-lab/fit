@@ -937,3 +937,11 @@
 - [x] `tests/e2e/internal-jobs.spec.ts` расширен validation-контрактом для `POST /api/internal/jobs/billing-reconcile?userId=not-a-uuid` -> `400 BILLING_RECONCILE_JOB_INVALID`.
 - [x] Tranche подтверждён пакетами `npx eslint src/app/api/admin/bootstrap/route.ts src/app/api/billing/webhook/stripe/route.ts src/app/api/internal/jobs/billing-reconcile/route.ts tests/e2e/api-contracts.spec.ts tests/e2e/internal-jobs.spec.ts`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/api-contracts.spec.ts tests/e2e/internal-jobs.spec.ts --workers=1` -> `13 passed`.
 - [ ] Следующий backend tranche: продолжать remaining route-handler audit по admin/self-service mutation handlers и добивать основной checkbox по validation/owner-only/idempotency.
+
+## 2026-03-21 admin mutation payload contract sanitation addendum
+
+- [x] `src/app/api/admin/users/[id]/billing/route.ts`, `billing/reconcile/route.ts`, `deletion/route.ts`, `export/route.ts`, `restore/route.ts`, `support-action/route.ts`, `suspend/route.ts` дочищены до чистого UTF-8: target-id, validation и failure copy больше не держат английские или битые transport messages.
+- [x] Default audit reasons для admin mutation handlers переведены на русский, чтобы operator-visible history больше не показывала английские `manual ... request` хвосты.
+- [x] `tests/e2e/api-contracts.spec.ts` расширен invalid-payload контрактами для admin queue routes: `ADMIN_DELETION_INVALID`, `ADMIN_EXPORT_INVALID`, `ADMIN_RESTORE_INVALID`, `ADMIN_SUPPORT_ACTION_INVALID`, `ADMIN_SUSPEND_INVALID`.
+- [x] Tranche подтверждён пакетами `npx eslint src/app/api/admin/users/[id]/billing/route.ts src/app/api/admin/users/[id]/billing/reconcile/route.ts src/app/api/admin/users/[id]/deletion/route.ts src/app/api/admin/users/[id]/export/route.ts src/app/api/admin/users/[id]/restore/route.ts src/app/api/admin/users/[id]/support-action/route.ts src/app/api/admin/users/[id]/suspend/route.ts tests/e2e/api-contracts.spec.ts`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1` -> `12 passed`.
+- [ ] Следующий backend tranche: добирать remaining route-handler audit по operator/self-service mutation surfaces и переоценить, можно ли закрывать основной checkbox по validation/owner-only/idempotency.

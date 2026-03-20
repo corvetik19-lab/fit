@@ -712,6 +712,73 @@ test.describe("api contracts with admin access", () => {
     );
   });
 
+  test("admin queue routes reject invalid payloads before side effects", async ({
+    page,
+  }) => {
+    const userId = await findAuthUserIdByEmail(
+      process.env.PLAYWRIGHT_TEST_EMAIL ?? "leva@leva.ru",
+    );
+
+    const [
+      invalidDeletionPayload,
+      invalidExportPayload,
+      invalidRestorePayload,
+      invalidSupportActionPayload,
+      invalidSuspendPayload,
+    ] = await Promise.all([
+      fetchJson(page, {
+        method: "POST",
+        url: `/api/admin/users/${userId}/deletion`,
+        body: { reason: "x".repeat(301) },
+      }),
+      fetchJson(page, {
+        method: "POST",
+        url: `/api/admin/users/${userId}/export`,
+        body: { format: "csv" },
+      }),
+      fetchJson(page, {
+        method: "POST",
+        url: `/api/admin/users/${userId}/restore`,
+        body: { reason: "x".repeat(301) },
+      }),
+      fetchJson(page, {
+        method: "POST",
+        url: `/api/admin/users/${userId}/support-action`,
+        body: { action: "" },
+      }),
+      fetchJson(page, {
+        method: "POST",
+        url: `/api/admin/users/${userId}/suspend`,
+        body: { reason: "x".repeat(301) },
+      }),
+    ]);
+
+    expect(invalidDeletionPayload.status).toBe(400);
+    expect(
+      (invalidDeletionPayload.body as { code?: string } | null)?.code,
+    ).toBe("ADMIN_DELETION_INVALID");
+
+    expect(invalidExportPayload.status).toBe(400);
+    expect((invalidExportPayload.body as { code?: string } | null)?.code).toBe(
+      "ADMIN_EXPORT_INVALID",
+    );
+
+    expect(invalidRestorePayload.status).toBe(400);
+    expect(
+      (invalidRestorePayload.body as { code?: string } | null)?.code,
+    ).toBe("ADMIN_RESTORE_INVALID");
+
+    expect(invalidSupportActionPayload.status).toBe(400);
+    expect(
+      (invalidSupportActionPayload.body as { code?: string } | null)?.code,
+    ).toBe("ADMIN_SUPPORT_ACTION_INVALID");
+
+    expect(invalidSuspendPayload.status).toBe(400);
+    expect(
+      (invalidSuspendPayload.body as { code?: string } | null)?.code,
+    ).toBe("ADMIN_SUSPEND_INVALID");
+  });
+
   test("proposal approve/apply actions stay idempotent on repeated requests", async ({
     page,
   }) => {

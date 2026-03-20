@@ -24,14 +24,14 @@ export async function POST(
     const { id: rawId } = await params;
     const id = parseAdminUserIdParam(rawId, {
       code: "ADMIN_EXPORT_TARGET_INVALID",
-      message: "Target user id is invalid.",
+      message: "Идентификатор целевого пользователя заполнен некорректно.",
     });
     const payload = exportJobSchema.parse(await request.json().catch(() => ({})));
     const adminSupabase = createAdminSupabaseClient();
 
     const data = await queueAdminExportJob({
       actorUserId: user.id,
-      auditReason: payload.reason ?? "manual export request",
+      auditReason: payload.reason ?? "ручной запрос на выгрузку",
       format: payload.format ?? "json_csv_zip",
       supabase: adminSupabase,
       targetUserId: id,

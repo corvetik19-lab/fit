@@ -29,7 +29,7 @@ export async function POST(
     const { id: rawId } = await params;
     const id = parseAdminUserIdParam(rawId, {
       code: "ADMIN_SUPPORT_ACTION_TARGET_INVALID",
-      message: "Target user id is invalid.",
+      message: "Идентификатор целевого пользователя заполнен некорректно.",
     });
     const body = supportActionSchema.parse(await request.json());
     const adminSupabase = createAdminSupabaseClient();
@@ -42,7 +42,7 @@ export async function POST(
       action: body.action,
       actorUserId: user.id,
       auditPayload: body.payload ?? {},
-      auditReason: body.reason ?? "manual support action",
+      auditReason: body.reason ?? "ручное support-действие",
       payload: body.payload ?? {},
       supabase: adminSupabase,
       targetUserId: id,

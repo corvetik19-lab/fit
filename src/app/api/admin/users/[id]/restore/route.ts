@@ -23,7 +23,7 @@ export async function POST(
     const { id: rawId } = await params;
     const id = parseAdminUserIdParam(rawId, {
       code: "ADMIN_RESTORE_TARGET_INVALID",
-      message: "Target user id is invalid.",
+      message: "Идентификатор целевого пользователя заполнен некорректно.",
     });
     const payload = restoreSchema.parse(await request.json().catch(() => ({})));
     const adminSupabase = createAdminSupabaseClient();
@@ -31,7 +31,7 @@ export async function POST(
     const data = await queueAdminSupportAction({
       action: "restore_user",
       actorUserId: user.id,
-      auditReason: payload.reason ?? "manual restore request",
+      auditReason: payload.reason ?? "ручной запрос на восстановление",
       payload: {
         source: "admin-api",
       },
