@@ -191,7 +191,7 @@ async function reconcileBillingForUsers(
       const message =
         error instanceof Error
           ? error.message
-          : "Непредвиденная ошибка сверки биллинга.";
+          : "Непредвиденная ошибка сверки Stripe-подписки.";
 
       try {
         await recordBillingReconcileResult({
@@ -229,7 +229,7 @@ async function reconcileBillingForUsers(
 async function handleRequest(request: Request) {
   const access = await requireInternalAdminJobAccess(
     request,
-    "billing reconciliation jobs",
+    "сверка Stripe-подписок",
   );
 
   if (access instanceof Response) {
@@ -243,7 +243,7 @@ async function handleRequest(request: Request) {
       return createApiErrorResponse({
         status: 503,
         code: "STRIPE_BILLING_RECONCILE_NOT_CONFIGURED",
-        message: "Сверка Stripe billing пока не настроена.",
+        message: "Сверка Stripe-подписок пока не настроена.",
         details: {
           missing: getMissingStripePortalEnv(),
         },
@@ -269,8 +269,8 @@ async function handleRequest(request: Request) {
       },
       message:
         errorCount > 0
-          ? "Сверка billing завершилась с частичными ошибками."
-          : "Сверка billing завершилась успешно.",
+          ? "Сверка Stripe-подписок завершена частично: есть пользователи с ошибками."
+          : "Сверка Stripe-подписок завершена успешно.",
     });
   } catch (error) {
     if (isInternalJobParamError(error)) {
@@ -286,7 +286,7 @@ async function handleRequest(request: Request) {
     return createApiErrorResponse({
       status: 500,
       code: "BILLING_RECONCILE_JOB_FAILED",
-      message: "Не удалось сверить состояние Stripe billing.",
+      message: "Не удалось сверить состояние Stripe-подписок.",
     });
   }
 }

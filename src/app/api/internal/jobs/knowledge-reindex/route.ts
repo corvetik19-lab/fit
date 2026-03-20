@@ -72,7 +72,7 @@ async function reindexKnowledgeForUsers(
       const message =
         error instanceof Error
           ? error.message
-          : "Unexpected knowledge reindex job failure.";
+          : "Непредвиденная ошибка обновления индекса базы знаний.";
 
       try {
         await recordKnowledgeReindexSupportAction({
@@ -107,7 +107,7 @@ async function reindexKnowledgeForUsers(
 async function handleRequest(request: Request) {
   const access = await requireInternalAdminJobAccess(
     request,
-    "knowledge reindex jobs",
+    "обновление индекса базы знаний",
   );
 
   if (access instanceof Response) {
@@ -139,8 +139,8 @@ async function handleRequest(request: Request) {
       },
       message:
         errorCount > 0
-          ? "Knowledge reindex job completed with partial failures."
-          : "Knowledge reindex job completed successfully.",
+          ? "Обновление индекса базы знаний завершено частично: есть ошибки."
+          : "Обновление индекса базы знаний завершено успешно.",
     });
   } catch (error) {
     if (isInternalJobParamError(error)) {

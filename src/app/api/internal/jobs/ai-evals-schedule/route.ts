@@ -28,7 +28,7 @@ const querySchema = z.object({
 async function handleRequest(request: Request) {
   const access = await requireInternalAdminJobAccess(
     request,
-    "scheduled AI eval jobs",
+    "плановые AI-проверки",
   );
 
   if (access instanceof Response) {

@@ -198,7 +198,7 @@ async function resolveAuditTargetUserId(
     const authUser = await getAuthUserById(adminSupabase, userId);
     return authUser ? userId : null;
   } catch (error) {
-    logger.warn("queue processor could not resolve audit target user", {
+    logger.warn("обработчик очереди не смог определить целевой user id для аудита", {
       error,
       userId,
     });
@@ -250,11 +250,11 @@ async function processExportJobs(
           format: job.format,
           fromStatus: job.status,
           kind: "export_job",
-          note: "automated queue processor",
+          note: "автоматическая обработка очереди",
           processor: true,
           toStatus: "processing",
         },
-        reason: "queue processor moved export job to processing",
+        reason: "Очередь перевела задачу выгрузки данных в обработку",
         targetUserId: job.user_id,
       });
 
@@ -280,17 +280,17 @@ async function processExportJobs(
           format: job.format,
           fromStatus: "processing",
           kind: "export_job",
-          note: "automated queue processor",
+          note: "автоматическая обработка очереди",
           processor: true,
           toStatus: "completed",
         },
-        reason: "queue processor completed export job",
+        reason: "Очередь завершила выгрузку данных",
         targetUserId: job.user_id,
       });
 
       summary.completed += 1;
     } catch (error) {
-      logger.error("queue processor failed to complete export job", {
+      logger.error("обработчик очереди не смог завершить элемент выгрузки", {
         error,
         exportJobId: job.id,
         userId: job.user_id,
@@ -311,14 +311,14 @@ async function processExportJobs(
             format: job.format,
             fromStatus: "processing",
             kind: "export_job",
-            note: error instanceof Error ? error.message : "queue processor failure",
+            note: error instanceof Error ? error.message : "сбой обработчика очереди",
             processor: true,
             toStatus: "failed",
           },
-          reason: "queue processor failed export job",
+          reason: "Очередь завершила выгрузку данных с ошибкой",
           targetUserId: job.user_id,
         }).catch((auditError) => {
-          logger.error("queue processor failed to log export failure audit", {
+          logger.error("обработчик очереди не смог записать аудит ошибки выгрузки", {
             auditError,
             exportJobId: job.id,
           });
@@ -381,11 +381,11 @@ async function processDeletionRequests(
             fromStatus: "queued",
             holdUntil,
             kind: "deletion_request",
-            note: "queue processor normalized deletion hold",
+            note: "очередь перевела запрос в режим удержания",
             processor: true,
             toStatus: "holding",
           },
-          reason: "queue processor moved deletion request into hold",
+          reason: "Очередь перевела запрос на удаление в удержание",
           targetUserId: request.user_id,
         });
 
@@ -437,7 +437,7 @@ async function processDeletionRequests(
           .eq("id", request.id);
 
         if (rollbackError) {
-          logger.error("queue processor failed to roll back deletion request", {
+          logger.error("обработчик очереди не смог откатить состояние запроса на удаление", {
             deletionRequestId: request.id,
             error: rollbackError,
           });
@@ -453,12 +453,12 @@ async function processDeletionRequests(
           fromStatus: "holding",
           holdUntil: request.hold_until,
           kind: "deletion_request",
-          note: "queue processor released deletion request to purge queue",
+          note: "очередь выпустила запрос на удаление в очередь очистки",
           processor: true,
           supportActionId: supportAction.id,
           toStatus: "completed",
         },
-        reason: "queue processor completed deletion hold",
+        reason: "Очередь завершила удержание и отправила данные в очистку",
         targetUserId: request.user_id,
       });
 
@@ -470,14 +470,14 @@ async function processDeletionRequests(
           processor: true,
           supportActionId: supportAction.id,
         },
-        reason: "queue processor queued purge user data support action",
+        reason: "Очередь поставила очистку данных пользователя в очередь поддержки",
         targetUserId: request.user_id,
       });
 
       summary.releasedToPurge += 1;
       summary.supportActionsQueued += 1;
     } catch (error) {
-      logger.error("queue processor failed to process deletion request", {
+      logger.error("обработчик очереди не смог обработать элемент удаления данных", {
         deletionRequestId: request.id,
         error,
         userId: request.user_id,
@@ -747,7 +747,8 @@ async function processSupportActions(
         await failSupportAction(adminSupabase, {
           action,
           actorUserId,
-          errorMessage: "queue processor cannot resolve target user for support action",
+          errorMessage:
+            "Обработчик очереди не смог определить целевого пользователя для действия поддержки",
           targetUserIdOverride: null,
         });
 
@@ -771,7 +772,7 @@ async function processSupportActions(
                 },
                 restored_at: null,
                 restored_by: null,
-                state_reason: "Support queue applied suspend_user",
+                state_reason: "Очередь поддержки применила блокировку пользователя",
                 suspended_at: new Date().toISOString(),
                 suspended_by: initiatedBy,
                 user_id: action.target_user_id,
@@ -786,7 +787,7 @@ async function processSupportActions(
           await completeSupportAction(adminSupabase, {
             actorUserId,
             action,
-            note: "queue processor applied suspended account state",
+            note: "Очередь применила состояние блокировки аккаунта",
             payloadExtras: {
               stateApplied: "suspended",
             },
@@ -811,7 +812,7 @@ async function processSupportActions(
                 },
                 restored_at: new Date().toISOString(),
                 restored_by: initiatedBy,
-                state_reason: "Support queue applied restore_user",
+                state_reason: "Очередь поддержки восстановила доступ пользователя",
                 suspended_at: null,
                 suspended_by: null,
                 user_id: action.target_user_id,
@@ -826,7 +827,7 @@ async function processSupportActions(
           await completeSupportAction(adminSupabase, {
             actorUserId,
             action,
-            note: "queue processor restored account access",
+            note: "Очередь восстановила доступ к аккаунту",
             payloadExtras: {
               stateApplied: "active",
             },
@@ -858,7 +859,7 @@ async function processSupportActions(
           await completeSupportAction(adminSupabase, {
             actorUserId,
             action,
-            note: "queue processor created admin resync snapshot",
+            note: "Очередь создала снимок для повторной синхронизации",
             payloadExtras: {
               snapshotId: snapshot.id,
               snapshotReason: "admin_support_resync",
@@ -880,7 +881,7 @@ async function processSupportActions(
             await completeSupportAction(adminSupabase, {
               actorUserId,
               action,
-              note: "queue processor found auth user already deleted",
+              note: "Очередь обнаружила, что auth-пользователь уже удалён",
               payloadExtras: {
                 deletedAuthUser: false,
                 purgeMode: "already_deleted",
@@ -930,7 +931,7 @@ async function processSupportActions(
               supportActionId: action.id,
               targetEmail: targetUser.email ?? null,
             },
-            reason: "queue processor started hard-delete purge workflow",
+            reason: "Очередь запустила сценарий полной очистки данных",
             targetUserId: action.target_user_id,
           });
 
@@ -954,7 +955,7 @@ async function processSupportActions(
                 purgeMode: "hard_delete",
                 purgedAt: new Date().toISOString(),
                 resolutionAction: "processor_completed",
-                resolutionNote: "queue processor executed hard-delete purge workflow",
+                resolutionNote: "Очередь выполнила сценарий полной очистки данных",
                 resolvedAt: new Date().toISOString(),
                 resolvedBy: actorUserId,
                 targetEmail: targetUser.email ?? null,
@@ -978,10 +979,10 @@ async function processSupportActions(
               supportActionId: action.id,
               targetEmail: targetUser.email ?? null,
             },
-            reason: "queue processor executed hard-delete purge workflow",
+            reason: "Очередь выполнила сценарий полной очистки данных",
             targetUserId: null,
           }).catch((auditError) => {
-            logger.warn("queue processor failed to log hard-delete audit", {
+            logger.warn("обработчик очереди не смог записать аудит полной очистки данных", {
               auditError,
               supportActionId: action.id,
             });
@@ -996,7 +997,7 @@ async function processSupportActions(
           break;
       }
     } catch (error) {
-      logger.error("queue processor failed to process support action", {
+      logger.error("обработчик очереди не смог обработать элемент очереди поддержки", {
         error,
         supportAction: action.action,
         supportActionId: action.id,
@@ -1015,10 +1016,10 @@ async function processSupportActions(
         errorMessage:
           error instanceof Error
             ? error.message
-            : "queue processor failed support action",
+            : "Обработчик очереди завершил действие поддержки с ошибкой",
         targetUserIdOverride,
       }).catch((auditError) => {
-        logger.error("queue processor failed to mark support action failed", {
+        logger.error("обработчик очереди не смог отметить элемент поддержки как ошибочный", {
           auditError,
           supportActionId: action.id,
         });

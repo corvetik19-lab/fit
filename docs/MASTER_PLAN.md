@@ -963,3 +963,11 @@
 - [x] `src/app/api/admin/ai-evals/run/route.ts` теперь создаёт русский default label `AI-проверка ...`, чтобы operator queue и audit history не смешивали английские и русские названия.
 - [x] Tranche подтверждён пакетами `npm run lint -- --quiet src/app/api/admin/operations/route.ts src/app/api/admin/operations/[kind]/[id]/route.ts src/app/api/admin/users/[id]/role/route.ts src/app/api/admin/users/[id]/support-action/route.ts src/app/api/admin/ai-evals/run/route.ts`, последовательными `npm run typecheck` и `npm run build`.
 - [ ] Следующий backend tranche: продолжать remaining route-handler audit по validation/owner-only/idempotency и переоценить, можно ли закрывать основной checkbox по backend hardening.
+
+## 2026-03-21 internal jobs and queue processing wording sanitation addendum
+
+- [x] `src/app/api/internal/jobs/ai-evals-schedule/route.ts`, `billing-reconcile/route.ts` и `knowledge-reindex/route.ts` переведены на чистый operator-facing copy: internal job labels и success/failure messages больше не смешивают английский и русский transport слой.
+- [x] `src/lib/admin-queue-processing.ts` переведён на единый русский audit/log слой: queue-processing reasons, deletion hold transitions, support queue notes и hard-delete workflow labels больше не держат английские `queue processor ...` хвосты.
+- [x] Повторная проверка поиском подтвердила, что в `src/app/api` и `src/lib` больше не осталось строк `queue processor`, `scheduled AI eval jobs`, `billing reconciliation jobs` и `knowledge reindex jobs`.
+- [x] Tranche подтверждён пакетами `npm run lint -- --quiet src/lib/admin-queue-processing.ts src/app/api/internal/jobs/ai-evals-schedule/route.ts src/app/api/internal/jobs/billing-reconcile/route.ts src/app/api/internal/jobs/knowledge-reindex/route.ts`, `npm run typecheck`, `npm run build`.
+- [ ] Следующий backend tranche: продолжать remaining route-handler audit по validation/owner-only/idempotency и переоценить, можно ли закрывать основной checkbox по backend hardening.

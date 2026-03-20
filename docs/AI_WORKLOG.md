@@ -1022,6 +1022,15 @@
 - Проверка зелёная: `npm run lint -- --quiet src/app/api/admin/operations/route.ts src/app/api/admin/operations/[kind]/[id]/route.ts src/app/api/admin/users/[id]/role/route.ts src/app/api/admin/users/[id]/support-action/route.ts src/app/api/admin/ai-evals/run/route.ts`, последовательные `npm run typecheck` и `npm run build`.
 - Общий прогресс execution checklist остается `146 / 176` (`83%`): tranche продолжает большой backend audit по validation/owner-only/idempotency, но ещё не закрывает основной checkbox целиком.
 
+### 2026-03-21 03:05 - Дочистил internal jobs и queue-processing copy
+
+- `src/app/api/internal/jobs/ai-evals-schedule/route.ts`, `billing-reconcile/route.ts` и `knowledge-reindex/route.ts` переведены на чистый operator-facing copy: internal job labels, success/failure messages и Stripe/billing wording больше не смешивают английский и русский transport слой.
+- `src/lib/admin-queue-processing.ts` переведён на единый русский audit/log слой: queue-processing reasons, deletion hold transitions, support queue notes и hard-delete workflow labels больше не держат английские `queue processor ...` хвосты.
+- Повторная проверка поиском подтвердила, что в `src/app/api` и `src/lib` больше не осталось английских `queue processor`, `scheduled AI eval jobs`, `billing reconciliation jobs` и `knowledge reindex jobs` строк.
+- Проверка зелёная: `npm run lint -- --quiet src/lib/admin-queue-processing.ts src/app/api/internal/jobs/ai-evals-schedule/route.ts src/app/api/internal/jobs/billing-reconcile/route.ts src/app/api/internal/jobs/knowledge-reindex/route.ts`, `npm run typecheck`, `npm run build`.
+- `npx playwright test tests/e2e/internal-jobs.spec.ts --workers=1` локально упёрся в Playwright `webServer` bootstrap, который ожидает отдельный test-build; кодовый baseline этого tranche подтверждён зелёными `lint/typecheck/build`.
+- Общий прогресс execution checklist остается `146 / 176` (`83%`): tranche продолжает большой backend audit по validation/owner-only/idempotency, но ещё не закрывает основной checkbox целиком.
+
 ### 2026-03-20 04:20 - Закрыл основной checkbox по route/lib duplication
 
 - После серии extraction tranche по `settings`, `nutrition`, `billing`, `AI` и `admin` mutation routes основной checklist-пункт `Доменные правила больше не дублируются между route handlers и lib` закрыт в `docs/MASTER_PLAN.md`.
