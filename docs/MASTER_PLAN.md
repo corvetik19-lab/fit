@@ -11,7 +11,7 @@
 
 Этот файл — текущий production-hardening backlog проекта. Он отражает фактическое состояние репозитория на `2026-03-14`.
 
-Текущий прогресс execution checklist: `144 / 176` (`82%`).
+Текущий прогресс execution checklist: `145 / 176` (`82%`).
 
 ## Текущая база
 
@@ -137,7 +137,7 @@
 - [x] Для `knowledge.ts` есть референсный паттерн с вынесенными retrieval/indexing/document builders.
 - [x] Для `ai-chat-panel.tsx` есть референсный паттерн с вынесенными session/actions/composer/view-state модулями.
 - [ ] Async/data orchestration больше не смешивается с JSX в оставшихся тяжёлых экранах.
-- [ ] Доменные правила больше не дублируются между route handlers и `lib`.
+- [x] Доменные правила больше не дублируются между route handlers и `lib`.
 
 ## Волна 2. UX overhaul для Web/PWA
 

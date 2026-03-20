@@ -921,6 +921,11 @@
 - Проверка зелёная: `npx eslint src/lib/admin-role-management.ts src/app/api/admin/users/[id]/role/route.ts`, `npm run typecheck`, `npm run build`.
 - Общий прогресс execution checklist остаётся `144 / 176` (`82%`): tranche продолжает admin/backend extraction, но не закрывает следующий основной checkbox целиком.
 
+### 2026-03-20 04:20 - Закрыл основной checkbox по route/lib duplication
+
+- После серии extraction tranche по `settings`, `nutrition`, `billing`, `AI` и `admin` mutation routes основной checklist-пункт `Доменные правила больше не дублируются между route handlers и lib` закрыт в `docs/MASTER_PLAN.md`.
+- Зафиксирован новый baseline прогресса execution checklist: `145 / 176` (`82%`).
+
 ### 2026-03-20 03:50 - Расширил admin mutation contract coverage
 
 - `tests/e2e/api-contracts.spec.ts` получил отдельный admin-only контракт для invalid target ids на `admin/users/[id]/export`, `deletion`, `support-action`, `suspend`, `restore`, `billing`, `billing/reconcile` и `role`.
