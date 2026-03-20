@@ -20,8 +20,24 @@ const goalTypeLabels: Record<string, string> = {
   performance: "Результат и выносливость",
 };
 
-export default async function SettingsPage() {
+type SettingsPageProps = {
+  searchParams?: Promise<{
+    section?: string | string[];
+  }>;
+};
+
+const settingsSectionKeys = new Set(["profile", "billing", "data"]);
+
+export default async function SettingsPage({ searchParams }: SettingsPageProps) {
   const viewer = await requireReadyViewer();
+  const resolvedSearchParams = searchParams ? await searchParams : {};
+  const requestedSection = Array.isArray(resolvedSearchParams.section)
+    ? resolvedSearchParams.section[0]
+    : resolvedSearchParams.section;
+  const initialSectionKey =
+    requestedSection && settingsSectionKeys.has(requestedSection)
+      ? requestedSection
+      : undefined;
   const supabase = await createServerSupabaseClient();
   const [dataSnapshot, access] = await Promise.all([
     loadSettingsDataSnapshotOrFallback(supabase, viewer.user.id),
@@ -38,6 +54,7 @@ export default async function SettingsPage() {
           viewer.adminState?.is_suspended ? "Аккаунт ограничен" : "Аккаунт активен",
         ]}
         description="Настройки тоже разделены по логике: профиль, доступ и личные данные. На мобильном это открывается через понятное меню разделов, без длинной вертикальной стены карточек."
+        initialSectionKey={initialSectionKey}
         metrics={[
           {
             label: "Цель",

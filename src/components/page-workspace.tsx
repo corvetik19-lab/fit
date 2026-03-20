@@ -54,11 +54,13 @@ function SectionButton({
   active,
   description,
   label,
+  sectionKey,
   onClick,
 }: {
   active: boolean;
   description: string;
   label: string;
+  sectionKey: string;
   onClick: () => void;
 }) {
   return (
@@ -69,6 +71,7 @@ function SectionButton({
           ? "border-accent/20 bg-[color-mix(in_srgb,var(--accent-soft)_78%,white)] text-foreground shadow-[0_16px_38px_-34px_rgba(20,97,75,0.22)]"
           : "border-border bg-white/72 text-foreground hover:bg-white"
       }`}
+      data-testid={`page-workspace-option-${sectionKey}`}
       onClick={onClick}
       type="button"
     >
@@ -369,6 +372,7 @@ export function PageWorkspace({
                 description={section.description}
                 key={section.key}
                 label={section.label}
+                sectionKey={section.key}
                 onClick={() => handleSectionSelect(section.key)}
               />
             ))}

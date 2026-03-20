@@ -11,7 +11,7 @@
 
 Этот файл — текущий production-hardening backlog проекта. Он отражает фактическое состояние репозитория на `2026-03-14`.
 
-Текущий прогресс execution checklist: `149 / 176` (`85%`).
+Текущий прогресс execution checklist: `150 / 176` (`85%`).
 
 ## Текущая база
 
@@ -252,7 +252,7 @@
 ### Billing UI
 
 - [x] Есть billing center в `/settings` и admin billing controls.
-- [ ] Довести user-facing billing UX до production-уровня без сырых промежуточных состояний.
+- [x] Довести user-facing billing UX до production-уровня без сырых промежуточных состояний.
 - [ ] Довести admin billing health и reconcile UX до операторского уровня.
 
 ## Волна 5. Тесты, CI и release process
@@ -1003,3 +1003,11 @@
 - [x] `tests/e2e/workout-sync.spec.ts` стабилизирован через `navigateStable(...)`, чтобы regression suite не флакал на auth redirect и мог служить реальным доказательством для checkbox про `reset/finish/sync` race conditions, infinite polling и idempotent reset/done flow.
 - [x] После этого закрыт и второй основной backend checkbox `Подтвердить, что reset/finish/sync сценарии не создают race conditions и бесконечный polling`: suite отдельно подтверждает invalid sync mutations, clean `sync -> reset -> sync/pull`, idempotent `done/reset`, очистку stale offline queue и guard для unlocked week.
 - [ ] Следующий backend tranche: переходить к оставшимся quality/release блокам вне уже закрытого route-handler audit, в первую очередь AI eval gate, production billing и remaining UX/documentation sanitation.
+
+## 2026-03-20 user-facing billing UX closure addendum
+
+- [x] `src/components/settings-billing-center.tsx` доведён до production-copy: в пользовательском billing center больше нет сырых ярлыков вроде `super-admin`, usage limit показывается как `без лимита`, а privileged plan surface остаётся понятным русским языком.
+- [x] `src/components/settings-billing-center-model.ts` и `src/components/page-workspace.tsx` получили стабилизированный formatter/testid слой для billing surface: desktop section-menu теперь имеет предсказуемые `data-testid`, а privileged subscription status показывает `полный корневой доступ`.
+- [x] Добавлен regression suite `tests/e2e/settings-billing.spec.ts`: подтверждены billing section navigation, видимость блоков `Текущий план / Запросить доступ / История доступа`, русские queued status copy и billing review snapshot на `/settings`.
+- [x] Tranche подтверждён пакетами `npm run lint`, `npm run typecheck`, `npm run build`, `node scripts/run-playwright.mjs PLAYWRIGHT_BASE_URL=http://127.0.0.1:3100 -- test tests/e2e/settings-billing.spec.ts --workers=1` -> `2 passed`.
+- [x] После этого закрыт основной checklist-пункт `Довести user-facing billing UX до production-уровня без сырых промежуточных состояний`.

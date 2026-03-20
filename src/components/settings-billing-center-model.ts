@@ -39,10 +39,29 @@ export function formatSubscriptionStatus(
   isPrivilegedAccess: boolean,
 ) {
   if (isPrivilegedAccess) {
-    return "полный доступ super-admin";
+    return "полный корневой доступ";
   }
 
-  return status ?? "нет";
+  switch (status) {
+    case "active":
+      return "активна";
+    case "trialing":
+      return "пробный период";
+    case "past_due":
+      return "нужна оплата";
+    case "canceled":
+      return "отключена";
+    case "incomplete":
+      return "ожидает оплаты";
+    case "incomplete_expired":
+      return "истекла без оплаты";
+    case "paused":
+      return "на паузе";
+    case "unpaid":
+      return "не оплачена";
+    default:
+      return status ?? "нет";
+  }
 }
 
 export function formatSubscriptionProvider(
@@ -53,7 +72,24 @@ export function formatSubscriptionProvider(
     return "встроенный административный доступ";
   }
 
-  return provider ?? "не задан";
+  switch (provider) {
+    case "stripe":
+      return "Stripe";
+    case "manual":
+      return "ручное подключение";
+    case "system":
+      return "система";
+    default:
+      return provider ?? "не задан";
+  }
+}
+
+export function formatUsageLimit(value: number | null | undefined) {
+  if (typeof value === "number") {
+    return value.toLocaleString("ru-RU");
+  }
+
+  return "без лимита";
 }
 
 export function formatReviewStatus(value: string) {

@@ -11,6 +11,7 @@ import {
   formatStripeSessionStatus,
   formatSubscriptionProvider,
   formatSubscriptionStatus,
+  formatUsageLimit,
   getStatusTone,
   getTimelineTone,
   settingsBillingInputClassName,
@@ -152,7 +153,7 @@ export function SettingsBillingCenter({
               </div>
               <span className="pill">
                 {isPrivilegedAccess
-                  ? "super-admin"
+                  ? "корневой доступ"
                   : access.subscription.isActive
                     ? "активен"
                     : "без подписки"}
@@ -199,8 +200,8 @@ export function SettingsBillingCenter({
             <div className="mt-4 flex flex-wrap gap-3">
               {isPrivilegedAccess ? (
                 <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-3 text-sm text-emerald-900">
-                  Для основного super-admin все AI и premium-функции платформы
-                  открыты постоянно и не зависят от подписки.
+                  Для корневого администратора все AI и premium-функции
+                  платформы открыты постоянно и не зависят от подписки.
                 </div>
               ) : access.subscription.isActive ? (
                 <button
@@ -270,9 +271,7 @@ export function SettingsBillingCenter({
                     </p>
                     <p>
                       Использовано: {feature.usage.count}
-                      {typeof feature.usage.limit === "number"
-                        ? ` / ${feature.usage.limit}`
-                        : ""}
+                      {` / ${formatUsageLimit(feature.usage.limit)}`}
                     </p>
                     <p>
                       Следующее обновление лимита:{" "}

@@ -1069,6 +1069,14 @@
 - Проверка зелёная: `npm run lint -- --quiet src/app/api/sync/pull/route.ts src/app/api/sync/push/route.ts src/app/api/workout-days/[id]/route.ts src/app/api/workout-days/[id]/reset/route.ts tests/e2e/api-contracts.spec.ts`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1` -> `13 passed`.
 - Общий прогресс execution checklist остаётся `146 / 176` (`83%`): tranche продолжает большой backend audit по validation/owner-only/idempotency, но ещё не закрывает основной checkbox целиком.
 
+### 2026-03-20 06:10 - Закрыл user-facing billing UX
+
+- `src/components/settings-billing-center.tsx` и `src/components/settings-billing-center-model.ts` дочищены до нормального product copy: privileged access больше не показывает `super-admin`, usage limit отображается как `без лимита`, а billing plan surface остаётся понятным русским языком.
+- `src/components/page-workspace.tsx` получил desktop `data-testid` для section-menu, чтобы billing regression suite переключал раздел `Доступ` без хрупких текстовых селекторов.
+- Добавлен и подтверждён `tests/e2e/settings-billing.spec.ts`: billing section на `/settings` открывается корректно, блоки `Текущий план / Запросить доступ / История доступа` видимы, queued billing review отображается с русским статусом `в очереди`.
+- Проверка зелёная: `npm run lint`, `npm run typecheck`, `npm run build`, `node scripts/run-playwright.mjs PLAYWRIGHT_BASE_URL=http://127.0.0.1:3100 -- test tests/e2e/settings-billing.spec.ts --workers=1` -> `2 passed`.
+- Общий прогресс execution checklist вырос до `150 / 176` (`85%`).
+
 ### 2026-03-20 04:20 - Закрыл основной checkbox по route/lib duplication
 
 - После серии extraction tranche по `settings`, `nutrition`, `billing`, `AI` и `admin` mutation routes основной checklist-пункт `Доменные правила больше не дублируются между route handlers и lib` закрыт в `docs/MASTER_PLAN.md`.
