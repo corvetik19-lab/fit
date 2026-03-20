@@ -8,6 +8,12 @@
 
 ## 2026-03-21
 
+### Mobile workout focus-mode cleanup
+
+- Доведён mobile focus-mode тренировки до более чистого UX: в `src/components/workout-session/workout-focus-header.tsx` collapsed header стал компактнее и перестал дублировать лишний контекст, когда пользователь сворачивает верхний блок во время тренировки.
+- Повторно подтверждён mobile regression bundle на живом локальном сервере `PLAYWRIGHT_BASE_URL=http://127.0.0.1:3100`: `tests/e2e/mobile-pwa-regressions.spec.ts` теперь проходит зелёно `3 passed`, включая shell drawer, mobile workspace sections и workout focus-mode.
+- Slice дополнительно подтверждён baseline-проверками `npm run lint`, `npm run build`, `npm run typecheck`; в `lint` остаётся только старый warning про неиспользуемый `getOperationLabel` в `src/app/api/admin/operations/[kind]/[id]/route.ts`.
+
 ### Backend audit closure and workout sync verification
 
 - Закрыт основной backend checkbox про `validation / owner-only / idempotency`: route-handler audit теперь опирается не только на точечные contract slices, а на объединённый regression bundle `tests/e2e/api-contracts.spec.ts`, `tests/e2e/ownership-isolation.spec.ts`, `tests/e2e/internal-jobs.spec.ts`, `tests/e2e/workout-sync.spec.ts` и `tests/rls/ownership.spec.ts`.

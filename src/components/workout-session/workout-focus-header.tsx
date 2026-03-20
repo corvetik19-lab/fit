@@ -61,8 +61,12 @@ export function WorkoutFocusHeader({
   totalExercises,
   totalSetsCount,
 }: WorkoutFocusHeaderProps) {
+  const sectionClassName = isFocusHeaderCollapsed
+    ? "card sticky top-[calc(0.75rem+env(safe-area-inset-top))] z-20 overflow-hidden px-4 py-3"
+    : "card sticky top-[calc(0.75rem+env(safe-area-inset-top))] z-20 overflow-hidden p-4 sm:p-5";
+
   return (
-    <section className="card sticky top-[calc(0.75rem+env(safe-area-inset-top))] z-20 overflow-hidden p-4 sm:p-5">
+    <section className={sectionClassName}>
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
           <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
@@ -98,7 +102,7 @@ export function WorkoutFocusHeader({
         </div>
       </div>
 
-      {activeExerciseTitle ? (
+      {!isFocusHeaderCollapsed && activeExerciseTitle ? (
         <p className="mt-3 text-sm text-muted">
           {currentExerciseIsComplete
             ? `${activeExerciseTitle} · шаг сохранён`

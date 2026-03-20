@@ -46,7 +46,9 @@ async function toggleFocusHeader(
 async function openMobileDrawer(
   page: Parameters<typeof expectNoHorizontalOverflow>[0],
 ) {
-  const drawerToggle = page.getByTestId("app-mobile-header-drawer-toggle").first();
+  const drawerToggle = page
+    .getByTestId("app-mobile-header-drawer-toggle")
+    .first();
   const drawer = page.getByTestId("app-mobile-drawer").first();
 
   await expect(drawerToggle).toBeVisible({ timeout: 15_000 });
