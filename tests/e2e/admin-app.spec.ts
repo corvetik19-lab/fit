@@ -4,6 +4,7 @@ import { hasAdminE2ECredentials } from "./helpers/auth";
 import { ADMIN_STORAGE_STATE_PATH } from "./helpers/auth-state";
 import { fetchJson } from "./helpers/http";
 import { navigateStable } from "./helpers/navigation";
+import { findAuthUserIdByEmail } from "./helpers/supabase-admin";
 
 test.use({
   storageState: ADMIN_STORAGE_STATE_PATH,
@@ -59,18 +60,9 @@ test.describe("admin app", () => {
   test("root admin gets degraded fallback for admin user detail snapshot", async ({
     page,
   }) => {
-    const usersResult = await fetchJson<{
-      data?: Array<{
-        user_id?: string;
-      }>;
-    }>(page, {
-      method: "GET",
-      url: "/api/admin/users",
-    });
-
-    expect(usersResult.status).toBe(200);
-    const targetUserId = usersResult.body?.data?.[0]?.user_id;
-    expect(targetUserId).toBeTruthy();
+    const targetUserEmail = process.env.PLAYWRIGHT_TEST_EMAIL;
+    expect(targetUserEmail).toBeTruthy();
+    const targetUserId = await findAuthUserIdByEmail(targetUserEmail!);
 
     const detailResult = await fetchJson<{
       data?: {

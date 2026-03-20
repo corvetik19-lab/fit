@@ -868,3 +868,11 @@
 - [x] Верхний client-state этого экрана синхронизирован с tranche в чистом UTF-8: `src/components/admin-user-detail-state.ts` и верхний shell `src/components/admin-user-detail.tsx` больше не держат битый copy в loading/error/section surface.
 - [x] Tranche подтверждён пакетами `npx eslint src/lib/admin-user-detail-data.ts src/app/api/admin/users/[id]/route.ts src/components/admin-user-detail-state.ts src/components/admin-user-detail.tsx`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/admin-app.spec.ts --workers=1` -> `5 passed`.
 - [ ] Следующий backend tranche: продолжать remaining route-handler audit по owner-only/idempotency/race conditions и добирать ещё один heavy admin/self-service read-surface, если основной пункт всё ещё не закрывается целиком.
+
+## 2026-03-20 admin users catalog data extraction addendum
+
+- [x] Основной catalog/read-model слой для `src/app/api/admin/users/route.ts` вынесен в `src/lib/admin-users-data.ts`: parse filters, fallback snapshot, auth user pagination, aggregate assembly, sorting, summary и segment building больше не живут внутри route handler.
+- [x] `src/app/api/admin/users/route.ts` стал тонким transport-слоем: handler держит только admin access, чтение search params, вызов shared loader и degraded fallback response.
+- [x] `tests/e2e/admin-app.spec.ts` стабилизирован против внешнего auth timeout: degraded admin detail scenario больше не зависит от `/api/admin/users`, а получает test user id через `findAuthUserIdByEmail(...)`.
+- [x] Tranche подтверждён пакетами `npx eslint src/lib/admin-users-data.ts src/app/api/admin/users/route.ts tests/e2e/admin-app.spec.ts`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/admin-app.spec.ts --workers=1` -> `5 passed`.
+- [ ] Следующий backend tranche: продолжать remaining route-handler audit по owner-only/idempotency/race conditions и переоценить, можно ли закрывать общий пункт по тяжёлым admin/self-service read-surfaces.
