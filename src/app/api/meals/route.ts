@@ -99,8 +99,6 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
-    logger.error("meal create route failed", { error });
-
     if (error instanceof z.ZodError) {
       return createApiErrorResponse({
         status: 400,
@@ -109,6 +107,8 @@ export async function POST(request: Request) {
         details: error.flatten(),
       });
     }
+
+    logger.error("meal create route failed", { error });
 
     return createApiErrorResponse({
       status: 500,

@@ -194,7 +194,7 @@ export async function POST(request: Request) {
               exercise_library_id: exercise.exerciseLibraryId,
               exercise_title_snapshot:
                 exerciseTitleMap.get(exercise.exerciseLibraryId) ??
-                "Unknown exercise",
+                "Неизвестное упражнение",
               sets_count: exercise.setsCount,
               sort_order: index,
             })
@@ -228,8 +228,6 @@ export async function POST(request: Request) {
       data: programRow,
     });
   } catch (error) {
-    logger.error("weekly program create route failed", { error });
-
     if (createdProgramId) {
       const supabase = await createServerSupabaseClient();
       const rollbackResult = await supabase
@@ -253,6 +251,8 @@ export async function POST(request: Request) {
         details: error.flatten(),
       });
     }
+
+    logger.error("weekly program create route failed", { error });
 
     return createApiErrorResponse({
       status: 500,

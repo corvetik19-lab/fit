@@ -161,6 +161,12 @@ test.describe("api contracts", () => {
       invalidStripeCheckoutReconcilePayload,
       invalidOnboardingPayload,
       invalidWeeklyProgramClonePayload,
+      invalidWeeklyProgramCreatePayload,
+      invalidExerciseCreatePayload,
+      invalidFoodCreatePayload,
+      invalidRecipeCreatePayload,
+      invalidMealTemplateCreatePayload,
+      invalidMealCreatePayload,
       invalidWorkoutTemplateCreatePayload,
     ] = await Promise.all([
       fetchJson(page, {
@@ -280,6 +286,62 @@ test.describe("api contracts", () => {
       }),
       fetchJson(page, {
         method: "POST",
+        url: "/api/weekly-programs",
+        body: {
+          title: "x",
+          weekStartDate: "2026/03/16",
+          days: [],
+        },
+      }),
+      fetchJson(page, {
+        method: "POST",
+        url: "/api/exercises",
+        body: {
+          title: "x",
+          muscleGroup: "",
+          description: "ok",
+          note: "ok",
+        },
+      }),
+      fetchJson(page, {
+        method: "POST",
+        url: "/api/foods",
+        body: {
+          name: "x",
+          kcal: -1,
+          protein: 10,
+          fat: 5,
+          carbs: 20,
+        },
+      }),
+      fetchJson(page, {
+        method: "POST",
+        url: "/api/recipes",
+        body: {
+          title: "x",
+          servings: 0,
+          items: [],
+        },
+      }),
+      fetchJson(page, {
+        method: "POST",
+        url: "/api/meal-templates",
+        body: {
+          title: "x",
+          items: [],
+        },
+      }),
+      fetchJson(page, {
+        method: "POST",
+        url: "/api/meals",
+        body: {
+          eatenAt: "not-a-date",
+          summaryDate: "2026/03/16",
+          items: [],
+        },
+      }),
+      fetchJson(page, {
+        method: "POST",
         url: "/api/workout-templates",
         body: {
           programId: "not-a-uuid",
@@ -388,6 +450,36 @@ test.describe("api contracts", () => {
     expect(
       (invalidWeeklyProgramClonePayload.body as { code?: string } | null)?.code,
     ).toBe("WEEKLY_PROGRAM_CLONE_INVALID");
+
+    expect(invalidWeeklyProgramCreatePayload.status).toBe(400);
+    expect(
+      (invalidWeeklyProgramCreatePayload.body as { code?: string } | null)?.code,
+    ).toBe("WEEKLY_PROGRAM_CREATE_INVALID");
+
+    expect(invalidExerciseCreatePayload.status).toBe(400);
+    expect(
+      (invalidExerciseCreatePayload.body as { code?: string } | null)?.code,
+    ).toBe("EXERCISE_CREATE_INVALID");
+
+    expect(invalidFoodCreatePayload.status).toBe(400);
+    expect((invalidFoodCreatePayload.body as { code?: string } | null)?.code).toBe(
+      "FOOD_CREATE_INVALID",
+    );
+
+    expect(invalidRecipeCreatePayload.status).toBe(400);
+    expect(
+      (invalidRecipeCreatePayload.body as { code?: string } | null)?.code,
+    ).toBe("RECIPE_CREATE_INVALID");
+
+    expect(invalidMealTemplateCreatePayload.status).toBe(400);
+    expect(
+      (invalidMealTemplateCreatePayload.body as { code?: string } | null)?.code,
+    ).toBe("MEAL_TEMPLATE_CREATE_INVALID");
+
+    expect(invalidMealCreatePayload.status).toBe(400);
+    expect((invalidMealCreatePayload.body as { code?: string } | null)?.code).toBe(
+      "MEAL_CREATE_INVALID",
+    );
 
     expect(invalidWorkoutTemplateCreatePayload.status).toBe(400);
     expect(

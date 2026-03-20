@@ -1039,6 +1039,14 @@
 - Проверка зелёная: `npm run lint -- --quiet src/app/api/onboarding/route.ts src/app/api/nutrition/targets/route.ts src/app/api/weekly-programs/[id]/lock/route.ts src/app/api/weekly-programs/[id]/clone/route.ts src/app/api/workout-templates/route.ts tests/e2e/api-contracts.spec.ts`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1` -> `13 passed`.
 - Общий прогресс execution checklist остаётся `146 / 176` (`83%`): tranche продолжает большой backend audit по validation/owner-only/idempotency, но ещё не закрывает основной checkbox целиком.
 
+### 2026-03-21 04:20 - Дочистил weekly programs, exercises и nutrition create contracts
+
+- `src/app/api/weekly-programs/route.ts`, `src/app/api/exercises/route.ts`, `src/app/api/foods/route.ts`, `src/app/api/recipes/route.ts`, `src/app/api/meal-templates/route.ts` и `src/app/api/meals/route.ts` переведены в чистый UTF-8: auth, validation, missing-food, duplicate-day и failure copy больше не держит mojibake в weekly/workout/nutrition create surface.
+- В этих create-routes validation path больше не пишет noisy route-level `logger.error` на ожидаемом `ZodError`, а default fallback `Unknown exercise` заменён на пользовательское `Неизвестное упражнение`.
+- `tests/e2e/api-contracts.spec.ts` расширен invalid-payload контрактами для `POST /api/weekly-programs`, `POST /api/exercises`, `POST /api/foods`, `POST /api/recipes`, `POST /api/meal-templates` и `POST /api/meals`, чтобы весь create-surface weekly/workout/nutrition контура был покрыт predictable `400` regression suite.
+- Проверка зелёная: `npm run lint -- --quiet src/app/api/weekly-programs/route.ts src/app/api/exercises/route.ts src/app/api/foods/route.ts src/app/api/recipes/route.ts src/app/api/meal-templates/route.ts src/app/api/meals/route.ts tests/e2e/api-contracts.spec.ts`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1` -> `13 passed`.
+- Общий прогресс execution checklist остаётся `146 / 176` (`83%`): tranche продолжает большой backend audit по validation/owner-only/idempotency, но ещё не закрывает основной checkbox целиком.
+
 ### 2026-03-20 04:20 - Закрыл основной checkbox по route/lib duplication
 
 - После серии extraction tranche по `settings`, `nutrition`, `billing`, `AI` и `admin` mutation routes основной checklist-пункт `Доменные правила больше не дублируются между route handlers и lib` закрыт в `docs/MASTER_PLAN.md`.
