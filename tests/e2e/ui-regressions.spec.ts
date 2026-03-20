@@ -150,10 +150,8 @@ test.describe("ui regressions", () => {
         await expect(page.locator("main")).toBeVisible();
         await page.waitForTimeout(1000);
 
-        await expect(page.getByRole("link", { name: "Админ" })).toBeVisible();
-        await expect(
-          page.getByRole("link", { name: "Пользователи" }),
-        ).toBeVisible();
+        await expect(page.locator('a[href="/admin"]').first()).toBeVisible();
+        await expect(page.locator('a[href="/admin/users"]').first()).toBeVisible();
 
         await navigateStable(page, "/admin/users", /\/admin\/users$/);
         const userCardLink = page.locator('a[href^="/admin/users/"]').first();

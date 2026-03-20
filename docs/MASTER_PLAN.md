@@ -11,7 +11,7 @@
 
 Этот файл — текущий production-hardening backlog проекта. Он отражает фактическое состояние репозитория на `2026-03-14`.
 
-Текущий прогресс execution checklist: `152 / 176` (`86%`).
+Текущий прогресс execution checklist: `153 / 176` (`87%`).
 
 ## Текущая база
 
@@ -293,7 +293,7 @@
 
 - [x] `lint`, `typecheck`, `build` проходят стабильно в один запуск.
 - [ ] Нет mojibake в ключевой документации и основных экранах приложения.
-- [ ] Нет hydration mismatch, render loops, infinite polling и state desync в базовых пользовательских сценариях.
+- [x] Нет hydration mismatch, render loops, infinite polling и state desync в базовых пользовательских сценариях.
 - [ ] Stripe-контур работает end-to-end.
 - [ ] AI quality gate пройден по минимуму: assistant, retrieval, workout plan, meal plan, safety. Кодовая часть и явные provider/runtime notices уже доведены; остаётся снять внешний блок по кредитам и embeddings.
 - [ ] Android wrapper smoke пройден после стабилизации web/PWA.
@@ -1020,3 +1020,10 @@
 - [x] Tranche подтверждён пакетами `npx eslint src/components/admin-health-dashboard.tsx src/components/admin-user-actions.tsx src/components/admin-user-detail.tsx src/components/admin-user-detail-sections.tsx tests/e2e/admin-app.spec.ts`, `npm run typecheck`, `npm run build`, `node scripts/run-playwright.mjs PLAYWRIGHT_BASE_URL=http://127.0.0.1:3100 -- test tests/e2e/admin-app.spec.ts --workers=1` -> `6 passed`.
 - [x] После этого закрыт основной checklist-пункт `Довести admin billing health и reconcile UX до операторского уровня`.
 - [x] Заодно закрыт milestone-пункт `UI в /settings и /admin корректно показывает статус подписки и расхождения`.
+
+## 2026-03-20 reliability gate closure addendum
+
+- [x] `tests/e2e/authenticated-app.spec.ts` стабилизирован на семантических shell-локаторах: переходы по основным пользовательским разделам и восстановление сессии больше не зависят от хрупкого `a[href="/ai"]`.
+- [x] `tests/e2e/ui-regressions.spec.ts` обновлён на стабильные admin shell locators `/admin` и `/admin/users`, чтобы regression suite отражал текущий desktop shell без ложных красных из-за переименованного пункта `Центр управления`.
+- [x] Полный reliability bundle подтверждён единым прогоном: `authenticated-app + settings-billing + ui-regressions + mobile-pwa-regressions + workout-sync` через `node scripts/run-playwright.mjs PLAYWRIGHT_BASE_URL=http://127.0.0.1:3100 -- test ... --workers=1` -> `16 passed`.
+- [x] После этого закрыт основной acceptance checkbox `Нет hydration mismatch, render loops, infinite polling и state desync в базовых пользовательских сценариях`.

@@ -1085,6 +1085,14 @@
 - Проверка зелёная: `npx eslint src/components/admin-health-dashboard.tsx src/components/admin-user-actions.tsx src/components/admin-user-detail.tsx src/components/admin-user-detail-sections.tsx tests/e2e/admin-app.spec.ts`, `npm run typecheck`, `npm run build`, `node scripts/run-playwright.mjs PLAYWRIGHT_BASE_URL=http://127.0.0.1:3100 -- test tests/e2e/admin-app.spec.ts --workers=1` -> `6 passed`.
 - Общий прогресс execution checklist вырос до `152 / 176` (`86%`).
 
+### 2026-03-20 08:00 - Закрыл базовый reliability gate по UI и sync
+
+- `tests/e2e/authenticated-app.spec.ts` стабилизирован на реальных shell-локаторах: переходы по `/dashboard -> /workouts -> /nutrition -> /ai -> /settings` и восстановление сессии больше не зависят от хрупкого `a[href="/ai"]`.
+- `tests/e2e/ui-regressions.spec.ts` переведён на стабильные admin shell locators `/admin` и `/admin/users`, чтобы regression suite отражал текущий root-admin shell без ложных падений из-за названия `Центр управления`.
+- Полный reliability bundle подтверждён единым прогоном: `authenticated-app`, `settings-billing`, `ui-regressions`, `mobile-pwa-regressions`, `workout-sync` -> `16 passed`.
+- Этим закрыт основной acceptance checkbox про отсутствие `hydration mismatch`, `render loops`, `infinite polling` и `state desync` в базовых пользовательских сценариях.
+- Общий прогресс execution checklist вырос до `153 / 176` (`87%`).
+
 ### 2026-03-20 04:20 - Закрыл основной checkbox по route/lib duplication
 
 - После серии extraction tranche по `settings`, `nutrition`, `billing`, `AI` и `admin` mutation routes основной checklist-пункт `Доменные правила больше не дублируются между route handlers и lib` закрыт в `docs/MASTER_PLAN.md`.

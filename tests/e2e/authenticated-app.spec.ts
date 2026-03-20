@@ -17,9 +17,9 @@ test.describe("authenticated app", () => {
   );
 
   test("user can open main product sections after sign-in", async ({ page }) => {
-    await page.goto("/dashboard");
-    await expect(page).toHaveURL(/\/dashboard$/);
-    await expect(page.locator('a[href="/ai"]').first()).toBeVisible();
+    await navigateStable(page, "/dashboard", /\/dashboard$/);
+    await page.waitForLoadState("networkidle");
+    await expect(page.getByRole("link", { name: "AI" }).first()).toBeVisible();
 
     await navigateStable(page, "/workouts", /\/workouts$/);
     await expect(page.locator('button[aria-pressed]').first()).toBeVisible();
@@ -37,6 +37,7 @@ test.describe("authenticated app", () => {
   test("session is restored inside the same browser context", async ({ page }) => {
     await navigateStable(page, "/dashboard", /\/(dashboard|onboarding)$/);
     await expect(page).toHaveURL(/\/dashboard$/);
-    await expect(page.locator('a[href="/ai"]').first()).toBeVisible();
+    await page.waitForLoadState("networkidle");
+    await expect(page.getByRole("link", { name: "AI" }).first()).toBeVisible();
   });
 });
