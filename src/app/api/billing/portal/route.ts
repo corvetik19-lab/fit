@@ -17,7 +17,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 401,
         code: "AUTH_REQUIRED",
-        message: "Нужно войти в аккаунт, чтобы открыть платёжный кабинет.",
+        message: "Нужно войти в аккаунт, чтобы открыть платежный кабинет.",
       });
     }
 

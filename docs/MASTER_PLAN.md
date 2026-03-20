@@ -905,3 +905,10 @@
 - [x] `tests/e2e/api-contracts.spec.ts` расширен self-service contract-покрытием: invalid `settings/data` payload -> `400 SETTINGS_DATA_INVALID`, повторная отмена удаления -> `404 SETTINGS_DELETION_NOT_FOUND`, повторный billing access review -> `409 SETTINGS_BILLING_REVIEW_ALREADY_ACTIVE`.
 - [x] Tranche подтверждён пакетами `npx eslint src/app/api/settings/data/route.ts src/app/api/settings/billing/route.ts tests/e2e/api-contracts.spec.ts`, `npm run build`, `npm run typecheck`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1` -> `10 passed`.
 - [ ] Следующий backend tranche: продолжать remaining route-handler audit по owner-only/idempotency/race conditions за пределами settings self-service routes.
+
+## 2026-03-20 billing self-service route copy and reconcile validation addendum
+
+- [x] `src/app/api/billing/checkout/route.ts`, `src/app/api/billing/checkout/reconcile/route.ts` и `src/app/api/billing/portal/route.ts` переведены в чистый UTF-8: auth-first и runtime failure copy больше не держат mojibake в billing self-service surface.
+- [x] `tests/e2e/api-contracts.spec.ts` расширен явным validation-контрактом для `POST /api/billing/checkout/reconcile`: пустой payload теперь подтвержден как `400 STRIPE_CHECKOUT_RECONCILE_INVALID`.
+- [x] Tranche подтверждён пакетами `npx eslint src/app/api/billing/checkout/route.ts src/app/api/billing/checkout/reconcile/route.ts src/app/api/billing/portal/route.ts tests/e2e/api-contracts.spec.ts`, `npm run build`, `npm run typecheck`, `node scripts/run-playwright.mjs PLAYWRIGHT_BASE_URL=http://127.0.0.1:3110 -- test tests/e2e/api-contracts.spec.ts --workers=1` -> `10 passed`.
+- [ ] Следующий backend tranche: продолжать remaining route-handler audit по billing/webhook/admin/self-service контурам вне уже подтвержденного transport/validation слоя.

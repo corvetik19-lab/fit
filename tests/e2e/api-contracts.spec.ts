@@ -133,6 +133,7 @@ test.describe("api contracts", () => {
       invalidNutritionTargetsPayload,
       invalidSettingsBillingPayload,
       invalidSettingsDataPayload,
+      invalidStripeCheckoutReconcilePayload,
     ] = await Promise.all([
       fetchJson(page, {
         method: "PATCH",
@@ -221,6 +222,11 @@ test.describe("api contracts", () => {
           reason: "x".repeat(301),
         },
       }),
+      fetchJson(page, {
+        method: "POST",
+        url: "/api/billing/checkout/reconcile",
+        body: {},
+      }),
     ]);
 
     expect(dayUpdate.status).toBe(400);
@@ -307,6 +313,12 @@ test.describe("api contracts", () => {
     expect(
       (invalidSettingsDataPayload.body as { code?: string } | null)?.code,
     ).toBe("SETTINGS_DATA_INVALID");
+
+    expect(invalidStripeCheckoutReconcilePayload.status).toBe(400);
+    expect(
+      (invalidStripeCheckoutReconcilePayload.body as { code?: string } | null)
+        ?.code,
+    ).toBe("STRIPE_CHECKOUT_RECONCILE_INVALID");
   });
 
   test("settings self-service routes keep duplicate and retry contracts predictable", async ({

@@ -965,6 +965,13 @@
 - Проверка зелёная: `npx eslint src/app/api/settings/data/route.ts src/app/api/settings/billing/route.ts tests/e2e/api-contracts.spec.ts`, `npm run build`, `npm run typecheck`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1` -> `10 passed`.
 - Общий прогресс execution checklist остается `146 / 176` (`83%`): tranche двигает открытый backend audit по validation/idempotency, но еще не закрывает следующий основной checkbox целиком.
 
+### 2026-03-20 22:40 - Дожал billing self-service transport contracts
+
+- `src/app/api/billing/checkout/route.ts`, `src/app/api/billing/checkout/reconcile/route.ts` и `src/app/api/billing/portal/route.ts` переведены в чистый UTF-8: auth-first и runtime failure copy больше не держат mojibake в billing self-service surface.
+- `tests/e2e/api-contracts.spec.ts` расширен explicit validation-покрытием для `POST /api/billing/checkout/reconcile`: пустой payload подтвержден как `400 STRIPE_CHECKOUT_RECONCILE_INVALID`.
+- Проверка зелёная: `npx eslint src/app/api/billing/checkout/route.ts src/app/api/billing/checkout/reconcile/route.ts src/app/api/billing/portal/route.ts tests/e2e/api-contracts.spec.ts`, `npm run build`, `npm run typecheck`, `node scripts/run-playwright.mjs PLAYWRIGHT_BASE_URL=http://127.0.0.1:3110 -- test tests/e2e/api-contracts.spec.ts --workers=1` -> `10 passed`.
+- Общий прогресс execution checklist остается `146 / 176` (`83%`): tranche продолжает route-handler audit по billing/self-service contracts, но не закрывает следующий основной checkbox целиком.
+
 ### 2026-03-20 04:20 - Закрыл основной checkbox по route/lib duplication
 
 - После серии extraction tranche по `settings`, `nutrition`, `billing`, `AI` и `admin` mutation routes основной checklist-пункт `Доменные правила больше не дублируются между route handlers и lib` закрыт в `docs/MASTER_PLAN.md`.
