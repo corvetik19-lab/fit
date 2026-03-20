@@ -134,7 +134,9 @@ test.describe("api contracts", () => {
     "requires PLAYWRIGHT_TEST_EMAIL and PLAYWRIGHT_TEST_PASSWORD",
   );
 
-  test("authenticated invalid route params return explicit 400s", async ({ page }) => {
+  test("authenticated invalid route params and payloads return explicit 400s", async ({
+    page,
+  }) => {
     await navigateStable(page, "/dashboard", /\/dashboard$/);
     await page.waitForLoadState("networkidle");
 
@@ -157,6 +159,9 @@ test.describe("api contracts", () => {
       invalidSettingsBillingPayload,
       invalidSettingsDataPayload,
       invalidStripeCheckoutReconcilePayload,
+      invalidOnboardingPayload,
+      invalidWeeklyProgramClonePayload,
+      invalidWorkoutTemplateCreatePayload,
     ] = await Promise.all([
       fetchJson(page, {
         method: "PATCH",
@@ -250,6 +255,37 @@ test.describe("api contracts", () => {
         url: "/api/billing/checkout/reconcile",
         body: {},
       }),
+      fetchJson(page, {
+        method: "POST",
+        url: "/api/onboarding",
+        body: {
+          fullName: "A",
+          age: 10,
+          sex: "",
+          heightCm: 90,
+          weightKg: 20,
+          fitnessLevel: "",
+          equipment: [],
+          injuries: [],
+          dietaryPreferences: [],
+          goalType: "fat_loss",
+          targetWeightKg: 20,
+          weeklyTrainingDays: 0,
+        },
+      }),
+      fetchJson(page, {
+        method: "POST",
+        url: `/api/weekly-programs/${crypto.randomUUID()}/clone`,
+        body: { weekStartDate: "2026/03/16" },
+      }),
+      fetchJson(page, {
+        method: "POST",
+        url: "/api/workout-templates",
+        body: {
+          programId: "not-a-uuid",
+          title: "x",
+        },
+      }),
     ]);
 
     expect(dayUpdate.status).toBe(400);
@@ -342,6 +378,21 @@ test.describe("api contracts", () => {
       (invalidStripeCheckoutReconcilePayload.body as { code?: string } | null)
         ?.code,
     ).toBe("STRIPE_CHECKOUT_RECONCILE_INVALID");
+
+    expect(invalidOnboardingPayload.status).toBe(400);
+    expect((invalidOnboardingPayload.body as { code?: string } | null)?.code).toBe(
+      "ONBOARDING_PAYLOAD_INVALID",
+    );
+
+    expect(invalidWeeklyProgramClonePayload.status).toBe(400);
+    expect(
+      (invalidWeeklyProgramClonePayload.body as { code?: string } | null)?.code,
+    ).toBe("WEEKLY_PROGRAM_CLONE_INVALID");
+
+    expect(invalidWorkoutTemplateCreatePayload.status).toBe(400);
+    expect(
+      (invalidWorkoutTemplateCreatePayload.body as { code?: string } | null)?.code,
+    ).toBe("WORKOUT_TEMPLATE_CREATE_INVALID");
   });
 
   test("settings self-service routes keep duplicate and retry contracts predictable", async ({

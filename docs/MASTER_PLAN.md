@@ -971,3 +971,11 @@
 - [x] Повторная проверка поиском подтвердила, что в `src/app/api` и `src/lib` больше не осталось строк `queue processor`, `scheduled AI eval jobs`, `billing reconciliation jobs` и `knowledge reindex jobs`.
 - [x] Tranche подтверждён пакетами `npm run lint -- --quiet src/lib/admin-queue-processing.ts src/app/api/internal/jobs/ai-evals-schedule/route.ts src/app/api/internal/jobs/billing-reconcile/route.ts src/app/api/internal/jobs/knowledge-reindex/route.ts`, `npm run typecheck`, `npm run build`.
 - [ ] Следующий backend tranche: продолжать remaining route-handler audit по validation/owner-only/idempotency и переоценить, можно ли закрывать основной checkbox по backend hardening.
+
+## 2026-03-21 onboarding, weekly programs и workout templates contract sanitation addendum
+
+- [x] `src/app/api/onboarding/route.ts`, `src/app/api/nutrition/targets/route.ts`, `src/app/api/weekly-programs/[id]/lock/route.ts`, `src/app/api/weekly-programs/[id]/clone/route.ts` и `src/app/api/workout-templates/route.ts` переведены в чистый UTF-8: user-facing auth, validation, not-found, conflict и failure copy больше не держит mojibake.
+- [x] В `onboarding` и `workout templates` validation path теперь режется до expected `400` без noisy route-level `logger.error` на `ZodError`, а clone/template titles больше не смешивают английский и русский в пользовательской поверхности.
+- [x] `tests/e2e/api-contracts.spec.ts` расширен invalid-payload контрактами для `POST /api/onboarding`, `POST /api/weekly-programs/{id}/clone` и `POST /api/workout-templates`, чтобы эти product routes были покрыты тем же predictable `400` слоем, что и остальные self-service handlers.
+- [x] Tranche подтверждён пакетами `npm run lint -- --quiet src/app/api/onboarding/route.ts src/app/api/nutrition/targets/route.ts src/app/api/weekly-programs/[id]/lock/route.ts src/app/api/weekly-programs/[id]/clone/route.ts src/app/api/workout-templates/route.ts tests/e2e/api-contracts.spec.ts`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1` -> `13 passed`.
+- [ ] Следующий backend tranche: продолжать remaining route-handler audit по validation/owner-only/idempotency и переоценить, можно ли уже закрывать основной checkbox по backend hardening.

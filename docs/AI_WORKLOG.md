@@ -1031,6 +1031,14 @@
 - `npx playwright test tests/e2e/internal-jobs.spec.ts --workers=1` локально упёрся в Playwright `webServer` bootstrap, который ожидает отдельный test-build; кодовый baseline этого tranche подтверждён зелёными `lint/typecheck/build`.
 - Общий прогресс execution checklist остается `146 / 176` (`83%`): tranche продолжает большой backend audit по validation/owner-only/idempotency, но ещё не закрывает основной checkbox целиком.
 
+### 2026-03-21 03:40 - Дочистил onboarding, weekly programs и workout templates contracts
+
+- `src/app/api/onboarding/route.ts`, `src/app/api/nutrition/targets/route.ts`, `src/app/api/weekly-programs/[id]/lock/route.ts`, `src/app/api/weekly-programs/[id]/clone/route.ts` и `src/app/api/workout-templates/route.ts` переведены в чистый UTF-8: auth, validation, conflict, not-found и failure copy больше не держит mojibake.
+- В `onboarding` и `workout templates` validation path больше не пишет noisy route-level `logger.error` на ожидаемом `ZodError`; predictable `400` остаётся чистым transport-контрактом без ложных error-логов.
+- `tests/e2e/api-contracts.spec.ts` расширен invalid-payload контрактами для `POST /api/onboarding`, `POST /api/weekly-programs/{id}/clone` и `POST /api/workout-templates`, чтобы эти product routes были покрыты тем же predictable `400` baseline, что и остальной self-service контур.
+- Проверка зелёная: `npm run lint -- --quiet src/app/api/onboarding/route.ts src/app/api/nutrition/targets/route.ts src/app/api/weekly-programs/[id]/lock/route.ts src/app/api/weekly-programs/[id]/clone/route.ts src/app/api/workout-templates/route.ts tests/e2e/api-contracts.spec.ts`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1` -> `13 passed`.
+- Общий прогресс execution checklist остаётся `146 / 176` (`83%`): tranche продолжает большой backend audit по validation/owner-only/idempotency, но ещё не закрывает основной checkbox целиком.
+
 ### 2026-03-20 04:20 - Закрыл основной checkbox по route/lib duplication
 
 - После серии extraction tranche по `settings`, `nutrition`, `billing`, `AI` и `admin` mutation routes основной checklist-пункт `Доменные правила больше не дублируются между route handlers и lib` закрыт в `docs/MASTER_PLAN.md`.

@@ -82,7 +82,8 @@ export async function POST(
       return createApiErrorResponse({
         status: 409,
         code: "WEEKLY_PROGRAM_LOCK_CONFLICT",
-        message: "Состояние программы изменилось во время запроса. Обнови экран и попробуй ещё раз.",
+        message:
+          "Состояние программы изменилось во время запроса. Обнови экран и попробуй ещё раз.",
       });
     }
 

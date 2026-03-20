@@ -121,14 +121,11 @@ export async function POST(request: Request) {
 
     for (const setRow of setRows) {
       if (!firstRepRangeByExerciseId.has(setRow.workout_exercise_id)) {
-        firstRepRangeByExerciseId.set(
-          setRow.workout_exercise_id,
-          {
-            plannedReps: setRow.planned_reps,
-            plannedRepsMin: setRow.planned_reps_min,
-            plannedRepsMax: setRow.planned_reps_max,
-          },
-        );
+        firstRepRangeByExerciseId.set(setRow.workout_exercise_id, {
+          plannedReps: setRow.planned_reps,
+          plannedRepsMin: setRow.planned_reps_min,
+          plannedRepsMax: setRow.planned_reps_max,
+        });
       }
     }
 
@@ -177,7 +174,7 @@ export async function POST(request: Request) {
       .from("workout_templates")
       .insert({
         user_id: user.id,
-        title: payload.title ?? `${programRow.title} template`,
+        title: payload.title ?? `${programRow.title} шаблон`,
         payload: templatePayload,
       })
       .select("id, title, payload, created_at")
@@ -189,8 +186,6 @@ export async function POST(request: Request) {
 
     return Response.json({ data });
   } catch (error) {
-    logger.error("workout template create route failed", { error });
-
     if (error instanceof z.ZodError) {
       return createApiErrorResponse({
         status: 400,
@@ -199,6 +194,8 @@ export async function POST(request: Request) {
         details: error.flatten(),
       });
     }
+
+    logger.error("workout template create route failed", { error });
 
     return createApiErrorResponse({
       status: 500,

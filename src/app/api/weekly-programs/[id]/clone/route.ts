@@ -108,7 +108,7 @@ export async function POST(
       .from("weekly_programs")
       .insert({
         user_id: user.id,
-        title: `${sourceProgram.title} (copy)`,
+        title: `${sourceProgram.title} (копия)`,
         status: "draft",
         week_start_date: payload.weekStartDate,
         week_end_date: weekEndDate,

@@ -130,8 +130,6 @@ export async function POST(request: Request) {
 
     return Response.json({ ok: true });
   } catch (error) {
-    logger.error("onboarding route failed", { error });
-
     if (error instanceof z.ZodError) {
       return createApiErrorResponse({
         status: 400,
@@ -140,6 +138,8 @@ export async function POST(request: Request) {
         details: error.flatten(),
       });
     }
+
+    logger.error("onboarding route failed", { error });
 
     return createApiErrorResponse({
       status: 500,
