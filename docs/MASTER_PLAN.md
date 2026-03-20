@@ -775,3 +775,11 @@
 - [x] `src/app/api/ai/meal-plan/route.ts` и `src/app/api/ai/workout-plan/route.ts` переведены на тонкий transport-слой с чистым UTF-8 copy, а safety/provider messaging для AI plan generation теперь идёт через shared helper.
 - [x] Tranche подтверждён пакетами `npx eslint src/lib/ai/plan-route-copy.ts src/app/api/ai/meal-plan/route.ts src/app/api/ai/workout-plan/route.ts`, `npm run typecheck`, `npm run build`.
 - [ ] Следующий AI/backend tranche: продолжать remaining runtime/guardrail sanitation в `ai/assistant`, затем возвращаться к route/lib extraction и owner-only/idempotency audit.
+
+## 2026-03-20 AI assistant runtime copy extraction addendum
+
+- [x] Общий user-facing и tool-facing copy для `ai/assistant` вынесен в `src/lib/ai/assistant-runtime-copy.ts`: runtime/auth/invalid messages, safety fallback, stream error copy, tool descriptions и summary labels больше не размазаны по route handler.
+- [x] `src/app/api/ai/assistant/route.ts` переведён на этот helper без изменения owner-only, billing, retrieval, proposal и streaming contracts: route стал тоньше и ближе к transport/orchestration роли.
+- [x] `src/lib/ai/domain-policy.ts` синхронизирован с текущим helper-slice и остаётся зелёным по compile/lint baseline.
+- [x] Tranche подтверждён пакетами `npx eslint src/lib/ai/assistant-runtime-copy.ts src/app/api/ai/assistant/route.ts src/lib/ai/domain-policy.ts`, `npm run typecheck`, `npm run build`.
+- [ ] Следующий AI/backend tranche: возвращаться к remaining route/lib extraction и owner-only/idempotency audit по AI/data handlers.

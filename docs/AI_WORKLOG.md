@@ -849,3 +849,11 @@
 - `src/app/api/ai/meal-plan/route.ts` и `src/app/api/ai/workout-plan/route.ts` переведены на этот helper без изменения owner-only, billing и generation contracts: handlers остались transport-обёртками вокруг plan generation flow.
 - Проверка зелёная: `npx eslint src/lib/ai/plan-route-copy.ts src/app/api/ai/meal-plan/route.ts src/app/api/ai/workout-plan/route.ts`, `npm run typecheck`, `npm run build`.
 - Общий прогресс execution checklist остаётся `144 / 176` (`82%`): tranche сокращает AI route duplication и sanitation backlog, но не закрывает следующий основной checkbox целиком.
+
+### 2026-03-20 00:45 - Вынес shared runtime copy из ai/assistant
+
+- Добавил `src/lib/ai/assistant-runtime-copy.ts`: shared runtime, safety и tool-facing copy для `ai/assistant` теперь живёт вне route handler и включает not-configured/auth-invalid/provider/runtime messages, safety fallback, tool descriptions и summary helpers.
+- `src/app/api/ai/assistant/route.ts` переведён на этот helper без изменения owner-only, billing, retrieval, proposal и streaming contracts: route остался orchestration-слоем, а shared copy и text-formatting helper'ы больше не дублируются внутри handler.
+- `src/lib/ai/domain-policy.ts` остаётся зелёным и синхронизированным с текущим AI helper tranche; локальный diff там ограничен форматной нормализацией prompt-строки.
+- Проверка зелёная: `npx eslint src/lib/ai/assistant-runtime-copy.ts src/app/api/ai/assistant/route.ts src/lib/ai/domain-policy.ts`, `npm run typecheck`, `npm run build`.
+- Общий прогресс execution checklist остаётся `144 / 176` (`82%`): tranche продолжает AI route/lib extraction, но не закрывает следующий основной checkbox целиком.
