@@ -11,7 +11,7 @@
 
 Этот файл — текущий production-hardening backlog проекта. Он отражает фактическое состояние репозитория на `2026-03-14`.
 
-Текущий прогресс execution checklist: `150 / 176` (`85%`).
+Текущий прогресс execution checklist: `152 / 176` (`86%`).
 
 ## Текущая база
 
@@ -41,7 +41,7 @@
 
 - [ ] Stripe env полностью готовы на production/staging.
 - [ ] Работает живой контур `checkout -> return reconcile -> webhook -> portal`.
-- [ ] UI в `/settings` и `/admin` корректно показывает статус подписки и расхождения.
+- [x] UI в `/settings` и `/admin` корректно показывает статус подписки и расхождения.
 
 ### Milestone 3 — Android Wrapper
 
@@ -253,7 +253,7 @@
 
 - [x] Есть billing center в `/settings` и admin billing controls.
 - [x] Довести user-facing billing UX до production-уровня без сырых промежуточных состояний.
-- [ ] Довести admin billing health и reconcile UX до операторского уровня.
+- [x] Довести admin billing health и reconcile UX до операторского уровня.
 
 ## Волна 5. Тесты, CI и release process
 
@@ -1011,3 +1011,12 @@
 - [x] Добавлен regression suite `tests/e2e/settings-billing.spec.ts`: подтверждены billing section navigation, видимость блоков `Текущий план / Запросить доступ / История доступа`, русские queued status copy и billing review snapshot на `/settings`.
 - [x] Tranche подтверждён пакетами `npm run lint`, `npm run typecheck`, `npm run build`, `node scripts/run-playwright.mjs PLAYWRIGHT_BASE_URL=http://127.0.0.1:3100 -- test tests/e2e/settings-billing.spec.ts --workers=1` -> `2 passed`.
 - [x] После этого закрыт основной checklist-пункт `Довести user-facing billing UX до production-уровня без сырых промежуточных состояний`.
+
+## 2026-03-20 admin billing health UX closure addendum
+
+- [x] `src/components/admin-health-dashboard.tsx` получил стабильный operator surface для billing health: кнопка ручной сверки и ключевые billing-карточки снабжены явными testid и подтверждены как отдельная админская поверхность.
+- [x] `src/components/admin-user-actions.tsx`, `src/components/admin-user-detail.tsx` и `src/components/admin-user-detail-sections.tsx` дочищены до нормального billing copy и стабильной навигации: вместо `главному супер-админу` теперь `корневому администратору`, а billing section/detail surface имеет предсказуемые `data-testid`.
+- [x] `tests/e2e/admin-app.spec.ts` расширен новым operator billing regression: root-admin видит billing health на `/admin`, кнопку `Сверить оплаты`, billing controls в карточке пользователя и billing section с карточками `Текущая подписка / Платёжный профиль / История подписки`.
+- [x] Tranche подтверждён пакетами `npx eslint src/components/admin-health-dashboard.tsx src/components/admin-user-actions.tsx src/components/admin-user-detail.tsx src/components/admin-user-detail-sections.tsx tests/e2e/admin-app.spec.ts`, `npm run typecheck`, `npm run build`, `node scripts/run-playwright.mjs PLAYWRIGHT_BASE_URL=http://127.0.0.1:3100 -- test tests/e2e/admin-app.spec.ts --workers=1` -> `6 passed`.
+- [x] После этого закрыт основной checklist-пункт `Довести admin billing health и reconcile UX до операторского уровня`.
+- [x] Заодно закрыт milestone-пункт `UI в /settings и /admin корректно показывает статус подписки и расхождения`.

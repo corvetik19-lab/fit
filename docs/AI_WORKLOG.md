@@ -1077,6 +1077,14 @@
 - Проверка зелёная: `npm run lint`, `npm run typecheck`, `npm run build`, `node scripts/run-playwright.mjs PLAYWRIGHT_BASE_URL=http://127.0.0.1:3100 -- test tests/e2e/settings-billing.spec.ts --workers=1` -> `2 passed`.
 - Общий прогресс execution checklist вырос до `150 / 176` (`85%`).
 
+### 2026-03-20 07:05 - Закрыл admin billing health и reconcile UX
+
+- `src/components/admin-health-dashboard.tsx` получил стабильный billing operator surface: карточки проверки оплат и подписок, а также кнопка ручной сверки теперь явно проверяются как отдельный админский сценарий.
+- `src/components/admin-user-actions.tsx`, `src/components/admin-user-detail.tsx` и `src/components/admin-user-detail-sections.tsx` дочищены до понятного billing copy и стабильной секционной навигации; формулировка про `главному супер-админу` заменена на `корневому администратору`.
+- `tests/e2e/admin-app.spec.ts` расширен новым billing regression: root-admin видит billing health на `/admin`, кнопку `Сверить оплаты`, billing controls в карточке пользователя и billing section с карточками подписки и истории доступа.
+- Проверка зелёная: `npx eslint src/components/admin-health-dashboard.tsx src/components/admin-user-actions.tsx src/components/admin-user-detail.tsx src/components/admin-user-detail-sections.tsx tests/e2e/admin-app.spec.ts`, `npm run typecheck`, `npm run build`, `node scripts/run-playwright.mjs PLAYWRIGHT_BASE_URL=http://127.0.0.1:3100 -- test tests/e2e/admin-app.spec.ts --workers=1` -> `6 passed`.
+- Общий прогресс execution checklist вырос до `152 / 176` (`86%`).
+
 ### 2026-03-20 04:20 - Закрыл основной checkbox по route/lib duplication
 
 - После серии extraction tranche по `settings`, `nutrition`, `billing`, `AI` и `admin` mutation routes основной checklist-пункт `Доменные правила больше не дублируются между route handlers и lib` закрыт в `docs/MASTER_PLAN.md`.

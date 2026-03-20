@@ -83,6 +83,50 @@ test.describe("admin app", () => {
     expect(detailResult.body?.data?.authUser?.email).toBeTruthy();
   });
 
+  test("root admin sees billing health and user billing controls", async ({
+    page,
+  }) => {
+    test.setTimeout(60_000);
+
+    await navigateStable(page, "/admin", /\/admin$/);
+    await page.waitForLoadState("networkidle");
+    await expect(
+      page.getByTestId("admin-health-billing-overview-card"),
+    ).toBeVisible();
+    await expect(
+      page.getByTestId("admin-health-billing-review-card"),
+    ).toBeVisible();
+    await expect(
+      page.getByTestId("admin-health-billing-subscriptions-card"),
+    ).toBeVisible();
+    await expect(
+      page.getByTestId("admin-health-billing-reconcile-button"),
+    ).toBeVisible();
+
+    await navigateStable(page, "/admin/users", /\/admin\/users$/);
+    await page.waitForLoadState("networkidle");
+    const firstUserLink = page.locator('a[href^="/admin/users/"]').first();
+    await expect(firstUserLink).toBeVisible();
+    const userHref = await firstUserLink.getAttribute("href");
+    expect(userHref).toBeTruthy();
+
+    await navigateStable(page, userHref!, /\/admin\/users\/.+$/);
+    await page.waitForLoadState("networkidle");
+    await expect(
+      page.getByTestId("admin-user-actions-billing-panel"),
+    ).toBeVisible();
+    await expect(
+      page.getByTestId("admin-user-actions-billing-reconcile"),
+    ).toBeVisible();
+    await page.getByTestId("admin-user-detail-section-billing").click();
+    await expect(
+      page.getByTestId("admin-user-detail-billing-section"),
+    ).toBeVisible();
+    await expect(page.getByText("Текущая подписка").first()).toBeVisible();
+    await expect(page.getByText("Платёжный профиль").first()).toBeVisible();
+    await expect(page.getByText("История подписки").first()).toBeVisible();
+  });
+
   test("root admin gets explicit validation error for invalid reindex payload", async ({
     page,
   }) => {

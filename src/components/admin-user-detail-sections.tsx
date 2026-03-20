@@ -422,7 +422,7 @@ export function AdminUserBillingSection({
   detail: AdminUserDetailData;
 }) {
   return (
-    <section className="card p-6">
+    <section className="card p-6" data-testid="admin-user-detail-billing-section">
       <div className="mb-5">
         <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
           Оплата и доступ

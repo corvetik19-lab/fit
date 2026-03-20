@@ -191,6 +191,7 @@ export function AdminUserDetail({
                     ? "border-accent/20 bg-[color-mix(in_srgb,var(--accent-soft)_78%,white)] text-foreground shadow-[0_16px_38px_-34px_rgba(20,97,75,0.22)]"
                     : "border-border bg-white/72 text-foreground hover:bg-white"
                 }`}
+                data-testid={`admin-user-detail-section-${key}`}
                 key={key}
                 onClick={() => setActiveSection(key)}
                 type="button"

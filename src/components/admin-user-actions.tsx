@@ -262,7 +262,10 @@ export function AdminUserActions({
           ) : null}
         </div>
 
-        <div className="rounded-3xl border border-border bg-white/60 p-5">
+        <div
+          className="rounded-3xl border border-border bg-white/60 p-5"
+          data-testid="admin-user-actions-billing-panel"
+        >
           <div className="mb-4">
             <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted">
               Оплата и доступ
@@ -274,7 +277,7 @@ export function AdminUserActions({
 
           {!canManageBilling ? (
             <p className="rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-              Управление оплатой и доступами доступно только главному супер-админу.
+              Управление оплатой и доступами доступно только корневому администратору.
             </p>
           ) : null}
 
@@ -321,6 +324,7 @@ export function AdminUserActions({
 
               <button
                 className="rounded-full border border-border px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
+                data-testid="admin-user-actions-billing-reconcile"
                 disabled={!canManageBilling || isPending}
                 onClick={() =>
                   submitJsonAction(

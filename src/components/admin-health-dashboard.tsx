@@ -565,7 +565,7 @@ export function AdminHealthDashboard({
                 </button>
               ) : null}
               {canRunAdminJobs ? (
-                <button className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60" disabled={!canRunBillingReconcile} onClick={() => void runBillingReconcileJob()} type="button">
+                <button className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60" data-testid="admin-health-billing-reconcile-button" disabled={!canRunBillingReconcile} onClick={() => void runBillingReconcileJob()} type="button">
                   {isRefreshingBilling ? "Сверяю оплаты..." : "Сверить оплаты"}
                 </button>
               ) : null}
@@ -630,7 +630,7 @@ export function AdminHealthDashboard({
               </div>
             </article>
 
-            <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm">
+            <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm" data-testid="admin-health-billing-overview-card">
               <p className="font-semibold text-foreground">Оплата и подписки</p>
               <div className="mt-3 grid gap-1 text-muted">
                 <p>Оформление оплаты: {formatConfigState(observability?.stripe.checkoutMissing ?? [])}</p>
@@ -766,7 +766,7 @@ export function AdminHealthDashboard({
           </div>
 
           <div className="grid gap-3 md:grid-cols-2">
-            <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm">
+            <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm" data-testid="admin-health-billing-review-card">
               <p className="font-semibold text-foreground">Проверка оплат</p>
               <div className="mt-3 grid gap-1 text-muted">
                 <p>Ждут ручной проверки: {billingHealth?.queuedBillingReviews ?? 0}</p>
@@ -777,7 +777,7 @@ export function AdminHealthDashboard({
                 <p>Последняя автоматическая сверка: {formatDateTime(billingHealth?.latestBillingReconcileAt ?? null)}</p>
               </div>
             </article>
-            <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm">
+            <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm" data-testid="admin-health-billing-subscriptions-card">
               <p className="font-semibold text-foreground">Подписки</p>
               <div className="mt-3 grid gap-1 text-muted">
                 <p>Всего подписок: {billingHealth?.stripeSubscriptions ?? 0}</p>
