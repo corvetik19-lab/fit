@@ -899,3 +899,10 @@
 - `src/app/api/admin/users/[id]/export/route.ts` и `src/app/api/admin/users/[id]/deletion/route.ts` переведены на этот helper, а `src/app/api/admin/users/bulk/route.ts` использует тот же export queue helper для ветки `queue_export`.
 - Проверка зелёная: `npx eslint src/lib/admin-user-requests.ts src/app/api/admin/users/[id]/export/route.ts src/app/api/admin/users/[id]/deletion/route.ts src/app/api/admin/users/bulk/route.ts`, `npm run typecheck`, `npm run build`.
 - Общий прогресс execution checklist остаётся `144 / 176` (`82%`): tranche продолжает admin/backend route extraction, но не закрывает следующий основной checkbox целиком.
+
+### 2026-03-20 03:20 - Дотянул bulk support-action ветки до shared helper
+
+- `src/app/api/admin/users/bulk/route.ts` переведён на `src/lib/admin-support-actions.ts` для bulk-веток `queue_resync` и `queue_suspend`, чтобы `support_actions` insert и audit payload не дублировались отдельно от single-user admin routes.
+- Shared helper теперь корректно мерджит `supportActionId` и дополнительный audit payload вроде `batchId`, поэтому bulk и single-user admin flows используют один и тот же queue/audit слой без потери метаданных.
+- Проверка зелёная: `npx eslint src/lib/admin-support-actions.ts src/app/api/admin/users/bulk/route.ts`, `npm run typecheck`, `npm run build`.
+- Общий прогресс execution checklist остаётся `144 / 176` (`82%`): tranche продолжает route/lib extraction в admin surface, но не закрывает следующий основной checkbox целиком.

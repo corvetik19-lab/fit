@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { queueAdminSupportAction } from "@/lib/admin-support-actions";
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import { queueAdminExportJob } from "@/lib/admin-user-requests";
 import {
@@ -66,77 +67,37 @@ export async function POST(request: Request) {
             targetUserId: userId,
           });
         } else if (payload.action === "queue_resync") {
-          const { data, error } = await adminSupabase
-            .from("support_actions")
-            .insert({
-              actor_user_id: user.id,
-              target_user_id: userId,
-              action: "resync_user_context",
-              status: "queued",
-              payload: {
-                source: "admin-bulk-actions",
-              },
-            })
-            .select("id")
-            .single();
-
-          if (error) {
-            throw error;
-          }
-
-          const { error: auditError } = await adminSupabase
-            .from("admin_audit_logs")
-            .insert({
-              actor_user_id: user.id,
-              target_user_id: userId,
-              action: "bulk_resync_user_context",
-              reason: payload.reason ?? "bulk user resync",
-              payload: {
-                batchId,
-                supportActionId: data.id,
-              },
-            });
-
-          if (auditError) {
-            throw auditError;
-          }
+          await queueAdminSupportAction({
+            action: "resync_user_context",
+            actorUserId: user.id,
+            auditAction: "bulk_resync_user_context",
+            auditPayload: {
+              batchId,
+            },
+            auditReason: payload.reason ?? "bulk user resync",
+            payload: {
+              source: "admin-bulk-actions",
+            },
+            supabase: adminSupabase,
+            targetUserId: userId,
+          });
         } else if (payload.action === "queue_suspend") {
           await assertUserIsNotPrimarySuperAdmin(adminSupabase, userId);
 
-          const { data, error } = await adminSupabase
-            .from("support_actions")
-            .insert({
-              actor_user_id: user.id,
-              target_user_id: userId,
-              action: "suspend_user",
-              status: "queued",
-              payload: {
-                source: "admin-bulk-actions",
-              },
-            })
-            .select("id")
-            .single();
-
-          if (error) {
-            throw error;
-          }
-
-          const { error: auditError } = await adminSupabase
-            .from("admin_audit_logs")
-            .insert({
-              actor_user_id: user.id,
-              target_user_id: userId,
-              action: "bulk_suspend_user",
-              reason: payload.reason ?? "bulk suspend queue",
-              payload: {
-                batchId,
-                supportActionId: data.id,
-              },
-            });
-
-          if (auditError) {
-            throw auditError;
-          }
+          await queueAdminSupportAction({
+            action: "suspend_user",
+            actorUserId: user.id,
+            auditAction: "bulk_suspend_user",
+            auditPayload: {
+              batchId,
+            },
+            auditReason: payload.reason ?? "bulk suspend queue",
+            payload: {
+              source: "admin-bulk-actions",
+            },
+            supabase: adminSupabase,
+            targetUserId: userId,
+          });
         } else if (payload.action === "grant_trial") {
           const subscription = await applyAdminSubscriptionAction(adminSupabase, {
             action: "grant_trial",

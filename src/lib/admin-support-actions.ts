@@ -52,11 +52,10 @@ export async function queueAdminSupportAction(params: {
     target_user_id: targetUserId,
     action: auditAction ?? action,
     reason: auditReason,
-    payload:
-      auditPayload ??
-      ({
-        supportActionId: data.id,
-      } satisfies Record<string, unknown>),
+    payload: {
+      supportActionId: data.id,
+      ...(auditPayload ?? {}),
+    },
   });
 
   if (auditError) {

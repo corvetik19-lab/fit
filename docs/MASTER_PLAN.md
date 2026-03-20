@@ -825,3 +825,10 @@
 - [x] `src/app/api/admin/users/[id]/export/route.ts` и `src/app/api/admin/users/[id]/deletion/route.ts` переведены на этот helper, а `src/app/api/admin/users/bulk/route.ts` использует тот же export queue helper для ветки `queue_export`, чтобы не дублировать insert в `export_jobs` и audit payload.
 - [x] Tranche подтверждён пакетами `npx eslint src/lib/admin-user-requests.ts src/app/api/admin/users/[id]/export/route.ts src/app/api/admin/users/[id]/deletion/route.ts src/app/api/admin/users/bulk/route.ts`, `npm run typecheck`, `npm run build`.
 - [ ] Следующий backend tranche: продолжать remaining route/lib extraction и owner-only/idempotency audit на оставшихся admin/self-service и AI/data handlers.
+
+## 2026-03-20 admin bulk support action follow-up addendum
+
+- [x] `src/app/api/admin/users/bulk/route.ts` теперь использует `src/lib/admin-support-actions.ts` не только в single-user surface, но и для bulk-веток `queue_resync` и `queue_suspend`: insert в `support_actions` и audit payload больше не дублируются внутри bulk handler.
+- [x] Bulk route сохранил текущие guard/contracts (`assertUserIsNotPrimarySuperAdmin`, batchId в audit payload, owner/admin access), но стал заметно ближе к orchestration-роли.
+- [x] Tranche подтверждён пакетами `npx eslint src/lib/admin-support-actions.ts src/app/api/admin/users/bulk/route.ts`, `npm run typecheck`, `npm run build`.
+- [ ] Следующий backend tranche: проверить, достаточно ли уже закрыт основной пункт про route/lib duplication, и если нет — добирать оставшиеся admin/self-service/AI handlers.
