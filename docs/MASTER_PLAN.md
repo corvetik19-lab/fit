@@ -846,3 +846,10 @@
 - [x] Теперь route-handler audit явно подтверждает, что эти admin mutation routes режут невалидный `userId` на уровне `400 ..._TARGET_INVALID` до любых side effects и не падают в общий `500`.
 - [x] Tranche подтверждён baseline-пакетом: `npx eslint tests/e2e/api-contracts.spec.ts`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1` -> `9 passed`.
 - [ ] Следующий backend tranche: решить, можно ли уже закрыть основной route-handler audit пункт по validation/owner-only/idempotency для covered admin and AI/data routes, или нужен ещё один coverage/fix slice.
+
+## 2026-03-20 admin role helper extraction addendum
+
+- [x] Общий target lookup и audit слой для `src/app/api/admin/users/[id]/role/route.ts` вынесен в `src/lib/admin-role-management.ts`: загрузка target user через auth admin API, чтение `platform_admins`, primary super-admin guards и audit insert больше не дублируются между `PATCH` и `DELETE`.
+- [x] Admin role route теперь заметно ближе к transport-слою: auth, param parse и response shape остались в handler, а shared role-management rules и audit plumbing живут в helper-слое.
+- [x] Tranche подтверждён пакетами `npx eslint src/lib/admin-role-management.ts src/app/api/admin/users/[id]/role/route.ts`, `npm run typecheck`, `npm run build`.
+- [ ] Следующий backend tranche: переоценить основной пункт про route/lib duplication и route-handler audit после этой серии admin extraction slices.

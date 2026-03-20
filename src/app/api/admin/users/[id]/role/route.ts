@@ -1,11 +1,13 @@
 import { z } from "zod";
 
-import { createApiErrorResponse } from "@/lib/api/error-response";
 import {
-  PRIMARY_SUPER_ADMIN_EMAIL,
-  canAssignAdminRole,
-  isPrimarySuperAdminEmail,
-} from "@/lib/admin-permissions";
+  ensureAdminRoleAssignmentAllowed,
+  ensurePrimarySuperAdminDowngradeAllowed,
+  ensurePrimarySuperAdminRevokeAllowed,
+  loadAdminRoleTarget,
+  recordAdminRoleAudit,
+} from "@/lib/admin-role-management";
+import { createApiErrorResponse } from "@/lib/api/error-response";
 import { isAdminAccessError, requireAdminRouteAccess } from "@/lib/admin-auth";
 import {
   isAdminRouteParamError,
@@ -42,46 +44,29 @@ export async function PATCH(
     }
 
     const adminSupabase = createAdminSupabaseClient();
-    const authUserResult = await adminSupabase.auth.admin.getUserById(id);
+    const target = await loadAdminRoleTarget(adminSupabase, id);
 
-    if (authUserResult.error || !authUserResult.data.user) {
-      return createApiErrorResponse({
-        status: 404,
-        code: "ADMIN_TARGET_NOT_FOUND",
-        message: "Target user was not found.",
-      });
+    if (target.response) {
+      return target.response;
     }
 
-    const targetEmail = authUserResult.data.user.email ?? null;
+    const roleAssignmentGuard = ensureAdminRoleAssignmentAllowed(
+      payload.role,
+      target.targetEmail,
+    );
 
-    if (!canAssignAdminRole(payload.role, targetEmail)) {
-      return createApiErrorResponse({
-        status: 400,
-        code: "PRIMARY_SUPER_ADMIN_EMAIL_ONLY",
-        message: `Роль super_admin закреплена только за ${PRIMARY_SUPER_ADMIN_EMAIL}.`,
-      });
+    if (roleAssignmentGuard) {
+      return roleAssignmentGuard;
     }
 
-    const { data: previousRoleRow, error: previousRoleError } = await adminSupabase
-      .from("platform_admins")
-      .select("role")
-      .eq("user_id", id)
-      .maybeSingle();
+    const downgradeGuard = ensurePrimarySuperAdminDowngradeAllowed(
+      target.previousRoleRow?.role ?? null,
+      payload.role,
+      target.targetEmail,
+    );
 
-    if (previousRoleError) {
-      throw previousRoleError;
-    }
-
-    if (
-      previousRoleRow?.role === "super_admin" &&
-      payload.role !== "super_admin" &&
-      isPrimarySuperAdminEmail(targetEmail)
-    ) {
-      return createApiErrorResponse({
-        status: 400,
-        code: "PRIMARY_SUPER_ADMIN_DOWNGRADE_BLOCKED",
-        message: "Основного super-admin нельзя понизить.",
-      });
+    if (downgradeGuard) {
+      return downgradeGuard;
     }
 
     const { data, error } = await adminSupabase
@@ -103,33 +88,26 @@ export async function PATCH(
       throw error;
     }
 
-    const auditAction = previousRoleRow
-      ? previousRoleRow.role === payload.role
+    const auditAction = target.previousRoleRow
+      ? target.previousRoleRow.role === payload.role
         ? "admin_role_confirmed"
         : "admin_role_updated"
       : "admin_role_granted";
 
-    const { error: auditError } = await adminSupabase
-      .from("admin_audit_logs")
-      .insert({
-        actor_user_id: actor.user.id,
-        target_user_id: id,
-        action: auditAction,
-        reason: payload.reason ?? "manual admin role update",
-        payload: {
-          previousRole: previousRoleRow?.role ?? null,
-          nextRole: payload.role,
-        },
-      });
-
-    if (auditError) {
-      throw auditError;
-    }
+    await recordAdminRoleAudit({
+      action: auditAction,
+      actorUserId: actor.user.id,
+      nextRole: payload.role,
+      previousRole: target.previousRoleRow?.role ?? null,
+      reason: payload.reason ?? "manual admin role update",
+      supabase: adminSupabase,
+      targetUserId: id,
+    });
 
     return Response.json({
       data: {
         ...data,
-        email: authUserResult.data.user.email ?? null,
+        email: target.targetEmail,
       },
     });
   } catch (error) {
@@ -194,28 +172,13 @@ export async function DELETE(
     }
 
     const adminSupabase = createAdminSupabaseClient();
-    const authUserResult = await adminSupabase.auth.admin.getUserById(id);
+    const target = await loadAdminRoleTarget(adminSupabase, id);
 
-    if (authUserResult.error || !authUserResult.data.user) {
-      return createApiErrorResponse({
-        status: 404,
-        code: "ADMIN_TARGET_NOT_FOUND",
-        message: "Target user was not found.",
-      });
+    if (target.response) {
+      return target.response;
     }
 
-    const targetEmail = authUserResult.data.user.email ?? null;
-    const { data: previousRoleRow, error: previousRoleError } = await adminSupabase
-      .from("platform_admins")
-      .select("role")
-      .eq("user_id", id)
-      .maybeSingle();
-
-    if (previousRoleError) {
-      throw previousRoleError;
-    }
-
-    if (!previousRoleRow) {
+    if (!target.previousRoleRow) {
       return createApiErrorResponse({
         status: 404,
         code: "ADMIN_ROLE_NOT_FOUND",
@@ -223,15 +186,13 @@ export async function DELETE(
       });
     }
 
-    if (
-      previousRoleRow.role === "super_admin" &&
-      isPrimarySuperAdminEmail(targetEmail)
-    ) {
-      return createApiErrorResponse({
-        status: 400,
-        code: "PRIMARY_SUPER_ADMIN_REVOKE_BLOCKED",
-        message: "Доступ основного super-admin нельзя отозвать.",
-      });
+    const revokeGuard = ensurePrimarySuperAdminRevokeAllowed(
+      target.previousRoleRow.role,
+      target.targetEmail,
+    );
+
+    if (revokeGuard) {
+      return revokeGuard;
     }
 
     const { error } = await adminSupabase
@@ -243,21 +204,14 @@ export async function DELETE(
       throw error;
     }
 
-    const { error: auditError } = await adminSupabase
-      .from("admin_audit_logs")
-      .insert({
-        actor_user_id: actor.user.id,
-        target_user_id: id,
-        action: "admin_role_revoked",
-        reason: reason || "manual admin role revoke",
-        payload: {
-          previousRole: previousRoleRow.role,
-        },
-      });
-
-    if (auditError) {
-      throw auditError;
-    }
+    await recordAdminRoleAudit({
+      action: "admin_role_revoked",
+      actorUserId: actor.user.id,
+      previousRole: target.previousRoleRow.role,
+      reason: reason || "manual admin role revoke",
+      supabase: adminSupabase,
+      targetUserId: id,
+    });
 
     return Response.json({
       data: {

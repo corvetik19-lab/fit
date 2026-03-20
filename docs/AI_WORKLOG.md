@@ -920,3 +920,10 @@
 - Это подтверждает route-handler audit по validation path: admin mutation routes отдают ожидаемые `400 ..._TARGET_INVALID` и не доходят до side effects при битом `userId`.
 - Проверка зелёная: `npx eslint tests/e2e/api-contracts.spec.ts`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1` -> `9 passed`.
 - Общий прогресс execution checklist остаётся `144 / 176` (`82%`): tranche двигает открытый route-handler audit пункт, но пока не закрывает его целиком.
+
+### 2026-03-20 04:05 - Вынес shared helper из admin role route
+
+- Добавил `src/lib/admin-role-management.ts`: target lookup через auth admin API, чтение `platform_admins`, primary super-admin guards и audit insert для role-management теперь живут вне route handler.
+- `src/app/api/admin/users/[id]/role/route.ts` переведён на этот helper без изменения access-control contracts: `PATCH` и `DELETE` стали тоньше и больше не дублируют один и тот же target/audit plumbing.
+- Проверка зелёная: `npx eslint src/lib/admin-role-management.ts src/app/api/admin/users/[id]/role/route.ts`, `npm run typecheck`, `npm run build`.
+- Общий прогресс execution checklist остаётся `144 / 176` (`82%`): tranche продолжает admin/backend extraction, но не закрывает следующий основной checkbox целиком.
