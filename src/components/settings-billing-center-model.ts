@@ -158,11 +158,11 @@ export function formatStripePaymentStatus(value: string | null | undefined) {
 export function formatStripeSessionStatus(value: string | null | undefined) {
   switch (value) {
     case "complete":
-      return "завершён";
+      return "завершен";
     case "open":
       return "открыт";
     case "expired":
-      return "истёк";
+      return "истек";
     default:
       return value ?? "неизвестно";
   }

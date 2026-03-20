@@ -1,7 +1,5 @@
 "use client";
 
-import { startTransition, useState } from "react";
-
 import {
   formatSettingsDataDateTime,
   getDeletionNextStep,
@@ -14,83 +12,31 @@ import {
   getSettingsDataTimelineTone,
   settingsDataInputClassName,
 } from "@/components/settings-data-center-model";
+import { useSettingsDataCenterState } from "@/components/use-settings-data-center-state";
 import type { SettingsDataSnapshot } from "@/lib/settings-data";
 
 type SettingsDataCenterProps = {
   initialSnapshot: SettingsDataSnapshot;
 };
 
-async function readJsonSafely(response: Response) {
-  return (await response.json().catch(() => null)) as
-    | { data?: SettingsDataSnapshot; message?: string }
-    | null;
-}
-
 export function SettingsDataCenter({
   initialSnapshot,
 }: SettingsDataCenterProps) {
-  const [snapshot, setSnapshot] = useState(initialSnapshot);
-  const [deletionReason, setDeletionReason] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
-  const [isPending, setIsPending] = useState(false);
-
-  const latestExport = snapshot.exportJobs[0] ?? null;
-  const hasActiveExport = snapshot.exportJobs.some(
-    (job) => job.status === "queued" || job.status === "processing",
-  );
-  const hasActiveDeletion =
-    snapshot.deletionRequest?.status === "queued" ||
-    snapshot.deletionRequest?.status === "holding";
-
-  function runRequest(
-    url: string,
-    {
-      body,
-      method,
-      successMessage,
-    }: {
-      body?: Record<string, unknown>;
-      method: "DELETE" | "GET" | "POST";
-      successMessage: string;
-    },
-  ) {
-    setError(null);
-    setNotice(null);
-    setIsPending(true);
-
-    startTransition(async () => {
-      try {
-        const response = await fetch(url, {
-          method,
-          cache: "no-store",
-          body: method === "POST" ? JSON.stringify(body ?? {}) : undefined,
-          headers:
-            method === "POST"
-              ? {
-                  "Content-Type": "application/json",
-                }
-              : undefined,
-        });
-
-        const payload = await readJsonSafely(response);
-
-        if (!response.ok || !payload?.data) {
-          setError(payload?.message ?? "Не удалось обновить статусы по данным.");
-          return;
-        }
-
-        setSnapshot(payload.data);
-        setNotice(successMessage);
-
-        if (body?.action === "request_deletion") {
-          setDeletionReason("");
-        }
-      } finally {
-        setIsPending(false);
-      }
-    });
-  }
+  const {
+    cancelDeletion,
+    deletionReason,
+    error,
+    hasActiveDeletion,
+    hasActiveExport,
+    isPending,
+    latestExport,
+    notice,
+    queueExport,
+    refreshSnapshot,
+    requestDeletion,
+    setDeletionReason,
+    snapshot,
+  } = useSettingsDataCenterState(initialSnapshot);
 
   return (
     <section className="card p-6 lg:col-span-2">
@@ -106,12 +52,7 @@ export function SettingsDataCenter({
         <button
           className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
           disabled={isPending}
-          onClick={() =>
-            runRequest("/api/settings/data", {
-              method: "GET",
-              successMessage: "Статусы синхронизированы.",
-            })
-          }
+          onClick={refreshSnapshot}
           type="button"
         >
           {isPending ? "Обновление..." : "Обновить статус"}
@@ -126,8 +67,8 @@ export function SettingsDataCenter({
                 Архив данных
               </p>
               <p className="mt-1 text-sm leading-6 text-muted">
-                Полный ZIP-архив с `export.json`, `summary.csv` и CSV-срезами
-                по тренировкам, питанию, AI и личным данным.
+                Полный ZIP-архив с `export.json`, `summary.csv` и CSV-срезами по
+                тренировкам, питанию, AI и личным данным.
               </p>
             </div>
             <span
@@ -141,7 +82,10 @@ export function SettingsDataCenter({
 
           <div className="mt-4 grid gap-3 text-sm text-muted">
             <div className="rounded-2xl border border-border/70 bg-white/80 px-4 py-3">
-              <p>Последнее обновление: {formatSettingsDataDateTime(latestExport?.updatedAt)}</p>
+              <p>
+                Последнее обновление:{" "}
+                {formatSettingsDataDateTime(latestExport?.updatedAt)}
+              </p>
               <p className="mt-1">{getExportNextStep(snapshot)}</p>
             </div>
 
@@ -149,18 +93,12 @@ export function SettingsDataCenter({
               <button
                 className="rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={isPending || hasActiveExport}
-                onClick={() =>
-                  runRequest("/api/settings/data", {
-                    body: {
-                      action: "queue_export",
-                    },
-                    method: "POST",
-                    successMessage: "Запрос на выгрузку поставлен в очередь.",
-                  })
-                }
+                onClick={queueExport}
                 type="button"
               >
-                {hasActiveExport ? "Выгрузка уже идет" : "Запросить выгрузку"}
+                {hasActiveExport
+                  ? "Выгрузка уже идет"
+                  : "Запросить выгрузку"}
               </button>
 
               {latestExport?.status === "completed" ? (
@@ -254,17 +192,7 @@ export function SettingsDataCenter({
             <button
               className="rounded-full bg-stone-950 px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
               disabled={isPending || hasActiveDeletion}
-              onClick={() =>
-                runRequest("/api/settings/data", {
-                  body: {
-                    action: "request_deletion",
-                    reason: deletionReason.trim() || undefined,
-                  },
-                  method: "POST",
-                  successMessage:
-                    "Запрос на удаление отправлен и переведен в hold.",
-                })
-              }
+              onClick={requestDeletion}
               type="button"
             >
               {hasActiveDeletion
@@ -276,12 +204,7 @@ export function SettingsDataCenter({
               <button
                 className="rounded-full border border-border px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={isPending}
-                onClick={() =>
-                  runRequest("/api/settings/data", {
-                    method: "DELETE",
-                    successMessage: "Запрос на удаление отменен.",
-                  })
-                }
+                onClick={cancelDeletion}
                 type="button"
               >
                 Отменить удаление
@@ -297,7 +220,7 @@ export function SettingsDataCenter({
             История операций
           </p>
           <h3 className="mt-2 text-xl font-semibold text-foreground">
-                История выгрузки и удаления
+            История выгрузки и удаления
           </h3>
         </div>
 

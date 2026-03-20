@@ -11,7 +11,7 @@
 
 Этот файл — текущий production-hardening backlog проекта. Он отражает фактическое состояние репозитория на `2026-03-14`.
 
-Текущий прогресс execution checklist: `145 / 176` (`82%`).
+Текущий прогресс execution checklist: `146 / 176` (`83%`).
 
 ## Текущая база
 
@@ -136,7 +136,7 @@
 - [x] Для `admin-user-detail.tsx` есть референсный паттерн с вынесенным state/model/sections слоем.
 - [x] Для `knowledge.ts` есть референсный паттерн с вынесенными retrieval/indexing/document builders.
 - [x] Для `ai-chat-panel.tsx` есть референсный паттерн с вынесенными session/actions/composer/view-state модулями.
-- [ ] Async/data orchestration больше не смешивается с JSX в оставшихся тяжёлых экранах.
+- [x] Async/data orchestration больше не смешивается с JSX в оставшихся тяжёлых экранах.
 - [x] Доменные правила больше не дублируются между route handlers и `lib`.
 
 ## Волна 2. UX overhaul для Web/PWA
@@ -883,3 +883,18 @@
 - [x] `src/components/admin-users-directory.tsx` теперь ближе к чистому UI-orchestrator: в компоненте остались layout, cards, filters UI и wiring к уже вынесенному state-hook.
 - [x] Tranche подтверждён пакетами `npx eslint src/components/admin-users-directory.tsx src/components/use-admin-users-directory-state.ts`, `npm run build`, `npm run typecheck`, `npx playwright test tests/e2e/admin-app.spec.ts --workers=1` -> `5 passed`.
 - [ ] Следующий frontend/backend tranche: продолжать убирать async/data orchestration из remaining heavy self-service screens и затем переоценить основной checkbox по тяжёлым экранам.
+
+## 2026-03-20 settings data center state extraction addendum
+
+- [x] Async/data orchestration `src/components/settings-data-center.tsx` вынесен в `src/components/use-settings-data-center-state.ts`: refresh snapshot, queue export, request/cancel deletion, success/error state и derived flags больше не смешиваются с JSX.
+- [x] `src/components/settings-data-center-model.ts` и верхний surface `src/components/settings-data-center.tsx` переписаны в чистом UTF-8: self-service copy, timeline labels и export/deletion статусы больше не отдают mojibake.
+- [x] Tranche подтверждён пакетами `npm run lint`, `npm run build`, `npm run typecheck`.
+- [ ] Следующий frontend tranche: вынести checkout/access-review orchestration из `settings-billing-center.tsx` и затем переоценить основной checkbox по remaining heavy screens.
+
+## 2026-03-20 settings billing center state extraction addendum
+
+- [x] Async/data orchestration `src/components/settings-billing-center.tsx` вынесен в `src/components/use-settings-billing-center-state.ts`: checkout return reconcile, retry-loop, URL/session orchestration, access review request flow, feature selection и refresh billing snapshot больше не смешиваются с JSX.
+- [x] `src/components/settings-billing-center-model.ts` и `src/components/settings-billing-center.tsx` синхронизированы в чистом UTF-8: billing center, request-access surface и access timeline больше не держат битый copy.
+- [x] После extraction tranche основной checklist-пункт `Async/data orchestration больше не смешивается с JSX в оставшихся тяжёлых экранах` закрыт: remaining heavy self-service screens переведены на тот же state-hook/model/orchestrator pattern, что и workout/admin/AI surface.
+- [x] Tranche подтверждён пакетами `npm run lint`, `npm run build`, `npm run typecheck`. Дополнительный targeted UI smoke локально упёрся в нестабильный Playwright webServer bootstrap на этой машине, но кодовый baseline по settings surface зелёный.
+- [ ] Следующий frontend/backend tranche: возвращаться к оставшемуся route-handler audit и remaining mojibake/self-service sanitation вне уже закрытого heavy-screen checkbox.

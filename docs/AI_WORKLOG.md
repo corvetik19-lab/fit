@@ -943,6 +943,21 @@
 - Проверка зелёная: `npx eslint src/lib/admin-role-management.ts src/app/api/admin/users/[id]/role/route.ts`, `npm run typecheck`, `npm run build`.
 - Общий прогресс execution checklist остаётся `144 / 176` (`82%`): tranche продолжает admin/backend extraction, но не закрывает следующий основной checkbox целиком.
 
+### 2026-03-20 18:55 - Вынес self-service orchestration из settings data center
+
+- Добавил `src/components/use-settings-data-center-state.ts`: refresh snapshot, queue export, request/cancel deletion, success/error state и derived flags для settings data center теперь живут вне JSX.
+- `src/components/settings-data-center.tsx` переведен на thin UI-orchestrator surface, а `src/components/settings-data-center-model.ts` переписан в чистом UTF-8 без mojibake в export/deletion copy и timeline labels.
+- Проверка зелёная: `npm run lint`, `npm run build`, `npm run typecheck`.
+- Общий прогресс execution checklist остается `145 / 176` (`82%`): tranche закрывает первый из двух remaining heavy self-service screens.
+
+### 2026-03-20 19:15 - Вынес self-service orchestration из settings billing center
+
+- Добавил `src/components/use-settings-billing-center-state.ts`: checkout return reconcile, retry-loop, URL/session orchestration, access review request flow, feature selection и refresh billing snapshot теперь живут вне JSX.
+- `src/components/settings-billing-center.tsx` и `src/components/settings-billing-center-model.ts` синхронизированы в чистом UTF-8: billing center, request-access surface и access timeline больше не держат битый copy.
+- После этого закрыт основной checklist-пункт `Async/data orchestration больше не смешивается с JSX в оставшихся тяжёлых экранах`: remaining heavy self-service screens переведены на тот же state-hook/model/orchestrator pattern, что и workout/admin/AI surface.
+- Проверка зелёная: `npm run lint`, `npm run build`, `npm run typecheck`. Локальный targeted Playwright smoke для `/settings` уперся в нестабильный `webServer` bootstrap на этой машине, но кодовый baseline по settings surface остается зеленым.
+- Общий прогресс execution checklist обновлен до `146 / 176` (`83%`).
+
 ### 2026-03-20 04:20 - Закрыл основной checkbox по route/lib duplication
 
 - После серии extraction tranche по `settings`, `nutrition`, `billing`, `AI` и `admin` mutation routes основной checklist-пункт `Доменные правила больше не дублируются между route handlers и lib` закрыт в `docs/MASTER_PLAN.md`.

@@ -110,28 +110,28 @@ export function getSettingsDataKindLabel(
 
 export function getHoldRemainingLabel(holdUntil: string | null | undefined) {
   if (!holdUntil) {
-    return "Срок hold пока не определён.";
+    return "Срок удержания пока не определен.";
   }
 
   const diff = new Date(holdUntil).getTime() - Date.now();
 
   if (diff <= 0) {
-    return "Срок hold уже истёк, ожидается следующий шаг обработки.";
+    return "Срок удержания уже истек, ожидается следующий этап обработки.";
   }
 
   const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
-  return `До следующего шага остаётся примерно ${days} дн.`;
+  return `До следующего шага остается примерно ${days} дн.`;
 }
 
 export function getExportNextStep(snapshot: SettingsDataSnapshot) {
   const latestExport = snapshot.exportJobs[0];
 
   if (!latestExport) {
-    return "Когда понадобится архив, запроси выгрузку и система соберёт ZIP автоматически.";
+    return "Когда понадобится архив, запроси выгрузку и система соберет ZIP автоматически.";
   }
 
   if (latestExport.status === "queued") {
-    return "Запрос стоит в очереди. Следующий шаг: сервер начнёт собирать архив.";
+    return "Запрос стоит в очереди. Следующий шаг: сервер начнет собирать архив.";
   }
 
   if (latestExport.status === "processing") {
@@ -149,7 +149,7 @@ export function getDeletionNextStep(snapshot: SettingsDataSnapshot) {
   const deletionRequest = snapshot.deletionRequest;
 
   if (!deletionRequest) {
-    return "Если потребуется удалить аккаунт, сначала будет создан hold-период на 14 дней.";
+    return "Если понадобится удалить аккаунт, сначала будет создан hold-период на 14 дней.";
   }
 
   if (deletionRequest.status === "holding") {
@@ -161,7 +161,7 @@ export function getDeletionNextStep(snapshot: SettingsDataSnapshot) {
   }
 
   if (deletionRequest.status === "completed") {
-    return "Процесс удаления уже продвинулся дальше периода удержания. Детали смотри в истории ниже.";
+    return "Процесс удаления уже прошел следующий этап. Подробности смотри в истории ниже.";
   }
 
   return "Активный процесс удаления остановлен. При необходимости можно создать новый запрос.";
