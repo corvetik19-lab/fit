@@ -811,3 +811,10 @@
 - [x] `src/app/api/ai/reindex/route.ts` и `src/app/api/internal/jobs/knowledge-reindex/route.ts` теперь ближе к transport/orchestration роли: route-level auth, validation и response shape остались в handlers, а shared reindex admin/job plumbing живёт в helper-слое.
 - [x] Tranche подтверждён пакетами `npx eslint src/lib/ai/knowledge-reindex-admin.ts src/app/api/ai/reindex/route.ts src/app/api/internal/jobs/knowledge-reindex/route.ts`, `npm run typecheck`, `npm run build`.
 - [ ] Следующий AI/backend tranche: продолжать remaining route/lib extraction и owner-only/idempotency audit по AI/data handlers.
+
+## 2026-03-20 admin support action helper extraction addendum
+
+- [x] Общий queue+audit слой для `src/app/api/admin/users/[id]/support-action/route.ts`, `src/app/api/admin/users/[id]/suspend/route.ts` и `src/app/api/admin/users/[id]/restore/route.ts` вынесен в `src/lib/admin-support-actions.ts`: insert в `support_actions` и follow-up audit insert больше не дублируются между тремя route handlers.
+- [x] Все три admin mutation routes теперь ближе к transport-слою: auth, target-user guard и payload validation остаются в handlers, а shared support-action plumbing живёт в helper-слое.
+- [x] Tranche подтверждён пакетами `npx eslint src/lib/admin-support-actions.ts src/app/api/admin/users/[id]/support-action/route.ts src/app/api/admin/users/[id]/suspend/route.ts src/app/api/admin/users/[id]/restore/route.ts`, `npm run typecheck`, `npm run build`.
+- [ ] Следующий backend tranche: продолжать remaining route/lib extraction и owner-only/idempotency audit на оставшихся admin/self-service и AI/data handlers.

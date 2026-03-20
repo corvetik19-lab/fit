@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { queueAdminSupportAction } from "@/lib/admin-support-actions";
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import { isAdminAccessError, requireAdminRouteAccess } from "@/lib/admin-auth";
 import {
@@ -37,35 +38,15 @@ export async function POST(
       await assertUserIsNotPrimarySuperAdmin(adminSupabase, id);
     }
 
-    const { data, error } = await adminSupabase
-      .from("support_actions")
-      .insert({
-        actor_user_id: user.id,
-        target_user_id: id,
-        action: body.action,
-        status: "queued",
-        payload: body.payload ?? {},
-      })
-      .select("id, action, status, created_at, payload")
-      .single();
-
-    if (error) {
-      throw error;
-    }
-
-    const { error: auditError } = await adminSupabase
-      .from("admin_audit_logs")
-      .insert({
-        actor_user_id: user.id,
-        target_user_id: id,
-        action: body.action,
-        reason: body.reason ?? "manual support action",
-        payload: body.payload ?? {},
-      });
-
-    if (auditError) {
-      throw auditError;
-    }
+    const data = await queueAdminSupportAction({
+      action: body.action,
+      actorUserId: user.id,
+      auditPayload: body.payload ?? {},
+      auditReason: body.reason ?? "manual support action",
+      payload: body.payload ?? {},
+      supabase: adminSupabase,
+      targetUserId: id,
+    });
 
     return Response.json({
       data: {

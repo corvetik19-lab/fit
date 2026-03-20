@@ -885,3 +885,10 @@
 - `src/app/api/ai/reindex/route.ts` и `src/app/api/internal/jobs/knowledge-reindex/route.ts` переведены на этот helper без изменения owner-only/admin-job contracts: route handlers стали тоньше и держат только auth, validation, orchestration и response shape.
 - Проверка зелёная: `npx eslint src/lib/ai/knowledge-reindex-admin.ts src/app/api/ai/reindex/route.ts src/app/api/internal/jobs/knowledge-reindex/route.ts`, `npm run typecheck`, `npm run build`.
 - Общий прогресс execution checklist остаётся `144 / 176` (`82%`): tranche продолжает AI/data route extraction, но не закрывает следующий основной checkbox целиком.
+
+### 2026-03-20 02:40 - Вынес shared helper из admin support action routes
+
+- Добавил `src/lib/admin-support-actions.ts`: общий queue+audit слой для `admin/users/[id]/support-action`, `suspend` и `restore` теперь живёт вне route handlers и покрывает insert в `support_actions` плюс follow-up audit insert.
+- `src/app/api/admin/users/[id]/support-action/route.ts`, `src/app/api/admin/users/[id]/suspend/route.ts` и `src/app/api/admin/users/[id]/restore/route.ts` переведены на этот helper без изменения owner-only/admin-action contracts: в handlers остались auth, target guard, validation и response shape.
+- Проверка зелёная: `npx eslint src/lib/admin-support-actions.ts src/app/api/admin/users/[id]/support-action/route.ts src/app/api/admin/users/[id]/suspend/route.ts src/app/api/admin/users/[id]/restore/route.ts`, `npm run typecheck`, `npm run build`.
+- Общий прогресс execution checklist остаётся `144 / 176` (`82%`): tranche продолжает admin/backend route extraction, но не закрывает следующий основной checkbox целиком.
