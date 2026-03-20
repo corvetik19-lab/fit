@@ -7,9 +7,7 @@ import {
 } from "@/lib/admin-route-params";
 import { logger } from "@/lib/logger";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
-import {
-  reconcileStripeSubscriptionForUser,
-} from "@/lib/stripe-billing";
+import { reconcileStripeSubscriptionForUser } from "@/lib/stripe-billing";
 
 export async function POST(
   _request: Request,
@@ -33,7 +31,7 @@ export async function POST(
         status: 404,
         code: "STRIPE_SUBSCRIPTION_RECONCILE_UNRESOLVED",
         message:
-          "No linked Stripe subscription was found for this user or the mapping could not be resolved.",
+          "Для этого пользователя не найдена связанная Stripe-подписка или маппинг не удалось разрешить.",
       });
     }
 

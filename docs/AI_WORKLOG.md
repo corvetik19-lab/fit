@@ -972,6 +972,13 @@
 - Проверка зелёная: `npx eslint src/app/api/billing/checkout/route.ts src/app/api/billing/checkout/reconcile/route.ts src/app/api/billing/portal/route.ts tests/e2e/api-contracts.spec.ts`, `npm run build`, `npm run typecheck`, `node scripts/run-playwright.mjs PLAYWRIGHT_BASE_URL=http://127.0.0.1:3110 -- test tests/e2e/api-contracts.spec.ts --workers=1` -> `10 passed`.
 - Общий прогресс execution checklist остается `146 / 176` (`83%`): tranche продолжает route-handler audit по billing/self-service contracts, но не закрывает следующий основной checkbox целиком.
 
+### 2026-03-20 23:20 - Дожал admin billing invalid-payload contract
+
+- `src/app/api/admin/users/[id]/billing/route.ts` и `src/app/api/admin/users/[id]/billing/reconcile/route.ts` переведены в чистый UTF-8: operator-facing invalid/failure copy больше не держит mojibake в admin billing surface.
+- `tests/e2e/api-contracts.spec.ts` расширен admin billing validation-контрактом: при валидном `targetUserId` и некорректном payload (`enable_entitlement` без `feature_key`) route подтвержден как `400 ADMIN_BILLING_INVALID` до любых side effects.
+- Проверка зелёная: `npx eslint src/app/api/admin/users/[id]/billing/route.ts src/app/api/admin/users/[id]/billing/reconcile/route.ts tests/e2e/api-contracts.spec.ts`, `npm run build`, `npm run typecheck`, `node scripts/run-playwright.mjs PLAYWRIGHT_BASE_URL=http://127.0.0.1:3110 -- test tests/e2e/api-contracts.spec.ts --workers=1` -> `11 passed`.
+- Общий прогресс execution checklist остается `146 / 176` (`83%`): tranche продолжает route-handler audit по admin/billing contracts, но не закрывает следующий основной checkbox целиком.
+
 ### 2026-03-20 04:20 - Закрыл основной checkbox по route/lib duplication
 
 - После серии extraction tranche по `settings`, `nutrition`, `billing`, `AI` и `admin` mutation routes основной checklist-пункт `Доменные правила больше не дублируются между route handlers и lib` закрыт в `docs/MASTER_PLAN.md`.

@@ -912,3 +912,10 @@
 - [x] `tests/e2e/api-contracts.spec.ts` расширен явным validation-контрактом для `POST /api/billing/checkout/reconcile`: пустой payload теперь подтвержден как `400 STRIPE_CHECKOUT_RECONCILE_INVALID`.
 - [x] Tranche подтверждён пакетами `npx eslint src/app/api/billing/checkout/route.ts src/app/api/billing/checkout/reconcile/route.ts src/app/api/billing/portal/route.ts tests/e2e/api-contracts.spec.ts`, `npm run build`, `npm run typecheck`, `node scripts/run-playwright.mjs PLAYWRIGHT_BASE_URL=http://127.0.0.1:3110 -- test tests/e2e/api-contracts.spec.ts --workers=1` -> `10 passed`.
 - [ ] Следующий backend tranche: продолжать remaining route-handler audit по billing/webhook/admin/self-service контурам вне уже подтвержденного transport/validation слоя.
+
+## 2026-03-20 admin billing payload contract addendum
+
+- [x] `src/app/api/admin/users/[id]/billing/route.ts` и `src/app/api/admin/users/[id]/billing/reconcile/route.ts` переведены в чистый UTF-8: operator-facing invalid/failure copy больше не держит mojibake в admin billing surface.
+- [x] `tests/e2e/api-contracts.spec.ts` расширен новым admin billing contract: при валидном `targetUserId` и некорректном payload (`enable_entitlement` без `feature_key`) route подтвержден как `400 ADMIN_BILLING_INVALID` до любых mutation side effects.
+- [x] Tranche подтверждён пакетами `npx eslint src/app/api/admin/users/[id]/billing/route.ts src/app/api/admin/users/[id]/billing/reconcile/route.ts tests/e2e/api-contracts.spec.ts`, `npm run build`, `npm run typecheck`, `node scripts/run-playwright.mjs PLAYWRIGHT_BASE_URL=http://127.0.0.1:3110 -- test tests/e2e/api-contracts.spec.ts --workers=1` -> `11 passed`.
+- [ ] Следующий backend tranche: продолжать remaining route-handler audit по admin/billing/webhook/self-service контурам, пока основной checkbox по validation/owner-only/idempotency не будет закрыт целиком.

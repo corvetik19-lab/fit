@@ -8,6 +8,7 @@ import {
 } from "./helpers/auth-state";
 import { navigateStable } from "./helpers/navigation";
 import { fetchJson } from "./helpers/http";
+import { findAuthUserIdByEmail } from "./helpers/supabase-admin";
 import {
   ensureSettingsBillingReviewRequest,
   ensureSettingsDeletionRequest,
@@ -626,6 +627,27 @@ test.describe("api contracts with admin access", () => {
     expect(invalidRoleDelete.status).toBe(400);
     expect((invalidRoleDelete.body as { code?: string } | null)?.code).toBe(
       "ADMIN_ROLE_TARGET_INVALID",
+    );
+  });
+
+  test("admin billing route rejects invalid payload before mutation side effects", async ({
+    page,
+  }) => {
+    const userId = await findAuthUserIdByEmail(
+      process.env.PLAYWRIGHT_TEST_EMAIL ?? "leva@leva.ru",
+    );
+
+    const invalidBillingPayload = await fetchJson(page, {
+      method: "POST",
+      url: `/api/admin/users/${userId}/billing`,
+      body: {
+        action: "enable_entitlement",
+      },
+    });
+
+    expect(invalidBillingPayload.status).toBe(400);
+    expect((invalidBillingPayload.body as { code?: string } | null)?.code).toBe(
+      "ADMIN_BILLING_INVALID",
     );
   });
 
