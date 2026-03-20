@@ -20,7 +20,8 @@ export async function POST(request: Request) {
     const adminSupabase = createAdminSupabaseClient();
 
     const suite = payload.suite ?? "all";
-    const label = payload.label ?? `AI eval ${suite} ${new Date().toISOString()}`;
+    const label =
+      payload.label ?? `AI-проверка ${suite} ${new Date().toISOString()}`;
     const modelId = payload.modelId ?? "google/gemini-3.1-pro-preview";
 
     const queuedRun = await queueAiEvalRun(adminSupabase, {

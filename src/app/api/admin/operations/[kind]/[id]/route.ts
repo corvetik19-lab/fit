@@ -27,6 +27,8 @@ const operationUpdateSchema = z.object({
   reason: z.string().trim().max(300).optional(),
 });
 
+const OPERATION_REASON_FALLBACK = "Ручное обновление операторской очереди";
+
 function getDefaultHoldUntil() {
   const holdUntil = new Date();
   holdUntil.setDate(holdUntil.getDate() + 14);
@@ -43,6 +45,19 @@ function getAuditAction(kind: "support_action" | "export_job" | "deletion_reques
       return "deletion_request_status_updated";
     default:
       return "admin_operation_status_updated";
+  }
+}
+
+function getOperationLabel(kind: "support_action" | "export_job" | "deletion_request") {
+  switch (kind) {
+    case "support_action":
+      return "операция поддержки";
+    case "export_job":
+      return "задача выгрузки данных";
+    case "deletion_request":
+      return "запрос на удаление данных";
+    default:
+      return "операция";
   }
 }
 
@@ -71,7 +86,7 @@ export async function PATCH(
         return createApiErrorResponse({
           status: 404,
           code: "ADMIN_OPERATION_NOT_FOUND",
-          message: "Элемент support action не найден.",
+          message: "Операция поддержки не найдена.",
         });
       }
 
@@ -79,7 +94,7 @@ export async function PATCH(
         return createApiErrorResponse({
           status: 409,
           code: "ADMIN_OPERATION_INVALID_TRANSITION",
-          message: "Этот статус support action нельзя обновить выбранным действием.",
+          message: "Этот статус операции поддержки нельзя обновить выбранным действием.",
         });
       }
 
@@ -89,7 +104,7 @@ export async function PATCH(
         return createApiErrorResponse({
           status: 400,
           code: "ADMIN_OPERATION_INVALID_ACTION",
-          message: "Неверное действие для support action.",
+          message: "Недопустимое действие для операции поддержки.",
         });
       }
 
@@ -125,7 +140,7 @@ export async function PATCH(
             note: payload.note ?? null,
             toStatus: nextStatus,
           },
-          reason: payload.reason ?? payload.note ?? "manual operations inbox update",
+          reason: payload.reason ?? payload.note ?? OPERATION_REASON_FALLBACK,
           target_user_id: current.target_user_id,
         });
 
@@ -156,7 +171,7 @@ export async function PATCH(
         return createApiErrorResponse({
           status: 404,
           code: "ADMIN_OPERATION_NOT_FOUND",
-          message: "Элемент export job не найден.",
+          message: "Задача выгрузки данных не найдена.",
         });
       }
 
@@ -164,7 +179,7 @@ export async function PATCH(
         return createApiErrorResponse({
           status: 409,
           code: "ADMIN_OPERATION_INVALID_TRANSITION",
-          message: "Этот статус export job нельзя обновить выбранным действием.",
+          message: "Этот статус задачи выгрузки данных нельзя обновить выбранным действием.",
         });
       }
 
@@ -174,7 +189,7 @@ export async function PATCH(
         return createApiErrorResponse({
           status: 400,
           code: "ADMIN_OPERATION_INVALID_ACTION",
-          message: "Неверное действие для export job.",
+          message: "Недопустимое действие для задачи выгрузки данных.",
         });
       }
 
@@ -203,7 +218,7 @@ export async function PATCH(
             note: payload.note ?? null,
             toStatus: nextStatus,
           },
-          reason: payload.reason ?? payload.note ?? "manual operations inbox update",
+          reason: payload.reason ?? payload.note ?? OPERATION_REASON_FALLBACK,
           target_user_id: current.user_id,
         });
 
@@ -233,7 +248,7 @@ export async function PATCH(
       return createApiErrorResponse({
         status: 404,
         code: "ADMIN_OPERATION_NOT_FOUND",
-        message: "Элемент deletion request не найден.",
+        message: "Запрос на удаление данных не найден.",
       });
     }
 
@@ -241,7 +256,7 @@ export async function PATCH(
       return createApiErrorResponse({
         status: 409,
         code: "ADMIN_OPERATION_INVALID_TRANSITION",
-        message: "Этот статус deletion request нельзя обновить выбранным действием.",
+        message: "Этот статус запроса на удаление данных нельзя обновить выбранным действием.",
       });
     }
 
@@ -251,7 +266,7 @@ export async function PATCH(
       return createApiErrorResponse({
         status: 400,
         code: "ADMIN_OPERATION_INVALID_ACTION",
-        message: "Неверное действие для deletion request.",
+        message: "Недопустимое действие для запроса на удаление данных.",
       });
     }
 
@@ -287,7 +302,7 @@ export async function PATCH(
           note: payload.note ?? null,
           toStatus: nextStatus,
         },
-        reason: payload.reason ?? payload.note ?? "manual operations inbox update",
+        reason: payload.reason ?? payload.note ?? OPERATION_REASON_FALLBACK,
         target_user_id: current.user_id,
       });
 
@@ -315,7 +330,7 @@ export async function PATCH(
         status: 400,
         code: "ADMIN_OPERATION_INVALID",
         details: error.flatten(),
-        message: "Параметры элемента operations inbox заполнены некорректно.",
+        message: "Параметры элемента операторской очереди заполнены некорректно.",
       });
     }
 
@@ -324,7 +339,7 @@ export async function PATCH(
     return createApiErrorResponse({
       status: 500,
       code: "ADMIN_OPERATION_UPDATE_FAILED",
-      message: "Не удалось обновить элемент operations inbox.",
+      message: "Не удалось обновить элемент операторской очереди.",
     });
   }
 }

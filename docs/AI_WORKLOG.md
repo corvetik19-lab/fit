@@ -1013,6 +1013,15 @@
 - Проверка зелёная: `npx eslint src/app/api/admin/ai-evals/run/route.ts src/app/api/admin/operations/process/route.ts src/app/api/admin/observability/sentry-test/route.ts tests/e2e/api-contracts.spec.ts`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1` -> `13 passed`.
 - Общий прогресс execution checklist остается `146 / 176` (`83%`): tranche продолжает большой backend audit по validation/owner-only/idempotency, но ещё не закрывает основной checkbox целиком.
 
+### 2026-03-21 02:20 - Дочистил operator wording в admin operations и role routes
+
+- `src/app/api/admin/operations/[kind]/[id]/route.ts` больше не держит английские `support action / export job / deletion request` в validation, transition и failure copy; default audit reason переведён в единое `Ручное обновление операторской очереди`.
+- `src/app/api/admin/operations/route.ts` теперь отдает русские заголовки `Экспорт данных пользователя` и `Запрос на удаление данных`, а fallback route message больше не содержит `operations inbox`.
+- `src/app/api/admin/users/[id]/role/route.ts` и `src/app/api/admin/users/[id]/support-action/route.ts` переведены на чистый operator-facing transport copy: административная роль и действие поддержки больше не отдают английские хвосты в validation, audit reason и failure paths.
+- `src/app/api/admin/ai-evals/run/route.ts` теперь создает русский default label `AI-проверка ...`, чтобы operator queue и audit history не смешивали английские и русские названия.
+- Проверка зелёная: `npm run lint -- --quiet src/app/api/admin/operations/route.ts src/app/api/admin/operations/[kind]/[id]/route.ts src/app/api/admin/users/[id]/role/route.ts src/app/api/admin/users/[id]/support-action/route.ts src/app/api/admin/ai-evals/run/route.ts`, последовательные `npm run typecheck` и `npm run build`.
+- Общий прогресс execution checklist остается `146 / 176` (`83%`): tranche продолжает большой backend audit по validation/owner-only/idempotency, но ещё не закрывает основной checkbox целиком.
+
 ### 2026-03-20 04:20 - Закрыл основной checkbox по route/lib duplication
 
 - После серии extraction tranche по `settings`, `nutrition`, `billing`, `AI` и `admin` mutation routes основной checklist-пункт `Доменные правила больше не дублируются между route handlers и lib` закрыт в `docs/MASTER_PLAN.md`.

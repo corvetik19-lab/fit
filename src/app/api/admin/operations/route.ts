@@ -251,7 +251,7 @@ export async function GET() {
       },
       status: item.status,
       target_user: getUserRef(item.user_id, authUsersById),
-      title: "user data export",
+      title: "Экспорт данных пользователя",
       updated_at: item.updated_at ?? item.created_at,
     }));
 
@@ -270,7 +270,7 @@ export async function GET() {
       },
       status: item.status,
       target_user: getUserRef(item.user_id, authUsersById),
-      title: "deletion request",
+      title: "Запрос на удаление данных",
       updated_at: item.updated_at ?? item.created_at,
     }));
 
@@ -302,7 +302,7 @@ export async function GET() {
         },
         status: item.status,
         target_user: getUserRef(item.user_id, authUsersById),
-        title: "user data export",
+        title: "Экспорт данных пользователя",
         updated_at: item.updated_at ?? item.created_at,
       })),
       ...(deletionRecentResult.data ?? []).map((item) => ({
@@ -317,7 +317,7 @@ export async function GET() {
         },
         status: item.status,
         target_user: getUserRef(item.user_id, authUsersById),
-        title: "deletion request",
+        title: "Запрос на удаление данных",
         updated_at: item.updated_at ?? item.created_at,
       })),
     ]).slice(0, RECENT_LIMIT);
@@ -370,7 +370,7 @@ export async function GET() {
     return createApiErrorResponse({
       status: 500,
       code: "ADMIN_OPERATIONS_FAILED",
-      message: "Не удалось загрузить операционный inbox.",
+      message: "Не удалось загрузить операторскую очередь.",
     });
   }
 }

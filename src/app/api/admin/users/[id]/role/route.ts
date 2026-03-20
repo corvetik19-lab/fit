@@ -99,7 +99,7 @@ export async function PATCH(
       actorUserId: actor.user.id,
       nextRole: payload.role,
       previousRole: target.previousRoleRow?.role ?? null,
-      reason: payload.reason ?? "manual admin role update",
+      reason: payload.reason ?? "Ручное обновление административной роли",
       supabase: adminSupabase,
       targetUserId: id,
     });
@@ -132,7 +132,7 @@ export async function PATCH(
       return createApiErrorResponse({
         status: 400,
         code: "ADMIN_ROLE_INVALID",
-        message: "Параметры админ-роли заполнены некорректно.",
+        message: "Параметры административной роли заполнены некорректно.",
         details: error.flatten(),
       });
     }
@@ -142,7 +142,7 @@ export async function PATCH(
     return createApiErrorResponse({
       status: 500,
       code: "ADMIN_ROLE_UPDATE_FAILED",
-      message: "Не удалось обновить админ-роль.",
+      message: "Не удалось обновить административную роль.",
     });
   }
 }
@@ -182,7 +182,7 @@ export async function DELETE(
       return createApiErrorResponse({
         status: 404,
         code: "ADMIN_ROLE_NOT_FOUND",
-        message: "Для этого пользователя админ-роль не найдена.",
+        message: "Для этого пользователя административная роль не найдена.",
       });
     }
 
@@ -208,7 +208,7 @@ export async function DELETE(
       action: "admin_role_revoked",
       actorUserId: actor.user.id,
       previousRole: target.previousRoleRow.role,
-      reason: reason || "manual admin role revoke",
+      reason: reason || "Ручной отзыв административной роли",
       supabase: adminSupabase,
       targetUserId: id,
     });
@@ -242,7 +242,7 @@ export async function DELETE(
     return createApiErrorResponse({
       status: 500,
       code: "ADMIN_ROLE_REVOKE_FAILED",
-      message: "Не удалось отозвать админ-роль.",
+      message: "Не удалось отозвать административную роль.",
     });
   }
 }

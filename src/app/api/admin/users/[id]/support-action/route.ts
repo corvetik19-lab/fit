@@ -42,7 +42,7 @@ export async function POST(
       action: body.action,
       actorUserId: user.id,
       auditPayload: body.payload ?? {},
-      auditReason: body.reason ?? "ручное support-действие",
+      auditReason: body.reason ?? "Ручное действие поддержки",
       payload: body.payload ?? {},
       supabase: adminSupabase,
       targetUserId: id,
@@ -87,7 +87,7 @@ export async function POST(
       return createApiErrorResponse({
         status: 400,
         code: "ADMIN_SUPPORT_ACTION_INVALID",
-        message: "Параметры support action заполнены некорректно.",
+        message: "Параметры действия поддержки заполнены некорректно.",
         details: error.flatten(),
       });
     }
@@ -97,7 +97,7 @@ export async function POST(
     return createApiErrorResponse({
       status: 500,
       code: "ADMIN_SUPPORT_ACTION_FAILED",
-      message: "Не удалось поставить support action в очередь.",
+      message: "Не удалось поставить действие поддержки в очередь.",
     });
   }
 }

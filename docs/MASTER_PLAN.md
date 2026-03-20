@@ -953,3 +953,13 @@
 - [x] `tests/e2e/api-contracts.spec.ts` расширен direct invalid-payload контрактами для operator tooling routes: `AI_EVAL_RUN_INVALID` и `ADMIN_OPERATIONS_PROCESS_INVALID`.
 - [x] Tranche подтверждён пакетами `npx eslint src/app/api/admin/ai-evals/run/route.ts src/app/api/admin/operations/process/route.ts src/app/api/admin/observability/sentry-test/route.ts tests/e2e/api-contracts.spec.ts`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1` -> `13 passed`.
 - [ ] Следующий backend tranche: дочистить remaining operator wording и audit reasons в admin surfaces, затем переоценить основной checkbox по validation/owner-only/idempotency.
+
+## 2026-03-21 admin operations wording sanitation addendum
+
+- [x] `src/app/api/admin/operations/[kind]/[id]/route.ts` переведён на единый operator-facing transport copy: `support action`, `export job`, `deletion request` и `operations inbox` больше не торчат в validation, transition и failure messages.
+- [x] Default audit reason для ручного обновления operator queue унифицирован как `Ручное обновление операторской очереди`, чтобы admin audit logs не смешивали английский и русский transport слой.
+- [x] `src/app/api/admin/operations/route.ts` теперь отдаёт русские titles `Экспорт данных пользователя` и `Запрос на удаление данных`, а fallback message больше не содержит `operations inbox`.
+- [x] `src/app/api/admin/users/[id]/role/route.ts` и `src/app/api/admin/users/[id]/support-action/route.ts` переведены на чистый operator-facing copy: administrative role и support action больше не держат английские хвосты в validation, audit reason и failure messages.
+- [x] `src/app/api/admin/ai-evals/run/route.ts` теперь создаёт русский default label `AI-проверка ...`, чтобы operator queue и audit history не смешивали английские и русские названия.
+- [x] Tranche подтверждён пакетами `npm run lint -- --quiet src/app/api/admin/operations/route.ts src/app/api/admin/operations/[kind]/[id]/route.ts src/app/api/admin/users/[id]/role/route.ts src/app/api/admin/users/[id]/support-action/route.ts src/app/api/admin/ai-evals/run/route.ts`, последовательными `npm run typecheck` и `npm run build`.
+- [ ] Следующий backend tranche: продолжать remaining route-handler audit по validation/owner-only/idempotency и переоценить, можно ли закрывать основной checkbox по backend hardening.
