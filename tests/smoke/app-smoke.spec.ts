@@ -34,3 +34,47 @@ test("pwa assets are reachable", async ({ request }) => {
   expect(Array.isArray(manifest.icons)).toBeTruthy();
   expect(offlineHtml).toContain("fit offline");
 });
+
+test("pwa surface exposes install metadata", async ({ page, request }) => {
+  await page.goto("/smoke");
+
+  await expect(page.locator('link[rel="manifest"]')).toHaveAttribute(
+    "href",
+    "/manifest.webmanifest",
+  );
+  await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute(
+    "href",
+    "/apple-touch-icon.png",
+  );
+  await expect(page.locator('meta[name="application-name"]')).toHaveAttribute(
+    "content",
+    "fit",
+  );
+
+  const [manifestResponse, serviceWorkerResponse] = await Promise.all([
+    request.get("/manifest.webmanifest"),
+    request.get("/sw.js"),
+  ]);
+
+  expect(manifestResponse.ok()).toBeTruthy();
+  expect(serviceWorkerResponse.ok()).toBeTruthy();
+
+  const manifest = await manifestResponse.json();
+  const serviceWorker = await serviceWorkerResponse.text();
+
+  expect(manifest.display).toBe("standalone");
+  expect(manifest.start_url).toBe("/dashboard");
+  expect(manifest.lang).toBe("ru");
+  expect(manifest.theme_color).toBe("#14614b");
+  expect(manifest.background_color).toBe("#f5f4ee");
+  expect(manifest.icons).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        purpose: "maskable",
+        sizes: "512x512",
+      }),
+    ]),
+  );
+  expect(serviceWorker).toContain("skipWaiting");
+  expect(serviceWorker).toContain("clients.claim");
+});

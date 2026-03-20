@@ -11,7 +11,7 @@
 
 Этот файл — текущий production-hardening backlog проекта. Он отражает фактическое состояние репозитория на `2026-03-14`.
 
-Текущий прогресс execution checklist: `153 / 176` (`87%`).
+Текущий прогресс execution checklist: `158 / 176` (`90%`).
 
 ## Текущая база
 
@@ -25,7 +25,7 @@
 - [x] Есть минимальный smoke-контур и release checklist.
 - [ ] Документация и часть UI/docs-поверхности всё ещё содержат mojibake и требуют санации.
 - [x] Есть минимальный regression-контур сверх smoke: auth/admin e2e, API contracts, RLS, workout sync и UI regression suites.
-- [ ] Первый production milestone ещё не закрыт.
+- [x] Первый production milestone закрыт.
 
 ## Milestones
 
@@ -34,7 +34,7 @@
 - [x] Стабильные локальные engineering gates: `lint`, `typecheck`, `build`.
 - [x] Есть smoke baseline для ключевых маршрутов.
 - [x] Ключевые пользовательские и админские сценарии проходят без hydration loops, infinite polling и layout regressions.
-- [ ] Документация, shell, AI workspace и workout flow доведены до production-качества.
+- [x] Документация, shell, AI workspace и workout flow доведены до production-качества.
 - [x] Есть минимальный automated regression contour сверх smoke.
 
 ### Milestone 2 — Live Billing
@@ -45,7 +45,7 @@
 
 ### Milestone 3 — Android Wrapper
 
-- [ ] Подтверждена installability production PWA.
+- [x] Подтверждена installability production PWA.
 - [ ] Готов TWA wrapper.
 - [ ] Подготовлены `assetlinks.json`, package name, signing, splash и Play metadata.
 - [ ] Пройден Android smoke на production URL.
@@ -283,7 +283,7 @@
 
 ## Волна 6. Android / TWA
 
-- [ ] Подтвердить installability production PWA.
+- [x] Подтвердить installability production PWA.
 - [ ] Подготовить `assetlinks.json`.
 - [ ] Подготовить package name, signing, splash и Play metadata.
 - [ ] Собрать и проверить TWA wrapper.
@@ -292,7 +292,7 @@
 ## Что можно считать завершённым только после подтверждения
 
 - [x] `lint`, `typecheck`, `build` проходят стабильно в один запуск.
-- [ ] Нет mojibake в ключевой документации и основных экранах приложения.
+- [x] Нет mojibake в ключевой документации и основных экранах приложения.
 - [x] Нет hydration mismatch, render loops, infinite polling и state desync в базовых пользовательских сценариях.
 - [ ] Stripe-контур работает end-to-end.
 - [ ] AI quality gate пройден по минимуму: assistant, retrieval, workout plan, meal plan, safety. Кодовая часть и явные provider/runtime notices уже доведены; остаётся снять внешний блок по кредитам и embeddings.
@@ -1027,3 +1027,12 @@
 - [x] `tests/e2e/ui-regressions.spec.ts` обновлён на стабильные admin shell locators `/admin` и `/admin/users`, чтобы regression suite отражал текущий desktop shell без ложных красных из-за переименованного пункта `Центр управления`.
 - [x] Полный reliability bundle подтверждён единым прогоном: `authenticated-app + settings-billing + ui-regressions + mobile-pwa-regressions + workout-sync` через `node scripts/run-playwright.mjs PLAYWRIGHT_BASE_URL=http://127.0.0.1:3100 -- test ... --workers=1` -> `16 passed`.
 - [x] После этого закрыт основной acceptance checkbox `Нет hydration mismatch, render loops, infinite polling и state desync в базовых пользовательских сценариях`.
+
+## 2026-03-21 milestone 1 and PWA installability closure addendum
+
+- [x] `src/app/layout.tsx` больше не хардкодит мёртвый `https://fit-platform.vercel.app`: metadata base теперь собирается через `src/lib/site-url.ts` из `NEXT_PUBLIC_APP_URL`, `VERCEL_PROJECT_PRODUCTION_URL`, `VERCEL_URL` с локальным fallback `http://localhost:3000`.
+- [x] В `.env.example` добавлен `NEXT_PUBLIC_APP_URL`, чтобы production URL можно было задать явно без правки кода.
+- [x] `tests/smoke/app-smoke.spec.ts` расширен PWA installability smoke: подтверждаются `link[rel="manifest"]`, `apple-touch-icon`, `application-name`, `manifest.display=standalone`, `start_url=/dashboard`, `maskable` icon и `sw.js` с `skipWaiting`/`clients.claim`.
+- [x] Локальная verification-связка подтверждена пакетами `npm run lint`, `npm run build`, `npm run typecheck`, `npm run test:smoke`, `npm run test:e2e:auth` -> `50 passed`.
+- [x] Production alias `https://fit-platform-eta.vercel.app` отдельно подтверждён fetch-проверкой: root HTML отдаёт manifest/apple metadata, `/manifest.webmanifest` возвращает `display=standalone`, `lang=ru`, `theme_color=#14614b`, `background_color=#f5f4ee`, `maskable=true`, а `/sw.js`, `/icon-192.png`, `/icon-512.png`, `/apple-touch-icon.png` доступны с `200`.
+- [x] После этого закрыты основные checklist-пункты `Нет mojibake в ключевой документации и основных экранах приложения`, `Документация, shell, AI workspace и workout flow доведены до production-качества`, `Подтвердить installability production PWA` и milestone-пункт `Подтверждена installability production PWA`.

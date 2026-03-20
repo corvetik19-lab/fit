@@ -958,6 +958,15 @@
 - Проверка зелёная: `npx eslint src/lib/admin-role-management.ts src/app/api/admin/users/[id]/role/route.ts`, `npm run typecheck`, `npm run build`.
 - Общий прогресс execution checklist остаётся `144 / 176` (`82%`): tranche продолжает admin/backend extraction, но не закрывает следующий основной checkbox целиком.
 
+### 2026-03-21 08:55 - Закрыл Milestone 1 и подтвердил installability production PWA
+
+- `src/app/layout.tsx` больше не держит мёртвый production URL: metadata base теперь собирается через `src/lib/site-url.ts` из `NEXT_PUBLIC_APP_URL`, `VERCEL_PROJECT_PRODUCTION_URL` и `VERCEL_URL`, а `.env.example` получил `NEXT_PUBLIC_APP_URL`.
+- `tests/smoke/app-smoke.spec.ts` расширен installability smoke: manifest link, apple touch icon, `application-name`, `display=standalone`, `start_url=/dashboard`, maskable icon и service worker с `skipWaiting/clients.claim` теперь подтверждаются автоматически.
+- Локальная проверка зелёная: `npm run lint`, `npm run build`, `npm run typecheck`, `npm run test:smoke`, `npm run test:e2e:auth` -> `50 passed`.
+- Production alias `https://fit-platform-eta.vercel.app` отдельно подтверждён fetch-проверкой: root HTML отдаёт manifest/apple metadata, `/manifest.webmanifest` возвращает installability-поля, а `/sw.js`, `/icon-192.png`, `/icon-512.png`, `/apple-touch-icon.png` доступны с `200`.
+- Этим закрыты Milestone 1, acceptance-чекбокс про mojibake в ключевых UI/docs и release-пункт про installability production PWA.
+- Общий прогресс execution checklist вырос до `158 / 176` (`90%`).
+
 ### 2026-03-20 18:55 - Вынес self-service orchestration из settings data center
 
 - Добавил `src/components/use-settings-data-center-state.ts`: refresh snapshot, queue export, request/cancel deletion, success/error state и derived flags для settings data center теперь живут вне JSX.

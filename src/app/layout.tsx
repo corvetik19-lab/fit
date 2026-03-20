@@ -1,10 +1,11 @@
-﻿import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { IBM_Plex_Mono, Manrope } from "next/font/google";
 import "./globals.css";
 
 import { ServiceWorkerRegistration } from "@/components/service-worker-registration";
+import { resolveSiteUrl } from "@/lib/site-url";
 
 const sans = Manrope({
   variable: "--font-geist-sans",
@@ -18,7 +19,7 @@ const mono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://fit-platform.vercel.app"),
+  metadataBase: resolveSiteUrl(),
   title: {
     default: "fit",
     template: "%s · fit",
@@ -39,6 +40,12 @@ export const metadata: Metadata = {
     ],
     apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#14614b",
+  width: "device-width",
+  initialScale: 1,
 };
 
 export const dynamic = "force-dynamic";
