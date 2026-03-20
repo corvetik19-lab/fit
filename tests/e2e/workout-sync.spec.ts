@@ -3,6 +3,7 @@ import { expect, test } from "@playwright/test";
 import { hasAuthE2ECredentials } from "./helpers/auth";
 import { USER_STORAGE_STATE_PATH } from "./helpers/auth-state";
 import { fetchJson } from "./helpers/http";
+import { navigateStable } from "./helpers/navigation";
 import {
   readWorkoutDayOfflineState,
   seedWorkoutDayOfflineState,
@@ -138,8 +139,7 @@ test.describe("workout sync contracts", () => {
   test("sync push rejects invalid workout mutations and applies the valid sequence", async ({
     page,
   }) => {
-    await page.goto("/dashboard");
-    await expect(page).toHaveURL(/\/dashboard$/);
+    await navigateStable(page, "/dashboard", /\/dashboard$/);
     await page.waitForLoadState("networkidle");
 
     const seededDay = await createLockedWorkoutDay(page, "sync");
@@ -245,8 +245,7 @@ test.describe("workout sync contracts", () => {
   test("reset clears synced execution and pull stays clean afterwards", async ({
     page,
   }) => {
-    await page.goto("/dashboard");
-    await expect(page).toHaveURL(/\/dashboard$/);
+    await navigateStable(page, "/dashboard", /\/dashboard$/);
     await page.waitForLoadState("networkidle");
 
     const seededDay = await createLockedWorkoutDay(page, "sync-reset");
@@ -310,8 +309,7 @@ test.describe("workout sync contracts", () => {
   test("done and reset routes stay idempotent on repeated requests", async ({
     page,
   }) => {
-    await page.goto("/dashboard");
-    await expect(page).toHaveURL(/\/dashboard$/);
+    await navigateStable(page, "/dashboard", /\/dashboard$/);
     await page.waitForLoadState("networkidle");
 
     const seededDay = await createLockedWorkoutDay(page, "route-idempotency");
@@ -411,8 +409,7 @@ test.describe("workout sync contracts", () => {
   test("reset action clears stale local cache and queued mutations", async ({
     page,
   }) => {
-    await page.goto("/dashboard");
-    await expect(page).toHaveURL(/\/dashboard$/);
+    await navigateStable(page, "/dashboard", /\/dashboard$/);
     await page.waitForLoadState("networkidle");
 
     const seededDay = await createLockedWorkoutDay(page, "offline-reset");
@@ -502,8 +499,7 @@ test.describe("workout sync contracts", () => {
   test("direct execution routes reject unlocked-week workout mutations", async ({
     page,
   }) => {
-    await page.goto("/dashboard");
-    await expect(page).toHaveURL(/\/dashboard$/);
+    await navigateStable(page, "/dashboard", /\/dashboard$/);
     await page.waitForLoadState("networkidle");
 
     const seededDay = await createUnlockedWorkoutDay(page, "unlocked-guard");

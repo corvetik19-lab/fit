@@ -6,6 +6,15 @@
 - Во время production hardening журнал был сжат и переписан в чистый UTF-8.
 - Ниже остаются только ключевые tranche, которые помогают понять текущее состояние продукта и инженерного контура.
 
+## 2026-03-21
+
+### Backend audit closure and workout sync verification
+
+- Закрыт основной backend checkbox про `validation / owner-only / idempotency`: route-handler audit теперь опирается не только на точечные contract slices, а на объединённый regression bundle `tests/e2e/api-contracts.spec.ts`, `tests/e2e/ownership-isolation.spec.ts`, `tests/e2e/internal-jobs.spec.ts`, `tests/e2e/workout-sync.spec.ts` и `tests/rls/ownership.spec.ts`.
+- Для этого `tests/e2e/workout-sync.spec.ts` стабилизирован через `navigateStable(...)`: suite больше не флакает на auth redirect при старте через `/dashboard`, поэтому его можно использовать как реальное доказательство для sync/reset verification, а не как хрупкий smoke.
+- Повторная ручная verification-связка прогнана локально через живой `PLAYWRIGHT_BASE_URL=http://127.0.0.1:3100`: `29 passed` для `api-contracts + ownership-isolation + internal-jobs + workout-sync` и `4 passed` для прямого `RLS`.
+- После этого отдельно закрыт checkbox про `reset/finish/sync` race conditions и infinite polling: regression bundle подтверждает invalid sync mutations, clean `sync -> reset -> sync/pull`, idempotent `done/reset`, очистку stale offline queue и locked-week guard.
+
 ## 2026-03-20
 
 ### Admin user detail data extraction

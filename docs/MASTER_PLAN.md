@@ -11,7 +11,7 @@
 
 Этот файл — текущий production-hardening backlog проекта. Он отражает фактическое состояние репозитория на `2026-03-14`.
 
-Текущий прогресс execution checklist: `146 / 176` (`83%`).
+Текущий прогресс execution checklist: `148 / 176` (`84%`).
 
 ## Текущая база
 
@@ -200,8 +200,8 @@
 - [x] Расширить `api-contracts.spec.ts` invalid-param покрытием для weekly program и nutrition mutation routes.
 - [x] `settings/data` и `settings/billing` snapshot routes теперь fail-open: при сбое загрузки оболочки settings UI получает безопасный пустой snapshot вместо общего `500`.
 - [x] User-facing billing access теперь fail-open на `/settings`, `/ai`, `/nutrition`, `/api/settings/billing` и в AI mutation routes: при сбое billing-access загрузки UI и AI surface больше не падают общим `500`, а используют безопасный fallback snapshot/access policy.
-- [ ] Пройти все route handlers на валидацию, owner-only доступ, ошибки и idempotency.
-- [ ] Подтвердить, что reset/finish/sync сценарии не создают race conditions и бесконечный polling.
+- [x] Пройти все route handlers на валидацию, owner-only доступ, ошибки и idempotency.
+- [x] Подтвердить, что reset/finish/sync сценарии не создают race conditions и бесконечный polling.
 - [x] Подтвердить, что offline queue и stale cleanup не восстанавливают уже сброшенное состояние.
 - [x] Проверить locked program guard и все mutation routes вокруг workout day execution.
 
@@ -994,4 +994,12 @@
 - [x] `sync/push`, `sync/pull` и direct workout-day update route теперь подтверждены predictable invalid-transport контрактами: `SYNC_PUSH_INVALID`, `SYNC_PULL_INVALID` и payload-level `WORKOUT_DAY_UPDATE_INVALID` режутся до expected `400` без noisy route-level `logger.error`.
 - [x] `tests/e2e/api-contracts.spec.ts` расширен invalid contract покрытием для `POST /api/sync/push`, `GET /api/sync/pull` и payload-level `PATCH /api/workout-days/{id}`, чтобы sync/day transport слой был в том же regression baseline, что и остальные owner-scoped mutation routes.
 - [x] Tranche подтверждён пакетами `npm run lint -- --quiet src/app/api/sync/pull/route.ts src/app/api/sync/push/route.ts src/app/api/workout-days/[id]/route.ts src/app/api/workout-days/[id]/reset/route.ts tests/e2e/api-contracts.spec.ts`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1` -> `13 passed`.
-- [ ] Следующий backend tranche: переоценить открытый checkbox по validation/owner-only/idempotency и решить, достаточно ли уже покрытия по workout/sync/backend handlers, или нужен ещё один короткий audit slice вне route transport слоя.
+- [x] Следующий backend tranche закрыт верификационным bundle ниже: owner-only, invalid contracts, internal jobs и workout sync покрыты отдельными regression suites, так что общий checkbox по validation/owner-only/idempotency и sync race conditions можно считать подтверждённым.
+
+## 2026-03-21 backend audit closure addendum
+
+- [x] Основной backend checkbox `Пройти все route handlers на валидацию, owner-only доступ, ошибки и idempotency` закрыт на базе объединённого regression bundle: `tests/e2e/api-contracts.spec.ts`, `tests/e2e/ownership-isolation.spec.ts`, `tests/e2e/internal-jobs.spec.ts`, `tests/e2e/workout-sync.spec.ts` и `tests/rls/ownership.spec.ts`.
+- [x] Повторная ручная verification-связка подтверждена локально через `PLAYWRIGHT_BASE_URL=http://127.0.0.1:3100`: `29 passed` для `api-contracts + ownership-isolation + internal-jobs + workout-sync` и `4 passed` для прямого `RLS`.
+- [x] `tests/e2e/workout-sync.spec.ts` стабилизирован через `navigateStable(...)`, чтобы regression suite не флакал на auth redirect и мог служить реальным доказательством для checkbox про `reset/finish/sync` race conditions, infinite polling и idempotent reset/done flow.
+- [x] После этого закрыт и второй основной backend checkbox `Подтвердить, что reset/finish/sync сценарии не создают race conditions и бесконечный polling`: suite отдельно подтверждает invalid sync mutations, clean `sync -> reset -> sync/pull`, idempotent `done/reset`, очистку stale offline queue и guard для unlocked week.
+- [ ] Следующий backend tranche: переходить к оставшимся quality/release блокам вне уже закрытого route-handler audit, в первую очередь AI eval gate, production billing и remaining UX/documentation sanitation.
