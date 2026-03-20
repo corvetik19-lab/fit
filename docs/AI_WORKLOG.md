@@ -857,3 +857,10 @@
 - `src/lib/ai/domain-policy.ts` остаётся зелёным и синхронизированным с текущим AI helper tranche; локальный diff там ограничен форматной нормализацией prompt-строки.
 - Проверка зелёная: `npx eslint src/lib/ai/assistant-runtime-copy.ts src/app/api/ai/assistant/route.ts src/lib/ai/domain-policy.ts`, `npm run typecheck`, `npm run build`.
 - Общий прогресс execution checklist остаётся `144 / 176` (`82%`): tranche продолжает AI route/lib extraction, но не закрывает следующий основной checkbox целиком.
+
+### 2026-03-20 01:05 - Вынес shared vision/runtime copy из ai/meal-photo
+
+- Добавил `src/lib/ai/meal-photo-runtime-copy.ts`: shared user-facing и vision/runtime copy для `ai/meal-photo` теперь живёт вне route handler и включает validation/error messages, vision prompt, user-message builder и форматирование итогового разбора блюда.
+- `src/app/api/ai/meal-photo/route.ts` переведён на этот helper без изменения owner-only, billing, image-processing и chat-session contracts: route остался transport-обёрткой вокруг meal-photo vision flow.
+- Проверка зелёная: `npx eslint src/lib/ai/meal-photo-runtime-copy.ts src/app/api/ai/meal-photo/route.ts`, `npm run typecheck`, `npm run build`.
+- Общий прогресс execution checklist остаётся `144 / 176` (`82%`): tranche продолжает AI route/lib extraction и sanitation wave, но не закрывает следующий основной checkbox целиком.

@@ -783,3 +783,10 @@
 - [x] `src/lib/ai/domain-policy.ts` синхронизирован с текущим helper-slice и остаётся зелёным по compile/lint baseline.
 - [x] Tranche подтверждён пакетами `npx eslint src/lib/ai/assistant-runtime-copy.ts src/app/api/ai/assistant/route.ts src/lib/ai/domain-policy.ts`, `npm run typecheck`, `npm run build`.
 - [ ] Следующий AI/backend tranche: возвращаться к remaining route/lib extraction и owner-only/idempotency audit по AI/data handlers.
+
+## 2026-03-20 AI meal photo runtime copy extraction addendum
+
+- [x] Общий user-facing и vision/runtime copy для `ai/meal-photo` вынесен в `src/lib/ai/meal-photo-runtime-copy.ts`: not-configured/auth/image validation/safety/schema-invalid/provider failure messages и форматирование разбора блюда больше не живут внутри route handler.
+- [x] `src/app/api/ai/meal-photo/route.ts` переведён на этот helper без изменения owner-only, billing, image-processing и chat-session contracts: route остался transport-слоем вокруг vision flow.
+- [x] Tranche подтверждён пакетами `npx eslint src/lib/ai/meal-photo-runtime-copy.ts src/app/api/ai/meal-photo/route.ts`, `npm run typecheck`, `npm run build`.
+- [ ] Следующий AI/backend tranche: продолжать remaining route/lib extraction и owner-only/idempotency audit по AI/data handlers.
