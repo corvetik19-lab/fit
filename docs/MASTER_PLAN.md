@@ -898,3 +898,10 @@
 - [x] После extraction tranche основной checklist-пункт `Async/data orchestration больше не смешивается с JSX в оставшихся тяжёлых экранах` закрыт: remaining heavy self-service screens переведены на тот же state-hook/model/orchestrator pattern, что и workout/admin/AI surface.
 - [x] Tranche подтверждён пакетами `npm run lint`, `npm run build`, `npm run typecheck`. Дополнительный targeted UI smoke локально упёрся в нестабильный Playwright webServer bootstrap на этой машине, но кодовый baseline по settings surface зелёный.
 - [ ] Следующий frontend/backend tranche: возвращаться к оставшемуся route-handler audit и remaining mojibake/self-service sanitation вне уже закрытого heavy-screen checkbox.
+
+## 2026-03-20 settings self-service contract hardening addendum
+
+- [x] `src/app/api/settings/data/route.ts` и `src/app/api/settings/billing/route.ts` переведены в чистый UTF-8 и expected validation path больше не уходит в noisy route-level error logging: `SETTINGS_DATA_INVALID` и `SETTINGS_BILLING_INVALID` режутся до unexpected-failure logging.
+- [x] `tests/e2e/api-contracts.spec.ts` расширен self-service contract-покрытием: invalid `settings/data` payload -> `400 SETTINGS_DATA_INVALID`, повторная отмена удаления -> `404 SETTINGS_DELETION_NOT_FOUND`, повторный billing access review -> `409 SETTINGS_BILLING_REVIEW_ALREADY_ACTIVE`.
+- [x] Tranche подтверждён пакетами `npx eslint src/app/api/settings/data/route.ts src/app/api/settings/billing/route.ts tests/e2e/api-contracts.spec.ts`, `npm run build`, `npm run typecheck`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1` -> `10 passed`.
+- [ ] Следующий backend tranche: продолжать remaining route-handler audit по owner-only/idempotency/race conditions за пределами settings self-service routes.

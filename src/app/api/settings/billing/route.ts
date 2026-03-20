@@ -1,9 +1,7 @@
 import { z } from "zod";
 
 import { createApiErrorResponse } from "@/lib/api/error-response";
-import {
-  BILLING_FEATURE_KEYS,
-} from "@/lib/billing-access";
+import { BILLING_FEATURE_KEYS } from "@/lib/billing-access";
 import { logger } from "@/lib/logger";
 import {
   getAuthenticatedSettingsContext,

@@ -958,6 +958,13 @@
 - Проверка зелёная: `npm run lint`, `npm run build`, `npm run typecheck`. Локальный targeted Playwright smoke для `/settings` уперся в нестабильный `webServer` bootstrap на этой машине, но кодовый baseline по settings surface остается зеленым.
 - Общий прогресс execution checklist обновлен до `146 / 176` (`83%`).
 
+### 2026-03-20 22:05 - Дожал self-service contracts в settings routes
+
+- `src/app/api/settings/data/route.ts` и `src/app/api/settings/billing/route.ts` переведены в чистый UTF-8: auth-first и failure copy больше не держат mojibake, а expected validation path не шумит как route-level `error`.
+- `tests/e2e/api-contracts.spec.ts` расширен predictable self-service contracts: invalid `settings/data` payload теперь режется как `400 SETTINGS_DATA_INVALID`, повторная отмена удаления как `404 SETTINGS_DELETION_NOT_FOUND`, повторный billing access review как `409 SETTINGS_BILLING_REVIEW_ALREADY_ACTIVE`.
+- Проверка зелёная: `npx eslint src/app/api/settings/data/route.ts src/app/api/settings/billing/route.ts tests/e2e/api-contracts.spec.ts`, `npm run build`, `npm run typecheck`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1` -> `10 passed`.
+- Общий прогресс execution checklist остается `146 / 176` (`83%`): tranche двигает открытый backend audit по validation/idempotency, но еще не закрывает следующий основной checkbox целиком.
+
 ### 2026-03-20 04:20 - Закрыл основной checkbox по route/lib duplication
 
 - После серии extraction tranche по `settings`, `nutrition`, `billing`, `AI` и `admin` mutation routes основной checklist-пункт `Доменные правила больше не дублируются между route handlers и lib` закрыт в `docs/MASTER_PLAN.md`.

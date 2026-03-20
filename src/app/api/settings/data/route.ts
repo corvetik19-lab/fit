@@ -106,8 +106,6 @@ export async function POST(request: Request) {
       data: snapshot,
     });
   } catch (error) {
-    logger.error("settings data mutation route failed", { error });
-
     if (error instanceof z.ZodError) {
       return createApiErrorResponse({
         status: 400,
@@ -116,6 +114,8 @@ export async function POST(request: Request) {
         details: error.flatten(),
       });
     }
+
+    logger.error("settings data mutation route failed", { error });
 
     return createApiErrorResponse({
       status: 500,

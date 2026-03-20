@@ -8,6 +8,10 @@ import {
 } from "./helpers/auth-state";
 import { navigateStable } from "./helpers/navigation";
 import { fetchJson } from "./helpers/http";
+import {
+  ensureSettingsBillingReviewRequest,
+  ensureSettingsDeletionRequest,
+} from "./helpers/settings-data";
 
 function buildAssistantMessages() {
   return [
@@ -128,6 +132,7 @@ test.describe("api contracts", () => {
       invalidMealTemplateDelete,
       invalidNutritionTargetsPayload,
       invalidSettingsBillingPayload,
+      invalidSettingsDataPayload,
     ] = await Promise.all([
       fetchJson(page, {
         method: "PATCH",
@@ -206,6 +211,14 @@ test.describe("api contracts", () => {
         body: {
           action: "request_access_review",
           feature_keys: [],
+        },
+      }),
+      fetchJson(page, {
+        method: "POST",
+        url: "/api/settings/data",
+        body: {
+          action: "request_deletion",
+          reason: "x".repeat(301),
         },
       }),
     ]);
@@ -289,6 +302,64 @@ test.describe("api contracts", () => {
     expect(
       (invalidSettingsBillingPayload.body as { code?: string } | null)?.code,
     ).toBe("SETTINGS_BILLING_INVALID");
+
+    expect(invalidSettingsDataPayload.status).toBe(400);
+    expect(
+      (invalidSettingsDataPayload.body as { code?: string } | null)?.code,
+    ).toBe("SETTINGS_DATA_INVALID");
+  });
+
+  test("settings self-service routes keep duplicate and retry contracts predictable", async ({
+    page,
+  }) => {
+    await navigateStable(page, "/settings", /\/settings$/);
+    await page.waitForLoadState("networkidle");
+
+    const { deletionRequestId } = await ensureSettingsDeletionRequest(page);
+    expect(deletionRequestId).toBeTruthy();
+
+    const firstCancel = await fetchJson<{
+      code?: string;
+      data?: {
+        deletionRequest?: { status?: string } | null;
+      };
+    }>(page, {
+      method: "DELETE",
+      url: "/api/settings/data",
+    });
+
+    expect(firstCancel.status).toBe(200);
+    expect(firstCancel.body?.data?.deletionRequest?.status).toBe("canceled");
+
+    const secondCancel = await fetchJson<{
+      code?: string;
+    }>(page, {
+      method: "DELETE",
+      url: "/api/settings/data",
+    });
+
+    expect(secondCancel.status).toBe(404);
+    expect(secondCancel.body?.code).toBe("SETTINGS_DELETION_NOT_FOUND");
+
+    const { reviewRequestId } = await ensureSettingsBillingReviewRequest(page);
+    expect(reviewRequestId).toBeTruthy();
+
+    const duplicateReview = await fetchJson<{
+      code?: string;
+    }>(page, {
+      method: "POST",
+      url: "/api/settings/billing",
+      body: {
+        action: "request_access_review",
+        feature_keys: ["ai_chat"],
+        note: "Повторный тестовый запрос",
+      },
+    });
+
+    expect(duplicateReview.status).toBe(409);
+    expect(duplicateReview.body?.code).toBe(
+      "SETTINGS_BILLING_REVIEW_ALREADY_ACTIVE",
+    );
   });
 
   test("owner-scoped AI session delete returns 404 for unknown valid session id", async ({
