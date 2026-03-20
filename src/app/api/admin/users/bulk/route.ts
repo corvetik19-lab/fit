@@ -36,7 +36,8 @@ const bulkActionSchema = z
     if (value.action === "enable_entitlement" && !value.feature_key) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "feature_key is required for entitlement bulk actions.",
+        message:
+          "Для массового включения entitlement нужно указать feature_key.",
         path: ["feature_key"],
       });
     }
@@ -170,7 +171,7 @@ export async function POST(request: Request) {
               ? error.message
               : error instanceof Error
                 ? error.message
-                : "Unknown bulk action error.",
+                : "Неизвестная ошибка массового действия.",
           status: "failed",
           user_id: userId,
         });

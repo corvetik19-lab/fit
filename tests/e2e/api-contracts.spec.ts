@@ -516,7 +516,14 @@ test.describe("api contracts with admin access", () => {
     await expect(page).toHaveURL(/\/admin$/);
     await page.waitForLoadState("networkidle");
 
+    const userId = await findAuthUserIdByEmail(
+      process.env.PLAYWRIGHT_TEST_EMAIL ?? "leva@leva.ru",
+    );
+
     const [
+      invalidUserDetail,
+      invalidBulkPayload,
+      invalidOperationUpdate,
       invalidExport,
       invalidDeletionQueue,
       invalidDeletionCancel,
@@ -528,6 +535,23 @@ test.describe("api contracts with admin access", () => {
       invalidRolePatch,
       invalidRoleDelete,
     ] = await Promise.all([
+      fetchJson(page, {
+        method: "GET",
+        url: "/api/admin/users/not-a-uuid",
+      }),
+      fetchJson(page, {
+        method: "POST",
+        url: "/api/admin/users/bulk",
+        body: {
+          action: "enable_entitlement",
+          user_ids: [userId],
+        },
+      }),
+      fetchJson(page, {
+        method: "PATCH",
+        url: "/api/admin/operations/support_action/not-a-uuid",
+        body: { action: "mark_completed" },
+      }),
       fetchJson(page, {
         method: "POST",
         url: "/api/admin/users/not-a-uuid/export",
@@ -578,6 +602,21 @@ test.describe("api contracts with admin access", () => {
         body: { reason: "test" },
       }),
     ]);
+
+    expect(invalidUserDetail.status).toBe(400);
+    expect((invalidUserDetail.body as { code?: string } | null)?.code).toBe(
+      "ADMIN_USER_DETAIL_INVALID",
+    );
+
+    expect(invalidBulkPayload.status).toBe(400);
+    expect((invalidBulkPayload.body as { code?: string } | null)?.code).toBe(
+      "ADMIN_BULK_INVALID",
+    );
+
+    expect(invalidOperationUpdate.status).toBe(400);
+    expect((invalidOperationUpdate.body as { code?: string } | null)?.code).toBe(
+      "ADMIN_OPERATION_INVALID",
+    );
 
     expect(invalidExport.status).toBe(400);
     expect((invalidExport.body as { code?: string } | null)?.code).toBe(

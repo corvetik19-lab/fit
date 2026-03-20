@@ -31,7 +31,7 @@ export async function PATCH(
     const { id: rawId } = await params;
     const id = parseAdminUserIdParam(rawId, {
       code: "ADMIN_ROLE_TARGET_INVALID",
-      message: "Target user id is invalid.",
+      message: "Идентификатор целевого пользователя заполнен некорректно.",
     });
     const payload = roleSchema.parse(await request.json());
 
@@ -39,7 +39,7 @@ export async function PATCH(
       return createApiErrorResponse({
         status: 400,
         code: "ADMIN_SELF_ROLE_CHANGE_BLOCKED",
-        message: "Super admin cannot downgrade their own access.",
+        message: "Главный супер-администратор не может понизить себе доступ.",
       });
     }
 
@@ -157,7 +157,7 @@ export async function DELETE(
     const { id: rawId } = await params;
     const id = parseAdminUserIdParam(rawId, {
       code: "ADMIN_ROLE_TARGET_INVALID",
-      message: "Target user id is invalid.",
+      message: "Идентификатор целевого пользователя заполнен некорректно.",
     });
     const body = await request.json().catch(() => ({}));
     const reason =
@@ -167,7 +167,7 @@ export async function DELETE(
       return createApiErrorResponse({
         status: 400,
         code: "ADMIN_SELF_REVOKE_BLOCKED",
-        message: "Super admin cannot revoke their own access.",
+        message: "Главный супер-администратор не может отозвать себе доступ.",
       });
     }
 
@@ -182,7 +182,7 @@ export async function DELETE(
       return createApiErrorResponse({
         status: 404,
         code: "ADMIN_ROLE_NOT_FOUND",
-        message: "Admin role was not found for this user.",
+        message: "Для этого пользователя админ-роль не найдена.",
       });
     }
 

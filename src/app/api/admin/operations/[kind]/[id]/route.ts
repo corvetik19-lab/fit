@@ -71,7 +71,7 @@ export async function PATCH(
         return createApiErrorResponse({
           status: 404,
           code: "ADMIN_OPERATION_NOT_FOUND",
-          message: "Support action was not found.",
+          message: "Элемент support action не найден.",
         });
       }
 
@@ -156,7 +156,7 @@ export async function PATCH(
         return createApiErrorResponse({
           status: 404,
           code: "ADMIN_OPERATION_NOT_FOUND",
-          message: "Export job was not found.",
+          message: "Элемент export job не найден.",
         });
       }
 
@@ -233,7 +233,7 @@ export async function PATCH(
       return createApiErrorResponse({
         status: 404,
         code: "ADMIN_OPERATION_NOT_FOUND",
-        message: "Deletion request was not found.",
+        message: "Элемент deletion request не найден.",
       });
     }
 
@@ -302,8 +302,6 @@ export async function PATCH(
       },
     });
   } catch (error) {
-    logger.error("admin operation update route failed", { error });
-
     if (isAdminAccessError(error)) {
       return createApiErrorResponse({
         status: error.status,
@@ -320,6 +318,8 @@ export async function PATCH(
         message: "Параметры элемента operations inbox заполнены некорректно.",
       });
     }
+
+    logger.error("admin operation update route failed", { error });
 
     return createApiErrorResponse({
       status: 500,

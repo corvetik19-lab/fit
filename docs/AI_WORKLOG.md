@@ -979,6 +979,14 @@
 - Проверка зелёная: `npx eslint src/app/api/admin/users/[id]/billing/route.ts src/app/api/admin/users/[id]/billing/reconcile/route.ts tests/e2e/api-contracts.spec.ts`, `npm run build`, `npm run typecheck`, `node scripts/run-playwright.mjs PLAYWRIGHT_BASE_URL=http://127.0.0.1:3110 -- test tests/e2e/api-contracts.spec.ts --workers=1` -> `11 passed`.
 - Общий прогресс execution checklist остается `146 / 176` (`83%`): tranche продолжает route-handler audit по admin/billing contracts, но не закрывает следующий основной checkbox целиком.
 
+### 2026-03-21 00:05 - Дожал admin bulk и operations transport contracts
+
+- `src/app/api/admin/users/bulk/route.ts`, `src/app/api/admin/operations/[kind]/[id]/route.ts`, `src/app/api/admin/users/[id]/route.ts` и `src/app/api/admin/users/[id]/role/route.ts` дочищены до чистого UTF-8: operator-facing invalid/not-found/self-guard copy больше не держит mojibake и английские хвосты.
+- `src/app/api/admin/operations/[kind]/[id]/route.ts` больше не пишет noisy `logger.error` на ожидаемом `ZodError`: validation path `ADMIN_OPERATION_INVALID` теперь режется до unexpected-failure logging.
+- `tests/e2e/api-contracts.spec.ts` расширен тремя admin transport contracts: invalid `GET /api/admin/users/not-a-uuid` -> `400 ADMIN_USER_DETAIL_INVALID`, invalid `POST /api/admin/users/bulk` (`enable_entitlement` без `feature_key`) -> `400 ADMIN_BULK_INVALID`, invalid `PATCH /api/admin/operations/support_action/not-a-uuid` -> `400 ADMIN_OPERATION_INVALID`.
+- Проверка зелёная: `npx eslint src/app/api/admin/users/bulk/route.ts src/app/api/admin/operations/[kind]/[id]/route.ts src/app/api/admin/users/[id]/route.ts src/app/api/admin/users/[id]/role/route.ts tests/e2e/api-contracts.spec.ts`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1` -> `11 passed`.
+- Общий прогресс execution checklist остается `146 / 176` (`83%`): tranche продолжает большой backend audit по validation/owner-only/idempotency, но ещё не закрывает основной checkbox целиком.
+
 ### 2026-03-20 04:20 - Закрыл основной checkbox по route/lib duplication
 
 - После серии extraction tranche по `settings`, `nutrition`, `billing`, `AI` и `admin` mutation routes основной checklist-пункт `Доменные правила больше не дублируются между route handlers и lib` закрыт в `docs/MASTER_PLAN.md`.

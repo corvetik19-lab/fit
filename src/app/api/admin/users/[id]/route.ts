@@ -23,7 +23,7 @@ export async function GET(
   try {
     const userId = parseAdminUserIdParam(rawId, {
       code: "ADMIN_USER_DETAIL_INVALID",
-      message: "User id is invalid.",
+      message: "Идентификатор пользователя заполнен некорректно.",
     });
     const currentAdmin = await requireAdminRouteAccess("view_admin_user_details");
     const adminSupabase = createAdminSupabaseClient();
@@ -37,7 +37,7 @@ export async function GET(
       return createApiErrorResponse({
         status: 404,
         code: "ADMIN_USER_NOT_FOUND",
-        message: "User detail was not found.",
+        message: "Карточка пользователя не найдена.",
       });
     }
 

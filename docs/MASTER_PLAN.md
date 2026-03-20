@@ -919,3 +919,11 @@
 - [x] `tests/e2e/api-contracts.spec.ts` расширен новым admin billing contract: при валидном `targetUserId` и некорректном payload (`enable_entitlement` без `feature_key`) route подтвержден как `400 ADMIN_BILLING_INVALID` до любых mutation side effects.
 - [x] Tranche подтверждён пакетами `npx eslint src/app/api/admin/users/[id]/billing/route.ts src/app/api/admin/users/[id]/billing/reconcile/route.ts tests/e2e/api-contracts.spec.ts`, `npm run build`, `npm run typecheck`, `node scripts/run-playwright.mjs PLAYWRIGHT_BASE_URL=http://127.0.0.1:3110 -- test tests/e2e/api-contracts.spec.ts --workers=1` -> `11 passed`.
 - [ ] Следующий backend tranche: продолжать remaining route-handler audit по admin/billing/webhook/self-service контурам, пока основной checkbox по validation/owner-only/idempotency не будет закрыт целиком.
+
+## 2026-03-20 admin bulk and operations contract sanitation addendum
+
+- [x] `src/app/api/admin/users/bulk/route.ts`, `src/app/api/admin/operations/[kind]/[id]/route.ts`, `src/app/api/admin/users/[id]/route.ts` и `src/app/api/admin/users/[id]/role/route.ts` дочищены до чистого UTF-8: operator-facing validation/not-found/self-guard copy больше не держит mojibake и английские хвосты.
+- [x] `src/app/api/admin/operations/[kind]/[id]/route.ts` больше не пишет noisy `logger.error` на ожидаемом `ZodError`: validation path `ADMIN_OPERATION_INVALID` теперь режется до unexpected-failure logging.
+- [x] `tests/e2e/api-contracts.spec.ts` расширен тремя admin transport contracts: invalid `GET /api/admin/users/not-a-uuid` -> `400 ADMIN_USER_DETAIL_INVALID`, invalid payload `POST /api/admin/users/bulk` (`enable_entitlement` без `feature_key`) -> `400 ADMIN_BULK_INVALID`, invalid `PATCH /api/admin/operations/support_action/not-a-uuid` -> `400 ADMIN_OPERATION_INVALID`.
+- [x] Tranche подтверждён пакетами `npx eslint src/app/api/admin/users/bulk/route.ts src/app/api/admin/operations/[kind]/[id]/route.ts src/app/api/admin/users/[id]/route.ts src/app/api/admin/users/[id]/role/route.ts tests/e2e/api-contracts.spec.ts`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1` -> `11 passed`.
+- [ ] Следующий backend tranche: продолжать remaining route-handler audit по webhook/internal/admin mutation контурам, пока основной checkbox по validation/owner-only/idempotency не будет закрыт целиком.
