@@ -1,0 +1,32 @@
+{
+  "packageName": "app.fitplatform.mobile",
+  "launcherName": "fit",
+  "host": "fit-platform-eta.vercel.app",
+  "startUrl": "/dashboard",
+  "display": "standalone",
+  "themeColor": "#14614b",
+  "backgroundColor": "#f5f4ee",
+  "icon192Path": "public/icon-192.png",
+  "icon512Path": "public/icon-512.png",
+  "maskableIconPath": "public/icon-512.png",
+  "splashIconPath": "public/icon-512.png",
+  "assetLinksPath": "/.well-known/assetlinks.json",
+  "signing": {
+    "packageNameEnv": "ANDROID_TWA_PACKAGE_NAME",
+    "fingerprintsEnv": "ANDROID_TWA_SHA256_FINGERPRINTS",
+    "keystorePath": "android/keys/fit-platform-upload.jks",
+    "keystoreAlias": "fit-upload",
+    "status": "pending-release-keystore"
+  },
+  "playStore": {
+    "defaultLanguage": "ru-RU",
+    "title": "fit",
+    "shortDescription": "Фитнес-платформа с тренировками, питанием и AI-коучем.",
+    "fullDescription": "fit — это web-first PWA для тренировок, питания, аналитики прогресса и AI-коучинга. Android-оболочка собирается как Trusted Web Activity поверх production PWA."
+  },
+  "bubblewrap": {
+    "preferredCli": "@bubblewrap/cli",
+    "manifestUrl": "https://fit-platform-eta.vercel.app/manifest.webmanifest",
+    "fallbackType": "customtabs"
+  }
+}

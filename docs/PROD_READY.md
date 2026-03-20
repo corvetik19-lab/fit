@@ -25,6 +25,7 @@
 - `npm run test:e2e:auth` - если менялись пользовательские сценарии, shell, API contracts, AI/admin UX
 - `npm run verify:staging-runtime` - если менялись AI runtime или billing runtime контуры и нужно прогнать staging-like preflight для live secrets
 - `npm run verify:migrations` - если менялись `supabase/migrations`
+- `npm run verify:android-twa` - если менялись Android/TWA scaffold, asset links или packaging metadata
 
 ### Что считается провалом automated gates
 
@@ -89,6 +90,11 @@
 - `STRIPE_WEBHOOK_SECRET`
 - `STRIPE_PREMIUM_MONTHLY_PRICE_ID`
 
+### Для Android/TWA
+
+- `ANDROID_TWA_PACKAGE_NAME` (можно оставить дефолт `app.fitplatform.mobile`)
+- `ANDROID_TWA_SHA256_FINGERPRINTS`
+
 Отсутствие обязательных env не всегда блокирует локальную разработку, но блокирует статус `prod-ready` для соответствующего контура.
 
 ## 4. Release-specific блокеры
@@ -121,6 +127,7 @@
 
 - production PWA installability не подтверждена;
 - не готовы `assetlinks.json`, package name, signing и splash;
+- Android scaffold в `android/twa-release.json` не синхронизирован с `docs/ANDROID_TWA.md`;
 - не пройден smoke на production URL.
 
 ### Supabase platform нельзя считать release-ready, если
@@ -146,3 +153,4 @@
 - текущий backlog и незакрытые blocker-пункты: `docs/MASTER_PLAN.md`
 - история изменений и последних прогонов: `docs/AI_WORKLOG.md`
 - допустимый warning-хвост сборки: `docs/BUILD_WARNINGS.md`
+- Android/TWA handoff: `docs/ANDROID_TWA.md`

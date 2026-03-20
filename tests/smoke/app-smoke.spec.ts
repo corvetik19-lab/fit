@@ -78,3 +78,24 @@ test("pwa surface exposes install metadata", async ({ page, request }) => {
   expect(serviceWorker).toContain("skipWaiting");
   expect(serviceWorker).toContain("clients.claim");
 });
+
+test("android twa asset links endpoint is reachable", async ({ request }) => {
+  const response = await request.get("/.well-known/assetlinks.json");
+
+  expect(response.ok()).toBeTruthy();
+
+  const statements = await response.json();
+
+  expect(Array.isArray(statements)).toBeTruthy();
+
+  if (statements.length > 0) {
+    expect(statements[0]).toEqual(
+      expect.objectContaining({
+        relation: expect.arrayContaining(["delegate_permission/common.handle_all_urls"]),
+        target: expect.objectContaining({
+          namespace: "android_app",
+        }),
+      }),
+    );
+  }
+});

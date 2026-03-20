@@ -5,6 +5,12 @@ const nextConfig: NextConfig = {
   distDir: process.env.NEXT_DIST_DIR ?? ".next",
   reactStrictMode: true,
   typedRoutes: true,
+  rewrites: async () => [
+    {
+      source: "/.well-known/assetlinks.json",
+      destination: "/android-assetlinks.json",
+    },
+  ],
   headers: async () => [
     {
       source: "/(.*)",

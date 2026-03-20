@@ -11,7 +11,7 @@
 
 Этот файл — текущий production-hardening backlog проекта. Он отражает фактическое состояние репозитория на `2026-03-14`.
 
-Текущий прогресс execution checklist: `161 / 176` (`91%`).
+Текущий прогресс execution checklist: `164 / 176` (`93%`).
 
 ## Текущая база
 
@@ -47,7 +47,7 @@
 
 - [x] Подтверждена installability production PWA.
 - [ ] Готов TWA wrapper.
-- [ ] Подготовлены `assetlinks.json`, package name, signing, splash и Play metadata.
+- [x] Подготовлены `assetlinks.json`, package name, signing, splash и Play metadata.
 - [ ] Пройден Android smoke на production URL.
 
 ## Волна 0. Engineering hygiene и release baseline
@@ -284,8 +284,8 @@
 ## Волна 6. Android / TWA
 
 - [x] Подтвердить installability production PWA.
-- [ ] Подготовить `assetlinks.json`.
-- [ ] Подготовить package name, signing, splash и Play metadata.
+- [x] Подготовить `assetlinks.json`.
+- [x] Подготовить package name, signing, splash и Play metadata.
 - [ ] Собрать и проверить TWA wrapper.
 - [ ] Пройти Android smoke на production URL.
 
@@ -478,6 +478,15 @@
 
 - [x] На текущем Windows/Next.js 16 стеке custom `NEXT_DIST_DIR` для `next build` даёт `spawn EPERM`, поэтому `build:test` и `start:test` возвращены на стандартный `.next`.
 - [x] Изоляция не потеряна полностью: `typecheck` по-прежнему использует отдельный `.next_build`, а e2e/smoke сервер остаётся на выделенном порту `3100`.
+
+## 2026-03-21 Android / TWA preparation addendum
+
+- [x] Добавлен Android/TWA release blueprint `android/twa-release.json`: package name `app.fitplatform.mobile`, production host, splash assets, signing placeholders и Play metadata теперь зафиксированы как source of truth.
+- [x] Добавлен `npm run verify:android-twa`: скрипт валидирует release blueprint, иконки, manifest-зависимости и синхронизирует `public/android-assetlinks.json`.
+- [x] `/.well-known/assetlinks.json` теперь обслуживается production-safe rewrite через `next.config.ts`, поэтому Digital Asset Links endpoint доступен и локально, и на Vercel без нестабильного app-route под dot-segment.
+- [x] `tests/smoke/app-smoke.spec.ts` расширен Android/TWA smoke-check на `/.well-known/assetlinks.json`.
+- [x] Санированы и повторно синхронизированы ключевые release/handoff docs: `README.md`, `docs/README.md`, `docs/PROD_READY.md`, `docs/RELEASE_CHECKLIST.md`, `docs/BUILD_WARNINGS.md`, `docs/BACKEND.md`, `docs/FRONTEND.md`, `docs/AI_STACK.md`, `docs/DB_AUDIT.md`, `docs/USER_GUIDE.md`.
+- [x] Tranche подтверждён командами `npm run verify:android-twa`, `npm run lint`, `npm run build`, `npm run typecheck`, `npm run test:smoke`, `npm run test:e2e:auth` -> `50 passed`.
 
 ## 2026-03-19 DB audit addendum
 

@@ -958,6 +958,16 @@
 - Проверка зелёная: `npx eslint src/lib/admin-role-management.ts src/app/api/admin/users/[id]/role/route.ts`, `npm run typecheck`, `npm run build`.
 - Общий прогресс execution checklist остаётся `144 / 176` (`82%`): tranche продолжает admin/backend extraction, но не закрывает следующий основной checkbox целиком.
 
+### 2026-03-21 11:45 - Подготовил Android / TWA scaffold и досанировал release docs
+
+- Добавлен Android/TWA release blueprint `android/twa-release.json`: package name `app.fitplatform.mobile`, production host, splash assets, signing placeholders и Play metadata теперь зафиксированы как source of truth для Android-оболочки.
+- Добавлен `npm run verify:android-twa` и скрипт `scripts/verify-android-twa.mjs`: он валидирует Android scaffold, синхронизирует `public/android-assetlinks.json` и заранее сигнализирует об отсутствии `ANDROID_TWA_SHA256_FINGERPRINTS`.
+- `next.config.ts` получил rewrite `/.well-known/assetlinks.json -> /android-assetlinks.json`, поэтому Digital Asset Links endpoint теперь обслуживается production-safe static asset path вместо нестабильного dot-segment app route.
+- Добавлены `docs/ANDROID_TWA.md` и smoke-проверка `tests/smoke/app-smoke.spec.ts` для `/.well-known/assetlinks.json`.
+- Досанированы ключевые handoff/release docs и корневой `README.md`: `docs/README.md`, `docs/PROD_READY.md`, `docs/RELEASE_CHECKLIST.md`, `docs/BUILD_WARNINGS.md`, `docs/BACKEND.md`, `docs/FRONTEND.md`, `docs/AI_STACK.md`, `docs/DB_AUDIT.md`, `docs/USER_GUIDE.md`.
+- Проверка зелёная: `npm run verify:android-twa`, `npm run lint`, `npm run build`, `npm run typecheck`, `npm run test:smoke` -> `5 passed`, `npm run test:e2e:auth` -> `50 passed`.
+- Общий прогресс execution checklist вырос до `164 / 176` (`93%`).
+
 ### 2026-03-21 08:55 - Закрыл Milestone 1 и подтвердил installability production PWA
 
 - `src/app/layout.tsx` больше не держит мёртвый production URL: metadata base теперь собирается через `src/lib/site-url.ts` из `NEXT_PUBLIC_APP_URL`, `VERCEL_PROJECT_PRODUCTION_URL` и `VERCEL_URL`, а `.env.example` получил `NEXT_PUBLIC_APP_URL`.

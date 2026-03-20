@@ -42,6 +42,7 @@ npm run build
 - `npm run test:smoke`
 - `npm run verify:migrations` при изменениях в `supabase/migrations`
 - `npm run verify:advisors` при изменениях в `supabase/migrations`, если доступны Supabase management secrets
+- `npm run verify:android-twa` при изменениях Android/TWA scaffolding или PWA packaging
 
 Цель проекта — чтобы все три команды проходили стабильно за один запуск и были готовы для CI.
 
@@ -67,6 +68,8 @@ Source of truth по production-ready состоянию теперь вынес
 - обязательные manual acceptance сценарии;
 - env readiness;
 - release blockers для web/PWA, AI, billing и Android.
+
+Подробный Android/TWA handoff зафиксирован в [docs/ANDROID_TWA.md](/C:/fit/docs/ANDROID_TWA.md).
 
 Если этих secrets нет, workflow всё равно прогоняет `lint`, `typecheck`, `build` и `test:smoke`, а полные auth/RLS regression jobs просто пропускаются.
 

@@ -48,19 +48,6 @@ function getAuditAction(kind: "support_action" | "export_job" | "deletion_reques
   }
 }
 
-function getOperationLabel(kind: "support_action" | "export_job" | "deletion_request") {
-  switch (kind) {
-    case "support_action":
-      return "операция поддержки";
-    case "export_job":
-      return "задача выгрузки данных";
-    case "deletion_request":
-      return "запрос на удаление данных";
-    default:
-      return "операция";
-  }
-}
-
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string; kind: string }> },

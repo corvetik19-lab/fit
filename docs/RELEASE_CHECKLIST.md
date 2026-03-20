@@ -21,6 +21,7 @@
 - [ ] Подтверждены `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN`
 - [ ] Подтверждены `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PREMIUM_MONTHLY_PRICE_ID`, если затронут billing
 - [ ] Если менялись AI runtime или billing runtime контуры, прогнан `npm run verify:staging-runtime`
+- [ ] Если менялись Android/TWA scaffold, asset links или packaging metadata, прогнан `npm run verify:android-twa`
 - [ ] После DDL-изменений применены миграции и проверены advisors `security` и `performance`
 - [ ] Для Supabase-проекта отдельно проверены platform-level пункты:
   - leaked password protection включён
@@ -50,3 +51,11 @@
 - [ ] AI runtime даёт корректный user-facing ответ при ошибке провайдера
 - [ ] Retrieval и history работают только в owner-scoped контуре
 - [ ] Минимальный eval gate закрыт для `assistant`, `retrieval`, `workout plan`, `meal plan`, `safety`
+
+## Дополнительно перед Android/TWA релизом
+
+- [ ] `npm run verify:android-twa` зелёный
+- [ ] `/.well-known/assetlinks.json` отдаёт production package name и release fingerprints
+- [ ] `android/twa-release.json` синхронизирован с production host, manifest и splash assets
+- [ ] Bubblewrap/TWA wrapper собран поверх production manifest
+- [ ] Android smoke на production URL пройден на устройстве или эмуляторе
