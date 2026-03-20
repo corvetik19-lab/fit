@@ -22,6 +22,12 @@
 - Заодно отвязал degraded admin detail e2e от `/api/admin/users`: `tests/e2e/admin-app.spec.ts` теперь получает test user id через `findAuthUserIdByEmail(...)`, поэтому suite не зависит от случайного auth timeout в каталоге.
 - Tranche подтверждён через `eslint`, `typecheck`, `build` и targeted `tests/e2e/admin-app.spec.ts`.
 
+### Admin users directory state extraction
+
+- Вынес async/data orchestration каталога пользователей из `src/components/admin-users-directory.tsx` в `src/components/use-admin-users-directory-state.ts`.
+- Теперь сам экран каталога держит только layout, filters UI, cards и wiring к state-hook, а fetch каталога, deferred search, bulk submit, reload/reset и selection state живут отдельно.
+- Tranche подтверждён через `eslint`, `build`, `typecheck` и targeted `tests/e2e/admin-app.spec.ts`.
+
 ## 2026-03-17
 
 ### Release docs sanitation and AI reindex copy

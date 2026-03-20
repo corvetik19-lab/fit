@@ -876,3 +876,10 @@
 - [x] `tests/e2e/admin-app.spec.ts` стабилизирован против внешнего auth timeout: degraded admin detail scenario больше не зависит от `/api/admin/users`, а получает test user id через `findAuthUserIdByEmail(...)`.
 - [x] Tranche подтверждён пакетами `npx eslint src/lib/admin-users-data.ts src/app/api/admin/users/route.ts tests/e2e/admin-app.spec.ts`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/admin-app.spec.ts --workers=1` -> `5 passed`.
 - [ ] Следующий backend tranche: продолжать remaining route-handler audit по owner-only/idempotency/race conditions и переоценить, можно ли закрывать общий пункт по тяжёлым admin/self-service read-surfaces.
+
+## 2026-03-20 admin users directory state extraction addendum
+
+- [x] Async/data orchestration каталога пользователей вынесен из `src/components/admin-users-directory.tsx` в `src/components/use-admin-users-directory-state.ts`: fetch каталога, deferred search, bulk submit, reload/reset и selection state больше не смешиваются с JSX.
+- [x] `src/components/admin-users-directory.tsx` теперь ближе к чистому UI-orchestrator: в компоненте остались layout, cards, filters UI и wiring к уже вынесенному state-hook.
+- [x] Tranche подтверждён пакетами `npx eslint src/components/admin-users-directory.tsx src/components/use-admin-users-directory-state.ts`, `npm run build`, `npm run typecheck`, `npx playwright test tests/e2e/admin-app.spec.ts --workers=1` -> `5 passed`.
+- [ ] Следующий frontend/backend tranche: продолжать убирать async/data orchestration из remaining heavy self-service screens и затем переоценить основной checkbox по тяжёлым экранам.
