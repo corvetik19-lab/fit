@@ -914,6 +914,13 @@
 - Проверка зелёная: `npx eslint src/lib/admin-billing.ts src/app/api/admin/users/[id]/billing/route.ts src/app/api/admin/users/[id]/billing/reconcile/route.ts src/app/api/admin/users/bulk/route.ts`, `npm run typecheck`, `npm run build`.
 - Общий прогресс execution checklist остаётся `144 / 176` (`82%`): tranche продолжает route/lib extraction в admin/billing surface, но не закрывает следующий основной checkbox целиком.
 
+### 2026-03-20 04:05 - Вынес shared helper из admin role route
+
+- Добавил `src/lib/admin-role-management.ts`: target lookup через auth admin API, чтение `platform_admins`, primary super-admin guards и audit insert для role-management теперь живут вне route handler.
+- `src/app/api/admin/users/[id]/role/route.ts` переведён на этот helper без изменения access-control contracts: `PATCH` и `DELETE` стали тоньше и больше не дублируют один и тот же target/audit plumbing.
+- Проверка зелёная: `npx eslint src/lib/admin-role-management.ts src/app/api/admin/users/[id]/role/route.ts`, `npm run typecheck`, `npm run build`.
+- Общий прогресс execution checklist остаётся `144 / 176` (`82%`): tranche продолжает admin/backend extraction, но не закрывает следующий основной checkbox целиком.
+
 ### 2026-03-20 03:50 - Расширил admin mutation contract coverage
 
 - `tests/e2e/api-contracts.spec.ts` получил отдельный admin-only контракт для invalid target ids на `admin/users/[id]/export`, `deletion`, `support-action`, `suspend`, `restore`, `billing`, `billing/reconcile` и `role`.

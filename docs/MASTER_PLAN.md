@@ -840,6 +840,13 @@
 - [x] Tranche подтверждён пакетами `npx eslint src/lib/admin-billing.ts src/app/api/admin/users/[id]/billing/route.ts src/app/api/admin/users/[id]/billing/reconcile/route.ts src/app/api/admin/users/bulk/route.ts`, `npm run typecheck`, `npm run build`.
 - [ ] Следующий backend tranche: проверить, достаточно ли уже закрыт основной пункт про route/lib duplication, и если нет — добирать оставшиеся admin/self-service/AI handlers.
 
+## 2026-03-20 admin role helper extraction addendum
+
+- [x] Общий target lookup и audit слой для `src/app/api/admin/users/[id]/role/route.ts` вынесен в `src/lib/admin-role-management.ts`: загрузка target user через auth admin API, чтение `platform_admins`, primary super-admin guards и audit insert больше не дублируются между `PATCH` и `DELETE`.
+- [x] Admin role route теперь ближе к transport-слою: auth, param parse и response shape остались в handler, а shared role-management rules и audit plumbing живут в helper-слое.
+- [x] Tranche подтверждён пакетами `npx eslint src/lib/admin-role-management.ts src/app/api/admin/users/[id]/role/route.ts`, `npm run typecheck`, `npm run build`.
+- [ ] Следующий backend tranche: переоценить основной пункт про route/lib duplication и route-handler audit после этой серии admin extraction slices.
+
 ## 2026-03-20 admin mutation contract coverage addendum
 
 - [x] `tests/e2e/api-contracts.spec.ts` расширен admin-only contract test на invalid target ids для `admin/users/[id]/export`, `deletion`, `support-action`, `suspend`, `restore`, `billing`, `billing/reconcile` и `role`.
