@@ -6,6 +6,8 @@ import { queueAdminExportJob } from "@/lib/admin-user-requests";
 import {
   applyAdminEntitlementAction,
   applyAdminSubscriptionAction,
+  recordAdminBillingAudit,
+  recordAdminSubscriptionEvent,
 } from "@/lib/admin-billing";
 import { isAdminAccessError, requireAdminRouteAccess } from "@/lib/admin-auth";
 import {
@@ -106,40 +108,28 @@ export async function POST(request: Request) {
             userId,
           });
 
-          const { error: auditError } = await adminSupabase
-            .from("admin_audit_logs")
-            .insert({
-              actor_user_id: user.id,
-              target_user_id: userId,
-              action: "bulk_grant_trial",
-              reason: payload.reason ?? "bulk trial grant",
-              payload: {
-                batchId,
-                subscriptionId: subscription.id,
-                currentPeriodEnd: subscription.current_period_end,
-              },
-            });
+          await recordAdminBillingAudit(adminSupabase, {
+            action: "bulk_grant_trial",
+            actorUserId: user.id,
+            payload: {
+              batchId,
+              subscriptionId: subscription.id,
+              currentPeriodEnd: subscription.current_period_end,
+            },
+            reason: payload.reason ?? "bulk trial grant",
+            targetUserId: userId,
+          });
 
-          if (auditError) {
-            throw auditError;
-          }
-
-          const { error: subscriptionEventError } = await adminSupabase
-            .from("subscription_events")
-            .insert({
-              user_id: userId,
-              subscription_id: subscription.id,
-              event_type: "admin_bulk_grant_trial",
-              payload: {
-                actorUserId: user.id,
-                batchId,
-                currentPeriodEnd: subscription.current_period_end,
-              },
-            });
-
-          if (subscriptionEventError) {
-            throw subscriptionEventError;
-          }
+          await recordAdminSubscriptionEvent(adminSupabase, {
+            eventType: "admin_bulk_grant_trial",
+            payload: {
+              actorUserId: user.id,
+              batchId,
+              currentPeriodEnd: subscription.current_period_end,
+            },
+            subscriptionId: subscription.id,
+            userId,
+          });
         } else {
           const entitlement = await applyAdminEntitlementAction(adminSupabase, {
             action: "enable_entitlement",
@@ -148,24 +138,18 @@ export async function POST(request: Request) {
             userId,
           });
 
-          const { error: auditError } = await adminSupabase
-            .from("admin_audit_logs")
-            .insert({
-              actor_user_id: user.id,
-              target_user_id: userId,
-              action: "bulk_enable_entitlement",
-              reason: payload.reason ?? "bulk entitlement enable",
-              payload: {
-                batchId,
-                entitlementId: entitlement.id,
-                featureKey: entitlement.feature_key,
-                limitValue: entitlement.limit_value,
-              },
-            });
-
-          if (auditError) {
-            throw auditError;
-          }
+          await recordAdminBillingAudit(adminSupabase, {
+            action: "bulk_enable_entitlement",
+            actorUserId: user.id,
+            payload: {
+              batchId,
+              entitlementId: entitlement.id,
+              featureKey: entitlement.feature_key,
+              limitValue: entitlement.limit_value,
+            },
+            reason: payload.reason ?? "bulk entitlement enable",
+            targetUserId: userId,
+          });
         }
 
         results.push({

@@ -1,4 +1,5 @@
 import { createApiErrorResponse } from "@/lib/api/error-response";
+import { recordAdminBillingAudit } from "@/lib/admin-billing";
 import { isAdminAccessError, requireAdminRouteAccess } from "@/lib/admin-auth";
 import {
   isAdminRouteParamError,
@@ -36,30 +37,24 @@ export async function POST(
       });
     }
 
-    const { error: auditError } = await adminSupabase
-      .from("admin_audit_logs")
-      .insert({
-        actor_user_id: currentAdmin.user.id,
-        target_user_id: id,
-        action: "admin_reconcile_stripe_subscription",
-        reason: "manual stripe reconcile",
-        payload: {
-          provider: reconciliation.subscription.provider,
-          providerCustomerId:
-            reconciliation.subscription.provider_customer_id ?? null,
-          providerSubscriptionId:
-            reconciliation.subscription.provider_subscription_id ?? null,
-          previousStatus: reconciliation.previousSubscription?.status ?? null,
-          source: reconciliation.source,
-          status: reconciliation.subscription.status,
-          stripeSubscriptionId: reconciliation.stripeSubscriptionId,
-          subscriptionId: reconciliation.subscription.id,
-        },
-      });
-
-    if (auditError) {
-      throw auditError;
-    }
+    await recordAdminBillingAudit(adminSupabase, {
+      action: "admin_reconcile_stripe_subscription",
+      actorUserId: currentAdmin.user.id,
+      payload: {
+        provider: reconciliation.subscription.provider,
+        providerCustomerId:
+          reconciliation.subscription.provider_customer_id ?? null,
+        providerSubscriptionId:
+          reconciliation.subscription.provider_subscription_id ?? null,
+        previousStatus: reconciliation.previousSubscription?.status ?? null,
+        source: reconciliation.source,
+        status: reconciliation.subscription.status,
+        stripeSubscriptionId: reconciliation.stripeSubscriptionId,
+        subscriptionId: reconciliation.subscription.id,
+      },
+      reason: "manual stripe reconcile",
+      targetUserId: id,
+    });
 
     return Response.json({
       data: {

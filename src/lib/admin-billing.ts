@@ -10,6 +10,8 @@ export type AdminEntitlementAction =
   | "enable_entitlement"
   | "disable_entitlement";
 
+type AdminBillingSupabase = ReturnType<typeof createAdminSupabaseClient>;
+
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
 function getPeriodEnd(days: number) {
@@ -100,7 +102,7 @@ export async function applyAdminSubscriptionAction(
 }
 
 export async function applyAdminEntitlementAction(
-  adminSupabase: ReturnType<typeof createAdminSupabaseClient>,
+  adminSupabase: AdminBillingSupabase,
   {
     action,
     featureKey,
@@ -135,4 +137,48 @@ export async function applyAdminEntitlementAction(
   }
 
   return data;
+}
+
+export async function recordAdminSubscriptionEvent(
+  adminSupabase: AdminBillingSupabase,
+  input: {
+    eventType: string;
+    payload: Record<string, unknown>;
+    subscriptionId?: string | null;
+    userId: string;
+  },
+) {
+  const { error } = await adminSupabase.from("subscription_events").insert({
+    user_id: input.userId,
+    subscription_id: input.subscriptionId ?? null,
+    event_type: input.eventType,
+    payload: input.payload,
+  });
+
+  if (error) {
+    throw error;
+  }
+}
+
+export async function recordAdminBillingAudit(
+  adminSupabase: AdminBillingSupabase,
+  input: {
+    action: string;
+    actorUserId: string;
+    payload: Record<string, unknown>;
+    reason: string;
+    targetUserId: string;
+  },
+) {
+  const { error } = await adminSupabase.from("admin_audit_logs").insert({
+    actor_user_id: input.actorUserId,
+    target_user_id: input.targetUserId,
+    action: input.action,
+    reason: input.reason,
+    payload: input.payload,
+  });
+
+  if (error) {
+    throw error;
+  }
 }

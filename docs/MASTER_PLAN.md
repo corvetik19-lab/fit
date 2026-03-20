@@ -832,3 +832,10 @@
 - [x] Bulk route сохранил текущие guard/contracts (`assertUserIsNotPrimarySuperAdmin`, batchId в audit payload, owner/admin access), но стал заметно ближе к orchestration-роли.
 - [x] Tranche подтверждён пакетами `npx eslint src/lib/admin-support-actions.ts src/app/api/admin/users/bulk/route.ts`, `npm run typecheck`, `npm run build`.
 - [ ] Следующий backend tranche: проверить, достаточно ли уже закрыт основной пункт про route/lib duplication, и если нет — добирать оставшиеся admin/self-service/AI handlers.
+
+## 2026-03-20 admin billing audit extraction addendum
+
+- [x] Общий audit/event слой для admin billing mutations вынесен в `src/lib/admin-billing.ts`: `recordAdminSubscriptionEvent(...)` и `recordAdminBillingAudit(...)` теперь держат insert в `subscription_events` и `admin_audit_logs` вне route handlers.
+- [x] `src/app/api/admin/users/[id]/billing/route.ts`, `src/app/api/admin/users/[id]/billing/reconcile/route.ts` и `src/app/api/admin/users/bulk/route.ts` переведены на эти helper'ы: billing single-user и bulk flows больше не дублируют один и тот же audit/event plumbing.
+- [x] Tranche подтверждён пакетами `npx eslint src/lib/admin-billing.ts src/app/api/admin/users/[id]/billing/route.ts src/app/api/admin/users/[id]/billing/reconcile/route.ts src/app/api/admin/users/bulk/route.ts`, `npm run typecheck`, `npm run build`.
+- [ ] Следующий backend tranche: проверить, достаточно ли уже закрыт основной пункт про route/lib duplication, и если нет — добирать оставшиеся admin/self-service/AI handlers.

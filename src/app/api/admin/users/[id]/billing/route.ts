@@ -3,6 +3,8 @@ import { z } from "zod";
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import {
   applyAdminEntitlementAction,
+  recordAdminBillingAudit,
+  recordAdminSubscriptionEvent,
   applyAdminSubscriptionAction,
 } from "@/lib/admin-billing";
 import { isAdminAccessError, requireAdminRouteAccess } from "@/lib/admin-auth";
@@ -73,23 +75,17 @@ export async function POST(
         userId: id,
       });
 
-      const { error: subscriptionEventError } = await adminSupabase
-        .from("subscription_events")
-        .insert({
-          user_id: id,
-          subscription_id: null,
-          event_type: `admin_${payload.action}`,
-          payload: {
-            actorUserId: user.id,
-            featureKey: entitlement.feature_key,
-            isEnabled: entitlement.is_enabled,
-            limitValue: entitlement.limit_value,
-          },
-        });
-
-      if (subscriptionEventError) {
-        throw subscriptionEventError;
-      }
+      await recordAdminSubscriptionEvent(adminSupabase, {
+        eventType: `admin_${payload.action}`,
+        payload: {
+          actorUserId: user.id,
+          featureKey: entitlement.feature_key,
+          isEnabled: entitlement.is_enabled,
+          limitValue: entitlement.limit_value,
+        },
+        subscriptionId: null,
+        userId: id,
+      });
 
       responseData = {
         entitlement,
@@ -108,23 +104,17 @@ export async function POST(
         userId: id,
       });
 
-      const { error: subscriptionEventError } = await adminSupabase
-        .from("subscription_events")
-        .insert({
-          user_id: id,
-          subscription_id: subscription.id,
-          event_type: `admin_${payload.action}`,
-          payload: {
-            actorUserId: user.id,
-            currentPeriodEnd: subscription.current_period_end,
-            provider: subscription.provider,
-            status: subscription.status,
-          },
-        });
-
-      if (subscriptionEventError) {
-        throw subscriptionEventError;
-      }
+      await recordAdminSubscriptionEvent(adminSupabase, {
+        eventType: `admin_${payload.action}`,
+        payload: {
+          actorUserId: user.id,
+          currentPeriodEnd: subscription.current_period_end,
+          provider: subscription.provider,
+          status: subscription.status,
+        },
+        subscriptionId: subscription.id,
+        userId: id,
+      });
 
       responseData = {
         subscription,
@@ -137,19 +127,13 @@ export async function POST(
       };
     }
 
-    const { error: auditError } = await adminSupabase
-      .from("admin_audit_logs")
-      .insert({
-        actor_user_id: user.id,
-        target_user_id: id,
-        action: `admin_${payload.action}`,
-        reason: payload.reason ?? `manual ${payload.action}`,
-        payload: auditPayload,
-      });
-
-    if (auditError) {
-      throw auditError;
-    }
+    await recordAdminBillingAudit(adminSupabase, {
+      action: `admin_${payload.action}`,
+      actorUserId: user.id,
+      payload: auditPayload,
+      reason: payload.reason ?? `manual ${payload.action}`,
+      targetUserId: id,
+    });
 
     return Response.json({
       data: {

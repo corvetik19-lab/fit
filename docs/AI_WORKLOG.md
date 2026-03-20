@@ -906,3 +906,10 @@
 - Shared helper теперь корректно мерджит `supportActionId` и дополнительный audit payload вроде `batchId`, поэтому bulk и single-user admin flows используют один и тот же queue/audit слой без потери метаданных.
 - Проверка зелёная: `npx eslint src/lib/admin-support-actions.ts src/app/api/admin/users/bulk/route.ts`, `npm run typecheck`, `npm run build`.
 - Общий прогресс execution checklist остаётся `144 / 176` (`82%`): tranche продолжает route/lib extraction в admin surface, но не закрывает следующий основной checkbox целиком.
+
+### 2026-03-20 03:35 - Вынес shared billing audit/event helper из admin routes
+
+- `src/lib/admin-billing.ts` расширен helper'ами `recordAdminSubscriptionEvent(...)` и `recordAdminBillingAudit(...)`, чтобы insert в `subscription_events` и `admin_audit_logs` для admin billing flows больше не жили внутри route handlers.
+- `src/app/api/admin/users/[id]/billing/route.ts`, `src/app/api/admin/users/[id]/billing/reconcile/route.ts` и `src/app/api/admin/users/bulk/route.ts` переведены на этот shared billing audit/event слой без изменения owner/admin contracts.
+- Проверка зелёная: `npx eslint src/lib/admin-billing.ts src/app/api/admin/users/[id]/billing/route.ts src/app/api/admin/users/[id]/billing/reconcile/route.ts src/app/api/admin/users/bulk/route.ts`, `npm run typecheck`, `npm run build`.
+- Общий прогресс execution checklist остаётся `144 / 176` (`82%`): tranche продолжает route/lib extraction в admin/billing surface, но не закрывает следующий основной checkbox целиком.
