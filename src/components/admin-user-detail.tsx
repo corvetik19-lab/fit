@@ -92,7 +92,7 @@ export function AdminUserDetail({
     ["Упражнения", String(detail.stats.workout.activeExercises)],
     ["Программы", String(detail.stats.workout.programs)],
     ["Приёмы пищи", String(detail.stats.nutrition.meals)],
-    ["Чаты ИИ", String(detail.stats.ai.chatSessions)],
+    ["Чаты AI", String(detail.stats.ai.chatSessions)],
     ["Подходы", String(detail.stats.workout.loggedSets)],
     canViewRoleDetails
       ? [

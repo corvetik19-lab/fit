@@ -6,6 +6,15 @@
 - Во время production hardening журнал был сжат и переписан в чистый UTF-8.
 - Ниже остаются только ключевые tranche, которые помогают понять текущее состояние продукта и инженерного контура.
 
+## 2026-03-20
+
+### Admin user detail data extraction
+
+- Вынес основной read-model и degraded fallback для `src/app/api/admin/users/[id]/route.ts` в `src/lib/admin-user-detail-data.ts`.
+- Теперь сам route держит только access-check, UUID parse, auth lookup, вызов shared loader и общий error mapping вместо большого fan-out запроса и post-processing внутри handler.
+- Заодно дочистил верхний client-state и summary shell admin detail в `src/components/admin-user-detail-state.ts` и `src/components/admin-user-detail.tsx`, чтобы loading/error/section surface больше не показывал битый copy.
+- Tranche подтверждён через `eslint`, `typecheck`, `build` и targeted `tests/e2e/admin-app.spec.ts`.
+
 ## 2026-03-17
 
 ### Release docs sanitation and AI reindex copy

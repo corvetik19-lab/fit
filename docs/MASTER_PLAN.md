@@ -860,3 +860,11 @@
 - [x] Admin role route теперь заметно ближе к transport-слою: auth, param parse и response shape остались в handler, а shared role-management rules и audit plumbing живут в helper-слое.
 - [x] Tranche подтверждён пакетами `npx eslint src/lib/admin-role-management.ts src/app/api/admin/users/[id]/role/route.ts`, `npm run typecheck`, `npm run build`.
 - [ ] Следующий backend tranche: переоценить основной пункт про route/lib duplication и route-handler audit после этой серии admin extraction slices.
+
+## 2026-03-20 admin user detail data extraction addendum
+
+- [x] Основной read-model и degraded fallback для `src/app/api/admin/users/[id]/route.ts` вынесены в `src/lib/admin-user-detail-data.ts`: heavy fan-out загрузка, actor reference hydration и формирование fallback snapshot больше не живут внутри route handler.
+- [x] `src/app/api/admin/users/[id]/route.ts` стал тонким transport-слоем: в handler остались только admin access, UUID parse, auth lookup, вызов shared loader и общий error mapping.
+- [x] Верхний client-state этого экрана синхронизирован с tranche в чистом UTF-8: `src/components/admin-user-detail-state.ts` и верхний shell `src/components/admin-user-detail.tsx` больше не держат битый copy в loading/error/section surface.
+- [x] Tranche подтверждён пакетами `npx eslint src/lib/admin-user-detail-data.ts src/app/api/admin/users/[id]/route.ts src/components/admin-user-detail-state.ts src/components/admin-user-detail.tsx`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/admin-app.spec.ts --workers=1` -> `5 passed`.
+- [ ] Следующий backend tranche: продолжать remaining route-handler audit по owner-only/idempotency/race conditions и добирать ещё один heavy admin/self-service read-surface, если основной пункт всё ещё не закрывается целиком.

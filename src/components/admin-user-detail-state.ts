@@ -26,7 +26,7 @@ export const adminUserDetailSections: Array<{
   {
     key: "activity",
     label: "Активность",
-    description: "Тренировки, питание, ИИ и общий жизненный цикл.",
+    description: "Тренировки, питание, AI и общий жизненный цикл.",
   },
   {
     key: "operations",
