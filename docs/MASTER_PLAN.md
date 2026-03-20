@@ -11,7 +11,7 @@
 
 Этот файл — текущий production-hardening backlog проекта. Он отражает фактическое состояние репозитория на `2026-03-14`.
 
-Текущий прогресс execution checklist: `158 / 176` (`90%`).
+Текущий прогресс execution checklist: `160 / 176` (`91%`).
 
 ## Текущая база
 
@@ -23,7 +23,7 @@
 - [x] `npm run typecheck` стабилен через `next typegen + tsc`.
 - [x] `npm run build` проходит.
 - [x] Есть минимальный smoke-контур и release checklist.
-- [ ] Документация и часть UI/docs-поверхности всё ещё содержат mojibake и требуют санации.
+- [x] Документация и ключевые UI/docs-поверхности санированы от mojibake; локальный `docs/AI_EXPLAINED.md` отдельно triaged и не блокирует shipped surface.
 - [x] Есть минимальный regression-контур сверх smoke: auth/admin e2e, API contracts, RLS, workout sync и UI regression suites.
 - [x] Первый production milestone закрыт.
 
@@ -75,7 +75,7 @@
 - [x] Добавить release checklist для production web/PWA.
 - [x] Санировать release-policy документы `docs/RELEASE_CHECKLIST.md`, `docs/PROD_READY.md`, `docs/BUILD_WARNINGS.md`.
 - [x] Санировать `docs/README.md`, `docs/AI_WORKLOG.md`, `docs/BACKEND.md`, `docs/AI_STACK.md`, `docs/USER_GUIDE.md` от mojibake.
-- [ ] Отдельно провести triage локального `docs/AI_EXPLAINED.md` и завершить sanitation-wave документации.
+- [x] Отдельно провести triage локального `docs/AI_EXPLAINED.md` и завершить sanitation-wave документации.
 
 ## Волна 1. Архитектурная декомпозиция рискованных модулей
 
@@ -1036,3 +1036,9 @@
 - [x] Локальная verification-связка подтверждена пакетами `npm run lint`, `npm run build`, `npm run typecheck`, `npm run test:smoke`, `npm run test:e2e:auth` -> `50 passed`.
 - [x] Production alias `https://fit-platform-eta.vercel.app` отдельно подтверждён fetch-проверкой: root HTML отдаёт manifest/apple metadata, `/manifest.webmanifest` возвращает `display=standalone`, `lang=ru`, `theme_color=#14614b`, `background_color=#f5f4ee`, `maskable=true`, а `/sw.js`, `/icon-192.png`, `/icon-512.png`, `/apple-touch-icon.png` доступны с `200`.
 - [x] После этого закрыты основные checklist-пункты `Нет mojibake в ключевой документации и основных экранах приложения`, `Документация, shell, AI workspace и workout flow доведены до production-качества`, `Подтвердить installability production PWA` и milestone-пункт `Подтверждена installability production PWA`.
+
+## 2026-03-21 sanitation-wave triage closure addendum
+
+- [x] Повторный поиск по `src/` и `docs/` (включая локальный `docs/AI_EXPLAINED.md`) не нашёл характерных mojibake-маркеров вроде `Рџ`, `РЎ`, `СЃ`, `С‚`, `РµР`.
+- [x] Локальный dirty файл `docs/AI_EXPLAINED.md` отдельно triaged без правки содержимого: он не попадает в коммиты slice-работ и не блокирует shipped documentation surface.
+- [x] После этого закрыт волновой пункт `Отдельно провести triage локального docs/AI_EXPLAINED.md и завершить sanitation-wave документации`, а верхнеуровневый статус документации переведён в санированное состояние.

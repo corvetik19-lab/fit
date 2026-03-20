@@ -967,6 +967,13 @@
 - Этим закрыты Milestone 1, acceptance-чекбокс про mojibake в ключевых UI/docs и release-пункт про installability production PWA.
 - Общий прогресс execution checklist вырос до `158 / 176` (`90%`).
 
+### 2026-03-21 09:05 - Закрыл sanitation-wave документации
+
+- Повторный поиск по `src/` и `docs/` (включая локальный `docs/AI_EXPLAINED.md`) не нашёл характерных mojibake-маркеров, поэтому отдельный triage по локальному explain-документу завершён без правки его содержимого.
+- Локальный dirty `docs/AI_EXPLAINED.md` оставлен вне коммитов, но больше не считается blocker для shipped documentation surface.
+- Этим закрыт оставшийся волновой sanitation-пункт и верхнеуровневый статус документации переведён в санированное состояние.
+- Общий прогресс execution checklist вырос до `160 / 176` (`91%`).
+
 ### 2026-03-20 18:55 - Вынес self-service orchestration из settings data center
 
 - Добавил `src/components/use-settings-data-center-state.ts`: refresh snapshot, queue export, request/cancel deletion, success/error state и derived flags для settings data center теперь живут вне JSX.
