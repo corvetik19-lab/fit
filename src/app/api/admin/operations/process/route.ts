@@ -29,8 +29,6 @@ export async function POST(request: Request) {
       data: summary,
     });
   } catch (error) {
-    logger.error("admin operations process route failed", { error });
-
     if (isAdminAccessError(error)) {
       return createApiErrorResponse({
         status: error.status,
@@ -47,6 +45,8 @@ export async function POST(request: Request) {
         message: "Параметры обработчика операций заполнены некорректно.",
       });
     }
+
+    logger.error("admin operations process route failed", { error });
 
     return createApiErrorResponse({
       status: 500,

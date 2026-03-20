@@ -779,6 +779,38 @@ test.describe("api contracts with admin access", () => {
     ).toBe("ADMIN_SUSPEND_INVALID");
   });
 
+  test("admin operator tooling routes reject invalid payloads before side effects", async ({
+    page,
+  }) => {
+    const [invalidAiEvalRunPayload, invalidOperationsProcessPayload] =
+      await Promise.all([
+        fetchJson(page, {
+          method: "POST",
+          url: "/api/admin/ai-evals/run",
+          body: {
+            suite: "unknown_suite",
+          },
+        }),
+        fetchJson(page, {
+          method: "POST",
+          url: "/api/admin/operations/process",
+          body: {
+            deletionLimit: 0,
+          },
+        }),
+      ]);
+
+    expect(invalidAiEvalRunPayload.status).toBe(400);
+    expect(
+      (invalidAiEvalRunPayload.body as { code?: string } | null)?.code,
+    ).toBe("AI_EVAL_RUN_INVALID");
+
+    expect(invalidOperationsProcessPayload.status).toBe(400);
+    expect(
+      (invalidOperationsProcessPayload.body as { code?: string } | null)?.code,
+    ).toBe("ADMIN_OPERATIONS_PROCESS_INVALID");
+  });
+
   test("proposal approve/apply actions stay idempotent on repeated requests", async ({
     page,
   }) => {

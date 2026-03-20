@@ -945,3 +945,11 @@
 - [x] `tests/e2e/api-contracts.spec.ts` расширен invalid-payload контрактами для admin queue routes: `ADMIN_DELETION_INVALID`, `ADMIN_EXPORT_INVALID`, `ADMIN_RESTORE_INVALID`, `ADMIN_SUPPORT_ACTION_INVALID`, `ADMIN_SUSPEND_INVALID`.
 - [x] Tranche подтверждён пакетами `npx eslint src/app/api/admin/users/[id]/billing/route.ts src/app/api/admin/users/[id]/billing/reconcile/route.ts src/app/api/admin/users/[id]/deletion/route.ts src/app/api/admin/users/[id]/export/route.ts src/app/api/admin/users/[id]/restore/route.ts src/app/api/admin/users/[id]/support-action/route.ts src/app/api/admin/users/[id]/suspend/route.ts tests/e2e/api-contracts.spec.ts`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1` -> `12 passed`.
 - [ ] Следующий backend tranche: добирать remaining route-handler audit по operator/self-service mutation surfaces и переоценить, можно ли закрывать основной checkbox по validation/owner-only/idempotency.
+
+## 2026-03-21 admin operator tooling contract sanitation addendum
+
+- [x] `src/app/api/admin/ai-evals/run/route.ts`, `src/app/api/admin/operations/process/route.ts` и `src/app/api/admin/observability/sentry-test/route.ts` дочищены до чистого UTF-8: tooling routes больше не держат битый operator copy в validation, audit reason и failure paths.
+- [x] `src/app/api/admin/operations/process/route.ts` и `src/app/api/admin/ai-evals/run/route.ts` теперь режут invalid payload до expected `400` без noisy route-level failure logging на validation path.
+- [x] `tests/e2e/api-contracts.spec.ts` расширен direct invalid-payload контрактами для operator tooling routes: `AI_EVAL_RUN_INVALID` и `ADMIN_OPERATIONS_PROCESS_INVALID`.
+- [x] Tranche подтверждён пакетами `npx eslint src/app/api/admin/ai-evals/run/route.ts src/app/api/admin/operations/process/route.ts src/app/api/admin/observability/sentry-test/route.ts tests/e2e/api-contracts.spec.ts`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1` -> `13 passed`.
+- [ ] Следующий backend tranche: дочистить remaining operator wording и audit reasons в admin surfaces, затем переоценить основной checkbox по validation/owner-only/idempotency.

@@ -23,8 +23,7 @@ export async function POST() {
       return createApiErrorResponse({
         status: 409,
         code: "SENTRY_RUNTIME_NOT_CONFIGURED",
-        message:
-          "Sentry runtime ещё не настроен: нужен NEXT_PUBLIC_SENTRY_DSN.",
+        message: "Sentry runtime ещё не настроен: нужен NEXT_PUBLIC_SENTRY_DSN.",
       });
     }
 
@@ -36,14 +35,14 @@ export async function POST() {
       scope.setTag("sentry.org", serverEnv.SENTRY_ORG ?? "unset");
       scope.setTag("sentry.project", serverEnv.SENTRY_PROJECT ?? "unset");
       scope.setUser({
-        id: user.id,
         email: user.email ?? undefined,
+        id: user.id,
       });
       scope.setExtras({
-        adminUserId: user.id,
         adminEmail: user.email ?? null,
-        sentryEnvironment: serverEnv.SENTRY_ENVIRONMENT ?? "unset",
+        adminUserId: user.id,
         createdAt,
+        sentryEnvironment: serverEnv.SENTRY_ENVIRONMENT ?? "unset",
       });
 
       return Sentry.captureException(new Error("Admin Sentry smoke test"));
@@ -58,8 +57,8 @@ export async function POST() {
 
     return Response.json({
       data: {
-        eventId: eventId ?? null,
         createdAt,
+        eventId: eventId ?? null,
       },
     });
   } catch (error) {

@@ -38,10 +38,10 @@ export async function POST(request: Request) {
       .insert({
         actor_user_id: user.id,
         action: "queue_ai_eval_run",
-        reason: "manual admin request",
+        reason: "ручной запуск AI-проверки",
         payload: {
-          runId: data.id,
           modelId,
+          runId: data.id,
           suite,
         },
       });
@@ -57,8 +57,6 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
-    logger.error("admin ai eval run route failed", { error });
-
     if (isAdminAccessError(error)) {
       return createApiErrorResponse({
         status: error.status,
@@ -75,6 +73,8 @@ export async function POST(request: Request) {
         details: error.flatten(),
       });
     }
+
+    logger.error("admin ai eval run route failed", { error });
 
     return createApiErrorResponse({
       status: 500,
