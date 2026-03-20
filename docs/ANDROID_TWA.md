@@ -74,6 +74,7 @@ Chrome для TWA проверяет association через `/.well-known/assetl
 
 ## Что ещё остаётся blocker-ом
 
+- JDK 17 и Android SDK Platform Tools (`java`, `adb`) на машине сборки;
 - реальный signing fingerprint;
 - собранный Bubblewrap/TWA wrapper;
 - Android smoke на production URL;

@@ -487,6 +487,7 @@
 - [x] `tests/smoke/app-smoke.spec.ts` расширен Android/TWA smoke-check на `/.well-known/assetlinks.json`.
 - [x] Санированы и повторно синхронизированы ключевые release/handoff docs: `README.md`, `docs/README.md`, `docs/PROD_READY.md`, `docs/RELEASE_CHECKLIST.md`, `docs/BUILD_WARNINGS.md`, `docs/BACKEND.md`, `docs/FRONTEND.md`, `docs/AI_STACK.md`, `docs/DB_AUDIT.md`, `docs/USER_GUIDE.md`.
 - [x] Tranche подтверждён командами `npm run verify:android-twa`, `npm run lint`, `npm run build`, `npm run typecheck`, `npm run test:smoke`, `npm run test:e2e:auth` -> `50 passed`.
+- [ ] Следующий Android tranche уже упирается во внешний blocker: на текущей машине нет `java` и `adb`, а `npx @bubblewrap/cli doctor` без JDK 17 и Android SDK не даёт собрать и проверить реальный TWA wrapper.
 
 ## 2026-03-19 DB audit addendum
 

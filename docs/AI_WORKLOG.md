@@ -968,6 +968,14 @@
 - Проверка зелёная: `npm run verify:android-twa`, `npm run lint`, `npm run build`, `npm run typecheck`, `npm run test:smoke` -> `5 passed`, `npm run test:e2e:auth` -> `50 passed`.
 - Общий прогресс execution checklist вырос до `164 / 176` (`93%`).
 
+### 2026-03-21 12:20 - Уперся в реальный blocker по TWA wrapper
+
+- После подготовки Android scaffold попытался перейти к следующему открытому пункту `Собрать и проверить TWA wrapper`.
+- Локальная среда не готова к этому tranche: `java` отсутствует, `adb` отсутствует, а `npx @bubblewrap/cli doctor` не может завершиться без JDK 17 и Android SDK Platform Tools.
+- Это уже не кодовый, а инфраструктурный blocker: до установки JDK/Android SDK и появления release fingerprint нельзя закрыть `Готов TWA wrapper` и `Android smoke`.
+- Остальные незакрытые основные пункты плана тоже завязаны на внешние зависимости: Stripe production secrets, Sentry production env и AI provider credits (`OpenRouter 402`, `Voyage 403`).
+- Текущий baseline остаётся зелёным: `npm run verify:android-twa`, `npm run lint`, `npm run build`, `npm run typecheck`, `npm run test:smoke`, `npm run test:e2e:auth`.
+
 ### 2026-03-21 08:55 - Закрыл Milestone 1 и подтвердил installability production PWA
 
 - `src/app/layout.tsx` больше не держит мёртвый production URL: metadata base теперь собирается через `src/lib/site-url.ts` из `NEXT_PUBLIC_APP_URL`, `VERCEL_PROJECT_PRODUCTION_URL` и `VERCEL_URL`, а `.env.example` получил `NEXT_PUBLIC_APP_URL`.
