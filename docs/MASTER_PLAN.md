@@ -797,3 +797,10 @@
 - [x] Оба route handler теперь ближе к transport-слою: session auth bootstrap и shared copy идут через helper, а delete-route дополнительно синхронизирован в чистом UTF-8 без изменения owner-only contracts.
 - [x] Tranche подтверждён пакетами `npx eslint src/lib/ai/session-route-helpers.ts src/app/api/ai/sessions/route.ts src/app/api/ai/sessions/[id]/route.ts`, `npm run typecheck`, `npm run build`.
 - [ ] Следующий AI/backend tranche: продолжать remaining route/lib extraction и owner-only/idempotency audit по AI/data handlers.
+
+## 2026-03-20 AI proposal route helper extraction addendum
+
+- [x] Общий auth/proposal lookup/billing feature resolution для `src/app/api/ai/proposals/[id]/apply/route.ts` и `src/app/api/ai/proposals/[id]/approve/route.ts` вынесен в `src/lib/ai/proposal-route-helpers.ts`: owner-scoped proposal lookup, auth gate, invalid-id parse и feature access bootstrap больше не дублируются между двумя route handlers.
+- [x] Оба proposal routes теперь ближе к transport-слою: в handlers остались только route-specific action calls (`applyAiPlanProposal` и `approveAiPlanProposal`), feature denied response и error mapping, а shared route access plumbing живёт в helper-слое.
+- [x] Tranche подтверждён пакетами `npx eslint src/lib/ai/proposal-route-helpers.ts src/app/api/ai/proposals/[id]/apply/route.ts src/app/api/ai/proposals/[id]/approve/route.ts`, `npm run typecheck`, `npm run build`.
+- [ ] Следующий AI/backend tranche: продолжать remaining route/lib extraction и owner-only/idempotency audit по AI/data handlers.

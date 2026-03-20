@@ -871,3 +871,10 @@
 - `src/app/api/ai/sessions/route.ts` и `src/app/api/ai/sessions/[id]/route.ts` переведены на этот helper без изменения owner-only session contracts: handlers стали тоньше, а delete-route дополнительно синхронизирован в чистом UTF-8.
 - Проверка зелёная: `npx eslint src/lib/ai/session-route-helpers.ts src/app/api/ai/sessions/route.ts src/app/api/ai/sessions/[id]/route.ts`, `npm run typecheck`, `npm run build`.
 - Общий прогресс execution checklist остаётся `144 / 176` (`82%`): tranche продолжает AI route/lib extraction, но не закрывает следующий основной checkbox целиком.
+
+### 2026-03-20 01:45 - Вынес shared helper из AI proposal routes
+
+- Добавил `src/lib/ai/proposal-route-helpers.ts`: общий auth/proposal lookup/billing feature resolution для `ai/proposals/[id]/apply` и `ai/proposals/[id]/approve` теперь живёт вне route handlers и покрывает auth gate, owner-scoped proposal lookup, invalid-id parse и feature access bootstrap.
+- `src/app/api/ai/proposals/[id]/apply/route.ts` и `src/app/api/ai/proposals/[id]/approve/route.ts` переведены на этот helper без изменения owner-only proposal contracts: route handlers теперь ближе к transport-слою и держат только route-specific action call и error mapping.
+- Проверка зелёная: `npx eslint src/lib/ai/proposal-route-helpers.ts src/app/api/ai/proposals/[id]/apply/route.ts src/app/api/ai/proposals/[id]/approve/route.ts`, `npm run typecheck`, `npm run build`.
+- Общий прогресс execution checklist остаётся `144 / 176` (`82%`): tranche продолжает AI route/lib extraction, но не закрывает следующий основной checkbox целиком.

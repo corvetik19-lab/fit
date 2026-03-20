@@ -1,65 +1,31 @@
 import { z } from "zod";
 
 import { applyAiPlanProposal, isAiProposalActionError } from "@/lib/ai/proposal-actions";
-import { getAiPlanProposal } from "@/lib/ai/proposals";
-import { createApiErrorResponse } from "@/lib/api/error-response";
 import {
-  BILLING_FEATURE_KEYS,
-  createFeatureAccessDeniedResponse,
-  readUserBillingAccessOrFallback,
-} from "@/lib/billing-access";
+  getAiProposalRouteContext,
+  isAiProposalRouteError,
+} from "@/lib/ai/proposal-route-helpers";
+import { createApiErrorResponse } from "@/lib/api/error-response";
+import { createFeatureAccessDeniedResponse } from "@/lib/billing-access";
 import { logger } from "@/lib/logger";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
-
-const paramsSchema = z.object({
-  id: z.string().uuid(),
-});
 
 export async function POST(
   _request: Request,
   context: { params: Promise<{ id: string }> },
-  ) {
+) {
   try {
-    const supabase = await createServerSupabaseClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const routeContext = await getAiProposalRouteContext(
+      context.params,
+      "Нужно войти в аккаунт, чтобы применять AI-предложения.",
+    );
 
-    if (!user) {
-      return createApiErrorResponse({
-        status: 401,
-        code: "UNAUTHORIZED",
-        message: "Нужно войти в аккаунт, чтобы применять AI-предложения.",
-      });
+    if (!routeContext.feature.allowed) {
+      return createFeatureAccessDeniedResponse(routeContext.feature);
     }
 
-    const { id } = paramsSchema.parse(await context.params);
-    const proposal = await getAiPlanProposal(supabase, user.id, id);
-
-    if (!proposal) {
-      return createApiErrorResponse({
-        status: 404,
-        code: "AI_PROPOSAL_NOT_FOUND",
-        message: "ИИ-предложение не найдено.",
-      });
-    }
-
-    const access = await readUserBillingAccessOrFallback(supabase, user.id, {
-      email: user.email,
-    });
-    const featureKey =
-      proposal.proposal_type === "meal_plan"
-        ? BILLING_FEATURE_KEYS.mealPlan
-        : BILLING_FEATURE_KEYS.workoutPlan;
-    const feature = access.features[featureKey];
-
-    if (!feature.allowed) {
-      return createFeatureAccessDeniedResponse(feature);
-    }
-
-    const applied = await applyAiPlanProposal(supabase, {
-      userId: user.id,
-      proposalId: proposal.id,
+    const applied = await applyAiPlanProposal(routeContext.supabase, {
+      userId: routeContext.user.id,
+      proposalId: routeContext.proposal.id,
     });
 
     return Response.json({
@@ -73,6 +39,15 @@ export async function POST(
         code: "AI_PROPOSAL_APPLY_INVALID",
         message: "Некорректный идентификатор AI-предложения.",
         details: error.flatten(),
+      });
+    }
+
+    if (isAiProposalRouteError(error)) {
+      return createApiErrorResponse({
+        status: error.status,
+        code: error.code,
+        message: error.message,
+        details: error.details,
       });
     }
 
