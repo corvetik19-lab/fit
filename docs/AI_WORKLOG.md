@@ -892,3 +892,10 @@
 - `src/app/api/admin/users/[id]/support-action/route.ts`, `src/app/api/admin/users/[id]/suspend/route.ts` и `src/app/api/admin/users/[id]/restore/route.ts` переведены на этот helper без изменения owner-only/admin-action contracts: в handlers остались auth, target guard, validation и response shape.
 - Проверка зелёная: `npx eslint src/lib/admin-support-actions.ts src/app/api/admin/users/[id]/support-action/route.ts src/app/api/admin/users/[id]/suspend/route.ts src/app/api/admin/users/[id]/restore/route.ts`, `npm run typecheck`, `npm run build`.
 - Общий прогресс execution checklist остаётся `144 / 176` (`82%`): tranche продолжает admin/backend route extraction, но не закрывает следующий основной checkbox целиком.
+
+### 2026-03-20 03:05 - Вынес shared helper из admin export and deletion routes
+
+- Добавил `src/lib/admin-user-requests.ts`: общий export/deletion admin слой теперь живёт вне route handlers и покрывает queue export job, hold deletion request и cancel deletion request вместе с audit insert.
+- `src/app/api/admin/users/[id]/export/route.ts` и `src/app/api/admin/users/[id]/deletion/route.ts` переведены на этот helper, а `src/app/api/admin/users/bulk/route.ts` использует тот же export queue helper для ветки `queue_export`.
+- Проверка зелёная: `npx eslint src/lib/admin-user-requests.ts src/app/api/admin/users/[id]/export/route.ts src/app/api/admin/users/[id]/deletion/route.ts src/app/api/admin/users/bulk/route.ts`, `npm run typecheck`, `npm run build`.
+- Общий прогресс execution checklist остаётся `144 / 176` (`82%`): tranche продолжает admin/backend route extraction, но не закрывает следующий основной checkbox целиком.

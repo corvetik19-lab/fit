@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { queueAdminExportJob } from "@/lib/admin-user-requests";
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import { isAdminAccessError, requireAdminRouteAccess } from "@/lib/admin-auth";
 import {
@@ -28,37 +29,13 @@ export async function POST(
     const payload = exportJobSchema.parse(await request.json().catch(() => ({})));
     const adminSupabase = createAdminSupabaseClient();
 
-    const { data, error } = await adminSupabase
-      .from("export_jobs")
-      .insert({
-        user_id: id,
-        requested_by: user.id,
-        format: payload.format ?? "json_csv_zip",
-        status: "queued",
-      })
-      .select("id, format, status, created_at, updated_at")
-      .single();
-
-    if (error) {
-      throw error;
-    }
-
-    const { error: auditError } = await adminSupabase
-      .from("admin_audit_logs")
-      .insert({
-        actor_user_id: user.id,
-        target_user_id: id,
-        action: "queue_export_job",
-        reason: payload.reason ?? "manual export request",
-        payload: {
-          exportJobId: data.id,
-          format: data.format,
-        },
-      });
-
-    if (auditError) {
-      throw auditError;
-    }
+    const data = await queueAdminExportJob({
+      actorUserId: user.id,
+      auditReason: payload.reason ?? "manual export request",
+      format: payload.format ?? "json_csv_zip",
+      supabase: adminSupabase,
+      targetUserId: id,
+    });
 
     return Response.json({
       data: {

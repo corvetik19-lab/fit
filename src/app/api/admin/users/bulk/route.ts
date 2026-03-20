@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { createApiErrorResponse } from "@/lib/api/error-response";
+import { queueAdminExportJob } from "@/lib/admin-user-requests";
 import {
   applyAdminEntitlementAction,
   applyAdminSubscriptionAction,
@@ -53,37 +54,17 @@ export async function POST(request: Request) {
     for (const userId of payload.user_ids) {
       try {
         if (payload.action === "queue_export") {
-          const { data, error } = await adminSupabase
-            .from("export_jobs")
-            .insert({
-              user_id: userId,
-              requested_by: user.id,
-              format: "json_csv_zip",
-              status: "queued",
-            })
-            .select("id")
-            .single();
-
-          if (error) {
-            throw error;
-          }
-
-          const { error: auditError } = await adminSupabase
-            .from("admin_audit_logs")
-            .insert({
-              actor_user_id: user.id,
-              target_user_id: userId,
-              action: "bulk_queue_export_job",
-              reason: payload.reason ?? "bulk export queue",
-              payload: {
-                batchId,
-                exportJobId: data.id,
-              },
-            });
-
-          if (auditError) {
-            throw auditError;
-          }
+          await queueAdminExportJob({
+            actorUserId: user.id,
+            auditAction: "bulk_queue_export_job",
+            auditPayload: {
+              batchId,
+            },
+            auditReason: payload.reason ?? "bulk export queue",
+            format: "json_csv_zip",
+            supabase: adminSupabase,
+            targetUserId: userId,
+          });
         } else if (payload.action === "queue_resync") {
           const { data, error } = await adminSupabase
             .from("support_actions")

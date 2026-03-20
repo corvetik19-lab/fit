@@ -1,5 +1,9 @@
 import { z } from "zod";
 
+import {
+  cancelAdminDeletionRequest,
+  holdAdminDeletionRequest,
+} from "@/lib/admin-user-requests";
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import { isAdminAccessError, requireAdminRouteAccess } from "@/lib/admin-auth";
 import {
@@ -17,14 +21,6 @@ const deletionRequestSchema = z.object({
   reason: z.string().trim().max(300).optional(),
 });
 
-const DEFAULT_HOLD_DAYS = 14;
-
-function getDefaultHoldUntil() {
-  const holdUntil = new Date();
-  holdUntil.setDate(holdUntil.getDate() + DEFAULT_HOLD_DAYS);
-  return holdUntil.toISOString();
-}
-
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -40,46 +36,15 @@ export async function POST(
       await request.json().catch(() => ({})),
     );
     const adminSupabase = createAdminSupabaseClient();
-    const holdUntil = getDefaultHoldUntil();
 
     await assertUserIsNotPrimarySuperAdmin(adminSupabase, id);
 
-    const { data, error } = await adminSupabase
-      .from("deletion_requests")
-      .upsert(
-        {
-          user_id: id,
-          requested_by: user.id,
-          status: "holding",
-          hold_until: holdUntil,
-        },
-        {
-          onConflict: "user_id",
-        },
-      )
-      .select("id, status, hold_until, created_at, updated_at")
-      .single();
-
-    if (error) {
-      throw error;
-    }
-
-    const { error: auditError } = await adminSupabase
-      .from("admin_audit_logs")
-      .insert({
-        actor_user_id: user.id,
-        target_user_id: id,
-        action: "queue_deletion_request",
-        reason: payload.reason ?? "manual deletion hold request",
-        payload: {
-          deletionRequestId: data.id,
-          holdUntil: data.hold_until,
-        },
-      });
-
-    if (auditError) {
-      throw auditError;
-    }
+    const data = await holdAdminDeletionRequest({
+      actorUserId: user.id,
+      auditReason: payload.reason ?? "manual deletion hold request",
+      supabase: adminSupabase,
+      targetUserId: id,
+    });
 
     return Response.json({
       data: {
@@ -153,19 +118,12 @@ export async function DELETE(
 
     await assertUserIsNotPrimarySuperAdmin(adminSupabase, id);
 
-    const { data, error } = await adminSupabase
-      .from("deletion_requests")
-      .update({
-        requested_by: user.id,
-        status: "canceled",
-      })
-      .eq("user_id", id)
-      .select("id, status, hold_until, created_at, updated_at")
-      .maybeSingle();
-
-    if (error) {
-      throw error;
-    }
+    const data = await cancelAdminDeletionRequest({
+      actorUserId: user.id,
+      auditReason: payload.reason ?? "manual deletion cancel request",
+      supabase: adminSupabase,
+      targetUserId: id,
+    });
 
     if (!data) {
       return createApiErrorResponse({
@@ -173,22 +131,6 @@ export async function DELETE(
         code: "ADMIN_DELETION_NOT_FOUND",
         message: "Deletion request was not found.",
       });
-    }
-
-    const { error: auditError } = await adminSupabase
-      .from("admin_audit_logs")
-      .insert({
-        actor_user_id: user.id,
-        target_user_id: id,
-        action: "cancel_deletion_request",
-        reason: payload.reason ?? "manual deletion cancel request",
-        payload: {
-          deletionRequestId: data.id,
-        },
-      });
-
-    if (auditError) {
-      throw auditError;
     }
 
     return Response.json({

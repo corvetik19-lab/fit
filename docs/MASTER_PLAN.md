@@ -818,3 +818,10 @@
 - [x] Все три admin mutation routes теперь ближе к transport-слою: auth, target-user guard и payload validation остаются в handlers, а shared support-action plumbing живёт в helper-слое.
 - [x] Tranche подтверждён пакетами `npx eslint src/lib/admin-support-actions.ts src/app/api/admin/users/[id]/support-action/route.ts src/app/api/admin/users/[id]/suspend/route.ts src/app/api/admin/users/[id]/restore/route.ts`, `npm run typecheck`, `npm run build`.
 - [ ] Следующий backend tranche: продолжать remaining route/lib extraction и owner-only/idempotency audit на оставшихся admin/self-service и AI/data handlers.
+
+## 2026-03-20 admin export and deletion helper extraction addendum
+
+- [x] Общий export/deletion admin слой вынесен в `src/lib/admin-user-requests.ts`: queue export job, hold deletion request и cancel deletion request теперь живут вне route handlers и держат queue+audit plumbing в одном месте.
+- [x] `src/app/api/admin/users/[id]/export/route.ts` и `src/app/api/admin/users/[id]/deletion/route.ts` переведены на этот helper, а `src/app/api/admin/users/bulk/route.ts` использует тот же export queue helper для ветки `queue_export`, чтобы не дублировать insert в `export_jobs` и audit payload.
+- [x] Tranche подтверждён пакетами `npx eslint src/lib/admin-user-requests.ts src/app/api/admin/users/[id]/export/route.ts src/app/api/admin/users/[id]/deletion/route.ts src/app/api/admin/users/bulk/route.ts`, `npm run typecheck`, `npm run build`.
+- [ ] Следующий backend tranche: продолжать remaining route/lib extraction и owner-only/idempotency audit на оставшихся admin/self-service и AI/data handlers.
