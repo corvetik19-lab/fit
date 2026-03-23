@@ -10,43 +10,8 @@ import { logger } from "@/lib/logger";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import {
   getStripeClient,
-  hasProcessedStripeEvent,
-  recordStripeEvent,
-  reconcileStripeCheckoutSession,
-  reconcileStripeSubscription,
-  resolveStripeUserId,
+  processStripeWebhookEvent,
 } from "@/lib/stripe-billing";
-
-function getCustomerId(
-  customer:
-    | string
-    | Stripe.Customer
-    | Stripe.DeletedCustomer
-    | null
-    | undefined,
-) {
-  if (!customer) {
-    return null;
-  }
-
-  return typeof customer === "string" ? customer : customer.id;
-}
-
-function getSubscriptionId(
-  subscription: string | Stripe.Subscription | null | undefined,
-) {
-  if (!subscription) {
-    return null;
-  }
-
-  return typeof subscription === "string" ? subscription : subscription.id;
-}
-
-function getInvoiceSubscriptionId(invoice: Stripe.Invoice) {
-  return getSubscriptionId(
-    invoice.parent?.subscription_details?.subscription ?? null,
-  );
-}
 
 export async function POST(request: Request) {
   try {
@@ -94,68 +59,9 @@ export async function POST(request: Request) {
 
     const adminSupabase = createAdminSupabaseClient();
 
-    if (await hasProcessedStripeEvent(adminSupabase, event.id)) {
-      return Response.json({ data: { duplicate: true, received: true } });
-    }
+    const result = await processStripeWebhookEvent(adminSupabase, event);
 
-    switch (event.type) {
-      case "checkout.session.completed": {
-        await reconcileStripeCheckoutSession(
-          adminSupabase,
-          event.data.object as Stripe.Checkout.Session,
-          event,
-        );
-        break;
-      }
-      case "customer.subscription.created":
-      case "customer.subscription.updated":
-      case "customer.subscription.deleted": {
-        await reconcileStripeSubscription(adminSupabase, {
-          event,
-          stripeSubscription: event.data.object as Stripe.Subscription,
-        });
-        break;
-      }
-      case "invoice.paid":
-      case "invoice.payment_failed": {
-        const invoice = event.data.object as Stripe.Invoice;
-        const providerCustomerId = getCustomerId(invoice.customer);
-        const providerSubscriptionId = getInvoiceSubscriptionId(invoice);
-        const userId = await resolveStripeUserId(adminSupabase, {
-          explicitUserId: null,
-          providerCustomerId,
-          providerSubscriptionId,
-        });
-
-        if (userId) {
-          await recordStripeEvent(adminSupabase, {
-            eventType: event.type,
-            payload: {
-              amountDue: invoice.amount_due,
-              amountPaid: invoice.amount_paid,
-              billingReason: invoice.billing_reason,
-              invoiceId: invoice.id,
-              isPaid: invoice.status === "paid",
-              providerCustomerId,
-              providerSubscriptionId,
-              status: invoice.status,
-            },
-            providerEventId: event.id,
-            subscriptionId: null,
-            userId,
-          });
-        }
-        break;
-      }
-      default: {
-        logger.info("stripe webhook received unhandled event", {
-          eventId: event.id,
-          eventType: event.type,
-        });
-      }
-    }
-
-    return Response.json({ data: { received: true } });
+    return Response.json({ data: result });
   } catch (error) {
     logger.error("stripe webhook route failed", { error });
 

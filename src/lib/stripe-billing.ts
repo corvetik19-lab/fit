@@ -39,6 +39,11 @@ export type StripeUserSubscriptionReconciliation = {
   userId: string;
 };
 
+export type StripeWebhookProcessResult = {
+  duplicate: boolean;
+  received: true;
+};
+
 let stripeClient: Stripe | null = null;
 
 function toIsoTimestamp(value: number | null | undefined) {
@@ -95,6 +100,12 @@ function getStripeSubscriptionId(
   }
 
   return typeof subscription === "string" ? subscription : subscription.id;
+}
+
+function getInvoiceSubscriptionId(invoice: Stripe.Invoice) {
+  return getStripeSubscriptionId(
+    invoice.parent?.subscription_details?.subscription ?? null,
+  );
 }
 
 function getStripeSubscriptionPeriod(stripeSubscription: Stripe.Subscription) {
@@ -351,6 +362,80 @@ export async function recordStripeEvent(
   }
 
   return data;
+}
+
+export async function processStripeWebhookEvent(
+  adminSupabase: AdminSupabaseClient,
+  event: Stripe.Event,
+): Promise<StripeWebhookProcessResult> {
+  if (await hasProcessedStripeEvent(adminSupabase, event.id)) {
+    return {
+      duplicate: true,
+      received: true,
+    };
+  }
+
+  switch (event.type) {
+    case "checkout.session.completed": {
+      await reconcileStripeCheckoutSession(
+        adminSupabase,
+        event.data.object as Stripe.Checkout.Session,
+        event,
+      );
+      break;
+    }
+    case "customer.subscription.created":
+    case "customer.subscription.updated":
+    case "customer.subscription.deleted": {
+      await reconcileStripeSubscription(adminSupabase, {
+        event,
+        stripeSubscription: event.data.object as Stripe.Subscription,
+      });
+      break;
+    }
+    case "invoice.paid":
+    case "invoice.payment_failed": {
+      const invoice = event.data.object as Stripe.Invoice;
+      const providerCustomerId = getStripeCustomerId(invoice.customer);
+      const providerSubscriptionId = getInvoiceSubscriptionId(invoice);
+      const userId = await resolveStripeUserId(adminSupabase, {
+        explicitUserId: null,
+        providerCustomerId,
+        providerSubscriptionId,
+      });
+
+      if (userId) {
+        await recordStripeEvent(adminSupabase, {
+          eventType: event.type,
+          payload: {
+            amountDue: invoice.amount_due,
+            amountPaid: invoice.amount_paid,
+            billingReason: invoice.billing_reason,
+            invoiceId: invoice.id,
+            isPaid: invoice.status === "paid",
+            providerCustomerId,
+            providerSubscriptionId,
+            status: invoice.status,
+          },
+          providerEventId: event.id,
+          subscriptionId: null,
+          userId,
+        });
+      }
+      break;
+    }
+    default: {
+      logger.info("stripe webhook received unhandled event", {
+        eventId: event.id,
+        eventType: event.type,
+      });
+    }
+  }
+
+  return {
+    duplicate: false,
+    received: true,
+  };
 }
 
 export async function upsertStripeSubscriptionRecord(

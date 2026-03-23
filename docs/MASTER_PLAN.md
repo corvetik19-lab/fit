@@ -4,14 +4,16 @@
 
 - `[x]` — сделано и подтверждено в коде, инфраструктуре или проверках.
 - `[ ]` — ещё не сделано или не доведено до production-ready состояния.
+- Каждый завершённый slice обязан сразу менять соответствующий чекбокс в этом файле с `[ ]` на `[x]`, если основной пункт реально закрыт, либо добавлять/обновлять addendum-подпункт с текущим статусом.
 - После каждого существенного tranche:
   - обновлять этот файл;
   - добавлять короткую запись в `docs/AI_WORKLOG.md`;
   - синхронизировать профильные документы в `docs/`, если меняется контракт, архитектура или release-процесс.
+- После каждого tranche обязательно пересчитывать `done / total` по основному execution checklist и обновлять процент прямо в этом файле и в пользовательском статусе.
 
 Этот файл — текущий production-hardening backlog проекта. Он отражает фактическое состояние репозитория на `2026-03-14`.
 
-Текущий прогресс execution checklist: `164 / 176` (`93%`).
+Текущий прогресс execution checklist: `165 / 176` (`94%`).
 
 ## Текущая база
 
@@ -247,7 +249,7 @@
 - [x] Billing domain и Stripe route scaffolding уже есть.
 - [ ] Завести и проверить все production/staging env для Stripe.
 - [ ] Пройти живой сценарий `checkout -> return reconcile -> webhook -> portal`.
-- [ ] Проверить идемпотентность webhook и согласованность `subscriptions`, `entitlements`, `usage counters`.
+- [x] Проверить идемпотентность webhook и согласованность `subscriptions`, `entitlements`, `usage counters`.
 
 ### Billing UI
 
@@ -1060,3 +1062,12 @@
 - [x] `package.json`, `docs/PROD_READY.md` и `docs/RELEASE_CHECKLIST.md` синхронизированы: в проекте теперь есть формальный command-level вход для staging-like verification billing/AI runtime, а не только разрозненные suites.
 - [x] Локальная verification-связка подтверждена пакетами `npx eslint scripts/verify-staging-runtime.mjs tests/billing-gate/billing-runtime-gate.spec.ts`, `npm run build`, `npm run typecheck`, `npm run test:billing-gate` -> `1 skipped`, `npm run verify:staging-runtime` -> явный blocker-report (`AI provider unavailable`, `Stripe env missing`) вместо молчаливого отсутствия процесса.
 - [x] После этого закрыт основной checklist-пункт `Ввести staging-like verification для Stripe и AI runtime`; live rollout и AI quality gate по-прежнему остаются отдельными внешними блокерами.
+
+## 2026-03-23 billing webhook idempotency gate addendum
+
+- [x] В `docs/MASTER_PLAN.md` усилено правило ведения execution checklist: после каждого tranche нужно обязательно менять `[ ]/[x]` по факту и пересчитывать текущий процент выполнения.
+- [x] `src/lib/stripe-billing.ts` получил общий helper `processStripeWebhookEvent(...)`, поэтому webhook dispatch и duplicate-event short-circuit теперь живут в тестируемом billing-lib слое, а `src/app/api/billing/webhook/stripe/route.ts` стал тоньше.
+- [x] Добавлен прямой regression `tests/billing-gate/stripe-webhook-idempotency.spec.ts`: repeated `customer.subscription.updated` с тем же `provider_event_id` подтверждён как идемпотентный, а `entitlements` и `usage_counters` остаются неизменными.
+- [x] Локальная verification-связка подтверждена пакетами `npm run lint`, `npm run build`, `npm run typecheck`, `npm run test:billing-gate` -> `1 passed, 1 skipped`.
+- [x] После этого закрыт основной checklist-пункт `Проверить идемпотентность webhook и согласованность subscriptions, entitlements, usage counters`.
+- [ ] Следующий billing tranche уже внешний: нужны реальные `production/staging` Stripe env и живой `checkout -> return reconcile -> webhook -> portal`, чтобы закрыть оставшийся live rollout.

@@ -6,6 +6,16 @@
 - Во время production hardening журнал был сжат и переписан в чистый UTF-8.
 - Ниже остаются только ключевые tranche, которые помогают понять текущее состояние продукта и инженерного контура.
 
+## 2026-03-23
+
+### Billing webhook idempotency gate
+
+- В [docs/MASTER_PLAN.md](/C:/fit/docs/MASTER_PLAN.md) усилено правило ведения execution checklist: после каждого tranche нужно обязательно переключать `[ ]/[x]` по факту и пересчитывать текущий процент выполнения.
+- В [stripe-billing.ts](/C:/fit/src/lib/stripe-billing.ts) вынесен общий helper `processStripeWebhookEvent(...)`, а [route.ts](/C:/fit/src/app/api/billing/webhook/stripe/route.ts) переведён на него, чтобы Stripe webhook dispatch и duplicate short-circuit проверялись вне route-level plumbing.
+- Добавлен прямой regression [stripe-webhook-idempotency.spec.ts](/C:/fit/tests/billing-gate/stripe-webhook-idempotency.spec.ts): повторный `customer.subscription.updated` с тем же `provider_event_id` подтверждён как идемпотентный, а `subscriptions`, `entitlements` и `usage_counters` после второго прохода остаются согласованными.
+- Этот tranche подтвердил локально выполнимый billing hardening без live Stripe env и позволил закрыть основной checklist-пункт про webhook idempotency/consistency; дальше по billing остаются уже внешние блокеры `production/staging` secrets и живой runtime contour.
+- Проверка зелёная: `npm run lint`, `npm run build`, `npm run typecheck`, `npm run test:billing-gate` -> `1 passed, 1 skipped`.
+
 ## 2026-03-21
 
 ### Mobile workout focus-mode cleanup
