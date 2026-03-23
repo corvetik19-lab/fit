@@ -187,11 +187,13 @@ jobs:
     needs:
       - quality
       - smoke
-    if: ${{ secrets.AI_QUALITY_GATE_ENABLED == '1' && secrets.NEXT_PUBLIC_SUPABASE_URL != '' && secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY != '' && secrets.SUPABASE_SERVICE_ROLE_KEY != '' && secrets.PLAYWRIGHT_ADMIN_EMAIL != '' && secrets.PLAYWRIGHT_ADMIN_PASSWORD != '' && (secrets.OPENROUTER_API_KEY != '' || secrets.AI_GATEWAY_API_KEY != '') }}
+    if: ${{ secrets.AI_QUALITY_GATE_ENABLED == '1' && secrets.NEXT_PUBLIC_SUPABASE_URL != '' && secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY != '' && secrets.SUPABASE_SERVICE_ROLE_KEY != '' && secrets.PLAYWRIGHT_TEST_EMAIL != '' && secrets.PLAYWRIGHT_TEST_PASSWORD != '' && secrets.PLAYWRIGHT_ADMIN_EMAIL != '' && secrets.PLAYWRIGHT_ADMIN_PASSWORD != '' && (secrets.OPENROUTER_API_KEY != '' || secrets.AI_GATEWAY_API_KEY != '') }}
     env:
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      PLAYWRIGHT_TEST_EMAIL: ${{ secrets.PLAYWRIGHT_TEST_EMAIL }}
+      PLAYWRIGHT_TEST_PASSWORD: ${{ secrets.PLAYWRIGHT_TEST_PASSWORD }}
       PLAYWRIGHT_ADMIN_EMAIL: ${{ secrets.PLAYWRIGHT_ADMIN_EMAIL }}
       PLAYWRIGHT_ADMIN_PASSWORD: ${{ secrets.PLAYWRIGHT_ADMIN_PASSWORD }}
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
@@ -220,5 +222,5 @@ jobs:
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
 
-      - name: AI quality gate
-        run: npm run test:ai-gate
+      - name: Retrieval release gate
+        run: npm run verify:retrieval-release

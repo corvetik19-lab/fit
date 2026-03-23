@@ -16,6 +16,10 @@ import {
   clampKnowledgeContextLimit,
   KNOWLEDGE_RETRIEVAL_LIMITS,
 } from "@/lib/ai/knowledge-retrieval-config";
+import {
+  resolveKnowledgeRetrievalMode,
+  selectKnowledgeRetrievalMatches,
+} from "@/lib/ai/knowledge-retrieval-rollout";
 import { logger } from "@/lib/logger";
 
 const KNOWLEDGE_FALLBACK_PAGE_SIZE = 200;
@@ -285,6 +289,7 @@ export async function retrieveKnowledgeMatchesWithPipeline({
   userId: string;
 }): Promise<RetrievedKnowledgeItem[]> {
   const finalLimit = clampKnowledgeContextLimit(limit);
+  const retrievalMode = resolveKnowledgeRetrievalMode();
 
   try {
     await ensureKnowledgeIndex(supabase, userId);
@@ -374,10 +379,42 @@ export async function retrieveKnowledgeMatchesWithPipeline({
     return [];
   }
 
-  return buildHybridKnowledgeMatches({
+  const hybridMatches =
+    retrievalMode === "legacy"
+      ? []
+      : buildHybridKnowledgeMatches({
+          limit: finalLimit,
+          query,
+          textMatches,
+          vectorMatches: semanticMatches,
+        });
+
+  const selection = selectKnowledgeRetrievalMatches({
+    hybridMatches,
     limit: finalLimit,
-    query,
+    mode: retrievalMode,
+    semanticMatches,
     textMatches,
-    vectorMatches: semanticMatches,
   });
+
+  if (selection.rollout.mode === "shadow") {
+    logger.info("knowledge retrieval shadow snapshot", {
+      fallbackToLegacy: selection.rollout.fallbackToLegacy,
+      hybridIds: selection.rollout.hybridIds,
+      legacyIds: selection.rollout.legacyIds,
+      rankingChanged: selection.rollout.rankingChanged,
+      selectedIds: selection.rollout.selectedIds,
+      semanticCandidateCount: selection.rollout.semanticCandidateCount,
+      textCandidateCount: selection.rollout.textCandidateCount,
+      userId,
+    });
+  } else if (selection.rollout.fallbackToLegacy) {
+    logger.warn("knowledge retrieval hybrid mode fell back to legacy ranking", {
+      semanticCandidateCount: selection.rollout.semanticCandidateCount,
+      textCandidateCount: selection.rollout.textCandidateCount,
+      userId,
+    });
+  }
+
+  return selection.matches;
 }

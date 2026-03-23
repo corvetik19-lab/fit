@@ -10,7 +10,7 @@
 - записать актуальный процент прямо здесь;
 - добавить короткую запись в [AI_WORKLOG.md](/C:/fit/docs/AI_WORKLOG.md).
 
-Текущий прогресс execution checklist: `13 / 18` (`72%`).
+Текущий прогресс execution checklist: `15 / 18` (`83%`).
 
 ## Execution Checklist
 
@@ -37,8 +37,8 @@
 - [x] Расширить eval suites по retrieval intent-категориям: workouts, nutrition, profile, plans, recent history.
 - [x] Добавить retrieval metrics: `Recall@5`, `Recall@10`, `nDCG@10`.
 - [x] Добавить retrieval regression command в npm/CI.
-- [ ] Добавить shadow-mode или feature-flag rollout для hybrid retrieval.
-- [ ] Зафиксировать release gate для `assistant`, `retrieval`, `workout plan`, `meal plan`, `safety`.
+- [x] Добавить shadow-mode и feature-flag rollout для hybrid retrieval.
+- [x] Зафиксировать release gate для `assistant`, `retrieval`, `workout plan`, `meal plan`, `safety`.
 
 ### Wave 4. Performance и observability
 
@@ -47,4 +47,4 @@
 
 ## Ближайший tranche
 
-- [ ] Wave 3: связать новый retrieval regression command с feature-flag rollout и release gate для assistant/plan suites.
+- [ ] Wave 4: добавить step-level telemetry и затем зафиксировать latency baseline с performance decisions для retrieval слоя.

@@ -1113,3 +1113,14 @@
 - [x] Добавлен regression suite [retrieval-metrics.spec.ts](/C:/fit/tests/ai-gate/retrieval-metrics.spec.ts), который подтверждает метрики и topic grouping отдельно от live AI runtime.
 - [x] Добавлен отдельный command-level gate `npm run test:retrieval-gate`: он запускает hybrid ranking, metadata, chunk sync, retrieval metrics и full-history retrieval fallback suite без web server и auth bootstrap.
 - [ ] Следующий RAG tranche: связать retrieval gate с feature-flag rollout и release gate для assistant/plan suites.
+
+## 2026-03-24 RAG v2 rollout gate addendum
+
+- [x] Добавлен rollout helper [knowledge-retrieval-rollout.ts](/C:/fit/src/lib/ai/knowledge-retrieval-rollout.ts): retrieval pipeline теперь поддерживает режимы `legacy`, `hybrid`, `shadow`, а `shadow` логирует comparison snapshot без смены итогового контекста.
+- [x] [env.ts](/C:/fit/src/lib/env.ts) и [\.env.example](/C:/fit/.env.example) расширены `AI_RETRIEVAL_MODE`, чтобы hybrid retrieval можно было включать и откатывать как явный release flag.
+- [x] [knowledge-retrieval.ts](/C:/fit/src/lib/ai/knowledge-retrieval.ts) переведён на rollout selection layer: `legacy` сохраняет исторический semantic-first fallback, `hybrid` отдаёт fused ranking, `shadow` возвращает legacy ranking и пишет rollout snapshot в logs.
+- [x] Добавлен regression suite [retrieval-rollout.spec.ts](/C:/fit/tests/ai-gate/retrieval-rollout.spec.ts) и он включён в `npm run test:retrieval-gate`.
+- [x] Добавлен release harness [verify-retrieval-release.mjs](/C:/fit/scripts/verify-retrieval-release.mjs) и команда `npm run verify:retrieval-release`: retrieval regression gate всегда идёт в `hybrid` режиме, а live `assistant / retrieval / workout plan / meal plan / safety` suites запускаются поверх того же режима, если доступны auth и AI provider credentials.
+- [x] [quality.yml](/C:/fit/.github/workflows/quality.yml) теперь проводит AI quality gate через `npm run verify:retrieval-release` и требует user/admin Playwright credentials, чтобы в CI действительно покрывались и assistant/safety, и admin retrieval/plan suites.
+- [x] Локальная verification-связка подтверждена пакетами `npm run lint`, `npm run test:retrieval-gate`, `npm run typecheck`, `npm run build`; `npm run verify:retrieval-release` сейчас честно упирается во внешний provider blocker (`OpenRouter 402`, `Voyage 403`) и поэтому не закрывает основной master-plan пункт про live AI quality gate.
+- [ ] Следующий RAG tranche: переходить к step-level telemetry и latency baseline для retrieval слоя.

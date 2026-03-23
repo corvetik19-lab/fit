@@ -1003,6 +1003,14 @@
 - Проверка зелёная: `npx eslint src/lib/admin-role-management.ts src/app/api/admin/users/[id]/role/route.ts`, `npm run typecheck`, `npm run build`.
 - Общий прогресс execution checklist остаётся `144 / 176` (`82%`): tranche продолжает admin/backend extraction, но не закрывает следующий основной checkbox целиком.
 
+### 2026-03-24 23:20 - Добавил rollout и release gate для RAG v2
+
+- Добавил [knowledge-retrieval-rollout.ts](/C:/fit/src/lib/ai/knowledge-retrieval-rollout.ts): retrieval pipeline теперь поддерживает режимы `legacy`, `hybrid`, `shadow`, а `shadow` сохраняет legacy ranking и логирует rollout snapshot для безопасного сравнения.
+- [env.ts](/C:/fit/src/lib/env.ts), [package.json](/C:/fit/package.json), [quality.yml](/C:/fit/.github/workflows/quality.yml) и [\.env.example](/C:/fit/.env.example) синхронизированы под `AI_RETRIEVAL_MODE` и новый release harness [verify-retrieval-release.mjs](/C:/fit/scripts/verify-retrieval-release.mjs).
+- Добавлен regression suite [retrieval-rollout.spec.ts](/C:/fit/tests/ai-gate/retrieval-rollout.spec.ts), а `npm run test:retrieval-gate` теперь покрывает hybrid rollout mode вместе с metadata, chunk sync, retrieval metrics и historical fallback.
+- Локальная verification-связка зелёная: `npm run lint`, `npm run test:retrieval-gate`, `npm run typecheck`, `npm run build`. `npm run verify:retrieval-release` сейчас честно упирается во внешний provider blocker: `OpenRouter 402` по кредитам и `Voyage 403` по embeddings.
+- Общий прогресс execution checklist остаётся `165 / 176` (`94%`), а профильный `RAG_V2_EXECUTION` вырос до `15 / 18` (`83%`).
+
 ### 2026-03-21 11:45 - Подготовил Android / TWA scaffold и досанировал release docs
 
 - Добавлен Android/TWA release blueprint `android/twa-release.json`: package name `app.fitplatform.mobile`, production host, splash assets, signing placeholders и Play metadata теперь зафиксированы как source of truth для Android-оболочки.

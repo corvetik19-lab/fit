@@ -117,6 +117,7 @@
 - `workout plan`
 - `meal plan`
 - `safety`
+- для retrieval rollout не прогнан `npm run verify:retrieval-release` или он не даёт явный status по provider/runtime blocker
 
 ### Billing нельзя считать production-ready, если
 

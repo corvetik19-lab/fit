@@ -21,6 +21,7 @@
 - [ ] Подтверждены `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN`
 - [ ] Подтверждены `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PREMIUM_MONTHLY_PRICE_ID`, если затронут billing
 - [ ] Если менялись AI runtime или billing runtime контуры, прогнан `npm run verify:staging-runtime`
+- [ ] Если менялись retrieval, indexing или AI quality gate для ассистента и планов, прогнан `npm run verify:retrieval-release`
 - [ ] Если менялись Sentry runtime, global error surface или admin observability flow, прогнан `npm run verify:sentry-runtime`
 - [ ] Если менялись Android/TWA scaffold, asset links или packaging metadata, прогнан `npm run verify:android-twa`
 - [ ] После DDL-изменений применены миграции и проверены advisors `security` и `performance`
