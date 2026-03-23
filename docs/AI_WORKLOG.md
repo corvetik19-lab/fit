@@ -44,6 +44,13 @@
 - [knowledge-indexing.ts](/C:/fit/src/lib/ai/knowledge-indexing.ts) теперь удаляет только stale embeddings и считает новые embeddings только для отсутствующих `chunk_id`, вместо полного пересоздания embedding слоя.
 - Добавлен regression [knowledge-chunk-sync.spec.ts](/C:/fit/tests/ai-gate/knowledge-chunk-sync.spec.ts), который подтверждает diff для `unchanged / changed / stale` chunk flow.
 
+### RAG v2 retrieval eval gate
+
+- [eval-suites.ts](/C:/fit/src/lib/ai/eval-suites.ts) переведён в чистый UTF-8 и расширен retrieval intent-темами `workouts`, `nutrition`, `profile`, `plans`, `recent_history`.
+- Добавлен metrics слой [knowledge-retrieval-evals.ts](/C:/fit/src/lib/ai/knowledge-retrieval-evals.ts): `Recall@5`, `Recall@10`, `nDCG@10`, score per eval case и grouping по retrieval topics теперь живут вне UI и route handlers.
+- Добавлен regression [retrieval-metrics.spec.ts](/C:/fit/tests/ai-gate/retrieval-metrics.spec.ts), который отдельно подтверждает retrieval metrics и topic grouping.
+- Добавлен новый command-level gate `npm run test:retrieval-gate`: он запускает hybrid ranking, metadata, chunk sync, retrieval metrics и full-history fallback suite без web server и auth bootstrap.
+
 ## 2026-03-21
 
 ### Mobile workout focus-mode cleanup

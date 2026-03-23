@@ -1105,3 +1105,11 @@
 - [x] [knowledge-indexing.ts](/C:/fit/src/lib/ai/knowledge-indexing.ts) больше не пересоздаёт весь embedding слой по умолчанию: stale embeddings удаляются, а новые embeddings считаются только для отсутствующих chunk ids.
 - [x] Добавлен regression suite [knowledge-chunk-sync.spec.ts](/C:/fit/tests/ai-gate/knowledge-chunk-sync.spec.ts), который подтверждает diff для `unchanged / changed / stale` chunk flow.
 - [ ] Следующий RAG tranche: переходить к DB migration для lexical search metadata и hybrid RPC, затем связывать это с retrieval eval gate.
+
+## 2026-03-24 RAG v2 retrieval eval addendum
+
+- [x] [eval-suites.ts](/C:/fit/src/lib/ai/eval-suites.ts) переведён в чистый UTF-8 и расширен retrieval intent-темами `workouts`, `nutrition`, `profile`, `plans`, `recent_history`.
+- [x] Добавлен metrics слой [knowledge-retrieval-evals.ts](/C:/fit/src/lib/ai/knowledge-retrieval-evals.ts): `Recall@5`, `Recall@10`, `nDCG@10`, score per eval case и grouping по retrieval topics теперь выражены отдельными pure helpers.
+- [x] Добавлен regression suite [retrieval-metrics.spec.ts](/C:/fit/tests/ai-gate/retrieval-metrics.spec.ts), который подтверждает метрики и topic grouping отдельно от live AI runtime.
+- [x] Добавлен отдельный command-level gate `npm run test:retrieval-gate`: он запускает hybrid ranking, metadata, chunk sync, retrieval metrics и full-history retrieval fallback suite без web server и auth bootstrap.
+- [ ] Следующий RAG tranche: связать retrieval gate с feature-flag rollout и release gate для assistant/plan suites.
