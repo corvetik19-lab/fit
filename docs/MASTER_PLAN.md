@@ -1124,3 +1124,12 @@
 - [x] [quality.yml](/C:/fit/.github/workflows/quality.yml) теперь проводит AI quality gate через `npm run verify:retrieval-release` и требует user/admin Playwright credentials, чтобы в CI действительно покрывались и assistant/safety, и admin retrieval/plan suites.
 - [x] Локальная verification-связка подтверждена пакетами `npm run lint`, `npm run test:retrieval-gate`, `npm run typecheck`, `npm run build`; `npm run verify:retrieval-release` сейчас честно упирается во внешний provider blocker (`OpenRouter 402`, `Voyage 403`) и поэтому не закрывает основной master-plan пункт про live AI quality gate.
 - [ ] Следующий RAG tranche: переходить к step-level telemetry и latency baseline для retrieval слоя.
+
+## 2026-03-24 RAG v2 telemetry and latency addendum
+
+- [x] Добавлен telemetry слой [knowledge-retrieval-telemetry.ts](/C:/fit/src/lib/ai/knowledge-retrieval-telemetry.ts): runtime теперь фиксирует `indexRefreshMs`, `queryEmbeddingMs`, `semanticRpcMs`, `semanticFallbackMs`, `lexicalRpcMs`, `lexicalFallbackMs`, `hybridRankMs`, candidate counts и rollout summary.
+- [x] [knowledge-retrieval.ts](/C:/fit/src/lib/ai/knowledge-retrieval.ts) переведён на step-level measurement и env-gated telemetry logging через `AI_RETRIEVAL_TELEMETRY=1`; `shadow` режим логирует telemetry автоматически.
+- [x] Добавлены regression suites [retrieval-telemetry.spec.ts](/C:/fit/tests/ai-gate/retrieval-telemetry.spec.ts) и [retrieval-performance.spec.ts](/C:/fit/tests/ai-gate/retrieval-performance.spec.ts), а `npm run test:retrieval-gate` теперь включает и telemetry contract, и deterministic latency budget.
+- [x] Добавлен performance handoff [RETRIEVAL_PERFORMANCE.md](/C:/fit/docs/RETRIEVAL_PERFORMANCE.md): зафиксированы caps `30 / 30 / 20 / 8`, локальный baseline (`p50 0.1346 ms`, `p95 0.3964 ms`, `max 0.9397 ms`, `250` samples) и текущие tuning decisions для rollout.
+- [x] Локальная verification-связка подтверждена пакетами `npm run test:retrieval-gate`, `npm run typecheck`, `npm run build`; профильный план [RAG_V2_EXECUTION.md](/C:/fit/docs/RAG_V2_EXECUTION.md) после пересчёта фактических checklist-пунктов находится на `17 / 19` (`89%`).
+- [ ] Следующий RAG tranche: оставшиеся DB slices для metadata/index migration и hybrid lexical RPC.

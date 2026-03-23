@@ -1011,6 +1011,14 @@
 - Локальная verification-связка зелёная: `npm run lint`, `npm run test:retrieval-gate`, `npm run typecheck`, `npm run build`. `npm run verify:retrieval-release` сейчас честно упирается во внешний provider blocker: `OpenRouter 402` по кредитам и `Voyage 403` по embeddings.
 - Общий прогресс execution checklist остаётся `165 / 176` (`94%`), а профильный `RAG_V2_EXECUTION` вырос до `15 / 18` (`83%`).
 
+### 2026-03-24 23:55 - Закрыл telemetry и latency baseline для RAG v2
+
+- Добавил [knowledge-retrieval-telemetry.ts](/C:/fit/src/lib/ai/knowledge-retrieval-telemetry.ts) и расширил [knowledge-retrieval.ts](/C:/fit/src/lib/ai/knowledge-retrieval.ts): pipeline теперь снимает step-level telemetry по `indexRefresh`, `embedding`, `semantic`, `lexical`, `hybridRank`, candidate counts и rollout summary.
+- Добавил [knowledge-retrieval-performance.ts](/C:/fit/src/lib/ai/knowledge-retrieval-performance.ts), [retrieval-telemetry.spec.ts](/C:/fit/tests/ai-gate/retrieval-telemetry.spec.ts) и [retrieval-performance.spec.ts](/C:/fit/tests/ai-gate/retrieval-performance.spec.ts); deterministic latency budget теперь является частью `npm run test:retrieval-gate`.
+- Добавил handoff [RETRIEVAL_PERFORMANCE.md](/C:/fit/docs/RETRIEVAL_PERFORMANCE.md) с текущим baseline: `p50 0.1346 ms`, `p95 0.3964 ms`, `max 0.9397 ms`, `250` samples на caps `30 / 30 / 20 / 8`.
+- Проверка зелёная: `npm run test:retrieval-gate`, `npm run typecheck`, `npm run build`.
+- Общий progress в [MASTER_PLAN.md](/C:/fit/docs/MASTER_PLAN.md) остаётся `165 / 176` (`94%`), а профильный [RAG_V2_EXECUTION.md](/C:/fit/docs/RAG_V2_EXECUTION.md) после корректного пересчёта checklist находится на `17 / 19` (`89%`).
+
 ### 2026-03-21 11:45 - Подготовил Android / TWA scaffold и досанировал release docs
 
 - Добавлен Android/TWA release blueprint `android/twa-release.json`: package name `app.fitplatform.mobile`, production host, splash assets, signing placeholders и Play metadata теперь зафиксированы как source of truth для Android-оболочки.

@@ -21,6 +21,7 @@ const serverEnvSchema = z.object({
   AI_RETRIEVAL_MODE: z
     .enum(["legacy", "hybrid", "shadow"])
     .optional(),
+  AI_RETRIEVAL_TELEMETRY: z.string().min(1).optional(),
   ADMIN_BOOTSTRAP_TOKEN: z.string().min(1).optional(),
   CRON_SECRET: z.string().min(1).optional(),
   OPENROUTER_API_KEY: z.string().min(1).optional(),
@@ -55,6 +56,7 @@ export const publicEnv = publicEnvSchema.parse({
 export const serverEnv = serverEnvSchema.parse({
   AI_GATEWAY_API_KEY: normalizeEnv(process.env.AI_GATEWAY_API_KEY),
   AI_RETRIEVAL_MODE: normalizeEnv(process.env.AI_RETRIEVAL_MODE),
+  AI_RETRIEVAL_TELEMETRY: normalizeEnv(process.env.AI_RETRIEVAL_TELEMETRY),
   ADMIN_BOOTSTRAP_TOKEN: normalizeEnv(process.env.ADMIN_BOOTSTRAP_TOKEN),
   CRON_SECRET: normalizeEnv(process.env.CRON_SECRET),
   OPENROUTER_API_KEY: normalizeEnv(process.env.OPENROUTER_API_KEY),
@@ -128,6 +130,10 @@ export function hasAiEmbeddingEnv() {
 
 export function getAiRetrievalMode() {
   return serverEnv.AI_RETRIEVAL_MODE ?? "hybrid";
+}
+
+export function hasAiRetrievalTelemetryEnv() {
+  return serverEnv.AI_RETRIEVAL_TELEMETRY === "1";
 }
 
 export function hasSentryRuntimeEnv() {

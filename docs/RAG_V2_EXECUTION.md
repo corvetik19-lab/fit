@@ -10,7 +10,7 @@
 - записать актуальный процент прямо здесь;
 - добавить короткую запись в [AI_WORKLOG.md](/C:/fit/docs/AI_WORKLOG.md).
 
-Текущий прогресс execution checklist: `15 / 18` (`83%`).
+Текущий прогресс execution checklist: `17 / 19` (`89%`).
 
 ## Execution Checklist
 
@@ -42,9 +42,9 @@
 
 ### Wave 4. Performance и observability
 
-- [ ] Добавить step-level telemetry для retrieval pipeline: embedding, vector, lexical, rerank, index refresh.
-- [ ] Зафиксировать latency baseline и performance tuning решения для retrieval слоя.
+- [x] Добавить step-level telemetry для retrieval pipeline: embedding, vector, lexical, rerank, index refresh.
+- [x] Зафиксировать latency baseline и performance tuning решения для retrieval слоя.
 
 ## Ближайший tranche
 
-- [ ] Wave 4: добавить step-level telemetry и затем зафиксировать latency baseline с performance decisions для retrieval слоя.
+- [ ] Wave 2: добавить DB migration для search/index metadata в `knowledge_chunks`, затем ввести lexical search index и hybrid RPC под user-scoped retrieval.
