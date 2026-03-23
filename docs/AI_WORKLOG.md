@@ -30,6 +30,13 @@
 - [knowledge-model.ts](/C:/fit/src/lib/ai/knowledge-model.ts) расширен score-breakdown полями `vectorScore`, `textScore`, `fusedScore`, `rerankScore`, `matchedTerms`, `sourceKind`, а [knowledge-retrieval.ts](/C:/fit/src/lib/ai/knowledge-retrieval.ts) переведён с fallback-only режима на `vector + lexical -> fused -> rerank`.
 - Добавлен regression [hybrid-retrieval.spec.ts](/C:/fit/tests/ai-gate/hybrid-retrieval.spec.ts), который подтверждает fusion, score-breakdown и верхний context cap без смены DB-стека.
 
+### RAG v2 chunk metadata contract
+
+- Добавлен [knowledge-chunk-policy.ts](/C:/fit/src/lib/ai/knowledge-chunk-policy.ts): source families и их importance/recency rules теперь формализованы отдельно от retrieval runtime.
+- Добавлен [knowledge-document-metadata.ts](/C:/fit/src/lib/ai/knowledge-document-metadata.ts): knowledge documents получают `sourceKey`, `chunkVersion`, `contentHash`, `importanceWeight`, `recencyAt`, `sourceFamily`, `tokenCount`.
+- [knowledge-documents.ts](/C:/fit/src/lib/ai/knowledge-documents.ts) теперь финализирует metadata contract для всех chunk-типов и прокидывает recency keys в `profile`, `body metrics`, `memory`, `workout day`, `exercise history` и `structured facts`.
+- Добавлен regression [knowledge-document-metadata.spec.ts](/C:/fit/tests/ai-gate/knowledge-document-metadata.spec.ts), который подтверждает deterministic metadata для workout и fallback chunks.
+
 ## 2026-03-21
 
 ### Mobile workout focus-mode cleanup

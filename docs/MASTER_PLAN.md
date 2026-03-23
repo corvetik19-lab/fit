@@ -1089,3 +1089,11 @@
 - [x] Добавлен app-side hybrid ranking [knowledge-hybrid-ranking.ts](/C:/fit/src/lib/ai/knowledge-hybrid-ranking.ts) и retrieval pipeline в [knowledge-retrieval.ts](/C:/fit/src/lib/ai/knowledge-retrieval.ts) переведён с fallback-only режима на `vector + lexical -> fused -> rerank`.
 - [x] Добавлен regression suite [hybrid-retrieval.spec.ts](/C:/fit/tests/ai-gate/hybrid-retrieval.spec.ts), который подтверждает fusion, score-breakdown и context cap.
 - [ ] Следующий RAG tranche: формализовать chunk policy и metadata contract для `knowledge_chunks`, затем переходить к incremental indexing и hybrid DB search.
+
+## 2026-03-24 RAG v2 chunk metadata addendum
+
+- [x] Добавлен policy слой [knowledge-chunk-policy.ts](/C:/fit/src/lib/ai/knowledge-chunk-policy.ts): source families `profile`, `workout`, `nutrition`, `memory`, `structured`, `fallback` и их importance/recency rules теперь зафиксированы явно.
+- [x] Добавлен metadata слой [knowledge-document-metadata.ts](/C:/fit/src/lib/ai/knowledge-document-metadata.ts): каждый knowledge document теперь получает `sourceKey`, `chunkVersion`, `contentHash`, `importanceWeight`, `recencyAt`, `sourceFamily`, `tokenCount`.
+- [x] [knowledge-documents.ts](/C:/fit/src/lib/ai/knowledge-documents.ts) переведён на финализацию metadata contract и дополнен recency keys для `profile`, `body metrics`, `memory`, `workout day`, `exercise history` и `structured facts`.
+- [x] Добавлен regression suite [knowledge-document-metadata.spec.ts](/C:/fit/tests/ai-gate/knowledge-document-metadata.spec.ts), который подтверждает deterministic metadata для workout и fallback chunks.
+- [ ] Следующий RAG tranche: переходить к incremental indexing, stale chunk cleanup и hybrid DB search, уже опираясь на введённый metadata contract.

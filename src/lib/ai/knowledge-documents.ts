@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { finalizeKnowledgeDocuments } from "@/lib/ai/knowledge-document-metadata";
 import {
   average,
   buildMealSummary,
@@ -51,7 +52,7 @@ export async function buildKnowledgeDocuments(
   ];
 
   if (!documents.length) {
-    return [
+    return finalizeKnowledgeDocuments([
       {
         sourceType: "fallback_context",
         sourceId: userId,
@@ -61,10 +62,10 @@ export async function buildKnowledgeDocuments(
           category: "fallback",
         },
       },
-    ];
+    ]);
   }
 
-  return documents;
+  return finalizeKnowledgeDocuments(documents);
 }
 
 function buildProfileDocuments(
@@ -106,6 +107,7 @@ function buildProfileDocuments(
       ].join("\n"),
       metadata: {
         category: "profile",
+        updatedAt: goal?.updated_at ?? null,
       },
     },
   ];
@@ -140,6 +142,7 @@ function buildBodyMetricDocuments(sourceData: KnowledgeSourceData): KnowledgeDoc
       ].join("\n"),
       metadata: {
         category: "body_progress",
+        measuredAt: latestMetric?.measured_at ?? null,
       },
     },
     ...bodyMetrics.map((metric) => ({
@@ -179,6 +182,7 @@ function buildNutritionDocuments(
       ].join("\n"),
       metadata: {
         category: "nutrition",
+        generatedAt: nutritionSummaries[0]?.summary_date ?? null,
       },
     });
 
@@ -312,6 +316,7 @@ function buildMemoryDocuments(sourceData: KnowledgeSourceData): KnowledgeDocumen
       content: `Факт о пользователе (${fact.fact_type}) от ${fact.created_at}: ${fact.content}. Уверенность ${fact.confidence}.`,
       metadata: {
         category: "memory",
+        createdAt: fact.created_at,
         factType: fact.fact_type,
       },
     });
@@ -324,6 +329,7 @@ function buildMemoryDocuments(sourceData: KnowledgeSourceData): KnowledgeDocumen
       content: `Снимок пользовательского контекста (${snapshot.snapshot_reason}) от ${snapshot.created_at}: ${compactJson(snapshot.payload)}.`,
       metadata: {
         category: "snapshot",
+        createdAt: snapshot.created_at,
         snapshotReason: snapshot.snapshot_reason,
       },
     });
@@ -382,6 +388,7 @@ function buildWorkoutDocuments(sourceData: KnowledgeSourceData): KnowledgeDocume
       ].join("\n"),
       metadata: {
         category: "workout",
+        updatedAt: workoutDays[0]?.updated_at ?? null,
       },
     },
   ];
@@ -499,11 +506,12 @@ function buildWorkoutDayDocument({
       `Заметка: ${day.session_note?.trim() || "нет заметки"}.`,
       ...exerciseLines,
     ].join("\n"),
-    metadata: {
-      category: "workout",
-      status: day.status,
-      weeklyProgramId: day.weekly_program_id,
-    },
+      metadata: {
+        category: "workout",
+        status: day.status,
+        updatedAt: day.updated_at,
+        weeklyProgramId: day.weekly_program_id,
+      },
   };
 }
 
@@ -612,6 +620,7 @@ function buildExerciseHistoryDocuments(
       metadata: {
         category: "workout_exercise_history",
         exerciseTitle,
+        updatedAt: summary.lastUpdatedAt,
       },
     });
   }
@@ -657,6 +666,7 @@ function buildStructuredKnowledgeDocuments(
         .join("\n"),
       metadata: {
         category: "structured_knowledge",
+        generatedAt: structuredKnowledge.generatedAt,
         priority: fact.priority,
         topic: fact.topic,
       },
