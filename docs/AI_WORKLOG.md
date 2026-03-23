@@ -1019,6 +1019,12 @@
 - Проверка зелёная: `npm run test:retrieval-gate`, `npm run typecheck`, `npm run build`.
 - Общий progress в [MASTER_PLAN.md](/C:/fit/docs/MASTER_PLAN.md) остаётся `165 / 176` (`94%`), а профильный [RAG_V2_EXECUTION.md](/C:/fit/docs/RAG_V2_EXECUTION.md) после корректного пересчёта checklist находится на `17 / 19` (`89%`).
 
+### 2026-03-25 00:10 - Зафиксировал реальный blocker по финальным DB slices RAG v2
+
+- Сверка через Supabase MCP показала, что доступный namespace `supabase-finappka` указывает не на `fit`, а на другой проект с finance/tenders schema.
+- Из-за этого два оставшихся пункта [RAG_V2_EXECUTION.md](/C:/fit/docs/RAG_V2_EXECUTION.md) по `knowledge_chunks` DDL, lexical index и hybrid RPC нельзя безопасно закрывать через `apply_migration` и advisors до корректной project binding.
+- Блокер зафиксирован в [MASTER_PLAN.md](/C:/fit/docs/MASTER_PLAN.md) и [RAG_V2_EXECUTION.md](/C:/fit/docs/RAG_V2_EXECUTION.md).
+
 ### 2026-03-21 11:45 - Подготовил Android / TWA scaffold и досанировал release docs
 
 - Добавлен Android/TWA release blueprint `android/twa-release.json`: package name `app.fitplatform.mobile`, production host, splash assets, signing placeholders и Play metadata теперь зафиксированы как source of truth для Android-оболочки.

@@ -48,3 +48,7 @@
 ## Ближайший tranche
 
 - [ ] Wave 2: добавить DB migration для search/index metadata в `knowledge_chunks`, затем ввести lexical search index и hybrid RPC под user-scoped retrieval.
+
+## Реальный blocker
+
+- [ ] Supabase MCP для DDL сейчас небезопасен для этих двух DB-пунктов: `supabase-finappka` указывает не на `fit`, а на другой проект с finance/tenders schema, поэтому `apply_migration`, `list_tables` и advisors по knowledge-таблицам нельзя использовать до корректной привязки проекта.
