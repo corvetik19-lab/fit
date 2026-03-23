@@ -6,7 +6,7 @@
 
 - `npm run build` зелёный;
 - Vercel deployment создался;
-- приложение "в целом открывается".
+- приложение в целом открывается.
 
 `Prod-ready` означает, что одновременно выполнены automated gates, manual acceptance, env readiness и release-specific проверки.
 
@@ -21,16 +21,17 @@
 
 ### Дополнительные обязательные проверки по изменению контура
 
-- `npm run test:rls` - если менялся auth, RLS, owner-only или self-service контур
-- `npm run test:e2e:auth` - если менялись пользовательские сценарии, shell, API contracts, AI/admin UX
-- `npm run verify:staging-runtime` - если менялись AI runtime или billing runtime контуры и нужно прогнать staging-like preflight для live secrets
-- `npm run verify:migrations` - если менялись `supabase/migrations`
-- `npm run verify:android-twa` - если менялись Android/TWA scaffold, asset links или packaging metadata
+- `npm run test:rls` — если менялся auth, RLS, owner-only или self-service контур
+- `npm run test:e2e:auth` — если менялись пользовательские сценарии, shell, API contracts, AI или admin UX
+- `npm run verify:staging-runtime` — если менялись AI runtime или billing runtime контуры и нужен staging-like preflight для live secrets
+- `npm run verify:sentry-runtime` — если менялись Sentry runtime, global error surface или admin observability flow
+- `npm run verify:migrations` — если менялись `supabase/migrations`
+- `npm run verify:android-twa` — если менялись Android/TWA scaffold, asset links или packaging metadata
 
 ### Что считается провалом automated gates
 
 - хотя бы одна из команд падает;
-- команды проходят только "со второго раза" без объяснимой причины;
+- команды проходят только со второго раза без объяснимой причины;
 - quality gates оставляют неожиданный tracked-noise;
 - тесты зелёные только за счёт skip, а не реального прохождения сценариев.
 
@@ -50,7 +51,7 @@
 
 - mobile PWA shell не перекрывает контент;
 - burger drawer открывается и закрывается без layout/hydration артефактов;
-- workout focus-mode читаем и usable на телефоне;
+- workout focus-mode читаем и удобен на телефоне;
 - AI workspace не показывает служебный мусор и не теряет историю;
 - admin surface читаем, секционен и не валится общим `500` при degraded fallback.
 
@@ -92,7 +93,7 @@
 
 ### Для Android/TWA
 
-- `ANDROID_TWA_PACKAGE_NAME` (можно оставить дефолт `app.fitplatform.mobile`)
+- `ANDROID_TWA_PACKAGE_NAME` — можно оставить дефолт `app.fitplatform.mobile`
 - `ANDROID_TWA_SHA256_FINGERPRINTS`
 
 Отсутствие обязательных env не всегда блокирует локальную разработку, но блокирует статус `prod-ready` для соответствующего контура.
@@ -108,14 +109,14 @@
 
 ### AI нельзя считать production-ready, если
 
-- history/retrieval/proposals не подтверждены как owner-scoped;
+- history, retrieval и proposals не подтверждены как owner-scoped;
 - provider failure ломает UX вместо понятного user-facing ответа;
 - minimal eval gate не закрыт для:
-  - `assistant`
-  - `retrieval`
-  - `workout plan`
-  - `meal plan`
-  - `safety`
+- `assistant`
+- `retrieval`
+- `workout plan`
+- `meal plan`
+- `safety`
 
 ### Billing нельзя считать production-ready, если
 
@@ -123,18 +124,24 @@
 - webhook idempotency не подтверждена;
 - `/settings` и `/admin` не показывают корректное состояние подписки.
 
+### Observability нельзя считать production-ready, если
+
+- `npm run verify:sentry-runtime` не проходит или явно пишет blocker по env;
+- root-admin smoke `/api/admin/observability/sentry-test` не подтверждён на живом runtime;
+- global error surface не отправляет исключения в Sentry.
+
 ### Android/TWA нельзя считать production-ready, если
 
 - production PWA installability не подтверждена;
 - не готовы `assetlinks.json`, package name, signing и splash;
-- Android scaffold в `android/twa-release.json` не синхронизирован с `docs/ANDROID_TWA.md`;
+- Android scaffold в [twa-release.json](/C:/fit/android/twa-release.json) не синхронизирован с [ANDROID_TWA.md](/C:/fit/docs/ANDROID_TWA.md);
 - не пройден smoke на production URL.
 
 ### Supabase platform нельзя считать release-ready, если
 
-- leaked password protection остаётся выключенной без отдельного принятого риска;
+- `leaked password protection` остаётся выключенной без отдельного принятого риска;
 - нет зафиксированного решения по `vector` extension в `public`;
-- platform-level настройки расходятся с `docs/RELEASE_CHECKLIST.md`.
+- platform-level настройки расходятся с [RELEASE_CHECKLIST.md](/C:/fit/docs/RELEASE_CHECKLIST.md).
 
 ## 5. Минимум для статуса "можно выкатывать"
 
@@ -149,8 +156,8 @@
 
 ## 6. Где это проверять
 
-- общий merge/deploy чеклист: `docs/RELEASE_CHECKLIST.md`
-- текущий backlog и незакрытые blocker-пункты: `docs/MASTER_PLAN.md`
-- история изменений и последних прогонов: `docs/AI_WORKLOG.md`
-- допустимый warning-хвост сборки: `docs/BUILD_WARNINGS.md`
-- Android/TWA handoff: `docs/ANDROID_TWA.md`
+- общий merge/deploy checklist: [RELEASE_CHECKLIST.md](/C:/fit/docs/RELEASE_CHECKLIST.md)
+- текущий backlog и незакрытые blocker-пункты: [MASTER_PLAN.md](/C:/fit/docs/MASTER_PLAN.md)
+- история изменений и последних прогонов: [AI_WORKLOG.md](/C:/fit/docs/AI_WORKLOG.md)
+- допустимый warning-хвост сборки: [BUILD_WARNINGS.md](/C:/fit/docs/BUILD_WARNINGS.md)
+- Android/TWA handoff: [ANDROID_TWA.md](/C:/fit/docs/ANDROID_TWA.md)

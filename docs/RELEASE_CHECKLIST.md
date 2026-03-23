@@ -6,11 +6,11 @@
 - [ ] `npm run typecheck`
 - [ ] `npm run build`
 - [ ] `npm run test:smoke`
-- [ ] Если менялся auth/RLS/owner-only контур, пройти `npm run test:rls`
-- [ ] Если менялись пользовательские сценарии или route contracts, пройти `npm run test:e2e:auth`
+- [ ] Если менялся auth, RLS, owner-only или self-service контур, пройти `npm run test:rls`
+- [ ] Если менялись пользовательские сценарии, shell или route contracts, пройти `npm run test:e2e:auth`
 - [ ] Если менялись `supabase/migrations`, проходит `npm run verify:migrations`
 - [ ] Нет лишних локальных изменений в tracked-файлах после quality gates
-- [ ] `docs/MASTER_PLAN.md` и `docs/AI_WORKLOG.md` обновлены, если менялся контракт
+- [ ] `docs/MASTER_PLAN.md` и `docs/AI_WORKLOG.md` обновлены, если менялся контракт или release-процесс
 
 ## Перед production deploy
 
@@ -21,11 +21,12 @@
 - [ ] Подтверждены `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN`
 - [ ] Подтверждены `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PREMIUM_MONTHLY_PRICE_ID`, если затронут billing
 - [ ] Если менялись AI runtime или billing runtime контуры, прогнан `npm run verify:staging-runtime`
+- [ ] Если менялись Sentry runtime, global error surface или admin observability flow, прогнан `npm run verify:sentry-runtime`
 - [ ] Если менялись Android/TWA scaffold, asset links или packaging metadata, прогнан `npm run verify:android-twa`
 - [ ] После DDL-изменений применены миграции и проверены advisors `security` и `performance`
 - [ ] Для Supabase-проекта отдельно проверены platform-level пункты:
-  - leaked password protection включён
-  - принято осознанное решение по `vector` extension в `public` и это отражено в release notes
+- [ ] `leaked password protection` включён
+- [ ] По `vector` extension в `public` принято осознанное решение и это отражено в release notes
 
 ## Для полного CI в GitHub Actions
 
@@ -45,7 +46,7 @@
 - [ ] Не видно hydration errors, render loops и бесконечного polling на базовых экранах
 - [ ] PWA shell и burger drawer не перекрывают контент на телефоне
 
-## Дополнительно перед billing/AI релизом
+## Дополнительно перед billing и AI релизом
 
 - [ ] Stripe flow проверен end-to-end: `checkout -> return reconcile -> webhook -> portal`
 - [ ] AI runtime даёт корректный user-facing ответ при ошибке провайдера

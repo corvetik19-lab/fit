@@ -16,6 +16,20 @@
 - Этот tranche подтвердил локально выполнимый billing hardening без live Stripe env и позволил закрыть основной checklist-пункт про webhook idempotency/consistency; дальше по billing остаются уже внешние блокеры `production/staging` secrets и живой runtime contour.
 - Проверка зелёная: `npm run lint`, `npm run build`, `npm run typecheck`, `npm run test:billing-gate` -> `1 passed, 1 skipped`.
 
+### Sentry runtime readiness gate
+
+- Добавлен [verify-sentry-runtime.mjs](/C:/fit/scripts/verify-sentry-runtime.mjs): новый `npm run verify:sentry-runtime` делает preflight по admin auth и Sentry env, а потом либо запускает live smoke suite, либо явно печатает blocker по отсутствующим secrets.
+- Добавлен [sentry-runtime-gate.spec.ts](/C:/fit/tests/sentry-gate/sentry-runtime-gate.spec.ts): при готовом runtime root-admin подтверждает, что [sentry-test route](/C:/fit/src/app/api/admin/observability/sentry-test/route.ts) возвращает `eventId` и `createdAt`.
+- Санированы [RELEASE_CHECKLIST.md](/C:/fit/docs/RELEASE_CHECKLIST.md), [PROD_READY.md](/C:/fit/docs/PROD_READY.md), [BUILD_WARNINGS.md](/C:/fit/docs/BUILD_WARNINGS.md), [docs/README.md](/C:/fit/docs/README.md), [global-error.tsx](/C:/fit/src/app/global-error.tsx) и [sentry-test route](/C:/fit/src/app/api/admin/observability/sentry-test/route.ts), чтобы observability и release blockers снова были зафиксированы в чистом UTF-8.
+- Локально tranche подтверждён пакетами `npm run lint`, `npm run typecheck`, `npm run build`, `npm run verify:sentry-runtime`; live Sentry rollout остаётся внешним blocker только по production env и credentials.
+
+### RAG v2 bootstrap
+
+- Добавлен отдельный execution doc [RAG_V2_EXECUTION.md](/C:/fit/docs/RAG_V2_EXECUTION.md) с чекбоксами `[ ]/[x]`, процентом прогресса и правилами ведения tranche-работы.
+- Добавлены [knowledge-retrieval-config.ts](/C:/fit/src/lib/ai/knowledge-retrieval-config.ts) и [knowledge-hybrid-ranking.ts](/C:/fit/src/lib/ai/knowledge-hybrid-ranking.ts): retrieval получил caps для semantic/lexical/fused/final context и детерминированный hybrid ranking поверх vector и lexical candidates.
+- [knowledge-model.ts](/C:/fit/src/lib/ai/knowledge-model.ts) расширен score-breakdown полями `vectorScore`, `textScore`, `fusedScore`, `rerankScore`, `matchedTerms`, `sourceKind`, а [knowledge-retrieval.ts](/C:/fit/src/lib/ai/knowledge-retrieval.ts) переведён с fallback-only режима на `vector + lexical -> fused -> rerank`.
+- Добавлен regression [hybrid-retrieval.spec.ts](/C:/fit/tests/ai-gate/hybrid-retrieval.spec.ts), который подтверждает fusion, score-breakdown и верхний context cap без смены DB-стека.
+
 ## 2026-03-21
 
 ### Mobile workout focus-mode cleanup

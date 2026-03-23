@@ -148,6 +148,12 @@ export type RetrievedKnowledgeItem = {
   content: string;
   metadata: JsonRecord;
   similarity: number;
+  vectorScore?: number | null;
+  textScore?: number | null;
+  fusedScore?: number | null;
+  rerankScore?: number | null;
+  matchedTerms?: string[];
+  sourceKind?: string;
 };
 
 export type KnowledgeReindexResult = {

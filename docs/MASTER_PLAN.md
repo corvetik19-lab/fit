@@ -1071,3 +1071,21 @@
 - [x] Локальная verification-связка подтверждена пакетами `npm run lint`, `npm run build`, `npm run typecheck`, `npm run test:billing-gate` -> `1 passed, 1 skipped`.
 - [x] После этого закрыт основной checklist-пункт `Проверить идемпотентность webhook и согласованность subscriptions, entitlements, usage counters`.
 - [ ] Следующий billing tranche уже внешний: нужны реальные `production/staging` Stripe env и живой `checkout -> return reconcile -> webhook -> portal`, чтобы закрыть оставшийся live rollout.
+
+## 2026-03-23 Sentry runtime readiness addendum
+
+- [x] Добавлен `npm run verify:sentry-runtime`: [verify-sentry-runtime.mjs](/C:/fit/scripts/verify-sentry-runtime.mjs) делает env preflight по admin auth, `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT` и либо запускает live smoke suite, либо явно печатает blocker по отсутствующим secrets.
+- [x] Добавлен regression gate [sentry-runtime-gate.spec.ts](/C:/fit/tests/sentry-gate/sentry-runtime-gate.spec.ts): при готовом runtime root-admin подтверждает, что [sentry-test route](/C:/fit/src/app/api/admin/observability/sentry-test/route.ts) возвращает `eventId` и `createdAt`.
+- [x] Санированы release-policy документы [RELEASE_CHECKLIST.md](/C:/fit/docs/RELEASE_CHECKLIST.md), [PROD_READY.md](/C:/fit/docs/PROD_READY.md), [BUILD_WARNINGS.md](/C:/fit/docs/BUILD_WARNINGS.md) и индекс документации [README.md](/C:/fit/docs/README.md): observability и release blockers снова зафиксированы в чистом UTF-8.
+- [x] Санированы [global-error.tsx](/C:/fit/src/app/global-error.tsx) и [sentry-test route](/C:/fit/src/app/api/admin/observability/sentry-test/route.ts): global error surface и admin Sentry smoke больше не держат битый copy.
+- [x] Локальная verification-связка подтверждена пакетами `npm run lint`, `npm run typecheck`, `npm run build`, `npm run verify:sentry-runtime`; последний gate сейчас корректно даёт явный skip/blocker только по отсутствующим runtime env и credentials.
+- [ ] Основной checklist-пункт `Завершить Sentry rollout на production env` остаётся открыт: кодовый и release слой готовы, но live runtime smoke всё ещё упирается во внешние production secrets.
+
+## 2026-03-23 RAG v2 bootstrap addendum
+
+- [x] Добавлен отдельный execution doc [RAG_V2_EXECUTION.md](/C:/fit/docs/RAG_V2_EXECUTION.md) с чекбоксами `[ ]/[x]`, правилами обновления и собственным процентом прогресса.
+- [x] Добавлен config слой [knowledge-retrieval-config.ts](/C:/fit/src/lib/ai/knowledge-retrieval-config.ts): зафиксированы caps для semantic candidates, lexical candidates, fused candidates и final context.
+- [x] Retrieval result type в [knowledge-model.ts](/C:/fit/src/lib/ai/knowledge-model.ts) расширен score-breakdown полями `vectorScore`, `textScore`, `fusedScore`, `rerankScore`, `matchedTerms`, `sourceKind`.
+- [x] Добавлен app-side hybrid ranking [knowledge-hybrid-ranking.ts](/C:/fit/src/lib/ai/knowledge-hybrid-ranking.ts) и retrieval pipeline в [knowledge-retrieval.ts](/C:/fit/src/lib/ai/knowledge-retrieval.ts) переведён с fallback-only режима на `vector + lexical -> fused -> rerank`.
+- [x] Добавлен regression suite [hybrid-retrieval.spec.ts](/C:/fit/tests/ai-gate/hybrid-retrieval.spec.ts), который подтверждает fusion, score-breakdown и context cap.
+- [ ] Следующий RAG tranche: формализовать chunk policy и metadata contract для `knowledge_chunks`, затем переходить к incremental indexing и hybrid DB search.

@@ -15,7 +15,7 @@ export async function POST() {
         status: 403,
         code: "PRIMARY_SUPER_ADMIN_REQUIRED",
         message:
-          "Тестовое событие в Sentry может отправлять только основной super-admin.",
+          "Тестовое событие в Sentry может отправлять только корневой администратор.",
       });
     }
 

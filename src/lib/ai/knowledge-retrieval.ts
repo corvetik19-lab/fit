@@ -2,6 +2,7 @@ import { cosineSimilarity } from "ai";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { embedQueryText } from "@/lib/ai/embeddings";
+import { buildHybridKnowledgeMatches } from "@/lib/ai/knowledge-hybrid-ranking";
 import {
   parseVector,
   rankChunkByTokens,
@@ -11,6 +12,10 @@ import {
   type KnowledgeEmbeddingRow,
   type RetrievedKnowledgeItem,
 } from "@/lib/ai/knowledge-model";
+import {
+  clampKnowledgeContextLimit,
+  KNOWLEDGE_RETRIEVAL_LIMITS,
+} from "@/lib/ai/knowledge-retrieval-config";
 import { logger } from "@/lib/logger";
 
 const KNOWLEDGE_FALLBACK_PAGE_SIZE = 200;
@@ -279,6 +284,8 @@ export async function retrieveKnowledgeMatchesWithPipeline({
   supabase: SupabaseClient;
   userId: string;
 }): Promise<RetrievedKnowledgeItem[]> {
+  const finalLimit = clampKnowledgeContextLimit(limit);
+
   try {
     await ensureKnowledgeIndex(supabase, userId);
   } catch (error) {
@@ -299,17 +306,15 @@ export async function retrieveKnowledgeMatchesWithPipeline({
     });
   }
 
+  let semanticMatches: RetrievedKnowledgeItem[] = [];
+
   if (queryEmbedding) {
     try {
-      const rpcMatches = await retrieveKnowledgeMatchesViaRpc(
+      semanticMatches = await retrieveKnowledgeMatchesViaRpc(
         supabase,
         queryEmbedding,
-        limit,
+        Math.max(finalLimit, KNOWLEDGE_RETRIEVAL_LIMITS.semanticCandidates),
       );
-
-      if (rpcMatches.length) {
-        return rpcMatches;
-      }
     } catch (error) {
       logger.warn("knowledge RPC retrieval fell back to app-side vector ranking", {
         error,
@@ -317,35 +322,31 @@ export async function retrieveKnowledgeMatchesWithPipeline({
       });
     }
 
-    try {
-      const vectorFallbackMatches = await retrieveKnowledgeMatchesWithFallback(
-        supabase,
-        userId,
-        queryEmbedding,
-        limit,
-      );
-
-      if (vectorFallbackMatches.length) {
-        return vectorFallbackMatches;
+    if (!semanticMatches.length) {
+      try {
+        semanticMatches = await retrieveKnowledgeMatchesWithFallback(
+          supabase,
+          userId,
+          queryEmbedding,
+          Math.max(finalLimit, KNOWLEDGE_RETRIEVAL_LIMITS.semanticCandidates),
+        );
+      } catch (error) {
+        logger.warn("knowledge vector fallback failed; trying text retrieval", {
+          error,
+          userId,
+        });
       }
-    } catch (error) {
-      logger.warn("knowledge vector fallback failed; trying text retrieval", {
-        error,
-        userId,
-      });
     }
   }
 
+  let textMatches: RetrievedKnowledgeItem[] = [];
+
   try {
-    const textRpcMatches = await retrieveKnowledgeMatchesViaTextRpc(
+    textMatches = await retrieveKnowledgeMatchesViaTextRpc(
       supabase,
       query,
-      limit,
+      Math.max(finalLimit, KNOWLEDGE_RETRIEVAL_LIMITS.lexicalCandidates),
     );
-
-    if (textRpcMatches.length) {
-      return textRpcMatches;
-    }
   } catch (error) {
     logger.warn("knowledge text RPC retrieval fell back to app-side text ranking", {
       error,
@@ -353,18 +354,30 @@ export async function retrieveKnowledgeMatchesWithPipeline({
     });
   }
 
-  try {
-    return await retrieveKnowledgeMatchesViaTextFallback(
-      supabase,
-      userId,
-      query,
-      limit,
-    );
-  } catch (error) {
-    logger.warn("knowledge text fallback failed", {
-      error,
-      userId,
-    });
+  if (!textMatches.length) {
+    try {
+      textMatches = await retrieveKnowledgeMatchesViaTextFallback(
+        supabase,
+        userId,
+        query,
+        Math.max(finalLimit, KNOWLEDGE_RETRIEVAL_LIMITS.lexicalCandidates),
+      );
+    } catch (error) {
+      logger.warn("knowledge text fallback failed", {
+        error,
+        userId,
+      });
+    }
+  }
+
+  if (!semanticMatches.length && !textMatches.length) {
     return [];
   }
+
+  return buildHybridKnowledgeMatches({
+    limit: finalLimit,
+    query,
+    textMatches,
+    vectorMatches: semanticMatches,
+  });
 }
