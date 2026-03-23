@@ -10,6 +10,7 @@ import {
   ensureKnowledgeIndexState,
   refreshKnowledgeEmbeddings as refreshKnowledgeEmbeddingsWithIndexing,
 } from "@/lib/ai/knowledge-indexing";
+import { syncKnowledgeDocuments } from "@/lib/ai/knowledge-chunk-sync";
 import { listKnowledgeChunkInputs } from "@/lib/ai/knowledge-source-data";
 
 const KNOWLEDGE_EMBEDDING_MODEL =
@@ -44,34 +45,15 @@ export async function reindexUserKnowledgeBase(
   }
 
   const documents = await buildKnowledgeDocuments(supabase, userId);
-
-  const { error: deleteError } = await supabase
-    .from("knowledge_chunks")
-    .delete()
-    .eq("user_id", userId);
-
-  if (deleteError) {
-    throw deleteError;
-  }
-
-  const { data: insertedChunks, error: chunkInsertError } = await supabase
-    .from("knowledge_chunks")
-    .insert(
-      documents.map((document) => ({
-        user_id: userId,
-        source_type: document.sourceType,
-        source_id: document.sourceId,
-        content: document.content,
-        metadata: document.metadata,
-      })),
-    )
-    .select("id, source_type, source_id, content, metadata");
-
-  if (chunkInsertError) {
-    throw chunkInsertError;
-  }
-
-  const chunks = (insertedChunks as KnowledgeChunkRow[] | null) ?? [];
+  const chunkSyncResult = await syncKnowledgeDocuments({
+    documents,
+    supabase,
+    userId,
+  });
+  const chunks = [
+    ...chunkSyncResult.unchangedChunks,
+    ...chunkSyncResult.insertedChunks,
+  ] as KnowledgeChunkRow[];
 
   if (!chunks.length) {
     return {

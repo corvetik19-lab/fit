@@ -37,6 +37,13 @@
 - [knowledge-documents.ts](/C:/fit/src/lib/ai/knowledge-documents.ts) теперь финализирует metadata contract для всех chunk-типов и прокидывает recency keys в `profile`, `body metrics`, `memory`, `workout day`, `exercise history` и `structured facts`.
 - Добавлен regression [knowledge-document-metadata.spec.ts](/C:/fit/tests/ai-gate/knowledge-document-metadata.spec.ts), который подтверждает deterministic metadata для workout и fallback chunks.
 
+### RAG v2 incremental chunk sync
+
+- Добавлен [knowledge-chunk-sync.ts](/C:/fit/src/lib/ai/knowledge-chunk-sync.ts): knowledge reindex теперь вычисляет `unchanged / insert / delete` по `sourceKey` и `contentHash`, а не удаляет весь корпус пользователя при каждом полном reindex.
+- [knowledge-runtime.ts](/C:/fit/src/lib/ai/knowledge-runtime.ts) переведён на incremental chunk sync: unchanged chunks сохраняются, changed chunks переиндексируются точечно, stale chunks удаляются отдельно.
+- [knowledge-indexing.ts](/C:/fit/src/lib/ai/knowledge-indexing.ts) теперь удаляет только stale embeddings и считает новые embeddings только для отсутствующих `chunk_id`, вместо полного пересоздания embedding слоя.
+- Добавлен regression [knowledge-chunk-sync.spec.ts](/C:/fit/tests/ai-gate/knowledge-chunk-sync.spec.ts), который подтверждает diff для `unchanged / changed / stale` chunk flow.
+
 ## 2026-03-21
 
 ### Mobile workout focus-mode cleanup

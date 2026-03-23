@@ -33,24 +33,63 @@ export async function refreshKnowledgeEmbeddings({
     };
   }
 
-  const { error: deleteError } = await supabase
+  const { data: existingEmbeddings, error: existingEmbeddingsError } = await supabase
     .from("knowledge_embeddings")
-    .delete()
-    .eq("user_id", userId);
+    .select("chunk_id")
+    .eq("user_id", userId)
+    .eq("model", embeddingModel);
 
-  if (deleteError) {
-    throw deleteError;
+  if (existingEmbeddingsError) {
+    throw existingEmbeddingsError;
+  }
+
+  const currentChunkIds = new Set(chunks.map((chunk) => chunk.id));
+  const existingChunkIds = new Set(
+    ((existingEmbeddings as Array<{ chunk_id: string }> | null) ?? []).map(
+      (row) => row.chunk_id,
+    ),
+  );
+  const staleChunkIds = [...existingChunkIds].filter(
+    (chunkId) => !currentChunkIds.has(chunkId),
+  );
+
+  if (staleChunkIds.length) {
+    const { error: deleteError } = await supabase
+      .from("knowledge_embeddings")
+      .delete()
+      .eq("user_id", userId)
+      .eq("model", embeddingModel)
+      .in("chunk_id", staleChunkIds);
+
+    if (deleteError) {
+      throw deleteError;
+    }
+  }
+
+  const chunksNeedingEmbeddings = chunks.filter(
+    (chunk) => !existingChunkIds.has(chunk.id),
+  );
+
+  if (!chunksNeedingEmbeddings.length) {
+    return {
+      indexedChunks: chunks.length,
+      embeddingsIndexed: 0,
+      mode: "embeddings",
+      searchMode: chunks.length ? "vector" : "text",
+    };
   }
 
   try {
-    const embeddings = await embedDocumentTexts(chunks.map((chunk) => chunk.content));
+    const embeddings = await embedDocumentTexts(
+      chunksNeedingEmbeddings.map((chunk) => chunk.content),
+    );
 
     const { error: embeddingInsertError } = await supabase
       .from("knowledge_embeddings")
       .insert(
         embeddings.map((embedding, index) => ({
           user_id: userId,
-          chunk_id: chunks[index]?.id,
+          chunk_id: chunksNeedingEmbeddings[index]?.id,
           embedding: toVectorLiteral(embedding),
           model: embeddingModel,
         })),
@@ -69,13 +108,13 @@ export async function refreshKnowledgeEmbeddings({
       indexedChunks: chunks.length,
       embeddingsIndexed: 0,
       mode: "embeddings",
-      searchMode: "text",
+      searchMode: existingChunkIds.size ? "vector" : "text",
     };
   }
 
   return {
     indexedChunks: chunks.length,
-    embeddingsIndexed: chunks.length,
+    embeddingsIndexed: chunksNeedingEmbeddings.length,
     mode: "embeddings",
     searchMode: "vector",
   };

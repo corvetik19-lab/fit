@@ -10,7 +10,7 @@
 - записать актуальный процент прямо здесь;
 - добавить короткую запись в [AI_WORKLOG.md](/C:/fit/docs/AI_WORKLOG.md).
 
-Текущий прогресс execution checklist: `8 / 18` (`44%`).
+Текущий прогресс execution checklist: `10 / 18` (`56%`).
 
 ## Execution Checklist
 
@@ -27,8 +27,8 @@
 
 - [x] Формализовать chunk policy по source families: profile, workouts, nutrition, weekly programs, structured facts.
 - [x] Добавить metadata contract для knowledge chunks: `source_key`, `chunk_version`, `content_hash`, `importance_weight`, `recency_at`, `token_count`.
-- [ ] Перевести indexing на incremental reindex вместо полного rebuild по умолчанию.
-- [ ] Добавить cleanup stale chunks по `source_key` и `content_hash`.
+- [x] Перевести indexing на incremental reindex вместо полного rebuild по умолчанию.
+- [x] Добавить cleanup stale chunks по `source_key` и `content_hash`.
 - [ ] Добавить DB migration для search/index metadata в `knowledge_chunks`.
 - [ ] Добавить lexical search index и hybrid RPC под user-scoped retrieval.
 
@@ -47,4 +47,4 @@
 
 ## Ближайший tranche
 
-- [ ] Wave 2: перевести indexing на incremental reindex вместо полного rebuild и добавить cleanup stale chunks по `source_key` и `content_hash`.
+- [ ] Wave 2: добавить DB migration для lexical search metadata и hybrid RPC, затем связать это с retrieval eval gate.

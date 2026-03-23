@@ -1097,3 +1097,11 @@
 - [x] [knowledge-documents.ts](/C:/fit/src/lib/ai/knowledge-documents.ts) переведён на финализацию metadata contract и дополнен recency keys для `profile`, `body metrics`, `memory`, `workout day`, `exercise history` и `structured facts`.
 - [x] Добавлен regression suite [knowledge-document-metadata.spec.ts](/C:/fit/tests/ai-gate/knowledge-document-metadata.spec.ts), который подтверждает deterministic metadata для workout и fallback chunks.
 - [ ] Следующий RAG tranche: переходить к incremental indexing, stale chunk cleanup и hybrid DB search, уже опираясь на введённый metadata contract.
+
+## 2026-03-24 RAG v2 incremental indexing addendum
+
+- [x] Добавлен sync слой [knowledge-chunk-sync.ts](/C:/fit/src/lib/ai/knowledge-chunk-sync.ts): knowledge reindex теперь планирует `unchanged / insert / delete` по `sourceKey` и `contentHash` вместо полного удаления всех chunks.
+- [x] [knowledge-runtime.ts](/C:/fit/src/lib/ai/knowledge-runtime.ts) переведён на incremental chunk sync: unchanged chunks сохраняются, changed chunks переиндексируются точечно, stale chunks удаляются отдельно.
+- [x] [knowledge-indexing.ts](/C:/fit/src/lib/ai/knowledge-indexing.ts) больше не пересоздаёт весь embedding слой по умолчанию: stale embeddings удаляются, а новые embeddings считаются только для отсутствующих chunk ids.
+- [x] Добавлен regression suite [knowledge-chunk-sync.spec.ts](/C:/fit/tests/ai-gate/knowledge-chunk-sync.spec.ts), который подтверждает diff для `unchanged / changed / stale` chunk flow.
+- [ ] Следующий RAG tranche: переходить к DB migration для lexical search metadata и hybrid RPC, затем связывать это с retrieval eval gate.
