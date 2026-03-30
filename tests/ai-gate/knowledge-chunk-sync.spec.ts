@@ -1,6 +1,9 @@
 import { expect, test } from "@playwright/test";
 
-import { planKnowledgeChunkSync } from "@/lib/ai/knowledge-chunk-sync";
+import {
+  buildKnowledgeChunkInsertRow,
+  planKnowledgeChunkSync,
+} from "@/lib/ai/knowledge-chunk-sync";
 import { buildKnowledgeDocumentMetadata } from "@/lib/ai/knowledge-document-metadata";
 import type { KnowledgeDocument } from "@/lib/ai/knowledge-model";
 
@@ -75,5 +78,23 @@ test.describe("knowledge chunk sync plan", () => {
       "workout_day",
     ]);
     expect(plan.deleteChunkIds.sort()).toEqual(["chunk-changed", "chunk-stale"]);
+  });
+
+  test("builds insert payload with explicit search metadata columns", () => {
+    const document = createDocument({
+      content: "РќРѕРІР°СЏ СЃРІРѕРґРєР° РїРѕ С‚СЂРµРЅРёСЂРѕРІРѕС‡РЅРѕРјСѓ РґРЅСЋ.",
+      sourceId: "day-5",
+      sourceType: "workout_day",
+    });
+
+    const row = buildKnowledgeChunkInsertRow("user-1", document);
+
+    expect(row.user_id).toBe("user-1");
+    expect(row.source_key).toBe("workout_day:day-5");
+    expect(row.chunk_version).toBe(2);
+    expect(row.content_hash).toHaveLength(64);
+    expect(row.importance_weight).toBeGreaterThan(0);
+    expect(row.token_count).toBeGreaterThan(0);
+    expect(row.recency_at).toBeNull();
   });
 });

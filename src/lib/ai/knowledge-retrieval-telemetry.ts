@@ -5,17 +5,14 @@ import type {
   KnowledgeRetrievalSelection,
 } from "@/lib/ai/knowledge-retrieval-rollout";
 
-const TELEMETRY_STEP_KEYS = [
-  "indexRefreshMs",
-  "queryEmbeddingMs",
-  "semanticRpcMs",
-  "semanticFallbackMs",
-  "lexicalRpcMs",
-  "lexicalFallbackMs",
-  "hybridRankMs",
-] as const;
-
-type TelemetryStepKey = (typeof TELEMETRY_STEP_KEYS)[number];
+type TelemetryStepKey =
+  | "indexRefreshMs"
+  | "queryEmbeddingMs"
+  | "semanticRpcMs"
+  | "semanticFallbackMs"
+  | "lexicalRpcMs"
+  | "lexicalFallbackMs"
+  | "hybridRankMs";
 
 type TelemetrySummary = {
   candidateCounts: {

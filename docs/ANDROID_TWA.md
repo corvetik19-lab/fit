@@ -1,81 +1,81 @@
-# Android / TWA для `fit`
+﻿# Android / TWA для `fit`
 
-Этот документ фиксирует Android-подготовку для `fit` как Trusted Web Activity поверх production PWA.
+Этот документ фиксирует текущее состояние Android-оболочки `fit` как Trusted Web Activity поверх production PWA.
 
-## Что уже подготовлено
+## Текущий статус
 
-- source of truth по Android-релизу лежит в `android/twa-release.json`;
-- `public/android-assetlinks.json` синхронизируется из release-конфига, а `/.well-known/assetlinks.json` обслуживается через rewrite в `next.config.ts`;
-- package name зафиксирован как `app.fitplatform.mobile`;
-- цветовая схема, стартовый URL и иконки синхронизированы с текущим PWA manifest;
-- готов статический verify-gate `npm run verify:android-twa`.
-
-## Базовая Android-конфигурация
-
+- production web origin: `https://fit-platform-eta.vercel.app`
 - package name: `app.fitplatform.mobile`
-- launcher name: `fit`
-- production host: `fit-platform-eta.vercel.app`
-- start URL: `/dashboard`
-- theme color: `#14614b`
-- background color: `#f5f4ee`
-- splash icon: `public/icon-512.png`
+- wrapper project: [android/twa-shell](/C:/fit/android/twa-shell)
+- release config: [android/twa-release.json](/C:/fit/android/twa-release.json)
+- asset links served from `/.well-known/assetlinks.json` через rewrite в [next.config.ts](/C:/fit/next.config.ts)
 
-## Digital Asset Links
+## Что уже готово
 
-Chrome для TWA проверяет association через `/.well-known/assetlinks.json`.
+- Подтверждена installability production PWA.
+- Сгенерирован полноценный Bubblewrap-проект в [android/twa-shell](/C:/fit/android/twa-shell), а не только JSON-scaffold.
+- Локально собраны Android-артефакты через `bubblewrap build`: signed APK и AAB подтверждены в smoke-проверке.
+- Эмулятор `Medium_Phone_API_36.1` успешно поднят, APK установлен, wrapper запущен.
+- Logcat подтвердил запуск production URL из `TWALauncherActivity`:
+  - `Using url from Manifest: https://fit-platform-eta.vercel.app/dashboard`
+  - `capturedLink=https://fit-platform-eta.vercel.app/dashboard`
 
-В проекте asset links собираются командой `npm run verify:android-twa` из:
+## Что использовалось для локального smoke
 
-- `ANDROID_TWA_PACKAGE_NAME`
-- `ANDROID_TWA_SHA256_FINGERPRINTS`
+- JDK 17: `C:\jdk17-fit` -> junction на установленный Temurin JDK без пробелов в пути, чтобы Bubblewrap корректно вызывал `java.exe` при подписи APK.
+- Android SDK: `C:\Users\User\AppData\Local\Android\Sdk`
+- Android command-line tools дополнительно разложены так, чтобы `bubblewrap doctor` видел валидный SDK layout.
+- Локальный test keystore лежит вне репозитория:
+  - `C:\Users\User\.bubblewrap\keys\fit-local-upload.jks`
 
-Если `ANDROID_TWA_SHA256_FINGERPRINTS` не задан, `public/android-assetlinks.json` всё равно остаётся доступным через `/.well-known/assetlinks.json`, но в нём будет пустой массив fingerprints. Это безопасно для web/PWA окружения, но не позволяет пройти TWA verification до тех пор, пока не появится реальный release fingerprint.
+## Репозиторный контракт
 
-Формат fingerprints:
+- В репозиторий коммитится только wrapper source project, без локальных build-артефактов.
+- Для этого в [android/twa-shell/.gitignore](/C:/fit/android/twa-shell/.gitignore) игнорируются `.gradle/`, `build/`, `app/build/`, `*.apk`, `*.aab`, `*.idsig`.
+- Путь в [android/twa-shell/twa-manifest.json](/C:/fit/android/twa-shell/twa-manifest.json) указывает на repo-ориентированный release keystore placeholder:
+  - `../keys/fit-platform-upload.jks`
+- Сама папка `android/keys/` игнорируется в [\.gitignore](/C:/fit/.gitignore).
 
-- несколько значений через запятую или перевод строки;
-- ожидается SHA-256 fingerprint в стандартном виде `AA:BB:CC:...`.
+## Что ещё остаётся как release-step
 
-## Signing и release keystore
+- Выпустить реальный upload/release keystore для production Android релиза.
+- Получить его SHA-256 fingerprint.
+- Прописать fingerprint в `ANDROID_TWA_SHA256_FINGERPRINTS` для проекта `fit-platform`.
+- Пересобрать `public/android-assetlinks.json` с release fingerprint и выкатить обновлённый deployment.
+- После этого повторить smoke уже не на local test keystore, а на release-signing контуре.
 
-Для финального Android релиза остаются внешние шаги:
+## Полезные команды
 
-- выпустить upload keystore;
-- сохранить его вне репозитория;
-- получить SHA-256 fingerprint release / app signing key;
-- добавить fingerprint в `ANDROID_TWA_SHA256_FINGERPRINTS`.
+Проверка scaffold и asset links:
 
-`android/twa-release.json` уже резервирует путь `android/keys/fit-platform-upload.jks` и alias `fit-upload`, но сами ключи в репозиторий не кладутся.
+```powershell
+npm run verify:android-twa
+```
 
-## Play metadata
+Проверка Bubblewrap окружения:
 
-В `android/twa-release.json` уже зафиксированы базовые Play Store поля:
+```powershell
+npx @bubblewrap/cli doctor
+```
 
-- `title`
-- `shortDescription`
-- `fullDescription`
-- `defaultLanguage`
+Пересборка wrapper:
 
-Если бренд или позиционирование продукта меняются, сначала обновляется этот файл, а потом Play Console listing.
+```powershell
+npx @bubblewrap/cli update --manifest="C:\fit\android\twa-shell\twa-manifest.json" --directory="C:\fit\android\twa-shell" --skipVersionUpgrade
+```
 
-## Как собирать TWA wrapper
+Локальная сборка APK/AAB:
 
-Официальный поток подготовки описан в документации Chrome:
+```powershell
+$env:BUBBLEWRAP_KEYSTORE_PASSWORD='***'
+$env:BUBBLEWRAP_KEY_PASSWORD='***'
+npx @bubblewrap/cli build --manifest="C:\fit\android\twa-shell\twa-manifest.json" --skipPwaValidation
+```
 
-- [Quick Start Guide](https://developer.chrome.com/docs/android/trusted-web-activity/quick-start)
-- [Android Concepts for Web Developers](https://developer.chrome.com/docs/android/trusted-web-activity/android-for-web-devs)
+Минимальный smoke на эмуляторе:
 
-Практический локальный порядок:
-
-1. Прогнать `npm run verify:android-twa`.
-2. Убедиться, что production PWA и `assetlinks.json` доступны.
-3. Инициализировать wrapper через Bubblewrap на основе production manifest.
-4. Собрать APK/AAB и проверить verification на устройстве или эмуляторе.
-
-## Что ещё остаётся blocker-ом
-
-- JDK 17 и Android SDK Platform Tools (`java`, `adb`) на машине сборки;
-- реальный signing fingerprint;
-- собранный Bubblewrap/TWA wrapper;
-- Android smoke на production URL;
-- фактический Play Console релиз.
+```powershell
+adb install -r "C:\fit\android\twa-shell\app-release-signed.apk"
+adb shell am start -W -n app.fitplatform.mobile/.LauncherActivity
+adb logcat -d | Select-String -Pattern "fit-platform-eta|TWALauncherActivity|capturedLink"
+```

@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { type JsonRecord, type KnowledgeChunkRow, type KnowledgeDocument } from "@/lib/ai/knowledge-model";
@@ -11,6 +13,20 @@ type PlannedKnowledgeChunkSync = {
   deleteChunkIds: string[];
   insertedDocuments: KnowledgeDocument[];
   unchangedChunks: ExistingKnowledgeChunk[];
+};
+
+export type KnowledgeChunkInsertRow = {
+  chunk_version: number;
+  content: string;
+  content_hash: string;
+  importance_weight: number;
+  metadata: JsonRecord;
+  recency_at: string | null;
+  source_id: string | null;
+  source_key: string;
+  source_type: string;
+  token_count: number;
+  user_id: string;
 };
 
 const CHUNK_DELETE_BATCH_SIZE = 200;
@@ -47,6 +63,71 @@ function getChunkSourceKey(chunk: ExistingKnowledgeChunk) {
 function getContentHash(metadata: JsonRecord) {
   const contentHash = metadata.contentHash;
   return typeof contentHash === "string" && contentHash.trim() ? contentHash : null;
+}
+
+function buildContentHash(content: string) {
+  return createHash("sha256").update(content).digest("hex");
+}
+
+function getNumberMetadataValue(
+  metadata: JsonRecord,
+  key: string,
+  fallback: number,
+) {
+  const value = metadata[key];
+
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === "string" && value.trim()) {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+
+  return fallback;
+}
+
+export function buildKnowledgeChunkInsertRow(
+  userId: string,
+  document: KnowledgeDocument,
+): KnowledgeChunkInsertRow {
+  const sourceKey = getDocumentSourceKey(document);
+  const contentHash = getContentHash(document.metadata) ?? buildContentHash(document.content);
+  const chunkVersion = Math.max(
+    1,
+    Math.trunc(getNumberMetadataValue(document.metadata, "chunkVersion", 1)),
+  );
+  const importanceWeight = getNumberMetadataValue(
+    document.metadata,
+    "importanceWeight",
+    0,
+  );
+  const recencyAt =
+    typeof document.metadata.recencyAt === "string" &&
+    document.metadata.recencyAt.trim()
+      ? document.metadata.recencyAt
+      : null;
+  const tokenCount = Math.max(
+    1,
+    Math.trunc(getNumberMetadataValue(document.metadata, "tokenCount", 1)),
+  );
+
+  return {
+    chunk_version: chunkVersion,
+    content: document.content,
+    content_hash: contentHash,
+    importance_weight: importanceWeight,
+    metadata: document.metadata,
+    recency_at: recencyAt,
+    source_id: document.sourceId,
+    source_key: sourceKey,
+    source_type: document.sourceType,
+    token_count: tokenCount,
+    user_id: userId,
+  };
 }
 
 export function planKnowledgeChunkSync({
@@ -167,13 +248,9 @@ export async function syncKnowledgeDocuments({
     const { data, error } = await supabase
       .from("knowledge_chunks")
       .insert(
-        documentBatch.map((document) => ({
-          user_id: userId,
-          source_type: document.sourceType,
-          source_id: document.sourceId,
-          content: document.content,
-          metadata: document.metadata,
-        })),
+        documentBatch.map((document) =>
+          buildKnowledgeChunkInsertRow(userId, document),
+        ),
       )
       .select("id, source_type, source_id, content, metadata");
 

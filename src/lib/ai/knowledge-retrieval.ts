@@ -29,6 +29,19 @@ import { logger } from "@/lib/logger";
 const KNOWLEDGE_FALLBACK_PAGE_SIZE = 200;
 const KNOWLEDGE_CHUNK_BATCH_SIZE = 200;
 
+type HybridKnowledgeRpcRow = {
+  content: string;
+  fused_score: number;
+  id: string;
+  matched_terms: string[] | null;
+  metadata: JsonRecord;
+  source_id: string | null;
+  source_kind: string | null;
+  source_type: string;
+  text_score: number | null;
+  vector_score: number | null;
+};
+
 export async function collectPaginatedRows<T>({
   fetchPage,
   pageSize = KNOWLEDGE_FALLBACK_PAGE_SIZE,
@@ -55,6 +68,42 @@ export async function collectPaginatedRows<T>({
   }
 
   return rows;
+}
+
+export function mapHybridKnowledgeRpcRow(
+  row: HybridKnowledgeRpcRow,
+): RetrievedKnowledgeItem {
+  const fusedScore = Number(row.fused_score);
+  const textScore =
+    typeof row.text_score === "number" && Number.isFinite(row.text_score)
+      ? Number(row.text_score)
+      : null;
+  const vectorScore =
+    typeof row.vector_score === "number" && Number.isFinite(row.vector_score)
+      ? Number(row.vector_score)
+      : null;
+
+  return {
+    content: row.content,
+    fusedScore: Number.isFinite(fusedScore) ? fusedScore : null,
+    id: row.id,
+    matchedTerms: Array.isArray(row.matched_terms)
+      ? row.matched_terms.filter(
+          (term): term is string => typeof term === "string" && term.trim().length > 0,
+        )
+      : [],
+    metadata: row.metadata ?? {},
+    rerankScore: Number.isFinite(fusedScore) ? fusedScore : null,
+    similarity: Number.isFinite(fusedScore) ? fusedScore : 0,
+    sourceId: row.source_id,
+    sourceKind:
+      typeof row.source_kind === "string" && row.source_kind.trim()
+        ? row.source_kind
+        : undefined,
+    sourceType: row.source_type,
+    textScore,
+    vectorScore,
+  };
 }
 
 function chunkArray<T>(items: T[], size: number) {
@@ -196,6 +245,30 @@ async function retrieveKnowledgeMatchesViaTextRpc(
     .filter((item) => Number.isFinite(item.similarity));
 }
 
+async function retrieveKnowledgeMatchesViaHybridRpc(
+  supabase: SupabaseClient,
+  query: string,
+  queryEmbedding: number[],
+  limit: number,
+) {
+  const { data, error } = await supabase.rpc("search_knowledge_chunks_hybrid", {
+    full_text_weight: 1,
+    match_count: limit,
+    query_embedding: toVectorLiteral(queryEmbedding),
+    query_text: query,
+    rrf_k: 40,
+    semantic_weight: 1,
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  return ((data as HybridKnowledgeRpcRow[] | null) ?? []).map((row) =>
+    mapHybridKnowledgeRpcRow(row),
+  );
+}
+
 async function retrieveKnowledgeMatchesWithFallback(
   supabase: SupabaseClient,
   userId: string,
@@ -323,6 +396,54 @@ export async function retrieveKnowledgeMatchesWithPipeline({
       });
     }
   });
+
+  if (queryEmbedding && retrievalMode === "hybrid") {
+    let hybridRpcMatches: RetrievedKnowledgeItem[] = [];
+
+    await telemetry.measure("hybridRankMs", async () => {
+      try {
+        hybridRpcMatches = await retrieveKnowledgeMatchesViaHybridRpc(
+          supabase,
+          query,
+          queryEmbedding!,
+          Math.max(finalLimit, KNOWLEDGE_RETRIEVAL_LIMITS.fusedCandidates),
+        );
+      } catch (error) {
+        logger.warn("knowledge hybrid RPC fell back to app-side fusion", {
+          error,
+          userId,
+        });
+      }
+    });
+
+    if (hybridRpcMatches.length) {
+      telemetry.setCandidateCounts({
+        returned: hybridRpcMatches.length,
+        semantic: 0,
+        text: 0,
+      });
+      telemetry.setRollout({
+        fallbackToLegacy: false,
+        mode: retrievalMode,
+        semanticCandidateCount: 0,
+        textCandidateCount: 0,
+        hybridIds: hybridRpcMatches.map((item) => item.id),
+        legacyIds: [],
+        rankingChanged: false,
+        selectedIds: hybridRpcMatches.map((item) => item.id),
+        selectedMode: "hybrid",
+      });
+
+      if (shouldLogKnowledgeRetrievalTelemetry(retrievalMode)) {
+        logger.info("knowledge retrieval telemetry", {
+          ...telemetry.toSummary(),
+          userId,
+        });
+      }
+
+      return hybridRpcMatches;
+    }
+  }
 
   let semanticMatches: RetrievedKnowledgeItem[] = [];
 

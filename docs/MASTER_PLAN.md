@@ -11,9 +11,9 @@
   - синхронизировать профильные документы в `docs/`, если меняется контракт, архитектура или release-процесс.
 - После каждого tranche обязательно пересчитывать `done / total` по основному execution checklist и обновлять процент прямо в этом файле и в пользовательском статусе.
 
-Этот файл — текущий production-hardening backlog проекта. Он отражает фактическое состояние репозитория на `2026-03-14`.
+Этот файл — текущий production-hardening backlog проекта. Он отражает фактическое состояние репозитория на `2026-03-30`.
 
-Текущий прогресс execution checklist: `165 / 176` (`94%`).
+Текущий прогресс execution checklist: `168 / 176` (`95%`).
 
 ## Текущая база
 
@@ -48,9 +48,9 @@
 ### Milestone 3 — Android Wrapper
 
 - [x] Подтверждена installability production PWA.
-- [ ] Готов TWA wrapper.
+- [x] Готов TWA wrapper.
 - [x] Подготовлены `assetlinks.json`, package name, signing, splash и Play metadata.
-- [ ] Пройден Android smoke на production URL.
+- [x] Пройден Android smoke на production URL.
 
 ## Волна 0. Engineering hygiene и release baseline
 
@@ -288,8 +288,8 @@
 - [x] Подтвердить installability production PWA.
 - [x] Подготовить `assetlinks.json`.
 - [x] Подготовить package name, signing, splash и Play metadata.
-- [ ] Собрать и проверить TWA wrapper.
-- [ ] Пройти Android smoke на production URL.
+- [x] Собрать и проверить TWA wrapper.
+- [x] Пройти Android smoke на production URL.
 
 ## Что можно считать завершённым только после подтверждения
 
@@ -298,7 +298,7 @@
 - [x] Нет hydration mismatch, render loops, infinite polling и state desync в базовых пользовательских сценариях.
 - [ ] Stripe-контур работает end-to-end.
 - [ ] AI quality gate пройден по минимуму: assistant, retrieval, workout plan, meal plan, safety. Кодовая часть и явные provider/runtime notices уже доведены; остаётся снять внешний блок по кредитам и embeddings.
-- [ ] Android wrapper smoke пройден после стабилизации web/PWA.
+- [x] Android wrapper smoke пройден после стабилизации web/PWA.
 
 ## 2026-03-15 progress addendum
 
@@ -489,7 +489,15 @@
 - [x] `tests/smoke/app-smoke.spec.ts` расширен Android/TWA smoke-check на `/.well-known/assetlinks.json`.
 - [x] Санированы и повторно синхронизированы ключевые release/handoff docs: `README.md`, `docs/README.md`, `docs/PROD_READY.md`, `docs/RELEASE_CHECKLIST.md`, `docs/BUILD_WARNINGS.md`, `docs/BACKEND.md`, `docs/FRONTEND.md`, `docs/AI_STACK.md`, `docs/DB_AUDIT.md`, `docs/USER_GUIDE.md`.
 - [x] Tranche подтверждён командами `npm run verify:android-twa`, `npm run lint`, `npm run build`, `npm run typecheck`, `npm run test:smoke`, `npm run test:e2e:auth` -> `50 passed`.
-- [ ] Следующий Android tranche уже упирается во внешний blocker: на текущей машине нет `java` и `adb`, а `npx @bubblewrap/cli doctor` без JDK 17 и Android SDK не даёт собрать и проверить реальный TWA wrapper.
+- [x] Исторический blocker по `java` и `adb` снят: на `2026-03-30` JDK 17, Android SDK, `adb` и `bubblewrap doctor` подтверждены, реальный TWA wrapper собран и проверен на эмуляторе.
+
+## 2026-03-30 Android / TWA closure addendum
+
+- [x] Для `fit-platform` подтверждён реальный Android toolchain: `java -version`, `adb --version` и `npx @bubblewrap/cli doctor` проходят на текущей машине.
+- [x] В [android/twa-shell](/C:/fit/android/twa-shell) сгенерирован полноценный Bubblewrap-проект по production manifest `https://fit-platform-eta.vercel.app/manifest.webmanifest`, а не только JSON-scaffold.
+- [x] `npx @bubblewrap/cli build --manifest="C:\fit\android\twa-shell\twa-manifest.json" --skipPwaValidation` успешно собрал signed APK и AAB через локальный test keystore вне репозитория.
+- [x] Android smoke на production URL подтверждён через эмулятор `Medium_Phone_API_36.1`: `adb install -r`, `adb shell am start -W -n app.fitplatform.mobile/.LauncherActivity` и logcat с `TWALauncherActivity: Using url from Manifest: https://fit-platform-eta.vercel.app/dashboard`.
+- [x] После этого закрыты основные checklist-пункты `Готов TWA wrapper`, `Собрать и проверить TWA wrapper`, `Пройти Android smoke на production URL` и acceptance-пункт `Android wrapper smoke пройден после стабилизации web/PWA`.
 
 ## 2026-03-19 DB audit addendum
 
@@ -1132,4 +1140,19 @@
 - [x] Добавлены regression suites [retrieval-telemetry.spec.ts](/C:/fit/tests/ai-gate/retrieval-telemetry.spec.ts) и [retrieval-performance.spec.ts](/C:/fit/tests/ai-gate/retrieval-performance.spec.ts), а `npm run test:retrieval-gate` теперь включает и telemetry contract, и deterministic latency budget.
 - [x] Добавлен performance handoff [RETRIEVAL_PERFORMANCE.md](/C:/fit/docs/RETRIEVAL_PERFORMANCE.md): зафиксированы caps `30 / 30 / 20 / 8`, локальный baseline (`p50 0.1346 ms`, `p95 0.3964 ms`, `max 0.9397 ms`, `250` samples) и текущие tuning decisions для rollout.
 - [x] Локальная verification-связка подтверждена пакетами `npm run test:retrieval-gate`, `npm run typecheck`, `npm run build`; профильный план [RAG_V2_EXECUTION.md](/C:/fit/docs/RAG_V2_EXECUTION.md) после пересчёта фактических checklist-пунктов находится на `17 / 19` (`89%`).
-- [ ] Следующий RAG tranche: оставшиеся DB slices для metadata/index migration и hybrid lexical RPC; текущий реальный blocker — `supabase-finappka` MCP указывает не на `fit`, поэтому DDL/advisors по knowledge schema сейчас небезопасны до корректной project binding.
+- [x] Исторический DB-blocker снят: для `fit` подтверждён canonical MCP target `mcp__supabase_mcp_server__*` на проекте `nactzaxrjzsdkyfqwecf`, поэтому финальные knowledge DDL и advisors можно применять безопасно.
+
+## 2026-03-30 RAG v2 DB closure addendum
+
+- [x] Через `mcp__supabase_mcp_server__get_project_url` подтверждён правильный Supabase target проекта `fit`: `https://nactzaxrjzsdkyfqwecf.supabase.co`.
+- [x] Миграция [20260330113000_knowledge_chunk_search_metadata_hybrid_rpc.sql](/C:/fit/supabase/migrations/20260330113000_knowledge_chunk_search_metadata_hybrid_rpc.sql) применена на реальный `fit`-проект через Supabase MCP и добавила metadata contract, generated `search_vector`, индексы и user-scoped hybrid RPC `search_knowledge_chunks_hybrid(...)`.
+- [x] Runtime переведён на DB-backed hybrid retrieval с app-side fallback в [knowledge-retrieval.ts](/C:/fit/src/lib/ai/knowledge-retrieval.ts), а incremental chunk sync теперь записывает metadata columns через [knowledge-chunk-sync.ts](/C:/fit/src/lib/ai/knowledge-chunk-sync.ts).
+- [x] Regression и RLS fixtures обновлены под новый contract: [hybrid-retrieval.spec.ts](/C:/fit/tests/ai-gate/hybrid-retrieval.spec.ts), [knowledge-chunk-sync.spec.ts](/C:/fit/tests/ai-gate/knowledge-chunk-sync.spec.ts), [supabase-rls.ts](/C:/fit/tests/rls/helpers/supabase-rls.ts).
+- [x] Финальная verification-связка подтверждена пакетами `npm run verify:migrations`, `npm run test:retrieval-gate`, `npm run test:rls`, `npm run typecheck`, `npm run build`; после этого execution-план `RAG v2` закрыт на `19 / 19` (`100%`).
+
+## 2026-03-30 remaining external blockers revalidation addendum
+
+- [x] `npm run verify:staging-runtime` повторно прогнан после закрытия Android/RAG tranche: live AI gate по-прежнему упирается в `OpenRouter 402` и `Voyage 403`, а Stripe runtime всё ещё не стартует без `STRIPE_SECRET_KEY` и `STRIPE_PREMIUM_MONTHLY_PRICE_ID`.
+- [x] `npm run verify:sentry-runtime` повторно подтверждает, что кодовый rollout готов, а live smoke всё ещё блокируется отсутствием `NEXT_PUBLIC_SENTRY_DSN` и `SENTRY_PROJECT`.
+- [x] `npm run verify:retrieval-release` повторно подтверждает, что retrieval regression зелёный, а незакрытый основной AI quality gate остаётся внешним provider-blocker, а не кодовой деградацией.
+- [x] После этой перепроверки текущие незакрытые main checklist-пункты остаются чисто внешними: live Stripe env/runtime, live AI providers/credits и production Sentry env.

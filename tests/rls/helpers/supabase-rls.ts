@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 import { loadEnvConfig } from "@next/env";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
@@ -10,6 +12,10 @@ function buildFixtureEmbeddingLiteral() {
   return `[${Array.from({ length: 1024 }, (_, index) =>
     ((index % 8) / 1000).toFixed(8),
   ).join(",")}]`;
+}
+
+function buildFixtureContentHash(content: string) {
+  return createHash("sha256").update(content).digest("hex");
 }
 
 loadEnvConfig(process.cwd());
@@ -842,8 +848,18 @@ export async function seedRlsOwnershipFixture() {
       source_type: "rls_fixture",
       source_id: seed,
       content: `RLS knowledge chunk ${seed}`,
+      source_key: `rls_fixture:${seed}`,
+      chunk_version: 2,
+      content_hash: buildFixtureContentHash(`RLS knowledge chunk ${seed}`),
+      importance_weight: 0.01,
+      token_count: 4,
       metadata: {
         source: "rls_test",
+        sourceKey: `rls_fixture:${seed}`,
+        chunkVersion: 2,
+        contentHash: buildFixtureContentHash(`RLS knowledge chunk ${seed}`),
+        importanceWeight: 0.01,
+        tokenCount: 4,
       },
     })
     .select("id")

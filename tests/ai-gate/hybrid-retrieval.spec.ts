@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { buildHybridKnowledgeMatches } from "@/lib/ai/knowledge-hybrid-ranking";
+import { mapHybridKnowledgeRpcRow } from "@/lib/ai/knowledge-retrieval";
 import type { RetrievedKnowledgeItem } from "@/lib/ai/knowledge-model";
 import { KNOWLEDGE_RETRIEVAL_LIMITS } from "@/lib/ai/knowledge-retrieval-config";
 
@@ -116,5 +117,30 @@ test.describe("hybrid retrieval ranking", () => {
     });
 
     expect(ranked.length).toBe(KNOWLEDGE_RETRIEVAL_LIMITS.finalContext);
+  });
+
+  test("maps hybrid RPC rows into retrieval matches with score breakdown", () => {
+    const item = mapHybridKnowledgeRpcRow({
+      content: "РџСЂРѕРіСЂРµСЃСЃ РІ Р¶РёРјРµ Р»РµР¶Р° Р·Р°РјРµРґР»РёР»СЃСЏ РёР·-Р·Р° РІРѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёСЏ.",
+      fused_score: 0.087,
+      id: "hybrid-1",
+      matched_terms: ["Р¶РёРј", "РІРѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ"],
+      metadata: {
+        recencyAt: new Date().toISOString(),
+      },
+      source_id: "day-1",
+      source_kind: "workout",
+      source_type: "workout_day",
+      text_score: 0.44,
+      vector_score: 0.82,
+    });
+
+    expect(item.id).toBe("hybrid-1");
+    expect(item.sourceKind).toBe("workout");
+    expect(item.vectorScore).toBe(0.82);
+    expect(item.textScore).toBe(0.44);
+    expect(item.fusedScore).toBe(0.087);
+    expect(item.rerankScore).toBe(0.087);
+    expect(item.matchedTerms).toEqual(["Р¶РёРј", "РІРѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ"]);
   });
 });

@@ -6,6 +6,30 @@
 - Во время production hardening журнал был сжат и переписан в чистый UTF-8.
 - Ниже остаются только ключевые tranche, которые помогают понять текущее состояние продукта и инженерного контура.
 
+## 2026-03-30
+
+### RAG v2 DB closure
+
+- Для `fit` подтверждён правильный Supabase MCP target `mcp__supabase_mcp_server__*` на проекте `nactzaxrjzsdkyfqwecf`, поэтому финальный knowledge DDL больше не упирается в ложный blocker по чужому проекту.
+- Применена миграция [20260330113000_knowledge_chunk_search_metadata_hybrid_rpc.sql](/C:/fit/supabase/migrations/20260330113000_knowledge_chunk_search_metadata_hybrid_rpc.sql): `knowledge_chunks` получили metadata columns, generated `search_vector`, индексы и user-scoped hybrid RPC `search_knowledge_chunks_hybrid(...)`.
+- [knowledge-chunk-sync.ts](/C:/fit/src/lib/ai/knowledge-chunk-sync.ts) и [knowledge-retrieval.ts](/C:/fit/src/lib/ai/knowledge-retrieval.ts) переведены на новый DB-backed contract, а regression и RLS fixtures обновлены в [hybrid-retrieval.spec.ts](/C:/fit/tests/ai-gate/hybrid-retrieval.spec.ts), [knowledge-chunk-sync.spec.ts](/C:/fit/tests/ai-gate/knowledge-chunk-sync.spec.ts), [supabase-rls.ts](/C:/fit/tests/rls/helpers/supabase-rls.ts).
+- Проверка зелёная: `npm run verify:migrations`, `npm run test:retrieval-gate` -> `18 passed`, `npm run test:rls` -> `4 passed`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `50 passed`.
+
+### Android / TWA closure
+
+- Для `fit-platform` поднят полноценный Android toolchain: подтверждены `java`, `adb`, Android SDK и `npx @bubblewrap/cli doctor`.
+- В [android/twa-shell](/C:/fit/android/twa-shell) сгенерирован реальный Bubblewrap/TWA wrapper по production manifest `https://fit-platform-eta.vercel.app/manifest.webmanifest`, а не только JSON-scaffold.
+- Локально через Bubblewrap собраны signed APK и AAB с внешним test keystore, затем проведён emulator smoke на `Medium_Phone_API_36.1`: APK установлен, `LauncherActivity` стартует, logcat подтверждает открытие `https://fit-platform-eta.vercel.app/dashboard`.
+- [verify-android-twa.mjs](/C:/fit/scripts/verify-android-twa.mjs) дополнительно стабилизирован под Windows-совместимый `UTF-8 with BOM`, чтобы release gate корректно парсил [android/twa-release.json](/C:/fit/android/twa-release.json) и не падал на BOM.
+- Репозиторный контракт закреплён документами [ANDROID_TWA.md](/C:/fit/docs/ANDROID_TWA.md), [RAG_V2_EXECUTION.md](/C:/fit/docs/RAG_V2_EXECUTION.md), [MASTER_PLAN.md](/C:/fit/docs/MASTER_PLAN.md); в git остаётся только wrapper source, без build-артефактов и keystore.
+- Проверка зелёная: `npm run lint`, `npm run verify:android-twa`, `npm run typecheck`, `npm run build`, `npm run test:smoke` -> `5 passed`, `npm run test:e2e:auth` -> `50 passed`.
+
+### Повторная проверка внешних блокеров
+
+- После закрытия Android/TWA и RAG v2 DB повторно прогнаны `npm run verify:staging-runtime`, `npm run verify:sentry-runtime` и `npm run verify:retrieval-release`.
+- Результат не изменился по сути: live AI quality gate блокируется `OpenRouter 402` и `Voyage 403`, Stripe runtime всё ещё не стартует без `STRIPE_SECRET_KEY` и `STRIPE_PREMIUM_MONTHLY_PRICE_ID`, а live Sentry smoke ждёт `NEXT_PUBLIC_SENTRY_DSN` и `SENTRY_PROJECT`.
+- Это подтверждает, что оставшиеся открытые пункты master-plan упираются уже не в код репозитория, а в внешние env/secrets и provider access.
+
 ## 2026-03-23
 
 ### Billing webhook idempotency gate

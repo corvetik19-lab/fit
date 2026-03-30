@@ -25,7 +25,7 @@ function assertFile(relativePath) {
 if (!fs.existsSync(configPath)) {
   fail("missing android/twa-release.json");
 } else {
-  const rawConfig = fs.readFileSync(configPath, "utf8");
+  const rawConfig = fs.readFileSync(configPath, "utf8").replace(/^\uFEFF/, "");
   const config = JSON.parse(rawConfig);
 
   const packageNamePattern = /^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$/;

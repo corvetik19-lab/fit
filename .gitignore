@@ -38,6 +38,7 @@ build.out
 build.err
 lint.out
 lint.err
+.next-start-test*.log
 /output/
 
 # env files (can opt-in for committing if needed)
@@ -45,6 +46,9 @@ lint.err
 
 # vercel
 .vercel
+.android
+/.android/
+/android/keys/
 .idea
 .codex
 supabase/.temp/
