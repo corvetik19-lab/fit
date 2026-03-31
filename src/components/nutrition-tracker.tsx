@@ -1,10 +1,12 @@
 ﻿"use client";
 
+import Image from "next/image";
 import { Check, ChevronDown, ChevronUp } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { startTransition, useMemo, useState } from "react";
+import { startTransition, useEffect, useMemo, useState } from "react";
 
 import { NutritionMealTemplatesManager } from "@/components/nutrition-meal-templates-manager";
+import { NutritionOpenFoodFactsCard } from "@/components/nutrition-open-food-facts-card";
 import { NutritionRecipesManager } from "@/components/nutrition-recipes-manager";
 import type {
   NutritionFood,
@@ -72,6 +74,7 @@ export function NutritionTracker({
   initialFoods,
   initialMeals,
   initialMealTemplates,
+  initialPanelKey,
   initialRecipes,
   todaySummary,
   todaySummaryDate,
@@ -80,12 +83,14 @@ export function NutritionTracker({
   initialFoods: NutritionFood[];
   initialMeals: NutritionMeal[];
   initialMealTemplates: NutritionMealTemplate[];
+  initialPanelKey?: NutritionTrackerPanelKey;
   initialRecipes: NutritionRecipe[];
   todaySummary: NutritionSummary | null;
   todaySummaryDate: string;
   nutritionTargets: NutritionTargets | null;
 }) {
   const router = useRouter();
+  const [foods, setFoods] = useState(initialFoods);
   const [foodName, setFoodName] = useState("");
   const [foodKcal, setFoodKcal] = useState("0");
   const [foodProtein, setFoodProtein] = useState("0");
@@ -114,12 +119,23 @@ export function NutritionTracker({
   const [notice, setNotice] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
   const [activePanelKey, setActivePanelKey] =
-    useState<NutritionTrackerPanelKey>("targets");
+    useState<NutritionTrackerPanelKey>(initialPanelKey ?? "targets");
   const [isMobilePanelMenuOpen, setIsMobilePanelMenuOpen] = useState(false);
+  const defaultFoodId = foods[0]?.id ?? "";
+
+  useEffect(() => {
+    setFoods(initialFoods);
+  }, [initialFoods]);
+
+  useEffect(() => {
+    if (initialPanelKey) {
+      setActivePanelKey(initialPanelKey);
+    }
+  }, [initialPanelKey]);
 
   const foodsById = useMemo(
-    () => new Map(initialFoods.map((food) => [food.id, food])),
-    [initialFoods],
+    () => new Map(foods.map((food) => [food.id, food])),
+    [foods],
   );
 
   const mealPreview = useMemo(
@@ -211,6 +227,13 @@ export function NutritionTracker({
     setNotice(null);
   }
 
+  function upsertFood(nextFood: NutritionFood) {
+    setFoods((currentFoods) => [
+      nextFood,
+      ...currentFoods.filter((food) => food.id !== nextFood.id),
+    ]);
+  }
+
   function runMutation(action: () => Promise<void>) {
     setError(null);
     setNotice(null);
@@ -245,12 +268,16 @@ export function NutritionTracker({
       });
 
       const payload = (await response.json().catch(() => null)) as
-        | { message?: string }
+        | { data?: NutritionFood; message?: string }
         | null;
 
       if (!response.ok) {
         setError(payload?.message ?? "Не удалось сохранить продукт.");
         return;
+      }
+
+      if (payload?.data) {
+        upsertFood(payload.data);
       }
 
       setNotice(editingFoodId ? "Продукт обновлён." : "Продукт добавлен.");
@@ -278,6 +305,14 @@ export function NutritionTracker({
         resetFoodForm();
       }
 
+      setFoods((currentFoods) =>
+        currentFoods.filter((food) => food.id !== foodId),
+      );
+      setMealItems((currentItems) =>
+        currentItems.map((item) =>
+          item.foodId === foodId ? { ...item, foodId: "" } : item,
+        ),
+      );
       setNotice("Продукт удалён.");
       router.refresh();
     });
@@ -316,7 +351,7 @@ export function NutritionTracker({
 
       setNotice("Приём пищи сохранён, дневная сводка пересчитана.");
       setMealDateTime(getDefaultMealDateTime());
-      setMealItems([createMealDraftItem(initialFoods[0]?.id ?? "", "1")]);
+      setMealItems([createMealDraftItem(defaultFoodId, "1")]);
       router.refresh();
     });
   }
@@ -400,7 +435,7 @@ export function NutritionTracker({
   function appendMealItem() {
     setMealItems((currentItems) => [
       ...currentItems,
-      createMealDraftItem(initialFoods[0]?.id ?? ""),
+      createMealDraftItem(defaultFoodId),
     ]);
   }
 
@@ -447,7 +482,7 @@ export function NutritionTracker({
     setMealItems(
       normalizedDraftItems.length
         ? normalizedDraftItems
-        : [createMealDraftItem(initialFoods[0]?.id ?? "", "1")],
+        : [createMealDraftItem(defaultFoodId, "1")],
     );
     setNotice(noticeMessage);
     setError(null);
@@ -482,7 +517,7 @@ export function NutritionTracker({
       return;
     }
 
-    const matchedFood = initialFoods.find(
+    const matchedFood = foods.find(
       (food) => food.barcode?.trim() === normalizedBarcode,
     );
 
@@ -530,6 +565,34 @@ export function NutritionTracker({
   function selectPanel(panelKey: NutritionTrackerPanelKey) {
     setActivePanelKey(panelKey);
     setIsMobilePanelMenuOpen(false);
+  }
+
+  function handleResolvedFoodForLibrary(
+    food: NutritionFood,
+    origin: "existing" | "imported",
+  ) {
+    upsertFood(food);
+    setError(null);
+    setNotice(
+      origin === "existing"
+        ? `Продукт «${food.name}» уже был в базе и открыт для редактирования.`
+        : `Продукт «${food.name}» импортирован из Open Food Facts.`,
+    );
+    selectFoodForEdit(food);
+  }
+
+  function handleResolvedFoodForMeal(
+    food: NutritionFood,
+    origin: "existing" | "imported",
+  ) {
+    upsertFood(food);
+    addFoodToCurrentMeal(food.id);
+    setError(null);
+    setNotice(
+      origin === "existing"
+        ? `Продукт «${food.name}» добавлен в текущий приём пищи.`
+        : `Продукт «${food.name}» импортирован и сразу добавлен в текущий приём пищи.`,
+    );
   }
 
   return (
@@ -592,6 +655,7 @@ export function NutritionTracker({
                         ? "border-accent/20 bg-[color-mix(in_srgb,var(--accent-soft)_72%,white)] text-foreground"
                         : "border-transparent bg-white/72 text-foreground hover:bg-white"
                     }`}
+                    data-testid={`nutrition-panel-mobile-${panel.key}`}
                     key={panel.key}
                     onClick={() => selectPanel(panel.key)}
                     type="button"
@@ -628,6 +692,7 @@ export function NutritionTracker({
                     ? "border-accent/20 bg-[color-mix(in_srgb,var(--accent-soft)_78%,white)] text-foreground shadow-[0_16px_38px_-34px_rgba(20,97,75,0.22)]"
                     : "border-border bg-white/80 text-foreground hover:bg-white"
                 }`}
+                data-testid={`nutrition-panel-${panel.key}`}
                 key={panel.key}
                 onClick={() => selectPanel(panel.key)}
                 type="button"
@@ -760,27 +825,70 @@ export function NutritionTracker({
               ) : null}
             </div>
 
+            <div className="mt-6">
+              <NutritionOpenFoodFactsCard
+                mode="foods"
+                onResolveFood={handleResolvedFoodForLibrary}
+              />
+            </div>
+
             <div className="mt-6 grid gap-3">
-              {initialFoods.length ? (
-                initialFoods.map((food) => (
-                  <article className="rounded-2xl border border-border bg-white/60 p-4" key={food.id}>
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <p className="text-lg font-semibold text-foreground">{food.name}</p>
-                        <p className="text-sm text-muted">
-                          {food.kcal} ккал · Б {formatMacro(Number(food.protein))} · Ж {formatMacro(Number(food.fat))} · У {formatMacro(Number(food.carbs))}
-                        </p>
+              {foods.length ? (
+                foods.map((food) => (
+                  <article className="rounded-[1.75rem] border border-border bg-white/60 p-4" key={food.id}>
+                    <div className="grid gap-4 sm:grid-cols-[104px_1fr]">
+                      <div className="overflow-hidden rounded-[1.25rem] border border-border bg-white/78">
+                        {food.image_url ? (
+                          <Image
+                            alt={food.name}
+                            className="h-[104px] w-full object-cover"
+                            height={104}
+                            src={food.image_url}
+                            unoptimized
+                            width={104}
+                          />
+                        ) : (
+                          <div className="flex h-[104px] items-center justify-center bg-[color-mix(in_srgb,var(--accent-soft)_52%,white)] px-3 text-center text-xs font-medium text-accent">
+                            {food.source === "open_food_facts" ? "Импорт без фото" : "Своя карточка"}
+                          </div>
+                        )}
                       </div>
-                      <div className="flex flex-wrap gap-2">
-                        <button className="rounded-full border border-border px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white/70" onClick={() => selectFoodForEdit(food)} type="button">
-                          Редактировать
-                        </button>
-                        <button className="rounded-full border border-border px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white/70" onClick={() => removeFood(food.id)} type="button">
-                          Удалить
-                        </button>
+
+                      <div>
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div>
+                            <p className="text-lg font-semibold text-foreground">{food.name}</p>
+                            <p className="mt-1 text-sm text-muted">
+                              {food.brand ?? "Без бренда"}
+                              {food.quantity ? ` · ${food.quantity}` : ""}
+                              {food.serving_size ? ` · порция ${food.serving_size}` : ""}
+                            </p>
+                            <p className="mt-2 text-sm text-muted">
+                              {food.kcal} ккал · Б {formatMacro(Number(food.protein))} · Ж {formatMacro(Number(food.fat))} · У {formatMacro(Number(food.carbs))}
+                            </p>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            <button className="rounded-full border border-border px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white/70" onClick={() => selectFoodForEdit(food)} type="button">
+                              Редактировать
+                            </button>
+                            <button className="rounded-full border border-border px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white/70" onClick={() => removeFood(food.id)} type="button">
+                              Удалить
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <span className="pill">{food.source === "open_food_facts" ? "Open Food Facts" : "Свой продукт"}</span>
+                          {food.barcode ? <span className="pill">Штрихкод: {food.barcode}</span> : null}
+                        </div>
+
+                        {food.ingredients_text ? (
+                          <p className="mt-3 line-clamp-3 text-sm leading-6 text-muted">
+                            {food.ingredients_text}
+                          </p>
+                        ) : null}
                       </div>
                     </div>
-                    {food.barcode ? <p className="mt-2 text-xs text-muted">Штрихкод: {food.barcode}</p> : null}
                   </article>
                 ))
               ) : (
@@ -792,7 +900,7 @@ export function NutritionTracker({
           </section>
 
           <NutritionRecipesManager
-            foods={initialFoods}
+            foods={foods}
             onApplyRecipe={applyRecipe}
             recipes={initialRecipes}
           />
@@ -835,6 +943,13 @@ export function NutritionTracker({
             </div>
           </div>
 
+          <div className="mb-5">
+            <NutritionOpenFoodFactsCard
+              mode="meal"
+              onResolveFood={handleResolvedFoodForMeal}
+            />
+          </div>
+
           <label className="grid gap-2 text-sm text-muted">
             Дата и время
             <input className={inputClassName} onChange={(event) => setMealDateTime(event.target.value)} type="datetime-local" value={mealDateTime} />
@@ -857,7 +972,7 @@ export function NutritionTracker({
                     Продукт
                     <select className={inputClassName} onChange={(event) => updateMealItem(item.localId, "foodId", event.target.value)} value={item.foodId}>
                       <option value="">Выбери продукт</option>
-                      {initialFoods.map((food) => (
+                      {foods.map((food) => (
                         <option key={food.id} value={food.id}>
                           {food.name}
                         </option>
@@ -948,7 +1063,7 @@ export function NutritionTracker({
               foodId: item.foodId,
               servings: item.servings,
             }))}
-            foods={initialFoods}
+            foods={foods}
             onApplyTemplate={applyMealTemplate}
             templates={initialMealTemplates}
           />

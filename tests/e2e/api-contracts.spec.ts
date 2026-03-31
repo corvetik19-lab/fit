@@ -152,6 +152,8 @@ test.describe("api contracts", () => {
       invalidWeeklyProgramClone,
       invalidFoodUpdate,
       invalidFoodDelete,
+      invalidFoodLookup,
+      invalidFoodImport,
       invalidRecipeDelete,
       invalidMealDelete,
       invalidMealTemplateDelete,
@@ -219,6 +221,17 @@ test.describe("api contracts", () => {
       fetchJson(page, {
         method: "DELETE",
         url: "/api/foods/not-a-uuid",
+      }),
+      fetchJson(page, {
+        method: "GET",
+        url: "/api/foods/open-food-facts/not-a-barcode",
+      }),
+      fetchJson(page, {
+        method: "POST",
+        url: "/api/foods/open-food-facts/import",
+        body: {
+          barcode: "not-a-barcode",
+        },
       }),
       fetchJson(page, {
         method: "DELETE",
@@ -436,6 +449,16 @@ test.describe("api contracts", () => {
     expect(invalidFoodDelete.status).toBe(400);
     expect((invalidFoodDelete.body as { code?: string } | null)?.code).toBe(
       "FOOD_DELETE_INVALID",
+    );
+
+    expect(invalidFoodLookup.status).toBe(400);
+    expect((invalidFoodLookup.body as { code?: string } | null)?.code).toBe(
+      "FOOD_LOOKUP_INVALID",
+    );
+
+    expect(invalidFoodImport.status).toBe(400);
+    expect((invalidFoodImport.body as { code?: string } | null)?.code).toBe(
+      "FOOD_IMPORT_INVALID",
     );
 
     expect(invalidRecipeDelete.status).toBe(400);

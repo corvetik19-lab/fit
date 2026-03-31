@@ -1,0 +1,178 @@
+import { expect, test } from "@playwright/test";
+
+import { hasAuthE2ECredentials } from "./helpers/auth";
+import { USER_STORAGE_STATE_PATH } from "./helpers/auth-state";
+import { navigateStable } from "./helpers/navigation";
+
+const previewPayload = {
+  data: {
+    existingFood: null,
+    product: {
+      barcode: "3017624010701",
+      brand: "Ferrero",
+      carbs: 57.5,
+      fat: 30.9,
+      imageUrl: "https://images.openfoodfacts.org/images/products/301/762/401/0701/front_en.3.400.jpg",
+      ingredientsText: "Сахар, пальмовое масло, фундук, какао, сухое молоко.",
+      kcal: 539,
+      name: "Nutella",
+      productUrl: "https://world.openfoodfacts.org/product/3017624010701",
+      protein: 6.3,
+      quantity: "350 g",
+      servingSize: "15 g",
+    },
+  },
+};
+
+const importedFood = {
+  data: {
+    id: "5a7fd8fd-e7d3-4efc-8ab1-b08f6572a001",
+    name: "Nutella",
+    brand: "Ferrero",
+    source: "open_food_facts",
+    kcal: 539,
+    protein: 6.3,
+    fat: 30.9,
+    carbs: 57.5,
+    barcode: "3017624010701",
+    image_url:
+      "https://images.openfoodfacts.org/images/products/301/762/401/0701/front_en.3.400.jpg",
+    ingredients_text: "Сахар, пальмовое масло, фундук, какао, сухое молоко.",
+    quantity: "350 g",
+    serving_size: "15 g",
+    created_at: "2026-03-31T10:30:00.000Z",
+    updated_at: "2026-03-31T10:30:00.000Z",
+  },
+  meta: {
+    existed: false,
+    imported: true,
+    source: "open_food_facts",
+  },
+};
+
+const existingFoodLookupPayload = {
+  data: {
+    existingFood: {
+      id: "79c29240-e473-4db2-a31c-88b502af14f2",
+      name: "Протеиновый батончик",
+      brand: "fit",
+      source: "custom",
+      kcal: 210,
+      protein: 20,
+      fat: 7,
+      carbs: 18,
+      barcode: "4601234567890",
+      image_url: null,
+      ingredients_text: null,
+      quantity: "60 g",
+      serving_size: "1 шт",
+      created_at: "2026-03-31T10:30:00.000Z",
+      updated_at: "2026-03-31T10:30:00.000Z",
+    },
+    product: {
+      barcode: "4601234567890",
+      brand: "fit",
+      carbs: 18,
+      fat: 7,
+      imageUrl: null,
+      ingredientsText: null,
+      kcal: 210,
+      name: "Протеиновый батончик",
+      productUrl: "https://world.openfoodfacts.org/product/4601234567890",
+      protein: 20,
+      quantity: "60 g",
+      servingSize: "1 шт",
+    },
+  },
+};
+
+test.describe("nutrition capture flow", () => {
+  test.use({
+    storageState: USER_STORAGE_STATE_PATH,
+  });
+
+  test.skip(
+    !hasAuthE2ECredentials(),
+    "requires PLAYWRIGHT_TEST_EMAIL and PLAYWRIGHT_TEST_PASSWORD",
+  );
+
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      window.localStorage.removeItem("fit:nutrition-page:workspace-visibility");
+    });
+  });
+
+  test("foods section previews and imports product from Open Food Facts", async ({
+    page,
+  }) => {
+    let importRequestCount = 0;
+
+    await page.route("**/api/foods/open-food-facts/3017624010701", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(previewPayload),
+      });
+    });
+
+    await page.route("**/api/foods/open-food-facts/import", async (route) => {
+      importRequestCount += 1;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(importedFood),
+      });
+    });
+
+    await navigateStable(page, "/nutrition?section=log&panel=foods", /\/nutrition(?:\?section=log&panel=foods)?$/);
+    await page.waitForLoadState("networkidle");
+    const lookupSection = page.getByTestId("nutrition-open-food-facts-card-foods");
+    await expect(lookupSection).toBeVisible();
+
+    await page.getByPlaceholder("Например, 4601234567890").first().fill("3017624010701");
+    await lookupSection.getByRole("button", { name: "Найти" }).click();
+    const previewCard = page.getByTestId("nutrition-open-food-facts-preview-foods");
+    await expect(previewCard).toBeVisible({ timeout: 10_000 });
+    await expect(previewCard.getByText("Nutella", { exact: true })).toBeVisible();
+    await expect(previewCard.getByText(/Ferrero/)).toBeVisible();
+    await expect(previewCard.getByText(/350 g/)).toBeVisible();
+    await expect(previewCard.getByText(/порция 15 g/)).toBeVisible();
+    await expect(previewCard.getByText(/Сахар/)).toBeVisible();
+
+    await page.getByTestId("nutrition-open-food-facts-import-foods").click();
+    await expect.poll(() => importRequestCount).toBe(1);
+    await expect(page.getByRole("button", { name: "Открыть в базе" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Сохранить продукт" })).toBeVisible();
+    await expect(
+      page.getByRole("textbox", { name: "Название", exact: true }),
+    ).toHaveValue("Nutella");
+  });
+
+  test("log section adds existing barcode product into current meal", async ({
+    page,
+  }) => {
+    await page.route("**/api/foods/open-food-facts/4601234567890", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(existingFoodLookupPayload),
+      });
+    });
+
+    await navigateStable(page, "/nutrition?section=log&panel=log", /\/nutrition(?:\?section=log&panel=log)?$/);
+    await page.waitForLoadState("networkidle");
+    const lookupSection = page.getByTestId("nutrition-open-food-facts-card-meal");
+    await expect(lookupSection).toBeVisible();
+
+    await page.getByPlaceholder("Например, 4601234567890").last().fill("4601234567890");
+    await lookupSection.getByRole("button", { name: "Найти" }).click();
+    await page.getByRole("button", { name: "Добавить в текущий приём" }).click();
+
+    await expect(
+      page.getByText("Продукт «Протеиновый батончик» добавлен в текущий приём пищи."),
+    ).toBeVisible();
+    await expect(page.locator("select").last()).toHaveValue(
+      "79c29240-e473-4db2-a31c-88b502af14f2",
+    );
+  });
+});

@@ -11,9 +11,9 @@
   - синхронизировать профильные документы в `docs/`, если меняется контракт, архитектура или release-процесс.
 - После каждого tranche обязательно пересчитывать `done / total` по основному execution checklist и обновлять процент прямо в этом файле и в пользовательском статусе.
 
-Этот файл — текущий production-hardening backlog проекта. Он отражает фактическое состояние репозитория на `2026-03-30`.
+Этот файл — текущий production-hardening backlog проекта. Он отражает фактическое состояние репозитория на `2026-03-31`.
 
-Текущий прогресс execution checklist: `168 / 176` (`95%`).
+Текущий прогресс execution checklist: `172 / 180` (`96%`).
 
 ## Текущая база
 
@@ -167,6 +167,13 @@
 - [x] Есть таймер с лимитом 2 часа и корректный сброс тренировки.
 - [x] Focus-mode на мобильной PWA доведён до эталонного UX без лишнего chrome и визуального шума.
 - [x] Сброс, сохранение, завершение и редактирование пройдены повторно как regression-critical сценарии.
+
+### Nutrition camera / barcode flow
+
+  - [x] Добавить in-app photo capture для питания с удобным mobile/PWA UX.
+  - [x] Добавить barcode scan и Open Food Facts lookup/import с preview изображения и состава.
+  - [x] Расширить `foods` schema и nutrition data-contract под image/composition/source metadata.
+  - [x] Закрыть regression, документацию и handoff по nutrition capture/import flow.
 
 ### AI workspace
 

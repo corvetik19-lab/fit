@@ -5,6 +5,14 @@ const nextConfig: NextConfig = {
   distDir: process.env.NEXT_DIST_DIR ?? ".next",
   reactStrictMode: true,
   typedRoutes: true,
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "images.openfoodfacts.org",
+      },
+    ],
+  },
   rewrites: async () => [
     {
       source: "/.well-known/assetlinks.json",

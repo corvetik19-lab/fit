@@ -3,12 +3,17 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 export type NutritionFood = {
   id: string;
   name: string;
+  brand: string | null;
   source: string;
   kcal: number;
   protein: number;
   fat: number;
   carbs: number;
   barcode: string | null;
+  image_url: string | null;
+  ingredients_text: string | null;
+  quantity: string | null;
+  serving_size: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -197,7 +202,9 @@ export async function listNutritionFoods(
 ) {
   const { data, error } = await supabase
     .from("foods")
-    .select("id, name, source, kcal, protein, fat, carbs, barcode, created_at, updated_at")
+    .select(
+      "id, name, brand, source, kcal, protein, fat, carbs, barcode, image_url, ingredients_text, quantity, serving_size, created_at, updated_at",
+    )
     .eq("user_id", userId)
     .order("updated_at", { ascending: false });
 

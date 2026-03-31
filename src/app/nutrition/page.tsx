@@ -17,9 +17,55 @@ import {
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireReadyViewer } from "@/lib/viewer";
 
-export default async function NutritionPage() {
+const nutritionPageSectionKeys = ["balance", "photo", "log"] as const;
+const nutritionTrackerPanelKeys = ["targets", "foods", "log", "history"] as const;
+
+type NutritionPageSectionKey = (typeof nutritionPageSectionKeys)[number];
+type NutritionTrackerPanelKey = (typeof nutritionTrackerPanelKeys)[number];
+
+type NutritionPageProps = {
+  searchParams?: Promise<{
+    panel?: string | string[];
+    section?: string | string[];
+  }>;
+};
+
+function resolveSearchParam(
+  value: string | string[] | undefined,
+): string | null {
+  return Array.isArray(value) ? value[0] ?? null : value ?? null;
+}
+
+function resolveSectionKey(value: string | null): NutritionPageSectionKey | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  return nutritionPageSectionKeys.includes(value as NutritionPageSectionKey)
+    ? (value as NutritionPageSectionKey)
+    : undefined;
+}
+
+function resolvePanelKey(value: string | null): NutritionTrackerPanelKey | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  return nutritionTrackerPanelKeys.includes(value as NutritionTrackerPanelKey)
+    ? (value as NutritionTrackerPanelKey)
+    : undefined;
+}
+
+export default async function NutritionPage({ searchParams }: NutritionPageProps) {
   const viewer = await requireReadyViewer();
   const supabase = await createServerSupabaseClient();
+  const resolvedSearchParams = searchParams ? await searchParams : {};
+  const initialSectionKey = resolveSectionKey(
+    resolveSearchParam(resolvedSearchParams.section),
+  );
+  const initialPanelKey = resolvePanelKey(
+    resolveSearchParam(resolvedSearchParams.panel),
+  );
   const todaySummaryDate = getTodaySummaryDate();
   const [
     foods,
@@ -50,7 +96,7 @@ export default async function NutritionPage() {
           viewer.profile?.full_name ?? viewer.user.email ?? "fit",
           `Сегодня: ${todaySummaryDate}`,
         ]}
-        description="Экран питания разбит на отдельные разделы: баланс дня, AI-анализ фото и журнал питания. На телефоне открывается только нужный раздел, без сплошной колонки из блоков."
+        description="Экран питания разбит на отдельные разделы: баланс дня, AI-анализ фото и журнал питания. На телефоне открывается только нужный блок, без сплошной длинной ленты."
         metrics={[
           {
             label: "Продукты",
@@ -109,6 +155,7 @@ export default async function NutritionPage() {
                 initialFoods={foods}
                 initialMeals={recentMeals}
                 initialMealTemplates={mealTemplates}
+                initialPanelKey={initialPanelKey}
                 initialRecipes={recipes}
                 nutritionTargets={nutritionTargets}
                 todaySummary={todaySummary}
@@ -117,6 +164,7 @@ export default async function NutritionPage() {
             ),
           },
         ]}
+        initialSectionKey={initialSectionKey}
         storageKey="nutrition-page"
         title="Рацион, AI-анализ фото и журнал питания в одном экране"
       />

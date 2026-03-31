@@ -31,7 +31,9 @@ export async function GET() {
 
     const { data, error } = await supabase
       .from("foods")
-      .select("id, name, source, kcal, protein, fat, carbs, barcode, created_at, updated_at")
+      .select(
+        "id, name, brand, source, kcal, protein, fat, carbs, barcode, image_url, ingredients_text, quantity, serving_size, created_at, updated_at",
+      )
       .eq("user_id", user.id)
       .order("updated_at", { ascending: false });
 
@@ -71,7 +73,9 @@ export async function POST(request: Request) {
     const { data, error } = await supabase
       .from("foods")
       .insert(buildFoodCreateData(user.id, payload))
-      .select("id, name, source, kcal, protein, fat, carbs, barcode, created_at, updated_at")
+      .select(
+        "id, name, brand, source, kcal, protein, fat, carbs, barcode, image_url, ingredients_text, quantity, serving_size, created_at, updated_at",
+      )
       .single();
 
     if (error) {

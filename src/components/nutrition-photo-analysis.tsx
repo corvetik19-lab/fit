@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { startTransition, useMemo, useState } from "react";
+import { Camera, ImagePlus } from "lucide-react";
+import { startTransition, useMemo, useRef, useState } from "react";
 
 import type { FeatureAccessSnapshot } from "@/lib/billing-access";
 
@@ -33,18 +34,20 @@ const inputClassName =
 function formatConfidence(value: MealPhotoAnalysis["confidence"]) {
   switch (value) {
     case "high":
-      return "Высокая";
+      return "высокая";
     case "medium":
-      return "Средняя";
+      return "средняя";
     case "low":
     default:
-      return "Низкая";
+      return "низкая";
   }
 }
 
 export function NutritionPhotoAnalysis({
   access,
 }: NutritionPhotoAnalysisProps) {
+  const cameraInputRef = useRef<HTMLInputElement | null>(null);
+  const galleryInputRef = useRef<HTMLInputElement | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [notes, setNotes] = useState("");
   const [result, setResult] = useState<MealPhotoAnalysis | null>(null);
@@ -63,14 +66,15 @@ export function NutritionPhotoAnalysis({
   function runAnalysis() {
     if (!access.allowed) {
       setError(
-        access.reason ?? "AI-анализ фото сейчас недоступен для текущего плана.",
+        access.reason ??
+          "AI-анализ фото сейчас недоступен для текущего плана.",
       );
       setResult(null);
       return;
     }
 
     if (!file) {
-      setError("Сначала выбери фото блюда.");
+      setError("Сначала сними или выбери фото блюда.");
       setResult(null);
       return;
     }
@@ -97,7 +101,7 @@ export function NutritionPhotoAnalysis({
           setResult(null);
           setError(
             payload?.message ??
-              "Не удалось проанализировать фото блюда. Попробуй другой ракурс или более четкое изображение.",
+              "Не удалось проанализировать фото блюда. Попробуй более чёткий кадр или другой ракурс.",
           );
           return;
         }
@@ -117,12 +121,12 @@ export function NutritionPhotoAnalysis({
             AI-помощник
           </p>
           <h2 className="mt-2 text-2xl font-semibold text-foreground">
-            Анализ фото блюда
+            Фото еды прямо из приложения
           </h2>
           <p className="mt-3 max-w-2xl text-sm leading-7 text-muted">
-            Загрузи фото блюда, и AI оценит состав, ориентировочную калорийность
-            и КБЖУ. Это online-only proposal: данные не записываются в дневник
-            автоматически.
+            Сними блюдо на камеру телефона или выбери фото из галереи. AI
+            оценит состав, ориентировочную калорийность и КБЖУ. Это
+            online-only анализ: данные не записываются в дневник автоматически.
           </p>
           {!access.allowed ? (
             <Link
@@ -137,10 +141,14 @@ export function NutritionPhotoAnalysis({
         <div className="rounded-3xl border border-border bg-white/60 px-5 py-4 text-sm text-muted">
           <p>
             Использовано: {access.usage.count}
-            {typeof access.usage.limit === "number" ? ` / ${access.usage.limit}` : ""}
+            {typeof access.usage.limit === "number"
+              ? ` / ${access.usage.limit}`
+              : ""}
           </p>
           <p className="mt-1">Источник доступа: {access.source}</p>
-          {access.reason ? <p className="mt-2 text-amber-700">{access.reason}</p> : null}
+          {access.reason ? (
+            <p className="mt-2 text-amber-700">{access.reason}</p>
+          ) : null}
         </div>
       </div>
 
@@ -150,18 +158,44 @@ export function NutritionPhotoAnalysis({
         </p>
       ) : null}
 
+      <input
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+        ref={cameraInputRef}
+        type="file"
+      />
+      <input
+        accept="image/*"
+        className="hidden"
+        onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+        ref={galleryInputRef}
+        type="file"
+      />
+
       <div className="mt-6 grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
         <div className="grid gap-4">
-          <label className="grid gap-2 text-sm text-muted">
-            Фото блюда
-            <input
-              accept="image/*"
-              className={inputClassName}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <button
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-accent/15 bg-[color-mix(in_srgb,var(--accent-soft)_74%,white)] px-5 py-3 text-sm font-semibold text-accent transition hover:bg-[color-mix(in_srgb,var(--accent-soft)_84%,white)] disabled:cursor-not-allowed disabled:opacity-60"
               disabled={!access.allowed}
-              onChange={(event) => setFile(event.target.files?.[0] ?? null)}
-              type="file"
-            />
-          </label>
+              onClick={() => cameraInputRef.current?.click()}
+              type="button"
+            >
+              <Camera size={16} strokeWidth={2.2} />
+              Снять фото
+            </button>
+            <button
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-border bg-white/82 px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={!access.allowed}
+              onClick={() => galleryInputRef.current?.click()}
+              type="button"
+            >
+              <ImagePlus size={16} strokeWidth={2.2} />
+              Из галереи
+            </button>
+          </div>
 
           <p className="text-sm text-muted">{fileLabel}</p>
 
@@ -171,7 +205,7 @@ export function NutritionPhotoAnalysis({
               className={`${inputClassName} min-h-32 resize-y`}
               disabled={!access.allowed}
               onChange={(event) => setNotes(event.target.value)}
-              placeholder="Например: это был обед после тренировки, на фото курица, рис и овощи."
+              placeholder="Например: это был обед после тренировки, на фото рис, курица и овощи."
               value={notes}
             />
           </label>
@@ -191,8 +225,12 @@ export function NutritionPhotoAnalysis({
             <div className="grid gap-5">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
-                  <p className="text-xl font-semibold text-foreground">{result.title}</p>
-                  <p className="mt-2 text-sm leading-7 text-muted">{result.summary}</p>
+                  <p className="text-xl font-semibold text-foreground">
+                    {result.title}
+                  </p>
+                  <p className="mt-2 text-sm leading-7 text-muted">
+                    {result.summary}
+                  </p>
                 </div>
                 <div className="pill">
                   Уверенность: {formatConfidence(result.confidence)}
@@ -235,7 +273,7 @@ export function NutritionPhotoAnalysis({
                     {result.items.map((item) => (
                       <li key={`${item.name}-${item.portion}`}>
                         {item.name} · {item.portion} · уверенность{" "}
-                        {formatConfidence(item.confidence).toLowerCase()}
+                        {formatConfidence(item.confidence)}
                       </li>
                     ))}
                   </ul>
@@ -254,18 +292,19 @@ export function NutritionPhotoAnalysis({
               </div>
 
               <p className="text-sm leading-7 text-muted">
-                Дальше можно вручную занести прием пищи в лог ниже и использовать
-                эту оценку как ориентир по составу и КБЖУ.
+                Если оценка выглядит правдоподобно, потом можно вручную занести
+                приём пищи в лог и использовать этот разбор как ориентир по
+                составу и КБЖУ.
               </p>
             </div>
           ) : (
             <div className="grid gap-3 text-sm leading-7 text-muted">
               <p>
-                Здесь появится оценка блюда после анализа фото: название, состав,
-                ориентировочные калории и КБЖУ.
+                Здесь появится оценка блюда после анализа фото: основные
+                ингредиенты, ориентировочные калории и КБЖУ.
               </p>
               <p>
-                Лучше всего работают четкие фотографии тарелки или упаковки при
+                Лучше всего работают чёткие фотографии тарелки или упаковки при
                 хорошем освещении и без лишних объектов в кадре.
               </p>
             </div>

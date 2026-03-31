@@ -5,33 +5,50 @@ import { recalculateDailyNutritionSummary } from "@/lib/nutrition/meal-logging";
 type NutritionDeleteTable = "foods" | "recipes" | "meal_templates" | "meals";
 
 type NutritionFoodUpdateInput = {
+  brand?: string | null;
   name?: string;
   kcal?: number;
   protein?: number;
   fat?: number;
   carbs?: number;
   barcode?: string | null;
+  image_url?: string | null;
+  ingredients_text?: string | null;
+  quantity?: string | null;
+  serving_size?: string | null;
+  source?: string;
 };
 
 type NutritionFoodCreateInput = {
+  brand?: string | null;
   name: string;
   kcal: number;
   protein: number;
   fat: number;
   carbs: number;
   barcode?: string | null;
+  image_url?: string | null;
+  ingredients_text?: string | null;
+  quantity?: string | null;
+  serving_size?: string | null;
+  source?: string;
 };
 
 export function buildFoodCreateData(userId: string, payload: NutritionFoodCreateInput) {
   return {
     user_id: userId,
-    source: "custom" as const,
+    source: payload.source?.trim() || ("custom" as const),
     name: payload.name,
+    brand: payload.brand?.trim() || null,
     kcal: payload.kcal,
     protein: Number(payload.protein.toFixed(2)),
     fat: Number(payload.fat.toFixed(2)),
     carbs: Number(payload.carbs.toFixed(2)),
     barcode: payload.barcode?.trim() || null,
+    image_url: payload.image_url?.trim() || null,
+    ingredients_text: payload.ingredients_text?.trim() || null,
+    quantity: payload.quantity?.trim() || null,
+    serving_size: payload.serving_size?.trim() || null,
   };
 }
 
@@ -40,6 +57,10 @@ export function buildFoodUpdateData(payload: NutritionFoodUpdateInput) {
 
   if (payload.name !== undefined) {
     updateData.name = payload.name;
+  }
+
+  if (payload.brand !== undefined) {
+    updateData.brand = payload.brand?.trim() || null;
   }
 
   if (payload.kcal !== undefined) {
@@ -60,6 +81,26 @@ export function buildFoodUpdateData(payload: NutritionFoodUpdateInput) {
 
   if (payload.barcode !== undefined) {
     updateData.barcode = payload.barcode?.trim() || null;
+  }
+
+  if (payload.image_url !== undefined) {
+    updateData.image_url = payload.image_url?.trim() || null;
+  }
+
+  if (payload.ingredients_text !== undefined) {
+    updateData.ingredients_text = payload.ingredients_text?.trim() || null;
+  }
+
+  if (payload.quantity !== undefined) {
+    updateData.quantity = payload.quantity?.trim() || null;
+  }
+
+  if (payload.serving_size !== undefined) {
+    updateData.serving_size = payload.serving_size?.trim() || null;
+  }
+
+  if (payload.source !== undefined) {
+    updateData.source = payload.source?.trim() || "custom";
   }
 
   return updateData;

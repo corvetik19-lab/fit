@@ -56,7 +56,9 @@ export async function PATCH(
       .update(updateData)
       .eq("id", id)
       .eq("user_id", user.id)
-      .select("id, name, source, kcal, protein, fat, carbs, barcode, created_at, updated_at")
+      .select(
+        "id, name, brand, source, kcal, protein, fat, carbs, barcode, image_url, ingredients_text, quantity, serving_size, created_at, updated_at",
+      )
       .maybeSingle();
 
     if (error) {
