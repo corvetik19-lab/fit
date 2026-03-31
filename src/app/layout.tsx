@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { IBM_Plex_Mono, Manrope } from "next/font/google";
+import { IBM_Plex_Mono, Manrope, Sora } from "next/font/google";
 import "./globals.css";
 
 import { ServiceWorkerRegistration } from "@/components/service-worker-registration";
@@ -9,6 +9,11 @@ import { resolveSiteUrl } from "@/lib/site-url";
 
 const sans = Manrope({
   variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const display = Sora({
+  variable: "--font-display",
   subsets: ["latin"],
 });
 
@@ -43,7 +48,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#14614b",
+  themeColor: "#0f7a60",
   width: "device-width",
   initialScale: 1,
 };
@@ -59,7 +64,9 @@ export default function RootLayout({
 
   return (
     <html lang="ru">
-      <body className={`${sans.variable} ${mono.variable} antialiased`}>
+      <body
+        className={`${sans.variable} ${display.variable} ${mono.variable} antialiased`}
+      >
         <ServiceWorkerRegistration />
         {children}
         {isVercelRuntime ? <Analytics /> : null}

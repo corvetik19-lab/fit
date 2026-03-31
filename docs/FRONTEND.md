@@ -7,70 +7,59 @@
 - TypeScript strict
 - Tailwind CSS v4
 - PWA shell + service worker
-- AI UI на `ai` и `@ai-sdk/react`
+- AI UI на `@ai-sdk/react`
 
-## Основные страницы
+## Текущая визуальная стратегия
 
-### Пользовательские
+С марта 2026 фронтенд переводится в направление **premium fitness / mobile-first**.
 
-- `/` — входная точка, перенаправляет в `auth`, `onboarding` или `dashboard`
-- `/auth` — вход и регистрация
-- `/onboarding` — первичная настройка профиля, целей и ограничений
-- `/dashboard` — сводка по тренировкам, питанию и AI
-- `/workouts` — недельные программы, упражнения и история выполнения
-- `/workouts/day/[dayId]` — экран конкретной тренировки, включая focus-mode
-- `/nutrition` — дневной баланс, приёмы пищи, продукты и история
-- `/ai` — полноэкранный AI workspace
-- `/history` — история программ, AI-предложений и self-service событий
-- `/settings` — профиль, доступы, billing, экспорт и удаление данных
-- `/suspended` — экран ограниченного аккаунта
+Базовые правила:
 
-### Админские
+- основная тема — светлая;
+- интерфейс должен ощущаться спортивным, но не агрессивным;
+- ключевой акцент — насыщённый зелёный;
+- вспомогательный энергичный акцент — тёплый `energy` tone для CTA и сигналов;
+- на mobile/PWA главный приоритет — читаемость, один доминирующий блок и отсутствие горизонтального overflow;
+- shell и workspace должны выглядеть как единая система, а не набор отдельных карточек.
 
-- `/admin` — операторский центр
-- `/admin/users` — каталог пользователей
-- `/admin/users/[id]` — детальная карточка пользователя
+Актуальный execution-doc по этому направлению:
 
-### Технические
-
-- `/smoke` — стабильная smoke-страница для локальных и CI-проверок
-- `app/api/**` — runtime routes, которые поддерживают UI и тесты
+- [PREMIUM_REDESIGN_PLAN.md](/C:/fit/docs/PREMIUM_REDESIGN_PLAN.md)
 
 ## Базовая архитектура
 
-Frontend держится на трёх уровнях:
+Frontend делится на три уровня:
 
 1. `src/app/**` — server pages и route-level orchestration
-2. `src/components/**` — клиентский UI, shell, формы, секции экранов
-3. `src/lib/**` — derived state, форматтеры, runtime helpers, domain logic
+2. `src/components/**` — UI-компоненты, shell, формы, workspace и screen surfaces
+3. `src/lib/**` — helpers, derive-слой, форматтеры, runtime plumbing и доменные правила
 
 Текущее правило production hardening:
 
 - страницы должны быть тонкими orchestrator-компонентами;
-- тяжёлая логика не должна жить прямо в JSX;
-- hydration-sensitive и sync-sensitive части нужно выносить в helper-модули и hooks;
-- UI не должен зависеть от служебного текста и внутренних технических терминов.
+- async/data orchestration не должна жить прямо в JSX;
+- hydration-sensitive и sync-sensitive logic нужно выносить в hooks и helper-модули;
+- пользовательский UI не должен показывать служебные или битые технические тексты.
 
 ## Shell и навигация
 
-Ключевые файлы shell:
+Ключевые файлы:
 
 - `src/components/app-shell.tsx`
 - `src/components/app-shell-frame.tsx`
 - `src/components/app-shell-nav.tsx`
 
-Что считается правильным состоянием:
+Текущий контракт shell:
 
-- на desktop есть стабильный top nav без перекрытий и лишнего fixed chrome;
-- на mobile/PWA используется burger drawer без portal-глюков и hydration mismatch;
-- AI chat-виджет доступен как отдельное действие, но не мешает навигации;
-- shell не должен ломать focus-mode сценарии тренировки и полноэкранный AI workspace.
+- на desktop используется стабильный top nav без обрезанных пунктов;
+- на mobile/PWA используется burger drawer без hydration mismatch и portal-глюков;
+- AI widget остаётся вторичным действием и не мешает основному контенту;
+- shell не должен ломать workout focus-mode и fullscreen AI workspace;
+- общие visual primitives shell управляются через `src/app/globals.css`.
 
 ## Workspace-паттерн
 
-Тяжёлые страницы приложения должны быть разбиты на логические секции.
-
-Это уже используется как базовый паттерн для:
+Общий workspace-паттерн применяется к:
 
 - `Dashboard`
 - `Workouts`
@@ -80,10 +69,14 @@ Frontend держится на трёх уровнях:
 
 Ожидаемое поведение:
 
-- пользователь видит явные разделы, а не длинную ленту блоков;
-- на мобильной PWA одновременно открыт только один основной логический блок;
+- пользователь открывает только нужный раздел, а не длинную ленту одинаковых блоков;
+- на mobile одновременно открыт один основной логический блок;
 - обзор, меню и активный раздел можно скрывать независимо;
-- переключатели секций должны быть читаемыми и на desktop, и на mobile.
+- section switchers и mobile triggers должны быть одинаково читаемы на desktop и mobile.
+
+Ключевой shared-файл:
+
+- `src/components/page-workspace.tsx`
 
 ## Тренировки
 
@@ -94,15 +87,15 @@ Frontend держится на трёх уровнях:
 - `src/components/workout-day-session.tsx`
 - `src/components/workout-session/**`
 
-Что уже является текущим продуктовым контрактом:
+Продуктовый контракт:
 
-- шаги тренировки видны сразу все;
-- будущие упражнения закрыты, пока текущее не сохранено;
-- сохранение упражнения возможно только при полностью заполненных `повторах`, `весе`, `RPE`;
-- после сохранения шаг становится read-only, пока пользователь явно не нажмёт `Редактировать`;
-- есть `focus-mode` для мобильной PWA;
-- таймер тренировки умеет старт, паузу, завершение и сохранение времени;
-- `Обнулить тренировку` сбрасывает и UI, и серверное execution state.
+- шаги тренировки видны заранее;
+- будущие упражнения закрыты до сохранения текущего;
+- сохранение упражнения требует полностью заполненных `повторов`, `веса`, `RPE`;
+- после сохранения шаг становится read-only до явного `Редактировать`;
+- есть mobile focus-mode;
+- таймер умеет старт, паузу, завершение и сохранение времени;
+- `Обнулить тренировку` сбрасывает и UI, и server-side execution state.
 
 ## Питание
 
@@ -110,70 +103,50 @@ Frontend держится на трёх уровнях:
 
 - `src/app/nutrition/page.tsx`
 - `src/components/nutrition-tracker.tsx`
-- `src/components/dashboard-nutrition-charts.tsx`
+- `src/components/nutrition-photo-analysis.tsx`
+- `src/components/nutrition-open-food-facts-card.tsx`
+- `src/components/nutrition-barcode-scanner.tsx`
 - `src/lib/nutrition/**`
 
-Фронтенд-контракт питания:
+Продуктовый контракт:
 
 - есть секционный интерфейс вместо одной длинной страницы;
-- пользователь видит дневной баланс, приёмы пищи, продукты и историю;
-- AI и дашборд получают meal-level и strategy-level сигналы без сырых технических деталей в UI;
-- карточки и бейджи не должны вылезать за экран на mobile/PWA.
+- есть in-app photo capture;
+- есть barcode scan и lookup/import через Open Food Facts;
+- найденный продукт можно сохранить в базу или сразу добавить в текущий приём пищи;
+- карточки продуктов не должны ломаться на узких экранах и не должны иметь случайных переносов бейджей.
 
-## AI workspace
+Подробный execution-doc по camera/barcode flow:
 
-Ключевые файлы:
+- [NUTRITION_CAPTURE_OFF_PLAN.md](/C:/fit/docs/NUTRITION_CAPTURE_OFF_PLAN.md)
 
-- `src/app/ai/page.tsx`
-- `src/components/ai-workspace.tsx`
-- `src/components/ai-chat-panel.tsx`
-- `src/components/ai-chat-toolbar.tsx`
-- `src/components/ai-chat-transcript.tsx`
-- `src/components/ai-chat-composer.tsx`
+## AI и Admin
 
-Что считается правильным UX:
+`AI` и `Admin` используют тот же визуальный язык, но с разной плотностью:
 
-- это chat-first полноэкранный экран без лишнего служебного текста;
-- история чатов создаётся автоматически и может очищаться по одному или массово;
-- поиск в интернете включается понятным компактным toggle;
-- загрузка фото еды встроена в composer, а не вынесена в отдельный непонятный поток;
-- assistant flow читается как `запрос -> анализ -> предложение -> подтверждение -> применение`.
+- `AI` — consumer-first fullscreen workspace;
+- `Admin` — плотнее и операторнее, но без сырых технических fallback-текстов;
+- degraded states должны быть явно показаны в UI, а не прятаться за пустыми блоками.
 
-## Admin UI
+## Regression expectations
 
-Ключевые файлы:
-
-- `src/app/admin/page.tsx`
-- `src/app/admin/users/page.tsx`
-- `src/app/admin/users/[id]/page.tsx`
-- `src/components/admin-*.tsx`
-
-Операторский контракт:
-
-- только русский язык и понятные бизнес-формулировки;
-- детали ролей и capability-поверхность видны только там, где это действительно нужно;
-- degraded/fallback режимы должны быть явными, но не ломать экран общим `500`;
-- каталоги и карточки пользователей остаются секционными и читабельными и на desktop, и на mobile.
-
-## Тесты и контроль качества
-
-Frontend regression-контур сейчас держится на:
+После заметных frontend-tranche обязательно проверять:
 
 - `npm run lint`
 - `npm run typecheck`
 - `npm run build`
 - `npm run test:smoke`
-- `npm run test:e2e:auth`
 
-Дополнительно:
+Для mobile/shell изменений дополнительно:
 
-- `npm run test:rls` проверяет data isolation напрямую через Supabase clients
-- `npm run verify:migrations` обязателен, если изменялись `supabase/migrations`
+- `tests/e2e/mobile-pwa-regressions.spec.ts`
 
-## Практические правила для изменений
+Для nutrition UI и barcode/photo flow дополнительно:
 
-- не добавлять новый UI с сырым техническим текстом;
-- не полагаться на `networkidle`, если тест проверяет только API-контракт;
-- не держать важную business logic прямо внутри большого client-компонента;
-- не ломать mobile/PWA layout fixed-плашками и лишними overlay;
-- не трогать `docs/AI_EXPLAINED.md` как часть sanitation-wave без отдельного triage.
+- `tests/e2e/nutrition-capture.spec.ts`
+
+Если меняется workspace/navigation UX, нужно синхронизировать:
+
+- [MASTER_PLAN.md](/C:/fit/docs/MASTER_PLAN.md)
+- [AI_WORKLOG.md](/C:/fit/docs/AI_WORKLOG.md)
+- [PREMIUM_REDESIGN_PLAN.md](/C:/fit/docs/PREMIUM_REDESIGN_PLAN.md)

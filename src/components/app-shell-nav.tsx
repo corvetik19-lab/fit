@@ -262,10 +262,8 @@ export function AppShellNav({
                 return (
                   <Link
                     aria-current={isActive ? "page" : undefined}
-                    className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
-                      isActive
-                        ? "border-accent/20 bg-[color-mix(in_srgb,var(--accent-soft)_76%,white)] text-foreground shadow-[0_14px_34px_-28px_rgba(20,97,75,0.2)]"
-                        : "border-border text-foreground hover:bg-white/70"
+                    className={`section-chip rounded-full px-4 py-2 text-sm font-semibold ${
+                      isActive ? "section-chip--active" : ""
                     }`}
                     href={route.href}
                     key={route.href}
@@ -296,7 +294,7 @@ export function AppShellNav({
               <button
                 aria-controls="app-mobile-drawer"
                 aria-expanded={isDrawerOpen}
-                className="inline-flex shrink-0 items-center gap-2 rounded-full border border-border bg-white/80 px-3.5 py-2.5 text-sm font-semibold text-foreground shadow-[0_14px_34px_-26px_rgba(24,22,19,0.45)] transition hover:bg-white"
+                className="toggle-chip shrink-0 px-3.5 py-2.5 text-sm font-semibold shadow-[0_18px_34px_-24px_rgba(15,122,96,0.24)]"
                 onClick={() => setIsDrawerOpen(true)}
                 type="button"
               >
@@ -311,7 +309,7 @@ export function AppShellNav({
           aria-controls="app-mobile-drawer"
           aria-expanded={isDrawerOpen}
           aria-label="Открыть меню"
-          className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border bg-white/82 text-foreground shadow-[0_16px_40px_-28px_rgba(24,22,19,0.5)] transition hover:bg-white lg:hidden"
+          className="toggle-chip inline-flex h-11 w-11 items-center justify-center rounded-full px-0 py-0 shadow-[0_18px_34px_-24px_rgba(15,122,96,0.24)] lg:hidden"
           data-testid="app-mobile-header-drawer-toggle"
           onClick={() => setIsDrawerOpen(true)}
           type="button"

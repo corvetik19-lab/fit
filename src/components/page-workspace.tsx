@@ -66,10 +66,8 @@ function SectionButton({
   return (
     <button
       aria-pressed={active}
-      className={`w-full rounded-3xl border px-4 py-3 text-left transition md:min-w-[13rem] md:w-auto ${
-        active
-          ? "border-accent/20 bg-[color-mix(in_srgb,var(--accent-soft)_78%,white)] text-foreground shadow-[0_16px_38px_-34px_rgba(20,97,75,0.22)]"
-          : "border-border bg-white/72 text-foreground hover:bg-white"
+      className={`section-chip w-full px-4 py-3 text-left md:min-w-[13rem] md:w-auto ${
+        active ? "section-chip--active" : ""
       }`}
       data-testid={`page-workspace-option-${sectionKey}`}
       onClick={onClick}
@@ -99,10 +97,8 @@ function VisibilityButton({
   return (
     <button
       aria-pressed={active}
-      className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition ${
-        active
-          ? "border-accent/15 bg-[color-mix(in_srgb,var(--accent-soft)_68%,white)] text-foreground"
-          : "border-border bg-white/80 text-foreground hover:bg-white"
+      className={`toggle-chip px-4 py-2 text-sm font-medium ${
+        active ? "toggle-chip--active" : ""
       }`}
       data-testid={testId}
       onClick={onClick}
@@ -198,13 +194,13 @@ export function PageWorkspace({
 
   return (
     <div className="grid gap-6">
-      <section className="card p-4 sm:p-5">
+      <section className="card card--hero p-4 sm:p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
               Настройка экрана
             </p>
-            <h2 className="mt-2 text-lg font-semibold text-foreground sm:text-xl">
+            <h2 className="app-display mt-2 text-lg font-semibold text-foreground sm:text-xl">
               Показывай только нужные блоки
             </h2>
           </div>
@@ -236,7 +232,7 @@ export function PageWorkspace({
       </section>
 
       {!hiddenBlocks.hero ? (
-        <section className="card overflow-hidden p-5 sm:p-6 lg:p-8">
+        <section className="card card--hero overflow-hidden p-5 sm:p-6 lg:p-8">
           <div className="grid gap-5 xl:grid-cols-[1.06fr_0.94fr]">
             <div className="space-y-4">
               {badges.length ? (
@@ -250,7 +246,7 @@ export function PageWorkspace({
               ) : null}
 
               <div className="space-y-3">
-                <h2 className="max-w-4xl text-2xl font-semibold tracking-tight text-foreground sm:text-3xl lg:text-4xl">
+                <h2 className="app-display max-w-4xl text-2xl font-semibold tracking-tight text-foreground sm:text-3xl lg:text-4xl">
                   {title}
                 </h2>
                 <p className="max-w-3xl text-sm leading-7 text-muted sm:text-base">
@@ -262,7 +258,7 @@ export function PageWorkspace({
             <div className="grid grid-cols-2 gap-3">
               {metrics.map((metric) => (
                 <article
-                  className="min-w-0 rounded-3xl border border-border bg-white/80 p-4 shadow-[0_18px_48px_-40px_rgba(15,23,42,0.28)]"
+                  className="metric-tile min-w-0 p-4"
                   key={metric.label}
                 >
                   <p className="truncate text-xs uppercase tracking-[0.18em] text-muted">
@@ -280,13 +276,13 @@ export function PageWorkspace({
       ) : null}
 
       {!hiddenBlocks.menu ? (
-        <section className="card p-4 sm:p-5">
+        <section className="card card--hero p-4 sm:p-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
                 Разделы
               </p>
-              <h2 className="mt-2 text-xl font-semibold text-foreground">
+              <h2 className="app-display mt-2 text-xl font-semibold text-foreground">
                 Открывай только нужный блок
               </h2>
             </div>
@@ -300,7 +296,7 @@ export function PageWorkspace({
           <div className="mt-4 md:hidden">
             <button
               aria-expanded={isMobileMenuOpen}
-              className="flex w-full items-center justify-between gap-3 rounded-3xl border border-border bg-white/82 px-4 py-3 text-left shadow-[0_18px_45px_-35px_rgba(20,97,75,0.25)] transition hover:bg-white"
+              className="section-chip flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
               data-testid="page-workspace-mobile-trigger"
               onClick={() => setIsMobileMenuOpen((current) => !current)}
               type="button"
@@ -318,7 +314,7 @@ export function PageWorkspace({
                   </span>
                 ) : null}
               </span>
-              <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-white/85 text-foreground">
+              <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-white/88 text-foreground shadow-[0_18px_32px_-26px_rgba(15,122,96,0.22)]">
                 {isMobileMenuOpen ? (
                   <ChevronUp size={18} strokeWidth={2.2} />
                 ) : (
@@ -328,17 +324,15 @@ export function PageWorkspace({
             </button>
 
             {isMobileMenuOpen ? (
-              <div className="mt-3 grid gap-2 rounded-3xl border border-border bg-[color-mix(in_srgb,var(--surface)_94%,white)] p-3">
+              <div className="mt-3 grid gap-2 rounded-3xl border border-border bg-[color-mix(in_srgb,var(--surface-overlay)_94%,white)] p-3 shadow-[0_30px_60px_-48px_rgba(18,32,27,0.22)]">
                 {sections.map((section) => {
                   const isActive = activeSection?.key === section.key;
 
                   return (
                     <button
                       aria-pressed={isActive}
-                      className={`flex items-start justify-between gap-3 rounded-2xl border px-3 py-3 text-left transition ${
-                        isActive
-                          ? "border-accent/20 bg-[color-mix(in_srgb,var(--accent-soft)_72%,white)] text-foreground"
-                          : "border-transparent bg-white/72 text-foreground hover:bg-white"
+                      className={`section-chip flex w-full items-start justify-between gap-3 px-3 py-3 text-left ${
+                        isActive ? "section-chip--active" : "border-transparent"
                       }`}
                       data-testid={`page-workspace-mobile-option-${section.key}`}
                       key={section.key}

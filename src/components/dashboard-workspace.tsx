@@ -111,10 +111,8 @@ function SectionButton({
   return (
     <button
       aria-pressed={active}
-      className={`w-full rounded-3xl border px-4 py-3 text-left transition md:min-w-[13rem] md:w-auto ${
-        active
-          ? "border-accent/20 bg-[color-mix(in_srgb,var(--accent-soft)_78%,white)] text-foreground shadow-[0_16px_38px_-34px_rgba(20,97,75,0.22)]"
-          : "border-border bg-white/72 text-foreground hover:bg-white"
+      className={`section-chip w-full px-4 py-3 text-left md:min-w-[13rem] md:w-auto ${
+        active ? "section-chip--active" : ""
       }`}
       onClick={onClick}
       type="button"
@@ -123,7 +121,7 @@ function SectionButton({
         <span
           className={`inline-flex h-10 w-10 items-center justify-center rounded-2xl ${
             active
-              ? "border border-accent/15 bg-[color-mix(in_srgb,var(--accent-soft)_72%,white)] text-accent"
+              ? "border border-accent/15 bg-[color-mix(in_srgb,var(--accent-soft)_72%,white)] text-accent shadow-[0_18px_30px_-22px_rgba(15,122,96,0.24)]"
               : "bg-accent/8 text-accent"
           }`}
         >
@@ -150,7 +148,7 @@ function SummaryDetailCard({
   action: string;
 }) {
   return (
-    <div className="rounded-3xl border border-border bg-white/76 p-4">
+    <div className="metric-tile p-4">
       <p className="text-sm font-semibold text-foreground">{title}</p>
       <p className="mt-2 text-sm leading-6 text-muted">{summary}</p>
       <p className="mt-3 text-sm font-medium text-foreground">
@@ -218,7 +216,7 @@ export function DashboardWorkspace({
 
   return (
     <>
-      <section className="card overflow-hidden p-5 sm:p-6 lg:p-8">
+      <section className="card card--hero overflow-hidden p-5 sm:p-6 lg:p-8">
         <div className="grid gap-5 xl:grid-cols-[1.08fr_0.92fr]">
           <div className="space-y-4">
             <div className="flex flex-wrap gap-2">
@@ -233,7 +231,7 @@ export function DashboardWorkspace({
             </div>
 
             <div className="space-y-3">
-              <h2 className="max-w-4xl text-2xl font-semibold tracking-tight text-foreground sm:text-3xl lg:text-4xl">
+              <h2 className="app-display max-w-4xl text-2xl font-semibold tracking-tight text-foreground sm:text-3xl lg:text-4xl">
                 Весь прогресс под рукой, без длинной прокрутки и перегруженных
                 отчётов.
               </h2>
@@ -245,7 +243,7 @@ export function DashboardWorkspace({
             </div>
 
             <div className="grid gap-3 lg:grid-cols-2">
-              <article className="rounded-3xl border border-border bg-white/76 p-4">
+              <article className="metric-tile p-4">
                 <p className="text-sm font-semibold text-foreground">
                   Текущий ритм тренировок
                 </p>
@@ -260,7 +258,7 @@ export function DashboardWorkspace({
                 </p>
               </article>
 
-              <article className="rounded-3xl border border-border bg-white/76 p-4">
+              <article className="metric-tile p-4">
                 <p className="text-sm font-semibold text-foreground">
                   Текущий ритм питания
                 </p>
@@ -280,11 +278,11 @@ export function DashboardWorkspace({
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            {metricCards.map((metric) => (
-              <article
-                className="rounded-3xl border border-border bg-white/80 p-4 shadow-[0_18px_48px_-40px_rgba(15,23,42,0.28)]"
-                key={metric.label}
-              >
+              {metricCards.map((metric) => (
+                <article
+                  className="metric-tile p-4"
+                  key={metric.label}
+                >
                 <p className="text-xs uppercase tracking-[0.18em] text-muted">
                   {metric.label}
                 </p>
@@ -298,19 +296,19 @@ export function DashboardWorkspace({
         </div>
       </section>
 
-      <section className="card p-4 sm:p-5">
+      <section className="card card--hero p-4 sm:p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
               Разделы дашборда
             </p>
-            <h2 className="mt-2 text-xl font-semibold text-foreground">
+            <h2 className="app-display mt-2 text-xl font-semibold text-foreground">
               Открывай только тот слой аналитики, который нужен сейчас
             </h2>
           </div>
 
           <Link
-            className="inline-flex items-center gap-2 rounded-full border border-accent/15 bg-[color-mix(in_srgb,var(--accent-soft)_72%,white)] px-4 py-2 text-sm font-semibold text-accent transition hover:bg-white"
+            className="toggle-chip px-4 py-2 text-sm font-semibold"
             href={"/ai" as Route}
           >
             Открыть AI
@@ -321,7 +319,7 @@ export function DashboardWorkspace({
         <div className="mt-4 md:hidden">
           <button
             aria-expanded={isMobileMenuOpen}
-            className="flex w-full items-center justify-between gap-3 rounded-3xl border border-border bg-white/82 px-4 py-3 text-left shadow-[0_18px_45px_-35px_rgba(20,97,75,0.25)] transition hover:bg-white"
+            className="section-chip flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
             data-testid="dashboard-workspace-mobile-trigger"
             onClick={() => setIsMobileMenuOpen((current) => !current)}
             type="button"
@@ -337,7 +335,7 @@ export function DashboardWorkspace({
                 {activeSectionMeta.description}
               </span>
             </span>
-            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-white/85 text-foreground">
+            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-white/88 text-foreground shadow-[0_18px_32px_-26px_rgba(15,122,96,0.22)]">
               {isMobileMenuOpen ? (
                 <ChevronUp size={18} strokeWidth={2.2} />
               ) : (
@@ -347,7 +345,7 @@ export function DashboardWorkspace({
           </button>
 
           {isMobileMenuOpen ? (
-            <div className="mt-3 grid gap-2 rounded-3xl border border-border bg-[color-mix(in_srgb,var(--surface)_94%,white)] p-3">
+            <div className="mt-3 grid gap-2 rounded-3xl border border-border bg-[color-mix(in_srgb,var(--surface-overlay)_94%,white)] p-3 shadow-[0_30px_60px_-48px_rgba(18,32,27,0.22)]">
               {sectionOptions.map((section) => {
                 const isActive = activeSection === section.key;
                 const Icon = section.icon;
@@ -355,10 +353,8 @@ export function DashboardWorkspace({
                 return (
                   <button
                     aria-pressed={isActive}
-                    className={`flex items-start justify-between gap-3 rounded-2xl border px-3 py-3 text-left transition ${
-                      isActive
-                        ? "border-accent/20 bg-[color-mix(in_srgb,var(--accent-soft)_72%,white)] text-foreground"
-                        : "border-transparent bg-white/72 text-foreground hover:bg-white"
+                    className={`section-chip flex w-full items-start justify-between gap-3 px-3 py-3 text-left ${
+                      isActive ? "section-chip--active" : "border-transparent"
                     }`}
                     data-testid={`dashboard-workspace-option-${section.key}`}
                     key={section.key}

@@ -87,7 +87,7 @@ export function AppShellFrame({
       {showMobileHeader ? (
         <header className="fixed inset-x-0 top-0 z-30 px-4 pt-[calc(0.65rem+env(safe-area-inset-top))] sm:px-6 lg:hidden">
           <div className="mx-auto max-w-[1500px]">
-            <div className="flex items-center gap-3 rounded-[1.5rem] border border-white/60 bg-[color-mix(in_srgb,var(--surface)_94%,white)] px-3 py-3 shadow-[0_18px_45px_rgba(24,22,19,0.08)] backdrop-blur-xl">
+            <div className="flex items-center gap-3 rounded-[1.6rem] border border-white/65 bg-[color-mix(in_srgb,var(--surface-overlay)_96%,white)] px-3 py-3 shadow-[0_24px_56px_-34px_rgba(18,32,27,0.26)] backdrop-blur-xl">
               <AppShellNav
                 minimal
                 onDrawerOpenChange={setIsMobileDrawerOpen}
@@ -97,7 +97,7 @@ export function AppShellFrame({
                 <p className="truncate font-mono text-[0.64rem] uppercase tracking-[0.22em] text-muted">
                   {eyebrow}
                 </p>
-                <p className="mt-1 truncate text-sm font-semibold text-foreground">
+                <p className="app-display mt-1 truncate text-sm font-semibold text-foreground">
                   {title}
                 </p>
               </div>
@@ -109,22 +109,22 @@ export function AppShellFrame({
       {!immersive && !shouldUseCompactHeader ? (
         <header className="fixed inset-x-0 top-0 z-30 hidden px-4 pt-[calc(0.65rem+env(safe-area-inset-top))] sm:px-6 lg:block lg:px-10">
           <div className="mx-auto max-w-[1500px]">
-            <div className="card border-white/60 bg-[color-mix(in_srgb,var(--surface)_90%,white)] p-4 backdrop-blur-xl sm:p-5">
+            <div className="card card--hero border-white/60 bg-[color-mix(in_srgb,var(--surface-overlay)_92%,white)] p-4 backdrop-blur-xl sm:p-5">
               <div className="flex flex-col gap-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
-                    <div className="inline-flex items-center gap-2 rounded-full border border-border bg-white/70 px-3 py-1.5 text-xs font-medium uppercase tracking-[0.22em] text-muted">
+                    <div className="inline-flex items-center gap-2 rounded-full border border-border bg-white/72 px-3 py-1.5 text-xs font-medium uppercase tracking-[0.22em] text-muted shadow-[0_16px_30px_-24px_rgba(15,122,96,0.24)]">
                       <span className="h-2 w-2 rounded-full bg-accent" />
                       {eyebrow}
                     </div>
-                    <h1 className="mt-3 max-w-3xl text-2xl font-semibold tracking-tight text-foreground sm:text-4xl">
+                    <h1 className="app-display mt-3 max-w-3xl text-2xl font-semibold tracking-tight text-foreground sm:text-4xl">
                       {title}
                     </h1>
                   </div>
 
                   <button
                     aria-expanded
-                    className="inline-flex items-center gap-2 rounded-full border border-border bg-white/80 px-4 py-2.5 text-sm font-semibold text-foreground transition hover:bg-white"
+                    className="toggle-chip px-4 py-2.5 text-sm font-semibold"
                     onClick={toggleCollapsed}
                     type="button"
                   >
@@ -155,13 +155,13 @@ export function AppShellFrame({
       {!immersive && shouldUseCompactHeader ? (
         <header className="fixed inset-x-0 top-0 z-30 hidden px-4 pt-[calc(0.5rem+env(safe-area-inset-top))] sm:px-6 lg:block lg:px-10">
           <div className="mx-auto max-w-[1500px]">
-            <div className="rounded-[1.6rem] border border-white/60 bg-[color-mix(in_srgb,var(--surface)_94%,white)] px-4 py-3 shadow-[0_18px_45px_rgba(24,22,19,0.08)] backdrop-blur-xl">
+            <div className="rounded-[1.7rem] border border-white/60 bg-[color-mix(in_srgb,var(--surface-overlay)_96%,white)] px-4 py-3 shadow-[0_24px_56px_-34px_rgba(18,32,27,0.24)] backdrop-blur-xl">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="min-w-0">
                   <p className="truncate font-mono text-[0.64rem] uppercase tracking-[0.22em] text-muted">
                     {eyebrow}
                   </p>
-                  <p className="mt-1 truncate text-sm font-semibold text-foreground">
+                  <p className="app-display mt-1 truncate text-sm font-semibold text-foreground">
                     {title}
                   </p>
                 </div>
@@ -175,7 +175,7 @@ export function AppShellFrame({
                     <button
                       aria-expanded={false}
                       aria-label="Развернуть верхнюю панель"
-                      className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border bg-white/92 text-foreground shadow-[0_16px_40px_-28px_rgba(24,22,19,0.5)] backdrop-blur-xl transition hover:bg-white"
+                      className="toggle-chip inline-flex h-11 w-11 items-center justify-center rounded-full px-0 py-0 shadow-[0_18px_34px_-24px_rgba(15,122,96,0.24)]"
                       onClick={toggleCollapsed}
                       type="button"
                     >

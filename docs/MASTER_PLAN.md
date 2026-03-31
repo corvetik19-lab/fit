@@ -13,7 +13,7 @@
 
 Этот файл — текущий production-hardening backlog проекта. Он отражает фактическое состояние репозитория на `2026-03-31`.
 
-Текущий прогресс execution checklist: `172 / 180` (`96%`).
+Текущий прогресс execution checklist: `174 / 186` (`94%`).
 
 ## Текущая база
 
@@ -158,6 +158,15 @@
 - [x] Все тяжёлые страницы (`Dashboard`, `Workouts`, `Nutrition`, `AI`, `Admin`) приведены к единому workspace-паттерну.
 - [x] На мобильной PWA одновременно открыт только один логический блок.
 - [x] Состояние скрытия/показа блоков ведёт себя предсказуемо на всех основных страницах.
+
+### Premium fitness redesign
+
+- [x] Завести отдельный execution-doc [PREMIUM_REDESIGN_PLAN.md](/C:/fit/docs/PREMIUM_REDESIGN_PLAN.md) и привязать его к `MASTER_PLAN`.
+- [x] Обновить визуальные токены, типографику и общие shell/workspace primitives в premium fitness-направлении.
+- [ ] Пересобрать `Dashboard` и `AI` под новый visual language.
+- [ ] Пересобрать `Workouts` и `Nutrition` под mobile/PWA-first подачу без потери текущих flows.
+- [ ] Довести `Admin` и remaining detail surfaces до того же визуального языка.
+- [ ] Закрыть visual regression, mobile acceptance и финальный handoff по редизайну.
 
 ### Workout execution
 
