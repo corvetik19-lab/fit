@@ -61,9 +61,9 @@ export function AdminUserExportHistoryCard({
       {detail.recentExportJobs.length ? (
         detail.recentExportJobs.map((job) => (
           <TimelineEntry key={job.id}>
-            <p className="font-medium text-foreground">
-              {job.format} · {formatStatus(job.status)}
-            </p>
+              <p className="font-medium text-foreground">
+                {job.format} • {formatStatus(job.status)}
+              </p>
             <p className="mt-1 text-muted">
               Запросил:{" "}
               <span className="text-foreground">

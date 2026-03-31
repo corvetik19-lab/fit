@@ -60,14 +60,14 @@ export function WorkoutExerciseCard({
 }) {
   return (
     <article
-      className="card p-4 sm:p-6"
+      className="card card--hero p-4 sm:p-6"
       data-complete={isExerciseComplete ? "true" : "false"}
       data-editable={isExerciseEditable ? "true" : "false"}
       data-testid={`workout-exercise-card-${index + 1}`}
     >
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
+          <p className="workspace-kicker">
             {isMobileFocusMode ? `Упражнение ${index + 1} из ${totalExercises}` : "Упражнение"}
           </p>
           <h3 className="mt-2 break-words text-xl font-semibold text-foreground sm:text-2xl">
@@ -85,7 +85,7 @@ export function WorkoutExerciseCard({
 
           {isExerciseComplete && !isExerciseEditable ? (
             <button
-              className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
+              className="action-button action-button--secondary px-4 py-2 text-sm"
               data-testid={`workout-exercise-edit-${index + 1}`}
               disabled={!dayIsLocked || isPending || isSyncing}
               onClick={() => onSetExerciseEditing(exercise.id, true)}
@@ -97,7 +97,7 @@ export function WorkoutExerciseCard({
 
           {isExerciseEditable ? (
             <button
-              className="rounded-full bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+              className="action-button action-button--primary px-4 py-2 text-sm"
               data-testid={`workout-exercise-save-${index + 1}`}
               disabled={!dayIsLocked || isPending || isSyncing || !isExerciseReadyToSave}
               onClick={() => onSaveExercise(exercise)}
@@ -112,7 +112,7 @@ export function WorkoutExerciseCard({
       <div className="grid gap-3">
         {exercise.sets.map((set) => (
           <div
-            className="rounded-2xl border border-border bg-white/60 p-4"
+            className="surface-panel surface-panel--soft p-4"
             key={set.id}
           >
             <div className="grid gap-3 lg:grid-cols-[0.8fr_1fr_1fr_1fr] lg:items-end">
@@ -194,19 +194,19 @@ export function WorkoutExerciseCard({
             </div>
 
             <div className="mt-3 grid gap-3 sm:grid-cols-3">
-              <div className="rounded-2xl border border-border/70 bg-white/70 px-4 py-3 text-sm text-muted">
+              <div className="surface-panel p-3 text-sm text-muted">
                 Последние повторы:{" "}
                 <span className="font-semibold text-foreground">
                   {set.actual_reps ?? "нет данных"}
                 </span>
               </div>
-              <div className="rounded-2xl border border-border/70 bg-white/70 px-4 py-3 text-sm text-muted">
+              <div className="surface-panel p-3 text-sm text-muted">
                 Последний вес:{" "}
                 <span className="font-semibold text-foreground">
                   {formatOptionalWeight(set.actual_weight_kg)}
                 </span>
               </div>
-              <div className="rounded-2xl border border-border/70 bg-white/70 px-4 py-3 text-sm text-muted">
+              <div className="surface-panel p-3 text-sm text-muted">
                 Последний RPE:{" "}
                 <span className="font-semibold text-foreground">
                   {formatOptionalRpe(set.actual_rpe)}

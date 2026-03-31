@@ -38,11 +38,11 @@ export function WorkoutStepStrip({
           return (
             <button
               aria-pressed={isActive}
-              className={`min-w-[7.75rem] shrink-0 rounded-2xl border px-3 py-2 text-left transition ${
+              className={`min-w-[8.4rem] shrink-0 rounded-[1.35rem] border px-3 py-3 text-left transition ${
                 isActive
-                  ? "border-accent/30 bg-accent-soft text-foreground shadow-[0_16px_36px_-30px_rgba(20,97,75,0.45)]"
+                  ? "border-accent/30 bg-[color-mix(in_srgb,var(--accent-soft)_78%,white)] text-foreground shadow-[0_20px_40px_-32px_rgba(20,97,75,0.42)]"
                   : isStepUnlocked
-                    ? "border-border bg-white/80 text-foreground hover:bg-white"
+                    ? "border-border bg-[color-mix(in_srgb,var(--surface-overlay)_88%,white)] text-foreground hover:bg-white"
                     : "border-border/80 bg-slate-100/90 text-slate-400 opacity-90"
               }`}
               data-complete={isExerciseStepComplete ? "true" : "false"}

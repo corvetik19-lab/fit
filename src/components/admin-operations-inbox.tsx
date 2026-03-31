@@ -87,6 +87,9 @@ type QueueProcessingSummary = {
 const inputClassName =
   "w-full rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15";
 
+const adminSecondaryButtonClassName =
+  "action-button action-button--secondary disabled:cursor-not-allowed disabled:opacity-60";
+
 const dateFormatter = new Intl.DateTimeFormat("ru-RU", {
   day: "2-digit",
   month: "2-digit",
@@ -362,7 +365,7 @@ export function AdminOperationsInbox({
             <div className="flex flex-wrap gap-2">
               {canManageOperations ? (
                 <button
-                  className="rounded-full bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="action-button action-button--primary disabled:cursor-not-allowed disabled:opacity-60"
                   disabled={isRefreshing || isProcessingWave}
                   onClick={() => void processWave()}
                   type="button"
@@ -371,7 +374,7 @@ export function AdminOperationsInbox({
                 </button>
               ) : null}
               <button
-                className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
+                    className={adminSecondaryButtonClassName}
                 disabled={isRefreshing || isProcessingWave}
                 onClick={() => void refreshInbox()}
                 type="button"
@@ -408,7 +411,7 @@ export function AdminOperationsInbox({
 
           <div className="grid gap-4 md:grid-cols-4">
             {[
-              ["Всего ждёт", String(payload?.summary.pending.total ?? 0)],
+              ["Всего задач", String(payload?.summary.pending.total ?? 0)],
               ["Поддержка", String(payload?.summary.pending.supportActions ?? 0)],
               ["Выгрузки", String(payload?.summary.pending.exportJobs ?? 0)],
               ["Удаление", String(payload?.summary.pending.deletionRequests ?? 0)],
@@ -428,7 +431,7 @@ export function AdminOperationsInbox({
 
                 return (
                   <article
-                    className="rounded-3xl border border-border bg-white/60 p-4 text-sm"
+                    className="surface-panel text-sm"
                     key={itemKey}
                   >
                     <div className="flex flex-wrap items-start justify-between gap-3">
@@ -518,7 +521,7 @@ export function AdminOperationsInbox({
                         <div className="flex flex-wrap gap-2">
                           {item.available_actions.map((action) => (
                             <button
-                              className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
+                              className={adminSecondaryButtonClassName}
                               disabled={!canManageOperations || isPending}
                               key={action}
                               onClick={() => void updateItem(item, action)}
@@ -542,7 +545,7 @@ export function AdminOperationsInbox({
         </div>
       </PanelCard>
 
-      <PanelCard caption="История" title="Последние завершённые операции">
+      <PanelCard caption="История" title="Недавно завершённые операции">
         <div className="grid gap-4">
           <div className="grid gap-4 sm:grid-cols-3">
             {[
@@ -561,7 +564,7 @@ export function AdminOperationsInbox({
             {payload?.recent.length ? (
               payload.recent.map((item) => (
                 <article
-                  className="rounded-3xl border border-border bg-white/60 p-4 text-sm"
+                  className="surface-panel text-sm"
                   key={getItemKey(item)}
                 >
                   <div className="flex flex-wrap items-start justify-between gap-3">
@@ -570,7 +573,7 @@ export function AdminOperationsInbox({
                         {formatTitle(item)}
                       </p>
                       <p className="mt-1 text-muted">
-                        {formatKind(item.kind)} · {formatStatus(item.status)}
+                        {formatKind(item.kind)} • {formatStatus(item.status)}
                       </p>
                     </div>
                     {item.target_user ? (
@@ -596,7 +599,7 @@ export function AdminOperationsInbox({
               ))
             ) : (
               <p className="text-sm leading-7 text-muted">
-                История завершённых действий пока не накопилась.
+                Недавно завершённых операций ещё не накопилось.
               </p>
             )}
           </div>

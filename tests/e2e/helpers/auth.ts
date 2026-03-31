@@ -16,6 +16,30 @@ type AuthCredentials = {
   password: string;
 };
 
+export function getAuthE2ECredentials(): AuthCredentials | null {
+  if (!authEmail || !authPassword) {
+    return null;
+  }
+
+  return {
+    email: authEmail,
+    password: authPassword,
+    fullName: onboardingName,
+  };
+}
+
+export function getAdminE2ECredentials(): AuthCredentials | null {
+  if (!adminEmail || !adminPassword) {
+    return null;
+  }
+
+  return {
+    email: adminEmail,
+    password: adminPassword,
+    fullName: adminFullName,
+  };
+}
+
 export function hasAuthE2ECredentials() {
   return Boolean(authEmail && authPassword);
 }
@@ -25,34 +49,31 @@ export function hasAdminE2ECredentials() {
 }
 
 export async function signInAndFinishOnboarding(page: Page) {
-  if (!authEmail || !authPassword) {
+  const credentials = getAuthE2ECredentials();
+
+  if (!credentials) {
     throw new Error(
       "PLAYWRIGHT_TEST_EMAIL and PLAYWRIGHT_TEST_PASSWORD are required for authenticated e2e.",
     );
   }
 
-  return signInWithCredentials(page, {
-    email: authEmail,
-    password: authPassword,
-    fullName: onboardingName,
-  });
+  return signInWithCredentials(page, credentials);
 }
 
 export async function signInAsAdmin(page: Page) {
-  if (!adminEmail || !adminPassword) {
+  const credentials = getAdminE2ECredentials();
+
+  if (!credentials) {
     throw new Error(
       "PLAYWRIGHT_ADMIN_EMAIL and PLAYWRIGHT_ADMIN_PASSWORD are required for admin e2e.",
     );
   }
 
-  return signInWithCredentials(page, {
-    email: adminEmail,
-    password: adminPassword,
-    fullName: adminFullName,
-  });
+  return signInWithCredentials(page, credentials);
 }
 
 async function setFieldValue(locator: ReturnType<Page["locator"]>, value: string) {
+  await expect(locator).toBeEditable({ timeout: 15_000 });
   await locator.click();
   await locator.press("Control+A").catch(() => undefined);
   await locator.press("Delete").catch(() => undefined);
@@ -74,12 +95,20 @@ async function setFieldValue(locator: ReturnType<Page["locator"]>, value: string
       const descriptor = Object.getOwnPropertyDescriptor(prototype, "value");
 
       descriptor?.set?.call(input, nextValue);
-      input.dispatchEvent(new Event("input", { bubbles: true }));
+      input.dispatchEvent(
+        new InputEvent("input", {
+          bubbles: true,
+          data: nextValue,
+          inputType: "insertText",
+        }),
+      );
       input.dispatchEvent(new Event("change", { bubbles: true }));
+      input.dispatchEvent(new KeyboardEvent("keyup", { bubbles: true }));
     }, value);
   }
 
   await locator.blur().catch(() => undefined);
+  await expect(locator).toHaveValue(value, { timeout: 10_000 });
 }
 
 async function waitForSubmitButtonReady(page: Page) {
@@ -156,7 +185,7 @@ async function waitForPostAuthRoute(page: Page) {
 async function signInWithCredentials(page: Page, credentials: AuthCredentials) {
   await page.goto("/");
   await page.waitForLoadState("networkidle");
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(1_000);
 
   if (page.url().includes("/dashboard")) {
     await expect(page).toHaveURL(/\/dashboard$/);
@@ -169,6 +198,8 @@ async function signInWithCredentials(page: Page, credentials: AuthCredentials) {
 
   await expect(emailField).toBeVisible();
   await expect(passwordField).toBeVisible();
+  await expect(submitButton).toBeVisible();
+  await page.waitForTimeout(300);
 
   await setFieldValue(emailField, credentials.email);
   await setFieldValue(passwordField, credentials.password);

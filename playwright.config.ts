@@ -37,7 +37,7 @@ export default defineConfig({
           PLAYWRIGHT_TEST_HOOKS: "1",
         },
         url: `${baseURL}/smoke`,
-        reuseExistingServer: !process.env.CI,
+        reuseExistingServer: false,
         timeout: 120_000,
       },
 });

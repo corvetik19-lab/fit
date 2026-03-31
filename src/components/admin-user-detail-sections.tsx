@@ -278,7 +278,7 @@ export function AdminUserActivitySection({
               ["Сообщения", String(detail.stats.ai.chatMessages)],
               ["Планы", String(detail.stats.ai.proposals)],
               ["События безопасности", String(detail.stats.ai.safetyEvents)],
-              ["Сохранённые сводки", String(detail.stats.ai.contextSnapshots)],
+              ["Контекстные снимки", String(detail.stats.ai.contextSnapshots)],
               ["Фрагменты базы", String(detail.stats.ai.knowledgeChunks)],
               [
                 "Последняя активность ИИ",
@@ -363,7 +363,7 @@ export function AdminUserOperationsSection({
                   ),
                 },
                 {
-                  label: "Обновлён",
+                  label: "Обновлено",
                   value: formatDateTime(
                     detail.stats.lifecycle.latestExportJob?.updated_at,
                   ),
@@ -395,7 +395,7 @@ export function AdminUserOperationsSection({
                   ),
                 },
                 {
-                  label: "Обновлён",
+                  label: "Обновлено",
                   value: formatDateTime(
                     detail.stats.lifecycle.deletionRequest?.updated_at,
                   ),
@@ -498,7 +498,7 @@ export function AdminUserBillingSection({
               value: String(detail.stats.lifecycle.entitlements),
             },
             {
-              label: "Счётчики использования",
+                label: "Счётчики использования",
               value: String(detail.stats.lifecycle.usageCounters),
             },
             {
@@ -510,7 +510,7 @@ export function AdminUserBillingSection({
               value: String(detail.stats.lifecycle.deletionRequests),
             },
           ]}
-          title="Доступ и счётчики"
+          title="Доступы и лимиты"
         />
 
         <AdminUserEntitlementsCard detail={detail} />

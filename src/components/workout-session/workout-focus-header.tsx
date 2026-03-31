@@ -62,17 +62,17 @@ export function WorkoutFocusHeader({
   totalSetsCount,
 }: WorkoutFocusHeaderProps) {
   const sectionClassName = isFocusHeaderCollapsed
-    ? "card sticky top-[calc(0.75rem+env(safe-area-inset-top))] z-20 overflow-hidden px-4 py-3"
-    : "card sticky top-[calc(0.75rem+env(safe-area-inset-top))] z-20 overflow-hidden p-4 sm:p-5";
+    ? "card card--hero sticky top-[calc(0.75rem+env(safe-area-inset-top))] z-20 overflow-hidden px-4 py-3"
+    : "card card--hero sticky top-[calc(0.75rem+env(safe-area-inset-top))] z-20 overflow-hidden p-4 sm:p-5";
 
   return (
     <section className={sectionClassName}>
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
+          <p className="workspace-kicker">
             Текущая тренировка
           </p>
-          <h2 className="mt-2 truncate text-xl font-semibold text-foreground">
+          <h2 className="app-display mt-2 truncate text-xl font-semibold text-foreground sm:text-2xl">
             {dayLabels[day.day_of_week] ?? `День ${day.day_of_week}`}
           </h2>
         </div>
@@ -80,7 +80,7 @@ export function WorkoutFocusHeader({
         <div className="flex items-center gap-2">
           <button
             aria-expanded={!isFocusHeaderCollapsed}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border bg-white/80 text-foreground transition hover:bg-white"
+            className="action-button action-button--secondary h-11 w-11 p-0"
             data-testid="workout-focus-header-toggle"
             onClick={onToggleCollapsed}
             type="button"
@@ -92,7 +92,7 @@ export function WorkoutFocusHeader({
             )}
           </button>
           <button
-            className="rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:bg-white/70"
+            className="action-button action-button--secondary px-4 py-2 text-sm"
             data-testid="workout-regular-mode-button"
             onClick={onReturnToRegularMode}
             type="button"
@@ -110,9 +110,9 @@ export function WorkoutFocusHeader({
         </p>
       ) : null}
 
-      <div className="mt-4 flex items-center justify-between gap-3 rounded-3xl border border-border bg-white/70 px-4 py-3">
+      <div className="surface-panel surface-panel--accent mt-4 flex items-center justify-between gap-3 px-4 py-3">
         <div className="min-w-0">
-          <p className="text-xs uppercase tracking-[0.18em] text-muted">
+          <p className="workspace-kicker">
             Таймер
           </p>
           <p className="mt-1 text-2xl font-semibold text-foreground">
@@ -127,7 +127,7 @@ export function WorkoutFocusHeader({
                 ? "Поставить таймер на паузу"
                 : "Запустить таймер тренировки"
             }
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border bg-white/85 text-foreground transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+            className="action-button action-button--secondary h-11 w-11 p-0"
             data-testid="workout-timer-toggle"
             disabled={!day.is_locked || isPending || isSyncing}
             onClick={isTimerRunning ? onPauseTimer : onStartTimer}
@@ -141,7 +141,7 @@ export function WorkoutFocusHeader({
           </button>
           <button
             aria-label="Сбросить таймер тренировки"
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border bg-white/85 text-foreground transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+            className="action-button action-button--secondary h-11 w-11 p-0"
             data-testid="workout-timer-reset"
             disabled={
               !day.is_locked ||

@@ -1275,3 +1275,20 @@
 - Заодно очищены и пересобраны developer-facing frontend docs в [docs/README.md](/C:/fit/docs/README.md) и [FRONTEND.md](/C:/fit/docs/FRONTEND.md), чтобы handoff по редизайну тоже был в чистом UTF-8.
 - Проверка зелёная: `npm run lint`, `npm run typecheck`, `npm run build`, `node scripts/run-playwright.mjs PLAYWRIGHT_BASE_URL=http://127.0.0.1:3100 -- test tests/smoke/app-smoke.spec.ts --workers=1` -> `5 passed`, `node scripts/run-playwright.mjs PLAYWRIGHT_BASE_URL=http://127.0.0.1:3100 -- test tests/e2e/nutrition-capture.spec.ts --workers=1` -> `2 passed`, `node scripts/run-playwright.mjs PLAYWRIGHT_BASE_URL=http://127.0.0.1:3100 -- test tests/e2e/mobile-pwa-regressions.spec.ts --workers=1` -> `3 passed`.
 - Общий progress execution checklist после добавления redesign-блока и закрытия первого slice: `174 / 186` (`94%`).
+
+### 2026-03-31 23:55 - Закрыл premium redesign и стабилизировал Playwright regression harness
+
+- `src/app/globals.css` получил финальный premium contract для `action-button`, `surface-panel` и hero-состояний; этот слой теперь используется в `Workouts`, `Nutrition` и `Admin`.
+- `src/components/weekly-program-builder.tsx`, `src/components/nutrition-tracker.tsx`, `src/components/nutrition-open-food-facts-card.tsx`, `src/components/nutrition-photo-analysis.tsx`, `src/components/workout-session/workout-focus-header.tsx`, `src/components/workout-session/workout-step-strip.tsx`, `src/components/workout-session/workout-exercise-card.tsx`, `src/components/panel-card.tsx` переведены на единый premium fitness visual language без потери focus-mode, barcode и photo flows.
+- `src/app/admin/page.tsx`, `src/components/admin-users-directory.tsx`, `src/components/admin-user-detail.tsx`, `src/components/admin-user-detail-model.ts`, `src/components/admin-user-detail-sections.tsx`, `src/components/admin-user-detail-operations.tsx`, `src/components/admin-health-dashboard.tsx`, `src/components/admin-operations-inbox.tsx` доведены до того же визуального языка и clean UTF-8 copy.
+- `playwright.config.ts`, `scripts/run-playwright.mjs`, `tests/e2e/global-auth-setup.ts`, `tests/e2e/helpers/auth.ts`, `tests/e2e/nutrition-capture.spec.ts`, `tests/e2e/ui-regressions.spec.ts` обновлены для стабильного regression-контура без stale reused server и битых chunk/css ссылок.
+- Проверка зелёная: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:smoke` -> `5 passed`, `node scripts/run-playwright.mjs -- test tests/e2e/admin-app.spec.ts tests/e2e/mobile-pwa-regressions.spec.ts --workers=1` -> `9 passed`, `node scripts/run-playwright.mjs -- test tests/e2e/ui-regressions.spec.ts --workers=1` -> `4 passed`, `npm run test:e2e:auth` -> `52 passed`.
+- Общий progress execution checklist вырос до `178 / 186` (`96%`); после этого в основном плане остались только внешние runtime/env блокеры по Stripe, AI providers и production Sentry.
+
+### 2026-04-01 00:25 - Довёл release-gates до быстрых внешних blocker-сигналов
+
+- `package.json` переведён на единый Playwright wrapper для `test:ai-gate` и `test:sentry-gate`, чтобы release-проверки не зависели от случайно оставшегося `webServer` на `3100`.
+- Добавлен [scripts/ai-runtime-preflight.mjs](/C:/fit/scripts/ai-runtime-preflight.mjs): быстрый preflight проверяет живой доступ к OpenRouter chat completions и Voyage embeddings до запуска тяжёлого `ai-gate`.
+- [scripts/verify-retrieval-release.mjs](/C:/fit/scripts/verify-retrieval-release.mjs) и [scripts/verify-staging-runtime.mjs](/C:/fit/scripts/verify-staging-runtime.mjs) теперь fast-fail на provider blocker и не тратят минуты на подвисший runtime suite, если кредиты или embeddings-доступ реально недоступны.
+- Проверка зелёная по ожидаемому контракту: `npm run verify:retrieval-release` -> быстрый fail с `Voyage 403`, `npm run verify:staging-runtime` -> быстрый fail с `Voyage 403` и отдельный skip по отсутствующим Stripe env, `npm run verify:sentry-runtime` -> явный skip по отсутствующим `NEXT_PUBLIC_SENTRY_DSN` и `SENTRY_PROJECT`.
+- Общий progress execution checklist остаётся `178 / 186` (`96%`): это hardening release-процесса без закрытия новых основных checklist-пунктов.

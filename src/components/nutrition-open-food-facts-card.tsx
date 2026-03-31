@@ -149,15 +149,15 @@ export function NutritionOpenFoodFactsCard({
 
   return (
     <section
-      className="rounded-[2rem] border border-border bg-white/68 p-5 shadow-[0_28px_70px_-48px_rgba(15,23,42,0.24)]"
+      className="surface-panel surface-panel--soft p-5"
       data-testid={`nutrition-open-food-facts-card-${mode}`}
     >
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
+          <p className="workspace-kicker">
             Open Food Facts
           </p>
-          <h3 className="mt-2 text-xl font-semibold text-foreground">
+          <h3 className="mt-2 text-xl font-semibold text-foreground sm:text-2xl">
             Сканер упаковки и быстрый импорт
           </h3>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">
@@ -167,7 +167,7 @@ export function NutritionOpenFoodFactsCard({
         </div>
 
         <button
-          className="inline-flex items-center gap-2 rounded-full border border-border bg-white/82 px-4 py-2.5 text-sm font-semibold text-foreground transition hover:bg-white"
+          className="action-button action-button--secondary px-4 py-2.5 text-sm"
           onClick={() => setIsScannerOpen((current) => !current)}
           type="button"
         >
@@ -195,7 +195,7 @@ export function NutritionOpenFoodFactsCard({
           value={barcode}
         />
         <button
-          className="inline-flex items-center justify-center gap-2 rounded-full border border-border bg-white/82 px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+          className="action-button action-button--secondary"
           disabled={isLookingUp}
           onClick={() => void lookupBarcode()}
           type="button"
@@ -204,7 +204,7 @@ export function NutritionOpenFoodFactsCard({
           {isLookingUp ? "Ищу..." : "Найти"}
         </button>
         <button
-          className="inline-flex items-center justify-center gap-2 rounded-full border border-accent/15 bg-[color-mix(in_srgb,var(--accent-soft)_74%,white)] px-5 py-3 text-sm font-semibold text-accent transition hover:bg-[color-mix(in_srgb,var(--accent-soft)_84%,white)]"
+          className="action-button action-button--soft"
           onClick={() => setIsScannerOpen(true)}
           type="button"
         >
@@ -221,7 +221,7 @@ export function NutritionOpenFoodFactsCard({
 
       {lookupResult ? (
         <article
-          className="mt-5 rounded-[2rem] border border-border bg-[color-mix(in_srgb,var(--surface)_92%,white)] p-4 sm:p-5"
+          className="surface-panel mt-5 p-4 sm:p-5"
           data-testid={`nutrition-open-food-facts-preview-${mode}`}
         >
           <div className="grid gap-4 lg:grid-cols-[minmax(0,168px)_1fr]">
@@ -262,8 +262,8 @@ export function NutritionOpenFoodFactsCard({
               </div>
 
               <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                <div className="rounded-2xl border border-border bg-white/75 p-3">
-                  <p className="text-xs uppercase tracking-[0.18em] text-muted">
+                <div className="surface-panel surface-panel--soft p-3">
+                  <p className="workspace-kicker">
                     Ккал / 100 г
                   </p>
                   <p className="mt-2 text-lg font-semibold text-foreground">
@@ -272,24 +272,24 @@ export function NutritionOpenFoodFactsCard({
                       : `${Math.round(lookupResult.product.kcal)} ккал`}
                   </p>
                 </div>
-                <div className="rounded-2xl border border-border bg-white/75 p-3">
-                  <p className="text-xs uppercase tracking-[0.18em] text-muted">
+                <div className="surface-panel surface-panel--soft p-3">
+                  <p className="workspace-kicker">
                     Белки
                   </p>
                   <p className="mt-2 text-lg font-semibold text-foreground">
                     {formatMacro(lookupResult.product.protein)}
                   </p>
                 </div>
-                <div className="rounded-2xl border border-border bg-white/75 p-3">
-                  <p className="text-xs uppercase tracking-[0.18em] text-muted">
+                <div className="surface-panel surface-panel--soft p-3">
+                  <p className="workspace-kicker">
                     Жиры
                   </p>
                   <p className="mt-2 text-lg font-semibold text-foreground">
                     {formatMacro(lookupResult.product.fat)}
                   </p>
                 </div>
-                <div className="rounded-2xl border border-border bg-white/75 p-3">
-                  <p className="text-xs uppercase tracking-[0.18em] text-muted">
+                <div className="surface-panel surface-panel--soft p-3">
+                  <p className="workspace-kicker">
                     Углеводы
                   </p>
                   <p className="mt-2 text-lg font-semibold text-foreground">
@@ -298,7 +298,7 @@ export function NutritionOpenFoodFactsCard({
                 </div>
               </div>
 
-              <div className="mt-4 rounded-2xl border border-border bg-white/70 p-4">
+              <div className="surface-panel surface-panel--accent mt-4 p-4">
                 <div className="flex flex-wrap items-center gap-2">
                   <Sparkles size={16} strokeWidth={2.2} className="text-accent" />
                   <p className="text-sm font-semibold text-foreground">Состав</p>
@@ -321,7 +321,7 @@ export function NutritionOpenFoodFactsCard({
                 {lookupResult.existingFood ? (
                   <>
                     <button
-                      className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                      className="action-button border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-semibold text-emerald-700 hover:bg-emerald-100"
                       onClick={() =>
                         onResolveFood(lookupResult.existingFood as NutritionFood, "existing")
                       }
@@ -336,7 +336,7 @@ export function NutritionOpenFoodFactsCard({
                   </>
                 ) : (
                   <button
-                    className="rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="action-button action-button--primary"
                     data-testid={`nutrition-open-food-facts-import-${mode}`}
                     disabled={isImporting}
                     onClick={() => void importFood()}

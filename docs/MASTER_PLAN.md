@@ -13,7 +13,7 @@
 
 Этот файл — текущий production-hardening backlog проекта. Он отражает фактическое состояние репозитория на `2026-03-31`.
 
-Текущий прогресс execution checklist: `175 / 186` (`94%`).
+Текущий прогресс execution checklist: `178 / 186` (`96%`).
 
 ## Текущая база
 
@@ -164,9 +164,9 @@
 - [x] Завести отдельный execution-doc [PREMIUM_REDESIGN_PLAN.md](/C:/fit/docs/PREMIUM_REDESIGN_PLAN.md) и привязать его к `MASTER_PLAN`.
 - [x] Обновить визуальные токены, типографику и общие shell/workspace primitives в premium fitness-направлении.
 - [x] Пересобрать `Dashboard` и `AI` под новый visual language.
-- [ ] Пересобрать `Workouts` и `Nutrition` под mobile/PWA-first подачу без потери текущих flows.
-- [ ] Довести `Admin` и remaining detail surfaces до того же визуального языка.
-- [ ] Закрыть visual regression, mobile acceptance и финальный handoff по редизайну.
+- [x] Пересобрать `Workouts` и `Nutrition` под mobile/PWA-first подачу без потери текущих flows.
+- [x] Довести `Admin` и remaining detail surfaces до того же визуального языка.
+- [x] Закрыть visual regression, mobile acceptance и финальный handoff по редизайну.
 
 ### Workout execution
 
@@ -1172,3 +1172,18 @@
 - [x] `npm run verify:sentry-runtime` повторно подтверждает, что кодовый rollout готов, а live smoke всё ещё блокируется отсутствием `NEXT_PUBLIC_SENTRY_DSN` и `SENTRY_PROJECT`.
 - [x] `npm run verify:retrieval-release` повторно подтверждает, что retrieval regression зелёный, а незакрытый основной AI quality gate остаётся внешним provider-blocker, а не кодовой деградацией.
 - [x] После этой перепроверки текущие незакрытые main checklist-пункты остаются чисто внешними: live Stripe env/runtime, live AI providers/credits и production Sentry env.
+
+## 2026-03-31 premium redesign closure addendum
+
+- [x] `Workouts` и `Nutrition` переведены на premium fitness-подачу без потери текущих flows: обновлены hero-секции, action-buttons, section chips, focus-header тренировки, exercise cards и nutrition capture/import surfaces.
+- [x] `Admin` и remaining detail surfaces доведены до того же визуального языка: summary/detail shells, health/inbox/operator surfaces и directory metric cards используют единый premium surface/button contract.
+- [x] Playwright regression harness стабилизирован против stale webServer reuse: `playwright.config.ts` больше не переиспользует старый сервер, а `scripts/run-playwright.mjs` очищает занятый порт перед стартом, что снимает ложные CSS/chunk regressions.
+- [x] Финальная verification-связка подтверждена пакетами `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:smoke` -> `5 passed`, `npm run test:e2e:auth` -> `52 passed`, плюс целевые `admin/mobile/ui` regression suites зелёные.
+- [x] После этого общий execution checklist вырос до `178 / 186` (`96%`), а все оставшиеся незакрытые main-пункты носят внешний runtime/env характер: live Stripe env, live AI provider access и production Sentry secrets.
+
+## 2026-04-01 AI runtime preflight addendum
+
+- [x] `test:ai-gate` и `test:sentry-gate` переведены на общий `scripts/run-playwright.mjs`, поэтому release-gates больше не ломаются о reused Playwright webServer и занятый порт `3100`.
+- [x] Добавлен быстрый provider preflight в [scripts/ai-runtime-preflight.mjs](/C:/fit/scripts/ai-runtime-preflight.mjs), а [verify-retrieval-release.mjs](/C:/fit/scripts/verify-retrieval-release.mjs) и [verify-staging-runtime.mjs](/C:/fit/scripts/verify-staging-runtime.mjs) теперь проверяют доступность OpenRouter/Voyage до запуска тяжёлого `ai-gate`.
+- [x] После этого `npm run verify:retrieval-release` и `npm run verify:staging-runtime` честно и быстро упираются в внешний blocker `Voyage 403`, а не в локальные timeout/webServer конфликты; `npm run verify:sentry-runtime` по-прежнему даёт явный skip по отсутствующим `NEXT_PUBLIC_SENTRY_DSN` и `SENTRY_PROJECT`.
+- [x] Общий прогресс execution checklist остаётся `178 / 186` (`96%`): кодовый backlog не изменился, но release verification теперь детерминированно отделяет реальные внешние блокеры от локальной инфраструктурной обвязки.

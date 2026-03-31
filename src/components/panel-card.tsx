@@ -10,12 +10,12 @@ export function PanelCard({
   children: ReactNode;
 }) {
   return (
-    <section className="card p-6">
-      <div className="mb-4">
-        <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
-          {caption}
-        </p>
-        <h2 className="mt-2 text-xl font-semibold text-foreground">{title}</h2>
+    <section className="card card--hero p-6 sm:p-7">
+      <div className="mb-5">
+        <p className="workspace-kicker">{caption}</p>
+        <h2 className="mt-3 text-2xl font-semibold tracking-tight text-foreground">
+          {title}
+        </h2>
       </div>
       {children}
     </section>

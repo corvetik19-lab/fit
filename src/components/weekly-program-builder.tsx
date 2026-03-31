@@ -141,6 +141,10 @@ export function WeeklyProgramBuilder({
   const [isMobilePanelMenuOpen, setIsMobilePanelMenuOpen] = useState(false);
   const activeProgram =
     initialPrograms.find((program) => program.status === "active") ?? null;
+  const totalPlannedExercises = days.reduce(
+    (count, day) => count + day.exercises.length,
+    0,
+  );
 
   function resetBuilder() {
     setTitle("Моя новая неделя");
@@ -462,6 +466,8 @@ export function WeeklyProgramBuilder({
       description: "Прошлые программы и черновики",
     },
   ];
+  const activePanel =
+    builderPanels.find((panel) => panel.key === activePanelKey) ?? null;
 
   function selectPanel(panelKey: BuilderPanelKey) {
     setActivePanelKey(panelKey);
@@ -470,43 +476,68 @@ export function WeeklyProgramBuilder({
 
   return (
     <div className="grid gap-6">
-      <section className="card p-4 sm:p-5">
+      <section className="card card--hero p-5 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
+            <p className="workspace-kicker">
               Меню тренировок
             </p>
-            <h2 className="mt-2 text-xl font-semibold text-foreground">
-              Выбери раздел
+            <h2 className="app-display mt-2 text-2xl font-semibold text-foreground sm:text-3xl">
+              Управляй неделей как тренировочным циклом
             </h2>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">
-              Конструктор, активная неделя, шаблоны и история открываются по отдельности.
+            <p className="mt-3 max-w-3xl text-sm leading-7 text-muted">
+              Здесь мы держим весь цикл рядом: собираем черновик, фиксируем активную неделю,
+              сохраняем шаблоны и поднимаем прошлые схемы без длинной ленты из равных блоков.
             </p>
           </div>
           <span className="pill">
-            {builderPanels.find((panel) => panel.key === activePanelKey)?.label ?? "Тренировки"}
+            {activePanel?.label ?? "Тренировки"}
           </span>
+        </div>
+
+        <div className="mt-5 grid gap-3 sm:grid-cols-3">
+          <article className="surface-panel surface-panel--soft p-4">
+            <p className="workspace-kicker">Черновик</p>
+            <p className="mt-2 text-2xl font-semibold text-foreground">{days.length}</p>
+            <p className="mt-1 text-sm text-muted">тренировочных дней в сборке</p>
+          </article>
+          <article className="surface-panel surface-panel--soft p-4">
+            <p className="workspace-kicker">Упражнения</p>
+            <p className="mt-2 text-2xl font-semibold text-foreground">
+              {totalPlannedExercises}
+            </p>
+            <p className="mt-1 text-sm text-muted">слотов уже разложено по неделе</p>
+          </article>
+          <article className="surface-panel surface-panel--accent p-4">
+            <p className="workspace-kicker">Активная неделя</p>
+            <p className="mt-2 text-2xl font-semibold text-foreground">
+              {activeProgram ? "В работе" : "Пусто"}
+            </p>
+            <p className="mt-1 text-sm text-muted">
+              {activeProgram ? activeProgram.title : "Зафиксируй черновик, чтобы начать выполнение"}
+            </p>
+          </article>
         </div>
 
         <div className="mt-4 md:hidden">
           <button
             aria-expanded={isMobilePanelMenuOpen}
-            className="flex w-full items-center justify-between gap-3 rounded-3xl border border-border bg-white/82 px-4 py-3 text-left shadow-[0_18px_45px_-35px_rgba(20,97,75,0.25)] transition hover:bg-white"
+            className="section-chip flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
             onClick={() => setIsMobilePanelMenuOpen((current) => !current)}
             type="button"
           >
             <span className="min-w-0 flex-1">
-              <span className="block text-xs uppercase tracking-[0.18em] text-muted">
+              <span className="workspace-kicker block">
                 Текущий раздел
               </span>
               <span className="mt-1 block truncate text-sm font-semibold text-foreground">
-                {builderPanels.find((panel) => panel.key === activePanelKey)?.label ?? "Выбери раздел"}
+                {activePanel?.label ?? "Выбери раздел"}
               </span>
               <span className="mt-1 block text-xs leading-5 text-muted">
-                {builderPanels.find((panel) => panel.key === activePanelKey)?.description ?? "Выбери нужный блок"}
+                {activePanel?.description ?? "Выбери нужный блок"}
               </span>
             </span>
-            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-white/85 text-foreground">
+            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-white/82 text-foreground">
               {isMobilePanelMenuOpen ? (
                 <ChevronUp size={18} strokeWidth={2.2} />
               ) : (
@@ -516,17 +547,15 @@ export function WeeklyProgramBuilder({
           </button>
 
           {isMobilePanelMenuOpen ? (
-            <div className="mt-3 grid gap-2 rounded-3xl border border-border bg-[color-mix(in_srgb,var(--surface)_94%,white)] p-3">
+            <div className="mt-3 grid gap-2 rounded-[1.75rem] border border-border bg-[color-mix(in_srgb,var(--surface)_94%,white)] p-3">
               {builderPanels.map((panel) => {
                 const isActive = panel.key === activePanelKey;
 
                 return (
                   <button
                     aria-pressed={isActive}
-                    className={`flex items-start justify-between gap-3 rounded-2xl border px-3 py-3 text-left transition ${
-                      isActive
-                        ? "border-accent/20 bg-[color-mix(in_srgb,var(--accent-soft)_72%,white)] text-foreground"
-                        : "border-transparent bg-white/72 text-foreground hover:bg-white"
+                    className={`section-chip flex items-start justify-between gap-3 px-3 py-3 text-left ${
+                      isActive ? "section-chip--active" : ""
                     }`}
                     key={panel.key}
                     onClick={() => selectPanel(panel.key)}
@@ -559,10 +588,8 @@ export function WeeklyProgramBuilder({
             return (
               <button
                 aria-pressed={isActive}
-                className={`min-w-[12rem] rounded-3xl border px-4 py-3 text-left transition ${
-                  isActive
-                    ? "border-accent/20 bg-[color-mix(in_srgb,var(--accent-soft)_78%,white)] text-foreground shadow-[0_16px_38px_-34px_rgba(20,97,75,0.22)]"
-                    : "border-border bg-white/80 text-foreground hover:bg-white"
+                className={`section-chip min-w-[12rem] px-4 py-3 text-left ${
+                  isActive ? "section-chip--active" : ""
                 }`}
                 key={panel.key}
                 onClick={() => selectPanel(panel.key)}
@@ -591,15 +618,15 @@ export function WeeklyProgramBuilder({
       </section>
 
       {activePanelKey === "builder" ? (
-        <section className="card p-6">
+        <section className="card card--hero p-6">
           <div className="mb-5">
-            <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
+            <p className="workspace-kicker">
               Конструктор недели
             </p>
-            <h2 className="mt-2 text-2xl font-semibold text-foreground">
+            <h2 className="app-display mt-2 text-2xl font-semibold text-foreground sm:text-3xl">
               Собрать черновик недели
             </h2>
-            <p className="mt-3 text-sm leading-7 text-muted">
+            <p className="mt-3 max-w-3xl text-sm leading-7 text-muted">
               Здесь собирается структура недели: дни, упражнения и плановые повторы. Фиксация недели и экран выполнения идут следующим отдельным шагом.
             </p>
           </div>
@@ -629,22 +656,19 @@ export function WeeklyProgramBuilder({
 
           <div className="mt-6 grid gap-5">
             {days.map((day, index) => (
-              <section
-                className="rounded-3xl border border-border bg-white/60 p-4"
-                key={day.localId}
-              >
+              <section className="surface-panel surface-panel--soft p-4" key={day.localId}>
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <p className="text-sm font-semibold text-foreground">
+                    <p className="workspace-kicker">
                       Тренировочный день {index + 1}
                     </p>
-                    <p className="text-sm text-muted">
+                    <p className="mt-2 text-sm leading-6 text-muted">
                       Выбери день недели и наполни его упражнениями.
                     </p>
                   </div>
                   {days.length > 1 ? (
                     <button
-                      className="rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:bg-white/70"
+                      className="action-button action-button--secondary"
                       onClick={() => removeDay(day.localId)}
                       type="button"
                     >
@@ -672,17 +696,14 @@ export function WeeklyProgramBuilder({
 
                   <div className="grid gap-4">
                     {day.exercises.map((exercise, exerciseIndex) => (
-                      <div
-                        className="rounded-2xl border border-border bg-white/85 p-4"
-                        key={exercise.localId}
-                      >
+                      <div className="surface-panel p-4" key={exercise.localId}>
                         <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
                           <p className="text-sm font-semibold text-foreground">
                             Упражнение {exerciseIndex + 1}
                           </p>
                           {day.exercises.length > 1 ? (
                             <button
-                              className="rounded-full border border-border px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white/70"
+                              className="action-button action-button--secondary px-4 py-2 text-sm"
                               onClick={() => removeExercise(day.localId, exercise.localId)}
                               type="button"
                             >
@@ -760,7 +781,7 @@ export function WeeklyProgramBuilder({
                     ))}
 
                     <button
-                      className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-white/70"
+                      className="action-button action-button--soft"
                       onClick={() => addExercise(day.localId)}
                       type="button"
                     >
@@ -774,7 +795,7 @@ export function WeeklyProgramBuilder({
 
           <div className="mt-6 flex flex-wrap gap-3">
             <button
-              className="rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+              className="action-button action-button--primary"
               disabled={isPending || !title.trim() || !weekStartDate}
               onClick={submit}
               type="button"
@@ -782,7 +803,7 @@ export function WeeklyProgramBuilder({
               {isPending ? "Сохраняю черновик..." : "Сохранить черновик недели"}
             </button>
             <button
-              className="rounded-full border border-border px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-white/70"
+              className="action-button action-button--secondary"
               onClick={addDay}
               type="button"
             >
@@ -793,13 +814,13 @@ export function WeeklyProgramBuilder({
       ) : null}
 
       {activePanelKey === "active" ? (
-        <section className="card p-6">
+        <section className="card card--hero p-6">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
-              <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
+              <p className="workspace-kicker">
                 Моя неделя
               </p>
-              <h2 className="mt-2 text-2xl font-semibold text-foreground">
+              <h2 className="app-display mt-2 text-2xl font-semibold text-foreground sm:text-3xl">
                 Текущая активная неделя
               </h2>
             </div>
@@ -815,7 +836,7 @@ export function WeeklyProgramBuilder({
 
               {activeProgram.days.map((day) => (
                 <article
-                  className="rounded-2xl border border-border bg-white/80 px-4 py-3"
+                  className="surface-panel p-4"
                   key={day.id}
                 >
                   <div className="flex flex-wrap items-center justify-between gap-3">
@@ -826,7 +847,7 @@ export function WeeklyProgramBuilder({
                   </div>
                   <p className="mt-2 text-sm text-muted">Упражнений: {day.exercises.length}</p>
                   <Link
-                    className="mt-3 inline-flex rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:bg-white/70"
+                    className="action-button action-button--secondary mt-3"
                     href={`/workouts/day/${day.id}` as Route}
                   >
                     Открыть день тренировки
@@ -843,13 +864,13 @@ export function WeeklyProgramBuilder({
       ) : null}
 
       {activePanelKey === "templates" ? (
-        <section className="card p-6">
+        <section className="card card--hero p-6">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
-              <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
+              <p className="workspace-kicker">
                 Шаблоны
               </p>
-              <h2 className="mt-2 text-2xl font-semibold text-foreground">
+              <h2 className="app-display mt-2 text-2xl font-semibold text-foreground sm:text-3xl">
                 Шаблоны тренировок
               </h2>
             </div>
@@ -860,7 +881,7 @@ export function WeeklyProgramBuilder({
             {initialTemplates.length ? (
               initialTemplates.map((template) => (
                 <article
-                  className="rounded-2xl border border-border bg-white/80 p-4"
+                  className="surface-panel p-4"
                   key={template.id}
                 >
                   <div className="flex flex-wrap items-center justify-between gap-3">
@@ -871,7 +892,7 @@ export function WeeklyProgramBuilder({
                       </p>
                     </div>
                     <button
-                      className="rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:bg-white/70"
+                      className="action-button action-button--soft"
                       onClick={() => applyTemplate(template)}
                       type="button"
                     >
@@ -890,13 +911,13 @@ export function WeeklyProgramBuilder({
       ) : null}
 
       {activePanelKey === "history" ? (
-        <section className="card p-6">
+        <section className="card card--hero p-6">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
-              <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
+              <p className="workspace-kicker">
                 Программы
               </p>
-              <h2 className="mt-2 text-2xl font-semibold text-foreground">
+              <h2 className="app-display mt-2 text-2xl font-semibold text-foreground sm:text-3xl">
                 История программ недели
               </h2>
             </div>
@@ -907,7 +928,7 @@ export function WeeklyProgramBuilder({
             {initialPrograms.length ? (
               initialPrograms.map((program) => (
                 <article
-                  className="rounded-2xl border border-border bg-white/60 p-4"
+                  className="surface-panel surface-panel--soft p-4"
                   key={program.id}
                 >
                   <div className="flex flex-wrap items-start justify-between gap-3">
@@ -917,7 +938,7 @@ export function WeeklyProgramBuilder({
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <button
-                        className="rounded-full border border-border px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="action-button action-button--secondary px-4 py-2 text-sm"
                         disabled={isPending}
                         onClick={() => cloneProgram(program)}
                         type="button"
@@ -925,7 +946,7 @@ export function WeeklyProgramBuilder({
                         Клонировать +7 дней
                       </button>
                       <button
-                        className="rounded-full border border-border px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="action-button action-button--soft px-4 py-2 text-sm"
                         disabled={isPending}
                         onClick={() => saveTemplate(program)}
                         type="button"
@@ -938,7 +959,7 @@ export function WeeklyProgramBuilder({
                       </span>
                       {!program.is_locked && program.status === "draft" ? (
                         <button
-                          className="rounded-full border border-border px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
+                          className="action-button action-button--primary px-4 py-2 text-sm"
                           disabled={isPending}
                           onClick={() => lockProgram(program.id)}
                           type="button"
@@ -953,7 +974,7 @@ export function WeeklyProgramBuilder({
                     {program.days.length ? (
                       program.days.map((day) => (
                         <div
-                          className="rounded-2xl border border-border bg-white/80 px-4 py-3"
+                          className="surface-panel p-4"
                           key={day.id}
                         >
                           <p className="text-sm font-semibold text-foreground">
@@ -971,7 +992,7 @@ export function WeeklyProgramBuilder({
                           </div>
                           {program.is_locked ? (
                             <Link
-                              className="mt-3 inline-flex rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:bg-white/70"
+                              className="action-button action-button--secondary mt-3"
                               href={`/workouts/day/${day.id}` as Route}
                             >
                               Перейти к выполнению

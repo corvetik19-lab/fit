@@ -216,6 +216,68 @@ textarea {
     color-mix(in srgb, var(--accent-soft) 76%, white);
 }
 
+.action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 999px;
+  padding: 0.84rem 1.25rem;
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  transition:
+    transform 160ms ease,
+    opacity 160ms ease,
+    border-color 160ms ease,
+    background-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.action-button:hover {
+  transform: translateY(-1px);
+}
+
+.action-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+}
+
+.action-button--primary {
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0)),
+    linear-gradient(135deg, color-mix(in srgb, var(--accent) 92%, #1b5f4b), color-mix(in srgb, var(--accent) 74%, #0f7a60));
+  color: white;
+  box-shadow: 0 22px 42px -28px rgba(15, 122, 96, 0.45);
+}
+
+.action-button--primary:hover {
+  box-shadow: 0 28px 48px -30px rgba(15, 122, 96, 0.52);
+}
+
+.action-button--secondary {
+  border: 1px solid var(--border);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.72)),
+    color-mix(in srgb, var(--surface-overlay) 88%, white);
+  color: var(--foreground);
+}
+
+.action-button--secondary:hover {
+  background: white;
+}
+
+.action-button--soft {
+  border: 1px solid color-mix(in srgb, var(--accent) 14%, transparent);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.62)),
+    color-mix(in srgb, var(--accent-soft) 78%, white);
+  color: var(--accent);
+  box-shadow: 0 20px 40px -34px rgba(15, 122, 96, 0.24);
+}
+
 .chat-toolbar-button {
   display: inline-flex;
   height: 2.85rem;

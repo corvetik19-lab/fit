@@ -561,6 +561,12 @@ export function NutritionTracker({
       description: "Последние приёмы и шаблоны",
     },
   ];
+  const activePanel =
+    trackerPanels.find((panel) => panel.key === activePanelKey) ?? null;
+  const completedMacroTargets = nutritionCards.filter(
+    (card) => (card.progress ?? 0) >= 100,
+  ).length;
+  const currentMealItemsCount = mealItems.filter((item) => item.foodId).length;
 
   function selectPanel(panelKey: NutritionTrackerPanelKey) {
     setActivePanelKey(panelKey);
@@ -597,43 +603,68 @@ export function NutritionTracker({
 
   return (
     <div className="grid gap-6">
-      <section className="card p-4 sm:p-5">
+      <section className="card card--hero p-5 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
+            <p className="workspace-kicker">
               Меню питания
             </p>
-            <h2 className="mt-2 text-xl font-semibold text-foreground">
-              Выбери раздел
+            <h2 className="app-display mt-2 text-2xl font-semibold text-foreground sm:text-3xl">
+              Держи питание под контролем без лишних экранов
             </h2>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">
-              Баланс, продукты, текущий лог и история открываются по отдельности.
+            <p className="mt-3 max-w-3xl text-sm leading-7 text-muted">
+              Баланс дня, импорт по штрихкоду, база продуктов и живой лог открываются по одному,
+              чтобы на телефоне всё ощущалось как быстрый пищевой контроль, а не таблица из форм.
             </p>
           </div>
           <span className="pill">
-            {trackerPanels.find((panel) => panel.key === activePanelKey)?.label ?? "Питание"}
+            {activePanel?.label ?? "Питание"}
           </span>
+        </div>
+
+        <div className="mt-5 grid gap-3 sm:grid-cols-3">
+          <article className="surface-panel surface-panel--soft p-4">
+            <p className="workspace-kicker">Сегодня</p>
+            <p className="mt-2 text-2xl font-semibold text-foreground">
+              {summary.kcal.toLocaleString("ru-RU")} ккал
+            </p>
+            <p className="mt-1 text-sm text-muted">съедено за текущий день</p>
+          </article>
+          <article className="surface-panel surface-panel--soft p-4">
+            <p className="workspace-kicker">Цели</p>
+            <p className="mt-2 text-2xl font-semibold text-foreground">
+              {completedMacroTargets} / {nutritionCards.length}
+            </p>
+            <p className="mt-1 text-sm text-muted">макро-ориентиров уже закрыто</p>
+          </article>
+          <article className="surface-panel surface-panel--accent p-4">
+            <p className="workspace-kicker">Текущий лог</p>
+            <p className="mt-2 text-2xl font-semibold text-foreground">
+              {currentMealItemsCount}
+            </p>
+            <p className="mt-1 text-sm text-muted">позиций сейчас в сборке приёма пищи</p>
+          </article>
         </div>
 
         <div className="mt-4 md:hidden">
           <button
             aria-expanded={isMobilePanelMenuOpen}
-            className="flex w-full items-center justify-between gap-3 rounded-3xl border border-border bg-white/82 px-4 py-3 text-left shadow-[0_18px_45px_-35px_rgba(20,97,75,0.25)] transition hover:bg-white"
+            className="section-chip flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
             onClick={() => setIsMobilePanelMenuOpen((current) => !current)}
             type="button"
           >
             <span className="min-w-0 flex-1">
-              <span className="block text-xs uppercase tracking-[0.18em] text-muted">
+              <span className="workspace-kicker block">
                 Текущий раздел
               </span>
               <span className="mt-1 block truncate text-sm font-semibold text-foreground">
-                {trackerPanels.find((panel) => panel.key === activePanelKey)?.label ?? "Выбери раздел"}
+                {activePanel?.label ?? "Выбери раздел"}
               </span>
               <span className="mt-1 block text-xs leading-5 text-muted">
-                {trackerPanels.find((panel) => panel.key === activePanelKey)?.description ?? "Выбери нужный блок"}
+                {activePanel?.description ?? "Выбери нужный блок"}
               </span>
             </span>
-            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-white/85 text-foreground">
+            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-white/82 text-foreground">
               {isMobilePanelMenuOpen ? (
                 <ChevronUp size={18} strokeWidth={2.2} />
               ) : (
@@ -643,17 +674,15 @@ export function NutritionTracker({
           </button>
 
           {isMobilePanelMenuOpen ? (
-            <div className="mt-3 grid gap-2 rounded-3xl border border-border bg-[color-mix(in_srgb,var(--surface)_94%,white)] p-3">
+            <div className="mt-3 grid gap-2 rounded-[1.75rem] border border-border bg-[color-mix(in_srgb,var(--surface)_94%,white)] p-3">
               {trackerPanels.map((panel) => {
                 const isActive = panel.key === activePanelKey;
 
                 return (
                   <button
                     aria-pressed={isActive}
-                    className={`flex items-start justify-between gap-3 rounded-2xl border px-3 py-3 text-left transition ${
-                      isActive
-                        ? "border-accent/20 bg-[color-mix(in_srgb,var(--accent-soft)_72%,white)] text-foreground"
-                        : "border-transparent bg-white/72 text-foreground hover:bg-white"
+                    className={`section-chip flex items-start justify-between gap-3 px-3 py-3 text-left ${
+                      isActive ? "section-chip--active" : ""
                     }`}
                     data-testid={`nutrition-panel-mobile-${panel.key}`}
                     key={panel.key}
@@ -687,10 +716,8 @@ export function NutritionTracker({
             return (
               <button
                 aria-pressed={isActive}
-                className={`min-w-[11rem] rounded-3xl border px-4 py-3 text-left transition ${
-                  isActive
-                    ? "border-accent/20 bg-[color-mix(in_srgb,var(--accent-soft)_78%,white)] text-foreground shadow-[0_16px_38px_-34px_rgba(20,97,75,0.22)]"
-                    : "border-border bg-white/80 text-foreground hover:bg-white"
+                className={`section-chip min-w-[11rem] px-4 py-3 text-left ${
+                  isActive ? "section-chip--active" : ""
                 }`}
                 data-testid={`nutrition-panel-${panel.key}`}
                 key={panel.key}
@@ -723,8 +750,11 @@ export function NutritionTracker({
         <section className="grid gap-6">
           <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {nutritionCards.map((card) => (
-              <article className="card p-5" key={card.label}>
-                <p className="text-xs uppercase tracking-[0.18em] text-muted">{card.label}</p>
+              <article
+                className={`surface-panel p-5 ${card.progress && card.progress >= 100 ? "surface-panel--accent" : "surface-panel--soft"}`}
+                key={card.label}
+              >
+                <p className="workspace-kicker">{card.label}</p>
                 <p className="mt-3 text-2xl font-semibold text-foreground">{card.value}</p>
                 <p className="mt-2 text-sm text-muted">
                   {card.target ? `Цель: ${card.target}` : "Цель не задана"}
@@ -739,14 +769,18 @@ export function NutritionTracker({
             ))}
           </section>
 
-          <section className="card p-6">
+          <section className="card card--hero p-6">
             <div className="mb-5">
-              <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
+              <p className="workspace-kicker">
                 Цели
               </p>
-              <h2 className="mt-2 text-2xl font-semibold text-foreground">
+              <h2 className="app-display mt-2 text-2xl font-semibold text-foreground sm:text-3xl">
                 Дневные ориентиры по КБЖУ
               </h2>
+              <p className="mt-3 max-w-3xl text-sm leading-7 text-muted">
+                Держи одну понятную планку на день: приложение покажет, сколько уже съедено,
+                сколько осталось и где рацион уходит в сторону.
+              </p>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -768,7 +802,7 @@ export function NutritionTracker({
               </label>
             </div>
 
-            <button className="mt-6 rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60" disabled={isPending} onClick={saveTargets} type="button">
+            <button className="action-button action-button--primary mt-6" disabled={isPending} onClick={saveTargets} type="button">
               {isPending ? "Сохраняю..." : "Сохранить цели"}
             </button>
           </section>
@@ -777,14 +811,18 @@ export function NutritionTracker({
 
       {activePanelKey === "foods" ? (
         <section className="grid gap-6">
-          <section className="card p-6">
+          <section className="card card--hero p-6">
             <div className="mb-5">
-              <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
+              <p className="workspace-kicker">
                 База продуктов
               </p>
-              <h2 className="mt-2 text-2xl font-semibold text-foreground">
+              <h2 className="app-display mt-2 text-2xl font-semibold text-foreground sm:text-3xl">
                 Свои продукты и справочник
               </h2>
+              <p className="mt-3 max-w-3xl text-sm leading-7 text-muted">
+                Храни свои продукты, импортируй упаковку по штрихкоду и собирай понятную базу
+                для быстрого логирования без ручного ввода каждого макроэлемента.
+              </p>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
@@ -815,11 +853,11 @@ export function NutritionTracker({
             </div>
 
             <div className="mt-6 flex flex-wrap gap-3">
-              <button className="rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60" disabled={isPending || !foodName.trim()} onClick={submitFood} type="button">
+              <button className="action-button action-button--primary" disabled={isPending || !foodName.trim()} onClick={submitFood} type="button">
                 {isPending ? "Сохраняю..." : editingFoodId ? "Сохранить продукт" : "Добавить продукт"}
               </button>
               {editingFoodId ? (
-                <button className="rounded-full border border-border px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-white/70" onClick={resetFoodForm} type="button">
+                <button className="action-button action-button--secondary" onClick={resetFoodForm} type="button">
                   Отменить редактирование
                 </button>
               ) : null}
@@ -835,7 +873,7 @@ export function NutritionTracker({
             <div className="mt-6 grid gap-3">
               {foods.length ? (
                 foods.map((food) => (
-                  <article className="rounded-[1.75rem] border border-border bg-white/60 p-4" key={food.id}>
+                  <article className="surface-panel surface-panel--soft p-4" key={food.id}>
                     <div className="grid gap-4 sm:grid-cols-[104px_1fr]">
                       <div className="overflow-hidden rounded-[1.25rem] border border-border bg-white/78">
                         {food.image_url ? (
@@ -868,10 +906,10 @@ export function NutritionTracker({
                             </p>
                           </div>
                           <div className="flex flex-wrap gap-2">
-                            <button className="rounded-full border border-border px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white/70" onClick={() => selectFoodForEdit(food)} type="button">
+                            <button className="action-button action-button--secondary px-4 py-2 text-sm" onClick={() => selectFoodForEdit(food)} type="button">
                               Редактировать
                             </button>
-                            <button className="rounded-full border border-border px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white/70" onClick={() => removeFood(food.id)} type="button">
+                            <button className="action-button action-button--secondary px-4 py-2 text-sm" onClick={() => removeFood(food.id)} type="button">
                               Удалить
                             </button>
                           </div>
@@ -908,18 +946,22 @@ export function NutritionTracker({
       ) : null}
 
       {activePanelKey === "log" ? (
-        <section className="card p-6">
+        <section className="card card--hero p-6">
           <div className="mb-5">
-            <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
+            <p className="workspace-kicker">
               Логирование
             </p>
-            <h2 className="mt-2 text-2xl font-semibold text-foreground">
+            <h2 className="app-display mt-2 text-2xl font-semibold text-foreground sm:text-3xl">
               Текущий приём пищи
             </h2>
+            <p className="mt-3 max-w-3xl text-sm leading-7 text-muted">
+              Добавляй еду так, как это реально происходит в жизни: по своему продукту, по
+              штрихкоду, из шаблона или прямо с импортом упаковки.
+            </p>
           </div>
 
-          <div className="mb-5 rounded-3xl border border-border bg-white/60 p-4">
-            <p className="text-sm font-semibold text-foreground">
+          <div className="surface-panel surface-panel--soft mb-5 p-4">
+            <p className="workspace-kicker">
               Быстрое добавление по штрихкоду
             </p>
             <p className="mt-2 text-sm leading-7 text-muted">
@@ -934,7 +976,7 @@ export function NutritionTracker({
                 value={mealBarcode}
               />
               <button
-                className="rounded-full border border-border px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-white/70"
+                className="action-button action-button--secondary"
                 onClick={addMealItemByBarcode}
                 type="button"
               >
@@ -957,11 +999,11 @@ export function NutritionTracker({
 
           <div className="mt-5 grid gap-3">
             {mealItems.map((item, index) => (
-              <div className="rounded-2xl border border-border bg-white/60 p-4" key={item.localId}>
+              <div className="surface-panel p-4" key={item.localId}>
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <p className="text-sm font-semibold text-foreground">Позиция {index + 1}</p>
                   {mealItems.length > 1 ? (
-                    <button className="rounded-full border border-border px-3 py-2 text-xs font-medium text-foreground transition hover:bg-white/70" onClick={() => removeMealItem(item.localId)} type="button">
+                    <button className="action-button action-button--secondary px-4 py-2 text-xs" onClick={() => removeMealItem(item.localId)} type="button">
                       Удалить позицию
                     </button>
                   ) : null}
@@ -990,13 +1032,13 @@ export function NutritionTracker({
           </div>
 
           <div className="mt-4 flex flex-wrap gap-3">
-            <button className="rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:bg-white/70" onClick={appendMealItem} type="button">
+            <button className="action-button action-button--soft" onClick={appendMealItem} type="button">
               Добавить ещё продукт
             </button>
           </div>
 
-          <div className="mt-6 rounded-3xl border border-border bg-white/55 p-5">
-            <p className="text-sm font-medium text-foreground">Предварительный расчёт</p>
+          <div className="surface-panel surface-panel--accent mt-6 p-5">
+            <p className="workspace-kicker">Предварительный расчёт</p>
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               <p className="text-sm text-muted">Калории: <span className="font-semibold text-foreground">{Math.round(mealPreview.kcal)}</span></p>
               <p className="text-sm text-muted">Белки: <span className="font-semibold text-foreground">{formatMacro(mealPreview.protein)} г</span></p>
@@ -1005,7 +1047,7 @@ export function NutritionTracker({
             </div>
           </div>
 
-          <button className="mt-6 rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60" disabled={isPending || !mealItems.some((item) => item.foodId && Number(item.servings) > 0)} onClick={submitMeal} type="button">
+          <button className="action-button action-button--primary mt-6" disabled={isPending || !mealItems.some((item) => item.foodId && Number(item.servings) > 0)} onClick={submitMeal} type="button">
             {isPending ? "Сохраняю..." : "Сохранить приём пищи"}
           </button>
         </section>
@@ -1013,13 +1055,13 @@ export function NutritionTracker({
 
       {activePanelKey === "history" ? (
         <section className="grid gap-6">
-          <section className="card p-6">
+          <section className="card card--hero p-6">
             <div className="mb-5 flex items-center justify-between gap-3">
               <div>
-                <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
+                <p className="workspace-kicker">
                   История
                 </p>
-                <h2 className="mt-2 text-2xl font-semibold text-foreground">
+                <h2 className="app-display mt-2 text-2xl font-semibold text-foreground sm:text-3xl">
                   Последние приёмы пищи
                 </h2>
               </div>
@@ -1029,7 +1071,7 @@ export function NutritionTracker({
             <div className="grid gap-3">
               {initialMeals.length ? (
                 initialMeals.map((meal) => (
-                  <article className="rounded-2xl border border-border bg-white/60 p-4" key={meal.id}>
+                  <article className="surface-panel surface-panel--soft p-4" key={meal.id}>
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
                         <p className="text-lg font-semibold text-foreground">{formatDateTime(meal.eaten_at)}</p>
@@ -1037,7 +1079,7 @@ export function NutritionTracker({
                           {meal.totals.kcal.toLocaleString("ru-RU")} ккал · Б {formatMacro(meal.totals.protein)} · Ж {formatMacro(meal.totals.fat)} · У {formatMacro(meal.totals.carbs)}
                         </p>
                       </div>
-                      <button className="rounded-full border border-border px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white/70" onClick={() => deleteMeal(meal)} type="button">
+                      <button className="action-button action-button--secondary px-4 py-2 text-sm" onClick={() => deleteMeal(meal)} type="button">
                         Удалить
                       </button>
                     </div>

@@ -9,7 +9,7 @@
   - обновить краткий статус ниже;
   - синхронизировать [MASTER_PLAN.md](/C:/fit/docs/MASTER_PLAN.md) и [AI_WORKLOG.md](/C:/fit/docs/AI_WORKLOG.md).
 
-Текущий прогресс feature-plan: `3 / 6` (`50%`).
+Текущий прогресс feature-plan: `6 / 6` (`100%`).
 
 ## Цель
 
@@ -25,9 +25,9 @@
 - [x] Завести отдельный execution-doc для редизайна и привязать его к `MASTER_PLAN`.
 - [x] Обновить визуальные токены, типографику и общие shell/workspace primitives.
 - [x] Пересобрать `Dashboard` и `AI` в новом premium fitness-направлении.
-- [ ] Пересобрать `Workouts` и `Nutrition` под mobile/PWA-first подачу.
-- [ ] Довести `Admin` и remaining detail surfaces до того же визуального языка.
-- [ ] Закрыть visual regression, mobile acceptance и финальный handoff по редизайну.
+- [x] Пересобрать `Workouts` и `Nutrition` под mobile/PWA-first подачу.
+- [x] Довести `Admin` и remaining detail surfaces до того же визуального языка.
+- [x] Закрыть visual regression, mobile acceptance и финальный handoff по редизайну.
 
 ## Что уже закрыто
 
@@ -63,14 +63,42 @@
   - чистые, короткие русские тексты без служебного шума.
 - Browser regression подтверждён на `AI workspace`, `mobile PWA regressions` и `smoke`.
 
-## Следующий tranche
+## Что дополнительно закрыто
 
-- Тем же языком довести `Workouts` и `Nutrition`, не ломая уже существующую логику focus-mode, barcode и meal-photo flows.
-- После этого добрать `Admin` и финальный visual/mobile handoff.
+### 4. Workouts и Nutrition
+
+- `Workouts` переведён на более собранный premium fitness-язык:
+  - новый focus-header;
+  - мягкие, но читаемые step chips;
+  - более сильная active-card подача упражнения;
+  - единый action-button contract для edit/save/reset CTA.
+- `Nutrition` переведён на mobile/PWA-first подачу:
+  - premium hero и summary;
+  - более чистые section chips;
+  - единые soft/premium surfaces для photo capture, barcode lookup и Open Food Facts import;
+  - карточки продуктов и import-preview больше не выглядят как отдельный визуальный стек.
+
+### 5. Admin и detail surfaces
+
+- `Admin` переведён в тот же визуальный язык без потери операторской плотности:
+  - hero/state surface каталога пользователей;
+  - summary/detail cards в карточке пользователя;
+  - health dashboard и operations inbox на общих `surface-panel` и `action-button` primitives.
+- Remaining detail surfaces выровнены по shared premium contract и чистому русскому copy.
+
+### 6. Финальный visual/mobile handoff
+
+- Playwright regression harness стабилизирован против stale server reuse и битых chunk/css ссылок.
+- Финальный verification bundle зелёный:
+  - `npm run lint`
+  - `npm run typecheck`
+  - `npm run build`
+  - `npm run test:smoke` -> `5 passed`
+  - `npm run test:e2e:auth` -> `52 passed`
+  - целевые suites `admin-app`, `mobile-pwa-regressions`, `ui-regressions` подтверждены отдельно
 
 ## Текущий статус
 
-- Execution-doc создан.
-- Визуальный фундамент и общие shell/workspace primitives уже закрыты.
-- `Dashboard` и `AI` переведены на новый premium fitness visual language.
-- Следующий приоритет — `Workouts` и `Nutrition`.
+- Premium redesign execution-doc полностью закрыт.
+- `Dashboard`, `AI`, `Workouts`, `Nutrition` и `Admin` приведены к одному visual language.
+- Mobile/PWA acceptance и regression handoff подтверждены кодом и проверками.

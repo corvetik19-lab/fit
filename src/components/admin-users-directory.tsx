@@ -36,7 +36,7 @@ function DirectoryMetricCard({
   detail?: string;
 }) {
   return (
-    <article className="rounded-3xl border border-border bg-white/72 p-5 shadow-[0_18px_48px_-40px_rgba(15,23,42,0.28)]">
+    <article className="surface-panel p-5">
       <p className="text-sm text-muted">{label}</p>
       <p className="mt-2 text-2xl font-semibold text-foreground">{value}</p>
       {detail ? <p className="mt-2 text-sm leading-6 text-muted">{detail}</p> : null}
@@ -119,7 +119,7 @@ export function AdminUsersDirectory({
   }
 
   return (
-    <section className="card p-6 sm:p-8">
+    <section className="card card--hero p-6 sm:p-8">
       <div className="grid gap-6 2xl:grid-cols-[1.12fr_0.88fr]">
         <div className="space-y-5">
           <div className="flex flex-wrap gap-2">
@@ -141,16 +141,12 @@ export function AdminUsersDirectory({
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <button
-              className="rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90"
-              onClick={reloadCatalog}
-              type="button"
-            >
+            <button className="action-button action-button--primary" onClick={reloadCatalog} type="button">
               Обновить каталог
             </button>
             {isFiltered ? (
               <button
-                className="rounded-full border border-border px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-white/70"
+                className="action-button action-button--secondary"
                 onClick={resetFilters}
                 type="button"
               >
@@ -195,7 +191,7 @@ export function AdminUsersDirectory({
         </div>
       ) : null}
 
-      <div className="mt-6 rounded-[30px] border border-border bg-white/72 p-5 sm:p-6">
+      <div className="surface-panel mt-6 p-5 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">

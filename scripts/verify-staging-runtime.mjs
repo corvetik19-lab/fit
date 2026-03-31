@@ -1,5 +1,6 @@
 import nextEnv from "@next/env";
 import { spawnSync } from "node:child_process";
+import { runAiRuntimePreflight } from "./ai-runtime-preflight.mjs";
 
 const { loadEnvConfig } = nextEnv;
 
@@ -58,10 +59,24 @@ const stripeReady =
 const suiteResults = [];
 
 if (aiReady) {
-  suiteResults.push({
-    label: "AI runtime gate",
-    status: runScript("AI runtime gate", "test:ai-gate"),
-  });
+  const aiRuntimePreflight = await runAiRuntimePreflight();
+
+  if (!aiRuntimePreflight.ok) {
+    console.log("[fail] AI runtime preflight");
+    for (const failure of aiRuntimePreflight.failures) {
+      console.log(`  - ${failure}`);
+    }
+
+    suiteResults.push({
+      label: "AI runtime preflight",
+      status: 1,
+    });
+  } else {
+    suiteResults.push({
+      label: "AI runtime gate",
+      status: runScript("AI runtime gate", "test:ai-gate"),
+    });
+  }
 } else {
   logSkip("AI runtime gate", [
     hasUserAuth ? null : "нет PLAYWRIGHT_TEST_EMAIL / PLAYWRIGHT_TEST_PASSWORD",
@@ -95,7 +110,9 @@ if (stripeReady) {
 }
 
 if (!suiteResults.length) {
-  console.log("[done] staging-like verification scaffold is in place; no runtime suites were runnable in this environment.");
+  console.log(
+    "[done] staging-like verification scaffold is in place; no runtime suites were runnable in this environment.",
+  );
   process.exit(0);
 }
 

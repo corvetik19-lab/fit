@@ -178,6 +178,11 @@ type AdminHealthDashboardProps = {
   canTriggerSentrySmokeTest: boolean;
 };
 
+const adminSecondaryButtonClassName =
+  "action-button action-button--secondary disabled:cursor-not-allowed disabled:opacity-60";
+
+const adminSoftPanelClassName = "surface-panel surface-panel--soft p-4 text-sm";
+
 const dateFormatter = new Intl.DateTimeFormat("ru-RU", {
   day: "2-digit",
   month: "2-digit",
@@ -550,31 +555,31 @@ export function AdminHealthDashboard({
             </p>
             <div className="flex flex-wrap gap-2">
               {canRunAdminJobs ? (
-                <button className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60" disabled={!canRunDashboardWarm} onClick={() => void runDashboardWarmJob()} type="button">
+                <button className={adminSecondaryButtonClassName} disabled={!canRunDashboardWarm} onClick={() => void runDashboardWarmJob()} type="button">
                   {isWarmingSnapshots ? "Обновляю дашборд..." : "Обновить дашборд"}
                 </button>
               ) : null}
               {canRunAdminJobs ? (
-                <button className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60" disabled={!canRunNutritionSummaryRefresh} onClick={() => void runNutritionSummariesJob()} type="button">
+                <button className={adminSecondaryButtonClassName} disabled={!canRunNutritionSummaryRefresh} onClick={() => void runNutritionSummariesJob()} type="button">
                   {isRefreshingNutritionSummaries ? "Обновляю питание..." : "Обновить питание"}
                 </button>
               ) : null}
               {canRunAdminJobs ? (
-                <button className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60" disabled={!canRunKnowledgeRefresh} onClick={() => void runKnowledgeReindexJob()} type="button">
+                <button className={adminSecondaryButtonClassName} disabled={!canRunKnowledgeRefresh} onClick={() => void runKnowledgeReindexJob()} type="button">
                   {isRefreshingKnowledge ? "Обновляю базу ИИ..." : "Обновить базу ИИ"}
                 </button>
               ) : null}
               {canRunAdminJobs ? (
-                <button className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60" data-testid="admin-health-billing-reconcile-button" disabled={!canRunBillingReconcile} onClick={() => void runBillingReconcileJob()} type="button">
+                <button className={adminSecondaryButtonClassName} data-testid="admin-health-billing-reconcile-button" disabled={!canRunBillingReconcile} onClick={() => void runBillingReconcileJob()} type="button">
                   {isRefreshingBilling ? "Сверяю оплаты..." : "Сверить оплаты"}
                 </button>
               ) : null}
               {canTriggerSentrySmokeTest ? (
-                <button className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60" disabled={!canSendSmokeTest} onClick={() => void sendSmokeTest()} type="button">
+                <button className={adminSecondaryButtonClassName} disabled={!canSendSmokeTest} onClick={() => void sendSmokeTest()} type="button">
                   {isSendingSmokeTest ? "Проверяю мониторинг..." : "Проверить мониторинг"}
                 </button>
               ) : null}
-              <button className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60" disabled={isRefreshing} onClick={() => void refreshStats()} type="button">
+              <button className={adminSecondaryButtonClassName} disabled={isRefreshing} onClick={() => void refreshStats()} type="button">
                 {isRefreshing ? "Обновляю..." : "Обновить"}
               </button>
             </div>
@@ -601,10 +606,10 @@ export function AdminHealthDashboard({
           </div>
 
           <div className="grid gap-3 md:grid-cols-2">
-            <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm">
+            <article className={adminSoftPanelClassName}>
               <p className="font-semibold text-foreground">Мониторинг</p>
               <div className="mt-3 grid gap-1 text-muted">
-                <p>Сбор ошибок: {readiness?.sentryRuntimeEnv ? "включён" : "не готов"}</p>
+                <p>DSN рантайма: {readiness?.sentryRuntimeEnv ? "готов" : "не задан"}</p>
                 <p>Настройка приложения: {formatConfigState(observability?.sentry.runtimeMissing ?? [])}</p>
                 <p>Настройка сборки: {formatConfigState(observability?.sentry.buildMissing ?? [])}</p>
                 <p>Среда: {formatEnvironment(observability?.sentry.environment ?? null)}</p>
@@ -619,18 +624,18 @@ export function AdminHealthDashboard({
               </div>
             </article>
 
-            <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm">
+            <article className={adminSoftPanelClassName}>
               <p className="font-semibold text-foreground">Подключение ИИ</p>
               <div className="mt-3 grid gap-1 text-muted">
                 <p>Ответы ИИ: {observability?.ai.runtimeEnabled ? "готовы" : "не готовы"}</p>
                 <p>Поиск по базе знаний: {observability?.ai.embeddingEnabled ? "готов" : "не готов"}</p>
-                <p>Основной канал ИИ: {observability?.ai.openRouterEnabled ? "подключён" : "не подключён"}</p>
-                <p>Провайдер поиска: {observability?.ai.voyageEnabled ? "подключён" : "не подключён"}</p>
-                <p>Резервный канал: {observability?.ai.gatewayEnabled ? "подключён" : "выключен"}</p>
+                <p>OpenRouter: {observability?.ai.openRouterEnabled ? "подключён" : "не подключён"}</p>
+                <p>Voyage: {observability?.ai.voyageEnabled ? "подключён" : "не подключён"}</p>
+                <p>Резервный шлюз: {observability?.ai.gatewayEnabled ? "подключён" : "выключен"}</p>
               </div>
             </article>
 
-            <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm" data-testid="admin-health-billing-overview-card">
+            <article className={adminSoftPanelClassName} data-testid="admin-health-billing-overview-card">
               <p className="font-semibold text-foreground">Оплата и подписки</p>
               <div className="mt-3 grid gap-1 text-muted">
                 <p>Оформление оплаты: {formatConfigState(observability?.stripe.checkoutMissing ?? [])}</p>
@@ -640,7 +645,7 @@ export function AdminHealthDashboard({
               </div>
             </article>
 
-            <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm">
+            <article className={adminSoftPanelClassName}>
               <p className="font-semibold text-foreground">Развёртывание</p>
               <div className="mt-3 grid gap-1 text-muted">
                 <p>Среда: {formatEnvironment(observability?.vercel.environment ?? null)}</p>
@@ -666,18 +671,18 @@ export function AdminHealthDashboard({
           </div>
 
           <div className="grid gap-3 md:grid-cols-2">
-            <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm">
+            <article className={adminSoftPanelClassName}>
               <p className="font-semibold text-foreground">Последнее обновление профиля</p>
               <p className="mt-2 text-muted">{formatDateTime(systemHealth?.latestProfileAt ?? null)}</p>
             </article>
-            <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm">
+            <article className={adminSoftPanelClassName}>
               <p className="font-semibold text-foreground">Последняя программа</p>
               <p className="mt-2 text-muted">{formatDateTime(systemHealth?.latestProgramAt ?? null)}</p>
             </article>
           </div>
 
           <div className="grid gap-3 md:grid-cols-2">
-            <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm">
+            <article className={adminSoftPanelClassName}>
               <p className="font-semibold text-foreground">Контекст ИИ</p>
               <div className="mt-3 grid gap-1 text-muted">
                 <p>Готовые снимки: {knowledgeHealth?.runtimeSnapshots ?? 0}</p>
@@ -687,7 +692,7 @@ export function AdminHealthDashboard({
                 <p>Последнее обновление: {formatDateTime(knowledgeHealth?.latestRuntimeSnapshotAt ?? null)}</p>
               </div>
             </article>
-            <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm">
+            <article className={adminSoftPanelClassName}>
               <p className="font-semibold text-foreground">Обновление базы знаний</p>
               <div className="mt-3 grid gap-1 text-muted">
                 <p>Обновлений за сутки: {knowledgeHealth?.recentReindexes24h ?? 0}</p>
@@ -704,13 +709,13 @@ export function AdminHealthDashboard({
         <div className="grid gap-4">
           <p className={`rounded-2xl border px-4 py-3 text-sm ${hasSyncBacklog ? "border-amber-300/60 bg-amber-50 text-amber-800" : "border-emerald-300/60 bg-emerald-50 text-emerald-700"}`}>
             {hasSyncBacklog
-              ? "Есть незавершённые операции. Ниже видно, где именно накопилась очередь."
+              ? "Есть накопившиеся задачи. Проверь ниже, где уже нужен операторский контроль."
               : "Критичных очередей сейчас нет. Основные процессы проходят штатно."}
           </p>
           <p className={`rounded-2xl border px-4 py-3 text-sm ${hasBillingAttention ? "border-amber-300/60 bg-amber-50 text-amber-800" : "border-emerald-300/60 bg-emerald-50 text-emerald-700"}`}>
             {hasBillingAttention
               ? "В оплатах есть задачи, которым нужен контроль: просрочки, ручные проверки или ошибки сверки."
-              : "По оплатам всё спокойно: критичных просрочек и ручных хвостов не видно."}
+              : "По оплате всё спокойно: активные подписки и свежая сверка на месте."}
           </p>
 
           <div className="grid gap-4 sm:grid-cols-3">

@@ -155,3 +155,18 @@ Frontend делится на три уровня:
 - [MASTER_PLAN.md](/C:/fit/docs/MASTER_PLAN.md)
 - [AI_WORKLOG.md](/C:/fit/docs/AI_WORKLOG.md)
 - [PREMIUM_REDESIGN_PLAN.md](/C:/fit/docs/PREMIUM_REDESIGN_PLAN.md)
+
+## Premium redesign status
+
+- Premium redesign закрыт для `Dashboard`, `AI`, `Workouts`, `Nutrition` и `Admin`.
+- Consumer surfaces используют единый visual contract через shared primitives:
+  - `card card--hero`
+  - `surface-panel`
+  - `action-button`
+- Workout focus-mode, nutrition capture/import и admin operator surfaces подтверждены как regression-critical части нового visual language.
+
+## Playwright regression contract
+
+- Для regression suites нельзя переиспользовать случайный старый dev/test server с устаревшими чанками.
+- `playwright.config.ts` работает с `reuseExistingServer: false`, а `scripts/run-playwright.mjs` перед запуском чистит занятый Playwright-порт.
+- Это часть frontend reliability contract: иначе возможны ложные падения с сырым HTML, `500 text/plain` на `_next/static/*` и отсутствующими mobile/admin селекторами при фактически исправном UI.

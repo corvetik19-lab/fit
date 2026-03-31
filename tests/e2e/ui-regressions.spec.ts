@@ -55,15 +55,10 @@ test.describe("ui regressions", () => {
       const regressionCapture = startClientRegressionCapture(page);
 
       try {
-        await navigateStable(page, "/dashboard", /\/dashboard$/);
-
-        await page.evaluate(() => {
+        await page.addInitScript(() => {
           window.localStorage.removeItem("fit-app-shell-collapsed");
-          window.dispatchEvent(
-            new StorageEvent("storage", { key: "fit-app-shell-collapsed" }),
-          );
         });
-        await page.reload();
+        await navigateStable(page, "/dashboard", /\/dashboard$/);
         await page.waitForLoadState("networkidle");
 
         await expect(

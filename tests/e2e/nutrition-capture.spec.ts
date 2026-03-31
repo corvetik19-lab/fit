@@ -4,6 +4,30 @@ import { hasAuthE2ECredentials } from "./helpers/auth";
 import { USER_STORAGE_STATE_PATH } from "./helpers/auth-state";
 import { navigateStable } from "./helpers/navigation";
 
+async function setLookupValue(
+  locator: ReturnType<import("@playwright/test").Page["locator"]>,
+  value: string,
+) {
+  await locator.click();
+  await locator.evaluate((element, nextValue) => {
+    const input = element as HTMLInputElement;
+    const prototype = Object.getPrototypeOf(input) as HTMLInputElement;
+    const descriptor = Object.getOwnPropertyDescriptor(prototype, "value");
+
+    descriptor?.set?.call(input, nextValue);
+    input.dispatchEvent(
+      new InputEvent("input", {
+        bubbles: true,
+        data: nextValue,
+        inputType: "insertText",
+      }),
+    );
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+    input.dispatchEvent(new Event("blur", { bubbles: true }));
+  }, value);
+  await expect(locator).toHaveValue(value);
+}
+
 const previewPayload = {
   data: {
     existingFood: null,
@@ -12,7 +36,8 @@ const previewPayload = {
       brand: "Ferrero",
       carbs: 57.5,
       fat: 30.9,
-      imageUrl: "https://images.openfoodfacts.org/images/products/301/762/401/0701/front_en.3.400.jpg",
+      imageUrl:
+        "https://images.openfoodfacts.org/images/products/301/762/401/0701/front_en.3.400.jpg",
       ingredientsText: "Сахар, пальмовое масло, фундук, какао, сухое молоко.",
       kcal: 539,
       name: "Nutella",
@@ -107,13 +132,16 @@ test.describe("nutrition capture flow", () => {
   }) => {
     let importRequestCount = 0;
 
-    await page.route("**/api/foods/open-food-facts/3017624010701", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify(previewPayload),
-      });
-    });
+    await page.route(
+      "**/api/foods/open-food-facts/3017624010701",
+      async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(previewPayload),
+        });
+      },
+    );
 
     await page.route("**/api/foods/open-food-facts/import", async (route) => {
       importRequestCount += 1;
@@ -124,16 +152,34 @@ test.describe("nutrition capture flow", () => {
       });
     });
 
-    await navigateStable(page, "/nutrition?section=log&panel=foods", /\/nutrition(?:\?section=log&panel=foods)?$/);
+    await navigateStable(
+      page,
+      "/nutrition?section=log&panel=foods",
+      /\/nutrition(?:\?section=log&panel=foods)?$/,
+    );
     await page.waitForLoadState("networkidle");
-    const lookupSection = page.getByTestId("nutrition-open-food-facts-card-foods");
+    const lookupSection = page.getByTestId(
+      "nutrition-open-food-facts-card-foods",
+    );
     await expect(lookupSection).toBeVisible();
 
-    await lookupSection
-      .getByPlaceholder("Например, 4601234567890")
-      .fill("3017624010701");
-    await lookupSection.getByRole("button", { name: "Найти" }).click();
-    const previewCard = page.getByTestId("nutrition-open-food-facts-preview-foods");
+    const foodLookupInput = lookupSection.getByPlaceholder(
+      "Например, 4601234567890",
+    );
+    await setLookupValue(foodLookupInput, "3017624010701");
+
+    await Promise.all([
+      page.waitForResponse(
+        (response) =>
+          response.url().includes("/api/foods/open-food-facts/3017624010701") &&
+          response.request().method() === "GET",
+      ),
+      lookupSection.getByRole("button", { name: "Найти" }).click(),
+    ]);
+
+    const previewCard = page.getByTestId(
+      "nutrition-open-food-facts-preview-foods",
+    );
     await expect(previewCard).toBeVisible({ timeout: 10_000 });
     await expect(previewCard.getByText("Nutella", { exact: true })).toBeVisible();
     await expect(previewCard.getByText(/Ferrero/)).toBeVisible();
@@ -143,8 +189,9 @@ test.describe("nutrition capture flow", () => {
 
     await page.getByTestId("nutrition-open-food-facts-import-foods").click();
     await expect.poll(() => importRequestCount).toBe(1);
-    await expect(page.getByRole("button", { name: "Открыть в базе" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Сохранить продукт" })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Открыть в базе" }),
+    ).toBeVisible();
     await expect(
       page.getByRole("textbox", { name: "Название", exact: true }),
     ).toHaveValue("Nutella");
@@ -153,30 +200,53 @@ test.describe("nutrition capture flow", () => {
   test("log section adds existing barcode product into current meal", async ({
     page,
   }) => {
-    await page.route("**/api/foods/open-food-facts/4601234567890", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify(existingFoodLookupPayload),
-      });
-    });
+    await page.route(
+      "**/api/foods/open-food-facts/4601234567890",
+      async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(existingFoodLookupPayload),
+        });
+      },
+    );
 
-    await navigateStable(page, "/nutrition?section=log&panel=log", /\/nutrition(?:\?section=log&panel=log)?$/);
+    await navigateStable(
+      page,
+      "/nutrition?section=log&panel=log",
+      /\/nutrition(?:\?section=log&panel=log)?$/,
+    );
     await page.waitForLoadState("networkidle");
-    const lookupSection = page.getByTestId("nutrition-open-food-facts-card-meal");
+    const lookupSection = page.getByTestId(
+      "nutrition-open-food-facts-card-meal",
+    );
     await expect(lookupSection).toBeVisible();
 
-    await lookupSection
-      .getByPlaceholder("Например, 4601234567890")
-      .fill("4601234567890");
-    await lookupSection.getByRole("button", { name: "Найти" }).click();
+    const mealLookupInput = lookupSection.getByPlaceholder(
+      "Например, 4601234567890",
+    );
+    await setLookupValue(mealLookupInput, "4601234567890");
+
+    await Promise.all([
+      page.waitForResponse(
+        (response) =>
+          response.url().includes("/api/foods/open-food-facts/4601234567890") &&
+          response.request().method() === "GET",
+      ),
+      lookupSection.getByRole("button", { name: "Найти" }).click(),
+    ]);
+
     await expect(
       page.getByTestId("nutrition-open-food-facts-preview-meal"),
     ).toBeVisible({ timeout: 10_000 });
-    await page.getByRole("button", { name: "Добавить в текущий приём" }).click();
+    await page
+      .getByRole("button", { name: "Добавить в текущий приём" })
+      .click();
 
     await expect(
-      page.getByText("Продукт «Протеиновый батончик» добавлен в текущий приём пищи."),
+      page.getByText(
+        "Продукт «Протеиновый батончик» добавлен в текущий приём пищи.",
+      ),
     ).toBeVisible();
     await expect(page.locator("select").last()).toHaveValue(
       "79c29240-e473-4db2-a31c-88b502af14f2",

@@ -28,7 +28,7 @@ function SummaryMetricCard({
   value: string;
 }) {
   return (
-    <article className="kpi p-4">
+    <article className="surface-panel surface-panel--soft p-4">
       <p className="text-sm text-muted">{label}</p>
       <p className="mt-2 text-xl font-semibold text-foreground">{value}</p>
     </article>
@@ -72,7 +72,7 @@ export function AdminUserDetail({
     return (
       <section className="card p-6">
         <Link
-          className="mb-4 inline-flex rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:bg-white/70"
+          className="action-button action-button--secondary mb-4 inline-flex"
           href={"/admin/users" as Route}
         >
           Назад к каталогу
@@ -109,13 +109,13 @@ export function AdminUserDetail({
 
   return (
     <div className="grid gap-6">
-      <section className="card p-6">
+      <section className="card card--hero p-6 sm:p-8">
         <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
+            <p className="workspace-kicker">
               Пользователь
             </p>
-            <h2 className="mt-2 text-2xl font-semibold text-foreground">
+            <h2 className="app-display mt-3 text-2xl text-foreground sm:text-3xl">
               {detail.profile?.full_name ?? "Без имени"}
             </h2>
             <p className="mt-2 break-all text-sm text-muted">{detail.id}</p>
@@ -124,7 +124,7 @@ export function AdminUserDetail({
             </p>
           </div>
           <Link
-            className="rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:bg-white/70"
+            className="action-button action-button--secondary"
             href={"/admin/users" as Route}
           >
             Назад к каталогу
@@ -163,7 +163,7 @@ export function AdminUserDetail({
         ) : null}
       </section>
 
-      <section className="card p-4 sm:p-5">
+      <section className="surface-panel p-4 sm:p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">

@@ -1,5 +1,6 @@
 import nextEnv from "@next/env";
 import { spawnSync } from "node:child_process";
+import { runAiRuntimePreflight } from "./ai-runtime-preflight.mjs";
 
 const { loadEnvConfig } = nextEnv;
 
@@ -60,28 +61,39 @@ const suiteResults = [
 ];
 
 if (hasUserAuth && hasAdminAuth && aiRuntimeReady) {
-  suiteResults.push({
-    label: "AI quality gate",
-    status: runScript("AI quality gate", "test:ai-gate"),
-  });
+  const aiRuntimePreflight = await runAiRuntimePreflight();
+
+  if (!aiRuntimePreflight.ok) {
+    console.log("[fail] AI runtime preflight");
+    for (const failure of aiRuntimePreflight.failures) {
+      console.log(`  - ${failure}`);
+    }
+
+    suiteResults.push({
+      label: "AI runtime preflight",
+      status: 1,
+    });
+  } else {
+    suiteResults.push({
+      label: "AI quality gate",
+      status: runScript("AI quality gate", "test:ai-gate"),
+    });
+  }
 } else {
-  logSkip(
-    "AI quality gate",
-    [
-      hasUserAuth
-        ? null
-        : "нет PLAYWRIGHT_TEST_EMAIL / PLAYWRIGHT_TEST_PASSWORD для assistant и safety suite",
-      hasAdminAuth
-        ? null
-        : "нет PLAYWRIGHT_ADMIN_EMAIL / PLAYWRIGHT_ADMIN_PASSWORD для retrieval и plan suites",
-      ...getMissing(["OPENROUTER_API_KEY"]).map(
-        (key) => `нет ${key} для chat и plan runtime`,
-      ),
-      hasValues(["VOYAGE_API_KEY"]) || hasValues(["AI_GATEWAY_API_KEY"])
-        ? null
-        : "нет VOYAGE_API_KEY или AI_GATEWAY_API_KEY для retrieval embeddings",
-    ].filter(Boolean),
-  );
+  logSkip("AI quality gate", [
+    hasUserAuth
+      ? null
+      : "нет PLAYWRIGHT_TEST_EMAIL / PLAYWRIGHT_TEST_PASSWORD для assistant и safety suite",
+    hasAdminAuth
+      ? null
+      : "нет PLAYWRIGHT_ADMIN_EMAIL / PLAYWRIGHT_ADMIN_PASSWORD для retrieval и plan suites",
+    ...getMissing(["OPENROUTER_API_KEY"]).map(
+      (key) => `нет ${key} для chat и plan runtime`,
+    ),
+    hasValues(["VOYAGE_API_KEY"]) || hasValues(["AI_GATEWAY_API_KEY"])
+      ? null
+      : "нет VOYAGE_API_KEY или AI_GATEWAY_API_KEY для retrieval embeddings",
+  ].filter(Boolean));
 }
 
 const failedSuites = suiteResults.filter((suite) => suite.status !== 0);

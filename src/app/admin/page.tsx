@@ -350,7 +350,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       value: String(superAdminPolicyViolations),
       detail: superAdminPolicyViolations
         ? "в системе есть лишний главный доступ"
-        : "главный доступ закреплён верно",
+        : "главный доступ защищён",
       tone: superAdminPolicyViolations ? ("warning" as const) : ("success" as const),
     },
   ];
