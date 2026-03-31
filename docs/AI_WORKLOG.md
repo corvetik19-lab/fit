@@ -8,6 +8,19 @@
 
 ## 2026-03-30
 
+## 2026-03-31
+
+### Dashboard + AI premium redesign
+
+- Закрыт следующий consumer-screen tranche по [PREMIUM_REDESIGN_PLAN.md](/C:/fit/docs/PREMIUM_REDESIGN_PLAN.md): `Dashboard` и `AI` переведены на новый premium fitness visual language.
+- В [dashboard-workspace.tsx](/C:/fit/src/components/dashboard-workspace.tsx) усилены hero, AI-сводка и блоки «что важно сейчас», чтобы экран не выглядел как длинная лента одинаковых карточек.
+- В [ai-workspace.tsx](/C:/fit/src/components/ai-workspace.tsx), [ai-chat-panel.tsx](/C:/fit/src/components/ai-chat-panel.tsx), [ai-chat-toolbar.tsx](/C:/fit/src/components/ai-chat-toolbar.tsx), [ai-chat-transcript.tsx](/C:/fit/src/components/ai-chat-transcript.tsx), [ai-chat-composer.tsx](/C:/fit/src/components/ai-chat-composer.tsx) и [ai-workspace-sidebar.tsx](/C:/fit/src/components/ai-workspace-sidebar.tsx) экран AI собран как цельный chat-workspace с mobile-trigger, более чистым transcript/composer слоем и короткими русскими CTA.
+- В [globals.css](/C:/fit/src/app/globals.css) добавлены shared visual primitives `workspace-kicker`, `surface-panel`, `chat-toolbar-button`, `chat-bubble`, чтобы следующий tranche по `Workouts` и `Nutrition` шёл тем же языком, а не новым набором случайных классов.
+- Попутно стабилизирован e2e для barcode-log сценария в [nutrition-capture.spec.ts](/C:/fit/tests/e2e/nutrition-capture.spec.ts): селектор штрихкода теперь привязан к нужной карточке, а не к двусмысленному placeholder на всей странице.
+- Проверка зелёная: `npm run lint`, `npm run typecheck`, `npm run build`, `tests/e2e/ai-workspace.spec.ts` -> `2 passed`, `tests/e2e/mobile-pwa-regressions.spec.ts` -> `3 passed`, `tests/smoke/app-smoke.spec.ts` -> `5 passed`.
+- Полный `npm run test:e2e:auth` после slice даёт `51 / 52`: новый AI/dashboard слой зелёный, но под параллельной нагрузкой остаётся один старый нестабильный `nutrition-capture` preview red, который отдельно проходит в таргетированном прогоне `2 passed`.
+- Общий прогресс `MASTER_PLAN`: `175 / 186` (`94%`). Прогресс `PREMIUM_REDESIGN_PLAN`: `3 / 6` (`50%`).
+
 ### RAG v2 DB closure
 
 - Для `fit` подтверждён правильный Supabase MCP target `mcp__supabase_mcp_server__*` на проекте `nactzaxrjzsdkyfqwecf`, поэтому финальный knowledge DDL больше не упирается в ложный blocker по чужому проекту.

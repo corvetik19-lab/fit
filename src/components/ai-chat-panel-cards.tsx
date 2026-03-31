@@ -29,7 +29,7 @@ function ProposalStatusPill({
 
 function LoadingToolCard({ text }: { text: string }) {
   return (
-    <div className="rounded-3xl border border-border bg-white/80 px-4 py-4 text-sm text-muted">
+    <div className="surface-panel px-4 py-4 text-sm text-muted">
       <div className="flex items-center gap-2">
         <LoaderCircle className="animate-spin" size={16} />
         {text}
@@ -54,7 +54,7 @@ export function ProposalToolCard({
   }
 
   return (
-    <div className="rounded-3xl border border-border bg-white/90 p-4">
+    <div className="surface-panel p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">

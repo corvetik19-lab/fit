@@ -148,7 +148,7 @@ export function AiChatPanel({
 
   return (
     <section
-      className="card flex min-h-[72dvh] flex-col overflow-hidden p-4 sm:p-5 lg:min-h-[78dvh]"
+      className="card card--hero flex min-h-[72dvh] flex-col overflow-hidden p-4 sm:p-5 lg:min-h-[78dvh]"
       data-testid="ai-chat-panel"
       data-hydrated={isHydrated ? "true" : "false"}
     >
@@ -172,12 +172,28 @@ export function AiChatPanel({
         type="file"
       />
 
-      <AiChatNotices
-        accessAllowed={access.allowed}
-        accessReason={access.reason ?? null}
-        errorNotice={errorNotice}
-        notice={notice}
-      />
+      <div className="mt-4 grid gap-3">
+        <div className="surface-panel surface-panel--accent px-4 py-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <p className="workspace-kicker">Рабочий режим</p>
+              <p className="mt-1 text-sm font-semibold text-foreground">
+                Один экран для диалога, фото еды, web search и применения плана.
+              </p>
+            </div>
+            <span className="pill">
+              {messages.length ? `${messages.length} сообщений` : "новая сессия"}
+            </span>
+          </div>
+        </div>
+
+        <AiChatNotices
+          accessAllowed={access.allowed}
+          accessReason={access.reason ?? null}
+          errorNotice={errorNotice}
+          notice={notice}
+        />
+      </div>
 
       <AiChatTranscript
         actionBusyKey={actionBusyKey}

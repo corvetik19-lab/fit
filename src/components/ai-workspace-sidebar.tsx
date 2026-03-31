@@ -53,15 +53,17 @@ export function AiWorkspaceSidebar({
 
   if (section === "context") {
     return (
-      <section className="card p-6">
+      <section className="card card--hero p-5 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
-              Контекст
-            </p>
-            <h2 className="mt-2 text-xl font-semibold text-foreground">
+            <p className="workspace-kicker">Контекст</p>
+            <h2 className="app-display mt-2 text-2xl font-semibold text-foreground">
               Что AI уже знает
             </h2>
+            <p className="mt-2 max-w-xl text-sm leading-6 text-muted">
+              Это не сырые таблицы, а уже собранные сигналы по прогрессу,
+              питанию и восстановлению.
+            </p>
           </div>
           <span className="pill">{structuredKnowledge.facts.length}</span>
         </div>
@@ -70,7 +72,7 @@ export function AiWorkspaceSidebar({
           {structuredKnowledge.facts.length ? (
             structuredKnowledge.facts.slice(0, 6).map((fact) => (
               <article
-                className="rounded-2xl border border-border bg-white/70 px-4 py-4"
+                className="surface-panel p-4"
                 key={fact.id}
               >
                 <div className="flex flex-wrap items-center gap-2">
@@ -91,7 +93,7 @@ export function AiWorkspaceSidebar({
               </article>
             ))
           ) : (
-            <div className="rounded-2xl border border-dashed border-border bg-white/60 px-4 py-5 text-sm leading-6 text-muted">
+            <div className="surface-panel border-dashed px-4 py-5 text-sm leading-6 text-muted">
               Когда накопится история тренировок и питания, здесь появятся
               короткие факты, на которые AI будет опираться в ответах.
             </div>
@@ -102,20 +104,22 @@ export function AiWorkspaceSidebar({
   }
 
   return (
-    <section className="card p-6">
+    <section className="card card--hero p-5 sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
-            История
-          </p>
-          <h2 className="mt-2 text-xl font-semibold text-foreground">
+          <p className="workspace-kicker">История</p>
+          <h2 className="app-display mt-2 text-2xl font-semibold text-foreground">
             Сохранённые чаты
           </h2>
+          <p className="mt-2 max-w-xl text-sm leading-6 text-muted">
+            Оставляй только полезные сессии, быстро возвращайся к планам и
+            очищай лишнее без перегруженного списка.
+          </p>
         </div>
 
         <div className="flex flex-wrap gap-2">
           <button
-            className="rounded-full border border-border bg-white/80 px-4 py-2 text-sm font-medium text-foreground transition hover:bg-white"
+            className="toggle-chip px-4 py-2 text-sm font-semibold"
             onClick={() => router.push("/ai")}
             type="button"
           >
@@ -124,7 +128,7 @@ export function AiWorkspaceSidebar({
 
           {recentSessions.length > 0 && onClearSessions ? (
             <button
-              className="rounded-full border border-border bg-white/80 px-4 py-2 text-sm font-medium text-foreground transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+              className="toggle-chip px-4 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
               data-testid="ai-session-clear-all"
               disabled={isClearingAll}
               onClick={onClearSessions}
@@ -137,7 +141,7 @@ export function AiWorkspaceSidebar({
       </div>
 
       {historyError ? (
-        <div className="mt-4 rounded-2xl border border-red-300/60 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="mt-4 rounded-3xl border border-red-300/60 bg-red-50 px-4 py-3 text-sm text-red-700">
           {historyError}
         </div>
       ) : null}
@@ -151,10 +155,10 @@ export function AiWorkspaceSidebar({
 
               return (
                 <article
-                  className={`rounded-2xl border px-4 py-4 text-sm transition ${
+                  className={`rounded-[1.7rem] border px-4 py-4 text-sm transition ${
                     isActive
-                      ? "border-accent/40 bg-accent/8"
-                      : "border-border bg-white/70 hover:bg-white"
+                      ? "border-accent/26 bg-[color-mix(in_srgb,var(--accent-soft)_76%,white)] shadow-[0_24px_54px_-42px_rgba(15,122,96,0.22)]"
+                      : "border-border bg-white/76 hover:bg-white"
                   }`}
                   data-testid="ai-session-item"
                   key={session.id}
@@ -173,7 +177,7 @@ export function AiWorkspaceSidebar({
 
                   <div className="mt-4 flex flex-wrap gap-2">
                     <button
-                      className="rounded-full border border-border bg-white/90 px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white"
+                      className="toggle-chip px-3 py-2 text-sm font-semibold"
                       onClick={() => router.push(`/ai?session=${session.id}`)}
                       type="button"
                     >
@@ -182,7 +186,7 @@ export function AiWorkspaceSidebar({
 
                     {onDeleteSession ? (
                       <button
-                        className="inline-flex items-center gap-2 rounded-full border border-border bg-white/90 px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                        className="toggle-chip px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
                         data-testid="ai-session-delete"
                         disabled={isDeleting || isClearingAll}
                         onClick={() => onDeleteSession(session.id)}
@@ -203,7 +207,7 @@ export function AiWorkspaceSidebar({
           </div>
         ) : (
           <div
-            className="rounded-2xl border border-dashed border-border bg-white/60 px-4 py-5 text-sm leading-6 text-muted"
+            className="surface-panel border-dashed px-4 py-5 text-sm leading-6 text-muted"
             data-testid="ai-session-empty-state"
           >
             После первых сообщений здесь появится история переписки. Любой чат

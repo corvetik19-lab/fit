@@ -148,13 +148,28 @@ function SummaryDetailCard({
   action: string;
 }) {
   return (
-    <div className="metric-tile p-4">
-      <p className="text-sm font-semibold text-foreground">{title}</p>
+    <div className="surface-panel p-4">
+      <p className="workspace-kicker">{title}</p>
       <p className="mt-2 text-sm leading-6 text-muted">{summary}</p>
       <p className="mt-3 text-sm font-medium text-foreground">
         Следующий шаг: {action}
       </p>
     </div>
+  );
+}
+
+function DashboardInsightCard({
+  body,
+  title,
+}: {
+  body: string;
+  title: string;
+}) {
+  return (
+    <article className="surface-panel p-4">
+      <p className="workspace-kicker">{title}</p>
+      <p className="mt-2 text-sm leading-6 text-muted">{body}</p>
+    </article>
   );
 }
 
@@ -232,13 +247,14 @@ export function DashboardWorkspace({
 
             <div className="space-y-3">
               <h2 className="app-display max-w-4xl text-2xl font-semibold tracking-tight text-foreground sm:text-3xl lg:text-4xl">
-                Весь прогресс под рукой, без длинной прокрутки и перегруженных
-                отчётов.
+                Сегодняшний статус, прогресс и AI-подсказки в одном спокойном
+                фитнес-экране.
               </h2>
               <p className="max-w-3xl text-sm leading-7 text-muted sm:text-base">
-                Здесь остаются только нужные секции: краткая сводка, силовая
-                аналитика, питание и AI-коуч. На телефоне они открываются как
-                удобное меню разделов, а не как длинная лента блоков.
+                Здесь остаются только сильные поверхности: краткая сводка,
+                силовая аналитика, питание и AI-коуч. На телефоне они открываются
+                как компактное меню разделов, а не как бесконечная колонка
+                второстепенных карточек.
               </p>
             </div>
 
@@ -278,11 +294,8 @@ export function DashboardWorkspace({
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-              {metricCards.map((metric) => (
-                <article
-                  className="metric-tile p-4"
-                  key={metric.label}
-                >
+            {metricCards.map((metric) => (
+              <article className="metric-tile p-4" key={metric.label}>
                 <p className="text-xs uppercase tracking-[0.18em] text-muted">
                   {metric.label}
                 </p>
@@ -412,11 +425,11 @@ export function DashboardWorkspace({
             <article className="card p-5 sm:p-6">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
+                  <p className="workspace-kicker">
                     Сводка по темпу
                   </p>
-                  <h3 className="mt-2 text-xl font-semibold text-foreground">
-                    Главный фокус на ближайшие дни
+                  <h3 className="app-display mt-2 text-2xl font-semibold text-foreground">
+                    Что сейчас важнее всего не потерять
                   </h3>
                 </div>
                 <span className="pill">
@@ -455,10 +468,10 @@ export function DashboardWorkspace({
             <article className="card p-5 sm:p-6">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
+                  <p className="workspace-kicker">
                     AI-контекст
                   </p>
-                  <h3 className="mt-2 text-xl font-semibold text-foreground">
+                  <h3 className="app-display mt-2 text-2xl font-semibold text-foreground">
                     Что коуч уже понимает без ручных пояснений
                   </h3>
                 </div>
@@ -470,17 +483,16 @@ export function DashboardWorkspace({
               </div>
 
               <div className="mt-4 grid gap-3">
-                <div className="rounded-3xl border border-border bg-white/76 p-4 text-sm leading-6 text-muted">
-                  Частота и объём тренировок уже попадают в AI-контекст вместе с
-                  тоннажом, лучшими подходами, RPE и сигналами по восстановлению.
-                </div>
-                <div className="rounded-3xl border border-border bg-white/76 p-4 text-sm leading-6 text-muted">
-                  Питание тоже учитывается не только по КБЖУ, но и по частоте
-                  логов, привычкам, повторяющимся продуктам и стратегии, которую
-                  реально можно внедрить.
-                </div>
+                <DashboardInsightCard
+                  body="Частота и объём тренировок уже попадают в AI-контекст вместе с тоннажом, лучшими подходами, RPE и сигналами по восстановлению."
+                  title="Силовой слой"
+                />
+                <DashboardInsightCard
+                  body="Питание учитывается не только по КБЖУ, но и по частоте логов, повторяющимся продуктам, стратегии и реальной выполнимости."
+                  title="Пищевой слой"
+                />
                 <Link
-                  className="inline-flex items-center justify-center gap-2 rounded-full border border-accent/25 bg-accent-soft px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-white"
+                  className="toggle-chip toggle-chip--active inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold"
                   href={"/ai#proposal-studio" as Route}
                 >
                   Перейти в AI и собрать новый план
@@ -507,13 +519,13 @@ export function DashboardWorkspace({
 
       {activeSection === "ai" ? (
         <section className="grid gap-6 xl:grid-cols-[1.02fr_0.98fr]">
-          <article className="card p-5 sm:p-6">
+          <article className="card card--hero p-5 sm:p-6">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
+                <p className="workspace-kicker">
                   AI-коуч
                 </p>
-                <h2 className="mt-2 text-xl font-semibold text-foreground">
+                <h2 className="app-display mt-2 text-2xl font-semibold text-foreground">
                   Вся история уже готова для диалога и новых планов
                 </h2>
               </div>
@@ -524,8 +536,8 @@ export function DashboardWorkspace({
             </div>
 
             <div className="mt-4 grid gap-3 md:grid-cols-2">
-              <article className="rounded-3xl border border-border bg-white/78 p-4">
-                <p className="text-sm font-semibold text-foreground">
+              <article className="surface-panel p-4">
+                <p className="workspace-kicker">
                   Что ассистент уже использует
                 </p>
                 <ul className="mt-3 grid gap-2 text-sm leading-6 text-muted">
@@ -535,8 +547,8 @@ export function DashboardWorkspace({
                 </ul>
               </article>
 
-              <article className="rounded-3xl border border-border bg-white/78 p-4">
-                <p className="text-sm font-semibold text-foreground">
+              <article className="surface-panel surface-panel--accent p-4">
+                <p className="workspace-kicker">
                   Что можно сделать одним действием
                 </p>
                 <ul className="mt-3 grid gap-2 text-sm leading-6 text-muted">
@@ -548,28 +560,28 @@ export function DashboardWorkspace({
             </div>
           </article>
 
-          <article className="card p-5 sm:p-6">
+          <article className="card card--hero p-5 sm:p-6">
             <div>
-              <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
+              <p className="workspace-kicker">
                 Следующий шаг
               </p>
-              <h2 className="mt-2 text-xl font-semibold text-foreground">
+              <h2 className="app-display mt-2 text-2xl font-semibold text-foreground">
                 Открывай AI, если нужен новый план, совет или быстрый разбор
               </h2>
             </div>
 
             <div className="mt-4 grid gap-3">
-              <div className="rounded-3xl border border-border bg-white/78 p-4 text-sm leading-6 text-muted">
+              <div className="surface-panel p-4 text-sm leading-6 text-muted">
                 Если нужна новая программа, ассистент уже подхватит историю
                 нагрузок, питание, recovery-сигналы и ограничения без ручного
                 копирования данных.
               </div>
-              <div className="rounded-3xl border border-border bg-white/78 p-4 text-sm leading-6 text-muted">
+              <div className="surface-panel p-4 text-sm leading-6 text-muted">
                 Если нужен точечный совет, AI уже видит, где держится ритм, где
                 питание попадает в цель и где сейчас узкое место.
               </div>
               <Link
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90"
+                className="toggle-chip toggle-chip--active inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold"
                 href={"/ai" as Route}
               >
                 Открыть AI-коуча

@@ -25,16 +25,21 @@ export function AiChatToolbar({
 }: AiChatToolbarProps) {
   return (
     <div
-      className="flex items-center justify-between gap-3 border-b border-border pb-4"
+      className="flex flex-wrap items-start justify-between gap-3 border-b border-border/80 pb-4"
       data-testid="ai-chat-toolbar"
     >
-      <div className="min-w-0">
-        <p className="truncate text-sm font-semibold text-foreground">
+      <div className="min-w-0 flex-1">
+        <p className="workspace-kicker">Сессия AI-коуча</p>
+        <p className="mt-2 truncate text-base font-semibold text-foreground">
           {sessionTitle?.trim() || "Новый чат"}
+        </p>
+        <p className="mt-1 text-sm leading-6 text-muted">
+          Быстрый режим для вопросов, разбора прогресса и сборки плана без
+          лишних экранов.
         </p>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-end gap-2">
         <button
           aria-label={
             allowWebSearch
@@ -42,10 +47,8 @@ export function AiChatToolbar({
               : "Включить поиск в интернете"
           }
           aria-pressed={allowWebSearch}
-          className={`inline-flex h-11 w-11 items-center justify-center rounded-full border transition ${
-            allowWebSearch
-              ? "border-accent/30 bg-accent/10 text-accent"
-              : "border-border bg-white/80 text-muted hover:bg-white"
+          className={`chat-toolbar-button ${
+            allowWebSearch ? "chat-toolbar-button--active" : ""
           }`}
           data-testid="ai-web-search-toggle"
           onClick={onToggleWebSearch}
@@ -56,7 +59,7 @@ export function AiChatToolbar({
 
         <button
           aria-label="Открыть шаблоны"
-          className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border bg-white/80 text-foreground transition hover:bg-white"
+          className="chat-toolbar-button"
           data-testid="ai-prompt-library-open"
           onClick={onOpenPromptLibrary}
           type="button"
@@ -66,10 +69,8 @@ export function AiChatToolbar({
 
         <button
           aria-label="Выбрать фото еды"
-          className={`inline-flex h-11 w-11 items-center justify-center rounded-full border transition ${
-            selectedImage
-              ? "border-accent/30 bg-accent/10 text-accent"
-              : "border-border bg-white/80 text-muted hover:bg-white"
+          className={`chat-toolbar-button ${
+            selectedImage ? "chat-toolbar-button--active" : ""
           }`}
           data-testid="ai-meal-photo-open"
           disabled={!mealPhotoAccessAllowed}
@@ -80,7 +81,7 @@ export function AiChatToolbar({
         </button>
 
         <button
-          className="rounded-full border border-border bg-white/80 px-4 py-2 text-sm font-medium text-foreground transition hover:bg-white"
+          className="toggle-chip px-4 py-2 text-sm font-semibold"
           data-testid="ai-chat-reset"
           onClick={onReset}
           type="button"

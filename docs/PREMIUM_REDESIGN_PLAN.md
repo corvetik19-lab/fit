@@ -9,7 +9,7 @@
   - обновить краткий статус ниже;
   - синхронизировать [MASTER_PLAN.md](/C:/fit/docs/MASTER_PLAN.md) и [AI_WORKLOG.md](/C:/fit/docs/AI_WORKLOG.md).
 
-Текущий прогресс feature-plan: `2 / 6` (`33%`).
+Текущий прогресс feature-plan: `3 / 6` (`50%`).
 
 ## Цель
 
@@ -24,7 +24,7 @@
 
 - [x] Завести отдельный execution-doc для редизайна и привязать его к `MASTER_PLAN`.
 - [x] Обновить визуальные токены, типографику и общие shell/workspace primitives.
-- [ ] Пересобрать `Dashboard` и `AI` в новом premium fitness-направлении.
+- [x] Пересобрать `Dashboard` и `AI` в новом premium fitness-направлении.
 - [ ] Пересобрать `Workouts` и `Nutrition` под mobile/PWA-first подачу.
 - [ ] Довести `Admin` и remaining detail surfaces до того же визуального языка.
 - [ ] Закрыть visual regression, mobile acceptance и финальный handoff по редизайну.
@@ -53,13 +53,24 @@
 - `AppShellNav` переведён на единый section-chip стиль.
 - `PageWorkspace` и `DashboardWorkspace` переведены на новый hero/menu/metric visual contract.
 
+### 3. Первые consumer screens
+
+- `Dashboard` получил более сильный hero-блок, AI-сводку и слой «что важно сейчас» без визуального шума.
+- `AI workspace` переведён в полноценный premium chat-workspace:
+  - hero с быстрыми статусами;
+  - mobile-trigger для разделов;
+  - более цельный transcript / composer / history / context слой;
+  - чистые, короткие русские тексты без служебного шума.
+- Browser regression подтверждён на `AI workspace`, `mobile PWA regressions` и `smoke`.
+
 ## Следующий tranche
 
-- Взять `Dashboard` и `AI` как первые показательные consumer screens.
-- Затем тем же языком довести `Workouts` и `Nutrition`, не ломая уже существующую логику focus-mode, barcode и meal-photo flows.
+- Тем же языком довести `Workouts` и `Nutrition`, не ломая уже существующую логику focus-mode, barcode и meal-photo flows.
+- После этого добрать `Admin` и финальный visual/mobile handoff.
 
 ## Текущий статус
 
 - Execution-doc создан.
-- Первый tranche по визуальному фундаменту и общим shell/workspace примитивам закрыт.
-- Следующий приоритет — consumer screens, начиная с `Dashboard` и `AI`.
+- Визуальный фундамент и общие shell/workspace primitives уже закрыты.
+- `Dashboard` и `AI` переведены на новый premium fitness visual language.
+- Следующий приоритет — `Workouts` и `Nutrition`.

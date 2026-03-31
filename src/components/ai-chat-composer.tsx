@@ -41,14 +41,14 @@ export function AiChatComposer({
 }: AiChatComposerProps) {
   return (
     <form
-      className="mt-4 rounded-[1.75rem] border border-border bg-white/85 p-3 sm:p-4"
+      className="surface-panel mt-4 p-3 sm:p-4"
       onSubmit={(event) => {
         event.preventDefault();
         onSubmit();
       }}
     >
       {selectedImage ? (
-        <div className="mb-3 flex items-center gap-3 rounded-2xl border border-border bg-white/90 p-3">
+        <div className="surface-panel surface-panel--accent mb-3 flex items-center gap-3 p-3">
           {selectedImageUrl ? (
             <Image
               alt="Выбранное фото еды"
@@ -72,7 +72,7 @@ export function AiChatComposer({
 
           <button
             aria-label="Убрать фото"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-white/80 text-muted transition hover:bg-white"
+            className="chat-toolbar-button"
             onClick={onClearSelectedImage}
             type="button"
           >
@@ -82,7 +82,7 @@ export function AiChatComposer({
       ) : null}
 
       <textarea
-        className="min-h-28 w-full resize-none rounded-3xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15 disabled:cursor-not-allowed disabled:opacity-60"
+        className="min-h-32 w-full resize-none rounded-[1.7rem] border border-border bg-white/88 px-4 py-4 text-sm leading-7 text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15 disabled:cursor-not-allowed disabled:opacity-60"
         data-testid="ai-chat-composer"
         disabled={!accessAllowed}
         onChange={(event) => onDraftChange(event.target.value)}
@@ -97,18 +97,21 @@ export function AiChatComposer({
       />
 
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-muted">
+        <div className="min-w-0 flex-1">
+          <p className="workspace-kicker">Что будет дальше</p>
+          <p className="mt-1 text-sm text-muted">
           {selectedImage
             ? "Фото будет проанализировано и сохранено в истории этого чата."
             : allowWebSearch
               ? "Поиск в интернете включён."
               : "Поиск в интернете выключен."}
-        </p>
+          </p>
+        </div>
 
         <div className="flex flex-wrap gap-2">
           {isBusy ? (
             <button
-              className="rounded-full border border-border px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-white/80"
+              className="toggle-chip px-4 py-3 text-sm font-semibold"
               data-testid="ai-chat-stop"
               onClick={onStop}
               type="button"
@@ -121,7 +124,7 @@ export function AiChatComposer({
           ) : null}
 
           <button
-            className="rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+            className="toggle-chip toggle-chip--active px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
             data-testid="ai-chat-submit"
             disabled={
               isComposerBusy ||

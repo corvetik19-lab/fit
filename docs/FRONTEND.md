@@ -26,6 +26,11 @@
 
 - [PREMIUM_REDESIGN_PLAN.md](/C:/fit/docs/PREMIUM_REDESIGN_PLAN.md)
 
+Уже закрытые consumer-screen tranche:
+
+- `Dashboard` — новый hero, AI-сводка и более направленный слой «что важно сейчас»;
+- `AI` — полноценный premium chat-workspace с mobile-trigger, цельным transcript/composer и history/context surfaces.
+
 ## Базовая архитектура
 
 Frontend делится на три уровня:

@@ -42,7 +42,7 @@ export function AiChatTranscript({
 }) {
   return (
     <div
-      className="mt-4 flex-1 overflow-y-auto rounded-[1.75rem] border border-border bg-white/50 p-3 sm:p-4"
+      className="surface-panel surface-panel--soft mt-4 flex-1 overflow-y-auto p-3 sm:p-4"
       data-testid="ai-chat-transcript"
       ref={scrollViewportRef}
     >
@@ -50,10 +50,10 @@ export function AiChatTranscript({
         {messages.length ? (
           messages.map((message) => (
             <article
-              className={`rounded-3xl border px-4 py-4 ${
+              className={`chat-bubble ${
                 message.role === "assistant"
-                  ? "border-border bg-white/85"
-                  : "ml-auto border-accent/20 bg-accent/5"
+                  ? "chat-bubble--assistant"
+                  : "chat-bubble--user ml-auto"
               }`}
               data-message-id={message.id}
               data-role={message.role}
@@ -176,9 +176,17 @@ export function AiChatTranscript({
           ))
         ) : (
           <div
-            className="rounded-3xl border border-dashed border-border bg-white/70 px-4 py-6"
+            className="surface-panel border-dashed px-4 py-6"
             data-testid="ai-transcript-empty"
-          />
+          >
+            <p className="text-sm font-semibold text-foreground">
+              Здесь появится разбор, план и история решений.
+            </p>
+            <p className="mt-2 text-sm leading-6 text-muted">
+              Начни с одного запроса: например, попроси оценить прогресс, собрать
+              тренировку или разобрать фото еды.
+            </p>
+          </div>
         )}
       </div>
     </div>

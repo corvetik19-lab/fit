@@ -5,7 +5,10 @@ import { useRouter } from "next/navigation";
 import {
   Brain,
   CheckCircle2,
+  Check,
   ChevronLeft,
+  ChevronDown,
+  ChevronUp,
   ClipboardList,
   History,
   Sparkles,
@@ -14,7 +17,6 @@ import { useEffect, useMemo, useState } from "react";
 
 import { AiChatPanel } from "@/components/ai-chat-panel";
 import { AiWorkspaceSidebar } from "@/components/ai-workspace-sidebar";
-import { PanelCard } from "@/components/panel-card";
 import type { AiChatMessageRow, AiChatSessionRow } from "@/lib/ai/chat";
 import type { AiPlanProposalRow } from "@/lib/ai/proposals";
 import type { AiStructuredKnowledgeSnapshot } from "@/lib/ai/structured-knowledge";
@@ -232,17 +234,20 @@ function FlowCard({
 
   return (
     <section
-      className="rounded-3xl border border-border bg-white/70 p-4 sm:p-5"
+      className="card card--hero p-4 sm:p-5"
       data-testid="ai-assistant-flow"
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
-            Сценарий AI
-          </p>
-          <h2 className="mt-2 text-lg font-semibold text-foreground">
+          <p className="workspace-kicker">Сценарий AI</p>
+          <h2 className="app-display mt-2 text-2xl font-semibold text-foreground">
             От запроса до применения
           </h2>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">
+            AI работает по понятной цепочке: сначала понимает запрос, потом
+            собирает контекст, формирует черновик и только после подтверждения
+            переносит решение в продукт.
+          </p>
         </div>
         <span className="pill">Сейчас: {currentMeta.label}</span>
       </div>
@@ -255,12 +260,12 @@ function FlowCard({
 
           return (
             <article
-              className={`rounded-2xl border px-4 py-4 text-sm ${
+              className={`rounded-[1.75rem] border px-4 py-4 text-sm ${
                 isActive
-                  ? "border-accent/40 bg-accent/10"
+                  ? "border-accent/28 bg-[color-mix(in_srgb,var(--accent-soft)_78%,white)] shadow-[0_24px_48px_-40px_rgba(15,122,96,0.24)]"
                   : isDone
-                    ? "border-emerald-300/60 bg-emerald-50/90"
-                    : "border-border bg-white/80"
+                    ? "border-emerald-300/60 bg-[color-mix(in_srgb,#ddf6eb_88%,white)]"
+                    : "border-border bg-white/82"
               }`}
               data-flow-state={state}
               key={step.key}
@@ -285,7 +290,7 @@ function FlowCard({
         })}
       </div>
 
-      <div className="mt-4 rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-muted">
+      <div className="surface-panel mt-4 px-4 py-3 text-sm text-muted">
         <span className="font-semibold text-foreground">Следующий шаг.</span>{" "}
         {getNextFlowHint(currentStep)}
       </div>
@@ -293,14 +298,47 @@ function FlowCard({
   );
 }
 
+function WorkspaceStatCard({
+  label,
+  tone = "default",
+  value,
+}: {
+  label: string;
+  tone?: "default" | "accent";
+  value: string;
+}) {
+  return (
+    <article
+      className={`metric-tile p-4 ${tone === "accent" ? "surface-panel--accent" : ""}`}
+    >
+      <p className="text-xs uppercase tracking-[0.18em] text-muted">{label}</p>
+      <p className="mt-3 text-3xl font-semibold text-foreground">{value}</p>
+    </article>
+  );
+}
+
 function PlansSection({ proposals }: { proposals: AiPlanProposalRow[] }) {
   return (
-    <PanelCard caption="Планы" title="Черновики и применение">
-      <div className="grid gap-3" id="ai-plans">
+    <section className="card card--hero p-5 sm:p-6">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="workspace-kicker">Планы</p>
+          <h2 className="app-display mt-2 text-2xl font-semibold text-foreground">
+            Черновики, подтверждение и применение
+          </h2>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">
+            Все предложения AI остаются здесь как понятная очередь действий:
+            посмотреть, подтвердить, применить в тренировки или питание.
+          </p>
+        </div>
+        <span className="pill">{proposals.length} в работе</span>
+      </div>
+
+      <div className="mt-4 grid gap-3" id="ai-plans">
         {proposals.length ? (
           proposals.map((proposal) => (
             <article
-              className="rounded-3xl border border-border bg-white/70 p-4"
+              className="surface-panel p-4"
               key={proposal.id}
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
@@ -328,12 +366,12 @@ function PlansSection({ proposals }: { proposals: AiPlanProposalRow[] }) {
 
               <div className="mt-4 flex flex-wrap gap-2">
                 {proposal.status !== "applied" ? (
-                  <span className="rounded-full bg-accent px-3 py-1.5 text-xs font-semibold text-white">
+                  <span className="toggle-chip toggle-chip--active px-3 py-1.5 text-xs font-semibold">
                     Можно подтвердить или применить прямо из чата
                   </span>
                 ) : (
                   <Link
-                    className="rounded-full border border-border bg-white/90 px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white"
+                    className="toggle-chip px-3 py-2 text-sm font-semibold"
                     href={
                       proposal.proposal_type === "meal_plan"
                         ? "/nutrition"
@@ -347,13 +385,13 @@ function PlansSection({ proposals }: { proposals: AiPlanProposalRow[] }) {
             </article>
           ))
         ) : (
-          <div className="rounded-3xl border border-dashed border-border bg-white/70 px-4 py-6 text-sm leading-6 text-muted">
+          <div className="surface-panel border-dashed px-4 py-6 text-sm leading-6 text-muted">
             Здесь появятся черновики программ, которые AI соберёт по вашему
             запросу.
           </div>
         )}
       </div>
-    </PanelCard>
+    </section>
   );
 }
 
@@ -374,6 +412,7 @@ export function AiWorkspace({
   const [historyError, setHistoryError] = useState<string | null>(null);
   const [busySessionId, setBusySessionId] = useState<string | null>(null);
   const [isClearingAll, setIsClearingAll] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     setSessionList(recentSessions);
@@ -491,6 +530,28 @@ export function AiWorkspace({
 
   const activeMeta =
     sectionMeta.find((item) => item.key === activeSection) ?? sectionMeta[0];
+  const summaryCards = [
+    {
+      label: "Чатов в истории",
+      tone: "default" as const,
+      value: sessionList.length.toLocaleString("ru-RU"),
+    },
+    {
+      label: "Фактов в контексте",
+      tone: "default" as const,
+      value: structuredKnowledge.facts.length.toLocaleString("ru-RU"),
+    },
+    {
+      label: "Черновиков",
+      tone: "accent" as const,
+      value: proposals.length.toLocaleString("ru-RU"),
+    },
+  ];
+
+  function handleSectionSelect(nextSection: WorkspaceSectionKey) {
+    setActiveSection(nextSection);
+    setIsMobileMenuOpen(false);
+  }
 
   function returnToApp() {
     if (window.history.length > 1) {
@@ -502,31 +563,163 @@ export function AiWorkspace({
   }
 
   return (
-    <div className="grid gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-2">
-          <span className="rounded-full border border-border bg-white/85 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-muted">
-            AI
-          </span>
-          <p className="text-sm text-muted">
-            Полноэкранный чат и управление планами
-          </p>
-        </div>
+    <div className="grid gap-5">
+      <section className="card card--hero overflow-hidden p-5 sm:p-6 lg:p-8">
+        <div className="grid gap-5 xl:grid-cols-[1.06fr_0.94fr]">
+          <div className="space-y-4">
+            <div className="flex flex-wrap gap-2">
+              <span className="pill">AI-коуч</span>
+              <span className="pill">
+                {mealPhotoAccess.allowed ? "Фото еды включено" : "Фото еды отключено"}
+              </span>
+              <span className="pill">
+                {chatAccess.allowed ? "Чат активен" : "Доступ ограничен"}
+              </span>
+            </div>
 
-        <button
-          className="inline-flex items-center gap-2 rounded-full border border-border bg-white/85 px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-white"
-          onClick={returnToApp}
-          type="button"
-        >
-          <ChevronLeft size={16} strokeWidth={2.2} />
-          Свернуть чат
-        </button>
-      </div>
+            <div className="space-y-3">
+              <h1 className="app-display max-w-4xl text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+                Разговор, план и применение в одном рабочем AI-экране.
+              </h1>
+              <p className="max-w-3xl text-sm leading-7 text-muted sm:text-base">
+                Здесь остаются только нужные поверхности: сам чат, контекст,
+                история, фото еды и готовые черновики. На телефоне экран ведёт
+                себя как компактная PWA-панель без лишнего шума.
+              </p>
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-3">
+              {summaryCards.map((card) => (
+                <WorkspaceStatCard
+                  key={card.label}
+                  label={card.label}
+                  tone={card.tone}
+                  value={card.value}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div className="grid gap-3">
+            <article className="surface-panel surface-panel--accent p-5">
+              <p className="workspace-kicker">Что удобно делать сразу</p>
+              <div className="mt-3 grid gap-2 text-sm leading-6 text-muted">
+                <p>Разобрать фото еды и тут же получить вывод по составу.</p>
+                <p>Собрать новый план тренировок или питания без ручного брифа.</p>
+                <p>Вернуться к прошлому чату и применить черновик одним нажатием.</p>
+              </div>
+            </article>
+
+            <div className="flex flex-wrap gap-2">
+              <button
+                className="toggle-chip px-4 py-2 text-sm font-semibold"
+                onClick={returnToApp}
+                type="button"
+              >
+                <ChevronLeft size={16} strokeWidth={2.2} />
+                Вернуться к дашборду
+              </button>
+              <Link
+                className="toggle-chip toggle-chip--active px-4 py-2 text-sm font-semibold"
+                href="/dashboard#ai"
+              >
+                Открыть AI-сводку
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <FlowCard currentStep={currentFlowStep} />
 
-      <div className="grid gap-3">
-        <div className="flex items-center gap-2 overflow-x-auto pb-1">
+      <section className="card card--hero p-4 sm:p-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="workspace-kicker">Разделы AI</p>
+            <h2 className="app-display mt-2 text-2xl font-semibold text-foreground">
+              Открывай только нужный слой рабочего экрана
+            </h2>
+          </div>
+          <span className="pill">Сейчас: {activeMeta.label}</span>
+        </div>
+
+        <div className="mt-4 md:hidden">
+          <button
+            aria-expanded={isMobileMenuOpen}
+            className="section-chip flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
+            data-testid="ai-workspace-mobile-trigger"
+            onClick={() => setIsMobileMenuOpen((current) => !current)}
+            type="button"
+          >
+            <span className="min-w-0 flex-1">
+              <span className="block text-xs uppercase tracking-[0.18em] text-muted">
+                Раздел AI
+              </span>
+              <span className="mt-1 block text-sm font-semibold text-foreground">
+                {activeMeta.label}
+              </span>
+              <span className="mt-1 block text-xs leading-5 text-muted">
+                {activeMeta.description}
+              </span>
+            </span>
+            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-white/88 text-foreground shadow-[0_18px_32px_-26px_rgba(15,122,96,0.22)]">
+              {isMobileMenuOpen ? (
+                <ChevronUp size={18} strokeWidth={2.2} />
+              ) : (
+                <ChevronDown size={18} strokeWidth={2.2} />
+              )}
+            </span>
+          </button>
+
+          {isMobileMenuOpen ? (
+            <div className="mt-3 grid gap-2 rounded-3xl border border-border bg-[color-mix(in_srgb,var(--surface-overlay)_94%,white)] p-3 shadow-[0_30px_60px_-48px_rgba(18,32,27,0.22)]">
+              {sectionMeta.map((section) => {
+                const Icon = section.icon;
+                const isActive = section.key === activeSection;
+
+                return (
+                  <button
+                    aria-pressed={isActive}
+                    className={`section-chip flex w-full items-start justify-between gap-3 px-3 py-3 text-left ${
+                      isActive ? "section-chip--active" : "border-transparent"
+                    }`}
+                    data-testid={`ai-workspace-option-${section.key}`}
+                    key={section.key}
+                    onClick={() => handleSectionSelect(section.key)}
+                    type="button"
+                  >
+                    <span className="flex min-w-0 flex-1 items-start gap-3">
+                      <span
+                        className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl ${
+                          isActive
+                            ? "border border-accent/15 bg-[color-mix(in_srgb,var(--accent-soft)_72%,white)] text-accent"
+                            : "bg-accent/8 text-accent"
+                        }`}
+                      >
+                        <Icon size={17} strokeWidth={2.2} />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-semibold">
+                          {section.label}
+                        </span>
+                        <span className="mt-1 block text-xs leading-5 text-muted">
+                          {section.description}
+                        </span>
+                      </span>
+                    </span>
+                    {isActive ? (
+                      <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 text-emerald-600">
+                        <Check size={16} strokeWidth={2.3} />
+                      </span>
+                    ) : null}
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+        </div>
+
+        <div className="mt-4 hidden items-center gap-2 overflow-x-auto pb-1 md:flex">
           {sectionMeta.map((section) => {
             const Icon = section.icon;
             const isActive = section.key === activeSection;
@@ -534,13 +727,11 @@ export function AiWorkspace({
             return (
               <button
                 aria-pressed={isActive}
-                className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition ${
-                  isActive
-                    ? "border-accent/30 bg-accent/10 text-foreground"
-                    : "border-border bg-white/80 text-muted hover:bg-white"
+                className={`section-chip inline-flex items-center gap-2 px-4 py-2 text-sm font-medium ${
+                  isActive ? "section-chip--active" : ""
                 }`}
                 key={section.key}
-                onClick={() => setActiveSection(section.key)}
+                onClick={() => handleSectionSelect(section.key)}
                 type="button"
               >
                 <Icon size={16} strokeWidth={2.1} />
@@ -550,11 +741,11 @@ export function AiWorkspace({
           })}
         </div>
 
-        <div className="rounded-3xl border border-border bg-white/70 px-4 py-3 text-sm text-muted">
+        <div className="surface-panel mt-4 px-4 py-3 text-sm text-muted">
           <span className="font-semibold text-foreground">{activeMeta.label}.</span>{" "}
           {activeMeta.description}
         </div>
-      </div>
+      </section>
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_22rem]">
         <div className="min-w-0">

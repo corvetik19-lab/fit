@@ -129,7 +129,9 @@ test.describe("nutrition capture flow", () => {
     const lookupSection = page.getByTestId("nutrition-open-food-facts-card-foods");
     await expect(lookupSection).toBeVisible();
 
-    await page.getByPlaceholder("Например, 4601234567890").first().fill("3017624010701");
+    await lookupSection
+      .getByPlaceholder("Например, 4601234567890")
+      .fill("3017624010701");
     await lookupSection.getByRole("button", { name: "Найти" }).click();
     const previewCard = page.getByTestId("nutrition-open-food-facts-preview-foods");
     await expect(previewCard).toBeVisible({ timeout: 10_000 });
@@ -164,8 +166,13 @@ test.describe("nutrition capture flow", () => {
     const lookupSection = page.getByTestId("nutrition-open-food-facts-card-meal");
     await expect(lookupSection).toBeVisible();
 
-    await page.getByPlaceholder("Например, 4601234567890").last().fill("4601234567890");
+    await lookupSection
+      .getByPlaceholder("Например, 4601234567890")
+      .fill("4601234567890");
     await lookupSection.getByRole("button", { name: "Найти" }).click();
+    await expect(
+      page.getByTestId("nutrition-open-food-facts-preview-meal"),
+    ).toBeVisible({ timeout: 10_000 });
     await page.getByRole("button", { name: "Добавить в текущий приём" }).click();
 
     await expect(
