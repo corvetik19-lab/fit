@@ -89,7 +89,6 @@ test.describe("admin app", () => {
     test.setTimeout(60_000);
 
     await navigateStable(page, "/admin", /\/admin$/);
-    await page.waitForLoadState("networkidle");
     await expect(
       page.getByTestId("admin-health-billing-overview-card"),
     ).toBeVisible();
@@ -104,14 +103,12 @@ test.describe("admin app", () => {
     ).toBeVisible();
 
     await navigateStable(page, "/admin/users", /\/admin\/users$/);
-    await page.waitForLoadState("networkidle");
     const firstUserLink = page.locator('a[href^="/admin/users/"]').first();
     await expect(firstUserLink).toBeVisible();
     const userHref = await firstUserLink.getAttribute("href");
     expect(userHref).toBeTruthy();
 
     await navigateStable(page, userHref!, /\/admin\/users\/.+$/);
-    await page.waitForLoadState("networkidle");
     await expect(
       page.getByTestId("admin-user-actions-billing-panel"),
     ).toBeVisible();
@@ -151,10 +148,6 @@ test.describe("admin app", () => {
   test("root admin gets explicit validation errors for invalid admin user ids", async ({
     page,
   }) => {
-    await page.goto("/admin");
-    await expect(page).toHaveURL(/\/admin$/);
-    await page.waitForLoadState("networkidle");
-
     const [
       detailResult,
       billingResult,

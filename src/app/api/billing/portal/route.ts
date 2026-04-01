@@ -1,7 +1,7 @@
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import {
   createBillingActionErrorResponse,
-  createStripePortalSessionForUser,
+  createBillingManagementSessionForUser,
 } from "@/lib/billing-self-service";
 import { logger } from "@/lib/logger";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -17,11 +17,11 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 401,
         code: "AUTH_REQUIRED",
-        message: "Нужно войти в аккаунт, чтобы открыть платежный кабинет.",
+        message: "Нужно войти в аккаунт, чтобы открыть управление оплатой.",
       });
     }
 
-    const result = await createStripePortalSessionForUser({
+    const result = await createBillingManagementSessionForUser({
       request,
       userId: user.id,
     });
@@ -34,12 +34,12 @@ export async function POST(request: Request) {
       data: result.data,
     });
   } catch (error) {
-    logger.error("stripe billing portal route failed", { error });
+    logger.error("billing management route failed", { error });
 
     return createApiErrorResponse({
       status: 500,
-      code: "STRIPE_PORTAL_FAILED",
-      message: "Не удалось открыть Stripe Billing Portal.",
+      code: "BILLING_MANAGEMENT_FAILED",
+      message: "Не удалось открыть управление оплатой.",
     });
   }
 }

@@ -5,9 +5,29 @@ import {
   isAdminRouteParamError,
   parseAdminUserIdParam,
 } from "@/lib/admin-route-params";
+import { getActiveBillingProvider } from "@/lib/billing-provider";
+import { reconcileCloudpaymentsSubscriptionForUser } from "@/lib/cloudpayments-billing";
 import { logger } from "@/lib/logger";
-import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { reconcileStripeSubscriptionForUser } from "@/lib/stripe-billing";
+import { createAdminSupabaseClient } from "@/lib/supabase/admin";
+
+function getUnresolvedMessage(provider: "cloudpayments" | "stripe") {
+  return provider === "cloudpayments"
+    ? "Для этого пользователя не найдена связанная подписка CloudPayments или её не удалось подтянуть из провайдера."
+    : "Для этого пользователя не найдена связанная подписка Stripe или её не удалось подтянуть из провайдера.";
+}
+
+function getAuditAction(provider: "cloudpayments" | "stripe") {
+  return provider === "cloudpayments"
+    ? "admin_reconcile_cloudpayments_subscription"
+    : "admin_reconcile_stripe_subscription";
+}
+
+function getAuditReason(provider: "cloudpayments" | "stripe") {
+  return provider === "cloudpayments"
+    ? "ручная сверка подписки CloudPayments"
+    : "ручная сверка подписки Stripe";
+}
 
 export async function POST(
   _request: Request,
@@ -21,22 +41,22 @@ export async function POST(
       message: "Идентификатор целевого пользователя заполнен некорректно.",
     });
     const adminSupabase = createAdminSupabaseClient();
-    const reconciliation = await reconcileStripeSubscriptionForUser(
-      adminSupabase,
-      id,
-    );
+    const provider = getActiveBillingProvider();
+    const reconciliation =
+      provider === "cloudpayments"
+        ? await reconcileCloudpaymentsSubscriptionForUser(adminSupabase, id)
+        : await reconcileStripeSubscriptionForUser(adminSupabase, id);
 
     if (!reconciliation) {
       return createApiErrorResponse({
         status: 404,
-        code: "STRIPE_SUBSCRIPTION_RECONCILE_UNRESOLVED",
-        message:
-          "Для этого пользователя не найдена связанная Stripe-подписка или маппинг не удалось разрешить.",
+        code: "BILLING_SUBSCRIPTION_RECONCILE_UNRESOLVED",
+        message: getUnresolvedMessage(provider),
       });
     }
 
     await recordAdminBillingAudit(adminSupabase, {
-      action: "admin_reconcile_stripe_subscription",
+      action: getAuditAction(provider),
       actorUserId: currentAdmin.user.id,
       payload: {
         provider: reconciliation.subscription.provider,
@@ -47,10 +67,9 @@ export async function POST(
         previousStatus: reconciliation.previousSubscription?.status ?? null,
         source: reconciliation.source,
         status: reconciliation.subscription.status,
-        stripeSubscriptionId: reconciliation.stripeSubscriptionId,
         subscriptionId: reconciliation.subscription.id,
       },
-      reason: "ручная сверка Stripe-подписки",
+      reason: getAuditReason(provider),
       targetUserId: id,
     });
 
@@ -83,7 +102,7 @@ export async function POST(
     return createApiErrorResponse({
       status: 500,
       code: "ADMIN_BILLING_RECONCILE_FAILED",
-      message: "Не удалось сверить состояние Stripe-подписки.",
+      message: "Не удалось сверить состояние подписки у платёжного провайдера.",
     });
   }
 }

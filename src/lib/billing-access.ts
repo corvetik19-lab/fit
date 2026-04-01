@@ -87,25 +87,27 @@ const MONTHLY_WINDOW = "monthly";
 const FEATURE_CONFIG: BillingFeatureConfigMap = {
   ai_chat: {
     label: "AI-чат",
-    description: "Контекстный AI-коуч и диалог по профилю пользователя.",
+    description: "Контекстный AI-коуч и диалог по твоему профилю и истории.",
     metricKey: "ai_chat_messages",
     requiresSubscription: false,
   },
   meal_plan: {
     label: "AI-план питания",
-    description: "Сборка плана питания в черновик и применение его в приложение.",
+    description:
+      "Сборка плана питания в черновик и применение его в приложении.",
     metricKey: "ai_meal_plan_generations",
     requiresSubscription: true,
   },
   workout_plan: {
     label: "AI-план тренировок",
-    description: "Сборка тренировочной недели в черновик и применение её в приложение.",
+    description:
+      "Сборка тренировочной недели в черновик и применение её в приложении.",
     metricKey: "ai_workout_plan_generations",
     requiresSubscription: true,
   },
   meal_photo: {
     label: "AI-анализ фото еды",
-    description: "Оценка состава блюда и КБЖУ по фотографии.",
+    description: "Оценка блюда и КБЖУ по фотографии или снимку упаковки.",
     metricKey: "ai_meal_photo_analyses",
     requiresSubscription: true,
   },
@@ -222,7 +224,7 @@ function buildFeatureAccess(
       description: config.description,
       allowed: false,
       reason:
-        "Нужен активный пробный доступ, подписка или ручное открытие функции супер-админом.",
+        "Нужен активный пробный доступ, подписка или ручное открытие функции администратором.",
       source: "default",
       usage,
     };
@@ -297,9 +299,10 @@ export async function readUserBillingAccess(
     ]),
   );
   const usageByMetric = new Map(
-    ((usageCountersResult.data as UsageCounterRow[] | null) ?? []).map(
-      (row) => [row.metric_key, row],
-    ),
+    ((usageCountersResult.data as UsageCounterRow[] | null) ?? []).map((row) => [
+      row.metric_key,
+      row,
+    ]),
   );
 
   if (isPrimarySuperAdminEmail(options?.email)) {

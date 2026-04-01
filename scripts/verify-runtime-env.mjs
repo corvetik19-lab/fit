@@ -19,6 +19,46 @@ function printGroup(title, entries) {
   }
 }
 
+function getActiveBillingProvider() {
+  if (process.env.NEXT_PUBLIC_BILLING_PROVIDER?.trim()) {
+    return process.env.NEXT_PUBLIC_BILLING_PROVIDER;
+  }
+
+  if (process.env.NEXT_PUBLIC_CLOUDPAYMENTS_PUBLIC_ID?.trim()) {
+    return "cloudpayments";
+  }
+
+  return "stripe";
+}
+
+const activeBillingProvider = getActiveBillingProvider();
+const billingEntries =
+  activeBillingProvider === "cloudpayments"
+    ? [
+        { key: "NEXT_PUBLIC_BILLING_PROVIDER", scope: "preview + production" },
+        {
+          key: "NEXT_PUBLIC_CLOUDPAYMENTS_PUBLIC_ID",
+          scope: "preview + production",
+        },
+        { key: "CLOUDPAYMENTS_API_SECRET", scope: "preview + production" },
+        {
+          key: "CLOUDPAYMENTS_PREMIUM_MONTHLY_AMOUNT_RUB",
+          scope: "preview + production",
+        },
+        {
+          key: "CLOUDPAYMENTS_WEBHOOK_SECRET",
+          scope: "preview + production (optional fallback to API secret)",
+        },
+      ]
+    : [
+        { key: "STRIPE_SECRET_KEY", scope: "preview + production" },
+        {
+          key: "STRIPE_PREMIUM_MONTHLY_PRICE_ID",
+          scope: "preview + production",
+        },
+        { key: "STRIPE_WEBHOOK_SECRET", scope: "preview + production" },
+      ];
+
 const groups = [
   {
     title: "Web/PWA baseline",
@@ -45,15 +85,8 @@ const groups = [
     ],
   },
   {
-    title: "Stripe",
-    entries: [
-      { key: "STRIPE_SECRET_KEY", scope: "preview + production" },
-      {
-        key: "STRIPE_PREMIUM_MONTHLY_PRICE_ID",
-        scope: "preview + production",
-      },
-      { key: "STRIPE_WEBHOOK_SECRET", scope: "preview + production" },
-    ],
+    title: `Billing (${activeBillingProvider})`,
+    entries: billingEntries,
   },
   {
     title: "Sentry",

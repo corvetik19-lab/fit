@@ -15,6 +15,7 @@ import {
 import { AdminUserActions } from "@/components/admin-user-actions";
 import {
   fitnessLevelLabels,
+  formatBillingProvider,
   formatDateTime,
   formatStatus,
   getUserLabel,
@@ -441,7 +442,9 @@ export function AdminUserBillingSection({
             },
             {
               label: "Провайдер",
-              value: detail.stats.lifecycle.latestSubscription?.provider ?? "Нет данных",
+              value: formatBillingProvider(
+                detail.stats.lifecycle.latestSubscription?.provider,
+              ),
             },
             {
               label: "Период до",
@@ -481,11 +484,9 @@ export function AdminUserBillingSection({
             },
             {
               label: "Способ оплаты",
-              value:
-                detail.stats.lifecycle.latestSubscription?.provider === "stripe"
-                  ? "Stripe"
-                  : detail.stats.lifecycle.latestSubscription?.provider ??
-                    "Нет данных",
+              value: formatBillingProvider(
+                detail.stats.lifecycle.latestSubscription?.provider,
+              ),
             },
           ]}
           title="Платёжный профиль"

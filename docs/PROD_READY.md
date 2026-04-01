@@ -70,7 +70,7 @@
 
 - `npm run verify:runtime-env`
 
-Эта команда не заменяет runtime-smoke, но сразу показывает, каких ключей не хватает по группам `AI`, `Stripe`, `Sentry`, `CI` и `Android/TWA`.
+Эта команда не заменяет runtime-smoke, но сразу показывает, каких ключей не хватает по группам `AI`, `Billing`, `Sentry`, `CI` и `Android/TWA`.
 
 ### Обязательные для web/PWA
 
@@ -93,9 +93,11 @@
 
 ### Для billing
 
-- `STRIPE_SECRET_KEY`
-- `STRIPE_WEBHOOK_SECRET`
-- `STRIPE_PREMIUM_MONTHLY_PRICE_ID`
+- `NEXT_PUBLIC_BILLING_PROVIDER`
+- `NEXT_PUBLIC_CLOUDPAYMENTS_PUBLIC_ID`
+- `CLOUDPAYMENTS_API_SECRET`
+- `CLOUDPAYMENTS_PREMIUM_MONTHLY_AMOUNT_RUB`
+- `CLOUDPAYMENTS_WEBHOOK_SECRET`
 
 ### Для Android/TWA
 
@@ -127,7 +129,7 @@
 
 ### Billing нельзя считать production-ready, если
 
-- не пройден живой сценарий `checkout -> return reconcile -> webhook -> portal`;
+- не пройден живой сценарий `checkout -> return reconcile -> webhook -> billing center`;
 - webhook idempotency не подтверждена;
 - `/settings` и `/admin` не показывают корректное состояние подписки.
 

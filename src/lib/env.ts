@@ -10,6 +10,10 @@ function normalizeEnv(value: string | undefined) {
 }
 
 const publicEnvSchema = z.object({
+  NEXT_PUBLIC_BILLING_PROVIDER: z
+    .enum(["cloudpayments", "stripe"])
+    .optional(),
+  NEXT_PUBLIC_CLOUDPAYMENTS_PUBLIC_ID: z.string().min(1).optional(),
   NEXT_PUBLIC_SUPABASE_URL: z.string().url().optional(),
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().min(1).optional(),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1).optional(),
@@ -24,6 +28,10 @@ const serverEnvSchema = z.object({
   AI_RETRIEVAL_TELEMETRY: z.string().min(1).optional(),
   ADMIN_BOOTSTRAP_TOKEN: z.string().min(1).optional(),
   CRON_SECRET: z.string().min(1).optional(),
+  CLOUDPAYMENTS_API_SECRET: z.string().min(1).optional(),
+  CLOUDPAYMENTS_PREMIUM_MONTHLY_AMOUNT_RUB: z.string().min(1).optional(),
+  CLOUDPAYMENTS_PREMIUM_MONTHLY_DESCRIPTION: z.string().min(1).optional(),
+  CLOUDPAYMENTS_WEBHOOK_SECRET: z.string().min(1).optional(),
   OPENROUTER_API_KEY: z.string().min(1).optional(),
   OPENROUTER_APP_NAME: z.string().min(1).optional(),
   OPENROUTER_BASE_URL: z.string().url().optional(),
@@ -43,6 +51,12 @@ const serverEnvSchema = z.object({
 });
 
 export const publicEnv = publicEnvSchema.parse({
+  NEXT_PUBLIC_BILLING_PROVIDER: normalizeEnv(
+    process.env.NEXT_PUBLIC_BILLING_PROVIDER,
+  ),
+  NEXT_PUBLIC_CLOUDPAYMENTS_PUBLIC_ID: normalizeEnv(
+    process.env.NEXT_PUBLIC_CLOUDPAYMENTS_PUBLIC_ID,
+  ),
   NEXT_PUBLIC_SUPABASE_URL: normalizeEnv(process.env.NEXT_PUBLIC_SUPABASE_URL),
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: normalizeEnv(
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
@@ -59,6 +73,16 @@ export const serverEnv = serverEnvSchema.parse({
   AI_RETRIEVAL_TELEMETRY: normalizeEnv(process.env.AI_RETRIEVAL_TELEMETRY),
   ADMIN_BOOTSTRAP_TOKEN: normalizeEnv(process.env.ADMIN_BOOTSTRAP_TOKEN),
   CRON_SECRET: normalizeEnv(process.env.CRON_SECRET),
+  CLOUDPAYMENTS_API_SECRET: normalizeEnv(process.env.CLOUDPAYMENTS_API_SECRET),
+  CLOUDPAYMENTS_PREMIUM_MONTHLY_AMOUNT_RUB: normalizeEnv(
+    process.env.CLOUDPAYMENTS_PREMIUM_MONTHLY_AMOUNT_RUB,
+  ),
+  CLOUDPAYMENTS_PREMIUM_MONTHLY_DESCRIPTION: normalizeEnv(
+    process.env.CLOUDPAYMENTS_PREMIUM_MONTHLY_DESCRIPTION,
+  ),
+  CLOUDPAYMENTS_WEBHOOK_SECRET: normalizeEnv(
+    process.env.CLOUDPAYMENTS_WEBHOOK_SECRET,
+  ),
   OPENROUTER_API_KEY: normalizeEnv(process.env.OPENROUTER_API_KEY),
   OPENROUTER_APP_NAME: normalizeEnv(process.env.OPENROUTER_APP_NAME),
   OPENROUTER_BASE_URL: normalizeEnv(process.env.OPENROUTER_BASE_URL),
@@ -90,6 +114,16 @@ const SENTRY_BUILD_ENV_KEYS = [
 const STRIPE_CHECKOUT_ENV_KEYS = [
   "STRIPE_SECRET_KEY",
   "STRIPE_PREMIUM_MONTHLY_PRICE_ID",
+] as const;
+const CLOUDPAYMENTS_CHECKOUT_ENV_KEYS = [
+  "NEXT_PUBLIC_CLOUDPAYMENTS_PUBLIC_ID",
+  "CLOUDPAYMENTS_API_SECRET",
+  "CLOUDPAYMENTS_PREMIUM_MONTHLY_AMOUNT_RUB",
+] as const;
+const CLOUDPAYMENTS_MANAGEMENT_ENV_KEYS = [] as const;
+const CLOUDPAYMENTS_WEBHOOK_ENV_KEYS = [
+  "NEXT_PUBLIC_CLOUDPAYMENTS_PUBLIC_ID",
+  "CLOUDPAYMENTS_API_SECRET",
 ] as const;
 const STRIPE_WEBHOOK_ENV_KEYS = [
   "STRIPE_SECRET_KEY",
@@ -195,4 +229,47 @@ export function hasStripePortalEnv() {
 
 export function getMissingStripePortalEnv() {
   return STRIPE_PORTAL_ENV_KEYS.filter((key) => !serverEnv[key]);
+}
+
+export function hasCloudpaymentsCheckoutEnv() {
+  return Boolean(
+    publicEnv.NEXT_PUBLIC_CLOUDPAYMENTS_PUBLIC_ID &&
+      serverEnv.CLOUDPAYMENTS_API_SECRET &&
+      serverEnv.CLOUDPAYMENTS_PREMIUM_MONTHLY_AMOUNT_RUB,
+  );
+}
+
+export function getMissingCloudpaymentsCheckoutEnv() {
+  return CLOUDPAYMENTS_CHECKOUT_ENV_KEYS.filter((key) => {
+    if (key in publicEnv) {
+      return !publicEnv[key as keyof typeof publicEnv];
+    }
+
+    return !serverEnv[key as keyof typeof serverEnv];
+  });
+}
+
+export function hasCloudpaymentsManagementEnv() {
+  return true;
+}
+
+export function getMissingCloudpaymentsManagementEnv() {
+  return CLOUDPAYMENTS_MANAGEMENT_ENV_KEYS;
+}
+
+export function hasCloudpaymentsWebhookEnv() {
+  return Boolean(
+    publicEnv.NEXT_PUBLIC_CLOUDPAYMENTS_PUBLIC_ID &&
+      serverEnv.CLOUDPAYMENTS_API_SECRET,
+  );
+}
+
+export function getMissingCloudpaymentsWebhookEnv() {
+  return CLOUDPAYMENTS_WEBHOOK_ENV_KEYS.filter((key) => {
+    if (key in publicEnv) {
+      return !publicEnv[key as keyof typeof publicEnv];
+    }
+
+    return !serverEnv[key as keyof typeof serverEnv];
+  });
 }

@@ -125,12 +125,15 @@
 - `POST /api/billing/checkout`
 - `POST /api/billing/checkout/reconcile`
 - `POST /api/billing/portal`
+- `GET /api/billing/cloudpayments/intent`
+- `POST /api/billing/webhook/cloudpayments/[kind]`
 - `POST /api/billing/webhook/stripe`
 - `GET/POST /api/settings/billing`
 - `POST /api/admin/users/[id]/billing/reconcile`
 
 Что уже реализовано:
-- Stripe integration layer;
+- provider-neutral billing layer;
+- CloudPayments checkout/widget integration layer;
 - checkout return reconciliation;
 - webhook idempotency;
 - admin manual reconcile;
@@ -210,16 +213,20 @@ Jobs должны принимать только авторизованный c
 
 ## Billing backend
 
-`src/lib/stripe-billing.ts` и `src/lib/billing-access.ts` обеспечивают:
-- checkout / portal / webhook sync;
+`src/lib/billing-self-service.ts`, `src/lib/cloudpayments-billing.ts`, `src/lib/stripe-billing.ts` и `src/lib/billing-access.ts` обеспечивают:
+- provider-neutral checkout / billing-center action / webhook sync;
 - local subscription reconciliation;
 - usage and entitlement access control;
 - provider-state recovery через return reconcile и admin reconcile.
 
-Production rollout Stripe всё ещё зависит от реальных env:
-- `STRIPE_SECRET_KEY`
-- `STRIPE_WEBHOOK_SECRET`
-- `STRIPE_PREMIUM_MONTHLY_PRICE_ID`
+Текущий production rollout для РФ целится в `CloudPayments`; legacy `Stripe` остаётся как совместимый fallback-адаптер до полного выведения из runtime.
+
+Production rollout CloudPayments зависит от реальных env:
+- `NEXT_PUBLIC_BILLING_PROVIDER`
+- `NEXT_PUBLIC_CLOUDPAYMENTS_PUBLIC_ID`
+- `CLOUDPAYMENTS_API_SECRET`
+- `CLOUDPAYMENTS_PREMIUM_MONTHLY_AMOUNT_RUB`
+- `CLOUDPAYMENTS_WEBHOOK_SECRET`
 
 ## Observability backend
 
@@ -243,9 +250,11 @@ Production rollout Stripe всё ещё зависит от реальных env
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `OPENROUTER_API_KEY`
 - `VOYAGE_API_KEY`
-- `STRIPE_SECRET_KEY`
-- `STRIPE_WEBHOOK_SECRET`
-- `STRIPE_PREMIUM_MONTHLY_PRICE_ID`
+- `NEXT_PUBLIC_BILLING_PROVIDER`
+- `NEXT_PUBLIC_CLOUDPAYMENTS_PUBLIC_ID`
+- `CLOUDPAYMENTS_API_SECRET`
+- `CLOUDPAYMENTS_PREMIUM_MONTHLY_AMOUNT_RUB`
+- `CLOUDPAYMENTS_WEBHOOK_SECRET`
 - `SENTRY_AUTH_TOKEN`
 - `NEXT_PUBLIC_SENTRY_DSN`
 - `SENTRY_PROJECT`

@@ -1,5 +1,11 @@
 import { createApiErrorResponse } from "@/lib/api/error-response";
-import { getMissingStripePortalEnv, hasStripePortalEnv } from "@/lib/env";
+import {
+  getActiveBillingProvider,
+  getBillingProviderLabel,
+  getMissingActiveBillingCheckoutEnv,
+  hasActiveBillingCheckoutEnv,
+} from "@/lib/billing-provider";
+import { reconcileCloudpaymentsSubscriptionForUser } from "@/lib/cloudpayments-billing";
 import {
   isInternalJobParamError,
   parseOptionalUuidParam,
@@ -37,15 +43,15 @@ async function resolveBillingTargetUserIds(params: {
   limit: number;
 }) {
   if (params.explicitUserId) {
-    const explicitUserId = params.explicitUserId;
-    return [explicitUserId];
+    return [params.explicitUserId];
   }
 
+  const provider = getActiveBillingProvider();
   const supabase = createAdminSupabaseClient();
   const { data, error } = await supabase
     .from("subscriptions")
     .select("user_id, provider_subscription_id, provider_customer_id, updated_at")
-    .eq("provider", "stripe")
+    .eq("provider", provider)
     .order("updated_at", { ascending: false })
     .limit(params.limit * 4);
 
@@ -113,30 +119,34 @@ async function reconcileBillingForUsers(
   },
 ) {
   const supabase = createAdminSupabaseClient();
+  const provider = getActiveBillingProvider();
   const results: Array<{
     message?: string;
-    source?: "provider_customer_id" | "provider_subscription_id";
-    status: "ok" | "error" | "skipped";
+    source?: "account_id" | "provider_customer_id" | "provider_subscription_id";
+    status: "error" | "ok" | "skipped";
     subscriptionStatus?: string;
     userId: string;
   }> = [];
 
   for (const userId of userIds) {
     try {
-      const reconciliation = await reconcileStripeSubscriptionForUser(
-        supabase,
-        userId,
-      );
+      const reconciliation =
+        provider === "cloudpayments"
+          ? await reconcileCloudpaymentsSubscriptionForUser(supabase, userId)
+          : await reconcileStripeSubscriptionForUser(supabase, userId);
 
       if (!reconciliation) {
         const message =
-          "Для этого пользователя не удалось определить связанную Stripe-подписку.";
+          provider === "cloudpayments"
+            ? "Для этого пользователя не удалось определить связанную подписку CloudPayments."
+            : "Для этого пользователя не удалось определить связанную подписку Stripe.";
 
         await recordBillingReconcileResult({
           actorUserId: options.actorUserId,
           details: {
             message,
             outcome: "skipped_not_linked",
+            provider,
           },
           source: options.source,
           status: "completed",
@@ -162,12 +172,12 @@ async function reconcileBillingForUsers(
           previousPeriodEnd:
             reconciliation.previousSubscription?.current_period_end ?? null,
           previousStatus: reconciliation.previousSubscription?.status ?? null,
+          provider,
           providerCustomerId:
             reconciliation.subscription.provider_customer_id ?? null,
           providerSubscriptionId:
             reconciliation.subscription.provider_subscription_id ?? null,
           status: reconciliation.subscription.status,
-          stripeSubscriptionId: reconciliation.stripeSubscriptionId,
           subscriptionId: reconciliation.subscription.id,
         },
         source: options.source,
@@ -185,13 +195,14 @@ async function reconcileBillingForUsers(
     } catch (error) {
       logger.error("billing reconciliation job failed for user", {
         error,
+        provider,
         userId,
       });
 
       const message =
         error instanceof Error
           ? error.message
-          : "Непредвиденная ошибка сверки Stripe-подписки.";
+          : `Непредвиденная ошибка сверки подписки ${getBillingProviderLabel(provider)}.`;
 
       try {
         await recordBillingReconcileResult({
@@ -199,6 +210,7 @@ async function reconcileBillingForUsers(
           details: {
             message,
             outcome: "failed",
+            provider,
           },
           source: options.source,
           status: "failed",
@@ -210,6 +222,7 @@ async function reconcileBillingForUsers(
           "billing reconciliation job failed to record support action",
           {
             error: logError,
+            provider,
             userId,
           },
         );
@@ -229,7 +242,7 @@ async function reconcileBillingForUsers(
 async function handleRequest(request: Request) {
   const access = await requireInternalAdminJobAccess(
     request,
-    "сверка Stripe-подписок",
+    "сверка платёжного провайдера",
   );
 
   if (access instanceof Response) {
@@ -238,14 +251,16 @@ async function handleRequest(request: Request) {
 
   try {
     const query = parseBillingReconcileRequest(request);
+    const provider = getActiveBillingProvider();
 
-    if (!hasStripePortalEnv()) {
+    if (!hasActiveBillingCheckoutEnv()) {
       return createApiErrorResponse({
         status: 503,
-        code: "STRIPE_BILLING_RECONCILE_NOT_CONFIGURED",
-        message: "Сверка Stripe-подписок пока не настроена.",
+        code: "BILLING_RECONCILE_NOT_CONFIGURED",
+        message: `Сверка ${getBillingProviderLabel(provider)} пока не настроена.`,
         details: {
-          missing: getMissingStripePortalEnv(),
+          missing: getMissingActiveBillingCheckoutEnv(),
+          provider,
         },
       });
     }
@@ -263,14 +278,15 @@ async function handleRequest(request: Request) {
       data: {
         errorCount,
         processedUsers: results.length,
+        provider,
         results,
         skippedCount,
         successCount,
       },
       message:
         errorCount > 0
-          ? "Сверка Stripe-подписок завершена частично: есть пользователи с ошибками."
-          : "Сверка Stripe-подписок завершена успешно.",
+          ? `Сверка ${getBillingProviderLabel(provider)} завершена частично: есть пользователи с ошибками.`
+          : `Сверка ${getBillingProviderLabel(provider)} завершена успешно.`,
     });
   } catch (error) {
     if (isInternalJobParamError(error)) {
@@ -286,7 +302,7 @@ async function handleRequest(request: Request) {
     return createApiErrorResponse({
       status: 500,
       code: "BILLING_RECONCILE_JOB_FAILED",
-      message: "Не удалось сверить состояние Stripe-подписок.",
+      message: "Не удалось сверить состояние подписок у платёжного провайдера.",
     });
   }
 }

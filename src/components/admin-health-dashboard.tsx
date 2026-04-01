@@ -15,9 +15,10 @@ type AdminStatsPayload = {
     serviceRoleEnv: boolean;
     sentryRuntimeEnv: boolean;
     sentryBuildEnv: boolean;
-    stripeCheckoutEnv: boolean;
-    stripePortalEnv: boolean;
-    stripeWebhookEnv: boolean;
+    billingCheckoutEnv: boolean;
+    billingManagementEnv: boolean;
+    billingProvider: "cloudpayments" | "stripe";
+    billingWebhookEnv: boolean;
     vercelRuntimeEnv: boolean;
     workoutSyncPullEnv: boolean;
   };
@@ -29,11 +30,14 @@ type AdminStatsPayload = {
       project: string | null;
       environment: string | null;
     };
-    stripe: {
+    billing: {
       checkoutMissing: string[];
-      portalMissing: string[];
+      checkoutReference: string | null;
+      checkoutReferenceLabel: string;
+      managementMissing: string[];
+      provider: "cloudpayments" | "stripe";
+      providerLabel: string;
       webhookMissing: string[];
-      priceId: string | null;
     };
     ai: {
       gatewayEnabled: boolean;
@@ -89,20 +93,22 @@ type AdminStatsPayload = {
     latestAiEvalRunAt: string | null;
   };
   billingHealth: {
-    stripeSubscriptions: number;
-    stripeActiveSubscriptions: number;
-    stripeTrialSubscriptions: number;
-    stripePastDueSubscriptions: number;
-    stripeLinkedCustomers: number;
+    activeSubscriptions: number;
+    linkedCustomers: number;
+    pastDueSubscriptions: number;
+    provider: "cloudpayments" | "stripe";
+    providerLabel: string;
     queuedBillingReviews: number;
     completedBillingReviews: number;
     recentBillingReconciles: number;
     failedBillingReconciles: number;
     recentCheckoutReturnReconciles: number;
+    subscriptions: number;
     latestBillingReviewAt: string | null;
     latestBillingReconcileAt: string | null;
-    latestStripeEventAt: string | null;
+    latestProviderEventAt: string | null;
     latestCheckoutReturnReconcileAt: string | null;
+    trialSubscriptions: number;
   };
 };
 
@@ -503,7 +509,7 @@ export function AdminHealthDashboard({
   const hasBillingAttention = Boolean(
     billingHealth &&
       (billingHealth.queuedBillingReviews > 0 ||
-        billingHealth.stripePastDueSubscriptions > 0 ||
+        billingHealth.pastDueSubscriptions > 0 ||
         billingHealth.failedBillingReconciles > 0),
   );
   const canSendSmokeTest =
@@ -535,9 +541,9 @@ export function AdminHealthDashboard({
     [
       "Оплата",
       Boolean(
-        readiness?.stripeCheckoutEnv &&
-          readiness?.stripePortalEnv &&
-          readiness?.stripeWebhookEnv,
+        readiness?.billingCheckoutEnv &&
+          readiness?.billingManagementEnv &&
+          readiness?.billingWebhookEnv,
       ),
     ],
     ["Синхронизация", Boolean(readiness?.workoutSyncPullEnv)],
@@ -636,12 +642,35 @@ export function AdminHealthDashboard({
             </article>
 
             <article className={adminSoftPanelClassName} data-testid="admin-health-billing-overview-card">
-              <p className="font-semibold text-foreground">Оплата и подписки</p>
+              <p className="font-semibold text-foreground">
+                Оплата и подписки
+              </p>
               <div className="mt-3 grid gap-1 text-muted">
-                <p>Оформление оплаты: {formatConfigState(observability?.stripe.checkoutMissing ?? [])}</p>
-                <p>Управление подпиской: {formatConfigState(observability?.stripe.portalMissing ?? [])}</p>
-                <p>Сверка платежей: {formatConfigState(observability?.stripe.webhookMissing ?? [])}</p>
-                <p>Премиум-тариф: {observability?.stripe.priceId ? "задан" : "не задан"}</p>
+                <p>
+                  Провайдер:{" "}
+                  {observability?.billing.providerLabel ?? "Нет данных"}
+                </p>
+                <p>
+                  Оформление оплаты:{" "}
+                  {formatConfigState(observability?.billing.checkoutMissing ?? [])}
+                </p>
+                <p>
+                  Управление подпиской:{" "}
+                  {formatConfigState(
+                    observability?.billing.managementMissing ?? [],
+                  )}
+                </p>
+                <p>
+                  Сверка платежей:{" "}
+                  {formatConfigState(observability?.billing.webhookMissing ?? [])}
+                </p>
+                <p>
+                  {observability?.billing.checkoutReferenceLabel ??
+                    "Тариф"}:{" "}
+                  {observability?.billing.checkoutReference
+                    ? observability.billing.checkoutReference
+                    : "не задан"}
+                </p>
               </div>
             </article>
 
@@ -783,14 +812,19 @@ export function AdminHealthDashboard({
               </div>
             </article>
             <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm" data-testid="admin-health-billing-subscriptions-card">
-              <p className="font-semibold text-foreground">Подписки</p>
+              <p className="font-semibold text-foreground">
+                Подписки {billingHealth?.providerLabel ? `(${billingHealth.providerLabel})` : ""}
+              </p>
               <div className="mt-3 grid gap-1 text-muted">
-                <p>Всего подписок: {billingHealth?.stripeSubscriptions ?? 0}</p>
-                <p>Активные: {billingHealth?.stripeActiveSubscriptions ?? 0}</p>
-                <p>Пробный период: {billingHealth?.stripeTrialSubscriptions ?? 0}</p>
-                <p>Нужна оплата: {billingHealth?.stripePastDueSubscriptions ?? 0}</p>
-                <p>Связанные клиенты: {billingHealth?.stripeLinkedCustomers ?? 0}</p>
-                <p>Последнее событие: {formatDateTime(billingHealth?.latestStripeEventAt ?? null)}</p>
+                <p>Всего подписок: {billingHealth?.subscriptions ?? 0}</p>
+                <p>Активные: {billingHealth?.activeSubscriptions ?? 0}</p>
+                <p>Пробный период: {billingHealth?.trialSubscriptions ?? 0}</p>
+                <p>Нужна оплата: {billingHealth?.pastDueSubscriptions ?? 0}</p>
+                <p>Связанные клиенты: {billingHealth?.linkedCustomers ?? 0}</p>
+                <p>
+                  Последнее событие:{" "}
+                  {formatDateTime(billingHealth?.latestProviderEventAt ?? null)}
+                </p>
               </div>
             </article>
           </div>

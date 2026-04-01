@@ -39,6 +39,18 @@ function runScript(label, script) {
   return result.status ?? 1;
 }
 
+function getActiveBillingProvider() {
+  if (process.env.NEXT_PUBLIC_BILLING_PROVIDER?.trim()) {
+    return process.env.NEXT_PUBLIC_BILLING_PROVIDER;
+  }
+
+  if (process.env.NEXT_PUBLIC_CLOUDPAYMENTS_PUBLIC_ID?.trim()) {
+    return "cloudpayments";
+  }
+
+  return "stripe";
+}
+
 const hasUserAuth =
   Boolean(process.env.PLAYWRIGHT_TEST_EMAIL?.trim()) &&
   Boolean(process.env.PLAYWRIGHT_TEST_PASSWORD?.trim());
@@ -52,9 +64,17 @@ const aiReady =
   hasValues(["OPENROUTER_API_KEY"]) &&
   (hasValues(["VOYAGE_API_KEY"]) || hasValues(["AI_GATEWAY_API_KEY"]));
 
-const stripeReady =
-  hasUserAuth &&
-  hasValues(["STRIPE_SECRET_KEY", "STRIPE_PREMIUM_MONTHLY_PRICE_ID"]);
+const billingProvider = getActiveBillingProvider();
+const billingReady =
+  billingProvider === "cloudpayments"
+    ? hasUserAuth &&
+      hasValues([
+        "NEXT_PUBLIC_CLOUDPAYMENTS_PUBLIC_ID",
+        "CLOUDPAYMENTS_API_SECRET",
+        "CLOUDPAYMENTS_PREMIUM_MONTHLY_AMOUNT_RUB",
+      ])
+    : hasUserAuth &&
+      hasValues(["STRIPE_SECRET_KEY", "STRIPE_PREMIUM_MONTHLY_PRICE_ID"]);
 
 const suiteResults = [];
 
@@ -78,33 +98,39 @@ if (aiReady) {
     });
   }
 } else {
-  logSkip("AI runtime gate", [
-    hasUserAuth ? null : "нет PLAYWRIGHT_TEST_EMAIL / PLAYWRIGHT_TEST_PASSWORD",
-    hasAdminAuth
-      ? null
-      : "нет PLAYWRIGHT_ADMIN_EMAIL / PLAYWRIGHT_ADMIN_PASSWORD",
-    hasValues(["OPENROUTER_API_KEY"]) ? null : "нет OPENROUTER_API_KEY",
-    hasValues(["VOYAGE_API_KEY"]) || hasValues(["AI_GATEWAY_API_KEY"])
-      ? null
-      : "нет VOYAGE_API_KEY или AI_GATEWAY_API_KEY для retrieval/embeddings",
-  ].filter(Boolean));
+  logSkip(
+    "AI runtime gate",
+    [
+      hasUserAuth ? null : "нет PLAYWRIGHT_TEST_EMAIL / PLAYWRIGHT_TEST_PASSWORD",
+      hasAdminAuth ? null : "нет PLAYWRIGHT_ADMIN_EMAIL / PLAYWRIGHT_ADMIN_PASSWORD",
+      hasValues(["OPENROUTER_API_KEY"]) ? null : "нет OPENROUTER_API_KEY",
+      hasValues(["VOYAGE_API_KEY"]) || hasValues(["AI_GATEWAY_API_KEY"])
+        ? null
+        : "нет VOYAGE_API_KEY или AI_GATEWAY_API_KEY для retrieval/embeddings",
+    ].filter(Boolean),
+  );
 }
 
-if (stripeReady) {
+if (billingReady) {
   suiteResults.push({
-    label: "Stripe runtime gate",
-    status: runScript("Stripe runtime gate", "test:billing-gate"),
+    label: `${billingProvider} runtime gate`,
+    status: runScript("Billing runtime gate", "test:billing-gate"),
   });
 } else {
+  const missingBillingKeys =
+    billingProvider === "cloudpayments"
+      ? getMissing([
+          "NEXT_PUBLIC_CLOUDPAYMENTS_PUBLIC_ID",
+          "CLOUDPAYMENTS_API_SECRET",
+          "CLOUDPAYMENTS_PREMIUM_MONTHLY_AMOUNT_RUB",
+        ])
+      : getMissing(["STRIPE_SECRET_KEY", "STRIPE_PREMIUM_MONTHLY_PRICE_ID"]);
+
   logSkip(
-    "Stripe runtime gate",
+    `${billingProvider} runtime gate`,
     [
-      hasUserAuth
-        ? null
-        : "нет PLAYWRIGHT_TEST_EMAIL / PLAYWRIGHT_TEST_PASSWORD",
-      ...getMissing(["STRIPE_SECRET_KEY", "STRIPE_PREMIUM_MONTHLY_PRICE_ID"]).map(
-        (key) => `нет ${key}`,
-      ),
+      hasUserAuth ? null : "нет PLAYWRIGHT_TEST_EMAIL / PLAYWRIGHT_TEST_PASSWORD",
+      ...missingBillingKeys.map((key) => `нет ${key}`),
     ].filter(Boolean),
   );
 }

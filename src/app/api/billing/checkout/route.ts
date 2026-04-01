@@ -1,7 +1,7 @@
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import {
   createBillingActionErrorResponse,
-  startStripeCheckoutSessionForUser,
+  startBillingCheckoutSessionForUser,
 } from "@/lib/billing-self-service";
 import { logger } from "@/lib/logger";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
       });
     }
 
-    const result = await startStripeCheckoutSessionForUser({
+    const result = await startBillingCheckoutSessionForUser({
       request,
       supabase,
       user,
@@ -35,12 +35,12 @@ export async function POST(request: Request) {
       data: result.data,
     });
   } catch (error) {
-    logger.error("stripe checkout route failed", { error });
+    logger.error("billing checkout route failed", { error });
 
     return createApiErrorResponse({
       status: 500,
-      code: "STRIPE_CHECKOUT_FAILED",
-      message: "Не удалось запустить Stripe Checkout.",
+      code: "BILLING_CHECKOUT_FAILED",
+      message: "Не удалось запустить оплату.",
     });
   }
 }

@@ -14,6 +14,20 @@ import {
   ensureSettingsDeletionRequest,
 } from "./helpers/settings-data";
 
+function getActiveBillingProvider() {
+  const explicitProvider = process.env.NEXT_PUBLIC_BILLING_PROVIDER?.trim();
+
+  if (explicitProvider === "cloudpayments" || explicitProvider === "stripe") {
+    return explicitProvider;
+  }
+
+  if (process.env.NEXT_PUBLIC_CLOUDPAYMENTS_PUBLIC_ID?.trim()) {
+    return "cloudpayments";
+  }
+
+  return "stripe";
+}
+
 function buildAssistantMessages() {
   return [
     {
@@ -38,6 +52,11 @@ test.describe("api contracts without auth", () => {
     page,
   }) => {
     await page.context().clearCookies();
+    const billingProvider = getActiveBillingProvider();
+    const billingWebhookUrl =
+      billingProvider === "cloudpayments"
+        ? "/api/billing/webhook/cloudpayments/pay"
+        : "/api/billing/webhook/stripe";
 
     const [
       bootstrapResult,
@@ -55,7 +74,7 @@ test.describe("api contracts without auth", () => {
       }),
       fetchJson(page, {
         method: "POST",
-        url: "/api/billing/webhook/stripe",
+        url: billingWebhookUrl,
         body: {},
       }),
       fetchJson(page, {
@@ -98,7 +117,11 @@ test.describe("api contracts without auth", () => {
     expect([400, 503]).toContain(webhookResult.status);
     expect(
       (webhookResult.body as { code?: string } | null)?.code,
-    ).toMatch(/^(STRIPE_SIGNATURE_MISSING|STRIPE_WEBHOOK_NOT_CONFIGURED)$/);
+    ).toMatch(
+      billingProvider === "cloudpayments"
+        ? /^(CLOUDPAYMENTS_WEBHOOK_INVALID_SIGNATURE|CLOUDPAYMENTS_WEBHOOK_NOT_CONFIGURED)$/
+        : /^(STRIPE_SIGNATURE_MISSING|STRIPE_WEBHOOK_NOT_CONFIGURED)$/,
+    );
 
     expect(reconcileResult.status).toBe(401);
     expect((reconcileResult.body as { code?: string } | null)?.code).toBe(
@@ -160,7 +183,7 @@ test.describe("api contracts", () => {
       invalidNutritionTargetsPayload,
       invalidSettingsBillingPayload,
       invalidSettingsDataPayload,
-      invalidStripeCheckoutReconcilePayload,
+      invalidBillingCheckoutReconcilePayload,
       invalidOnboardingPayload,
       invalidSyncPullParams,
       invalidSyncPushPayload,
@@ -491,11 +514,11 @@ test.describe("api contracts", () => {
       (invalidSettingsDataPayload.body as { code?: string } | null)?.code,
     ).toBe("SETTINGS_DATA_INVALID");
 
-    expect(invalidStripeCheckoutReconcilePayload.status).toBe(400);
+    expect(invalidBillingCheckoutReconcilePayload.status).toBe(400);
     expect(
-      (invalidStripeCheckoutReconcilePayload.body as { code?: string } | null)
+      (invalidBillingCheckoutReconcilePayload.body as { code?: string } | null)
         ?.code,
-    ).toBe("STRIPE_CHECKOUT_RECONCILE_INVALID");
+    ).toBe("BILLING_CHECKOUT_RECONCILE_INVALID");
 
     expect(invalidOnboardingPayload.status).toBe(400);
     expect((invalidOnboardingPayload.body as { code?: string } | null)?.code).toBe(

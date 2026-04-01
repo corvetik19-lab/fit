@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  formatBillingProvider,
   formatDateTime,
   formatSnakeLabel,
   formatStatus,
@@ -141,7 +142,9 @@ export function AdminUserSubscriptionEventsCard({
                 <p className="mt-1 text-muted">
                   Провайдер:{" "}
                   <span className="text-foreground">
-                    {getPayloadString(event.payload, "provider")}
+                    {formatBillingProvider(
+                      getPayloadString(event.payload, "provider"),
+                    )}
                   </span>
                 </p>
               ) : null}

@@ -1190,9 +1190,9 @@
 
 ## 2026-04-01 runtime env matrix addendum
 
-- [x] Добавлен [scripts/verify-runtime-env.mjs](/C:/fit/scripts/verify-runtime-env.mjs) и команда `npm run verify:runtime-env`: проект теперь умеет одним запуском показать missing env по группам `Web/PWA`, `AI`, `Stripe`, `Sentry`, `CI`, `Android/TWA`.
+- [x] Добавлен [scripts/verify-runtime-env.mjs](/C:/fit/scripts/verify-runtime-env.mjs) и команда `npm run verify:runtime-env`: проект теперь умеет одним запуском показать missing env по группам `Web/PWA`, `AI`, `Billing`, `Sentry`, `CI`, `Android/TWA`.
 - [x] [PROD_READY.md](/C:/fit/docs/PROD_READY.md), [RELEASE_CHECKLIST.md](/C:/fit/docs/RELEASE_CHECKLIST.md) и [README.md](/C:/fit/README.md) синхронизированы с этим preflight: у владельца окружения теперь есть явный список того, что надо выставить для закрытия последних release-blocker пунктов.
-- [x] Фактический прогон `npm run verify:runtime-env` подтверждает текущий внешний остаток: отсутствуют `CRON_SECRET`, весь `Stripe` runtime set, `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_PROJECT` и Android release fingerprints; при этом CI auth/secrets и AI ключи уже подхвачены.
+- [x] Фактический прогон `npm run verify:runtime-env` подтверждает текущий внешний остаток: отсутствуют `CRON_SECRET`, runtime env активного billing-провайдера, `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_PROJECT` и Android release fingerprints; при этом CI auth/secrets и AI ключи уже подхвачены.
 - [x] Общий прогресс execution checklist остаётся `178 / 186` (`96%`): кодовые и документальные tranche закрыты, а remaining main-пункты по-прежнему зависят от реальных env/secrets и provider access.
 
 ## 2026-04-01 AI chat transcript stability addendum
@@ -1208,3 +1208,11 @@
 - [x] В [RUSSIAN_BILLING_PROVIDER_PLAN.md](/C:/fit/docs/RUSSIAN_BILLING_PROVIDER_PLAN.md) оформлен отдельный техплан миграции с чекбоксами; primary-кандидат выбран `CloudPayments`, fallback — `ЮKassa`.
 - [x] Открытые main-checklist пункты `Milestone 2` и acceptance-критерий обновлены на provider-neutral wording, чтобы дальнейшее выполнение плана шло уже не от `Stripe`, а от выбранного провайдера РФ.
 - [x] Общий прогресс execution checklist остаётся `178 / 186` (`96%`): это документальный и архитектурный reframe billing-направления без закрытия новых main-пунктов.
+
+## 2026-04-01 CloudPayments runtime migration addendum
+
+- [x] Реализован provider-neutral billing runtime: checkout, reconcile, billing-center action, admin reconcile и internal billing job теперь выбирают активного провайдера через [billing-provider.ts](/C:/fit/src/lib/billing-provider.ts) и больше не завязаны исключительно на `Stripe`.
+- [x] Добавлены CloudPayments transport/runtime surfaces: [cloudpayments-billing.ts](/C:/fit/src/lib/cloudpayments-billing.ts), [billing/cloudpayments intent route](/C:/fit/src/app/api/billing/cloudpayments/intent/route.ts), [billing webhook cloudpayments route](/C:/fit/src/app/api/billing/webhook/cloudpayments/[kind]/route.ts), [billing/cloudpayments page](/C:/fit/src/app/billing/cloudpayments/page.tsx), [cloudpayments-checkout.tsx](/C:/fit/src/components/cloudpayments-checkout.tsx).
+- [x] `/settings`, `/admin`, `admin stats` и billing handoff/release docs переведены на provider-neutral wording: активный billing runtime теперь отображается как `CloudPayments`, а не как скрытое допущение про `Stripe`.
+- [x] Tranche подтверждён пакетами `npm run lint`, `npm run typecheck`, `npm run build`, а live billing flow по-прежнему остаётся внешним блокером до появления реальных env выбранного провайдера и webhook/runtime smoke.
+- [x] Общий прогресс execution checklist остаётся `178 / 186` (`96%`): кодовый migration-slice закрыт, но основные незакрытые пункты `Milestone 2` всё ещё зависят от живого provider env и end-to-end smoke.

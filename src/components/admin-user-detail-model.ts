@@ -249,6 +249,7 @@ export const statusLabels: Record<string, string> = {
 };
 
 export const auditActionLabels: Record<string, string> = {
+  admin_reconcile_cloudpayments_subscription: "Ручная сверка подписки",
   admin_reconcile_stripe_subscription: "Ручная сверка подписки",
   bulk_wave_completed: "Завершена групповая операция",
   cancel_deletion_request: "Отменён запрос на удаление",
@@ -259,8 +260,12 @@ export const auditActionLabels: Record<string, string> = {
   queue_export_job: "Создана выгрузка данных",
   queue_support_action: "Создано служебное действие",
   support_action_status_updated: "Изменён статус служебного действия",
+  user_reconciled_cloudpayments_checkout_return:
+    "Синхронизирован возврат после оплаты",
   user_reconciled_stripe_checkout_return:
     "Синхронизирован возврат после оплаты",
+  user_started_cloudpayments_checkout: "Запущено оформление оплаты",
+  user_started_stripe_checkout: "Запущено оформление оплаты",
   user_requested_billing_access_review:
     "Запрошена проверка доступа к оплате",
 };
@@ -311,6 +316,22 @@ export function formatAuditAction(value: string) {
 
 export function formatSupportAction(value: string) {
   return supportActionLabels[value] ?? formatAuditAction(value);
+}
+
+export function formatBillingProvider(value: string | null | undefined) {
+  if (!value) {
+    return "Нет данных";
+  }
+
+  if (value === "cloudpayments") {
+    return "CloudPayments";
+  }
+
+  if (value === "stripe") {
+    return "Stripe";
+  }
+
+  return formatSnakeLabel(value);
 }
 
 export function renderList(items: string[] | undefined) {

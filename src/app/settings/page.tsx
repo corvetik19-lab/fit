@@ -7,8 +7,12 @@ import { PanelCard } from "@/components/panel-card";
 import { SettingsBillingCenter } from "@/components/settings-billing-center";
 import { SettingsDataCenter } from "@/components/settings-data-center";
 import { SignOutButton } from "@/components/sign-out-button";
+import {
+  getActiveBillingProvider,
+  hasActiveBillingCheckoutEnv,
+  hasActiveBillingManagementEnv,
+} from "@/lib/billing-provider";
 import { readUserBillingAccessOrFallback } from "@/lib/billing-access";
-import { hasStripeCheckoutEnv, hasStripePortalEnv } from "@/lib/env";
 import { loadSettingsDataSnapshotOrFallback } from "@/lib/settings-data-server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireReadyViewer } from "@/lib/viewer";
@@ -45,6 +49,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
       email: viewer.user.email,
     }),
   ]);
+  const billingProvider = getActiveBillingProvider();
 
   return (
     <AppShell eyebrow="Настройки" title="Профиль, доступ и управление данными">
@@ -145,11 +150,12 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
             content: (
               <SettingsBillingCenter
                 access={access}
-                initialSnapshot={dataSnapshot}
-                stripe={{
-                  checkoutReady: hasStripeCheckoutEnv(),
-                  portalReady: hasStripePortalEnv(),
+                billing={{
+                  provider: billingProvider,
+                  checkoutReady: hasActiveBillingCheckoutEnv(),
+                  managementReady: hasActiveBillingManagementEnv(),
                 }}
+                initialSnapshot={dataSnapshot}
               />
             ),
           },

@@ -3,12 +3,13 @@
 import {
   formatAccessSource,
   formatActorScope,
+  formatBillingManagementLabel,
+  formatBillingPaymentStatus,
+  formatBillingSessionStatus,
   formatEventKind,
   formatFeatureKey,
   formatReviewStatus,
   formatSettingsDateTime,
-  formatStripePaymentStatus,
-  formatStripeSessionStatus,
   formatSubscriptionProvider,
   formatSubscriptionStatus,
   formatUsageLimit,
@@ -17,22 +18,24 @@ import {
   settingsBillingInputClassName,
 } from "@/components/settings-billing-center-model";
 import { useSettingsBillingCenterState } from "@/components/use-settings-billing-center-state";
+import type { BillingProvider } from "@/lib/billing-provider";
 import type { UserBillingAccessSnapshot } from "@/lib/billing-access";
 import type { SettingsDataSnapshot } from "@/lib/settings-data";
 
 type SettingsBillingCenterProps = {
   access: UserBillingAccessSnapshot;
-  initialSnapshot: SettingsDataSnapshot;
-  stripe: {
+  billing: {
     checkoutReady: boolean;
-    portalReady: boolean;
+    managementReady: boolean;
+    provider: BillingProvider;
   };
+  initialSnapshot: SettingsDataSnapshot;
 };
 
 export function SettingsBillingCenter({
   access: initialAccess,
+  billing,
   initialSnapshot,
-  stripe,
 }: SettingsBillingCenterProps) {
   const {
     access,
@@ -55,9 +58,10 @@ export function SettingsBillingCenter({
     selectedFeatures,
     setNote,
     snapshot,
-    startStripeFlow,
+    startBillingFlow,
     toggleFeature,
   } = useSettingsBillingCenterState({
+    billingProvider: billing.provider,
     initialAccess,
     initialSnapshot,
   });
@@ -70,7 +74,7 @@ export function SettingsBillingCenter({
             Доступ и оплата
           </p>
           <h2 className="mt-2 text-2xl font-semibold text-foreground">
-            Подписка, функции и история доступа
+            Подписка, AI-функции и история доступа
           </h2>
         </div>
         <button
@@ -79,7 +83,7 @@ export function SettingsBillingCenter({
           onClick={refreshBilling}
           type="button"
         >
-          {isPending ? "Обновление..." : "Обновить"}
+          {isPending ? "Обновляю..." : "Обновить"}
         </button>
       </div>
 
@@ -97,15 +101,15 @@ export function SettingsBillingCenter({
           {checkoutReturn ? (
             <div className="mt-3 grid gap-1 text-xs">
               <p>
-                Состояние оплаты:{" "}
+                Статус оплаты:{" "}
                 <span className="font-semibold">
-                  {formatStripeSessionStatus(checkoutReturn.sessionStatus)}
+                  {formatBillingSessionStatus(checkoutReturn.sessionStatus)}
                 </span>
               </p>
               <p>
-                Платеж:{" "}
+                Платёж:{" "}
                 <span className="font-semibold">
-                  {formatStripePaymentStatus(checkoutReturn.paymentStatus)}
+                  {formatBillingPaymentStatus(checkoutReturn.paymentStatus)}
                 </span>
               </p>
               <p>
@@ -132,7 +136,7 @@ export function SettingsBillingCenter({
             >
               {isCheckoutReturnSyncing
                 ? "Проверяю оплату..."
-                : "Проверить оплату еще раз"}
+                : "Проверить оплату ещё раз"}
             </button>
           ) : null}
         </div>
@@ -147,8 +151,8 @@ export function SettingsBillingCenter({
                   Текущий план
                 </p>
                 <p className="mt-1 text-sm leading-6 text-muted">
-                  Текущее состояние подписки, доступов и месячных лимитов без
-                  лишних переходов.
+                  Здесь видно состояние подписки, источники доступа и месячные
+                  лимиты без лишних переходов.
                 </p>
               </div>
               <span className="pill">
@@ -200,29 +204,35 @@ export function SettingsBillingCenter({
             <div className="mt-4 flex flex-wrap gap-3">
               {isPrivilegedAccess ? (
                 <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-3 text-sm text-emerald-900">
-                  Для корневого администратора все AI и premium-функции
-                  платформы открыты постоянно и не зависят от подписки.
+                  Для корневого администратора все AI и premium-функции открыты
+                  постоянно и не зависят от подписки.
                 </div>
               ) : access.subscription.isActive ? (
-                <button
-                  className="rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={!stripe.portalReady || isPending}
-                  onClick={() =>
-                    startStripeFlow(
-                      "/api/billing/portal",
-                      "Открываю управление подпиской...",
-                    )
-                  }
-                  type="button"
-                >
-                  Управлять подпиской
-                </button>
+                billing.managementReady ? (
+                  <button
+                    className="rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                    disabled={isPending}
+                    onClick={() =>
+                      startBillingFlow(
+                        "/api/billing/portal",
+                        "Открываю управление подпиской...",
+                      )
+                    }
+                    type="button"
+                  >
+                    {formatBillingManagementLabel(billing.provider)}
+                  </button>
+                ) : (
+                  <span className="rounded-full border border-border px-4 py-3 text-xs font-semibold text-muted">
+                    Управление подпиской сейчас остаётся внутри fit и через поддержку.
+                  </span>
+                )
               ) : (
                 <button
                   className="rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={!stripe.checkoutReady || isPending}
+                  disabled={!billing.checkoutReady || isPending}
                   onClick={() =>
-                    startStripeFlow("/api/billing/checkout", "Открываю оплату...")
+                    startBillingFlow("/api/billing/checkout", "Открываю оплату...")
                   }
                   type="button"
                 >
@@ -238,10 +248,12 @@ export function SettingsBillingCenter({
               ) : null}
             </div>
 
-            {!isPrivilegedAccess && (!stripe.checkoutReady || !stripe.portalReady) ? (
+            {!isPrivilegedAccess &&
+            (!billing.checkoutReady ||
+              (access.subscription.isActive && !billing.managementReady)) ? (
               <div className="mt-4 rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                Платежный модуль еще не настроен полностью, поэтому оплата или
-                управление подпиской могут быть временно недоступны.
+                Платёжный модуль ещё не настроен полностью. Часть действий по
+                подписке может быть временно недоступна.
               </div>
             ) : null}
 
@@ -266,9 +278,7 @@ export function SettingsBillingCenter({
                   </div>
 
                   <div className="mt-3 grid gap-1 text-muted">
-                    <p>
-                      Источник доступа: {formatAccessSource(feature.source)}
-                    </p>
+                    <p>Источник доступа: {formatAccessSource(feature.source)}</p>
                     <p>
                       Использовано: {feature.usage.count}
                       {` / ${formatUsageLimit(feature.usage.limit)}`}
@@ -295,8 +305,8 @@ export function SettingsBillingCenter({
                   Запросить доступ
                 </p>
                 <p className="mt-1 text-sm leading-6 text-muted">
-                  Если функция закрыта, можно отправить запрос на пробный или
-                  ручной доступ.
+                  Если функция закрыта, можно отправить запрос на ручную проверку
+                  доступа.
                 </p>
               </div>
               {activeReviewRequest ? (
@@ -325,9 +335,7 @@ export function SettingsBillingCenter({
                   </span>
                 </p>
                 {activeReviewRequest.note ? (
-                  <p className="mt-1 text-foreground">
-                    {activeReviewRequest.note}
-                  </p>
+                  <p className="mt-1 text-foreground">{activeReviewRequest.note}</p>
                 ) : null}
               </div>
             ) : blockedFeatures.length ? (

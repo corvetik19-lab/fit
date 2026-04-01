@@ -1,15 +1,13 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import {
-  startTransition,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { startTransition, useCallback, useEffect, useMemo, useState } from "react";
 
-import { CHECKOUT_RETURN_RETRY_DELAYS_MS } from "@/components/settings-billing-center-model";
+import {
+  CHECKOUT_RETURN_RETRY_DELAYS_MS,
+  formatBillingManagementLabel,
+} from "@/components/settings-billing-center-model";
+import type { BillingProvider } from "@/lib/billing-provider";
 import type { UserBillingAccessSnapshot } from "@/lib/billing-access";
 import type { SettingsDataSnapshot } from "@/lib/settings-data";
 
@@ -18,6 +16,7 @@ type SettingsBillingCenterResponseData = {
   checkoutReturn?: {
     checkoutSessionId: string;
     paymentStatus: string | null;
+    provider: BillingProvider;
     reconciled: boolean;
     sessionStatus: string | null;
   } | null;
@@ -46,6 +45,7 @@ async function readJsonSafely(response: Response) {
 }
 
 export function useSettingsBillingCenterState(input: {
+  billingProvider: BillingProvider;
   initialAccess: UserBillingAccessSnapshot;
   initialSnapshot: SettingsDataSnapshot;
 }) {
@@ -64,8 +64,8 @@ export function useSettingsBillingCenterState(input: {
   const [checkoutReturn, setCheckoutReturn] = useState<
     SettingsBillingCenterResponseData["checkoutReturn"]
   >(null);
-  const [returnSessionId, setReturnSessionId] = useState(
-    searchParams.get("session_id"),
+  const [returnReferenceId, setReturnReferenceId] = useState<string | null>(
+    searchParams.get("reference_id") ?? searchParams.get("session_id"),
   );
 
   const featureCards = useMemo(
@@ -85,12 +85,10 @@ export function useSettingsBillingCenterState(input: {
   );
   const billingReturnState = searchParams.get("billing");
   const checkoutSessionId = searchParams.get("session_id");
+  const checkoutReferenceId = searchParams.get("reference_id");
   const checkoutRetriesRemaining =
-    returnSessionId && checkoutReturn && !checkoutReturn.reconciled
-      ? Math.max(
-          CHECKOUT_RETURN_RETRY_DELAYS_MS.length - checkoutRetryAttempt,
-          0,
-        )
+    returnReferenceId && checkoutReturn && !checkoutReturn.reconciled
+      ? Math.max(CHECKOUT_RETURN_RETRY_DELAYS_MS.length - checkoutRetryAttempt, 0)
       : 0;
   const checkoutRetryEnabled = checkoutRetriesRemaining > 0;
   const isPrivilegedAccess = accessState.subscription.isPrivilegedAccess;
@@ -121,13 +119,13 @@ export function useSettingsBillingCenterState(input: {
           data.checkoutReturn.reconciled
             ? {
                 detail:
-                  "Оплата подтверждена. Обновленные функции уже отмечены в карточках ниже.",
+                  "Оплата подтверждена. Обновлённые функции уже отражены в карточках ниже.",
                 title: "Оплата прошла успешно",
                 tone: "success",
               }
             : {
                 detail:
-                  "Платеж найден, но доступ еще обновляется. Экран сам повторит проверку еще несколько раз.",
+                  "Платёж найден, но доступ ещё обновляется. Экран сам повторит проверку ещё несколько раз.",
                 title: "Обновляю доступ",
                 tone: "warning",
               },
@@ -139,7 +137,7 @@ export function useSettingsBillingCenterState(input: {
 
   const reconcileCheckoutReturn = useCallback(
     (
-      sessionId: string,
+      referenceId: string,
       {
         background = false,
         successMessage,
@@ -159,15 +157,18 @@ export function useSettingsBillingCenterState(input: {
 
       startTransition(async () => {
         try {
+          const body =
+            input.billingProvider === "cloudpayments"
+              ? { referenceId }
+              : { sessionId: referenceId };
+
           const response = await fetch("/api/billing/checkout/reconcile", {
             method: "POST",
             cache: "no-store",
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({
-              sessionId,
-            }),
+            body: JSON.stringify(body),
           });
           const payload = await readJsonSafely(response);
 
@@ -188,7 +189,7 @@ export function useSettingsBillingCenterState(input: {
         }
       });
     },
-    [applyBillingCenterData],
+    [applyBillingCenterData, input.billingProvider],
   );
 
   const runRequest = useCallback(
@@ -261,16 +262,18 @@ export function useSettingsBillingCenterState(input: {
       window.history.replaceState({}, "", `${window.location.pathname}#billing-center`);
     }
 
-    if (billingReturnState === "success" && checkoutSessionId) {
+    const resolvedReferenceId = checkoutReferenceId ?? checkoutSessionId;
+
+    if (billingReturnState === "success" && resolvedReferenceId) {
       setBillingReturnNotice({
         detail:
-          "Проверяю оплату и обновляю доступ после возврата из платежной формы.",
+          "Проверяю оплату и обновляю доступ после возврата из платёжной формы.",
         title: "Оплата завершена",
         tone: "warning",
       });
-      setReturnSessionId(checkoutSessionId);
+      setReturnReferenceId(resolvedReferenceId);
       setCheckoutRetryAttempt(0);
-      reconcileCheckoutReturn(checkoutSessionId, {
+      reconcileCheckoutReturn(resolvedReferenceId, {
         successMessage: "Оплата завершена. Обновляю данные по подписке.",
       });
       return;
@@ -280,11 +283,11 @@ export function useSettingsBillingCenterState(input: {
       setBillingReturnNotice({
         detail:
           "Обновляю текущее состояние подписки после возврата из управления оплатой.",
-        title: "Возврат к подписке",
+        title: formatBillingManagementLabel(input.billingProvider),
         tone: "success",
       });
       setCheckoutReturn(null);
-      setReturnSessionId(null);
+      setReturnReferenceId(null);
       setCheckoutRetryAttempt(0);
     } else if (billingReturnState === "canceled") {
       setBillingReturnNotice({
@@ -294,7 +297,7 @@ export function useSettingsBillingCenterState(input: {
         tone: "warning",
       });
       setCheckoutReturn(null);
-      setReturnSessionId(null);
+      setReturnReferenceId(null);
       setCheckoutRetryAttempt(0);
     }
 
@@ -311,15 +314,17 @@ export function useSettingsBillingCenterState(input: {
     });
   }, [
     billingReturnState,
+    checkoutReferenceId,
     checkoutSessionId,
     hasHandledReturnState,
+    input.billingProvider,
     reconcileCheckoutReturn,
     runRequest,
   ]);
 
   useEffect(() => {
     if (
-      !returnSessionId ||
+      !returnReferenceId ||
       !checkoutReturn ||
       checkoutReturn.reconciled ||
       isCheckoutReturnSyncing ||
@@ -330,7 +335,7 @@ export function useSettingsBillingCenterState(input: {
 
     const timeoutId = window.setTimeout(() => {
       setCheckoutRetryAttempt((current) => current + 1);
-      reconcileCheckoutReturn(returnSessionId, {
+      reconcileCheckoutReturn(returnReferenceId, {
         background: true,
       });
     }, CHECKOUT_RETURN_RETRY_DELAYS_MS[checkoutRetryAttempt]);
@@ -343,7 +348,7 @@ export function useSettingsBillingCenterState(input: {
     checkoutRetryAttempt,
     isCheckoutReturnSyncing,
     reconcileCheckoutReturn,
-    returnSessionId,
+    returnReferenceId,
   ]);
 
   const toggleFeature = useCallback((featureKey: string) => {
@@ -354,7 +359,7 @@ export function useSettingsBillingCenterState(input: {
     );
   }, []);
 
-  const startStripeFlow = useCallback((url: string, successMessage: string) => {
+  const startBillingFlow = useCallback((url: string, successMessage: string) => {
     setError(null);
     setNotice(null);
     setCheckoutRetryAttempt(0);
@@ -369,11 +374,14 @@ export function useSettingsBillingCenterState(input: {
           },
         });
         const payload = (await response.json().catch(() => null)) as
-          | { data?: { url?: string | null }; message?: string }
+          | {
+              data?: { url?: string | null };
+              message?: string;
+            }
           | null;
 
         if (!response.ok || !payload?.data?.url) {
-          setError(payload?.message ?? "Не удалось открыть страницу оплаты.");
+          setError(payload?.message ?? "Не удалось открыть форму оплаты.");
           return;
         }
 
@@ -405,15 +413,15 @@ export function useSettingsBillingCenterState(input: {
   }, [note, runRequest, selectedFeatures]);
 
   const retryCheckoutSync = useCallback(() => {
-    if (!returnSessionId) {
+    if (!returnReferenceId) {
       return;
     }
 
     setCheckoutRetryAttempt(0);
-    reconcileCheckoutReturn(returnSessionId, {
+    reconcileCheckoutReturn(returnReferenceId, {
       successMessage: "Повторно проверяю оплату.",
     });
-  }, [reconcileCheckoutReturn, returnSessionId]);
+  }, [reconcileCheckoutReturn, returnReferenceId]);
 
   return {
     access: accessState,
@@ -436,7 +444,7 @@ export function useSettingsBillingCenterState(input: {
     selectedFeatures,
     setNote,
     snapshot,
-    startStripeFlow,
+    startBillingFlow,
     toggleFeature,
   };
 }

@@ -1,12 +1,12 @@
 # План миграции billing со Stripe на российский платёжный провайдер
 
-Текущий прогресс этого контура: `2 / 11` (`18%`).
+Текущий прогресс этого контура: `19 / 21` (`90%`).
 
 ## Что зафиксировано
 
 - [x] Для российского production rollout `fit` больше не целится в `Stripe` как в финального live-провайдера.
 - [x] Primary-кандидат для миграции выбран: `CloudPayments`.
-- [ ] Подготовлен provider-neutral billing layer и завершён перенос runtime c `Stripe` на провайдера РФ.
+- [x] Подготовлен provider-neutral billing layer и завершён перенос runtime c `Stripe` на провайдера РФ.
 
 ## Почему выбран `CloudPayments`
 
@@ -71,36 +71,36 @@
 
 ### Этап 1. Развязать код от Stripe
 
-- [ ] Ввести provider-neutral типы и adapter-layer в `src/lib/billing-provider/*`.
-- [ ] Перевести `src/lib/billing-self-service.ts` с прямых вызовов `stripe-billing.ts` на provider interface.
-- [ ] Перевести `src/lib/billing-access.ts`, `src/lib/admin-billing.ts` и `src/lib/settings-self-service.ts` на provider-neutral поля и статусы там, где это сейчас завязано на `stripe`.
-- [ ] Оставить текущий `src/lib/stripe-billing.ts` как `legacy adapter`, чтобы миграция шла поэтапно и без двойного переписывания.
+- [x] Ввести provider-neutral типы и adapter-layer в `src/lib/billing-provider/*`.
+- [x] Перевести `src/lib/billing-self-service.ts` с прямых вызовов `stripe-billing.ts` на provider interface.
+- [x] Перевести `src/lib/billing-access.ts`, `src/lib/admin-billing.ts` и `src/lib/settings-self-service.ts` на provider-neutral поля и статусы там, где это сейчас завязано на `stripe`.
+- [x] Оставить текущий `src/lib/stripe-billing.ts` как `legacy adapter`, чтобы миграция шла поэтапно и без двойного переписывания.
 
 ### Этап 2. Заменить transport-слой
 
-- [ ] Сохранить product routes `checkout` и `checkout/reconcile`, но отвязать их от Stripe-специфики.
-- [ ] Заменить `src/app/api/billing/portal/route.ts` на provider-neutral billing-center action:
+- [x] Сохранить product routes `checkout` и `checkout/reconcile`, но отвязать их от Stripe-специфики.
+- [x] Заменить `src/app/api/billing/portal/route.ts` на provider-neutral billing-center action:
   - либо ссылка на внешний кабинет провайдера, если он реально есть;
   - либо наш внутренний self-service flow без отдельного внешнего portal.
-- [ ] Добавить CloudPayments webhook route и нормальный dispatcher для событий подписки/платежа.
-- [ ] Унифицировать transport/error copy: в user-facing и operator-facing слоях не должно остаться формулировок “Stripe ...”, если провайдер уже не Stripe.
+- [x] Добавить CloudPayments webhook route и нормальный dispatcher для событий подписки/платежа.
+- [x] Унифицировать transport/error copy: в user-facing и operator-facing слоях не должно остаться формулировок “Stripe ...”, если провайдер уже не Stripe.
 
 ### Этап 3. Реализовать CloudPayments adapter
 
-- [ ] Реализовать checkout/create-payment flow через `CloudPayments`.
-- [ ] Реализовать return/reconcile flow после успешной оплаты.
-- [ ] Реализовать webhook verification и идемпотентный event processing.
-- [ ] Реализовать sync подписки и обновление `subscriptions`, `subscription_events`, `entitlements`, `usage_counters`.
+- [x] Реализовать checkout/create-payment flow через `CloudPayments`.
+- [x] Реализовать return/reconcile flow после успешной оплаты.
+- [x] Реализовать webhook verification и идемпотентный event processing.
+- [x] Реализовать sync подписки и обновление `subscriptions`, `subscription_events`, `entitlements`, `usage_counters`.
 
 ### Этап 4. Обновить env и release-gates
 
-- [ ] Заменить Stripe-only env contract на provider-neutral + CloudPayments runtime env.
-- [ ] Обновить `verify:runtime-env`, `verify:staging-runtime`, `test:billing-gate` и release-docs под нового провайдера.
-- [ ] Зафиксировать список env для preview/production и handoff владельцу окружения.
+- [x] Заменить Stripe-only env contract на provider-neutral + CloudPayments runtime env.
+- [x] Обновить `verify:runtime-env`, `verify:staging-runtime`, `test:billing-gate` и release-docs под нового провайдера.
+- [x] Зафиксировать список env для preview/production и handoff владельцу окружения.
 
 ### Этап 5. Обновить UI и тесты
 
-- [ ] Убрать Stripe-specific wording из `/settings`, `/admin`, release docs и billing handoff docs.
+- [x] Убрать Stripe-specific wording из `/settings`, `/admin`, release docs и billing handoff docs.
 - [ ] Добавить contract/e2e покрытие для сценария `checkout -> return reconcile -> webhook -> billing center`.
 - [ ] Отдельно проверить mobile/PWA и Android/TWA flow оплаты, если платёж открывается через hosted page/widget.
 

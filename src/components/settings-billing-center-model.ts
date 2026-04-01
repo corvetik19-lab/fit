@@ -1,3 +1,4 @@
+import type { BillingProvider } from "@/lib/billing-provider";
 import type { SettingsDataSnapshot } from "@/lib/settings-data";
 
 export const CHECKOUT_RETURN_RETRY_DELAYS_MS = [2500, 5000, 8000] as const;
@@ -45,6 +46,7 @@ export function formatSubscriptionStatus(
   switch (status) {
     case "active":
       return "активна";
+    case "trial":
     case "trialing":
       return "пробный период";
     case "past_due":
@@ -73,6 +75,8 @@ export function formatSubscriptionProvider(
   }
 
   switch (provider) {
+    case "cloudpayments":
+      return "CloudPayments";
     case "stripe":
       return "Stripe";
     case "manual":
@@ -178,12 +182,18 @@ export function formatFeatureKey(value: string) {
   }
 }
 
-export function formatStripePaymentStatus(value: string | null | undefined) {
+export function formatBillingPaymentStatus(value: string | null | undefined) {
   switch (value) {
     case "paid":
       return "оплачен";
+    case "active":
+      return "активна";
     case "unpaid":
       return "не оплачен";
+    case "past_due":
+      return "нужна оплата";
+    case "canceled":
+      return "отключена";
     case "no_payment_required":
       return "оплата не требуется";
     default:
@@ -191,15 +201,23 @@ export function formatStripePaymentStatus(value: string | null | undefined) {
   }
 }
 
-export function formatStripeSessionStatus(value: string | null | undefined) {
+export function formatBillingSessionStatus(value: string | null | undefined) {
   switch (value) {
     case "complete":
-      return "завершен";
+      return "завершён";
     case "open":
       return "открыт";
     case "expired":
-      return "истек";
+      return "истёк";
+    case "pending":
+      return "ожидает подтверждения";
     default:
       return value ?? "неизвестно";
   }
+}
+
+export function formatBillingManagementLabel(provider: BillingProvider) {
+  return provider === "cloudpayments"
+    ? "Управлять в кабинете CloudPayments"
+    : "Управлять подпиской";
 }

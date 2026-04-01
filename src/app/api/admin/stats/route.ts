@@ -5,9 +5,16 @@ import {
 } from "@/lib/admin-operations";
 import { isAdminAccessError, requireAdminRouteAccess } from "@/lib/admin-auth";
 import {
-  getMissingStripeCheckoutEnv,
-  getMissingStripePortalEnv,
-  getMissingStripeWebhookEnv,
+  getActiveBillingProvider,
+  getBillingProviderLabel,
+  getMissingActiveBillingCheckoutEnv,
+  getMissingActiveBillingManagementEnv,
+  getMissingActiveBillingWebhookEnv,
+  hasActiveBillingCheckoutEnv,
+  hasActiveBillingManagementEnv,
+  hasActiveBillingWebhookEnv,
+} from "@/lib/billing-provider";
+import {
   getMissingSentryBuildEnv,
   getMissingSentryRuntimeEnv,
   getVercelRuntimeEnv,
@@ -15,9 +22,6 @@ import {
   hasAiGatewayEnv,
   hasAiRuntimeEnv,
   hasOpenRouterEnv,
-  hasStripeCheckoutEnv,
-  hasStripePortalEnv,
-  hasStripeWebhookEnv,
   hasSentryBuildEnv,
   hasSentryRuntimeEnv,
   hasSupabasePublicEnv,
@@ -33,7 +37,26 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+function getBillingCheckoutReference(provider: "cloudpayments" | "stripe") {
+  if (provider === "cloudpayments") {
+    return serverEnv.CLOUDPAYMENTS_PREMIUM_MONTHLY_AMOUNT_RUB
+      ? `${serverEnv.CLOUDPAYMENTS_PREMIUM_MONTHLY_AMOUNT_RUB} ₽ / месяц`
+      : null;
+  }
+
+  return serverEnv.STRIPE_PREMIUM_MONTHLY_PRICE_ID ?? null;
+}
+
+function getBillingCheckoutReferenceLabel(provider: "cloudpayments" | "stripe") {
+  return provider === "cloudpayments"
+    ? "Ежемесячный тариф"
+    : "Премиум-тариф";
+}
+
 function createFallbackAdminStatsSnapshot() {
+  const billingProvider = getActiveBillingProvider();
+  const billingProviderLabel = getBillingProviderLabel(billingProvider);
+
   return {
     readiness: {
       supabasePublicEnv: hasSupabasePublicEnv(),
@@ -45,9 +68,10 @@ function createFallbackAdminStatsSnapshot() {
       serviceRoleEnv: Boolean(serverEnv.SUPABASE_SERVICE_ROLE_KEY),
       sentryRuntimeEnv: hasSentryRuntimeEnv(),
       sentryBuildEnv: hasSentryBuildEnv(),
-      stripeCheckoutEnv: hasStripeCheckoutEnv(),
-      stripePortalEnv: hasStripePortalEnv(),
-      stripeWebhookEnv: hasStripeWebhookEnv(),
+      billingCheckoutEnv: hasActiveBillingCheckoutEnv(),
+      billingManagementEnv: hasActiveBillingManagementEnv(),
+      billingProvider,
+      billingWebhookEnv: hasActiveBillingWebhookEnv(),
       vercelRuntimeEnv: hasVercelRuntimeEnv(),
       workoutSyncPullEnv: true,
     },
@@ -62,11 +86,15 @@ function createFallbackAdminStatsSnapshot() {
       vercel: {
         environment: getVercelRuntimeEnv(),
       },
-      stripe: {
-        checkoutMissing: getMissingStripeCheckoutEnv(),
-        portalMissing: getMissingStripePortalEnv(),
-        webhookMissing: getMissingStripeWebhookEnv(),
-        priceId: serverEnv.STRIPE_PREMIUM_MONTHLY_PRICE_ID ?? null,
+      billing: {
+        checkoutMissing: getMissingActiveBillingCheckoutEnv(),
+        checkoutReference: getBillingCheckoutReference(billingProvider),
+        checkoutReferenceLabel:
+          getBillingCheckoutReferenceLabel(billingProvider),
+        managementMissing: getMissingActiveBillingManagementEnv(),
+        provider: billingProvider,
+        providerLabel: billingProviderLabel,
+        webhookMissing: getMissingActiveBillingWebhookEnv(),
       },
       ai: {
         gatewayEnabled: hasAiGatewayEnv(),
@@ -133,20 +161,22 @@ function createFallbackAdminStatsSnapshot() {
       latestAiEvalRunAt: null,
     },
     billingHealth: {
-      stripeSubscriptions: 0,
-      stripeActiveSubscriptions: 0,
-      stripeTrialSubscriptions: 0,
-      stripePastDueSubscriptions: 0,
-      stripeLinkedCustomers: 0,
+      activeSubscriptions: 0,
+      linkedCustomers: 0,
+      pastDueSubscriptions: 0,
+      provider: billingProvider,
+      providerLabel: billingProviderLabel,
       queuedBillingReviews: 0,
       completedBillingReviews: 0,
       recentBillingReconciles: 0,
       failedBillingReconciles: 0,
       recentCheckoutReturnReconciles: 0,
+      subscriptions: 0,
       latestBillingReviewAt: null,
       latestBillingReconcileAt: null,
-      latestStripeEventAt: null,
+      latestProviderEventAt: null,
       latestCheckoutReturnReconcileAt: null,
+      trialSubscriptions: 0,
     },
   };
 }
@@ -155,6 +185,12 @@ export async function GET() {
   try {
     await requireAdminRouteAccess("view_admin_dashboard");
     const adminSupabase = createAdminSupabaseClient();
+    const billingProvider = getActiveBillingProvider();
+    const billingProviderLabel = getBillingProviderLabel(billingProvider);
+    const checkoutReturnAuditActions =
+      billingProvider === "cloudpayments"
+        ? ["user_reconciled_cloudpayments_checkout_return"]
+        : ["user_reconciled_stripe_checkout_return"];
 
     const [
       usersCountResult,
@@ -168,11 +204,11 @@ export async function GET() {
       queuedExportJobsCountResult,
       activeDeletionRequestsCountResult,
       dueDeletionRequestsCountResult,
-      stripeSubscriptionsCountResult,
-      stripeActiveSubscriptionsCountResult,
-      stripeTrialSubscriptionsCountResult,
-      stripePastDueSubscriptionsCountResult,
-      stripeLinkedCustomersCountResult,
+      subscriptionsCountResult,
+      activeSubscriptionsCountResult,
+      trialSubscriptionsCountResult,
+      pastDueSubscriptionsCountResult,
+      linkedCustomersCountResult,
       recentCheckoutReturnReconcilesCountResult,
       recentBillingReconcilesCountResult,
       failedBillingReconcilesCountResult,
@@ -203,7 +239,7 @@ export async function GET() {
       latestExportJobResult,
       latestDeletionRequestResult,
       latestAiEvalRunResult,
-      latestStripeEventResult,
+      latestProviderEventResult,
       latestCheckoutReturnReconcileResult,
       latestRuntimeContextSnapshotResult,
       latestReindexActionResult,
@@ -257,31 +293,31 @@ export async function GET() {
       adminSupabase
         .from("subscriptions")
         .select("*", { count: "exact", head: true })
-        .eq("provider", "stripe"),
+        .eq("provider", billingProvider),
       adminSupabase
         .from("subscriptions")
         .select("*", { count: "exact", head: true })
-        .eq("provider", "stripe")
+        .eq("provider", billingProvider)
         .eq("status", "active"),
       adminSupabase
         .from("subscriptions")
         .select("*", { count: "exact", head: true })
-        .eq("provider", "stripe")
+        .eq("provider", billingProvider)
         .eq("status", "trial"),
       adminSupabase
         .from("subscriptions")
         .select("*", { count: "exact", head: true })
-        .eq("provider", "stripe")
+        .eq("provider", billingProvider)
         .eq("status", "past_due"),
       adminSupabase
         .from("subscriptions")
         .select("*", { count: "exact", head: true })
-        .eq("provider", "stripe")
+        .eq("provider", billingProvider)
         .not("provider_customer_id", "is", null),
       adminSupabase
         .from("admin_audit_logs")
         .select("*", { count: "exact", head: true })
-        .eq("action", "user_reconciled_stripe_checkout_return")
+        .in("action", checkoutReturnAuditActions)
         .gte("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()),
       adminSupabase
         .from("support_actions")
@@ -425,7 +461,7 @@ export async function GET() {
       adminSupabase
         .from("admin_audit_logs")
         .select("created_at")
-        .eq("action", "user_reconciled_stripe_checkout_return")
+        .in("action", checkoutReturnAuditActions)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle(),
@@ -457,11 +493,11 @@ export async function GET() {
       queuedExportJobsCountResult,
       activeDeletionRequestsCountResult,
       dueDeletionRequestsCountResult,
-      stripeSubscriptionsCountResult,
-      stripeActiveSubscriptionsCountResult,
-      stripeTrialSubscriptionsCountResult,
-      stripePastDueSubscriptionsCountResult,
-      stripeLinkedCustomersCountResult,
+      subscriptionsCountResult,
+      activeSubscriptionsCountResult,
+      trialSubscriptionsCountResult,
+      pastDueSubscriptionsCountResult,
+      linkedCustomersCountResult,
       recentCheckoutReturnReconcilesCountResult,
       recentBillingReconcilesCountResult,
       failedBillingReconcilesCountResult,
@@ -492,7 +528,7 @@ export async function GET() {
       latestExportJobResult,
       latestDeletionRequestResult,
       latestAiEvalRunResult,
-      latestStripeEventResult,
+      latestProviderEventResult,
       latestCheckoutReturnReconcileResult,
       latestRuntimeContextSnapshotResult,
       latestReindexActionResult,
@@ -536,9 +572,10 @@ export async function GET() {
           serviceRoleEnv: Boolean(serverEnv.SUPABASE_SERVICE_ROLE_KEY),
           sentryRuntimeEnv: hasSentryRuntimeEnv(),
           sentryBuildEnv: hasSentryBuildEnv(),
-          stripeCheckoutEnv: hasStripeCheckoutEnv(),
-          stripePortalEnv: hasStripePortalEnv(),
-          stripeWebhookEnv: hasStripeWebhookEnv(),
+          billingCheckoutEnv: hasActiveBillingCheckoutEnv(),
+          billingManagementEnv: hasActiveBillingManagementEnv(),
+          billingProvider,
+          billingWebhookEnv: hasActiveBillingWebhookEnv(),
           vercelRuntimeEnv: hasVercelRuntimeEnv(),
           workoutSyncPullEnv: true,
         },
@@ -553,11 +590,15 @@ export async function GET() {
           vercel: {
             environment: getVercelRuntimeEnv(),
           },
-          stripe: {
-            checkoutMissing: getMissingStripeCheckoutEnv(),
-            portalMissing: getMissingStripePortalEnv(),
-            webhookMissing: getMissingStripeWebhookEnv(),
-            priceId: serverEnv.STRIPE_PREMIUM_MONTHLY_PRICE_ID ?? null,
+          billing: {
+            checkoutMissing: getMissingActiveBillingCheckoutEnv(),
+            checkoutReference: getBillingCheckoutReference(billingProvider),
+            checkoutReferenceLabel:
+              getBillingCheckoutReferenceLabel(billingProvider),
+            managementMissing: getMissingActiveBillingManagementEnv(),
+            provider: billingProvider,
+            providerLabel: billingProviderLabel,
+            webhookMissing: getMissingActiveBillingWebhookEnv(),
           },
           ai: {
             gatewayEnabled: hasAiGatewayEnv(),
@@ -626,11 +667,11 @@ export async function GET() {
           latestAiEvalRunAt: latestAiEvalRunResult.data?.updated_at ?? null,
         },
         billingHealth: {
-          stripeSubscriptions: stripeSubscriptionsCountResult.count ?? 0,
-          stripeActiveSubscriptions: stripeActiveSubscriptionsCountResult.count ?? 0,
-          stripeTrialSubscriptions: stripeTrialSubscriptionsCountResult.count ?? 0,
-          stripePastDueSubscriptions: stripePastDueSubscriptionsCountResult.count ?? 0,
-          stripeLinkedCustomers: stripeLinkedCustomersCountResult.count ?? 0,
+          activeSubscriptions: activeSubscriptionsCountResult.count ?? 0,
+          linkedCustomers: linkedCustomersCountResult.count ?? 0,
+          pastDueSubscriptions: pastDueSubscriptionsCountResult.count ?? 0,
+          provider: billingProvider,
+          providerLabel: billingProviderLabel,
           queuedBillingReviews: queuedBillingReviewActionsCountResult.count ?? 0,
           completedBillingReviews:
             completedBillingReviewActionsCountResult.count ?? 0,
@@ -638,13 +679,16 @@ export async function GET() {
           failedBillingReconciles: failedBillingReconcilesCountResult.count ?? 0,
           recentCheckoutReturnReconciles:
             recentCheckoutReturnReconcilesCountResult.count ?? 0,
+          subscriptions: subscriptionsCountResult.count ?? 0,
           latestBillingReviewAt:
             latestBillingReviewActionResult.data?.updated_at ?? null,
           latestBillingReconcileAt:
             latestBillingReconcileResult.data?.updated_at ?? null,
-          latestStripeEventAt: latestStripeEventResult.data?.created_at ?? null,
+          latestProviderEventAt:
+            latestProviderEventResult.data?.created_at ?? null,
           latestCheckoutReturnReconcileAt:
             latestCheckoutReturnReconcileResult.data?.created_at ?? null,
+          trialSubscriptions: trialSubscriptionsCountResult.count ?? 0,
         },
       },
     });

@@ -3,14 +3,20 @@ import { z } from "zod";
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import {
   createBillingActionErrorResponse,
-  reconcileStripeCheckoutReturnForUser,
+  reconcileBillingCheckoutReturnForUser,
 } from "@/lib/billing-self-service";
 import { logger } from "@/lib/logger";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
-const reconcileCheckoutSchema = z.object({
-  sessionId: z.string().trim().min(1).max(255),
-});
+const reconcileCheckoutSchema = z
+  .object({
+    referenceId: z.string().trim().min(1).max(255).optional(),
+    sessionId: z.string().trim().min(1).max(255).optional(),
+  })
+  .refine((value) => Boolean(value.sessionId || value.referenceId), {
+    message: "Нужен идентификатор оплаты.",
+    path: ["sessionId"],
+  });
 
 export async function POST(request: Request) {
   try {
@@ -31,7 +37,8 @@ export async function POST(request: Request) {
       await request.json().catch(() => ({})),
     );
 
-    const result = await reconcileStripeCheckoutReturnForUser({
+    const result = await reconcileBillingCheckoutReturnForUser({
+      referenceId: payload.referenceId,
       sessionId: payload.sessionId,
       supabase,
       user,
@@ -48,18 +55,18 @@ export async function POST(request: Request) {
     if (error instanceof z.ZodError) {
       return createApiErrorResponse({
         status: 400,
-        code: "STRIPE_CHECKOUT_RECONCILE_INVALID",
+        code: "BILLING_CHECKOUT_RECONCILE_INVALID",
         message: "Параметры подтверждения оплаты заполнены некорректно.",
         details: error.flatten(),
       });
     }
 
-    logger.error("stripe checkout reconcile route failed", { error });
+    logger.error("billing checkout reconcile route failed", { error });
 
     return createApiErrorResponse({
       status: 500,
-      code: "STRIPE_CHECKOUT_RECONCILE_FAILED",
-      message: "Не удалось подтвердить возврат из Stripe Checkout.",
+      code: "BILLING_CHECKOUT_RECONCILE_FAILED",
+      message: "Не удалось подтвердить оплату после возврата из платёжной формы.",
     });
   }
 }

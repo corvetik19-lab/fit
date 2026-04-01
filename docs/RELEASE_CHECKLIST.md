@@ -20,7 +20,7 @@
 - [ ] Подтверждены `CRON_SECRET` и admin bootstrap token
 - [ ] Подтверждены `OPENROUTER_API_KEY` и `VOYAGE_API_KEY`, если выкатывается AI runtime
 - [ ] Подтверждены `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN`
-- [ ] Подтверждены `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PREMIUM_MONTHLY_PRICE_ID`, если затронут billing
+- [ ] Подтверждены `NEXT_PUBLIC_BILLING_PROVIDER`, `NEXT_PUBLIC_CLOUDPAYMENTS_PUBLIC_ID`, `CLOUDPAYMENTS_API_SECRET`, `CLOUDPAYMENTS_PREMIUM_MONTHLY_AMOUNT_RUB`, `CLOUDPAYMENTS_WEBHOOK_SECRET`, если затронут billing
 - [ ] Если менялись AI runtime или billing runtime контуры, прогнан `npm run verify:staging-runtime`
 - [ ] Если менялись retrieval, indexing или AI quality gate для ассистента и планов, прогнан `npm run verify:retrieval-release`
 - [ ] Если менялись Sentry runtime, global error surface или admin observability flow, прогнан `npm run verify:sentry-runtime`
@@ -42,7 +42,7 @@
 ## Оставшиеся внешние блокеры на 2026-04-01
 
 - [ ] Для AI runtime снят provider-blocker: `OpenRouter` отвечает рабочим runtime, `Voyage` больше не отдаёт `403`
-- [ ] Для billing выставлены живые `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PREMIUM_MONTHLY_PRICE_ID`
+- [ ] Для billing выставлены живые `NEXT_PUBLIC_BILLING_PROVIDER`, `NEXT_PUBLIC_CLOUDPAYMENTS_PUBLIC_ID`, `CLOUDPAYMENTS_API_SECRET`, `CLOUDPAYMENTS_PREMIUM_MONTHLY_AMOUNT_RUB`, `CLOUDPAYMENTS_WEBHOOK_SECRET`
 - [ ] Для observability выставлены `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN`
 - [ ] После этого повторно пройдены `npm run verify:staging-runtime`, `npm run verify:retrieval-release`, `npm run verify:sentry-runtime`
 
@@ -57,7 +57,7 @@
 
 ## Дополнительно перед billing и AI релизом
 
-- [ ] Stripe flow проверен end-to-end: `checkout -> return reconcile -> webhook -> portal`
+- [ ] Billing flow выбранного провайдера проверен end-to-end: `checkout -> return reconcile -> webhook -> billing center`
 - [ ] AI runtime даёт корректный user-facing ответ при ошибке провайдера
 - [ ] Retrieval и history работают только в owner-scoped контуре
 - [ ] Минимальный eval gate закрыт для `assistant`, `retrieval`, `workout plan`, `meal plan`, `safety`
