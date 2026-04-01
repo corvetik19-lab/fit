@@ -24,6 +24,7 @@
 
 - [RELEASE_CHECKLIST.md](/C:/fit/docs/RELEASE_CHECKLIST.md) — release-процедура перед merge/deploy и post-deploy smoke.
 - [PROD_READY.md](/C:/fit/docs/PROD_READY.md) — критерии production-ready состояния.
+- [RUNTIME_ENV_HANDOFF.md](/C:/fit/docs/RUNTIME_ENV_HANDOFF.md) — точный handoff по Vercel env, CloudPayments, Sentry и live runtime-проверкам.
 - [BUILD_WARNINGS.md](/C:/fit/docs/BUILD_WARNINGS.md) — допустимые build warnings и правила эскалации.
 
 ## Правила обновления

@@ -15,6 +15,7 @@
 ## Перед production deploy
 
 - [ ] Прогнан `npm run verify:runtime-env` и проверены все missing env по релевантным контурам
+- [ ] Если env настраивает другой разработчик или DevOps, он ориентируется на [RUNTIME_ENV_HANDOFF.md](/C:/fit/docs/RUNTIME_ENV_HANDOFF.md)
 - [ ] Подтверждены `NEXT_PUBLIC_SUPABASE_URL` и publishable key
 - [ ] Подтверждён `SUPABASE_SERVICE_ROLE_KEY`
 - [ ] Подтверждены `CRON_SECRET` и admin bootstrap token
@@ -45,6 +46,8 @@
 - [ ] Для billing выставлены живые `NEXT_PUBLIC_BILLING_PROVIDER`, `NEXT_PUBLIC_CLOUDPAYMENTS_PUBLIC_ID`, `CLOUDPAYMENTS_API_SECRET`, `CLOUDPAYMENTS_PREMIUM_MONTHLY_AMOUNT_RUB`, `CLOUDPAYMENTS_WEBHOOK_SECRET`
 - [ ] Для observability выставлены `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN`
 - [ ] После этого повторно пройдены `npm run verify:staging-runtime`, `npm run verify:retrieval-release`, `npm run verify:sentry-runtime`
+
+Подробный handoff по этим шагам вынесен в [RUNTIME_ENV_HANDOFF.md](/C:/fit/docs/RUNTIME_ENV_HANDOFF.md).
 
 ## Smoke после deploy
 

@@ -1336,3 +1336,10 @@
 - [PREMIUM_REDESIGN_PLAN.md](/C:/fit/docs/PREMIUM_REDESIGN_PLAN.md) переписан в чистом UTF-8: visual language, mobile acceptance и финальный статус редизайна теперь снова читаются нормально, без mojibake.
 - В [MASTER_PLAN.md](/C:/fit/docs/MASTER_PLAN.md) архивные `Следующий ... tranche` записи в historical addendum переведены из ложных `[ ]`-чекбоксов в обычные заметки, чтобы не маскировать реальный остаток работ десятками устаревших псевдо-open пунктов.
 - Этот slice не меняет основной progress execution checklist: он остаётся `178 / 186` (`96%`), но source of truth стал заметно чище и понятнее для следующих разработчиков и агентов.
+
+### 2026-04-01 22:05 - Добавил точный runtime env handoff для Vercel и внешних сервисов
+
+- Добавлен [RUNTIME_ENV_HANDOFF.md](/C:/fit/docs/RUNTIME_ENV_HANDOFF.md): в одном месте собраны точные env для `CloudPayments`, `Sentry`, `AI runtime`, `Web/PWA baseline` и `Android/TWA`, плюс порядок настройки в Vercel и кабинетах внешних сервисов.
+- В документ вынесены production webhook URL для `CloudPayments`, порядок live billing smoke и явный post-setup checklist, чтобы следующий разработчик или DevOps мог закрывать последние внешние блокеры без чтения исходников.
+- [docs/README.md](/C:/fit/docs/README.md), [RELEASE_CHECKLIST.md](/C:/fit/docs/RELEASE_CHECKLIST.md) и [MASTER_PLAN.md](/C:/fit/docs/MASTER_PLAN.md) синхронизированы с новым handoff.
+- Общий progress execution checklist не меняется и остаётся `178 / 186` (`96%`): этот tranche документирует и ускоряет финальный rollout, но не заменяет реальные env/secrets и live provider access.

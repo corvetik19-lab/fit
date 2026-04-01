@@ -1230,3 +1230,9 @@
 - [x] [PREMIUM_REDESIGN_PLAN.md](/C:/fit/docs/PREMIUM_REDESIGN_PLAN.md) переписан в чистом UTF-8 и снова пригоден как developer-facing handoff по visual language и mobile acceptance.
 - [x] В архивных addendum-блоках этого master plan historical `Следующий ... tranche` записи переведены из ложных `[ ]`-чекбоксов в обычные исторические заметки, чтобы `source of truth` больше не выглядел как будто локально осталось десятки незакрытых tranche.
 - [x] Основной progress execution checklist не меняется и остаётся `178 / 186` (`96%`): docs cleanup убирает путаницу в handoff, но не закрывает внешние runtime/env блокеры.
+
+## 2026-04-01 runtime env handoff addendum
+
+- [x] Добавлен отдельный developer-facing handoff [RUNTIME_ENV_HANDOFF.md](/C:/fit/docs/RUNTIME_ENV_HANDOFF.md) с точным списком Vercel env, шагами настройки `CloudPayments`, `Sentry`, `AI runtime` и post-setup verification.
+- [x] [docs/README.md](/C:/fit/docs/README.md) и [RELEASE_CHECKLIST.md](/C:/fit/docs/RELEASE_CHECKLIST.md) синхронизированы с этим handoff: следующий разработчик или DevOps больше не должен собирать release env по коду вручную.
+- [x] Основной progress execution checklist не меняется и остаётся `178 / 186` (`96%`): это documentation tranche, который ускоряет закрытие последних внешних блокеров, но не заменяет сами живые env и provider access.
