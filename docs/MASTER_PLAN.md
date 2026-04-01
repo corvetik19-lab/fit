@@ -41,8 +41,8 @@
 
 ### Milestone 2 — Live Billing
 
-- [ ] Stripe env полностью готовы на production/staging.
-- [ ] Работает живой контур `checkout -> return reconcile -> webhook -> portal`.
+- [ ] Production/staging env выбранного российского платёжного провайдера готовы.
+- [ ] Работает живой контур `checkout -> return reconcile -> webhook -> billing center`.
 - [x] UI в `/settings` и `/admin` корректно показывает статус подписки и расхождения.
 
 ### Milestone 3 — Android Wrapper
@@ -260,11 +260,11 @@
 
 ## Волна 4. Billing и SaaS readiness
 
-### Stripe foundation
+### Платёжный провайдер РФ
 
-- [x] Billing domain и Stripe route scaffolding уже есть.
-- [ ] Завести и проверить все production/staging env для Stripe.
-- [ ] Пройти живой сценарий `checkout -> return reconcile -> webhook -> portal`.
+- [x] Billing domain уже есть; целевой провайдер РФ для миграции зафиксирован: `CloudPayments` как primary и `ЮKassa` как fallback.
+- [ ] Завести и проверить все production/staging env выбранного российского провайдера.
+- [ ] Пройти живой сценарий `checkout -> return reconcile -> webhook -> billing center`.
 - [x] Проверить идемпотентность webhook и согласованность `subscriptions`, `entitlements`, `usage counters`.
 
 ### Billing UI
@@ -296,7 +296,7 @@
 ### Release process
 
 - [x] Формализовать release checklist для web/PWA.
-- [x] Ввести staging-like verification для Stripe и AI runtime.
+- [x] Ввести staging-like verification для billing runtime и AI runtime.
 - [x] Зафиксировать критерий `prod-ready` как набор automated + manual acceptance checks, а не только локальную сборку.
 
 ## Волна 6. Android / TWA
@@ -312,7 +312,7 @@
 - [x] `lint`, `typecheck`, `build` проходят стабильно в один запуск.
 - [x] Нет mojibake в ключевой документации и основных экранах приложения.
 - [x] Нет hydration mismatch, render loops, infinite polling и state desync в базовых пользовательских сценариях.
-- [ ] Stripe-контур работает end-to-end.
+- [ ] Контур выбранного российского платёжного провайдера работает end-to-end.
 - [ ] AI quality gate пройден по минимуму: assistant, retrieval, workout plan, meal plan, safety. Кодовая часть и явные provider/runtime notices уже доведены; остаётся снять внешний блок по кредитам и embeddings.
 - [x] Android wrapper smoke пройден после стабилизации web/PWA.
 
@@ -1201,3 +1201,10 @@
 - [x] Очищены от mojibake и приведены к нормальному русскому UX тексты в [ai-chat-panel.tsx](/C:/fit/src/components/ai-chat-panel.tsx), [ai-chat-transcript.tsx](/C:/fit/src/components/ai-chat-transcript.tsx), [ai-chat-toolbar.tsx](/C:/fit/src/components/ai-chat-toolbar.tsx), [ai-chat-notices.tsx](/C:/fit/src/components/ai-chat-notices.tsx), [ai-chat-composer.tsx](/C:/fit/src/components/ai-chat-composer.tsx), [ai-chat-panel-model.ts](/C:/fit/src/components/ai-chat-panel-model.ts).
 - [x] Проверка подтверждена пакетами `npm run lint`, `npm run typecheck`, `npm run build`, а также таргетным `tests/e2e/ai-workspace.spec.ts:91` -> `1 passed`; второй history-сценарий этого suite по-прежнему может упираться во внешний сетевой timeout на фоновой dashboard-загрузке и не связан с transcript bugfix.
 - [x] Общий прогресс execution checklist остаётся `178 / 186` (`96%`): это production fix и UI sanitation поверх уже закрытого milestone, а не новый основной tranche.
+
+## 2026-04-01 Russian billing provider migration planning addendum
+
+- [x] Зафиксировано изменение billing-вектора: для российского live rollout `fit` больше не целится в `Stripe` как в финального production-провайдера.
+- [x] В [RUSSIAN_BILLING_PROVIDER_PLAN.md](/C:/fit/docs/RUSSIAN_BILLING_PROVIDER_PLAN.md) оформлен отдельный техплан миграции с чекбоксами; primary-кандидат выбран `CloudPayments`, fallback — `ЮKassa`.
+- [x] Открытые main-checklist пункты `Milestone 2` и acceptance-критерий обновлены на provider-neutral wording, чтобы дальнейшее выполнение плана шло уже не от `Stripe`, а от выбранного провайдера РФ.
+- [x] Общий прогресс execution checklist остаётся `178 / 186` (`96%`): это документальный и архитектурный reframe billing-направления без закрытия новых main-пунктов.

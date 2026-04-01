@@ -1306,3 +1306,10 @@
 - В [ai-chat-transcript.tsx](/C:/fit/src/components/ai-chat-transcript.tsx), [ai-chat-toolbar.tsx](/C:/fit/src/components/ai-chat-toolbar.tsx), [ai-chat-notices.tsx](/C:/fit/src/components/ai-chat-notices.tsx), [ai-chat-composer.tsx](/C:/fit/src/components/ai-chat-composer.tsx), [ai-chat-panel-model.ts](/C:/fit/src/components/ai-chat-panel-model.ts) и верхнем слое [ai-chat-panel.tsx](/C:/fit/src/components/ai-chat-panel.tsx) убран битый русский текст на живой AI-поверхности.
 - Проверка зелёная: `npm run lint`, `npm run typecheck`, `npm run build`, `npx eslint src/components/ai-chat-panel.tsx src/components/ai-chat-transcript.tsx src/components/ai-chat-toolbar.tsx src/components/ai-chat-notices.tsx src/components/ai-chat-composer.tsx src/components/ai-chat-panel-model.ts`, `node scripts/run-playwright.mjs -- test tests/e2e/ai-workspace.spec.ts:91 --workers=1` -> `1 passed`.
 - Полный `ai-workspace` suite в одном из прогонов всё ещё может краснеть не на transcript, а на внешнем timeout фонового dashboard fetch в history-сценарии; сам duplicate-key баг после slice закрыт.
+
+### 2026-04-01 14:20 - Зафиксировал техплан миграции billing со Stripe на провайдера РФ
+
+- В [MASTER_PLAN.md](/C:/fit/docs/MASTER_PLAN.md) переписаны открытые billing-пункты под provider-neutral формулировки: теперь основной план смотрит не на `Stripe`, а на контур выбранного российского платёжного провайдера.
+- Добавлен отдельный handoff-документ [RUSSIAN_BILLING_PROVIDER_PLAN.md](/C:/fit/docs/RUSSIAN_BILLING_PROVIDER_PLAN.md) с чекбоксами, картой затрагиваемых файлов, env-контрактом и пошаговой миграцией через provider adapter layer.
+- В этом документе зафиксирован выбор `CloudPayments` как primary-кандидата для `fit` и `ЮKassa` как fallback: по официальной документации CloudPayments лучше ложится на текущий подписочный runtime, mobile/TWA-поток и webhook/idempotency модель проекта.
+- Общий progress execution checklist не изменился и остаётся `178 / 186` (`96%`): это архитектурный reframe и подготовка migration backlog, а не закрытие live billing rollout.
