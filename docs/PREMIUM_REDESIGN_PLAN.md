@@ -15,9 +15,9 @@
 
 Перевести `fit` в более профессиональный, цельный и mobile-first визуальный язык:
 
-- светлый premium fitness-стиль вместо нейтрального “базового” UI;
+- светлый premium fitness-стиль вместо базового нейтрального UI;
 - более сильная типографика и иерархия экранов;
-- удобные mobile/PWA-поверхности без тяжёлого визуального шума;
+- удобные mobile/PWA-поверхности без лишнего визуального шума;
 - единый shell/workspace-паттерн для `Dashboard`, `Workouts`, `Nutrition`, `AI`, `Admin`.
 
 ## Execution checklist
@@ -62,8 +62,6 @@
   - более цельный transcript / composer / history / context слой;
   - чистые, короткие русские тексты без служебного шума.
 - Browser regression подтверждён на `AI workspace`, `mobile PWA regressions` и `smoke`.
-
-## Что дополнительно закрыто
 
 ### 4. Workouts и Nutrition
 

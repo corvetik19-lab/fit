@@ -1,4 +1,4 @@
-﻿# Master Plan проекта `fit`
+# Master Plan проекта `fit`
 
 ## Как использовать этот план
 
@@ -322,12 +322,12 @@
 - [x] Добавлен root/admin e2e baseline: `/admin`, `/admin/users`, открытие карточки пользователя и проверка секционного operator UI под `corvetik1@yandex.ru`.
 - [x] Добавлены route contract tests без платного AI runtime: явные `400` для invalid UUID и owner-scoped `404` для неизвестной AI session.
 - [x] Добавлен offline/sync regression baseline: seeded locked workout day, `sync/push` с duplicate/incomplete mutations и контроль итогового `sync/pull` snapshot.
-- [ ] Следующий тестовый tranche: расширить user-owned isolation tests до RLS-контуров beyond workout day и вынести auth storage state, чтобы e2e снова можно было безопасно распараллелить.
+- Историческая заметка: Следующий тестовый tranche: расширить user-owned isolation tests до RLS-контуров beyond workout day и вынести auth storage state, чтобы e2e снова можно было безопасно распараллелить.
 
 ## 2026-03-15 isolation addendum
 
 - [x] Расширен user-owned isolation baseline: root-admin не видит чужой weekly program в /api/weekly-programs и не может вызвать lock или clone на чужом programId; оба route-контракта возвращают owner-scoped 404 WEEKLY_PROGRAM_NOT_FOUND.
-- [ ] Следующий тестовый tranche: расширить user-owned isolation beyond workout/program flows до остальных RLS-контуров и вынести auth storage state, чтобы e2e можно было снова безопасно распараллелить.
+- Историческая заметка: Следующий тестовый tranche: расширить user-owned isolation beyond workout/program flows до остальных RLS-контуров и вынести auth storage state, чтобы e2e можно было снова безопасно распараллелить.
 
 ## 2026-03-15 e2e infra addendum
 
@@ -339,12 +339,12 @@
 ## 2026-03-15 nutrition isolation addendum
 
 - [x] Расширен user-owned isolation baseline до nutrition routes: root-admin не видит чужие foods в `GET /api/foods` и получает owner-scoped `404` на `PATCH/DELETE /api/foods/{id}`, `DELETE /api/recipes/{id}`, `DELETE /api/meal-templates/{id}` и `DELETE /api/meals/{id}` для чужих nutrition assets.
-- [ ] Следующий тестовый tranche: расширить user-owned isolation beyond workout/program/nutrition flows до остальных owner-scoped и RLS-контуров.
+- Историческая заметка: Следующий тестовый tranche: расширить user-owned isolation beyond workout/program/nutrition flows до остальных owner-scoped и RLS-контуров.
 
 ## 2026-03-15 exercises isolation addendum
 
 - [x] Расширен user-owned isolation baseline до custom exercises: route-контур `GET /api/exercises` и `PATCH /api/exercises/{id}` теперь явно держит owner guard по `user_id`, а root-admin не видит и не может обновить чужое упражнение.
-- [ ] Следующий тестовый tranche: расширить user-owned isolation beyond workout/program/nutrition/exercises flows до остальных owner-scoped и RLS-контуров.
+- Историческая заметка: Следующий тестовый tranche: расширить user-owned isolation beyond workout/program/nutrition/exercises flows до остальных owner-scoped и RLS-контуров.
 
 ## 2026-03-15 playwright env addendum
 
@@ -356,14 +356,14 @@
 - [x] Расширен user-owned isolation baseline до self-service `settings/data export`: root-admin не видит чужой export job в `GET /api/settings/data` и получает owner-scoped `404 SETTINGS_EXPORT_NOT_FOUND` на `GET /api/settings/data/export/{id}/download`.
 - [x] Добавлен `tests/e2e/helpers/settings-data.ts`, чтобы e2e могли штатно создавать или переиспользовать активную self-service выгрузку под тестовым пользователем без прямого DB-seed.
 - [x] Tranche подтверждён quality gates: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `10 passed`, `npx playwright test tests/smoke` -> `3 passed`.
-- [ ] Следующий тестовый tranche: расширить user-owned isolation на оставшиеся owner-scoped self-service и AI/data контуры beyond workout/program/nutrition/exercises/settings export.
+- Историческая заметка: Следующий тестовый tranche: расширить user-owned isolation на оставшиеся owner-scoped self-service и AI/data контуры beyond workout/program/nutrition/exercises/settings export.
 
 ## 2026-03-15 workout templates isolation addendum
 
 - [x] Расширен user-owned isolation baseline до `workout_templates`: root-admin не видит чужой workout template в `GET /api/workout-templates` и получает owner-scoped `404 WORKOUT_TEMPLATE_SOURCE_NOT_FOUND` на попытку создать template из чужого `programId`.
 - [x] `tests/e2e/ownership-isolation.spec.ts` усилен ещё одним owner-scoped сценарием, а timeout isolation-suite увеличен до `60_000`, чтобы длительный seed/template flow не давал ложный красный таймаут.
 - [x] Tranche подтверждён quality gates: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `11 passed`, `npx playwright test tests/smoke` -> `3 passed`.
-- [ ] Следующий тестовый tranche: расширить user-owned isolation на оставшиеся owner-scoped self-service и AI/data контуры beyond workout/program/nutrition/exercises/settings export/workout templates.
+- Историческая заметка: Следующий тестовый tranche: расширить user-owned isolation на оставшиеся owner-scoped self-service и AI/data контуры beyond workout/program/nutrition/exercises/settings export/workout templates.
 
 ## 2026-03-15 settings deletion isolation addendum
 
@@ -371,7 +371,7 @@
 - [x] `tests/e2e/helpers/settings-data.ts` дополнен helper-ом для `request_deletion`, а `tests/e2e/ownership-isolation.spec.ts` теперь покрывает и export, и deletion self-service контуры `settings/data`.
 - [x] `tests/e2e/admin-app.spec.ts` стабилизирован ожиданием реального секционного heading на detail-экране, поэтому auth e2e снова зелёный без флака из-за client-side loading state.
 - [x] Tranche подтверждён quality gates: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `12 passed`, `npx playwright test tests/smoke` -> `3 passed`.
-- [ ] Следующий тестовый tranche: расширить user-owned isolation на оставшиеся owner-scoped self-service и AI/data контуры beyond workout/program/nutrition/exercises/settings export/workout templates/settings deletion.
+- Историческая заметка: Следующий тестовый tranche: расширить user-owned isolation на оставшиеся owner-scoped self-service и AI/data контуры beyond workout/program/nutrition/exercises/settings export/workout templates/settings deletion.
 
 ## 2026-03-15 build output hotfix addendum
 
@@ -388,7 +388,7 @@
 - [x] `tests/e2e/api-contracts.spec.ts` расширен новым invalid-param контрактом для export download route.
 - [x] `test:smoke` отвязан от обязательного auth bootstrap: smoke-suite теперь запускается через `PLAYWRIGHT_SKIP_AUTH_SETUP=1`, а глобальный auth setup корректно пишет пустой storage state для smoke-only запуска.
 - [x] Tranche подтверждён quality gates: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `13 passed`, `npm run test:smoke` -> `3 passed`.
-- [ ] Следующий тестовый tranche: расширить user-owned isolation на оставшиеся owner-scoped AI/data контуры beyond workout/program/nutrition/exercises/settings export/workout templates/settings deletion/settings billing/AI history.
+- Историческая заметка: Следующий тестовый tranche: расширить user-owned isolation на оставшиеся owner-scoped AI/data контуры beyond workout/program/nutrition/exercises/settings export/workout templates/settings deletion/settings billing/AI history.
 
 ## 2026-03-15 AI history isolation addendum
 
@@ -411,7 +411,7 @@
 - [x] `tests/e2e/workout-sync.spec.ts` расширен сценарием `reset action clears stale local cache and queued mutations`: тест сидирует stale snapshot и queued mutations в IndexedDB, запускает reset через UI и подтверждает, что после reset и reload локальное offline state уже чистое.
 - [x] `tests/e2e/helpers/workouts.ts` усилен более широким диапазоном будущих недель и большим числом retry, чтобы seed locked-week не падал от накопившихся `active week conflict`.
 - [x] Tranche подтверждён quality gates: `npm run lint`, `npx eslint tests/e2e tests/e2e/helpers`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `16 passed`, `npm run test:smoke` -> `3 passed`.
-- [ ] Следующий backend tranche: добить оставшийся route/backend audit по owner-only access, idempotency и race conditions, в первую очередь AI retrieval/reindex/proposal ownership и locked-program execution guards.
+- Историческая заметка: Следующий backend tranche: добить оставшийся route/backend audit по owner-only access, idempotency и race conditions, в первую очередь AI retrieval/reindex/proposal ownership и locked-program execution guards.
 
 ## 2026-03-16 AI proposal isolation addendum
 
@@ -421,7 +421,7 @@
 - [x] `tests/e2e/api-contracts.spec.ts` расширен invalid-param контрактами для `POST /api/ai/proposals/not-a-uuid/approve` и `/apply`, route-контур подтверждён явными `400 AI_PROPOSAL_APPROVE_INVALID` и `400 AI_PROPOSAL_APPLY_INVALID`.
 - [x] `src/app/api/ai/proposals/[id]/approve/route.ts` и `.../apply/route.ts` больше не логируют ожидаемые `400/404` как route-level `error`; логирование оставлено только для неожиданных `500` path.
 - [x] Tranche подтверждён quality gates: `npm run lint`, `npx eslint tests/e2e tests/e2e/helpers src/app/api/ai/proposals/[id]/approve/route.ts src/app/api/ai/proposals/[id]/apply/route.ts`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `19 passed`.
-- [ ] Следующий AI/data tranche: owner-only / RLS coverage для retrieval / reindex / proposal listing, затем отдельный `test:rls` слой поверх route-level isolation.
+- Историческая заметка: Следующий AI/data tranche: owner-only / RLS coverage для retrieval / reindex / proposal listing, затем отдельный `test:rls` слой поверх route-level isolation.
 
 ## 2026-03-16 RLS test baseline addendum
 
@@ -429,7 +429,7 @@
 - [x] `tests/rls/helpers/supabase-rls.ts` добавлен как RLS harness: он логинит обычного пользователя и root-admin через публичный key, а fixture сидируется service-role helper'ом.
 - [x] `tests/rls/ownership.spec.ts` подтверждает row-level изоляцию напрямую на таблицах `ai_plan_proposals`, `exercise_library`, `weekly_programs`, `ai_chat_sessions`, `ai_chat_messages`, `export_jobs`, `deletion_requests`, `user_context_snapshots`, `knowledge_chunks`: владелец видит свои строки, другой auth-user не видит их и не может обновить чужой proposal.
 - [x] Tranche подтверждён quality gates: `npx eslint tests/rls tests/rls/helpers`, `npm run test:rls`, затем общим baseline `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `22 passed`, `npm run test:smoke` -> `3 passed`.
-- [ ] Следующий AI/data tranche: owner-only / RLS coverage для retrieval / reindex / proposal listing и затем расширение CI до отдельных DB/advisor verification шагов.
+- Историческая заметка: Следующий AI/data tranche: owner-only / RLS coverage для retrieval / reindex / proposal listing и затем расширение CI до отдельных DB/advisor verification шагов.
 
 ## 2026-03-16 admin users fail-open addendum
 
@@ -439,7 +439,7 @@
 - [x] Detail surface `/api/admin/users/[id]` переведён на аналогичный fail-open/degraded contract: route теперь отдаёт резервный snapshot вместо общего `500`, state понимает `meta.degraded`, а верхний слой карточки и section-switcher очищены от mojibake.
 - [x] Добавлен e2e контракт на degraded detail snapshot: root-admin может запросить test-only fallback и получить `meta.degraded = true` без падения карточки.
 - [x] Tranche подтверждён quality gates: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth`, `npm run test:smoke`.
-- [ ] Следующий операторский tranche: добить remaining mojibake и timeline/detail подблоки внутри `admin-user-detail-sections.tsx`, либо вернуться к AI/data backend audit по retrieval / reindex ownership.
+- Историческая заметка: Следующий операторский tranche: добить remaining mojibake и timeline/detail подблоки внутри `admin-user-detail-sections.tsx`, либо вернуться к AI/data backend audit по retrieval / reindex ownership.
 
 ## 2026-03-16 admin dashboard fail-open addendum
 
@@ -453,7 +453,7 @@
 - [x] `src/app/api/ai/reindex/route.ts` больше не логирует ожидаемые `403/400` как warn/error path; logging остаётся только для неожиданных `500`.
 - [x] `tests/e2e/api-contracts.spec.ts` расширен контрактом `ai reindex stays admin-only for authenticated non-admin users`, подтверждающим `403 ADMIN_REQUIRED`.
 - [x] `tests/e2e/admin-app.spec.ts` расширен root-admin сценарием на невалидный `targetUserId`, подтверждающим `400 REINDEX_INVALID`.
-- [ ] Следующий AI/data tranche: owner-only / RLS coverage для retrieval / proposal listing и затем расширение CI до отдельных DB/advisor verification шагов.
+- Историческая заметка: Следующий AI/data tranche: owner-only / RLS coverage для retrieval / proposal listing и затем расширение CI до отдельных DB/advisor verification шагов.
 
 ## 2026-03-16 advisor hardening addendum
 
@@ -461,7 +461,7 @@
 - [x] Добавлена миграция `supabase/migrations/20260315173518_ai_history_self_service_index_hardening.sql`, которая фиксирует `set_updated_at` с `search_path = public, pg_temp` и добавляет индексы под AI/history/self-service query paths.
 - [x] Добавлена миграция `supabase/migrations/20260315173725_ai_history_self_service_rls_initplan_hardening.sql`, которая переводит owner policies AI/history/self-service таблиц на `(select auth.uid())` и закрывает `auth_rls_initplan` warnings для `ai_chat_sessions`, `ai_chat_messages`, `export_jobs`, `deletion_requests`, `user_context_snapshots`, `knowledge_chunks`, `knowledge_embeddings`, `ai_safety_events`.
 - [x] После DDL повторно прогнаны Supabase advisors `security` и `performance`: targeted warnings по этой группе таблиц исчезли, а direct `npm run test:rls` подтвердил, что row-level ownership после policy-alter не сломался.
-- [ ] Следующий DB tranche: пройти remaining advisor backlog по `auth_rls_initplan`, `rls_enabled_no_policy` для admin/system tables и затем оформить migration/advisor verification как отдельный CI gate.
+- Историческая заметка: Следующий DB tranche: пройти remaining advisor backlog по `auth_rls_initplan`, `rls_enabled_no_policy` для admin/system tables и затем оформить migration/advisor verification как отдельный CI gate.
 
 ## 2026-03-16 internal jobs contracts addendum
 
@@ -478,7 +478,7 @@
 - [x] `auth-e2e` job запускает `npm run test:e2e:auth` при наличии тех же secrets и Playwright browser setup.
 - [x] `README.md` и `docs/RELEASE_CHECKLIST.md` теперь явно перечисляют secrets, необходимые для полного CI regression-контура.
 - [x] Добавлен migration-aware verification gate для DB-изменений.
-- [ ] Следующий CI tranche: advisor verification gate для DB-изменений.
+- Историческая заметка: Следующий CI tranche: advisor verification gate для DB-изменений.
 
 ## 2026-03-16 build warnings addendum
 
@@ -490,7 +490,7 @@
 - [x] Добавлены `scripts/verify-migrations.ps1` и `scripts/verify-migrations.mjs`: PowerShell-обёртка собирает diff, а JS-валидатор проверяет изменения в `supabase/migrations`.
 - [x] Скрипт валидирует формат migration filenames, запрещает пустые `.sql` и требует синхронные updates в `docs/MASTER_PLAN.md` и `docs/AI_WORKLOG.md`.
 - [x] `.github/workflows/quality.yml` теперь запускает этот gate перед основным `quality` job, а локально он доступен через `npm run verify:migrations`.
-- [ ] Следующий DB tranche: реальное advisor verification в CI или отдельный automation gate для `security/performance` после DDL.
+- Историческая заметка: Следующий DB tranche: реальное advisor verification в CI или отдельный automation gate для `security/performance` после DDL.
 
 ## 2026-03-16 test build fallback addendum
 
@@ -526,13 +526,13 @@
 ## 2026-03-16 frontend docs sanitation addendum
 
 - [x] `docs/FRONTEND.md` полностью переписан в нормальном UTF-8 вместо mojibake и снова описывает текущий shell, workspace-паттерн, workouts, nutrition, AI workspace и admin UI.
-- [ ] Следующий sanitation tranche: пройти оставшиеся ключевые docs/UI-поверхности на реальные mojibake и устаревшие handoff-описания, не трогая отдельно triaged `docs/AI_EXPLAINED.md`.
+- Историческая заметка: Следующий sanitation tranche: пройти оставшиеся ключевые docs/UI-поверхности на реальные mojibake и устаревшие handoff-описания, не трогая отдельно triaged `docs/AI_EXPLAINED.md`.
 
 ## 2026-03-16 prod-ready definition addendum
 
 - [x] Добавлен `docs/PROD_READY.md` как отдельный source of truth по `prod-ready`: automated gates, manual acceptance, env readiness и release blockers.
 - [x] `docs/README.md` и корневой `README.md` теперь ссылаются на этот документ вместо неявного “зелёный build = можно выкатывать”.
-- [ ] Следующий release tranche: staging-like verification для Stripe и AI runtime уже против этого явного `prod-ready` критерия.
+- Историческая заметка: Следующий release tranche: staging-like verification для Stripe и AI runtime уже против этого явного `prod-ready` критерия.
 
 ## 2026-03-16 ui regression addendum
 
@@ -540,7 +540,7 @@
 - [x] Добавлен `tests/e2e/helpers/client-regressions.ts`, который ловит browser console/pageerror сигналы вроде `Hydration failed`, `Maximum update depth exceeded`, `Recoverable Error`.
 - [x] `tests/e2e/helpers/http.ts` переведён на `browserContext.request`, поэтому API contract tests больше не зависят от flaky `page.evaluate` и `networkidle`.
 - [x] Full authenticated regression contour подтверждён заново: `npm run test:e2e:auth` -> `27 passed`.
-- [ ] Следующий UI reliability tranche: расширить automated coverage на оставшиеся layout/PWA-specific regressions beyond hydration/loop/polling.
+- Историческая заметка: Следующий UI reliability tranche: расширить automated coverage на оставшиеся layout/PWA-specific regressions beyond hydration/loop/polling.
 
 ## 2026-03-16 workspace sanitation and AI stability addendum
 
@@ -550,7 +550,7 @@
 - [x] `tests/e2e/ai-workspace.spec.ts`, `tests/e2e/ui-regressions.spec.ts` и `tests/e2e/helpers/http.ts` усилены против flaky modal/admin-detail/auth timing, а полный baseline снова зеленый: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `36 passed`, `npm run test:smoke` -> `3 passed`.
 - [x] `src/lib/admin-permissions.ts`, `src/components/admin-role-manager.tsx`, `src/components/admin-user-actions.tsx`, `src/components/admin-ai-operations.tsx`, `src/components/admin-ai-eval-runs.tsx` и `src/components/admin-operations-inbox.tsx` переписаны в чистом UTF-8: operator surfaces больше не отдают mojibake и не показывают лишние role/capability детали не-root администраторам.
 - [x] Санитарный tranche подтверждён повторным baseline: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `36 passed`, `npm run test:smoke` -> `3 passed`.
-- [ ] Следующий sanitation tranche: добить оставшиеся словари/formatters в `admin-users-directory-model.ts` и `admin-user-detail-model.ts`, затем вернуться к следующему backend/advisor tranche.
+- Историческая заметка: Следующий sanitation tranche: добить оставшиеся словари/formatters в `admin-users-directory-model.ts` и `admin-user-detail-model.ts`, затем вернуться к следующему backend/advisor tranche.
 
 ## 2026-03-17 advisor initplan and policy merge addendum
 
@@ -559,7 +559,7 @@
 - [x] Добавлена миграция `supabase/migrations/20260317015500_foods_select_policy_merge.sql`: два permissive select-policy на `public.foods` схлопнуты в одну `foods_access_select`, и performance-advisor больше не ругается на `multiple_permissive_policies`.
 - [x] После DDL повторно прогнаны Supabase advisors `performance` и `security`: performance backlog очищен от `auth_rls_initplan`, `multiple_permissive_policies` и targeted FK warnings; в backlog остались только `unused_index` info и отдельный security-layer (`rls_enabled_no_policy`, `extension_in_public`, `auth_leaked_password_protection`).
 - [x] Tranche подтверждён полным baseline: `npm run verify:migrations`, `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:rls` -> `1 passed`, `npm run test:e2e:auth` -> `36 passed`, `npm run test:smoke` -> `3 passed`.
-- [ ] Следующий DB tranche: либо осознанно разбирать security-advisor backlog по service-role/admin tables, либо вводить advisor-policy document/gate вместо слепого добавления RLS policies на системные таблицы.
+- Историческая заметка: Следующий DB tranche: либо осознанно разбирать security-advisor backlog по service-role/admin tables, либо вводить advisor-policy document/gate вместо слепого добавления RLS policies на системные таблицы.
 
 ## 2026-03-17 ui regression selector hardening addendum
 
@@ -572,7 +572,7 @@
 - [x] Перед миграцией подтверждено по коду, что эти таблицы читаются через `createAdminSupabaseClient()` или service-role paths, поэтому явные deny-all policies не меняют user-facing runtime-контракты и не мешают admin/service-role доступу.
 - [x] После DDL повторно прогнаны advisors: `security` больше не содержит `rls_enabled_no_policy`, а remaining security backlog сужен до двух platform-level warning — `extension_in_public` для `vector` и `auth_leaked_password_protection`.
 - [x] Tranche подтверждён verification-пакетом: `npm run verify:migrations`, `npm run test:rls` -> `1 passed`, `npm run test:e2e:auth` -> `36 passed`, `npm run test:smoke` -> `3 passed`.
-- [ ] Следующий DB tranche: отдельно оформить policy по двум оставшимся platform-level warning (`vector` schema и leaked password protection) и решить, что из этого автоматизируется в repo, а что остаётся внешним release checklist для Supabase проекта.
+- Историческая заметка: Следующий DB tranche: отдельно оформить policy по двум оставшимся platform-level warning (`vector` schema и leaked password protection) и решить, что из этого автоматизируется в repo, а что остаётся внешним release checklist для Supabase проекта.
 
 ## 2026-03-17 workspace surface sanitation addendum
 
@@ -582,7 +582,7 @@
 - [x] `src/app/workouts/page.tsx` и `src/app/nutrition/page.tsx` снова отдают чистый user-facing copy для badges, title, metrics и section descriptions.
 - [x] `tests/e2e/mobile-pwa-regressions.spec.ts` переведён на новые stable selectors; regression suite подтверждает, что `Dashboard / Workouts / Nutrition / Admin` mobile surfaces остаются usable без overflow и без зависимости от старого mojibake.
 - [x] Tranche подтверждён baseline: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `36 passed`, `npm run test:smoke` -> `3 passed`.
-- [ ] Следующий sanitation/backend tranche: добить remaining mojibake и operator copy на оставшихся user-facing surfaces, затем вернуться к `owner-only / idempotency / retrieval` audit по AI/data routes.
+- Историческая заметка: Следующий sanitation/backend tranche: добить remaining mojibake и operator copy на оставшихся user-facing surfaces, затем вернуться к `owner-only / idempotency / retrieval` audit по AI/data routes.
 
 ## 2026-03-17 admin user detail sanitation addendum
 
@@ -590,14 +590,14 @@
 - [x] Карточка пользователя, секции `Профиль / Активность / Операции / Оплата`, degraded-banner, summary metrics, role/status словари и timeline/billing коллекции теперь показывают нормальный русский operator copy без mojibake.
 - [x] Дожат flaky admin fallback regression: `src/app/admin/page.tsx` получил стабильные `data-testid` для degraded CTA-кнопок, а `tests/e2e/admin-app.spec.ts` больше не зависит от общего `href`-локатора на фоне shell/nav DOM.
 - [x] Tranche подтверждён baseline: `npx eslint ...admin-user-detail* src/app/admin/page.tsx tests/e2e/admin-app.spec.ts`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/admin-app.spec.ts --workers=1` -> `5 passed`, `npx playwright test tests/e2e/mobile-pwa-regressions.spec.ts --workers=1` -> `3 passed`, `npm run test:e2e:auth` -> `36 passed`.
-- [ ] Следующий sanitation/backend tranche: пройти remaining operator copy на оставшихся admin/user-facing surfaces и затем вернуться к `owner-only / idempotency / retrieval` audit по AI/data routes.
+- Историческая заметка: Следующий sanitation/backend tranche: пройти remaining operator copy на оставшихся admin/user-facing surfaces и затем вернуться к `owner-only / idempotency / retrieval` audit по AI/data routes.
 
 ## 2026-03-17 AI route copy sanitation addendum
 
 - [x] Полностью санирован user-facing copy в `src/app/api/ai/chat/route.ts`, `src/app/api/ai/assistant/route.ts`, `src/app/api/ai/meal-photo/route.ts`, `src/app/api/ai/meal-plan/route.ts`, `src/app/api/ai/workout-plan/route.ts`, `src/app/api/ai/reindex/route.ts`, `src/app/api/ai/sessions/route.ts`, `src/app/api/ai/sessions/[id]/route.ts`, `src/app/api/ai/proposals/[id]/apply/route.ts`, `src/app/api/ai/proposals/[id]/approve/route.ts`.
 - [x] Из AI API убраны английские сообщения и лишние технические формулировки вроде `AI runtime`, `live-запросы`, `AI-предложение`; пользовательская поверхность теперь везде говорит по-русски и понятнее разводит runtime/config ошибки.
 - [x] Tranche подтверждён baseline: `npx eslint ...src/app/api/ai/*`, `npm run typecheck`, `npm run build`, `npm run build:test`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1` -> `6 passed`.
-- [ ] Следующий AI/backend tranche: вернуться к `owner-only / idempotency / retrieval` audit по AI/data routes и добить remaining route-level ownership coverage.
+- Историческая заметка: Следующий AI/backend tranche: вернуться к `owner-only / idempotency / retrieval` audit по AI/data routes и добить remaining route-level ownership coverage.
 
 ## 2026-03-17 direct RLS ownership expansion addendum
 
@@ -605,35 +605,35 @@
 - [x] `tests/rls/ownership.spec.ts` теперь напрямую подтверждает row-level изоляцию не только для `ai_plan_proposals`, `exercise_library`, `weekly_programs`, `ai_chat_*`, `export_jobs`, `deletion_requests`, `user_context_snapshots`, `knowledge_chunks`, но и для `foods`, `recipes`, `workout_templates`.
 - [x] Заодно дочищен user-facing copy в `src/app/api/workout-templates/route.ts`, `src/app/api/foods/route.ts`, `src/app/api/recipes/route.ts`: self-service тренировки и питание больше не отдают английские login/save/load сообщения.
 - [x] Tranche подтверждён baseline: `npx eslint tests/rls tests/rls/helpers src/app/api/workout-templates/route.ts src/app/api/foods/route.ts src/app/api/recipes/route.ts`, `npm run test:rls` -> `1 passed`, `npm run typecheck`, `npm run build`.
-- [ ] Следующий backend tranche: продолжить `owner-only / idempotency / retrieval` audit по оставшимся AI/data routes и затем решить, нужен ли ещё один direct RLS слой для оставшихся user-scoped tables.
+- Историческая заметка: Следующий backend tranche: продолжить `owner-only / idempotency / retrieval` audit по оставшимся AI/data routes и затем решить, нужен ли ещё один direct RLS слой для оставшихся user-scoped tables.
 
 ## 2026-03-17 product API sanitation addendum
 
 - [x] Санирован user-facing copy в `src/app/api/weekly-programs/route.ts`, `src/app/api/weekly-programs/[id]/clone/route.ts`, `src/app/api/weekly-programs/[id]/lock/route.ts`, `src/app/api/nutrition/targets/route.ts`, `src/app/api/onboarding/route.ts`, `src/app/api/chat/route.ts`, `src/app/api/meal-templates/route.ts`, `src/app/api/meals/route.ts`, `src/app/api/settings/billing/route.ts`.
 - [x] `weekly programs`, `nutrition targets`, `onboarding`, `legacy chat`, `meal templates`, `meals` и `settings billing` больше не отдают английские сообщения и mojibake в user-facing error surface.
 - [x] Tranche подтверждён baseline-пакетом: `npx eslint ...`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `36 passed`.
-- [ ] Следующий sanitation/backend tranche: дочистить оставшиеся self-service и product API routes вне этого пакета, затем вернуться к owner-only / retrieval audit по оставшимся AI/data контурам.
+- Историческая заметка: Следующий sanitation/backend tranche: дочистить оставшиеся self-service и product API routes вне этого пакета, затем вернуться к owner-only / retrieval audit по оставшимся AI/data контурам.
 
 ## 2026-03-17 self-service route sanitation follow-up
 
 - [x] Санирован user-facing copy в `src/app/api/foods/[id]/route.ts`, `src/app/api/meal-templates/[id]/route.ts`, `src/app/api/meals/[id]/route.ts`, `src/app/api/recipes/[id]/route.ts`, `src/app/api/settings/data/route.ts`, `src/app/api/settings/data/export/[id]/download/route.ts`.
 - [x] Delete/update/export поверхности для продуктов, шаблонов питания, приёмов пищи, рецептов и центра данных больше не отдают mojibake и выровнены по понятному русскому self-service UX.
 - [x] Follow-up подтверждён baseline-пакетом: `npx eslint ...`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `36 passed`.
-- [ ] Следующий sanitation/backend tranche: дочистить remaining operator/self-service routes вне этого пакета и затем вернуться к owner-only / retrieval audit по оставшимся AI/data контурам.
+- Историческая заметка: Следующий sanitation/backend tranche: дочистить remaining operator/self-service routes вне этого пакета и затем вернуться к owner-only / retrieval audit по оставшимся AI/data контурам.
 
 ## 2026-03-17 billing sync workout copy sanitation addendum
 
 - [x] Санирован user-facing copy в `src/app/api/billing/checkout/route.ts`, `src/app/api/billing/checkout/reconcile/route.ts`, `src/app/api/billing/portal/route.ts`, `src/app/api/dashboard/period-compare/route.ts`, `src/app/api/exercises/route.ts`, `src/app/api/exercises/[id]/route.ts`, `src/app/api/sync/pull/route.ts`, `src/app/api/sync/push/route.ts`, `src/app/api/workout-days/[id]/route.ts`, `src/app/api/workout-days/[id]/reset/route.ts`, `src/app/api/workout-sets/[id]/route.ts`.
 - [x] Billing, dashboard compare, exercise library, sync и workout execution route surface теперь отдают понятный русский copy вместо английских login/update/error сообщений.
 - [x] Tranche подтверждён baseline-пакетом: `npx eslint ...`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `36 passed`.
-- [ ] Следующий sanitation/backend tranche: дочистить remaining operator/internal routes с английским copy и затем вернуться к owner-only / retrieval audit по оставшимся AI/data контурам.
+- Историческая заметка: Следующий sanitation/backend tranche: дочистить remaining operator/internal routes с английским copy и затем вернуться к owner-only / retrieval audit по оставшимся AI/data контурам.
 
 ## 2026-03-17 operator internal copy sanitation addendum
 
 - [x] Санирован operator/internal copy в `src/app/api/admin/ai-evals/run/route.ts`, `src/app/api/admin/bootstrap/route.ts`, `src/app/api/admin/operations/route.ts`, `src/app/api/admin/operations/process/route.ts`, `src/app/api/admin/operations/[kind]/[id]/route.ts`, `src/app/api/admin/users/bulk/route.ts`, `src/app/api/admin/users/[id]/billing/route.ts`, `src/app/api/admin/users/[id]/billing/reconcile/route.ts`, `src/app/api/admin/users/[id]/deletion/route.ts`, `src/app/api/admin/users/[id]/export/route.ts`, `src/app/api/admin/users/[id]/restore/route.ts`, `src/app/api/admin/users/[id]/role/route.ts`, `src/app/api/admin/users/[id]/support-action/route.ts`, `src/app/api/admin/users/[id]/suspend/route.ts`, `src/app/api/billing/webhook/stripe/route.ts`, `src/app/api/internal/jobs/billing-reconcile/route.ts`, `src/app/api/internal/jobs/dashboard-warm/route.ts`, `src/app/api/internal/jobs/knowledge-reindex/route.ts`, `src/app/api/internal/jobs/nutrition-summaries/route.ts`.
 - [x] Operator/internal API surface больше не отдает английские payload/update/queue/error сообщения и выровнен по русскому operator UX.
 - [x] Tranche подтверждён baseline-пакетом: `npx eslint ...`, `npm run typecheck`, `npm run build`, `npm run test:e2e:auth` -> `36 passed`.
-- [ ] Следующий backend tranche: возвращаться к owner-only / retrieval audit по оставшимся AI/data контурам и затем закрывать AI quality gate.
+- Историческая заметка: Следующий backend tranche: возвращаться к owner-only / retrieval audit по оставшимся AI/data контурам и затем закрывать AI quality gate.
 
 ## 2026-03-17 AI runtime UX and build reuse addendum
 
@@ -641,7 +641,7 @@
 - [x] `src/app/api/ai/chat/route.ts`, `src/app/api/ai/assistant/route.ts`, `src/app/api/ai/meal-photo/route.ts` теперь отдают согласованные русские сообщения и отдельные `503 AI_PROVIDER_UNAVAILABLE` / `503 AI_RUNTIME_NOT_CONFIGURED` там, где проблема именно в конфигурации или внешнем провайдере.
 - [x] `scripts/run-next-with-dist-dir.mjs` получил memory guard для `next build`, а `scripts/ensure-next-build.mjs` + `package.json` убрали лишний повторный build перед `test:smoke` и `test:e2e:*`: тестовые команды теперь переиспользуют уже собранный `.next`, если он существует.
 - [x] Tranche подтверждён baseline-пакетом: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:smoke` -> `3 passed`, `npx playwright test tests/e2e/ai-workspace.spec.ts tests/e2e/api-contracts.spec.ts --workers=1` -> `8 passed`, `npm run test:e2e:auth` -> `36 passed`.
-- [ ] Следующий AI/backend tranche: закрывать минимальный AI quality gate (`assistant`, `retrieval`, `workout plan`, `meal plan`, `safety`).
+- Историческая заметка: Следующий AI/backend tranche: закрывать минимальный AI quality gate (`assistant`, `retrieval`, `workout plan`, `meal plan`, `safety`).
 
 ## 2026-03-17 historical retrieval fallback addendum
 
@@ -649,7 +649,7 @@
 - [x] Из vector fallback убран скрытый bias на `limit(400)`, а из text fallback убран fresh-only bias на `order(created_at desc).limit(600)`; оба fallback пути теперь ранжируют весь paged result set.
 - [x] Добавлен прямой regression suite `tests/rls/retrieval-history.spec.ts`, который без внешнего AI-провайдера подтверждает три вещи: pager доходит дальше первых страниц, text fallback поднимает старый релевантный chunk, vector fallback поднимает старый релевантный embedding.
 - [x] Tranche подтверждён baseline-пакетом: `npx eslint src/lib/ai/knowledge-retrieval.ts tests/rls/retrieval-history.spec.ts`, `npm run test:rls` -> `4 passed`, `npm run typecheck`, `npm run build`.
-- [ ] Следующий AI/backend tranche: закрывать минимальный AI quality gate (`assistant`, `retrieval`, `workout plan`, `meal plan`, `safety`) и привязать его к release baseline.
+- Историческая заметка: Следующий AI/backend tranche: закрывать минимальный AI quality gate (`assistant`, `retrieval`, `workout plan`, `meal plan`, `safety`) и привязать его к release baseline.
 
 ## 2026-03-17 AI quality gate readiness addendum
 
@@ -658,35 +658,35 @@
 - [x] `tests/ai-gate/ai-quality-gate.spec.ts` доведён до реального quality-gate поведения: assistant workspace больше не зависает на пустом transcript state и честно доходит до provider/runtime surface.
 - [x] Tranche подтверждён baseline-пакетом: `npm run lint`, `npm run typecheck`, `npm run build`, `npx eslint tests/ai-gate tests/e2e/helpers/ai.ts tests/e2e/helpers/auth.ts`, `npx playwright test tests/e2e/ai-workspace.spec.ts --workers=1` -> `2 passed`, `npm run test:e2e:auth` -> `36 passed`, `npm run test:smoke` -> `3 passed`.
 - [x] `npm run test:ai-gate` теперь падает не на внутреннем UI/session баге, а на реальном внешнем блокере: assistant, retrieval, meal plan, workout plan и safety упираются в `OpenRouter 402` по кредитам, а retrieval слой дополнительно логирует `Voyage 403` по embeddings.
-- [ ] Следующий AI/backend tranche: снять внешний blocker по `OpenRouter/Voyage` или продолжать следующие незаблокированные production tranche до момента, когда live AI providers будут готовы.
+- Историческая заметка: Следующий AI/backend tranche: снять внешний blocker по `OpenRouter/Voyage` или продолжать следующие незаблокированные production tranche до момента, когда live AI providers будут готовы.
 
 ## 2026-03-18 AI proposal idempotency addendum
 
 - [x] `src/lib/ai/proposal-actions.ts` теперь делает `approve` и `apply` идемпотентными: повторное подтверждение возвращает уже подтверждённый proposal без ошибки, а повторное применение отдаёт тот же applied-result и тот же applied meta вместо дублирования шаблонов или новой ошибки.
 - [x] `tests/e2e/api-contracts.spec.ts` расширен admin-only контрактом на повторные `POST /api/ai/proposals/[id]/approve` и `POST /api/ai/proposals/[id]/apply`; сценарий подтверждает, что второй запрос остаётся `200` и не меняет итоговый applied payload.
 - [x] Tranche подтверждён baseline-пакетом: `npm run lint`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1` -> `7 passed`, `npm run test:e2e:auth` -> `40 passed`, `npm run test:smoke` -> `3 passed`.
-- [ ] Следующий backend tranche: продолжить route-level audit по idempotency и race conditions на workout mutation flows, затем вернуться к следующим незаблокированным AI/data пунктам.
+- Историческая заметка: Следующий backend tranche: продолжить route-level audit по idempotency и race conditions на workout mutation flows, затем вернуться к следующим незаблокированным AI/data пунктам.
 
 ## 2026-03-18 workout idempotency and typecheck contract addendum
 
 - [x] `package.json` и `tsconfig.json` снова согласованы по одному `distDir`: `typecheck` теперь генерирует route types в стандартный `.next`, а `tsconfig` больше не зависит от устаревшего `.next_build/types`, из-за которого gate снова падал на `TS6053`.
 - [x] `tests/e2e/workout-sync.spec.ts` расширен regression-сценарием на повторные direct mutation routes: `PATCH /api/workout-days/[id]` со статусом `done` и `POST /api/workout-days/[id]/reset` теперь отдельно подтверждены как безопасные и идемпотентные при повторном вызове.
 - [x] Tranche подтверждён baseline-пакетом: `npm run lint`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/workout-sync.spec.ts -g "done and reset routes stay idempotent on repeated requests" --workers=1` -> `1 passed`, `npm run test:smoke` -> `3 passed`.
-- [ ] Следующий backend tranche: продолжить route-level audit по idempotency и race conditions на оставшихся workout/sync mutation flows, затем возвращаться к следующим незаблокированным AI/data и sanitation пунктам.
+- Историческая заметка: Следующий backend tranche: продолжить route-level audit по idempotency и race conditions на оставшихся workout/sync mutation flows, затем возвращаться к следующим незаблокированным AI/data и sanitation пунктам.
 
 ## 2026-03-18 nutrition self-service RLS addendum
 
 - [x] `tests/rls/helpers/supabase-rls.ts` расширен fixture rows для `meal_templates`, `meals`, `meal_items`, `recipe_items` и `daily_nutrition_summaries`, seeded через service-role под обычного пользователя на том же owner-scoped nutrition контуре.
 - [x] `tests/rls/ownership.spec.ts` теперь напрямую подтверждает row-level изоляцию не только для `foods`, `recipes`, `workout_templates`, `ai_chat_*`, `export_jobs`, `deletion_requests`, `knowledge_*`, но и для `meal_templates`, `meals`, `meal_items`, `recipe_items`, `daily_nutrition_summaries`.
 - [x] Tranche подтверждён baseline-пакетом: `npx eslint tests/rls tests/rls/helpers`, `npm run test:rls` -> `4 passed`, `npm run typecheck`, `npm run build`.
-- [ ] Следующий backend tranche: продолжить direct owner-only / RLS audit по оставшимся user-scoped данным и затем вернуться к незакрытым route-level race/idempotency пунктам.
+- Историческая заметка: Следующий backend tranche: продолжить direct owner-only / RLS audit по оставшимся user-scoped данным и затем вернуться к незакрытым route-level race/idempotency пунктам.
 
 ## 2026-03-18 final typecheck runner addendum
 
 - [x] `scripts/typecheck-stable.mjs` переведён на реальный stable contract: сначала `npx next typegen`, затем проверка полноты route-type wrappers, и если `typegen` не построил весь `app`-дерево типов, автоматический fallback на `npm run build`, после чего уже запускается `tsc`.
 - [x] `package.json` теперь использует этот runner в `typecheck`, так что baseline снова проходит одним запуском даже после полного удаления `.next/types`, без ручного второго прогона.
 - [x] Tranche подтверждён чистым сценарием: удаление `.next/types` через Node, затем `npm run typecheck` -> успешно; дальше baseline подтверждён `npx eslint tests/rls tests/rls/helpers`, `npm run test:rls` -> `4 passed`, `npm run build`.
-- [ ] Следующий engineering tranche: продолжить незаблокированные backend/RLS/route-level hardening slices, не теряя одношаговый quality-gate contract.
+- Историческая заметка: Следующий engineering tranche: продолжить незаблокированные backend/RLS/route-level hardening slices, не теряя одношаговый quality-gate contract.
 
 ## 2026-03-19 nutrition targets и remaining nutrition-profile RLS addendum
 
@@ -694,21 +694,21 @@
 - [x] `tests/e2e/api-contracts.spec.ts` расширен invalid-payload контрактом для `PUT /api/nutrition/targets`, а `tests/e2e/helpers/http.ts` поддерживает `PUT` в общем request helper'е.
 - [x] `tests/rls/helpers/supabase-rls.ts` и `tests/rls/ownership.spec.ts` расширены direct owner-scoped покрытием для remaining nutrition/body/self-profile таблиц: `goals`, `nutrition_goals`, `nutrition_profiles`, `body_metrics`.
 - [x] Tranche подтверждён baseline-пакетом: `npx eslint src/app/api/nutrition/targets/route.ts tests/e2e/api-contracts.spec.ts tests/e2e/helpers/http.ts tests/rls/helpers/supabase-rls.ts tests/rls/ownership.spec.ts`, `npm run test:rls` -> `4 passed`, `npm run typecheck`, `npm run build`, `npm run test:smoke` -> `3 passed`, `npm run test:e2e:auth` -> `41 passed`.
-- [ ] Следующий backend tranche: продолжить оставшийся route-handler audit по owner-only/idempotency/race conditions и добивать незакрытые AI/data hardening пункты.
+- Историческая заметка: Следующий backend tranche: продолжить оставшийся route-handler audit по owner-only/idempotency/race conditions и добивать незакрытые AI/data hardening пункты.
 
 ## 2026-03-19 profile metrics и AI memory RLS addendum
 
 - [x] `tests/rls/helpers/supabase-rls.ts` расширен fixture rows для `profiles`, `onboarding_profiles`, `daily_metrics`, `period_metric_snapshots`, `user_memory_facts`, `ai_safety_events`, чтобы прямой owner-only слой покрывал уже не только workout/nutrition assets, но и профильный, агрегатный и AI-memory контур.
 - [x] `tests/rls/ownership.spec.ts` теперь подтверждает, что владелец видит свои `profiles`, `onboarding_profiles`, `daily_metrics`, `period_metric_snapshots`, `user_memory_facts`, `ai_safety_events`, а другой auth-user не видит и не может обновить эти строки точечными `update`.
 - [x] Tranche подтверждён baseline-пакетом: `npx eslint tests/rls/helpers/supabase-rls.ts tests/rls/ownership.spec.ts`, `npm run test:rls` -> `4 passed`, `npm run typecheck`, `npm run build`.
-- [ ] Следующий backend tranche: продолжить route-level owner-only audit по оставшимся self-service/AI/data handlers и дальше добивать общий database audit через Supabase MCP.
+- Историческая заметка: Следующий backend tranche: продолжить route-level owner-only audit по оставшимся self-service/AI/data handlers и дальше добивать общий database audit через Supabase MCP.
 
 ## 2026-03-19 billing RLS ownership addendum
 
 - [x] `tests/rls/helpers/supabase-rls.ts` расширен fixture rows для billing user-scoped таблиц: `subscriptions`, `subscription_events`, `entitlements`, `usage_counters`.
 - [x] `tests/rls/ownership.spec.ts` теперь напрямую подтверждает, что владелец видит свои billing rows, а другой auth-user не видит и не может обновить хотя бы `usage_counters` точечным `update`.
 - [x] Tranche подтверждён baseline-пакетом: `npx eslint tests/rls/helpers/supabase-rls.ts tests/rls/ownership.spec.ts`, `npm run test:rls` -> `4 passed`, `npm run typecheck`, `npm run build`.
-- [ ] Следующий backend tranche: продолжить remaining route-level audit и добивать прямой database audit по оставшимся user-scoped/admin-scoped контурам.
+- Историческая заметка: Следующий backend tranche: продолжить remaining route-level audit и добивать прямой database audit по оставшимся user-scoped/admin-scoped контурам.
 
 ## 2026-03-19 workout execution RLS addendum
 
@@ -716,7 +716,7 @@
 - [x] `tests/rls/ownership.spec.ts` теперь подтверждает, что владелец видит свои workout execution rows, другой auth-user не видит их и не может точечно обновить чужой `workout_set`.
 - [x] Fixture billing rows сделаны идемпотентными через `upsert` по уникальным ключам `entitlements(user_id, feature_key)` и `usage_counters(user_id, metric_key, metric_window)`, поэтому `test:rls` больше не флакает на накопленных данных прошлых прогонов.
 - [x] Tranche подтверждён baseline-пакетом: `npx eslint tests/rls/helpers/supabase-rls.ts tests/rls/ownership.spec.ts`, `npm run test:rls` -> `4 passed`, `npm run typecheck`, `npm run build`.
-- [ ] Следующий backend tranche: возвращаться к remaining route-level audit и добивать прямой database audit на оставшихся user-scoped/admin-scoped таблицах.
+- Историческая заметка: Следующий backend tranche: возвращаться к remaining route-level audit и добивать прямой database audit на оставшихся user-scoped/admin-scoped таблицах.
 
 ## 2026-03-19 billing auth-first contract addendum
 
@@ -725,14 +725,14 @@
 - [x] User-facing copy в `src/app/api/billing/webhook/stripe/route.ts` и всём текущем billing/settings tranche переведён в чистый UTF-8; auth/config/error messages больше не отдают битую кириллицу.
 - [x] `tests/e2e/api-contracts.spec.ts` расширен unauthenticated billing/settings contracts и invalid payload покрытием для `POST /api/settings/billing`; `tests/e2e/helpers/auth.ts` получил устойчивый `waitForSubmitButtonReady(...)` для Playwright auth bootstrap.
 - [x] Tranche подтверждён baseline-пакетом: `npx eslint src/app/api/billing/checkout/route.ts src/app/api/billing/checkout/reconcile/route.ts src/app/api/billing/portal/route.ts src/app/api/billing/webhook/stripe/route.ts src/app/api/settings/billing/route.ts tests/e2e/api-contracts.spec.ts tests/e2e/helpers/auth.ts`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1` -> `8 passed`.
-- [ ] Следующий billing/backend tranche: дочистить remaining mojibake в shared billing/AI dictionaries и продолжить route-handler audit по owner-only/idempotency/retrieval контурам.
+- Историческая заметка: Следующий billing/backend tranche: дочистить remaining mojibake в shared billing/AI dictionaries и продолжить route-handler audit по owner-only/idempotency/retrieval контурам.
 
 ## 2026-03-19 shared billing access sanitation addendum
 
 - [x] `src/lib/billing-access.ts` переведён в чистый UTF-8 на уровне общего feature-config словаря, deny-reason текстов и `FEATURE_ACCESS_DENIED` copy; shared billing snapshot больше не тянет mojibake в `/settings`, `/ai`, `/nutrition` и другие поверхности, которые читают общий access слой.
 - [x] Tranche не меняет access/fallback/usage-counter контракты и ограничен shared user-facing copy плюс форматированием billing layer.
 - [x] Tranche подтверждён пакетами `npx eslint src/lib/billing-access.ts`, `npm run typecheck`, `npm run build`; содержимое файла отдельно перепроверено прямым поиском по нормальным русским строкам, чтобы отсеять ложный PowerShell misrender.
-- [ ] Следующий sanitation/backend tranche: забирать remaining mojibake в shared AI dictionaries (`proposal-actions`, AI summaries и related preview/error copy), затем возвращаться к route-handler audit.
+- Историческая заметка: Следующий sanitation/backend tranche: забирать remaining mojibake в shared AI dictionaries (`proposal-actions`, AI summaries и related preview/error copy), затем возвращаться к route-handler audit.
 
 ## 2026-03-19 settings surface decomposition addendum
 
@@ -741,7 +741,7 @@
 - [x] `src/components/settings-data-center.tsx` переведён на вынесенный formatter/model слой `src/components/settings-data-center-model.ts`, поэтому export/deletion surface тоже ближе к orchestrator-роли вместо смеси JSX и derive helper-функций.
 - [x] `tests/rls/ownership.spec.ts` получил `test.setTimeout(60_000)`, потому что прямой RLS-suite уже покрывает гораздо больше owner-scoped таблиц и перестал стабильно укладываться в старые `30s`.
 - [x] Tranche подтверждён baseline-пакетом: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:rls` -> `4 passed`.
-- [ ] Следующий architecture/backend tranche: продолжать разносить remaining heavy settings/data surfaces и возвращаться к оставшемуся route-handler audit по owner-only/idempotency/race conditions.
+- Историческая заметка: Следующий architecture/backend tranche: продолжать разносить remaining heavy settings/data surfaces и возвращаться к оставшемуся route-handler audit по owner-only/idempotency/race conditions.
 
 ## 2026-03-19 settings self-service lib extraction addendum
 
@@ -749,7 +749,7 @@
 - [x] Доменные self-service правила для `/api/settings/billing` тоже вынесены в `src/lib/settings-self-service.ts`: загрузка billing center data и queue billing access review теперь идут через единый lib-слой, а route handler остаётся тонкой transport-обёрткой.
 - [x] Это уменьшает дублирование между route handlers и `lib` на одном из самых тяжёлых self-service контуров и двигает открытый основной пункт про разнос доменных правил из handler-слоя.
 - [x] Tranche подтверждён baseline-пакетом: `npx eslint src/lib/settings-self-service.ts src/app/api/settings/data/route.ts src/app/api/settings/billing/route.ts`, `npm run build`, `npm run typecheck`.
-- [ ] Следующий backend tranche: продолжать route/lib extraction и owner-only/idempotency audit на remaining self-service и AI/data handlers.
+- Историческая заметка: Следующий backend tranche: продолжать route/lib extraction и owner-only/idempotency audit на remaining self-service и AI/data handlers.
 
 ## 2026-03-19 billing self-service lib extraction addendum
 
@@ -758,7 +758,7 @@
 - [x] Заодно полностью убран remaining mojibake из user-facing copy в `billing/portal`, а billing self-service error messages в новом helper-слое зафиксированы в чистом UTF-8.
 - [x] `src/app/api/settings/data/export/[id]/download/route.ts` тоже переведён на общий self-service слой: owner-only lookup export job, archive build и download audit log теперь идут через `src/lib/settings-self-service.ts`, а route handler остался transport-обёрткой.
 - [x] Tranche подтверждён пакетами `npx eslint src/lib/billing-self-service.ts src/lib/settings-self-service.ts src/app/api/billing/checkout/route.ts src/app/api/billing/checkout/reconcile/route.ts src/app/api/billing/portal/route.ts src/app/api/settings/data/export/[id]/download/route.ts`, `npm run typecheck`, `npm run build`.
-- [ ] Следующий backend tranche: продолжать route/lib extraction и owner-only/idempotency audit на remaining self-service и AI/data handlers.
+- Историческая заметка: Следующий backend tranche: продолжать route/lib extraction и owner-only/idempotency audit на remaining self-service и AI/data handlers.
 
 ## 2026-03-19 nutrition write-model extraction addendum
 
@@ -767,28 +767,28 @@
 - [x] Заодно из этих create-routes убран remaining mojibake в user-facing copy, а `meals` create-path теперь откатывает созданную `meal` запись, если вставка `meal_items` не удалась, чтобы route не оставлял сиротскую строку без item payload.
 - [x] Tranche подтверждён пакетами `npx eslint src/lib/nutrition/nutrition-write-model.ts src/app/api/recipes/route.ts src/app/api/meal-templates/route.ts src/app/api/meals/route.ts`, `npm run typecheck`, `npm run build`.
 - [x] Повторные browser-suite прогоны на этой машине снова упёрлись в локальный Playwright timeout (`npm run test:e2e:auth`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1`, `npm run test:smoke`), поэтому для этого tranche зафиксирован compile/type baseline без дополнительного browser green run.
-- [ ] Следующий backend tranche: продолжать route/lib extraction и owner-only/idempotency audit на remaining nutrition/AI/data handlers, пока основной пункт про доменные правила вне route handlers не будет закрыт целиком.
+- Историческая заметка: Следующий backend tranche: продолжать route/lib extraction и owner-only/idempotency audit на remaining nutrition/AI/data handlers, пока основной пункт про доменные правила вне route handlers не будет закрыт целиком.
 
 ## 2026-03-19 nutrition delete/update self-service extraction addendum
 
 - [x] Общая owner-scoped self-service логика для `foods/[id]`, `recipes/[id]`, `meal-templates/[id]` и `meals/[id]` вынесена в `src/lib/nutrition/nutrition-self-service.ts`: generic delete helper, delete+summary recalculation для meal и build helper для food update payload больше не дублируются по route handlers.
 - [x] `src/app/api/foods/[id]/route.ts`, `src/app/api/recipes/[id]/route.ts`, `src/app/api/meal-templates/[id]/route.ts` и `src/app/api/meals/[id]/route.ts` переведены на тонкий transport-слой с чистым UTF-8 copy: auth, Zod validation и API response shape остались в handlers, а reusable nutrition domain rules живут в `lib`.
 - [x] Tranche подтверждён пакетами `npx eslint src/lib/nutrition/nutrition-self-service.ts src/app/api/foods/[id]/route.ts src/app/api/recipes/[id]/route.ts src/app/api/meal-templates/[id]/route.ts src/app/api/meals/[id]/route.ts`, `npm run typecheck`, `npm run build`.
-- [ ] Следующий backend tranche: продолжать route/lib extraction и owner-only/idempotency audit на remaining nutrition/AI/data handlers, пока основной пункт про доменные правила вне route handlers не будет закрыт целиком.
+- Историческая заметка: Следующий backend tranche: продолжать route/lib extraction и owner-only/idempotency audit на remaining nutrition/AI/data handlers, пока основной пункт про доменные правила вне route handlers не будет закрыт целиком.
 
 ## 2026-03-19 foods list/create sanitation addendum
 
 - [x] `src/app/api/foods/route.ts` переведён на чистый UTF-8 и больше не тянет mojibake в nutrition catalog surface.
 - [x] Food create payload теперь тоже собирается через `src/lib/nutrition/nutrition-self-service.ts`: helper `buildFoodCreateData(...)` держит rounding и barcode normalization вне route handler, а сам handler остаётся transport-обёрткой.
 - [x] Tranche подтверждён пакетами `npx eslint src/lib/nutrition/nutrition-self-service.ts src/app/api/foods/route.ts`, `npm run typecheck`, `npm run build`.
-- [ ] Следующий backend tranche: переходить от nutrition self-service к remaining AI/data route/lib extraction и owner-only/idempotency audit.
+- Историческая заметка: Следующий backend tranche: переходить от nutrition self-service к remaining AI/data route/lib extraction и owner-only/idempotency audit.
 
 ## 2026-03-19 shared AI copy sanitation addendum
 
 - [x] `src/lib/ai/chat.ts` переведён в чистый UTF-8: shared session errors больше не тянут битый copy в AI history и session recovery surface.
 - [x] `src/lib/ai/proposal-actions.ts` полностью санирован в чистый UTF-8: preview titles, request summaries, timelines, owner-only errors и applied/approved copy больше не отдают mojibake в assistant flow и proposal studio.
 - [x] Tranche подтверждён пакетами `npx eslint src/lib/ai/chat.ts src/lib/ai/proposal-actions.ts`, `npm run typecheck`, `npm run build`.
-- [ ] Следующий AI/backend tranche: вынести и санировать remaining shared runtime/guardrail copy из `ai/chat` и `ai/assistant`, затем продолжать route/lib extraction и owner-only/idempotency audit.
+- Историческая заметка: Следующий AI/backend tranche: вынести и санировать remaining shared runtime/guardrail copy из `ai/chat` и `ai/assistant`, затем продолжать route/lib extraction и owner-only/idempotency audit.
 
 ## 2026-03-19 AI eval surface sanitation addendum
 
@@ -796,21 +796,21 @@
 - [x] `src/app/api/admin/ai-evals/route.ts`, `src/app/api/admin/ai-evals/run/route.ts` и `src/app/api/internal/jobs/ai-evals-schedule/route.ts` переведены на чистый user-facing copy без изменения route contracts.
 - [x] `src/components/admin-ai-eval-runs.tsx` полностью санирован: статусы, notices, пустые состояния и quick-run surface больше не отдают битую кириллицу оператору.
 - [x] Tranche подтверждён пакетами `npx eslint src/lib/ai/eval-suites.ts src/lib/ai/eval-runs.ts src/app/api/admin/ai-evals/route.ts src/app/api/admin/ai-evals/run/route.ts src/app/api/internal/jobs/ai-evals-schedule/route.ts src/components/admin-ai-eval-runs.tsx`, `npm run typecheck`, `npm run build`.
-- [ ] Следующий AI/backend tranche: продолжать remaining shared runtime/guardrail sanitation в `ai/chat` и `ai/assistant`, затем возвращаться к route/lib extraction и owner-only/idempotency audit.
+- Историческая заметка: Следующий AI/backend tranche: продолжать remaining shared runtime/guardrail sanitation в `ai/chat` и `ai/assistant`, затем возвращаться к route/lib extraction и owner-only/idempotency audit.
 
 ## 2026-03-19 AI chat runtime copy extraction addendum
 
 - [x] Общий user-facing copy для `ai/chat` вынесен в `src/lib/ai/chat-runtime-copy.ts`: сообщения о неготовом runtime, auth-required, invalid payload, provider/runtime failures и safety fallback больше не размазаны по route handler.
 - [x] `src/app/api/ai/chat/route.ts` переведён на тонкий transport-слой с чистым UTF-8 copy: auth/runtime gates, safety fallback и provider error message идут через shared helper без изменения owner-only, billing и retrieval контрактов.
 - [x] Tranche подтверждён пакетами `npx eslint src/lib/ai/chat-runtime-copy.ts src/app/api/ai/chat/route.ts`, `npm run typecheck`, `npm run build`.
-- [ ] Следующий AI/backend tranche: продолжать remaining runtime/guardrail sanitation в `ai/assistant`, затем возвращаться к route/lib extraction и owner-only/idempotency audit.
+- Историческая заметка: Следующий AI/backend tranche: продолжать remaining runtime/guardrail sanitation в `ai/assistant`, затем возвращаться к route/lib extraction и owner-only/idempotency audit.
 
 ## 2026-03-20 AI plan route copy extraction addendum
 
 - [x] Общий user-facing copy для `ai/meal-plan` и `ai/workout-plan` вынесен в `src/lib/ai/plan-route-copy.ts`: auth-required, runtime-not-configured, invalid payload и provider/runtime failure messages больше не дублируются между двумя route handlers.
 - [x] `src/app/api/ai/meal-plan/route.ts` и `src/app/api/ai/workout-plan/route.ts` переведены на тонкий transport-слой с чистым UTF-8 copy, а safety/provider messaging для AI plan generation теперь идёт через shared helper.
 - [x] Tranche подтверждён пакетами `npx eslint src/lib/ai/plan-route-copy.ts src/app/api/ai/meal-plan/route.ts src/app/api/ai/workout-plan/route.ts`, `npm run typecheck`, `npm run build`.
-- [ ] Следующий AI/backend tranche: продолжать remaining runtime/guardrail sanitation в `ai/assistant`, затем возвращаться к route/lib extraction и owner-only/idempotency audit.
+- Историческая заметка: Следующий AI/backend tranche: продолжать remaining runtime/guardrail sanitation в `ai/assistant`, затем возвращаться к route/lib extraction и owner-only/idempotency audit.
 
 ## 2026-03-20 AI assistant runtime copy extraction addendum
 
@@ -818,84 +818,84 @@
 - [x] `src/app/api/ai/assistant/route.ts` переведён на этот helper без изменения owner-only, billing, retrieval, proposal и streaming contracts: route стал тоньше и ближе к transport/orchestration роли.
 - [x] `src/lib/ai/domain-policy.ts` синхронизирован с текущим helper-slice и остаётся зелёным по compile/lint baseline.
 - [x] Tranche подтверждён пакетами `npx eslint src/lib/ai/assistant-runtime-copy.ts src/app/api/ai/assistant/route.ts src/lib/ai/domain-policy.ts`, `npm run typecheck`, `npm run build`.
-- [ ] Следующий AI/backend tranche: возвращаться к remaining route/lib extraction и owner-only/idempotency audit по AI/data handlers.
+- Историческая заметка: Следующий AI/backend tranche: возвращаться к remaining route/lib extraction и owner-only/idempotency audit по AI/data handlers.
 
 ## 2026-03-20 AI meal photo runtime copy extraction addendum
 
 - [x] Общий user-facing и vision/runtime copy для `ai/meal-photo` вынесен в `src/lib/ai/meal-photo-runtime-copy.ts`: not-configured/auth/image validation/safety/schema-invalid/provider failure messages и форматирование разбора блюда больше не живут внутри route handler.
 - [x] `src/app/api/ai/meal-photo/route.ts` переведён на этот helper без изменения owner-only, billing, image-processing и chat-session contracts: route остался transport-слоем вокруг vision flow.
 - [x] Tranche подтверждён пакетами `npx eslint src/lib/ai/meal-photo-runtime-copy.ts src/app/api/ai/meal-photo/route.ts`, `npm run typecheck`, `npm run build`.
-- [ ] Следующий AI/backend tranche: продолжать remaining route/lib extraction и owner-only/idempotency audit по AI/data handlers.
+- Историческая заметка: Следующий AI/backend tranche: продолжать remaining route/lib extraction и owner-only/idempotency audit по AI/data handlers.
 
 ## 2026-03-20 AI session route helper extraction addendum
 
 - [x] Общий auth-context и user-facing copy для `src/app/api/ai/sessions/route.ts` и `src/app/api/ai/sessions/[id]/route.ts` вынесены в `src/lib/ai/session-route-helpers.ts`: auth-required, invalid-id, create/delete/clear failed messages и default title нового чата больше не дублируются между двумя route handlers.
 - [x] Оба route handler теперь ближе к transport-слою: session auth bootstrap и shared copy идут через helper, а delete-route дополнительно синхронизирован в чистом UTF-8 без изменения owner-only contracts.
 - [x] Tranche подтверждён пакетами `npx eslint src/lib/ai/session-route-helpers.ts src/app/api/ai/sessions/route.ts src/app/api/ai/sessions/[id]/route.ts`, `npm run typecheck`, `npm run build`.
-- [ ] Следующий AI/backend tranche: продолжать remaining route/lib extraction и owner-only/idempotency audit по AI/data handlers.
+- Историческая заметка: Следующий AI/backend tranche: продолжать remaining route/lib extraction и owner-only/idempotency audit по AI/data handlers.
 
 ## 2026-03-20 AI proposal route helper extraction addendum
 
 - [x] Общий auth/proposal lookup/billing feature resolution для `src/app/api/ai/proposals/[id]/apply/route.ts` и `src/app/api/ai/proposals/[id]/approve/route.ts` вынесен в `src/lib/ai/proposal-route-helpers.ts`: owner-scoped proposal lookup, auth gate, invalid-id parse и feature access bootstrap больше не дублируются между двумя route handlers.
 - [x] Оба proposal routes теперь ближе к transport-слою: в handlers остались только route-specific action calls (`applyAiPlanProposal` и `approveAiPlanProposal`), feature denied response и error mapping, а shared route access plumbing живёт в helper-слое.
 - [x] Tranche подтверждён пакетами `npx eslint src/lib/ai/proposal-route-helpers.ts src/app/api/ai/proposals/[id]/apply/route.ts src/app/api/ai/proposals/[id]/approve/route.ts`, `npm run typecheck`, `npm run build`.
-- [ ] Следующий AI/backend tranche: продолжать remaining route/lib extraction и owner-only/idempotency audit по AI/data handlers.
+- Историческая заметка: Следующий AI/backend tranche: продолжать remaining route/lib extraction и owner-only/idempotency audit по AI/data handlers.
 
 ## 2026-03-20 knowledge reindex admin helper extraction addendum
 
 - [x] Общий parse/logging слой для `src/app/api/ai/reindex/route.ts` и `src/app/api/internal/jobs/knowledge-reindex/route.ts` вынесен в `src/lib/ai/knowledge-reindex-admin.ts`: parse mode, support action logging, audit logging и форматирование success message больше не живут в route handlers.
 - [x] `src/app/api/ai/reindex/route.ts` и `src/app/api/internal/jobs/knowledge-reindex/route.ts` теперь ближе к transport/orchestration роли: route-level auth, validation и response shape остались в handlers, а shared reindex admin/job plumbing живёт в helper-слое.
 - [x] Tranche подтверждён пакетами `npx eslint src/lib/ai/knowledge-reindex-admin.ts src/app/api/ai/reindex/route.ts src/app/api/internal/jobs/knowledge-reindex/route.ts`, `npm run typecheck`, `npm run build`.
-- [ ] Следующий AI/backend tranche: продолжать remaining route/lib extraction и owner-only/idempotency audit по AI/data handlers.
+- Историческая заметка: Следующий AI/backend tranche: продолжать remaining route/lib extraction и owner-only/idempotency audit по AI/data handlers.
 
 ## 2026-03-20 admin support action helper extraction addendum
 
 - [x] Общий queue+audit слой для `src/app/api/admin/users/[id]/support-action/route.ts`, `src/app/api/admin/users/[id]/suspend/route.ts` и `src/app/api/admin/users/[id]/restore/route.ts` вынесен в `src/lib/admin-support-actions.ts`: insert в `support_actions` и follow-up audit insert больше не дублируются между тремя route handlers.
 - [x] Все три admin mutation routes теперь ближе к transport-слою: auth, target-user guard и payload validation остаются в handlers, а shared support-action plumbing живёт в helper-слое.
 - [x] Tranche подтверждён пакетами `npx eslint src/lib/admin-support-actions.ts src/app/api/admin/users/[id]/support-action/route.ts src/app/api/admin/users/[id]/suspend/route.ts src/app/api/admin/users/[id]/restore/route.ts`, `npm run typecheck`, `npm run build`.
-- [ ] Следующий backend tranche: продолжать remaining route/lib extraction и owner-only/idempotency audit на оставшихся admin/self-service и AI/data handlers.
+- Историческая заметка: Следующий backend tranche: продолжать remaining route/lib extraction и owner-only/idempotency audit на оставшихся admin/self-service и AI/data handlers.
 
 ## 2026-03-20 admin export and deletion helper extraction addendum
 
 - [x] Общий export/deletion admin слой вынесен в `src/lib/admin-user-requests.ts`: queue export job, hold deletion request и cancel deletion request теперь живут вне route handlers и держат queue+audit plumbing в одном месте.
 - [x] `src/app/api/admin/users/[id]/export/route.ts` и `src/app/api/admin/users/[id]/deletion/route.ts` переведены на этот helper, а `src/app/api/admin/users/bulk/route.ts` использует тот же export queue helper для ветки `queue_export`, чтобы не дублировать insert в `export_jobs` и audit payload.
 - [x] Tranche подтверждён пакетами `npx eslint src/lib/admin-user-requests.ts src/app/api/admin/users/[id]/export/route.ts src/app/api/admin/users/[id]/deletion/route.ts src/app/api/admin/users/bulk/route.ts`, `npm run typecheck`, `npm run build`.
-- [ ] Следующий backend tranche: продолжать remaining route/lib extraction и owner-only/idempotency audit на оставшихся admin/self-service и AI/data handlers.
+- Историческая заметка: Следующий backend tranche: продолжать remaining route/lib extraction и owner-only/idempotency audit на оставшихся admin/self-service и AI/data handlers.
 
 ## 2026-03-20 admin bulk support action follow-up addendum
 
 - [x] `src/app/api/admin/users/bulk/route.ts` теперь использует `src/lib/admin-support-actions.ts` не только в single-user surface, но и для bulk-веток `queue_resync` и `queue_suspend`: insert в `support_actions` и audit payload больше не дублируются внутри bulk handler.
 - [x] Bulk route сохранил текущие guard/contracts (`assertUserIsNotPrimarySuperAdmin`, batchId в audit payload, owner/admin access), но стал заметно ближе к orchestration-роли.
 - [x] Tranche подтверждён пакетами `npx eslint src/lib/admin-support-actions.ts src/app/api/admin/users/bulk/route.ts`, `npm run typecheck`, `npm run build`.
-- [ ] Следующий backend tranche: проверить, достаточно ли уже закрыт основной пункт про route/lib duplication, и если нет — добирать оставшиеся admin/self-service/AI handlers.
+- Историческая заметка: Следующий backend tranche: проверить, достаточно ли уже закрыт основной пункт про route/lib duplication, и если нет — добирать оставшиеся admin/self-service/AI handlers.
 
 ## 2026-03-20 admin billing audit extraction addendum
 
 - [x] Общий audit/event слой для admin billing mutations вынесен в `src/lib/admin-billing.ts`: `recordAdminSubscriptionEvent(...)` и `recordAdminBillingAudit(...)` теперь держат insert в `subscription_events` и `admin_audit_logs` вне route handlers.
 - [x] `src/app/api/admin/users/[id]/billing/route.ts`, `src/app/api/admin/users/[id]/billing/reconcile/route.ts` и `src/app/api/admin/users/bulk/route.ts` переведены на эти helper'ы: billing single-user и bulk flows больше не дублируют один и тот же audit/event plumbing.
 - [x] Tranche подтверждён пакетами `npx eslint src/lib/admin-billing.ts src/app/api/admin/users/[id]/billing/route.ts src/app/api/admin/users/[id]/billing/reconcile/route.ts src/app/api/admin/users/bulk/route.ts`, `npm run typecheck`, `npm run build`.
-- [ ] Следующий backend tranche: проверить, достаточно ли уже закрыт основной пункт про route/lib duplication, и если нет — добирать оставшиеся admin/self-service/AI handlers.
+- Историческая заметка: Следующий backend tranche: проверить, достаточно ли уже закрыт основной пункт про route/lib duplication, и если нет — добирать оставшиеся admin/self-service/AI handlers.
 
 ## 2026-03-20 admin role helper extraction addendum
 
 - [x] Общий target lookup и audit слой для `src/app/api/admin/users/[id]/role/route.ts` вынесен в `src/lib/admin-role-management.ts`: загрузка target user через auth admin API, чтение `platform_admins`, primary super-admin guards и audit insert больше не дублируются между `PATCH` и `DELETE`.
 - [x] Admin role route теперь ближе к transport-слою: auth, param parse и response shape остались в handler, а shared role-management rules и audit plumbing живут в helper-слое.
 - [x] Tranche подтверждён пакетами `npx eslint src/lib/admin-role-management.ts src/app/api/admin/users/[id]/role/route.ts`, `npm run typecheck`, `npm run build`.
-- [ ] Следующий backend tranche: переоценить основной пункт про route/lib duplication и route-handler audit после этой серии admin extraction slices.
+- Историческая заметка: Следующий backend tranche: переоценить основной пункт про route/lib duplication и route-handler audit после этой серии admin extraction slices.
 
 ## 2026-03-20 admin mutation contract coverage addendum
 
 - [x] `tests/e2e/api-contracts.spec.ts` расширен admin-only contract test на invalid target ids для `admin/users/[id]/export`, `deletion`, `support-action`, `suspend`, `restore`, `billing`, `billing/reconcile` и `role`.
 - [x] Теперь route-handler audit явно подтверждает, что эти admin mutation routes режут невалидный `userId` на уровне `400 ..._TARGET_INVALID` до любых side effects и не падают в общий `500`.
 - [x] Tranche подтверждён baseline-пакетом: `npx eslint tests/e2e/api-contracts.spec.ts`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1` -> `9 passed`.
-- [ ] Следующий backend tranche: решить, можно ли уже закрыть основной route-handler audit пункт по validation/owner-only/idempotency для covered admin and AI/data routes, или нужен ещё один coverage/fix slice.
+- Историческая заметка: Следующий backend tranche: решить, можно ли уже закрыть основной route-handler audit пункт по validation/owner-only/idempotency для covered admin and AI/data routes, или нужен ещё один coverage/fix slice.
 
 ## 2026-03-20 admin role helper extraction addendum
 
 - [x] Общий target lookup и audit слой для `src/app/api/admin/users/[id]/role/route.ts` вынесен в `src/lib/admin-role-management.ts`: загрузка target user через auth admin API, чтение `platform_admins`, primary super-admin guards и audit insert больше не дублируются между `PATCH` и `DELETE`.
 - [x] Admin role route теперь заметно ближе к transport-слою: auth, param parse и response shape остались в handler, а shared role-management rules и audit plumbing живут в helper-слое.
 - [x] Tranche подтверждён пакетами `npx eslint src/lib/admin-role-management.ts src/app/api/admin/users/[id]/role/route.ts`, `npm run typecheck`, `npm run build`.
-- [ ] Следующий backend tranche: переоценить основной пункт про route/lib duplication и route-handler audit после этой серии admin extraction slices.
+- Историческая заметка: Следующий backend tranche: переоценить основной пункт про route/lib duplication и route-handler audit после этой серии admin extraction slices.
 
 ## 2026-03-20 admin user detail data extraction addendum
 
@@ -903,7 +903,7 @@
 - [x] `src/app/api/admin/users/[id]/route.ts` стал тонким transport-слоем: в handler остались только admin access, UUID parse, auth lookup, вызов shared loader и общий error mapping.
 - [x] Верхний client-state этого экрана синхронизирован с tranche в чистом UTF-8: `src/components/admin-user-detail-state.ts` и верхний shell `src/components/admin-user-detail.tsx` больше не держат битый copy в loading/error/section surface.
 - [x] Tranche подтверждён пакетами `npx eslint src/lib/admin-user-detail-data.ts src/app/api/admin/users/[id]/route.ts src/components/admin-user-detail-state.ts src/components/admin-user-detail.tsx`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/admin-app.spec.ts --workers=1` -> `5 passed`.
-- [ ] Следующий backend tranche: продолжать remaining route-handler audit по owner-only/idempotency/race conditions и добирать ещё один heavy admin/self-service read-surface, если основной пункт всё ещё не закрывается целиком.
+- Историческая заметка: Следующий backend tranche: продолжать remaining route-handler audit по owner-only/idempotency/race conditions и добирать ещё один heavy admin/self-service read-surface, если основной пункт всё ещё не закрывается целиком.
 
 ## 2026-03-20 admin users catalog data extraction addendum
 
@@ -911,21 +911,21 @@
 - [x] `src/app/api/admin/users/route.ts` стал тонким transport-слоем: handler держит только admin access, чтение search params, вызов shared loader и degraded fallback response.
 - [x] `tests/e2e/admin-app.spec.ts` стабилизирован против внешнего auth timeout: degraded admin detail scenario больше не зависит от `/api/admin/users`, а получает test user id через `findAuthUserIdByEmail(...)`.
 - [x] Tranche подтверждён пакетами `npx eslint src/lib/admin-users-data.ts src/app/api/admin/users/route.ts tests/e2e/admin-app.spec.ts`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/admin-app.spec.ts --workers=1` -> `5 passed`.
-- [ ] Следующий backend tranche: продолжать remaining route-handler audit по owner-only/idempotency/race conditions и переоценить, можно ли закрывать общий пункт по тяжёлым admin/self-service read-surfaces.
+- Историческая заметка: Следующий backend tranche: продолжать remaining route-handler audit по owner-only/idempotency/race conditions и переоценить, можно ли закрывать общий пункт по тяжёлым admin/self-service read-surfaces.
 
 ## 2026-03-20 admin users directory state extraction addendum
 
 - [x] Async/data orchestration каталога пользователей вынесен из `src/components/admin-users-directory.tsx` в `src/components/use-admin-users-directory-state.ts`: fetch каталога, deferred search, bulk submit, reload/reset и selection state больше не смешиваются с JSX.
 - [x] `src/components/admin-users-directory.tsx` теперь ближе к чистому UI-orchestrator: в компоненте остались layout, cards, filters UI и wiring к уже вынесенному state-hook.
 - [x] Tranche подтверждён пакетами `npx eslint src/components/admin-users-directory.tsx src/components/use-admin-users-directory-state.ts`, `npm run build`, `npm run typecheck`, `npx playwright test tests/e2e/admin-app.spec.ts --workers=1` -> `5 passed`.
-- [ ] Следующий frontend/backend tranche: продолжать убирать async/data orchestration из remaining heavy self-service screens и затем переоценить основной checkbox по тяжёлым экранам.
+- Историческая заметка: Следующий frontend/backend tranche: продолжать убирать async/data orchestration из remaining heavy self-service screens и затем переоценить основной checkbox по тяжёлым экранам.
 
 ## 2026-03-20 settings data center state extraction addendum
 
 - [x] Async/data orchestration `src/components/settings-data-center.tsx` вынесен в `src/components/use-settings-data-center-state.ts`: refresh snapshot, queue export, request/cancel deletion, success/error state и derived flags больше не смешиваются с JSX.
 - [x] `src/components/settings-data-center-model.ts` и верхний surface `src/components/settings-data-center.tsx` переписаны в чистом UTF-8: self-service copy, timeline labels и export/deletion статусы больше не отдают mojibake.
 - [x] Tranche подтверждён пакетами `npm run lint`, `npm run build`, `npm run typecheck`.
-- [ ] Следующий frontend tranche: вынести checkout/access-review orchestration из `settings-billing-center.tsx` и затем переоценить основной checkbox по remaining heavy screens.
+- Историческая заметка: Следующий frontend tranche: вынести checkout/access-review orchestration из `settings-billing-center.tsx` и затем переоценить основной checkbox по remaining heavy screens.
 
 ## 2026-03-20 settings billing center state extraction addendum
 
@@ -933,28 +933,28 @@
 - [x] `src/components/settings-billing-center-model.ts` и `src/components/settings-billing-center.tsx` синхронизированы в чистом UTF-8: billing center, request-access surface и access timeline больше не держат битый copy.
 - [x] После extraction tranche основной checklist-пункт `Async/data orchestration больше не смешивается с JSX в оставшихся тяжёлых экранах` закрыт: remaining heavy self-service screens переведены на тот же state-hook/model/orchestrator pattern, что и workout/admin/AI surface.
 - [x] Tranche подтверждён пакетами `npm run lint`, `npm run build`, `npm run typecheck`. Дополнительный targeted UI smoke локально упёрся в нестабильный Playwright webServer bootstrap на этой машине, но кодовый baseline по settings surface зелёный.
-- [ ] Следующий frontend/backend tranche: возвращаться к оставшемуся route-handler audit и remaining mojibake/self-service sanitation вне уже закрытого heavy-screen checkbox.
+- Историческая заметка: Следующий frontend/backend tranche: возвращаться к оставшемуся route-handler audit и remaining mojibake/self-service sanitation вне уже закрытого heavy-screen checkbox.
 
 ## 2026-03-20 settings self-service contract hardening addendum
 
 - [x] `src/app/api/settings/data/route.ts` и `src/app/api/settings/billing/route.ts` переведены в чистый UTF-8 и expected validation path больше не уходит в noisy route-level error logging: `SETTINGS_DATA_INVALID` и `SETTINGS_BILLING_INVALID` режутся до unexpected-failure logging.
 - [x] `tests/e2e/api-contracts.spec.ts` расширен self-service contract-покрытием: invalid `settings/data` payload -> `400 SETTINGS_DATA_INVALID`, повторная отмена удаления -> `404 SETTINGS_DELETION_NOT_FOUND`, повторный billing access review -> `409 SETTINGS_BILLING_REVIEW_ALREADY_ACTIVE`.
 - [x] Tranche подтверждён пакетами `npx eslint src/app/api/settings/data/route.ts src/app/api/settings/billing/route.ts tests/e2e/api-contracts.spec.ts`, `npm run build`, `npm run typecheck`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1` -> `10 passed`.
-- [ ] Следующий backend tranche: продолжать remaining route-handler audit по owner-only/idempotency/race conditions за пределами settings self-service routes.
+- Историческая заметка: Следующий backend tranche: продолжать remaining route-handler audit по owner-only/idempotency/race conditions за пределами settings self-service routes.
 
 ## 2026-03-20 billing self-service route copy and reconcile validation addendum
 
 - [x] `src/app/api/billing/checkout/route.ts`, `src/app/api/billing/checkout/reconcile/route.ts` и `src/app/api/billing/portal/route.ts` переведены в чистый UTF-8: auth-first и runtime failure copy больше не держат mojibake в billing self-service surface.
 - [x] `tests/e2e/api-contracts.spec.ts` расширен явным validation-контрактом для `POST /api/billing/checkout/reconcile`: пустой payload теперь подтвержден как `400 STRIPE_CHECKOUT_RECONCILE_INVALID`.
 - [x] Tranche подтверждён пакетами `npx eslint src/app/api/billing/checkout/route.ts src/app/api/billing/checkout/reconcile/route.ts src/app/api/billing/portal/route.ts tests/e2e/api-contracts.spec.ts`, `npm run build`, `npm run typecheck`, `node scripts/run-playwright.mjs PLAYWRIGHT_BASE_URL=http://127.0.0.1:3110 -- test tests/e2e/api-contracts.spec.ts --workers=1` -> `10 passed`.
-- [ ] Следующий backend tranche: продолжать remaining route-handler audit по billing/webhook/admin/self-service контурам вне уже подтвержденного transport/validation слоя.
+- Историческая заметка: Следующий backend tranche: продолжать remaining route-handler audit по billing/webhook/admin/self-service контурам вне уже подтвержденного transport/validation слоя.
 
 ## 2026-03-20 admin billing payload contract addendum
 
 - [x] `src/app/api/admin/users/[id]/billing/route.ts` и `src/app/api/admin/users/[id]/billing/reconcile/route.ts` переведены в чистый UTF-8: operator-facing invalid/failure copy больше не держит mojibake в admin billing surface.
 - [x] `tests/e2e/api-contracts.spec.ts` расширен новым admin billing contract: при валидном `targetUserId` и некорректном payload (`enable_entitlement` без `feature_key`) route подтвержден как `400 ADMIN_BILLING_INVALID` до любых mutation side effects.
 - [x] Tranche подтверждён пакетами `npx eslint src/app/api/admin/users/[id]/billing/route.ts src/app/api/admin/users/[id]/billing/reconcile/route.ts tests/e2e/api-contracts.spec.ts`, `npm run build`, `npm run typecheck`, `node scripts/run-playwright.mjs PLAYWRIGHT_BASE_URL=http://127.0.0.1:3110 -- test tests/e2e/api-contracts.spec.ts --workers=1` -> `11 passed`.
-- [ ] Следующий backend tranche: продолжать remaining route-handler audit по admin/billing/webhook/self-service контурам, пока основной checkbox по validation/owner-only/idempotency не будет закрыт целиком.
+- Историческая заметка: Следующий backend tranche: продолжать remaining route-handler audit по admin/billing/webhook/self-service контурам, пока основной checkbox по validation/owner-only/idempotency не будет закрыт целиком.
 
 ## 2026-03-20 admin bulk and operations contract sanitation addendum
 
@@ -962,7 +962,7 @@
 - [x] `src/app/api/admin/operations/[kind]/[id]/route.ts` больше не пишет noisy `logger.error` на ожидаемом `ZodError`: validation path `ADMIN_OPERATION_INVALID` теперь режется до unexpected-failure logging.
 - [x] `tests/e2e/api-contracts.spec.ts` расширен тремя admin transport contracts: invalid `GET /api/admin/users/not-a-uuid` -> `400 ADMIN_USER_DETAIL_INVALID`, invalid payload `POST /api/admin/users/bulk` (`enable_entitlement` без `feature_key`) -> `400 ADMIN_BULK_INVALID`, invalid `PATCH /api/admin/operations/support_action/not-a-uuid` -> `400 ADMIN_OPERATION_INVALID`.
 - [x] Tranche подтверждён пакетами `npx eslint src/app/api/admin/users/bulk/route.ts src/app/api/admin/operations/[kind]/[id]/route.ts src/app/api/admin/users/[id]/route.ts src/app/api/admin/users/[id]/role/route.ts tests/e2e/api-contracts.spec.ts`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1` -> `11 passed`.
-- [ ] Следующий backend tranche: продолжать remaining route-handler audit по webhook/internal/admin mutation контурам, пока основной checkbox по validation/owner-only/idempotency не будет закрыт целиком.
+- Историческая заметка: Следующий backend tranche: продолжать remaining route-handler audit по webhook/internal/admin mutation контурам, пока основной checkbox по validation/owner-only/idempotency не будет закрыт целиком.
 
 ## 2026-03-21 bootstrap, webhook and billing job contract sanitation addendum
 
@@ -972,7 +972,7 @@
 - [x] `tests/e2e/api-contracts.spec.ts` расширен transport-контрактами: anonymous `POST /api/admin/bootstrap` -> `401 AUTH_REQUIRED`, anonymous `POST /api/billing/webhook/stripe` подтверждён как `400 STRIPE_SIGNATURE_MISSING` или `503 STRIPE_WEBHOOK_NOT_CONFIGURED` в зависимости от env.
 - [x] `tests/e2e/internal-jobs.spec.ts` расширен validation-контрактом для `POST /api/internal/jobs/billing-reconcile?userId=not-a-uuid` -> `400 BILLING_RECONCILE_JOB_INVALID`.
 - [x] Tranche подтверждён пакетами `npx eslint src/app/api/admin/bootstrap/route.ts src/app/api/billing/webhook/stripe/route.ts src/app/api/internal/jobs/billing-reconcile/route.ts tests/e2e/api-contracts.spec.ts tests/e2e/internal-jobs.spec.ts`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/api-contracts.spec.ts tests/e2e/internal-jobs.spec.ts --workers=1` -> `13 passed`.
-- [ ] Следующий backend tranche: продолжать remaining route-handler audit по admin/self-service mutation handlers и добивать основной checkbox по validation/owner-only/idempotency.
+- Историческая заметка: Следующий backend tranche: продолжать remaining route-handler audit по admin/self-service mutation handlers и добивать основной checkbox по validation/owner-only/idempotency.
 
 ## 2026-03-21 admin mutation payload contract sanitation addendum
 
@@ -980,7 +980,7 @@
 - [x] Default audit reasons для admin mutation handlers переведены на русский, чтобы operator-visible history больше не показывала английские `manual ... request` хвосты.
 - [x] `tests/e2e/api-contracts.spec.ts` расширен invalid-payload контрактами для admin queue routes: `ADMIN_DELETION_INVALID`, `ADMIN_EXPORT_INVALID`, `ADMIN_RESTORE_INVALID`, `ADMIN_SUPPORT_ACTION_INVALID`, `ADMIN_SUSPEND_INVALID`.
 - [x] Tranche подтверждён пакетами `npx eslint src/app/api/admin/users/[id]/billing/route.ts src/app/api/admin/users/[id]/billing/reconcile/route.ts src/app/api/admin/users/[id]/deletion/route.ts src/app/api/admin/users/[id]/export/route.ts src/app/api/admin/users/[id]/restore/route.ts src/app/api/admin/users/[id]/support-action/route.ts src/app/api/admin/users/[id]/suspend/route.ts tests/e2e/api-contracts.spec.ts`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1` -> `12 passed`.
-- [ ] Следующий backend tranche: добирать remaining route-handler audit по operator/self-service mutation surfaces и переоценить, можно ли закрывать основной checkbox по validation/owner-only/idempotency.
+- Историческая заметка: Следующий backend tranche: добирать remaining route-handler audit по operator/self-service mutation surfaces и переоценить, можно ли закрывать основной checkbox по validation/owner-only/idempotency.
 
 ## 2026-03-21 admin operator tooling contract sanitation addendum
 
@@ -988,7 +988,7 @@
 - [x] `src/app/api/admin/operations/process/route.ts` и `src/app/api/admin/ai-evals/run/route.ts` теперь режут invalid payload до expected `400` без noisy route-level failure logging на validation path.
 - [x] `tests/e2e/api-contracts.spec.ts` расширен direct invalid-payload контрактами для operator tooling routes: `AI_EVAL_RUN_INVALID` и `ADMIN_OPERATIONS_PROCESS_INVALID`.
 - [x] Tranche подтверждён пакетами `npx eslint src/app/api/admin/ai-evals/run/route.ts src/app/api/admin/operations/process/route.ts src/app/api/admin/observability/sentry-test/route.ts tests/e2e/api-contracts.spec.ts`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1` -> `13 passed`.
-- [ ] Следующий backend tranche: дочистить remaining operator wording и audit reasons в admin surfaces, затем переоценить основной checkbox по validation/owner-only/idempotency.
+- Историческая заметка: Следующий backend tranche: дочистить remaining operator wording и audit reasons в admin surfaces, затем переоценить основной checkbox по validation/owner-only/idempotency.
 
 ## 2026-03-21 admin operations wording sanitation addendum
 
@@ -998,7 +998,7 @@
 - [x] `src/app/api/admin/users/[id]/role/route.ts` и `src/app/api/admin/users/[id]/support-action/route.ts` переведены на чистый operator-facing copy: administrative role и support action больше не держат английские хвосты в validation, audit reason и failure messages.
 - [x] `src/app/api/admin/ai-evals/run/route.ts` теперь создаёт русский default label `AI-проверка ...`, чтобы operator queue и audit history не смешивали английские и русские названия.
 - [x] Tranche подтверждён пакетами `npm run lint -- --quiet src/app/api/admin/operations/route.ts src/app/api/admin/operations/[kind]/[id]/route.ts src/app/api/admin/users/[id]/role/route.ts src/app/api/admin/users/[id]/support-action/route.ts src/app/api/admin/ai-evals/run/route.ts`, последовательными `npm run typecheck` и `npm run build`.
-- [ ] Следующий backend tranche: продолжать remaining route-handler audit по validation/owner-only/idempotency и переоценить, можно ли закрывать основной checkbox по backend hardening.
+- Историческая заметка: Следующий backend tranche: продолжать remaining route-handler audit по validation/owner-only/idempotency и переоценить, можно ли закрывать основной checkbox по backend hardening.
 
 ## 2026-03-21 internal jobs and queue processing wording sanitation addendum
 
@@ -1006,7 +1006,7 @@
 - [x] `src/lib/admin-queue-processing.ts` переведён на единый русский audit/log слой: queue-processing reasons, deletion hold transitions, support queue notes и hard-delete workflow labels больше не держат английские `queue processor ...` хвосты.
 - [x] Повторная проверка поиском подтвердила, что в `src/app/api` и `src/lib` больше не осталось строк `queue processor`, `scheduled AI eval jobs`, `billing reconciliation jobs` и `knowledge reindex jobs`.
 - [x] Tranche подтверждён пакетами `npm run lint -- --quiet src/lib/admin-queue-processing.ts src/app/api/internal/jobs/ai-evals-schedule/route.ts src/app/api/internal/jobs/billing-reconcile/route.ts src/app/api/internal/jobs/knowledge-reindex/route.ts`, `npm run typecheck`, `npm run build`.
-- [ ] Следующий backend tranche: продолжать remaining route-handler audit по validation/owner-only/idempotency и переоценить, можно ли закрывать основной checkbox по backend hardening.
+- Историческая заметка: Следующий backend tranche: продолжать remaining route-handler audit по validation/owner-only/idempotency и переоценить, можно ли закрывать основной checkbox по backend hardening.
 
 ## 2026-03-21 onboarding, weekly programs и workout templates contract sanitation addendum
 
@@ -1014,7 +1014,7 @@
 - [x] В `onboarding` и `workout templates` validation path теперь режется до expected `400` без noisy route-level `logger.error` на `ZodError`, а clone/template titles больше не смешивают английский и русский в пользовательской поверхности.
 - [x] `tests/e2e/api-contracts.spec.ts` расширен invalid-payload контрактами для `POST /api/onboarding`, `POST /api/weekly-programs/{id}/clone` и `POST /api/workout-templates`, чтобы эти product routes были покрыты тем же predictable `400` слоем, что и остальные self-service handlers.
 - [x] Tranche подтверждён пакетами `npm run lint -- --quiet src/app/api/onboarding/route.ts src/app/api/nutrition/targets/route.ts src/app/api/weekly-programs/[id]/lock/route.ts src/app/api/weekly-programs/[id]/clone/route.ts src/app/api/workout-templates/route.ts tests/e2e/api-contracts.spec.ts`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1` -> `13 passed`.
-- [ ] Следующий backend tranche: продолжать remaining route-handler audit по validation/owner-only/idempotency и переоценить, можно ли уже закрывать основной checkbox по backend hardening.
+- Историческая заметка: Следующий backend tranche: продолжать remaining route-handler audit по validation/owner-only/idempotency и переоценить, можно ли уже закрывать основной checkbox по backend hardening.
 
 ## 2026-03-21 weekly programs, exercises и nutrition create routes sanitation addendum
 
@@ -1022,7 +1022,7 @@
 - [x] В `weekly-programs`, `exercises`, `foods`, `recipes`, `meal-templates` и `meals` validation path теперь режется до expected `400` без noisy route-level `logger.error` на `ZodError`, а default title snapshot `Unknown exercise` заменён на пользовательское `Неизвестное упражнение`.
 - [x] `tests/e2e/api-contracts.spec.ts` расширен invalid-payload контрактами для `POST /api/weekly-programs`, `POST /api/exercises`, `POST /api/foods`, `POST /api/recipes`, `POST /api/meal-templates` и `POST /api/meals`, чтобы весь create-surface weekly/workout/nutrition контура был покрыт predictable `400` regression suite.
 - [x] Tranche подтверждён пакетами `npm run lint -- --quiet src/app/api/weekly-programs/route.ts src/app/api/exercises/route.ts src/app/api/foods/route.ts src/app/api/recipes/route.ts src/app/api/meal-templates/route.ts src/app/api/meals/route.ts tests/e2e/api-contracts.spec.ts`, `npm run typecheck`, `npm run build`, `npx playwright test tests/e2e/api-contracts.spec.ts --workers=1` -> `13 passed`.
-- [ ] Следующий backend tranche: переоценить, какие route handlers ещё реально не закрыты по validation/owner-only/idempotency, и добить последний хвост перед закрытием основного checkbox.
+- Историческая заметка: Следующий backend tranche: переоценить, какие route handlers ещё реально не закрыты по validation/owner-only/idempotency, и добить последний хвост перед закрытием основного checkbox.
 
 ## 2026-03-21 workout sync transport sanitation addendum
 
@@ -1038,7 +1038,7 @@
 - [x] Повторная ручная verification-связка подтверждена локально через `PLAYWRIGHT_BASE_URL=http://127.0.0.1:3100`: `29 passed` для `api-contracts + ownership-isolation + internal-jobs + workout-sync` и `4 passed` для прямого `RLS`.
 - [x] `tests/e2e/workout-sync.spec.ts` стабилизирован через `navigateStable(...)`, чтобы regression suite не флакал на auth redirect и мог служить реальным доказательством для checkbox про `reset/finish/sync` race conditions, infinite polling и idempotent reset/done flow.
 - [x] После этого закрыт и второй основной backend checkbox `Подтвердить, что reset/finish/sync сценарии не создают race conditions и бесконечный polling`: suite отдельно подтверждает invalid sync mutations, clean `sync -> reset -> sync/pull`, idempotent `done/reset`, очистку stale offline queue и guard для unlocked week.
-- [ ] Следующий backend tranche: переходить к оставшимся quality/release блокам вне уже закрытого route-handler audit, в первую очередь AI eval gate, production billing и remaining UX/documentation sanitation.
+- Историческая заметка: Следующий backend tranche: переходить к оставшимся quality/release блокам вне уже закрытого route-handler audit, в первую очередь AI eval gate, production billing и remaining UX/documentation sanitation.
 
 ## 2026-03-20 user-facing billing UX closure addendum
 
@@ -1094,7 +1094,7 @@
 - [x] Добавлен прямой regression `tests/billing-gate/stripe-webhook-idempotency.spec.ts`: repeated `customer.subscription.updated` с тем же `provider_event_id` подтверждён как идемпотентный, а `entitlements` и `usage_counters` остаются неизменными.
 - [x] Локальная verification-связка подтверждена пакетами `npm run lint`, `npm run build`, `npm run typecheck`, `npm run test:billing-gate` -> `1 passed, 1 skipped`.
 - [x] После этого закрыт основной checklist-пункт `Проверить идемпотентность webhook и согласованность subscriptions, entitlements, usage counters`.
-- [ ] Следующий billing tranche уже внешний: нужны реальные `production/staging` Stripe env и живой `checkout -> return reconcile -> webhook -> portal`, чтобы закрыть оставшийся live rollout.
+- Историческая заметка: Следующий billing tranche уже внешний: нужны реальные `production/staging` Stripe env и живой `checkout -> return reconcile -> webhook -> portal`, чтобы закрыть оставшийся live rollout.
 
 ## 2026-03-23 Sentry runtime readiness addendum
 
@@ -1103,7 +1103,7 @@
 - [x] Санированы release-policy документы [RELEASE_CHECKLIST.md](/C:/fit/docs/RELEASE_CHECKLIST.md), [PROD_READY.md](/C:/fit/docs/PROD_READY.md), [BUILD_WARNINGS.md](/C:/fit/docs/BUILD_WARNINGS.md) и индекс документации [README.md](/C:/fit/docs/README.md): observability и release blockers снова зафиксированы в чистом UTF-8.
 - [x] Санированы [global-error.tsx](/C:/fit/src/app/global-error.tsx) и [sentry-test route](/C:/fit/src/app/api/admin/observability/sentry-test/route.ts): global error surface и admin Sentry smoke больше не держат битый copy.
 - [x] Локальная verification-связка подтверждена пакетами `npm run lint`, `npm run typecheck`, `npm run build`, `npm run verify:sentry-runtime`; последний gate сейчас корректно даёт явный skip/blocker только по отсутствующим runtime env и credentials.
-- [ ] Основной checklist-пункт `Завершить Sentry rollout на production env` остаётся открыт: кодовый и release слой готовы, но live runtime smoke всё ещё упирается во внешние production secrets.
+- Историческая заметка: Основной checklist-пункт `Завершить Sentry rollout на production env` остаётся открыт: кодовый и release слой готовы, но live runtime smoke всё ещё упирается во внешние production secrets.
 
 ## 2026-03-23 RAG v2 bootstrap addendum
 
@@ -1112,7 +1112,7 @@
 - [x] Retrieval result type в [knowledge-model.ts](/C:/fit/src/lib/ai/knowledge-model.ts) расширен score-breakdown полями `vectorScore`, `textScore`, `fusedScore`, `rerankScore`, `matchedTerms`, `sourceKind`.
 - [x] Добавлен app-side hybrid ranking [knowledge-hybrid-ranking.ts](/C:/fit/src/lib/ai/knowledge-hybrid-ranking.ts) и retrieval pipeline в [knowledge-retrieval.ts](/C:/fit/src/lib/ai/knowledge-retrieval.ts) переведён с fallback-only режима на `vector + lexical -> fused -> rerank`.
 - [x] Добавлен regression suite [hybrid-retrieval.spec.ts](/C:/fit/tests/ai-gate/hybrid-retrieval.spec.ts), который подтверждает fusion, score-breakdown и context cap.
-- [ ] Следующий RAG tranche: формализовать chunk policy и metadata contract для `knowledge_chunks`, затем переходить к incremental indexing и hybrid DB search.
+- Историческая заметка: Следующий RAG tranche: формализовать chunk policy и metadata contract для `knowledge_chunks`, затем переходить к incremental indexing и hybrid DB search.
 
 ## 2026-03-24 RAG v2 chunk metadata addendum
 
@@ -1120,7 +1120,7 @@
 - [x] Добавлен metadata слой [knowledge-document-metadata.ts](/C:/fit/src/lib/ai/knowledge-document-metadata.ts): каждый knowledge document теперь получает `sourceKey`, `chunkVersion`, `contentHash`, `importanceWeight`, `recencyAt`, `sourceFamily`, `tokenCount`.
 - [x] [knowledge-documents.ts](/C:/fit/src/lib/ai/knowledge-documents.ts) переведён на финализацию metadata contract и дополнен recency keys для `profile`, `body metrics`, `memory`, `workout day`, `exercise history` и `structured facts`.
 - [x] Добавлен regression suite [knowledge-document-metadata.spec.ts](/C:/fit/tests/ai-gate/knowledge-document-metadata.spec.ts), который подтверждает deterministic metadata для workout и fallback chunks.
-- [ ] Следующий RAG tranche: переходить к incremental indexing, stale chunk cleanup и hybrid DB search, уже опираясь на введённый metadata contract.
+- Историческая заметка: Следующий RAG tranche: переходить к incremental indexing, stale chunk cleanup и hybrid DB search, уже опираясь на введённый metadata contract.
 
 ## 2026-03-24 RAG v2 incremental indexing addendum
 
@@ -1128,7 +1128,7 @@
 - [x] [knowledge-runtime.ts](/C:/fit/src/lib/ai/knowledge-runtime.ts) переведён на incremental chunk sync: unchanged chunks сохраняются, changed chunks переиндексируются точечно, stale chunks удаляются отдельно.
 - [x] [knowledge-indexing.ts](/C:/fit/src/lib/ai/knowledge-indexing.ts) больше не пересоздаёт весь embedding слой по умолчанию: stale embeddings удаляются, а новые embeddings считаются только для отсутствующих chunk ids.
 - [x] Добавлен regression suite [knowledge-chunk-sync.spec.ts](/C:/fit/tests/ai-gate/knowledge-chunk-sync.spec.ts), который подтверждает diff для `unchanged / changed / stale` chunk flow.
-- [ ] Следующий RAG tranche: переходить к DB migration для lexical search metadata и hybrid RPC, затем связывать это с retrieval eval gate.
+- Историческая заметка: Следующий RAG tranche: переходить к DB migration для lexical search metadata и hybrid RPC, затем связывать это с retrieval eval gate.
 
 ## 2026-03-24 RAG v2 retrieval eval addendum
 
@@ -1136,7 +1136,7 @@
 - [x] Добавлен metrics слой [knowledge-retrieval-evals.ts](/C:/fit/src/lib/ai/knowledge-retrieval-evals.ts): `Recall@5`, `Recall@10`, `nDCG@10`, score per eval case и grouping по retrieval topics теперь выражены отдельными pure helpers.
 - [x] Добавлен regression suite [retrieval-metrics.spec.ts](/C:/fit/tests/ai-gate/retrieval-metrics.spec.ts), который подтверждает метрики и topic grouping отдельно от live AI runtime.
 - [x] Добавлен отдельный command-level gate `npm run test:retrieval-gate`: он запускает hybrid ranking, metadata, chunk sync, retrieval metrics и full-history retrieval fallback suite без web server и auth bootstrap.
-- [ ] Следующий RAG tranche: связать retrieval gate с feature-flag rollout и release gate для assistant/plan suites.
+- Историческая заметка: Следующий RAG tranche: связать retrieval gate с feature-flag rollout и release gate для assistant/plan suites.
 
 ## 2026-03-24 RAG v2 rollout gate addendum
 
@@ -1147,7 +1147,7 @@
 - [x] Добавлен release harness [verify-retrieval-release.mjs](/C:/fit/scripts/verify-retrieval-release.mjs) и команда `npm run verify:retrieval-release`: retrieval regression gate всегда идёт в `hybrid` режиме, а live `assistant / retrieval / workout plan / meal plan / safety` suites запускаются поверх того же режима, если доступны auth и AI provider credentials.
 - [x] [quality.yml](/C:/fit/.github/workflows/quality.yml) теперь проводит AI quality gate через `npm run verify:retrieval-release` и требует user/admin Playwright credentials, чтобы в CI действительно покрывались и assistant/safety, и admin retrieval/plan suites.
 - [x] Локальная verification-связка подтверждена пакетами `npm run lint`, `npm run test:retrieval-gate`, `npm run typecheck`, `npm run build`; `npm run verify:retrieval-release` сейчас честно упирается во внешний provider blocker (`OpenRouter 402`, `Voyage 403`) и поэтому не закрывает основной master-plan пункт про live AI quality gate.
-- [ ] Следующий RAG tranche: переходить к step-level telemetry и latency baseline для retrieval слоя.
+- Историческая заметка: Следующий RAG tranche: переходить к step-level telemetry и latency baseline для retrieval слоя.
 
 ## 2026-03-24 RAG v2 telemetry and latency addendum
 
@@ -1224,3 +1224,9 @@
 - [x] Добавлен отдельный mobile/PWA regression guard для hosted billing page: mobile viewport проверяет [billing/cloudpayments page](/C:/fit/src/app/billing/cloudpayments/page.tsx), [cloudpayments-checkout.tsx](/C:/fit/src/components/cloudpayments-checkout.tsx) и отсутствие horizontal overflow.
 - [x] Отдельно подтверждён Android/TWA billing deep-link smoke на эмуляторе `Medium_Phone_API_36.1`: `adb` и `logcat` фиксируют `TWALauncherActivity` с `capturedLink=https://fit-platform-eta.vercel.app/billing/cloudpayments?...`.
 - [x] Подплан [RUSSIAN_BILLING_PROVIDER_PLAN.md](/C:/fit/docs/RUSSIAN_BILLING_PROVIDER_PLAN.md) после этого закрыт на `21 / 21` (`100%`), а основной progress execution checklist остаётся `178 / 186` (`96%`), потому что `Milestone 2` всё ещё блокируется не кодом, а живыми provider env для production/staging.
+
+## 2026-04-01 docs sanitation follow-up addendum
+
+- [x] [PREMIUM_REDESIGN_PLAN.md](/C:/fit/docs/PREMIUM_REDESIGN_PLAN.md) переписан в чистом UTF-8 и снова пригоден как developer-facing handoff по visual language и mobile acceptance.
+- [x] В архивных addendum-блоках этого master plan historical `Следующий ... tranche` записи переведены из ложных `[ ]`-чекбоксов в обычные исторические заметки, чтобы `source of truth` больше не выглядел как будто локально осталось десятки незакрытых tranche.
+- [x] Основной progress execution checklist не меняется и остаётся `178 / 186` (`96%`): docs cleanup убирает путаницу в handoff, но не закрывает внешние runtime/env блокеры.
