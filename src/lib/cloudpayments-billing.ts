@@ -99,6 +99,7 @@ export type CloudpaymentsCheckoutIntent = {
 const CLOUDPAYMENTS_MANAGEMENT_URL = "https://my.cloudpayments.ru/";
 
 type CloudpaymentsWebhookPayload = Record<string, unknown>;
+type CloudpaymentsTestMode = "mock" | null;
 
 function parseAmount(value: string | undefined) {
   if (!value) {
@@ -161,6 +162,10 @@ function getCloudpaymentsApiBaseUrl() {
   return "https://api.cloudpayments.ru";
 }
 
+function getCloudpaymentsTestMode(): CloudpaymentsTestMode {
+  return serverEnv.CLOUDPAYMENTS_TEST_MODE === "mock" ? "mock" : null;
+}
+
 export function getCloudpaymentsPublicId() {
   if (!publicEnv.NEXT_PUBLIC_CLOUDPAYMENTS_PUBLIC_ID) {
     throw new Error("NEXT_PUBLIC_CLOUDPAYMENTS_PUBLIC_ID is not configured.");
@@ -209,10 +214,54 @@ function getCloudpaymentsAuthorizationHeader() {
   ).toString("base64")}`;
 }
 
+function buildMockCloudpaymentsSubscription(input: {
+  accountId?: string | null;
+  subscriptionId?: string | null;
+}) {
+  const accountId = input.accountId?.trim() || "mock-account";
+  const amount = getCloudpaymentsPremiumMonthlyAmountRub();
+  const now = Date.now();
+
+  return {
+    AccountId: accountId,
+    Amount: amount,
+    Currency: "RUB",
+    Description: getCloudpaymentsPremiumMonthlyDescription(),
+    Email: null,
+    FailedTransactionsNumber: 0,
+    Id: input.subscriptionId?.trim() || `mock-cloudpayments-sub-${accountId}`,
+    Interval: "Month",
+    LastTransactionDateIso: new Date(now).toISOString(),
+    MaxPeriods: null,
+    NextTransactionDateIso: new Date(now + 30 * 24 * 60 * 60 * 1000).toISOString(),
+    Period: 1,
+    StartDateIso: new Date(now - 24 * 60 * 60 * 1000).toISOString(),
+    Status: "Active",
+    SuccessfulTransactionsNumber: 1,
+  } satisfies Record<string, unknown>;
+}
+
 async function callCloudpaymentsApi<TModel>(
   path: string,
   body: Record<string, unknown>,
 ): Promise<TModel> {
+  if (getCloudpaymentsTestMode() === "mock") {
+    if (path === "/subscriptions/find") {
+      const accountId = normalizeString(body.accountId);
+      return [
+        buildMockCloudpaymentsSubscription({
+          accountId,
+        }),
+      ] as TModel;
+    }
+
+    if (path === "/subscriptions/get") {
+      return buildMockCloudpaymentsSubscription({
+        subscriptionId: normalizeString(body.Id),
+      }) as TModel;
+    }
+  }
+
   const response = await fetch(`${getCloudpaymentsApiBaseUrl()}${path}`, {
     method: "POST",
     headers: {
@@ -333,15 +382,27 @@ export async function findCloudpaymentsSubscriptionsByAccountId(accountId: strin
   return models.map((model) => mapCloudpaymentsSubscription(model));
 }
 
-export async function getCloudpaymentsSubscriptionById(id: string) {
+export async function getCloudpaymentsSubscriptionById(
+  id: string,
+  accountIdHint?: string | null,
+) {
   const model = await callCloudpaymentsApi<Record<string, unknown>>(
     "/subscriptions/get",
     {
+      AccountId: accountIdHint ?? null,
       Id: id,
     },
   );
 
-  return mapCloudpaymentsSubscription(model);
+  const rawModel =
+    getCloudpaymentsTestMode() === "mock" && accountIdHint
+      ? {
+          ...model,
+          AccountId: accountIdHint,
+        }
+      : model;
+
+  return mapCloudpaymentsSubscription(rawModel);
 }
 
 function pickLatestCloudpaymentsSubscription(
@@ -740,7 +801,10 @@ export async function processCloudpaymentsWebhookNotification(
     normalizeString(payload.SubscriptionId) ?? normalizeString(payload.Id);
 
   if (subscriptionId) {
-    const subscription = await getCloudpaymentsSubscriptionById(subscriptionId);
+    const subscription = await getCloudpaymentsSubscriptionById(
+      subscriptionId,
+      normalizeString(payload.AccountId),
+    );
 
     await reconcileCloudpaymentsSubscription(adminSupabase, {
       providerEventId,

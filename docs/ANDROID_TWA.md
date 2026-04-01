@@ -19,6 +19,9 @@
 - Logcat подтвердил запуск production URL из `TWALauncherActivity`:
   - `Using url from Manifest: https://fit-platform-eta.vercel.app/dashboard`
   - `capturedLink=https://fit-platform-eta.vercel.app/dashboard`
+- Отдельно подтверждён billing deep-link smoke внутри TWA:
+  - `adb shell am start -W -a android.intent.action.VIEW -d "https://fit-platform-eta.vercel.app/billing/cloudpayments?reference=android-billing-smoke" app.fitplatform.mobile`
+  - `TWALauncherActivity` получил и открыл `capturedLink=https://fit-platform-eta.vercel.app/billing/cloudpayments?reference=android-billing-smoke`
 
 ## Что использовалось для локального smoke
 
@@ -78,4 +81,12 @@ npx @bubblewrap/cli build --manifest="C:\fit\android\twa-shell\twa-manifest.json
 adb install -r "C:\fit\android\twa-shell\app-release-signed.apk"
 adb shell am start -W -n app.fitplatform.mobile/.LauncherActivity
 adb logcat -d | Select-String -Pattern "fit-platform-eta|TWALauncherActivity|capturedLink"
+```
+
+Billing deep-link smoke:
+
+```powershell
+adb logcat -c
+adb shell am start -W -a android.intent.action.VIEW -d "https://fit-platform-eta.vercel.app/billing/cloudpayments?reference=android-billing-smoke" app.fitplatform.mobile
+adb logcat -d | Select-String -Pattern "billing/cloudpayments|fit-platform-eta|capturedLink|TWALauncherActivity"
 ```

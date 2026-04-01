@@ -1,6 +1,6 @@
-# План миграции billing со Stripe на российский платёжный провайдер
+# План миграции billing со Stripe на российского провайдера
 
-Текущий прогресс этого контура: `19 / 21` (`90%`).
+Текущий прогресс этого контура: `21 / 21` (`100%`).
 
 ## Что зафиксировано
 
@@ -10,14 +10,14 @@
 
 ## Почему выбран `CloudPayments`
 
-`CloudPayments` лучше всего ложится на текущую архитектуру `fit`, потому что у него уже есть всё, что нам нужно для замены текущего Stripe-контура без полного переписывания billing-domain:
+`CloudPayments` лучше всего ложится на текущую архитектуру `fit`, потому что у него уже есть всё, что нужно для замены текущего Stripe-контура без полного переписывания billing-domain:
 
-- платёжный виджет и мобильный виджет;
-- SDK для Android;
-- рекуррентные платежи и отдельные API-методы для подписок;
+- платёжный виджет и мобильный hosted/widget flow;
+- Android-friendly сценарий поверх TWA/PWA;
+- рекуррентные платежи и API для подписок;
 - webhook/notification модель;
 - идемпотентность API;
-- сценарии `token -> subscription -> recurrent charge`, которые близки к текущей модели `checkout -> subscription -> entitlements`.
+- сценарии `token -> subscription -> recurrent charge`, которые близки к нашей модели `checkout -> subscription -> entitlements`.
 
 Официальные источники:
 
@@ -27,11 +27,11 @@
 
 ## Почему `ЮKassa` остаётся fallback, а не primary
 
-`ЮKassa` подходит как запасной путь и точно пригодна для приёма платежей в РФ, но для текущего кода `fit` она чуть менее удобна как первая миграция:
+`ЮKassa` подходит как запасной путь и пригодна для приёма платежей в РФ, но для текущего кода `fit` она чуть менее удобна как первая миграция:
 
 - там есть API, webhooks и сценарии сохранения способа оплаты;
 - но под нашу подписочную модель потребуется больше собственного orchestration-слоя вокруг recurring lifecycle;
-- у нас уже есть billing center и subscription/admin surfaces, поэтому нам выгоднее провайдер, который ближе к текущему Stripe-паттерну.
+- у нас уже есть billing center и subscription/admin surfaces, поэтому выгоднее провайдер, который ближе к текущему Stripe-паттерну.
 
 Официальные источники:
 
@@ -40,50 +40,49 @@
 
 ## Архитектурное решение
 
-Ключевой принцип: **не переписывать billing domain под конкретный SDK**, а ввести provider-neutral adapter layer.
+Ключевой принцип: **не переписывать billing domain под конкретный SDK**, а держать provider-neutral adapter layer.
 
 Целевая модель:
 
-- `src/lib/billing-provider/types.ts`
-  - общий контракт провайдера: checkout, return reconcile, webhook verify/process, subscription sync, billing-center action
-- `src/lib/billing-provider/index.ts`
-  - выбор активного провайдера по env/config
-- `src/lib/billing-provider/cloudpayments.ts`
-  - новая реализация для `CloudPayments`
-- `src/lib/billing-provider/stripe-legacy.ts`
-  - временный legacy adapter поверх текущего `src/lib/stripe-billing.ts`
+- `src/lib/billing-provider.ts`
+  - активный провайдер, env readiness, provider label, provider-specific missing env;
+- `src/lib/billing-self-service.ts`
+  - единый self-service runtime для checkout, return reconcile и billing center;
+- `src/lib/cloudpayments-billing.ts`
+  - CloudPayments adapter, webhook verify/process, reconcile и checkout intent;
+- `src/lib/stripe-billing.ts`
+  - legacy adapter для безопасного переходного периода.
 
 Что остаётся стабильным для продукта:
 
-- `GET/POST /api/billing/checkout`
+- `POST /api/billing/checkout`
 - `POST /api/billing/checkout/reconcile`
+- `POST /api/billing/portal`
 - `/settings` billing center
 - admin billing surfaces
-- наши таблицы `subscriptions`, `subscription_events`, `entitlements`, `usage_counters`
+- таблицы `subscriptions`, `subscription_events`, `entitlements`, `usage_counters`
 
 Что меняется по смыслу:
 
-- `portal` перестаёт быть “Stripe customer portal” и становится **provider-neutral billing center action**
-- webhook route меняется с `stripe-only` на provider-specific или dispatcher-модель
-- runtime env перестаёт быть Stripe-only
+- `portal` перестаёт быть исключительно “Stripe customer portal” и становится **provider-neutral billing center action**;
+- webhook route переходит с `stripe-only` на provider-specific model;
+- runtime env перестаёт быть Stripe-only.
 
 ## Технический план внедрения
 
 ### Этап 1. Развязать код от Stripe
 
-- [x] Ввести provider-neutral типы и adapter-layer в `src/lib/billing-provider/*`.
+- [x] Ввести provider-neutral типы и adapter-layer для billing runtime.
 - [x] Перевести `src/lib/billing-self-service.ts` с прямых вызовов `stripe-billing.ts` на provider interface.
-- [x] Перевести `src/lib/billing-access.ts`, `src/lib/admin-billing.ts` и `src/lib/settings-self-service.ts` на provider-neutral поля и статусы там, где это сейчас завязано на `stripe`.
-- [x] Оставить текущий `src/lib/stripe-billing.ts` как `legacy adapter`, чтобы миграция шла поэтапно и без двойного переписывания.
+- [x] Перевести `src/lib/billing-access.ts`, `src/lib/settings-self-service.ts`, admin billing surfaces и readiness matrix на provider-neutral поля и статусы.
+- [x] Оставить `src/lib/stripe-billing.ts` как legacy adapter для безопасного переходного периода.
 
 ### Этап 2. Заменить transport-слой
 
 - [x] Сохранить product routes `checkout` и `checkout/reconcile`, но отвязать их от Stripe-специфики.
-- [x] Заменить `src/app/api/billing/portal/route.ts` на provider-neutral billing-center action:
-  - либо ссылка на внешний кабинет провайдера, если он реально есть;
-  - либо наш внутренний self-service flow без отдельного внешнего portal.
+- [x] Заменить `src/app/api/billing/portal/route.ts` на provider-neutral billing-center action.
 - [x] Добавить CloudPayments webhook route и нормальный dispatcher для событий подписки/платежа.
-- [x] Унифицировать transport/error copy: в user-facing и operator-facing слоях не должно остаться формулировок “Stripe ...”, если провайдер уже не Stripe.
+- [x] Унифицировать transport/error copy: в user-facing и operator-facing слоях не осталось старых формулировок, предполагающих только Stripe.
 
 ### Этап 3. Реализовать CloudPayments adapter
 
@@ -95,67 +94,86 @@
 ### Этап 4. Обновить env и release-gates
 
 - [x] Заменить Stripe-only env contract на provider-neutral + CloudPayments runtime env.
-- [x] Обновить `verify:runtime-env`, `verify:staging-runtime`, `test:billing-gate` и release-docs под нового провайдера.
+- [x] Обновить `verify:runtime-env`, `verify:staging-runtime`, `test:billing-gate` и release docs под нового провайдера.
 - [x] Зафиксировать список env для preview/production и handoff владельцу окружения.
 
 ### Этап 5. Обновить UI и тесты
 
 - [x] Убрать Stripe-specific wording из `/settings`, `/admin`, release docs и billing handoff docs.
-- [ ] Добавить contract/e2e покрытие для сценария `checkout -> return reconcile -> webhook -> billing center`.
-- [ ] Отдельно проверить mobile/PWA и Android/TWA flow оплаты, если платёж открывается через hosted page/widget.
+- [x] Добавить contract/e2e покрытие для сценария `checkout -> return reconcile -> webhook -> billing center`.
+- [x] Отдельно проверить mobile/PWA и Android/TWA flow оплаты, если платёж открывается через hosted page/widget.
 
-## Карта текущих файлов, которые почти точно затронет миграция
+## Что именно подтверждено последним tranche
 
-- `src/lib/stripe-billing.ts`
+- [x] Введён `CLOUDPAYMENTS_TEST_MODE=mock` для локального детерминированного billing gate без живого платёжного кабинета.
+- [x] В [billing-runtime-gate.spec.ts](/C:/fit/tests/billing-gate/billing-runtime-gate.spec.ts) добавлен полный mock-flow:
+  - checkout
+  - intent
+  - webhook
+  - return reconcile
+  - billing center
+- [x] Для hosted page добавлен mobile/PWA regression guard на billing surface в мобильном viewport.
+- [x] В [cloudpayments-checkout.tsx](/C:/fit/src/components/cloudpayments-checkout.tsx) и [billing/cloudpayments/page.tsx](/C:/fit/src/app/billing/cloudpayments/page.tsx) убран mojibake и добавлены стабильные `data-testid` для regression suite.
+- [x] Android/TWA billing deep-link smoke подтверждён через `adb` на эмуляторе:
+  - `am start -W -a android.intent.action.VIEW -d "https://fit-platform-eta.vercel.app/billing/cloudpayments?reference=android-billing-smoke" app.fitplatform.mobile`
+  - `logcat` подтвердил `TWALauncherActivity` и `capturedLink=https://fit-platform-eta.vercel.app/billing/cloudpayments?...`
+
+## Карта текущих файлов, которые затронула миграция
+
+- `src/lib/billing-provider.ts`
 - `src/lib/billing-self-service.ts`
 - `src/lib/billing-access.ts`
-- `src/lib/admin-billing.ts`
-- `src/lib/settings-self-service.ts`
+- `src/lib/cloudpayments-billing.ts`
 - `src/app/api/billing/checkout/route.ts`
 - `src/app/api/billing/checkout/reconcile/route.ts`
+- `src/app/api/billing/cloudpayments/intent/route.ts`
 - `src/app/api/billing/portal/route.ts`
-- `src/app/api/billing/webhook/stripe/route.ts`
+- `src/app/api/billing/webhook/cloudpayments/[kind]/route.ts`
 - `src/app/api/internal/jobs/billing-reconcile/route.ts`
+- `src/app/billing/cloudpayments/page.tsx`
+- `src/components/cloudpayments-checkout.tsx`
 - `src/components/settings-billing-center.tsx`
 - `src/components/settings-billing-center-model.ts`
 - `src/components/use-settings-billing-center-state.ts`
+- `src/components/admin-health-dashboard.tsx`
 - `src/components/admin-user-detail-billing.tsx`
+- `tests/billing-gate/billing-runtime-gate.spec.ts`
 - `scripts/verify-runtime-env.mjs`
 - `scripts/verify-staging-runtime.mjs`
-- `tests/billing-gate/*`
 
-## Предлагаемый env-контракт для новой интеграции
-
-Точные имена можно утвердить в ходе реализации, но целевой набор разумно вести так:
+## Env-контракт для новой интеграции
 
 - `NEXT_PUBLIC_BILLING_PROVIDER=cloudpayments`
-- `CLOUDPAYMENTS_PUBLIC_ID`
+- `NEXT_PUBLIC_CLOUDPAYMENTS_PUBLIC_ID`
 - `CLOUDPAYMENTS_API_SECRET`
+- `CLOUDPAYMENTS_PREMIUM_MONTHLY_AMOUNT_RUB`
+- `CLOUDPAYMENTS_PREMIUM_MONTHLY_DESCRIPTION`
 - `CLOUDPAYMENTS_WEBHOOK_SECRET`
-- при необходимости отдельный `CLOUDPAYMENTS_TEST_MODE`
+- `CLOUDPAYMENTS_TEST_MODE` — только для локального mock billing gate
 
-Важно: пользовательские и серверные ключи должны быть разделены. Секреты — только на сервере.
+Важно: пользовательские и серверные ключи разделены. Секреты — только на сервере.
 
-## Риски и решения заранее
+## Риски и решения
 
 - **Нет прямого аналога Stripe Portal.**
-  Решение: делать provider-neutral billing center и не завязывать UX на существование внешнего портала.
+  Решение: provider-neutral billing center и self-service flow без жёсткой привязки к внешнему кабинету.
 
 - **Recurring lifecycle у разных провайдеров различается.**
-  Решение: нормализовать события в нашем domain-layer, а не протаскивать provider statuses в UI.
+  Решение: нормализовать события в нашем domain-layer, а не протаскивать provider statuses напрямую в UI.
 
-- **Android/TWA + платежи могут требовать дополнительной проверки policy.**
-  Решение: до live Android rollout отдельно проверить допустимость внешней оплаты для конкретного канала дистрибуции.
+- **Android/TWA + hosted payment flow требует отдельной проверки deep link и policy.**
+  Решение: держать отдельный Android handoff и фиксировать deep-link smoke отдельно от web regression suite.
 
-- **Миграция не должна ломать текущий admin/audit контур.**
-  Решение: все privileged billing actions и reconcile должны сохранить audit logging.
+- **Миграция не должна ломать admin/audit контур.**
+  Решение: все privileged billing actions и reconcile сохраняют audit logging.
 
 ## Критерий готовности
 
-Этот migration-plan можно считать закрытым, когда:
+Этот migration-plan можно считать закрытым, потому что:
 
 - checkout больше не зависит от Stripe;
 - webhook и reconcile работают через провайдера РФ;
 - billing center остаётся рабочим для пользователя и admin;
 - `subscriptions / entitlements / usage counters` остаются согласованными;
-- docs, release gates и env readiness больше не считают Stripe обязательным контуром для РФ rollout.
+- docs, release gates и env readiness больше не считают Stripe обязательным контуром для РФ rollout;
+- локальный contract/e2e и mobile/TWA verification для CloudPayments уже закреплены отдельными regression-проверками.

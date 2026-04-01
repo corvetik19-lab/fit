@@ -31,6 +31,7 @@ const serverEnvSchema = z.object({
   CLOUDPAYMENTS_API_SECRET: z.string().min(1).optional(),
   CLOUDPAYMENTS_PREMIUM_MONTHLY_AMOUNT_RUB: z.string().min(1).optional(),
   CLOUDPAYMENTS_PREMIUM_MONTHLY_DESCRIPTION: z.string().min(1).optional(),
+  CLOUDPAYMENTS_TEST_MODE: z.enum(["mock"]).optional(),
   CLOUDPAYMENTS_WEBHOOK_SECRET: z.string().min(1).optional(),
   OPENROUTER_API_KEY: z.string().min(1).optional(),
   OPENROUTER_APP_NAME: z.string().min(1).optional(),
@@ -80,6 +81,7 @@ export const serverEnv = serverEnvSchema.parse({
   CLOUDPAYMENTS_PREMIUM_MONTHLY_DESCRIPTION: normalizeEnv(
     process.env.CLOUDPAYMENTS_PREMIUM_MONTHLY_DESCRIPTION,
   ),
+  CLOUDPAYMENTS_TEST_MODE: normalizeEnv(process.env.CLOUDPAYMENTS_TEST_MODE),
   CLOUDPAYMENTS_WEBHOOK_SECRET: normalizeEnv(
     process.env.CLOUDPAYMENTS_WEBHOOK_SECRET,
   ),

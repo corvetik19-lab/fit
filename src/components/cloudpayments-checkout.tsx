@@ -10,9 +10,7 @@ declare global {
   interface Window {
     cp?: {
       CloudPayments: new () => {
-        start: (
-          options: CloudpaymentsCheckoutIntent,
-        ) => Promise<unknown>;
+        start: (options: CloudpaymentsCheckoutIntent) => Promise<unknown>;
       };
     };
   }
@@ -129,7 +127,10 @@ export function CloudpaymentsCheckout() {
   }, [intent, openWidget, scriptReady]);
 
   return (
-    <section className="card card--hero mx-auto max-w-2xl p-6 sm:p-8">
+    <section
+      className="card card--hero mx-auto max-w-2xl p-6 sm:p-8"
+      data-testid="cloudpayments-checkout-page"
+    >
       <Script
         onLoad={() => setScriptReady(true)}
         src="https://widget.cloudpayments.ru/bundles/cloudpayments.js"
@@ -138,7 +139,10 @@ export function CloudpaymentsCheckout() {
 
       <div className="space-y-4">
         <p className="workspace-kicker">CloudPayments</p>
-        <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+        <h1
+          className="text-3xl font-semibold tracking-tight text-foreground"
+          data-testid="cloudpayments-checkout-heading"
+        >
           Оплата подписки fit Premium
         </h1>
         <p className="text-sm leading-7 text-muted">
@@ -182,6 +186,7 @@ export function CloudpaymentsCheckout() {
         <div className="mt-5 flex flex-wrap gap-3">
           <button
             className="rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+            data-testid="cloudpayments-checkout-open"
             disabled={!isReady || checkoutState === "running"}
             onClick={() => void openWidget()}
             type="button"
@@ -191,6 +196,7 @@ export function CloudpaymentsCheckout() {
 
           <a
             className="rounded-full border border-border px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-white/70"
+            data-testid="cloudpayments-checkout-back"
             href="/settings?section=billing"
           >
             Вернуться в настройки

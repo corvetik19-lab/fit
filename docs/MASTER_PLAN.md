@@ -1216,3 +1216,11 @@
 - [x] `/settings`, `/admin`, `admin stats` и billing handoff/release docs переведены на provider-neutral wording: активный billing runtime теперь отображается как `CloudPayments`, а не как скрытое допущение про `Stripe`.
 - [x] Tranche подтверждён пакетами `npm run lint`, `npm run typecheck`, `npm run build`, а live billing flow по-прежнему остаётся внешним блокером до появления реальных env выбранного провайдера и webhook/runtime smoke.
 - [x] Общий прогресс execution checklist остаётся `178 / 186` (`96%`): кодовый migration-slice закрыт, но основные незакрытые пункты `Milestone 2` всё ещё зависят от живого provider env и end-to-end smoke.
+
+## 2026-04-01 CloudPayments contract and mobile/TWA verification addendum
+
+- [x] Для локального deterministic billing gate добавлен `CLOUDPAYMENTS_TEST_MODE=mock`: [cloudpayments-billing.ts](/C:/fit/src/lib/cloudpayments-billing.ts), [env.ts](/C:/fit/src/lib/env.ts), [\.env.example](/C:/fit/.env.example).
+- [x] В [billing-runtime-gate.spec.ts](/C:/fit/tests/billing-gate/billing-runtime-gate.spec.ts) закрыт полный CloudPayments regression contour: `checkout -> intent -> webhook -> return reconcile -> billing center`.
+- [x] Добавлен отдельный mobile/PWA regression guard для hosted billing page: mobile viewport проверяет [billing/cloudpayments page](/C:/fit/src/app/billing/cloudpayments/page.tsx), [cloudpayments-checkout.tsx](/C:/fit/src/components/cloudpayments-checkout.tsx) и отсутствие horizontal overflow.
+- [x] Отдельно подтверждён Android/TWA billing deep-link smoke на эмуляторе `Medium_Phone_API_36.1`: `adb` и `logcat` фиксируют `TWALauncherActivity` с `capturedLink=https://fit-platform-eta.vercel.app/billing/cloudpayments?...`.
+- [x] Подплан [RUSSIAN_BILLING_PROVIDER_PLAN.md](/C:/fit/docs/RUSSIAN_BILLING_PROVIDER_PLAN.md) после этого закрыт на `21 / 21` (`100%`), а основной progress execution checklist остаётся `178 / 186` (`96%`), потому что `Milestone 2` всё ещё блокируется не кодом, а живыми provider env для production/staging.
