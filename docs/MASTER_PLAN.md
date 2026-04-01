@@ -1236,3 +1236,10 @@
 - [x] Добавлен отдельный developer-facing handoff [RUNTIME_ENV_HANDOFF.md](/C:/fit/docs/RUNTIME_ENV_HANDOFF.md) с точным списком Vercel env, шагами настройки `CloudPayments`, `Sentry`, `AI runtime` и post-setup verification.
 - [x] [docs/README.md](/C:/fit/docs/README.md) и [RELEASE_CHECKLIST.md](/C:/fit/docs/RELEASE_CHECKLIST.md) синхронизированы с этим handoff: следующий разработчик или DevOps больше не должен собирать release env по коду вручную.
 - [x] Основной progress execution checklist не меняется и остаётся `178 / 186` (`96%`): это documentation tranche, который ускоряет закрытие последних внешних блокеров, но не заменяет сами живые env и provider access.
+
+## 2026-04-02 designer handoff package addendum
+
+- [x] Добавлена отдельная папка [design-handoff](/C:/fit/docs/design-handoff/README.md) с дизайнерским handoff-пакетом, который можно передать без устного контекста.
+- [x] В [FIT_SCREEN_DESIGN_BRIEF.md](/C:/fit/docs/design-handoff/FIT_SCREEN_DESIGN_BRIEF.md) подробно описаны все реальные экраны продукта: `11` пользовательских и `3` admin-only, включая цели, контентные блоки, mobile/desktop-поведение, states и интеграционные ограничения.
+- [x] [docs/README.md](/C:/fit/docs/README.md) синхронизирован с новым пакетом, поэтому экранный дизайн-бриф теперь включён в официальный handoff surface проекта.
+- [x] Основной progress execution checklist не меняется и остаётся `178 / 186` (`96%`): это documentation tranche для передачи дизайнеру, а не закрытие внешних runtime/env блокеров.

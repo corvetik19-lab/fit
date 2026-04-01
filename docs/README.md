@@ -20,6 +20,11 @@
 - [DB_AUDIT.md](/C:/fit/docs/DB_AUDIT.md) — актуальный аудит схемы, RLS, RPC, advisors и индексов.
 - [ANDROID_TWA.md](/C:/fit/docs/ANDROID_TWA.md) — handoff по Android/TWA wrapper, asset links, signing и release.
 
+## Пакет для дизайнера
+
+- [design-handoff/README.md](/C:/fit/docs/design-handoff/README.md) — входная точка в отдельный пакет документации для дизайнера.
+- [design-handoff/FIT_SCREEN_DESIGN_BRIEF.md](/C:/fit/docs/design-handoff/FIT_SCREEN_DESIGN_BRIEF.md) — полный подробный экранный бриф по всем user/admin-экранам, states и интеграционным ограничениям.
+
 ## Release и production readiness
 
 - [RELEASE_CHECKLIST.md](/C:/fit/docs/RELEASE_CHECKLIST.md) — release-процедура перед merge/deploy и post-deploy smoke.

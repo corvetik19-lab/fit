@@ -1343,3 +1343,10 @@
 - В документ вынесены production webhook URL для `CloudPayments`, порядок live billing smoke и явный post-setup checklist, чтобы следующий разработчик или DevOps мог закрывать последние внешние блокеры без чтения исходников.
 - [docs/README.md](/C:/fit/docs/README.md), [RELEASE_CHECKLIST.md](/C:/fit/docs/RELEASE_CHECKLIST.md) и [MASTER_PLAN.md](/C:/fit/docs/MASTER_PLAN.md) синхронизированы с новым handoff.
 - Общий progress execution checklist не меняется и остаётся `178 / 186` (`96%`): этот tranche документирует и ускоряет финальный rollout, но не заменяет реальные env/secrets и live provider access.
+
+### 2026-04-02 00:20 - Собрал отдельный пакет экранной документации для дизайнера
+
+- Добавлена отдельная папка [design-handoff](/C:/fit/docs/design-handoff/README.md), чтобы дизайнеру можно было передать весь экранный handoff отдельно от общей инженерной документации проекта.
+- В [FIT_SCREEN_DESIGN_BRIEF.md](/C:/fit/docs/design-handoff/FIT_SCREEN_DESIGN_BRIEF.md) подробно описаны все реальные экраны приложения: старт, онбординг, dashboard, workouts, workout day, nutrition, AI, history, settings, billing, suspended, а также `/admin`, `/admin/users`, `/admin/users/[id]`.
+- Для каждого экрана зафиксированы цель, композиция, mobile/desktop-поведение, состояния и продуктовые ограничения, чтобы новый дизайн можно было интегрировать без слома текущих route-flow и business logic.
+- [docs/README.md](/C:/fit/docs/README.md) и [MASTER_PLAN.md](/C:/fit/docs/MASTER_PLAN.md) синхронизированы с новым дизайнерским handoff-пакетом.
