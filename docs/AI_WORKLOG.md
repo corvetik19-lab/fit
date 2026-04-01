@@ -1299,3 +1299,10 @@
 - [PROD_READY.md](/C:/fit/docs/PROD_READY.md), [RELEASE_CHECKLIST.md](/C:/fit/docs/RELEASE_CHECKLIST.md) и [README.md](/C:/fit/README.md) синхронизированы: теперь для внешних blocker-ов есть один быстрый preflight и явный список того, что должен выставить владелец окружения.
 - Проверка по новому контуру: `npm run verify:runtime-env`, `npm run verify:retrieval-release`, `npm run verify:staging-runtime`, `npm run verify:sentry-runtime`.
 - Общий progress execution checklist остаётся `178 / 186` (`96%`): это ускоряет закрытие последних внешних блокеров, но не закрывает новые main checklist-пункты без реальных env/secrets.
+
+### 2026-04-01 13:40 - Починил AI transcript duplicate keys и подчистил live copy
+
+- В [ai-chat-panel.tsx](/C:/fit/src/components/ai-chat-panel.tsx) добавлена нормализация `messages` через `dedupeUiMessages(...)`, поэтому AI transcript больше не получает два элемента с одинаковым `message.id` и не шумит React warning `Encountered two children with the same key`.
+- В [ai-chat-transcript.tsx](/C:/fit/src/components/ai-chat-transcript.tsx), [ai-chat-toolbar.tsx](/C:/fit/src/components/ai-chat-toolbar.tsx), [ai-chat-notices.tsx](/C:/fit/src/components/ai-chat-notices.tsx), [ai-chat-composer.tsx](/C:/fit/src/components/ai-chat-composer.tsx), [ai-chat-panel-model.ts](/C:/fit/src/components/ai-chat-panel-model.ts) и верхнем слое [ai-chat-panel.tsx](/C:/fit/src/components/ai-chat-panel.tsx) убран битый русский текст на живой AI-поверхности.
+- Проверка зелёная: `npm run lint`, `npm run typecheck`, `npm run build`, `npx eslint src/components/ai-chat-panel.tsx src/components/ai-chat-transcript.tsx src/components/ai-chat-toolbar.tsx src/components/ai-chat-notices.tsx src/components/ai-chat-composer.tsx src/components/ai-chat-panel-model.ts`, `node scripts/run-playwright.mjs -- test tests/e2e/ai-workspace.spec.ts:91 --workers=1` -> `1 passed`.
+- Полный `ai-workspace` suite в одном из прогонов всё ещё может краснеть не на transcript, а на внешнем timeout фонового dashboard fetch в history-сценарии; сам duplicate-key баг после slice закрыт.

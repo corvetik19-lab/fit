@@ -1194,3 +1194,10 @@
 - [x] [PROD_READY.md](/C:/fit/docs/PROD_READY.md), [RELEASE_CHECKLIST.md](/C:/fit/docs/RELEASE_CHECKLIST.md) и [README.md](/C:/fit/README.md) синхронизированы с этим preflight: у владельца окружения теперь есть явный список того, что надо выставить для закрытия последних release-blocker пунктов.
 - [x] Фактический прогон `npm run verify:runtime-env` подтверждает текущий внешний остаток: отсутствуют `CRON_SECRET`, весь `Stripe` runtime set, `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_PROJECT` и Android release fingerprints; при этом CI auth/secrets и AI ключи уже подхвачены.
 - [x] Общий прогресс execution checklist остаётся `178 / 186` (`96%`): кодовые и документальные tranche закрыты, а remaining main-пункты по-прежнему зависят от реальных env/secrets и provider access.
+
+## 2026-04-01 AI chat transcript stability addendum
+
+- [x] На живой AI-поверхности устранён runtime-баг с дублирующимися React keys: [ai-chat-panel.tsx](/C:/fit/src/components/ai-chat-panel.tsx) теперь нормализует массив `messages` через `dedupeUiMessages(...)` из [ai-chat-panel-model.ts](/C:/fit/src/components/ai-chat-panel-model.ts) до рендера transcript.
+- [x] Очищены от mojibake и приведены к нормальному русскому UX тексты в [ai-chat-panel.tsx](/C:/fit/src/components/ai-chat-panel.tsx), [ai-chat-transcript.tsx](/C:/fit/src/components/ai-chat-transcript.tsx), [ai-chat-toolbar.tsx](/C:/fit/src/components/ai-chat-toolbar.tsx), [ai-chat-notices.tsx](/C:/fit/src/components/ai-chat-notices.tsx), [ai-chat-composer.tsx](/C:/fit/src/components/ai-chat-composer.tsx), [ai-chat-panel-model.ts](/C:/fit/src/components/ai-chat-panel-model.ts).
+- [x] Проверка подтверждена пакетами `npm run lint`, `npm run typecheck`, `npm run build`, а также таргетным `tests/e2e/ai-workspace.spec.ts:91` -> `1 passed`; второй history-сценарий этого suite по-прежнему может упираться во внешний сетевой timeout на фоновой dashboard-загрузке и не связан с transcript bugfix.
+- [x] Общий прогресс execution checklist остаётся `178 / 186` (`96%`): это production fix и UI sanitation поверх уже закрытого milestone, а не новый основной tranche.

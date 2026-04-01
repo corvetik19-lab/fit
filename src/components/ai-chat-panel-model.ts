@@ -232,6 +232,18 @@ export function toUiTextMessage(message: ChatMessage): UIMessage {
   };
 }
 
+export function dedupeUiMessages<T extends { id: string }>(messages: T[]): T[] {
+  const lastIndexById = new Map<string, number>();
+
+  messages.forEach((message, index) => {
+    lastIndexById.set(message.id, index);
+  });
+
+  return messages.filter(
+    (message, index) => lastIndexById.get(message.id) === index,
+  );
+}
+
 export function buildMealPhotoMarkdown(result: MealPhotoAnalysis) {
   const items =
     result.items.length > 0

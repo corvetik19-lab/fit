@@ -100,11 +100,11 @@ export function AiChatComposer({
         <div className="min-w-0 flex-1">
           <p className="workspace-kicker">Что будет дальше</p>
           <p className="mt-1 text-sm text-muted">
-          {selectedImage
-            ? "Фото будет проанализировано и сохранено в истории этого чата."
-            : allowWebSearch
-              ? "Поиск в интернете включён."
-              : "Поиск в интернете выключен."}
+            {selectedImage
+              ? "Фото будет проанализировано и сохранено в истории этого чата."
+              : allowWebSearch
+                ? "Поиск в интернете включён."
+                : "Поиск в интернете выключен."}
           </p>
         </div>
 

@@ -18,6 +18,7 @@ import { useAiChatViewState } from "@/components/use-ai-chat-view-state";
 import { useAiChatWebSearch } from "@/components/use-ai-chat-web-search";
 import {
   classifyAiSurfaceErrorMessage,
+  dedupeUiMessages,
   timeFormatter,
   type AiChatPanelProps,
 } from "@/components/ai-chat-panel-model";
@@ -82,6 +83,7 @@ export function AiChatPanel({
         : classifyAiSurfaceErrorMessage(error?.message ?? null),
     [error?.message],
   );
+  const transcriptMessages = useMemo(() => dedupeUiMessages(messages), [messages]);
 
   const isBusy = status === "submitted" || status === "streaming";
   const {
@@ -95,7 +97,7 @@ export function AiChatPanel({
   } = useAiChatViewState({
     initialMessages,
     isBusy,
-    messages,
+    messages: transcriptMessages,
     notice,
   });
   const { actionBusyKey, analyzeMealPhoto, isAnalyzingImage, runProposalAction } =
@@ -178,11 +180,14 @@ export function AiChatPanel({
             <div>
               <p className="workspace-kicker">Рабочий режим</p>
               <p className="mt-1 text-sm font-semibold text-foreground">
-                Один экран для диалога, фото еды, web search и применения плана.
+                Один экран для диалога, фото еды, web search и применения
+                плана.
               </p>
             </div>
             <span className="pill">
-              {messages.length ? `${messages.length} сообщений` : "новая сессия"}
+              {transcriptMessages.length
+                ? `${transcriptMessages.length} сообщений`
+                : "новая сессия"}
             </span>
           </div>
         </div>
@@ -199,7 +204,7 @@ export function AiChatPanel({
         actionBusyKey={actionBusyKey}
         lastAssistantMessageId={lastAssistantMessageId}
         messageTimes={messageTimes}
-        messages={messages}
+        messages={transcriptMessages}
         nowLabel={nowLabel}
         onApplyProposal={(target) => runProposalAction("apply", target)}
         onApproveProposal={(target) => runProposalAction("approve", target)}
