@@ -66,6 +66,12 @@
 
 ## 3. Env readiness
 
+Быстрый локальный preflight по текущему набору env можно запускать через:
+
+- `npm run verify:runtime-env`
+
+Эта команда не заменяет runtime-smoke, но сразу показывает, каких ключей не хватает по группам `AI`, `Stripe`, `Sentry`, `CI` и `Android/TWA`.
+
 ### Обязательные для web/PWA
 
 - `NEXT_PUBLIC_SUPABASE_URL`
@@ -162,3 +168,4 @@
 - история изменений и последних прогонов: [AI_WORKLOG.md](/C:/fit/docs/AI_WORKLOG.md)
 - допустимый warning-хвост сборки: [BUILD_WARNINGS.md](/C:/fit/docs/BUILD_WARNINGS.md)
 - Android/TWA handoff: [ANDROID_TWA.md](/C:/fit/docs/ANDROID_TWA.md)
+- локальная матрица env readiness: `npm run verify:runtime-env`

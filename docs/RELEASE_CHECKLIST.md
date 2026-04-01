@@ -14,6 +14,7 @@
 
 ## Перед production deploy
 
+- [ ] Прогнан `npm run verify:runtime-env` и проверены все missing env по релевантным контурам
 - [ ] Подтверждены `NEXT_PUBLIC_SUPABASE_URL` и publishable key
 - [ ] Подтверждён `SUPABASE_SERVICE_ROLE_KEY`
 - [ ] Подтверждены `CRON_SECRET` и admin bootstrap token
@@ -37,6 +38,13 @@
 - [ ] Заданы `PLAYWRIGHT_ADMIN_EMAIL` и `PLAYWRIGHT_ADMIN_PASSWORD`
 - [ ] `quality.yml` действительно запускает `test:rls` и `test:e2e:auth`, а не только `smoke`
 - [ ] `quality.yml` действительно запускает `verify:migrations`, если в diff есть SQL migrations
+
+## Оставшиеся внешние блокеры на 2026-04-01
+
+- [ ] Для AI runtime снят provider-blocker: `OpenRouter` отвечает рабочим runtime, `Voyage` больше не отдаёт `403`
+- [ ] Для billing выставлены живые `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PREMIUM_MONTHLY_PRICE_ID`
+- [ ] Для observability выставлены `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN`
+- [ ] После этого повторно пройдены `npm run verify:staging-runtime`, `npm run verify:retrieval-release`, `npm run verify:sentry-runtime`
 
 ## Smoke после deploy
 

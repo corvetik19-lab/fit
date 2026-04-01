@@ -1187,3 +1187,10 @@
 - [x] Добавлен быстрый provider preflight в [scripts/ai-runtime-preflight.mjs](/C:/fit/scripts/ai-runtime-preflight.mjs), а [verify-retrieval-release.mjs](/C:/fit/scripts/verify-retrieval-release.mjs) и [verify-staging-runtime.mjs](/C:/fit/scripts/verify-staging-runtime.mjs) теперь проверяют доступность OpenRouter/Voyage до запуска тяжёлого `ai-gate`.
 - [x] После этого `npm run verify:retrieval-release` и `npm run verify:staging-runtime` честно и быстро упираются в внешний blocker `Voyage 403`, а не в локальные timeout/webServer конфликты; `npm run verify:sentry-runtime` по-прежнему даёт явный skip по отсутствующим `NEXT_PUBLIC_SENTRY_DSN` и `SENTRY_PROJECT`.
 - [x] Общий прогресс execution checklist остаётся `178 / 186` (`96%`): кодовый backlog не изменился, но release verification теперь детерминированно отделяет реальные внешние блокеры от локальной инфраструктурной обвязки.
+
+## 2026-04-01 runtime env matrix addendum
+
+- [x] Добавлен [scripts/verify-runtime-env.mjs](/C:/fit/scripts/verify-runtime-env.mjs) и команда `npm run verify:runtime-env`: проект теперь умеет одним запуском показать missing env по группам `Web/PWA`, `AI`, `Stripe`, `Sentry`, `CI`, `Android/TWA`.
+- [x] [PROD_READY.md](/C:/fit/docs/PROD_READY.md), [RELEASE_CHECKLIST.md](/C:/fit/docs/RELEASE_CHECKLIST.md) и [README.md](/C:/fit/README.md) синхронизированы с этим preflight: у владельца окружения теперь есть явный список того, что надо выставить для закрытия последних release-blocker пунктов.
+- [x] Фактический прогон `npm run verify:runtime-env` подтверждает текущий внешний остаток: отсутствуют `CRON_SECRET`, весь `Stripe` runtime set, `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_PROJECT` и Android release fingerprints; при этом CI auth/secrets и AI ключи уже подхвачены.
+- [x] Общий прогресс execution checklist остаётся `178 / 186` (`96%`): кодовые и документальные tranche закрыты, а remaining main-пункты по-прежнему зависят от реальных env/secrets и provider access.

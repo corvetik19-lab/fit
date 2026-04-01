@@ -43,6 +43,7 @@ npm run build
 - `npm run verify:migrations` при изменениях в `supabase/migrations`
 - `npm run verify:advisors` при изменениях в `supabase/migrations`, если доступны Supabase management secrets
 - `npm run verify:android-twa` при изменениях Android/TWA scaffolding или PWA packaging
+- `npm run verify:runtime-env` чтобы быстро увидеть, каких env не хватает для AI, Stripe, Sentry, CI и Android/TWA
 
 Цель проекта — чтобы все три команды проходили стабильно за один запуск и были готовы для CI.
 

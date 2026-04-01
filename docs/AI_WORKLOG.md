@@ -1292,3 +1292,10 @@
 - [scripts/verify-retrieval-release.mjs](/C:/fit/scripts/verify-retrieval-release.mjs) и [scripts/verify-staging-runtime.mjs](/C:/fit/scripts/verify-staging-runtime.mjs) теперь fast-fail на provider blocker и не тратят минуты на подвисший runtime suite, если кредиты или embeddings-доступ реально недоступны.
 - Проверка зелёная по ожидаемому контракту: `npm run verify:retrieval-release` -> быстрый fail с `Voyage 403`, `npm run verify:staging-runtime` -> быстрый fail с `Voyage 403` и отдельный skip по отсутствующим Stripe env, `npm run verify:sentry-runtime` -> явный skip по отсутствующим `NEXT_PUBLIC_SENTRY_DSN` и `SENTRY_PROJECT`.
 - Общий progress execution checklist остаётся `178 / 186` (`96%`): это hardening release-процесса без закрытия новых основных checklist-пунктов.
+
+### 2026-04-01 00:45 - Добавил явную матрицу env readiness для внешних blocker-ов
+
+- Добавлен [scripts/verify-runtime-env.mjs](/C:/fit/scripts/verify-runtime-env.mjs) и команда `npm run verify:runtime-env`: она группирует текущие env по контурам `Web/PWA`, `AI`, `Stripe`, `Sentry`, `CI`, `Android/TWA` и сразу показывает, каких ключей не хватает.
+- [PROD_READY.md](/C:/fit/docs/PROD_READY.md), [RELEASE_CHECKLIST.md](/C:/fit/docs/RELEASE_CHECKLIST.md) и [README.md](/C:/fit/README.md) синхронизированы: теперь для внешних blocker-ов есть один быстрый preflight и явный список того, что должен выставить владелец окружения.
+- Проверка по новому контуру: `npm run verify:runtime-env`, `npm run verify:retrieval-release`, `npm run verify:staging-runtime`, `npm run verify:sentry-runtime`.
+- Общий progress execution checklist остаётся `178 / 186` (`96%`): это ускоряет закрытие последних внешних блокеров, но не закрывает новые main checklist-пункты без реальных env/secrets.
