@@ -1286,3 +1286,14 @@
 - [x] В PWA metadata обновлены визуальные токены нового редизайна: [manifest.ts](/C:/fit/src/app/manifest.ts) теперь использует `background_color=#fcf9f8` и `theme_color=#0040e0`, чтобы install surface и browser chrome соответствовали stitch-style visual system.
 - [x] Проверка по этому slice зелёная: `npm run lint`, `npm run typecheck`, `npm run test:smoke` -> `5 passed`.
 - [x] Общий progress execution checklist не меняется и остаётся `188 / 196` (`96%`): это branded PWA polish поверх уже закрытого redesign baseline, а незакрытым остаётся всё тот же внешний auth-regression blocker.
+
+## 2026-04-13 auth form only + server auth follow-up
+
+- [x] Стартовый экран [page.tsx](/C:/fit/src/app/page.tsx) упрощён до single-column stitch-layout: на маршруте `/` теперь остаются только brand chip и auth-card без левой промо-колонки.
+- [x] В [auth-form.tsx](/C:/fit/src/components/auth-form.tsx) удалены кнопки `Google` и `Apple`, оставлен только основной email/password flow и понятные русские notice/error состояния.
+- [x] Введён server-side auth transport через [api/auth/sign-in/route.ts](/C:/fit/src/app/api/auth/sign-in/route.ts) и [api/auth/sign-up/route.ts](/C:/fit/src/app/api/auth/sign-up/route.ts), чтобы входной экран больше не зависел от прямого браузерного вызова auth SDK.
+- [x] Auth transport доведён до предсказуемого API-контракта: при внешнем DNS/runtime-сбое auth routes возвращают `503 AUTH_PROVIDER_UNAVAILABLE`, а invalid-payload сценарии покрыты в [api-contracts.spec.ts](/C:/fit/tests/e2e/api-contracts.spec.ts).
+- [x] После смены PWA branding-токенов синхронизирован smoke-контракт в [app-smoke.spec.ts](/C:/fit/tests/smoke/app-smoke.spec.ts); проверка install metadata снова зелёная и соответствует новому stitch-style manifest.
+- [x] Технический результат этого slice подтверждён пакетами `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:smoke`.
+- [x] Таргетированный contract-test `auth routes reject invalid payloads before provider runtime` проходит зелёно; остальные auth-based suites по-прежнему упираются не в код slice, а во внешний доступ к Supabase Auth.
+- [x] Общий progress execution checklist не меняется и остаётся `188 / 196` (`96%`): финальный auth-based visual regression по-прежнему блокируется внешним DNS/runtime фактором `ENOTFOUND nactzaxrjzsdkyfqwecf.supabase.co`, а не проблемой текущего UI или маршрутов `/api/auth/*`.

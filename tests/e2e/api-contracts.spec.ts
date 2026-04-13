@@ -143,6 +143,42 @@ test.describe("api contracts without auth", () => {
       "AUTH_REQUIRED",
     );
   });
+
+  test("auth routes reject invalid payloads before provider runtime", async ({
+    page,
+  }) => {
+    await page.context().clearCookies();
+
+    const [invalidSignInResult, invalidSignUpResult] = await Promise.all([
+      fetchJson(page, {
+        method: "POST",
+        url: "/api/auth/sign-in",
+        body: {
+          email: "not-an-email",
+          password: "123",
+        },
+      }),
+      fetchJson(page, {
+        method: "POST",
+        url: "/api/auth/sign-up",
+        body: {
+          email: "not-an-email",
+          fullName: "A",
+          password: "123",
+        },
+      }),
+    ]);
+
+    expect(invalidSignInResult.status).toBe(400);
+    expect((invalidSignInResult.body as { code?: string } | null)?.code).toBe(
+      "AUTH_SIGNIN_INVALID",
+    );
+
+    expect(invalidSignUpResult.status).toBe(400);
+    expect((invalidSignUpResult.body as { code?: string } | null)?.code).toBe(
+      "AUTH_SIGNUP_INVALID",
+    );
+  });
 });
 
 test.describe("api contracts", () => {

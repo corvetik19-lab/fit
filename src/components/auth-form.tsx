@@ -1,42 +1,15 @@
 "use client";
 
-import type { SupabaseClient } from "@supabase/supabase-js";
-import { Eye, EyeOff, LogIn, Mail, Smartphone } from "lucide-react";
+import type { Route } from "next";
+import { Eye, EyeOff, LogIn, Mail } from "lucide-react";
 import { startTransition, useState, type FormEvent } from "react";
-
-import { createClient } from "@/lib/supabase/browser";
 
 type Mode = "sign-in" | "sign-up";
 
 const fieldClassName =
   "w-full rounded-[1.15rem] border-none bg-[#e8e4e3] px-4 py-4 text-sm text-foreground outline-none transition placeholder:text-[#7b7a84] focus:bg-white focus:ring-2 focus:ring-accent/18";
 
-function wait(delayMs: number) {
-  return new Promise((resolve) => setTimeout(resolve, delayMs));
-}
-
-async function waitForClientSession(
-  supabase: SupabaseClient,
-  timeoutMs = 4_000,
-) {
-  const deadline = Date.now() + timeoutMs;
-
-  while (Date.now() < deadline) {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    if (session?.access_token) {
-      await wait(180);
-      return;
-    }
-
-    await wait(120);
-  }
-}
-
 export function AuthForm() {
-  const supabase = createClient();
   const [mode, setMode] = useState<Mode>("sign-in");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -55,46 +28,69 @@ export function AuthForm() {
     startTransition(async () => {
       try {
         if (mode === "sign-up") {
-          const { data, error: signUpError } = await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-              data: {
-                full_name: fullName.trim(),
-              },
+          const response = await fetch("/api/auth/sign-up", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
             },
+            body: JSON.stringify({
+              email,
+              fullName,
+              password,
+            }),
           });
+          const payload = (await response.json().catch(() => null)) as
+            | {
+                message?: string;
+                notice?: string;
+                redirectTo?: Route;
+              }
+            | null;
 
-          if (signUpError) {
-            setError(signUpError.message);
+          if (!response.ok) {
+            setError(payload?.message ?? "Не удалось создать аккаунт.");
             return;
           }
 
-          if (!data.session) {
-            setNotice(
-              "Аккаунт создан. Если нужно подтверждение почты, подтверди email и затем войди в приложение.",
-            );
+          if (payload?.notice && !payload.redirectTo) {
+            setNotice(payload.notice);
             setMode("sign-in");
             return;
           }
 
-          await waitForClientSession(supabase);
-          window.location.assign("/onboarding");
+          window.location.assign(payload?.redirectTo ?? "/onboarding");
           return;
         }
 
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
+        const response = await fetch("/api/auth/sign-in", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email,
+            password,
+          }),
         });
+        const payload = (await response.json().catch(() => null)) as
+          | {
+              message?: string;
+              redirectTo?: Route;
+            }
+          | null;
 
-        if (signInError) {
-          setError(signInError.message);
+        if (!response.ok) {
+          setError(payload?.message ?? "Не удалось выполнить вход.");
           return;
         }
 
-        await waitForClientSession(supabase);
-        window.location.assign("/dashboard");
+        window.location.assign(payload?.redirectTo ?? "/dashboard");
+      } catch {
+        setError(
+          mode === "sign-up"
+            ? "Сервис регистрации временно недоступен. Попробуй ещё раз немного позже."
+            : "Сервис входа временно недоступен. Попробуй ещё раз немного позже.",
+        );
       } finally {
         setIsPending(false);
       }
@@ -103,6 +99,21 @@ export function AuthForm() {
 
   return (
     <section className="w-full max-w-[34rem] rounded-[2rem] bg-[#f6f3f2] p-6 shadow-[0_28px_64px_-48px_rgba(28,27,27,0.2)] sm:p-8 md:rounded-[2.25rem] md:p-10">
+      <div className="mb-8 space-y-3">
+        <p className="text-[0.68rem] font-semibold uppercase tracking-[0.28em] text-muted">
+          дисциплина и прогресс
+        </p>
+        <h1 className="font-display text-[2.25rem] font-black leading-[0.94] tracking-[-0.08em] text-foreground sm:text-[2.7rem]">
+          Вход в
+          <br />
+          рабочее пространство
+        </h1>
+        <p className="max-w-md text-sm leading-7 text-muted">
+          Только форма входа, быстрый доступ к платформе и никакого лишнего
+          шума. После авторизации ты сразу попадешь в свой рабочий контур.
+        </p>
+      </div>
+
       <div className="flex gap-7 border-b border-[#d8d5d4] pb-5">
         {([
           ["sign-in", "Вход"],
@@ -245,33 +256,6 @@ export function AuthForm() {
           </span>
         </button>
       </form>
-
-      <div className="my-8 flex items-center gap-4">
-        <div className="h-px flex-1 bg-[#d8d5d4]" />
-        <span className="text-[0.65rem] font-bold uppercase tracking-[0.22em] text-[#9f9aa0]">
-          или через
-        </span>
-        <div className="h-px flex-1 bg-[#d8d5d4]" />
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <button
-          className="inline-flex items-center justify-center gap-2 rounded-[1.15rem] bg-[#e8e4e3] px-4 py-4 text-sm font-bold text-foreground opacity-70"
-          type="button"
-        >
-          <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-white text-[0.65rem] font-black text-foreground">
-            G
-          </span>
-          Google
-        </button>
-        <button
-          className="inline-flex items-center justify-center gap-2 rounded-[1.15rem] bg-[#e8e4e3] px-4 py-4 text-sm font-bold text-foreground opacity-70"
-          type="button"
-        >
-          <Smartphone size={16} strokeWidth={2.1} />
-          Apple
-        </button>
-      </div>
 
       <footer className="mt-8 px-2 text-center text-[0.72rem] leading-6 text-[#8b888d]">
         Входя, вы соглашаетесь с{" "}

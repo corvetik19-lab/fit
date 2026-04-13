@@ -65,8 +65,8 @@ test("pwa surface exposes install metadata", async ({ page, request }) => {
   expect(manifest.display).toBe("standalone");
   expect(manifest.start_url).toBe("/dashboard");
   expect(manifest.lang).toBe("ru");
-  expect(manifest.theme_color).toBe("#14614b");
-  expect(manifest.background_color).toBe("#f5f4ee");
+  expect(manifest.theme_color).toBe("#0040e0");
+  expect(manifest.background_color).toBe("#fcf9f8");
   expect(manifest.icons).toEqual(
     expect.arrayContaining([
       expect.objectContaining({

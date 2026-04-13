@@ -1416,3 +1416,14 @@
 - [icon.svg](/C:/fit/public/icon.svg) переведён на тот же SVG-логотип, что уже используется в shell и entry screens, чтобы браузерный icon и PWA install surface не расходились с новым брендингом.
 - В [layout.tsx](/C:/fit/src/app/layout.tsx) добавлен SVG icon/shortcut icon, а [manifest.ts](/C:/fit/src/app/manifest.ts) синхронизирован с новым editorial palette: `background_color=#fcf9f8`, `theme_color=#0040e0`.
 - Проверка: `npm run lint`, `npm run typecheck`, `npm run test:smoke` -> `5 passed`.
+
+### Auth screen без левой колонки и server auth transport
+
+- На маршруте `/` в [page.tsx](/C:/fit/src/app/page.tsx) оставлен только компактный brand chip и сама форма; левая промо-часть полностью убрана.
+- В [auth-form.tsx](/C:/fit/src/components/auth-form.tsx) удалены социальные кнопки `Google` и `Apple`, очищен русский copy и добавлен явный fallback на временную недоступность auth backend.
+- Для входа и регистрации добавлены серверные routes [api/auth/sign-in/route.ts](/C:/fit/src/app/api/auth/sign-in/route.ts) и [api/auth/sign-up/route.ts](/C:/fit/src/app/api/auth/sign-up/route.ts); форма теперь работает через `/api/auth/*`, а не через прямой клиентский вызов Supabase auth SDK.
+- Auth routes доведены до аккуратного transport-контракта: при внешнем DNS/runtime-сбое они отдают `503 AUTH_PROVIDER_UNAVAILABLE`, а invalid-payload сценарии покрыты в [api-contracts.spec.ts](/C:/fit/tests/e2e/api-contracts.spec.ts).
+- После этого синхронизирован smoke-тест [app-smoke.spec.ts](/C:/fit/tests/smoke/app-smoke.spec.ts): он снова ждёт актуальные stitch-цвета из [manifest.ts](/C:/fit/src/app/manifest.ts).
+- Проверка зелёная: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:smoke` -> `5 passed`.
+- Отдельно подтверждён контрактный тест `auth routes reject invalid payloads before provider runtime`; он проходит зелёно и не зависит от внешнего Supabase DNS.
+- Таргетированный auth e2e всё ещё не закрыт, но причина теперь зафиксирована точно: локальная среда не резолвит `nactzaxrjzsdkyfqwecf.supabase.co` и даёт `getaddrinfo ENOTFOUND`, то есть это внешний runtime/DNS blocker, а не регресс нового дизайна или auth-form.
