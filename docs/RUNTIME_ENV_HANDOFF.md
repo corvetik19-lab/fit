@@ -230,3 +230,13 @@ https://<production-host>/billing/cloudpayments
 - [RELEASE_CHECKLIST.md](/C:/fit/docs/RELEASE_CHECKLIST.md)
 - [RUSSIAN_BILLING_PROVIDER_PLAN.md](/C:/fit/docs/RUSSIAN_BILLING_PROVIDER_PLAN.md)
 - [ANDROID_TWA.md](/C:/fit/docs/ANDROID_TWA.md)
+
+## 10. Быстрый preflight Supabase runtime
+
+- [x] В репозитории есть отдельная команда `npm run verify:supabase-runtime`.
+- Команда проверяет:
+  - наличие `NEXT_PUBLIC_SUPABASE_URL`;
+  - DNS-резолв hostname;
+  - HTTPS-доступность `auth` и `rest` поверхности.
+- Используй её перед любыми auth- или Supabase-завязанными regression suite, если локально вход остаётся на `/` или серверные auth routes падают без понятной причины.
+- На текущем локальном окружении эта команда воспроизводит реальный blocker: `ENOTFOUND nactzaxrjzsdkyfqwecf.supabase.co`.

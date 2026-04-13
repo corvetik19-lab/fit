@@ -1296,4 +1296,5 @@
 - [x] После смены PWA branding-токенов синхронизирован smoke-контракт в [app-smoke.spec.ts](/C:/fit/tests/smoke/app-smoke.spec.ts); проверка install metadata снова зелёная и соответствует новому stitch-style manifest.
 - [x] Технический результат этого slice подтверждён пакетами `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:smoke`.
 - [x] Таргетированный contract-test `auth routes reject invalid payloads before provider runtime` проходит зелёно; остальные auth-based suites по-прежнему упираются не в код slice, а во внешний доступ к Supabase Auth.
+- [x] Добавлен отдельный preflight [verify-supabase-runtime.mjs](/C:/fit/scripts/verify-supabase-runtime.mjs) и npm-команда `npm run verify:supabase-runtime`, чтобы разработчик мог одной командой проверить `NEXT_PUBLIC_SUPABASE_URL`, DNS-резолв и HTTPS-доступность auth/rest поверхности.
 - [x] Общий progress execution checklist не меняется и остаётся `188 / 196` (`96%`): финальный auth-based visual regression по-прежнему блокируется внешним DNS/runtime фактором `ENOTFOUND nactzaxrjzsdkyfqwecf.supabase.co`, а не проблемой текущего UI или маршрутов `/api/auth/*`.

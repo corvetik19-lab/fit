@@ -1426,4 +1426,5 @@
 - После этого синхронизирован smoke-тест [app-smoke.spec.ts](/C:/fit/tests/smoke/app-smoke.spec.ts): он снова ждёт актуальные stitch-цвета из [manifest.ts](/C:/fit/src/app/manifest.ts).
 - Проверка зелёная: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:smoke` -> `5 passed`.
 - Отдельно подтверждён контрактный тест `auth routes reject invalid payloads before provider runtime`; он проходит зелёно и не зависит от внешнего Supabase DNS.
+- Добавлен отдельный preflight [verify-supabase-runtime.mjs](/C:/fit/scripts/verify-supabase-runtime.mjs) и npm-команда `npm run verify:supabase-runtime`; в текущей среде она сразу фиксирует тот же реальный blocker `ENOTFOUND nactzaxrjzsdkyfqwecf.supabase.co`.
 - Таргетированный auth e2e всё ещё не закрыт, но причина теперь зафиксирована точно: локальная среда не резолвит `nactzaxrjzsdkyfqwecf.supabase.co` и даёт `getaddrinfo ENOTFOUND`, то есть это внешний runtime/DNS blocker, а не регресс нового дизайна или auth-form.

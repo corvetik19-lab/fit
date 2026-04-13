@@ -15,6 +15,7 @@
     "verify:advisors": "powershell -ExecutionPolicy Bypass -File scripts/verify-advisors.ps1",
     "verify:android-twa": "node scripts/verify-android-twa.mjs",
     "verify:runtime-env": "node scripts/verify-runtime-env.mjs",
+    "verify:supabase-runtime": "node scripts/verify-supabase-runtime.mjs",
     "verify:retrieval-release": "node scripts/verify-retrieval-release.mjs",
     "pretest:e2e": "node scripts/ensure-next-build.mjs",
     "pretest:e2e:auth": "node scripts/ensure-next-build.mjs",
