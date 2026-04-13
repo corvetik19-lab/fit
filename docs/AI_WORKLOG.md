@@ -1428,3 +1428,10 @@
 - Отдельно подтверждён контрактный тест `auth routes reject invalid payloads before provider runtime`; он проходит зелёно и не зависит от внешнего Supabase DNS.
 - Добавлен отдельный preflight [verify-supabase-runtime.mjs](/C:/fit/scripts/verify-supabase-runtime.mjs) и npm-команда `npm run verify:supabase-runtime`; в текущей среде она сразу фиксирует тот же реальный blocker `ENOTFOUND nactzaxrjzsdkyfqwecf.supabase.co`.
 - Таргетированный auth e2e всё ещё не закрыт, но причина теперь зафиксирована точно: локальная среда не резолвит `nactzaxrjzsdkyfqwecf.supabase.co` и даёт `getaddrinfo ENOTFOUND`, то есть это внешний runtime/DNS blocker, а не регресс нового дизайна или auth-form.
+
+### Mobile-first auth/admin final pass
+
+- Дожат мобильный stitch-flow: в [page.tsx](/C:/fit/src/app/page.tsx) и [auth-form.tsx](/C:/fit/src/components/auth-form.tsx) входной экран стал легче и ближе к Android/PWA-first подаче, без тяжёлой карточной рамки и лишнего шума вокруг формы.
+- На `/admin`, `/admin/users` и `/admin/users/[id]` отключён floating AI widget, чтобы на узком экране он не перекрывал CTA и не ломал операторскую композицию.
+- [mobile-pwa-regressions.spec.ts](/C:/fit/tests/e2e/mobile-pwa-regressions.spec.ts) переведён на новый mobile contract для admin surface, после чего прошли зелёно `authenticated-app`, `ui-regressions`, `mobile-pwa-regressions` и `smoke`.
+- Stitch redesign после этого закрыт полностью: `10 / 10` (`100%`), общий master-progress — `189 / 196` (`96%`).

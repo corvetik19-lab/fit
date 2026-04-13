@@ -7,7 +7,7 @@ import { startTransition, useState, type FormEvent } from "react";
 type Mode = "sign-in" | "sign-up";
 
 const fieldClassName =
-  "w-full rounded-[1.15rem] border-none bg-[#e8e4e3] px-4 py-4 text-sm text-foreground outline-none transition placeholder:text-[#7b7a84] focus:bg-white focus:ring-2 focus:ring-accent/18";
+  "w-full rounded-[1.4rem] border border-white/70 bg-white/82 px-4 py-4 text-sm text-foreground outline-none transition placeholder:text-[#7b7a84] focus:bg-white focus:ring-2 focus:ring-accent/18";
 
 export function AuthForm() {
   const [mode, setMode] = useState<Mode>("sign-in");
@@ -98,23 +98,8 @@ export function AuthForm() {
   }
 
   return (
-    <section className="w-full max-w-[34rem] rounded-[2rem] bg-[#f6f3f2] p-6 shadow-[0_28px_64px_-48px_rgba(28,27,27,0.2)] sm:p-8 md:rounded-[2.25rem] md:p-10">
-      <div className="mb-8 space-y-3">
-        <p className="text-[0.68rem] font-semibold uppercase tracking-[0.28em] text-muted">
-          дисциплина и прогресс
-        </p>
-        <h1 className="font-display text-[2.25rem] font-black leading-[0.94] tracking-[-0.08em] text-foreground sm:text-[2.7rem]">
-          Вход в
-          <br />
-          рабочее пространство
-        </h1>
-        <p className="max-w-md text-sm leading-7 text-muted">
-          Только форма входа, быстрый доступ к платформе и никакого лишнего
-          шума. После авторизации ты сразу попадешь в свой рабочий контур.
-        </p>
-      </div>
-
-      <div className="flex gap-7 border-b border-[#d8d5d4] pb-5">
+    <section className="w-full max-w-[28rem] px-1 sm:px-2">
+      <div className="flex items-center justify-center gap-7 border-b border-[#d8d5d4]/75 pb-5">
         {([
           ["sign-in", "Вход"],
           ["sign-up", "Регистрация"],
@@ -140,16 +125,6 @@ export function AuthForm() {
             </button>
           );
         })}
-      </div>
-
-      <div className="mt-7 space-y-2">
-        <h2 className="font-display text-[1.75rem] font-bold tracking-[-0.06em] text-foreground">
-          {mode === "sign-up" ? "Создай профиль" : "Войдите в приложение"}
-        </h2>
-        <p className="max-w-md text-sm leading-7 text-muted">
-          После входа сессия останется на этом устройстве. Ты сможешь сразу
-          вернуться к плану, журналу питания и AI-коучу.
-        </p>
       </div>
 
       <form className="mt-8 space-y-5" onSubmit={submit}>
@@ -215,29 +190,20 @@ export function AuthForm() {
           </div>
         </label>
 
-        <div className="flex justify-end">
-          <button
-            className="text-xs font-bold text-accent transition hover:opacity-80"
-            type="button"
-          >
-            Забыли пароль?
-          </button>
-        </div>
-
         {error ? (
-          <p className="rounded-[1.15rem] border border-red-300/70 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <p className="rounded-[1.35rem] border border-red-300/70 bg-red-50/92 px-4 py-3 text-sm text-red-700">
             {error}
           </p>
         ) : null}
 
         {notice ? (
-          <p className="rounded-[1.15rem] border border-emerald-300/70 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+          <p className="rounded-[1.35rem] border border-emerald-300/70 bg-emerald-50/92 px-4 py-3 text-sm text-emerald-700">
             {notice}
           </p>
         ) : null}
 
         <button
-          className="w-full rounded-[1.15rem] bg-[linear-gradient(135deg,#0040e0,#2e5bff)] px-5 py-4 text-sm font-extrabold uppercase tracking-[0.12em] text-white shadow-[0_18px_40px_-24px_rgba(0,64,224,0.48)] transition hover:translate-y-[-1px] hover:shadow-[0_24px_44px_-24px_rgba(0,64,224,0.56)] disabled:cursor-not-allowed disabled:opacity-60"
+          className="w-full rounded-[1.4rem] bg-[linear-gradient(135deg,#0040e0,#2e5bff)] px-5 py-4 text-sm font-extrabold uppercase tracking-[0.12em] text-white shadow-[0_18px_40px_-24px_rgba(0,64,224,0.48)] transition hover:translate-y-[-1px] hover:shadow-[0_24px_44px_-24px_rgba(0,64,224,0.56)] disabled:cursor-not-allowed disabled:opacity-60"
           disabled={
             isPending ||
             !email.trim() ||
@@ -256,12 +222,6 @@ export function AuthForm() {
           </span>
         </button>
       </form>
-
-      <footer className="mt-8 px-2 text-center text-[0.72rem] leading-6 text-[#8b888d]">
-        Входя, вы соглашаетесь с{" "}
-        <span className="font-bold text-accent">правилами дисциплины</span> и{" "}
-        <span className="font-bold text-accent">протоколом приватности</span>.
-      </footer>
     </section>
   );
 }

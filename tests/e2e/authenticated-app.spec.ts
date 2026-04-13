@@ -31,7 +31,7 @@ test.describe("authenticated app", () => {
     await expect(page.locator("textarea").first()).toBeVisible();
 
     await navigateStable(page, "/settings", /\/settings$/);
-    await expect(page.locator('button[aria-pressed]').first()).toBeVisible();
+    await expect(page.locator("#billing-center").first()).toBeVisible();
   });
 
   test("session is restored inside the same browser context", async ({ page }) => {

@@ -62,20 +62,16 @@ test.describe("ui regressions", () => {
         await page.waitForLoadState("networkidle");
 
         await expect(
-          page.getByRole("link", { name: "Тренировки" }),
+          page.getByRole("link", { name: "Тренировки", exact: true }),
         ).toBeVisible();
         await expect(
-          page.getByRole("link", { name: "Питание" }),
+          page.getByRole("link", { name: "Питание", exact: true }),
         ).toBeVisible();
         await expect(
-          page.getByRole("link", { name: "Настройки" }),
+          page.getByRole("link", { name: "Настройки", exact: true }),
         ).toBeVisible();
-
-        const collapseButton = page.getByRole("button", { name: "Свернуть" });
-        await expect(collapseButton).toBeVisible();
-        await collapseButton.click();
         await expect(
-          page.getByRole("button", { name: "Развернуть верхнюю панель" }),
+          page.getByRole("link", { name: "Архив", exact: true }),
         ).toBeVisible();
 
         regressionCapture.assertNone();

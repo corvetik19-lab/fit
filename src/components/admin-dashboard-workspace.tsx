@@ -302,14 +302,21 @@ export function AdminDashboardWorkspace({
   const recentAudit = adminAuditLogs.slice(0, 4);
 
   return (
-    <div className="grid gap-6">
-      <section className="card card--hero p-6 sm:p-8">
-        <div className="grid gap-8 xl:grid-cols-[1.12fr_0.88fr]">
-          <div className="space-y-5">
+    <div className="flex min-w-0 w-full flex-col gap-6">
+      <section className="card card--hero min-w-0 w-full max-w-full overflow-hidden p-6 sm:p-8">
+        <div className="grid min-w-0 gap-8 xl:grid-cols-[1.12fr_0.88fr]">
+          <div className="min-w-0 space-y-5">
             <div className="flex flex-wrap gap-2">
               <span className="pill">fit Admin</span>
               <span className="pill">Роль: {operatorRole}</span>
-              <span className="pill">Главный доступ: {PRIMARY_SUPER_ADMIN_EMAIL}</span>
+            </div>
+            <div className="rounded-[1.45rem] bg-[color:var(--accent-soft)] px-4 py-3 text-[color:var(--accent-strong)] sm:max-w-max">
+              <p className="text-[10px] font-bold uppercase tracking-[0.22em]">
+                Главный доступ
+              </p>
+              <p className="mt-2 break-all text-sm font-semibold tracking-[0.02em] sm:text-xs sm:uppercase sm:tracking-[0.18em]">
+                {PRIMARY_SUPER_ADMIN_EMAIL}
+              </p>
             </div>
 
             <div className="space-y-3">
@@ -323,7 +330,7 @@ export function AdminDashboardWorkspace({
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <ActionChip
                 href={"/admin/users" as Route}
                 testId="admin-page-open-users-link"

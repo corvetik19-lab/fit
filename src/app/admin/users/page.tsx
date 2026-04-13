@@ -17,7 +17,11 @@ export default async function AdminUsersPage() {
   );
 
   return (
-    <AppShell eyebrow="Админ" title="Пользователи и управление доступом">
+    <AppShell
+      eyebrow="Админ"
+      hideAssistantWidget
+      title="Пользователи и управление доступом"
+    >
       <section className="card overflow-hidden p-6 sm:p-8">
         <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
           <div className="space-y-5">

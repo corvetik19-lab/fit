@@ -94,6 +94,15 @@ export function WorkoutFocusHeader({
             <Settings2 size={18} strokeWidth={2.15} />
           </div>
           <button
+            aria-label="Обычный вид"
+            className="inline-flex h-11 items-center justify-center rounded-[1.15rem] bg-[color:var(--surface-container-high)] px-3 text-xs font-semibold text-[color:var(--foreground)] transition hover:bg-[color:var(--surface-container-highest)] sm:hidden"
+            data-testid="workout-regular-mode-button"
+            onClick={onReturnToRegularMode}
+            type="button"
+          >
+            Вид
+          </button>
+          <button
             aria-expanded={!isFocusHeaderCollapsed}
             className="flex h-11 w-11 items-center justify-center rounded-[1.15rem] bg-[color:var(--surface-container-high)] text-[color:var(--foreground)] transition hover:bg-[color:var(--surface-container-highest)]"
             data-testid="workout-focus-header-toggle"

@@ -75,9 +75,9 @@ export function AppShellFrame({
   return (
     <div className="min-h-dvh">
       {!immersive ? (
-        <header className="fixed inset-x-0 top-0 z-30 px-4 pt-[calc(0.8rem+env(safe-area-inset-top))] sm:px-6 lg:px-10">
-          <div className="mx-auto max-w-[1500px]">
-            <div className="card rounded-[2rem] px-4 py-3 sm:px-5 sm:py-4">
+        <header className="fixed inset-x-0 top-0 z-30 overflow-x-clip pt-[calc(0.8rem+env(safe-area-inset-top))]">
+          <div className="mx-4 sm:mx-6 lg:mx-auto lg:max-w-[1500px] lg:px-10">
+            <div className="card w-full rounded-[2rem] px-4 py-3 sm:px-5 sm:py-4">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-3">
                   <div className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/82 p-2 shadow-[0_20px_40px_-28px_rgba(0,64,224,0.22)]">
@@ -127,7 +127,7 @@ export function AppShellFrame({
       ) : null}
 
       <main
-        className={`mx-auto grid max-w-[1500px] gap-6 px-4 pb-[calc(6.5rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-10 lg:pb-8 ${topPaddingClassName}`}
+        className={`mx-auto grid w-full max-w-[1500px] grid-cols-[minmax(0,1fr)] gap-6 overflow-x-clip px-4 pb-[calc(6.5rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-10 lg:pb-8 ${topPaddingClassName}`}
       >
         {children}
       </main>

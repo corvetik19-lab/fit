@@ -17,28 +17,22 @@ export default async function Home() {
   return (
     <main className="relative flex min-h-dvh items-center justify-center overflow-hidden bg-background px-5 py-10 sm:px-8">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(46,91,255,0.12),transparent_34%),linear-gradient(180deg,#fcf9f8_0%,#f6f3f2_100%)]" />
-      <div className="relative z-10 w-full max-w-[36rem]">
-        <header className="mb-8 flex justify-center">
-          <div className="flex items-center gap-3 rounded-full bg-white/78 px-4 py-3 shadow-[0_18px_42px_-32px_rgba(28,27,27,0.24)] backdrop-blur-xl">
-            <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-white p-2 shadow-[0_14px_30px_-24px_rgba(28,27,27,0.28)]">
-              <Image
-                alt="fit"
-                className="h-full w-full object-contain"
-                height={44}
-                priority
-                src="/fit-logo.svg"
-                width={44}
-              />
-            </span>
-            <div>
-              <p className="font-display text-3xl font-black tracking-[-0.08em] text-accent">
-                fit
-              </p>
-              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.26em] text-muted">
-                fitness platform
-              </p>
-            </div>
-          </div>
+      <div className="relative z-10 w-full max-w-[32rem]">
+        <header className="mb-8 flex flex-col items-center text-center sm:mb-10">
+          <Image
+            alt="fit"
+            className="h-28 w-28 object-contain drop-shadow-[0_22px_46px_rgba(0,64,224,0.18)] sm:h-32 sm:w-32"
+            height={128}
+            priority
+            src="/fit-logo.svg"
+            width={128}
+          />
+          <p className="mt-5 font-display text-5xl font-black tracking-[-0.1em] text-accent sm:text-6xl">
+            fit
+          </p>
+          <p className="mt-3 max-w-sm text-sm font-medium leading-6 text-muted sm:text-[0.95rem]">
+            Тренируйся точно. Восстанавливайся умно.
+          </p>
         </header>
 
         <section className="flex justify-center">

@@ -1,25 +1,30 @@
+import type { Route } from "next";
 import Link from "next/link";
 
 import { AppShell } from "@/components/app-shell";
-import { PageWorkspace } from "@/components/page-workspace";
-import { PanelCard } from "@/components/panel-card";
 import { listAiPlanProposals } from "@/lib/ai/proposals";
 import { loadSettingsDataSnapshot } from "@/lib/settings-data-server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { listWeeklyPrograms } from "@/lib/workout/weekly-programs";
 import { requireReadyViewer } from "@/lib/viewer";
 
-const dateFormatter = new Intl.DateTimeFormat("ru-RU", {
+const rangeFormatter = new Intl.DateTimeFormat("ru-RU", {
+  day: "numeric",
+  month: "short",
+});
+
+const fullDateFormatter = new Intl.DateTimeFormat("ru-RU", {
   day: "2-digit",
   month: "long",
+  year: "numeric",
 });
 
 function formatDateRange(start: string, end: string) {
-  return `${dateFormatter.format(new Date(start))} - ${dateFormatter.format(new Date(end))}`;
+  return `${rangeFormatter.format(new Date(start))} · ${rangeFormatter.format(new Date(end))}`;
 }
 
 function formatProposalType(value: string) {
-  return value === "meal_plan" ? "Питание" : "Тренировки";
+  return value === "meal_plan" ? "AI питание" : "AI тренировки";
 }
 
 function formatProposalStatus(value: string) {
@@ -50,6 +55,14 @@ function formatProgramStatus(value: string) {
   }
 }
 
+type TimelineItem = {
+  detail: string;
+  href?: Route;
+  kind: "ai" | "data" | "workout";
+  title: string;
+  when: number;
+};
+
 export default async function HistoryPage() {
   const viewer = await requireReadyViewer();
   const supabase = await createServerSupabaseClient();
@@ -60,217 +73,343 @@ export default async function HistoryPage() {
   ]);
 
   const completedPrograms = programs.filter((program) => program.is_locked);
-  const appliedProposals = proposals.filter((proposal) => proposal.status === "applied");
+  const timelineItems: TimelineItem[] = [
+    ...programs.slice(0, 6).map((program) => ({
+      kind: "workout" as const,
+      title: program.title,
+      detail: `${formatDateRange(program.week_start_date, program.week_end_date)} · ${formatProgramStatus(program.status)}`,
+      href: program.days[0]
+        ? (`/workouts/day/${program.days[0].id}` as Route)
+        : undefined,
+      when: new Date(program.created_at).getTime(),
+    })),
+    ...proposals.slice(0, 4).map((proposal) => ({
+      kind: "ai" as const,
+      title: formatProposalType(proposal.proposal_type),
+      detail: `${formatProposalStatus(proposal.status)} · ${fullDateFormatter.format(new Date(proposal.updated_at))}`,
+      when: new Date(proposal.updated_at).getTime(),
+    })),
+    ...settingsSnapshot.privacyEvents.slice(0, 4).map((event) => ({
+      kind: "data" as const,
+      title: event.kind === "deletion" ? "Удаление аккаунта" : "Операция по данным",
+      detail: `${event.title} · ${fullDateFormatter.format(new Date(event.createdAt))}`,
+      when: new Date(event.createdAt).getTime(),
+    })),
+  ].sort((left, right) => right.when - left.when);
 
   return (
     <AppShell eyebrow="История" title="Прошлые циклы, AI-решения и операции с данными">
-      <PageWorkspace
-        badges={[
-          viewer.profile?.full_name ?? viewer.user.email ?? "fit",
-          completedPrograms.length
-            ? `${completedPrograms.length} завершённых недель`
-            : "История только начинает собираться",
-        ]}
-        description="История разделена на три слоя: тренировочные циклы, AI-предложения и операции с личными данными. На телефоне это работает как компактный архив по разделам, без перегруженной ленты."
-        metrics={[
-          {
-            label: "Программ",
-            value: String(programs.length),
-            note: "в хронологии профиля",
-          },
-          {
-            label: "Закрыто",
-            value: String(completedPrograms.length),
-            note: "недель завершено",
-          },
-          {
-            label: "AI-планы",
-            value: String(appliedProposals.length),
-            note: "уже применены",
-          },
-          {
-            label: "Операций",
-            value: String(
-              settingsSnapshot.exportJobs.length + settingsSnapshot.privacyEvents.length,
-            ),
-            note: "по данным и выгрузкам",
-          },
-        ]}
-        sections={[
-          {
-            key: "programs",
-            label: "Программы",
-            description: "Прошлые недели, статусы и быстрый вход в день.",
-            content: (
-              <PanelCard
-                caption="Архив программ"
-                title="Прошлые недели и завершённые рабочие циклы"
-              >
-                <div className="grid gap-3">
-                  {programs.length ? (
-                    programs.map((program) => (
-                      <article
-                        className="rounded-[2rem] border border-border bg-white/72 p-4 shadow-[0_24px_52px_-40px_rgba(20,58,160,0.22)]"
-                        key={program.id}
-                      >
-                        <div className="flex flex-wrap items-start justify-between gap-3">
-                          <div>
-                            <p className="text-sm font-semibold text-foreground">
-                              {program.title}
-                            </p>
-                            <p className="mt-1 text-sm text-muted">
-                              {formatDateRange(
-                                program.week_start_date,
-                                program.week_end_date,
-                              )}
-                            </p>
-                          </div>
-                          <span className="pill">{formatProgramStatus(program.status)}</span>
-                        </div>
+      <div className="grid gap-6">
+        <section className="grid gap-5">
+          <div className="space-y-3">
+            <p className="workspace-kicker text-accent">Личный архив</p>
+            <h1 className="app-display text-5xl font-black tracking-[-0.08em] text-foreground">
+              Архив
+            </h1>
+          </div>
 
-                        <div className="mt-3 grid gap-2 text-sm text-muted">
-                          {program.days.map((day) => (
-                            <div
-                              className="flex items-center justify-between gap-3 rounded-[1.5rem] border border-border/80 bg-white/88 px-3 py-3"
-                              key={day.id}
-                            >
-                              <div>
-                                <p className="font-medium text-foreground">
-                                  День {day.day_of_week}
-                                </p>
-                                <p>Упражнений: {day.exercises.length}</p>
-                              </div>
-                              <Link
-                                className="rounded-full border border-border px-3 py-2 text-xs font-semibold text-foreground transition hover:bg-white"
-                                href={`/workouts/day/${day.id}`}
-                              >
-                                Открыть
-                              </Link>
-                            </div>
-                          ))}
-                        </div>
-                      </article>
-                    ))
-                  ) : (
-                    <div className="rounded-[2rem] border border-dashed border-border bg-white/72 px-4 py-5 text-sm text-muted">
-                      Здесь появятся завершённые недели и архив тренировочных дней.
-                    </div>
-                  )}
-                </div>
-              </PanelCard>
-            ),
-          },
-          {
-            key: "ai",
-            label: "AI",
-            description: "Предложения, которые уже доходили до подтверждения и применения.",
-            content: (
-              <PanelCard
-                caption="AI-история"
-                title="Черновики, подтверждения и применённые решения"
-              >
-                <div className="grid gap-3">
-                  {proposals.length ? (
-                    proposals.map((proposal) => (
-                      <article
-                        className="rounded-[2rem] border border-border bg-white/72 p-4 shadow-[0_24px_52px_-40px_rgba(20,58,160,0.22)]"
-                        key={proposal.id}
-                      >
-                        <div className="flex flex-wrap items-start justify-between gap-3">
-                          <div>
-                            <p className="text-sm font-semibold text-foreground">
-                              {formatProposalType(proposal.proposal_type)}
-                            </p>
-                            <p className="mt-1 text-sm text-muted">
-                              Обновлено{" "}
-                              {new Date(proposal.updated_at).toLocaleString("ru-RU")}
-                            </p>
-                          </div>
-                          <span className="pill">{formatProposalStatus(proposal.status)}</span>
-                        </div>
-                        <p className="mt-3 text-sm leading-6 text-muted">
-                          Идентификатор предложения: {proposal.id.slice(0, 8)}
-                        </p>
-                      </article>
-                    ))
-                  ) : (
-                    <div className="rounded-[2rem] border border-dashed border-border bg-white/72 px-4 py-5 text-sm text-muted">
-                      Как только AI начнёт собирать и применять планы, история появится
-                      здесь.
-                    </div>
-                  )}
-                </div>
-              </PanelCard>
-            ),
-          },
-          {
-            key: "data",
-            label: "Данные",
-            description: "Выгрузки и события по приватности без лишней техничности.",
-            content: (
-              <PanelCard
-                caption="Данные и приватность"
-                title="Выгрузки профиля и запросы на удаление"
-              >
-                <div className="grid gap-3 lg:grid-cols-2">
-                  <div className="rounded-[2rem] border border-border bg-white/72 p-4">
-                    <p className="text-sm font-semibold text-foreground">Выгрузки</p>
-                    <div className="mt-3 grid gap-2 text-sm text-muted">
-                      {settingsSnapshot.exportJobs.length ? (
-                        settingsSnapshot.exportJobs.map((job) => (
-                          <div
-                            className="rounded-[1.5rem] border border-border/80 bg-white/88 px-3 py-3"
-                            key={job.id}
-                          >
-                            <p className="font-medium text-foreground">{job.status}</p>
-                            <p className="mt-1">
-                              {new Date(job.createdAt).toLocaleString("ru-RU")}
-                            </p>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="rounded-[1.5rem] border border-dashed border-border px-3 py-3">
-                          Пока нет созданных выгрузок.
-                        </div>
-                      )}
-                    </div>
-                  </div>
+          <article className="surface-panel p-6 sm:p-7">
+            <p className="text-5xl font-black tracking-tight text-accent">
+              {completedPrograms.length}
+            </p>
+            <p className="mt-2 text-sm uppercase tracking-[0.18em] text-muted">
+              недель завершено
+            </p>
+          </article>
+        </section>
 
-                  <div className="rounded-[2rem] border border-border bg-white/72 p-4">
-                    <p className="text-sm font-semibold text-foreground">
-                      События приватности
+        <section className="overflow-x-auto pb-1">
+          <div className="flex min-w-max gap-3">
+            <a className="section-chip section-chip--active px-4 py-3 text-sm font-semibold" href="#history-events">
+              Все события
+            </a>
+            <a className="section-chip px-4 py-3 text-sm font-semibold" href="#history-programs">
+              Тренировки
+            </a>
+            <a className="section-chip px-4 py-3 text-sm font-semibold" href="#history-ai">
+              AI аналитик
+            </a>
+            <a className="section-chip px-4 py-3 text-sm font-semibold" href="#history-data">
+              Данные
+            </a>
+          </div>
+        </section>
+
+        <section className="grid gap-6" id="history-events">
+          <div className="grid gap-3">
+            {timelineItems.slice(0, 6).map((item) => (
+              <article
+                className={`rounded-[2rem] p-5 ${
+                  item.kind === "ai"
+                    ? "athletic-hero-card"
+                    : "surface-panel"
+                }`}
+                key={`${item.kind}-${item.title}-${item.when}`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p
+                      className={`workspace-kicker ${
+                        item.kind === "ai" ? "text-white/76" : ""
+                      }`}
+                    >
+                      {item.kind === "ai"
+                        ? "AI изменения"
+                        : item.kind === "data"
+                          ? "Данные"
+                          : "Тренировки"}
                     </p>
-                    <div className="mt-3 grid gap-2 text-sm text-muted">
-                      {settingsSnapshot.privacyEvents.length ? (
-                        settingsSnapshot.privacyEvents.map((event) => (
-                          <div
-                            className="rounded-[1.5rem] border border-border/80 bg-white/88 px-3 py-3"
-                            key={event.id}
-                          >
-                            <p className="font-medium text-foreground">
-                              {event.kind === "deletion"
-                                ? "Запрос на удаление"
-                                : "Событие приватности"}
-                            </p>
-                            <p className="mt-1">
-                              {new Date(event.createdAt).toLocaleString("ru-RU")}
-                            </p>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="rounded-[1.5rem] border border-dashed border-border px-3 py-3">
-                          Здесь будут показаны выгрузки и события по личным данным.
-                        </div>
-                      )}
-                    </div>
+                    <h2
+                      className={`mt-3 text-3xl font-semibold tracking-tight ${
+                        item.kind === "ai" ? "text-white" : "text-foreground"
+                      }`}
+                    >
+                      {item.title}
+                    </h2>
+                    <p
+                      className={`mt-2 text-sm leading-7 ${
+                        item.kind === "ai" ? "text-white/78" : "text-muted"
+                      }`}
+                    >
+                      {item.detail}
+                    </p>
                   </div>
+
+                  {item.href ? (
+                    <Link
+                      className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                        item.kind === "ai"
+                          ? "bg-white text-accent"
+                          : "border border-border bg-white/80 text-foreground hover:bg-white"
+                      }`}
+                      href={item.href}
+                    >
+                      Подробнее
+                    </Link>
+                  ) : null}
                 </div>
-              </PanelCard>
-            ),
-          },
-        ]}
-        title="История прогресса, решений и действий над профилем"
-      />
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="grid gap-4" id="history-programs">
+          <div>
+            <p className="workspace-kicker">Программы</p>
+            <h2 className="app-display mt-2 text-3xl font-semibold text-foreground">
+              Прошлые циклы и рабочие недели
+            </h2>
+          </div>
+
+          <div className="grid gap-3">
+            {programs.length ? (
+              programs.map((program) => {
+                const firstDay = program.days[0] ?? null;
+
+                return (
+                  <article className="surface-panel p-5" key={program.id}>
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <h3 className="text-2xl font-semibold tracking-tight text-foreground">
+                          {program.title}
+                        </h3>
+                        <p className="mt-2 text-sm text-muted">
+                          {formatDateRange(
+                            program.week_start_date,
+                            program.week_end_date,
+                          )}
+                        </p>
+                      </div>
+                      <span className="pill">{formatProgramStatus(program.status)}</span>
+                    </div>
+
+                    <div className="mt-5 grid grid-cols-3 gap-3">
+                      <div>
+                        <p className="text-3xl font-black tracking-tight text-foreground">
+                          {program.days.length}
+                        </p>
+                        <p className="mt-1 text-xs uppercase tracking-[0.18em] text-muted">
+                          дней
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-3xl font-black tracking-tight text-foreground">
+                          {program.days.reduce(
+                            (sum, day) => sum + day.exercises.length,
+                            0,
+                          )}
+                        </p>
+                        <p className="mt-1 text-xs uppercase tracking-[0.18em] text-muted">
+                          упражнений
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-3xl font-black tracking-tight text-foreground">
+                          {program.is_locked ? "Да" : "Нет"}
+                        </p>
+                        <p className="mt-1 text-xs uppercase tracking-[0.18em] text-muted">
+                          зафиксирована
+                        </p>
+                      </div>
+                    </div>
+
+                    {firstDay ? (
+                      <div className="mt-5">
+                        <Link
+                          className="action-button action-button--primary w-full justify-center"
+                          href={`/workouts/day/${firstDay.id}` as Route}
+                        >
+                          Открыть день {firstDay.day_of_week}
+                        </Link>
+                      </div>
+                    ) : null}
+                  </article>
+                );
+              })
+            ) : (
+              <article className="surface-panel p-5 text-sm text-muted">
+                Архив тренировочных недель пока пуст.
+              </article>
+            )}
+          </div>
+        </section>
+
+        <section className="grid gap-4" id="history-ai">
+          <div>
+            <p className="workspace-kicker">AI</p>
+            <h2 className="app-display mt-2 text-3xl font-semibold text-foreground">
+              Черновики, подтверждения и применённые решения
+            </h2>
+          </div>
+
+          <div className="grid gap-3">
+            {proposals.length ? (
+              proposals.map((proposal) => (
+                <article
+                  className={`rounded-[2rem] p-5 ${
+                    proposal.status === "applied"
+                      ? "athletic-hero-card"
+                      : "surface-panel"
+                  }`}
+                  key={proposal.id}
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p
+                        className={`workspace-kicker ${
+                          proposal.status === "applied" ? "text-white/78" : ""
+                        }`}
+                      >
+                        {formatProposalType(proposal.proposal_type)}
+                      </p>
+                      <h3
+                        className={`mt-2 text-2xl font-semibold tracking-tight ${
+                          proposal.status === "applied"
+                            ? "text-white"
+                            : "text-foreground"
+                        }`}
+                      >
+                        {formatProposalStatus(proposal.status)}
+                      </h3>
+                      <p
+                        className={`mt-2 text-sm ${
+                          proposal.status === "applied"
+                            ? "text-white/78"
+                            : "text-muted"
+                        }`}
+                      >
+                        {fullDateFormatter.format(new Date(proposal.updated_at))}
+                      </p>
+                    </div>
+
+                    <span
+                      className={`rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] ${
+                        proposal.status === "applied"
+                          ? "bg-white/18 text-white"
+                          : "bg-[color-mix(in_srgb,var(--accent-soft)_44%,white)] text-accent"
+                      }`}
+                    >
+                      {proposal.id.slice(0, 8)}
+                    </span>
+                  </div>
+                </article>
+              ))
+            ) : (
+              <article className="surface-panel p-5 text-sm text-muted">
+                История AI-предложений пока пустая.
+              </article>
+            )}
+          </div>
+        </section>
+
+        <section className="grid gap-4" id="history-data">
+          <div>
+            <p className="workspace-kicker">Данные</p>
+            <h2 className="app-display mt-2 text-3xl font-semibold text-foreground">
+              Экспорт и приватность
+            </h2>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            <article className="surface-panel p-5">
+              <h3 className="text-2xl font-semibold tracking-tight text-foreground">
+                Выгрузки профиля
+              </h3>
+              <div className="mt-4 grid gap-3">
+                {settingsSnapshot.exportJobs.length ? (
+                  settingsSnapshot.exportJobs.map((job) => (
+                    <div
+                      className="rounded-[1.6rem] bg-white/78 px-4 py-4 text-sm text-muted"
+                      key={job.id}
+                    >
+                      <p className="font-semibold text-foreground">
+                        {job.status}
+                      </p>
+                      <p className="mt-1">
+                        {fullDateFormatter.format(new Date(job.createdAt))}
+                      </p>
+                    </div>
+                  ))
+                ) : (
+                  <div className="rounded-[1.6rem] bg-white/78 px-4 py-4 text-sm text-muted">
+                    Выгрузок пока не было.
+                  </div>
+                )}
+              </div>
+            </article>
+
+            <article className="surface-panel p-5">
+              <h3 className="text-2xl font-semibold tracking-tight text-foreground">
+                События приватности
+              </h3>
+              <div className="mt-4 grid gap-3">
+                {settingsSnapshot.privacyEvents.length ? (
+                  settingsSnapshot.privacyEvents.map((event) => (
+                    <div
+                      className="rounded-[1.6rem] bg-white/78 px-4 py-4 text-sm text-muted"
+                      key={event.id}
+                    >
+                      <p className="font-semibold text-foreground">
+                        {event.kind === "deletion"
+                          ? "Удаление аккаунта"
+                          : "Операция по данным"}
+                      </p>
+                      <p className="mt-1">{event.title}</p>
+                      <p className="mt-1">
+                        {fullDateFormatter.format(new Date(event.createdAt))}
+                      </p>
+                    </div>
+                  ))
+                ) : (
+                  <div className="rounded-[1.6rem] bg-white/78 px-4 py-4 text-sm text-muted">
+                    Событий приватности пока нет.
+                  </div>
+                )}
+              </div>
+            </article>
+          </div>
+        </section>
+      </div>
     </AppShell>
   );
 }

@@ -13,7 +13,7 @@
 
 Р­С‚РѕС‚ С„Р°Р№Р» вЂ” С‚РµРєСѓС‰РёР№ production-hardening backlog РїСЂРѕРµРєС‚Р°. РћРЅ РѕС‚СЂР°Р¶Р°РµС‚ С„Р°РєС‚РёС‡РµСЃРєРѕРµ СЃРѕСЃС‚РѕСЏРЅРёРµ СЂРµРїРѕР·РёС‚РѕСЂРёСЏ РЅР° `2026-03-31`.
 
-Текущий прогресс execution checklist: `188 / 196` (`96%`).
+Текущий прогресс execution checklist: `189 / 196` (`96%`).
 
 ## РўРµРєСѓС‰Р°СЏ Р±Р°Р·Р°
 
@@ -1255,9 +1255,9 @@
 - [x] Закрыт stitch-tranche для remaining user screens: [page.tsx](/C:/fit/src/app/page.tsx), [onboarding/page.tsx](/C:/fit/src/app/onboarding/page.tsx), [onboarding-form.tsx](/C:/fit/src/components/onboarding-form.tsx), [workouts/page.tsx](/C:/fit/src/app/workouts/page.tsx), [history/page.tsx](/C:/fit/src/app/history/page.tsx), [settings/page.tsx](/C:/fit/src/app/settings/page.tsx), [billing/cloudpayments/page.tsx](/C:/fit/src/app/billing/cloudpayments/page.tsx), [cloudpayments-checkout.tsx](/C:/fit/src/components/cloudpayments-checkout.tsx), [suspended/page.tsx](/C:/fit/src/app/suspended/page.tsx) и [page-workspace.tsx](/C:/fit/src/components/page-workspace.tsx) переведены на тот же UI contract.
 - [x] Закрыт stitch-tranche для admin surfaces: `/admin`, `/admin/users`, `/admin/users/[id]` переведены на тот же editorial/operator language через [admin/page.tsx](/C:/fit/src/app/admin/page.tsx), [admin-dashboard-workspace.tsx](/C:/fit/src/components/admin-dashboard-workspace.tsx), [admin-users-directory.tsx](/C:/fit/src/components/admin-users-directory.tsx), [admin-users-bulk-actions.tsx](/C:/fit/src/components/admin-users-bulk-actions.tsx), [admin/users/[id]/page.tsx](/C:/fit/src/app/admin/users/[id]/page.tsx), [admin-user-detail.tsx](/C:/fit/src/components/admin-user-detail.tsx), [admin-ai-eval-runs.tsx](/C:/fit/src/components/admin-ai-eval-runs.tsx).
 - [x] Закрыт stitch-tranche по visible-copy sanitation и developer handoff: [STITCH_REDESIGN_EXECUTION.md](/C:/fit/docs/STITCH_REDESIGN_EXECUTION.md), [FRONTEND.md](/C:/fit/docs/FRONTEND.md) и [design-handoff/FIT_SCREEN_DESIGN_BRIEF.md](/C:/fit/docs/design-handoff/FIT_SCREEN_DESIGN_BRIEF.md) синхронизированы с реально внедрённым stitch-style baseline.
-- [ ] Открыт только финальный auth-based visual regression tranche: нужно повторно прогнать [ui-regressions.spec.ts](/C:/fit/tests/e2e/ui-regressions.spec.ts) и [mobile-pwa-regressions.spec.ts](/C:/fit/tests/e2e/mobile-pwa-regressions.spec.ts), как только внешний Supabase Auth runtime перестанет падать по `ERR_CONNECTION`.
+- [x] Финальный auth/mobile visual regression tranche закрыт: [authenticated-app.spec.ts](/C:/fit/tests/e2e/authenticated-app.spec.ts), [ui-regressions.spec.ts](/C:/fit/tests/e2e/ui-regressions.spec.ts) и [mobile-pwa-regressions.spec.ts](/C:/fit/tests/e2e/mobile-pwa-regressions.spec.ts) повторно пройдены на живом локальном auth runtime.
 - [x] Текущий slice подтверждён пакетами `npm run lint`, `npm run typecheck`, `npm run build`; таргетированные Playwright suites в этой среде по-прежнему могут упираться в локальный auth-bootstrap redirect на `/`, а не в compile/layout regression нового UI.
-- [x] После закрытия admin surfaces, visible-copy sanitation и handoff sync общий execution checklist пересчитан честно: `188 / 196` (`96%`).
+- [x] После закрытия admin surfaces, visible-copy sanitation, mobile-first auth polish и финального regression pass общий execution checklist пересчитан честно: `189 / 196` (`96%`).
 
 ## 2026-04-13 stitch redesign admin detail follow-up
 
@@ -1298,3 +1298,11 @@
 - [x] Таргетированный contract-test `auth routes reject invalid payloads before provider runtime` проходит зелёно; остальные auth-based suites по-прежнему упираются не в код slice, а во внешний доступ к Supabase Auth.
 - [x] Добавлен отдельный preflight [verify-supabase-runtime.mjs](/C:/fit/scripts/verify-supabase-runtime.mjs) и npm-команда `npm run verify:supabase-runtime`, чтобы разработчик мог одной командой проверить `NEXT_PUBLIC_SUPABASE_URL`, DNS-резолв и HTTPS-доступность auth/rest поверхности.
 - [x] Общий progress execution checklist не меняется и остаётся `188 / 196` (`96%`): финальный auth-based visual regression по-прежнему блокируется внешним DNS/runtime фактором `ENOTFOUND nactzaxrjzsdkyfqwecf.supabase.co`, а не проблемой текущего UI или маршрутов `/api/auth/*`.
+
+## 2026-04-13 mobile-first auth/admin final regression addendum
+
+- [x] В [page.tsx](/C:/fit/src/app/page.tsx) и [auth-form.tsx](/C:/fit/src/components/auth-form.tsx) входной экран дополнительно дожат под Android-first UX: увеличен логотип, форма стала легче визуально, а на экране остались только logo, `fit`, короткий слоган и сам auth flow.
+- [x] На операторских маршрутах [admin/page.tsx](/C:/fit/src/app/admin/page.tsx), [admin/users/page.tsx](/C:/fit/src/app/admin/users/page.tsx) и [admin/users/[id]/page.tsx](/C:/fit/src/app/admin/users/[id]/page.tsx) отключён assistant FAB, чтобы на мобильном viewport он не наезжал на CTA и не съедал полезную площадь.
+- [x] Обновлён mobile regression contract в [mobile-pwa-regressions.spec.ts](/C:/fit/tests/e2e/mobile-pwa-regressions.spec.ts): admin mobile теперь проверяется по drawer, CTA и отсутствию overflow в новом stitch-shell, а не по legacy `page-workspace-mobile-trigger`.
+- [x] Финальная verification-связка для stitch/mobile slice зелёная: `npm run lint`, `npm run typecheck`, `npm run build`, `tests/e2e/authenticated-app.spec.ts`, `tests/e2e/ui-regressions.spec.ts`, `tests/e2e/mobile-pwa-regressions.spec.ts`, `tests/smoke/app-smoke.spec.ts`.
+- [x] Общий progress execution checklist после закрытия этого slice: `189 / 196` (`96%`).

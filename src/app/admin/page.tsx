@@ -47,7 +47,11 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
   if (!viewer.isPlatformAdmin) {
     return (
-      <AppShell eyebrow="Админ" title="Доступ к панели управления">
+    <AppShell
+      eyebrow="Админ"
+      hideAssistantWidget
+      title="Доступ к панели управления"
+    >
         <PanelCard
           caption="Доступ"
           title="Операторская панель доступна только администраторам платформы"
@@ -354,7 +358,11 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   ];
 
   return (
-    <AppShell eyebrow="Админ" title="Операторский центр fit">
+    <AppShell
+      eyebrow="Админ"
+      hideAssistantWidget
+      title="Операторский центр fit"
+    >
       <AdminDashboardWorkspace
         adminAuditLogs={adminAuditLogs}
         adminRoster={adminRoster}
