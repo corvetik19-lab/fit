@@ -3,6 +3,7 @@
 import type { Route } from "next";
 import Link from "next/link";
 
+import { AdminUserContentSection } from "@/components/admin-user-detail-content-assets";
 import {
   AdminUserActivitySection,
   AdminUserBillingSection,
@@ -59,6 +60,7 @@ export function AdminUserDetail({
     currentUserRole,
     currentUserEmail,
   );
+  const canManageContentAssets = canViewRoleDetails;
 
   if (isLoading) {
     return (
@@ -218,6 +220,15 @@ export function AdminUserDetail({
 
       {activeSection === "activity" ? (
         <AdminUserActivitySection detail={detail} />
+      ) : null}
+
+      {activeSection === "content" ? (
+        <AdminUserContentSection
+          canManageContentAssets={canManageContentAssets}
+          detail={detail}
+          onUpdated={reload}
+          userId={userId}
+        />
       ) : null}
 
       {activeSection === "operations" ? (

@@ -10,7 +10,7 @@ export async function navigateStable(
   for (let attempt = 0; attempt < 3; attempt += 1) {
     try {
       await page.goto(targetPath, {
-        waitUntil: "domcontentloaded",
+        waitUntil: "commit",
         timeout: 45_000,
       });
       await page.waitForURL(targetUrl, { timeout: 45_000 });

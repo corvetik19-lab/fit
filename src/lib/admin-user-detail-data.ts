@@ -167,16 +167,18 @@ export function createFallbackAdminUserDetailResponse(input: {
           latestSubscription: null,
           recentEntitlements: [],
           recentSubscriptionEvents: [],
-          recentUsageCounters: [],
-          subscriptions: 0,
-          usageCounters: 0,
-        },
-      },
-      recentSupportActions: [],
-      recentExportJobs: [],
-      recentOperationAuditLogs: [],
-      recentAdminAuditLogs: [],
+      recentUsageCounters: [],
+      subscriptions: 0,
+      usageCounters: 0,
     },
+  },
+  recentSupportActions: [],
+  recentExportJobs: [],
+  recentExercises: [],
+  recentFoods: [],
+  recentOperationAuditLogs: [],
+  recentAdminAuditLogs: [],
+},
     meta: {
       degraded: true,
     },
@@ -237,6 +239,8 @@ export async function loadAdminUserDetailData(params: {
     latestWorkoutSetResult,
     latestMealResult,
     latestAiMessageResult,
+    recentExercisesResult,
+    recentFoodsResult,
     recentSupportActionsResult,
     recentExportJobsResult,
     operationAuditLogsResult,
@@ -435,6 +439,18 @@ export async function loadAdminUserDetailData(params: {
       .limit(1)
       .maybeSingle(),
     adminSupabase
+      .from("exercise_library")
+      .select("id, title, muscle_group, image_url, is_archived, updated_at")
+      .eq("user_id", userId)
+      .order("updated_at", { ascending: false })
+      .limit(6),
+    adminSupabase
+      .from("foods")
+      .select("id, name, brand, source, image_url, updated_at")
+      .eq("user_id", userId)
+      .order("updated_at", { ascending: false })
+      .limit(6),
+    adminSupabase
       .from("support_actions")
       .select("id, action, status, payload, actor_user_id, created_at, updated_at")
       .eq("target_user_id", userId)
@@ -506,6 +522,8 @@ export async function loadAdminUserDetailData(params: {
     latestWorkoutSetResult,
     latestMealResult,
     latestAiMessageResult,
+    recentExercisesResult,
+    recentFoodsResult,
     recentSupportActionsResult,
     recentExportJobsResult,
     operationAuditLogsResult,
@@ -662,6 +680,8 @@ export async function loadAdminUserDetailData(params: {
           exportJob.requested_by,
         ),
       })),
+      recentExercises: recentExercisesResult.data ?? [],
+      recentFoods: recentFoodsResult.data ?? [],
       recentOperationAuditLogs: (operationAuditLogsResult.data ?? []).map((entry) => ({
         ...entry,
         actor_user: getUserReference(userReferences, entry.actor_user_id),

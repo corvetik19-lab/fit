@@ -196,9 +196,6 @@ test.describe("api contracts", () => {
   test("authenticated invalid route params and payloads return explicit 400s", async ({
     page,
   }) => {
-    await navigateStable(page, "/dashboard", /\/dashboard$/);
-    await page.waitForLoadState("networkidle");
-
     const [
       dayUpdate,
       dayReset,
@@ -227,7 +224,9 @@ test.describe("api contracts", () => {
       invalidWeeklyProgramClonePayload,
       invalidWeeklyProgramCreatePayload,
       invalidExerciseCreatePayload,
+      invalidExerciseImagePayload,
       invalidFoodCreatePayload,
+      invalidFoodImagePayload,
       invalidRecipeCreatePayload,
       invalidMealTemplateCreatePayload,
       invalidMealCreatePayload,
@@ -410,6 +409,15 @@ test.describe("api contracts", () => {
       }),
       fetchJson(page, {
         method: "POST",
+        url: "/api/exercises",
+        body: {
+          title: "Тестовое упражнение",
+          muscleGroup: "Ноги",
+          imageUrl: "not-a-url",
+        },
+      }),
+      fetchJson(page, {
+        method: "POST",
         url: "/api/foods",
         body: {
           name: "x",
@@ -417,6 +425,18 @@ test.describe("api contracts", () => {
           protein: 10,
           fat: 5,
           carbs: 20,
+        },
+      }),
+      fetchJson(page, {
+        method: "POST",
+        url: "/api/foods",
+        body: {
+          name: "Тестовый продукт",
+          kcal: 120,
+          protein: 10,
+          fat: 4,
+          carbs: 12,
+          imageUrl: "not-a-url",
         },
       }),
       fetchJson(page, {
@@ -591,8 +611,18 @@ test.describe("api contracts", () => {
       (invalidExerciseCreatePayload.body as { code?: string } | null)?.code,
     ).toBe("EXERCISE_CREATE_INVALID");
 
+    expect(invalidExerciseImagePayload.status).toBe(400);
+    expect(
+      (invalidExerciseImagePayload.body as { code?: string } | null)?.code,
+    ).toBe("EXERCISE_CREATE_INVALID");
+
     expect(invalidFoodCreatePayload.status).toBe(400);
     expect((invalidFoodCreatePayload.body as { code?: string } | null)?.code).toBe(
+      "FOOD_CREATE_INVALID",
+    );
+
+    expect(invalidFoodImagePayload.status).toBe(400);
+    expect((invalidFoodImagePayload.body as { code?: string } | null)?.code).toBe(
       "FOOD_CREATE_INVALID",
     );
 

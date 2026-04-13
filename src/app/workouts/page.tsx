@@ -14,7 +14,7 @@ export default async function WorkoutsPage() {
     supabase
       .from("exercise_library")
       .select(
-        "id, title, muscle_group, description, note, is_archived, created_at, updated_at",
+        "id, title, muscle_group, description, note, image_url, is_archived, created_at, updated_at",
       )
       .order("updated_at", { ascending: false }),
     listWeeklyPrograms(supabase, viewer.user.id),

@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { createApiErrorResponse } from "@/lib/api/error-response";
+import { optionalImageUrlSchema } from "@/lib/image-url";
 import { logger } from "@/lib/logger";
 import {
   buildFoodUpdateData,
@@ -15,11 +16,15 @@ const foodUpdateSchema = z.object({
   fat: z.number().min(0).max(500).optional(),
   carbs: z.number().min(0).max(500).optional(),
   barcode: z.string().trim().max(64).nullable().optional(),
+  imageUrl: optionalImageUrlSchema,
 });
 
 const paramsSchema = z.object({
   id: z.string().uuid(),
 });
+
+const foodSelect =
+  "id, name, brand, source, kcal, protein, fat, carbs, barcode, image_url, ingredients_text, quantity, serving_size, created_at, updated_at";
 
 export async function PATCH(
   request: Request,
@@ -41,7 +46,15 @@ export async function PATCH(
 
     const payload = foodUpdateSchema.parse(await request.json());
     const { id } = paramsSchema.parse(await params);
-    const updateData = buildFoodUpdateData(payload);
+    const updateData = buildFoodUpdateData({
+      name: payload.name,
+      kcal: payload.kcal,
+      protein: payload.protein,
+      fat: payload.fat,
+      carbs: payload.carbs,
+      barcode: payload.barcode,
+      image_url: payload.imageUrl,
+    });
 
     if (!Object.keys(updateData).length) {
       return createApiErrorResponse({
@@ -56,9 +69,7 @@ export async function PATCH(
       .update(updateData)
       .eq("id", id)
       .eq("user_id", user.id)
-      .select(
-        "id, name, brand, source, kcal, protein, fat, carbs, barcode, image_url, ingredients_text, quantity, serving_size, created_at, updated_at",
-      )
+      .select(foodSelect)
       .maybeSingle();
 
     if (error) {

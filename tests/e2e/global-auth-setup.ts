@@ -36,6 +36,8 @@ type PlaywrightCookie = {
   sameSite: "Lax";
 };
 
+type AuthCredentials = NonNullable<ReturnType<typeof getAuthE2ECredentials>>;
+
 function getSupabaseProjectRef() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
@@ -127,6 +129,7 @@ async function createSupabaseStorageState(
 async function saveStorageState(
   baseURL: string,
   filePath: string,
+  credentials: AuthCredentials,
   signIn: (page: Parameters<typeof signInAndFinishOnboarding>[0]) => Promise<void>,
 ) {
   const browser = await chromium.launch();
@@ -137,7 +140,56 @@ async function saveStorageState(
     });
     const page = await context.newPage();
 
-    await signIn(page);
+    await page.goto("/", {
+      waitUntil: "domcontentloaded",
+      timeout: 30_000,
+    });
+
+    const authResult = await page.evaluate(
+      async (payload) => {
+        const response = await fetch("/api/auth/sign-in", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "same-origin",
+          body: JSON.stringify(payload),
+        });
+
+        const body = (await response.json().catch(() => null)) as
+          | { message?: string }
+          | null;
+
+        return {
+          ok: response.ok,
+          status: response.status,
+          body,
+        };
+      },
+      {
+        email: credentials.email,
+        password: credentials.password,
+      },
+    );
+
+    if (!authResult.ok) {
+      throw new Error(
+        authResult.body?.message ??
+          `App auth route returned ${authResult.status} during Playwright bootstrap.`,
+      );
+    }
+
+    await page.goto("/dashboard", {
+      waitUntil: "domcontentloaded",
+      timeout: 30_000,
+    });
+
+    if (page.url().includes("/onboarding")) {
+      await signIn(page);
+    } else if (page.url().endsWith("/")) {
+      throw new Error("App auth route did not establish a browser session.");
+    }
+
     await context.storageState({
       path: filePath,
     });
@@ -173,9 +225,14 @@ export default async function globalAuthSetup(config: FullConfig) {
       writeEmptyStorageState(USER_STORAGE_STATE_PATH);
     } else {
       try {
-        await createSupabaseStorageState(baseURL, USER_STORAGE_STATE_PATH, credentials);
+        await saveStorageState(
+          baseURL,
+          USER_STORAGE_STATE_PATH,
+          credentials,
+          signInAndFinishOnboarding,
+        );
       } catch {
-        await saveStorageState(baseURL, USER_STORAGE_STATE_PATH, signInAndFinishOnboarding);
+        await createSupabaseStorageState(baseURL, USER_STORAGE_STATE_PATH, credentials);
       }
     }
   } else {
@@ -189,9 +246,14 @@ export default async function globalAuthSetup(config: FullConfig) {
       writeEmptyStorageState(ADMIN_STORAGE_STATE_PATH);
     } else {
       try {
-        await createSupabaseStorageState(baseURL, ADMIN_STORAGE_STATE_PATH, credentials);
+        await saveStorageState(
+          baseURL,
+          ADMIN_STORAGE_STATE_PATH,
+          credentials,
+          signInAsAdmin,
+        );
       } catch {
-        await saveStorageState(baseURL, ADMIN_STORAGE_STATE_PATH, signInAsAdmin);
+        await createSupabaseStorageState(baseURL, ADMIN_STORAGE_STATE_PATH, credentials);
       }
     }
   } else {

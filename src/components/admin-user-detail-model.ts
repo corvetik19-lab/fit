@@ -170,6 +170,22 @@ export type AdminUserDetailData = {
     created_at: string;
     updated_at: string;
   }>;
+  recentExercises: Array<{
+    id: string;
+    title: string;
+    muscle_group: string;
+    image_url: string | null;
+    is_archived: boolean;
+    updated_at: string;
+  }>;
+  recentFoods: Array<{
+    id: string;
+    name: string;
+    brand: string | null;
+    source: string;
+    image_url: string | null;
+    updated_at: string;
+  }>;
   recentOperationAuditLogs: Array<{
     id: string;
     action: string;
@@ -249,6 +265,8 @@ export const statusLabels: Record<string, string> = {
 };
 
 export const auditActionLabels: Record<string, string> = {
+  admin_update_exercise_image: "Обновлено изображение упражнения",
+  admin_update_food_image: "Обновлено изображение продукта",
   admin_reconcile_cloudpayments_subscription: "Ручная сверка подписки",
   admin_reconcile_stripe_subscription: "Ручная сверка подписки",
   bulk_wave_completed: "Завершена групповая операция",

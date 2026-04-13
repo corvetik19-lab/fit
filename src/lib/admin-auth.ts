@@ -8,6 +8,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 const ROOT_ONLY_CAPABILITIES: AdminCapability[] = [
   "manage_admin_roles",
+  "manage_user_content_assets",
   "manage_billing",
   "bulk_manage_users",
   "run_admin_jobs",
@@ -32,7 +33,9 @@ export function isAdminAccessError(error: unknown): error is AdminAccessError {
 function getRootOnlyCapabilityMessage(capability: AdminCapability) {
   switch (capability) {
     case "manage_billing":
-      return "Управлять billing и entitlements может только основной super-admin.";
+      return "Управлять оплатой и доступами может только основной super-admin.";
+    case "manage_user_content_assets":
+      return "Редактировать изображения в пользовательском контенте может только основной super-admin.";
     case "bulk_manage_users":
       return "Запускать bulk-операции по пользователям может только основной super-admin.";
     case "run_admin_jobs":

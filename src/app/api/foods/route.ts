@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { createApiErrorResponse } from "@/lib/api/error-response";
+import { optionalImageUrlSchema } from "@/lib/image-url";
 import { logger } from "@/lib/logger";
 import { buildFoodCreateData } from "@/lib/nutrition/nutrition-self-service";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -12,7 +13,11 @@ const foodCreateSchema = z.object({
   fat: z.number().min(0).max(500),
   carbs: z.number().min(0).max(500),
   barcode: z.string().trim().max(64).nullable().optional(),
+  imageUrl: optionalImageUrlSchema,
 });
+
+const foodSelect =
+  "id, name, brand, source, kcal, protein, fat, carbs, barcode, image_url, ingredients_text, quantity, serving_size, created_at, updated_at";
 
 export async function GET() {
   try {
@@ -31,9 +36,7 @@ export async function GET() {
 
     const { data, error } = await supabase
       .from("foods")
-      .select(
-        "id, name, brand, source, kcal, protein, fat, carbs, barcode, image_url, ingredients_text, quantity, serving_size, created_at, updated_at",
-      )
+      .select(foodSelect)
       .eq("user_id", user.id)
       .order("updated_at", { ascending: false });
 
@@ -72,10 +75,18 @@ export async function POST(request: Request) {
 
     const { data, error } = await supabase
       .from("foods")
-      .insert(buildFoodCreateData(user.id, payload))
-      .select(
-        "id, name, brand, source, kcal, protein, fat, carbs, barcode, image_url, ingredients_text, quantity, serving_size, created_at, updated_at",
+      .insert(
+        buildFoodCreateData(user.id, {
+          name: payload.name,
+          kcal: payload.kcal,
+          protein: payload.protein,
+          fat: payload.fat,
+          carbs: payload.carbs,
+          barcode: payload.barcode,
+          image_url: payload.imageUrl,
+        }),
       )
+      .select(foodSelect)
       .single();
 
     if (error) {

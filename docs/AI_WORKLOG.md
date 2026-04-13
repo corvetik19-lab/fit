@@ -1435,3 +1435,14 @@
 - На `/admin`, `/admin/users` и `/admin/users/[id]` отключён floating AI widget, чтобы на узком экране он не перекрывал CTA и не ломал операторскую композицию.
 - [mobile-pwa-regressions.spec.ts](/C:/fit/tests/e2e/mobile-pwa-regressions.spec.ts) переведён на новый mobile contract для admin surface, после чего прошли зелёно `authenticated-app`, `ui-regressions`, `mobile-pwa-regressions` и `smoke`.
 - Stitch redesign после этого закрыт полностью: `10 / 10` (`100%`), общий master-progress — `189 / 196` (`96%`).
+
+## 2026-04-14
+
+### Изображения упражнений и продуктов
+
+- Для пользовательских упражнений и продуктов добавлен единый image-contract: новый helper [image-url.ts](/C:/fit/src/lib/image-url.ts) валидирует только абсолютные `http/https` URL, а API routes [exercises/route.ts](/C:/fit/src/app/api/exercises/route.ts), [exercises/[id]/route.ts](/C:/fit/src/app/api/exercises/%5Bid%5D/route.ts), [foods/route.ts](/C:/fit/src/app/api/foods/route.ts) и [foods/[id]/route.ts](/C:/fit/src/app/api/foods/%5Bid%5D/route.ts) принимают `imageUrl` и сохраняют его в `image_url`.
+- В репозиторий добавлена миграция [20260413211718_exercise_library_image_url_support.sql](/C:/fit/supabase/migrations/20260413211718_exercise_library_image_url_support.sql): `exercise_library` теперь поддерживает `image_url`, а owner-scoped exercise/food flows могут хранить собственные изображения без отдельного CDN контракта.
+- Потребительский UI обновлён в [exercise-library-manager.tsx](/C:/fit/src/components/exercise-library-manager.tsx) и [nutrition-tracker.tsx](/C:/fit/src/components/nutrition-tracker.tsx): в карточках и формах появились preview, ручной ввод URL и безопасный fallback, если картинки нет.
+- Для super-admin добавлен отдельный контур [content-assets route](/C:/fit/src/app/api/admin/users/%5Bid%5D/content-assets/route.ts) и helper [admin-user-content-assets.ts](/C:/fit/src/lib/admin-user-content-assets.ts): из карточки пользователя теперь можно обновлять изображения упражнений и продуктов с обязательной записью в `admin_audit_logs`.
+- В [admin-user-detail-data.ts](/C:/fit/src/lib/admin-user-detail-data.ts), [admin-user-detail-state.ts](/C:/fit/src/components/admin-user-detail-state.ts), [admin-user-detail.tsx](/C:/fit/src/components/admin-user-detail.tsx) и новом [admin-user-detail-content-assets.tsx](/C:/fit/src/components/admin-user-detail-content-assets.tsx) собран отдельный раздел «Контент», где super-admin видит последние упражнения и продукты пользователя и может быстро поправить изображения.
+- Проверка зелёная на кодовом baseline: `npm run lint`, `npm run typecheck`, `npm run build`. Повторный Playwright по этому tranche сначала упёрся в нестабильный lifecycle локального test server на `3100`, поэтому дальше я перевёл verification на отдельный вручную поднятый сервер, чтобы не путать UI regression с падением bootstrap-процесса.

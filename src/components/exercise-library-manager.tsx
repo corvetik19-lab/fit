@@ -1,7 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { startTransition, useMemo, useState } from "react";
+
+import { isAbsoluteHttpUrl } from "@/lib/image-url";
 
 type Exercise = {
   id: string;
@@ -9,6 +12,7 @@ type Exercise = {
   muscle_group: string;
   description: string | null;
   note: string | null;
+  image_url: string | null;
   is_archived: boolean;
   updated_at: string;
 };
@@ -21,6 +25,45 @@ function toNullable(value: string) {
   return trimmed.length ? trimmed : null;
 }
 
+function ExercisePreview({
+  imageUrl,
+  muscleGroup,
+  title,
+}: {
+  imageUrl: string | null;
+  muscleGroup: string;
+  title: string;
+}) {
+  const resolvedImageUrl =
+    typeof imageUrl === "string" && isAbsoluteHttpUrl(imageUrl)
+      ? imageUrl.trim()
+      : null;
+
+  return (
+    <div className="overflow-hidden rounded-[1.5rem] border border-border bg-white/78">
+      {resolvedImageUrl ? (
+        <Image
+          alt={title}
+          className="h-36 w-full object-cover"
+          height={144}
+          src={resolvedImageUrl}
+          unoptimized
+          width={288}
+        />
+      ) : (
+        <div className="flex h-36 items-center justify-center bg-[color-mix(in_srgb,var(--accent-soft)_60%,white)] px-4 text-center">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-accent">
+              Упражнение
+            </p>
+            <p className="mt-2 text-sm text-foreground">{muscleGroup || "Свой шаблон"}</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function ExerciseLibraryManager({
   initialExercises,
 }: {
@@ -31,6 +74,7 @@ export function ExerciseLibraryManager({
   const [muscleGroup, setMuscleGroup] = useState("");
   const [description, setDescription] = useState("");
   const [note, setNote] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -51,6 +95,7 @@ export function ExerciseLibraryManager({
     setMuscleGroup("");
     setDescription("");
     setNote("");
+    setImageUrl("");
   }
 
   function selectForEdit(exercise: Exercise) {
@@ -59,6 +104,7 @@ export function ExerciseLibraryManager({
     setMuscleGroup(exercise.muscle_group);
     setDescription(exercise.description ?? "");
     setNote(exercise.note ?? "");
+    setImageUrl(exercise.image_url ?? "");
     setError(null);
     setNotice(null);
   }
@@ -84,6 +130,7 @@ export function ExerciseLibraryManager({
             muscleGroup: muscleGroup.trim(),
             description: toNullable(description),
             note: toNullable(note),
+            imageUrl: toNullable(imageUrl),
           }),
         });
 
@@ -152,58 +199,79 @@ export function ExerciseLibraryManager({
 
   return (
     <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-      <section className="card p-6">
+      <section className="card card--hero p-6">
         <div className="mb-5">
-          <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
-            Библиотека упражнений
-          </p>
-          <h2 className="mt-2 text-2xl font-semibold text-foreground">
-            {editingId ? "Редактирование упражнения" : "Добавить упражнение"}
+          <p className="workspace-kicker">Библиотека упражнений</p>
+          <h2 className="app-display mt-2 text-2xl text-foreground sm:text-3xl">
+            {editingId ? "Редактирование упражнения" : "Новое упражнение"}
           </h2>
+          <p className="mt-3 text-sm leading-7 text-muted">
+            Сохраняй свою библиотеку упражнений со своими обложками. Картинка поможет
+            быстрее узнавать движение на телефоне и в шаблонах недели.
+          </p>
         </div>
 
-        <div className="grid gap-4">
-          <label className="grid gap-2 text-sm text-muted">
-            Название
-            <input
-              className={inputClassName}
-              onChange={(event) => setTitle(event.target.value)}
-              placeholder="Присед с гантелью"
-              type="text"
-              value={title}
-            />
-          </label>
+        <div className="grid gap-4 lg:grid-cols-[0.82fr_1.18fr]">
+          <ExercisePreview
+            imageUrl={toNullable(imageUrl)}
+            muscleGroup={muscleGroup.trim()}
+            title={title.trim() || "Новое упражнение"}
+          />
 
-          <label className="grid gap-2 text-sm text-muted">
-            Группа мышц
-            <input
-              className={inputClassName}
-              onChange={(event) => setMuscleGroup(event.target.value)}
-              placeholder="Ноги"
-              type="text"
-              value={muscleGroup}
-            />
-          </label>
+          <div className="grid gap-4">
+            <label className="grid gap-2 text-sm text-muted">
+              Название
+              <input
+                className={inputClassName}
+                onChange={(event) => setTitle(event.target.value)}
+                placeholder="Например, присед с гантелью"
+                type="text"
+                value={title}
+              />
+            </label>
 
-          <label className="grid gap-2 text-sm text-muted">
-            Описание
-            <textarea
-              className={`${inputClassName} min-h-28 resize-y`}
-              onChange={(event) => setDescription(event.target.value)}
-              placeholder="Короткое описание техники или назначения"
-              value={description}
-            />
-          </label>
+            <label className="grid gap-2 text-sm text-muted">
+              Группа мышц
+              <input
+                className={inputClassName}
+                onChange={(event) => setMuscleGroup(event.target.value)}
+                placeholder="Ноги"
+                type="text"
+                value={muscleGroup}
+              />
+            </label>
 
-          <label className="grid gap-2 text-sm text-muted">
-            Заметка
-            <textarea
-              className={`${inputClassName} min-h-24 resize-y`}
-              onChange={(event) => setNote(event.target.value)}
-              placeholder="Например: избегать большого веса из-за колена"
-              value={note}
-            />
-          </label>
+            <label className="grid gap-2 text-sm text-muted">
+              Ссылка на фото
+              <input
+                className={inputClassName}
+                onChange={(event) => setImageUrl(event.target.value)}
+                placeholder="https://..."
+                type="url"
+                value={imageUrl}
+              />
+            </label>
+
+            <label className="grid gap-2 text-sm text-muted">
+              Описание
+              <textarea
+                className={`${inputClassName} min-h-28 resize-y`}
+                onChange={(event) => setDescription(event.target.value)}
+                placeholder="Коротко опиши технику или назначение упражнения."
+                value={description}
+              />
+            </label>
+
+            <label className="grid gap-2 text-sm text-muted">
+              Заметка
+              <textarea
+                className={`${inputClassName} min-h-24 resize-y`}
+                onChange={(event) => setNote(event.target.value)}
+                placeholder="Например: держать корпус жёстко и не уходить в глубокую амплитуду."
+                value={note}
+              />
+            </label>
+          </div>
         </div>
 
         {error ? (
@@ -220,7 +288,7 @@ export function ExerciseLibraryManager({
 
         <div className="mt-6 flex flex-wrap gap-3">
           <button
-            className="rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+            className="action-button action-button--primary"
             disabled={isPending || !title.trim() || !muscleGroup.trim()}
             onClick={submit}
             type="button"
@@ -228,12 +296,12 @@ export function ExerciseLibraryManager({
             {isPending
               ? "Сохраняю..."
               : editingId
-                ? "Сохранить изменения"
+                ? "Сохранить упражнение"
                 : "Добавить упражнение"}
           </button>
           {editingId ? (
             <button
-              className="rounded-full border border-border px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-white/70"
+              className="action-button action-button--secondary"
               onClick={resetForm}
               type="button"
             >
@@ -247,11 +315,9 @@ export function ExerciseLibraryManager({
         <section className="card p-6">
           <div className="mb-5 flex items-center justify-between gap-3">
             <div>
-              <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
-                Активные
-              </p>
+              <p className="workspace-kicker">Активные</p>
               <h2 className="mt-2 text-2xl font-semibold text-foreground">
-                Активные упражнения
+                Текущая библиотека
               </h2>
             </div>
             <div className="pill">{activeExercises.length}</div>
@@ -260,52 +326,70 @@ export function ExerciseLibraryManager({
           <div className="grid gap-3">
             {activeExercises.length ? (
               activeExercises.map((exercise) => (
-                <article
-                  className="rounded-2xl border border-border bg-white/60 p-4"
-                  key={exercise.id}
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <p className="text-lg font-semibold text-foreground">
-                        {exercise.title}
-                      </p>
-                      <p className="text-sm text-muted">
-                        {exercise.muscle_group}
-                      </p>
+                <article className="surface-panel surface-panel--soft p-4" key={exercise.id}>
+                  <div className="grid gap-4 sm:grid-cols-[96px_1fr]">
+                    <div className="overflow-hidden rounded-[1.25rem] border border-border bg-white/78">
+                      {exercise.image_url ? (
+                        <Image
+                          alt={exercise.title}
+                          className="h-24 w-full object-cover"
+                          height={96}
+                          src={exercise.image_url}
+                          unoptimized
+                          width={96}
+                        />
+                      ) : (
+                        <div className="flex h-24 items-center justify-center bg-[color-mix(in_srgb,var(--accent-soft)_52%,white)] px-3 text-center text-xs font-medium text-accent">
+                          {exercise.muscle_group || "Своя карточка"}
+                        </div>
+                      )}
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        className="rounded-full border border-border px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white/70"
-                        onClick={() => selectForEdit(exercise)}
-                        type="button"
-                      >
-                        Редактировать
-                      </button>
-                      <button
-                        className="rounded-full border border-border px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white/70"
-                        onClick={() => toggleArchived(exercise, true)}
-                        type="button"
-                      >
-                        В архив
-                      </button>
+
+                    <div>
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <p className="text-lg font-semibold text-foreground">
+                            {exercise.title}
+                          </p>
+                          <p className="mt-1 text-sm text-muted">
+                            {exercise.muscle_group}
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            className="action-button action-button--secondary px-4 py-2 text-sm"
+                            onClick={() => selectForEdit(exercise)}
+                            type="button"
+                          >
+                            Редактировать
+                          </button>
+                          <button
+                            className="action-button action-button--secondary px-4 py-2 text-sm"
+                            onClick={() => toggleArchived(exercise, true)}
+                            type="button"
+                          >
+                            В архив
+                          </button>
+                        </div>
+                      </div>
+                      {exercise.description ? (
+                        <p className="mt-3 text-sm leading-7 text-muted">
+                          {exercise.description}
+                        </p>
+                      ) : null}
+                      {exercise.note ? (
+                        <p className="mt-2 text-sm leading-7 text-muted">
+                          Заметка: {exercise.note}
+                        </p>
+                      ) : null}
                     </div>
                   </div>
-                  {exercise.description ? (
-                    <p className="mt-3 text-sm leading-7 text-muted">
-                      {exercise.description}
-                    </p>
-                  ) : null}
-                  {exercise.note ? (
-                    <p className="mt-2 text-sm leading-7 text-muted">
-                      Заметка: {exercise.note}
-                    </p>
-                  ) : null}
                 </article>
               ))
             ) : (
               <p className="text-sm leading-7 text-muted">
-                Пока нет активных упражнений. Начни с базовой библиотеки для
-                своей первой программы.
+                Пока нет активных упражнений. Сначала добавь базовые движения для своей
+                первой недели.
               </p>
             )}
           </div>
@@ -314,11 +398,9 @@ export function ExerciseLibraryManager({
         <section className="card p-6">
           <div className="mb-5 flex items-center justify-between gap-3">
             <div>
-              <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
-                Архив
-              </p>
+              <p className="workspace-kicker">Архив</p>
               <h2 className="mt-2 text-2xl font-semibold text-foreground">
-                Архив
+                Архивированные
               </h2>
             </div>
             <div className="pill">{archivedExercises.length}</div>
@@ -327,33 +409,49 @@ export function ExerciseLibraryManager({
           <div className="grid gap-3">
             {archivedExercises.length ? (
               archivedExercises.map((exercise) => (
-                <article
-                  className="rounded-2xl border border-border bg-white/60 p-4"
-                  key={exercise.id}
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <p className="text-lg font-semibold text-foreground">
-                        {exercise.title}
-                      </p>
-                      <p className="text-sm text-muted">
-                        {exercise.muscle_group}
-                      </p>
+                <article className="surface-panel surface-panel--soft p-4" key={exercise.id}>
+                  <div className="grid gap-4 sm:grid-cols-[96px_1fr]">
+                    <div className="overflow-hidden rounded-[1.25rem] border border-border bg-white/78">
+                      {exercise.image_url ? (
+                        <Image
+                          alt={exercise.title}
+                          className="h-24 w-full object-cover"
+                          height={96}
+                          src={exercise.image_url}
+                          unoptimized
+                          width={96}
+                        />
+                      ) : (
+                        <div className="flex h-24 items-center justify-center bg-[color-mix(in_srgb,var(--accent-soft)_52%,white)] px-3 text-center text-xs font-medium text-accent">
+                          Архив
+                        </div>
+                      )}
                     </div>
-                    <button
-                      className="rounded-full border border-border px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white/70"
-                      onClick={() => toggleArchived(exercise, false)}
-                      type="button"
-                    >
-                      Вернуть
-                    </button>
+
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <p className="text-lg font-semibold text-foreground">
+                          {exercise.title}
+                        </p>
+                        <p className="mt-1 text-sm text-muted">
+                          {exercise.muscle_group}
+                        </p>
+                      </div>
+                      <button
+                        className="action-button action-button--secondary px-4 py-2 text-sm"
+                        onClick={() => toggleArchived(exercise, false)}
+                        type="button"
+                      >
+                        Вернуть
+                      </button>
+                    </div>
                   </div>
                 </article>
               ))
             ) : (
               <p className="text-sm leading-7 text-muted">
-                Архив пока пуст. Сюда будут попадать упражнения, которые ты
-                убрала из активной библиотеки.
+                Архив пока пуст. Сюда попадают упражнения, которые ты убрала из активной
+                библиотеки.
               </p>
             )}
           </div>

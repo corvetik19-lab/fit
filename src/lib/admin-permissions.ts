@@ -9,6 +9,7 @@ export type AdminCapability =
   | "view_admin_audit"
   | "view_ai_usage"
   | "manage_admin_roles"
+  | "manage_user_content_assets"
   | "manage_billing"
   | "bulk_manage_users"
   | "queue_support_actions"
@@ -24,6 +25,7 @@ const CAPABILITY_MATRIX: Record<PlatformAdminRole, readonly AdminCapability[]> =
     "view_admin_audit",
     "view_ai_usage",
     "manage_admin_roles",
+    "manage_user_content_assets",
     "manage_billing",
     "bulk_manage_users",
     "queue_support_actions",
@@ -104,6 +106,8 @@ export function getAdminCapabilityErrorMessage(capability: AdminCapability) {
   switch (capability) {
     case "manage_admin_roles":
       return "Управлять ролями может только главный супер-админ.";
+    case "manage_user_content_assets":
+      return "Редактировать изображения в пользовательском контенте может только главный супер-админ.";
     case "manage_billing":
       return "Управлять оплатой и доступами может только главный супер-админ.";
     case "bulk_manage_users":

@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { createApiErrorResponse } from "@/lib/api/error-response";
+import { optionalImageUrlSchema } from "@/lib/image-url";
 import { logger } from "@/lib/logger";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -9,12 +10,16 @@ const exerciseUpdateSchema = z.object({
   muscleGroup: z.string().trim().min(2).max(80).optional(),
   description: z.string().trim().max(500).nullable().optional(),
   note: z.string().trim().max(500).nullable().optional(),
+  imageUrl: optionalImageUrlSchema,
   isArchived: z.boolean().optional(),
 });
 
 const exerciseParamsSchema = z.object({
   id: z.string().uuid(),
 });
+
+const exerciseSelect =
+  "id, title, muscle_group, description, note, image_url, is_archived, created_at, updated_at";
 
 function normalizeText(value: string | null | undefined) {
   if (value == null) {
@@ -64,6 +69,10 @@ export async function PATCH(
       updateData.note = normalizeText(payload.note);
     }
 
+    if (payload.imageUrl !== undefined) {
+      updateData.image_url = payload.imageUrl;
+    }
+
     if (payload.isArchived !== undefined) {
       updateData.is_archived = payload.isArchived;
     }
@@ -81,9 +90,7 @@ export async function PATCH(
       .update(updateData)
       .eq("id", id)
       .eq("user_id", user.id)
-      .select(
-        "id, title, muscle_group, description, note, is_archived, created_at, updated_at",
-      )
+      .select(exerciseSelect)
       .maybeSingle();
 
     if (error) {

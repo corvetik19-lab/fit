@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { createApiErrorResponse } from "@/lib/api/error-response";
+import { normalizeOptionalImageUrl, optionalImageUrlSchema } from "@/lib/image-url";
 import { logger } from "@/lib/logger";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -9,7 +10,11 @@ const exerciseCreateSchema = z.object({
   muscleGroup: z.string().trim().min(2).max(80),
   description: z.string().trim().max(500).optional().default(""),
   note: z.string().trim().max(500).optional().default(""),
+  imageUrl: optionalImageUrlSchema,
 });
+
+const exerciseSelect =
+  "id, title, muscle_group, description, note, image_url, is_archived, created_at, updated_at";
 
 export async function GET(request: Request) {
   try {
@@ -31,9 +36,7 @@ export async function GET(request: Request) {
 
     let query = supabase
       .from("exercise_library")
-      .select(
-        "id, title, muscle_group, description, note, is_archived, created_at, updated_at",
-      )
+      .select(exerciseSelect)
       .eq("user_id", user.id)
       .order("updated_at", { ascending: false });
 
@@ -86,10 +89,9 @@ export async function POST(request: Request) {
         muscle_group: payload.muscleGroup,
         description: payload.description || null,
         note: payload.note || null,
+        image_url: normalizeOptionalImageUrl(payload.imageUrl),
       })
-      .select(
-        "id, title, muscle_group, description, note, is_archived, created_at, updated_at",
-      )
+      .select(exerciseSelect)
       .single();
 
     if (error) {

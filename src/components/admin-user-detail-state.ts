@@ -10,6 +10,7 @@ import type {
 export type AdminUserDetailSection =
   | "profile"
   | "activity"
+  | "content"
   | "operations"
   | "billing";
 
@@ -27,6 +28,11 @@ export const adminUserDetailSections: Array<{
     key: "activity",
     label: "Активность",
     description: "Тренировки, питание, AI и общий жизненный цикл.",
+  },
+  {
+    key: "content",
+    label: "Контент",
+    description: "Изображения упражнений и продуктов, которые видит пользователь.",
   },
   {
     key: "operations",

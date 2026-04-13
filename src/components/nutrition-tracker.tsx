@@ -8,6 +8,7 @@ import { startTransition, useEffect, useMemo, useState } from "react";
 import { NutritionMealTemplatesManager } from "@/components/nutrition-meal-templates-manager";
 import { NutritionOpenFoodFactsCard } from "@/components/nutrition-open-food-facts-card";
 import { NutritionRecipesManager } from "@/components/nutrition-recipes-manager";
+import { isAbsoluteHttpUrl } from "@/lib/image-url";
 import type {
   NutritionFood,
   NutritionMeal,
@@ -97,6 +98,7 @@ export function NutritionTracker({
   const [foodFat, setFoodFat] = useState("0");
   const [foodCarbs, setFoodCarbs] = useState("0");
   const [foodBarcode, setFoodBarcode] = useState("");
+  const [foodImageUrl, setFoodImageUrl] = useState("");
   const [editingFoodId, setEditingFoodId] = useState<string | null>(null);
   const [mealDateTime, setMealDateTime] = useState(getDefaultMealDateTime);
   const [mealBarcode, setMealBarcode] = useState("");
@@ -213,6 +215,7 @@ export function NutritionTracker({
     setFoodFat("0");
     setFoodCarbs("0");
     setFoodBarcode("");
+    setFoodImageUrl("");
   }
 
   function selectFoodForEdit(food: NutritionFood) {
@@ -223,6 +226,7 @@ export function NutritionTracker({
     setFoodFat(String(food.fat));
     setFoodCarbs(String(food.carbs));
     setFoodBarcode(food.barcode ?? "");
+    setFoodImageUrl(food.image_url ?? "");
     setError(null);
     setNotice(null);
   }
@@ -264,6 +268,7 @@ export function NutritionTracker({
           fat: Number(foodFat),
           carbs: Number(foodCarbs),
           barcode: foodBarcode.trim() || null,
+          imageUrl: foodImageUrl.trim() || null,
         }),
       });
 
@@ -850,6 +855,35 @@ export function NutritionTracker({
                 Штрихкод
                 <input className={inputClassName} onChange={(event) => setFoodBarcode(event.target.value)} placeholder="Необязательно" type="text" value={foodBarcode} />
               </label>
+              <label className="grid gap-2 text-sm text-muted sm:col-span-2">
+                Ссылка на фото
+                <input className={inputClassName} onChange={(event) => setFoodImageUrl(event.target.value)} placeholder="https://..." type="url" value={foodImageUrl} />
+              </label>
+            </div>
+
+            <div className="mt-4 overflow-hidden rounded-[1.5rem] border border-border bg-white/78">
+              {isAbsoluteHttpUrl(foodImageUrl) ? (
+                <Image
+                  alt={foodName.trim() || "Предпросмотр продукта"}
+                  className="h-40 w-full object-cover"
+                  height={160}
+                  src={foodImageUrl.trim()}
+                  unoptimized
+                  width={640}
+                />
+              ) : (
+                <div className="flex h-40 items-center justify-center bg-[color-mix(in_srgb,var(--accent-soft)_58%,white)] px-5 text-center">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-accent">
+                      Обложка продукта
+                    </p>
+                    <p className="mt-2 text-sm text-foreground">
+                      Добавь свою ссылку на изображение, чтобы карточка продукта выглядела
+                      аккуратно в базе и при логировании.
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="mt-6 flex flex-wrap gap-3">

@@ -4,7 +4,10 @@ import { hasAdminE2ECredentials } from "./helpers/auth";
 import { ADMIN_STORAGE_STATE_PATH } from "./helpers/auth-state";
 import { fetchJson } from "./helpers/http";
 import { navigateStable } from "./helpers/navigation";
-import { findAuthUserIdByEmail } from "./helpers/supabase-admin";
+import {
+  createSupabaseAdminTestClient,
+  findAuthUserIdByEmail,
+} from "./helpers/supabase-admin";
 
 test.use({
   storageState: ADMIN_STORAGE_STATE_PATH,
@@ -145,6 +148,103 @@ test.describe("admin app", () => {
     );
   });
 
+  test("root admin can update user content asset images", async ({ page }) => {
+    test.setTimeout(90_000);
+
+    const targetUserEmail = process.env.PLAYWRIGHT_TEST_EMAIL;
+    expect(targetUserEmail).toBeTruthy();
+
+    const targetUserId = await findAuthUserIdByEmail(targetUserEmail!);
+    const adminSupabase = createSupabaseAdminTestClient();
+    const suffix = crypto.randomUUID().slice(0, 8);
+
+    const { data: exerciseRow, error: exerciseInsertError } = await adminSupabase
+      .from("exercise_library")
+      .insert({
+        user_id: targetUserId,
+        title: `E2E media exercise ${suffix}`,
+        muscle_group: "Ноги",
+        description: null,
+        note: null,
+        image_url: null,
+      })
+      .select("id")
+      .single();
+
+    expect(exerciseInsertError).toBeNull();
+    expect(exerciseRow?.id).toBeTruthy();
+
+    const { data: foodRow, error: foodInsertError } = await adminSupabase
+      .from("foods")
+      .insert({
+        user_id: targetUserId,
+        source: "custom",
+        name: `E2E media food ${suffix}`,
+        kcal: 180,
+        protein: 10,
+        fat: 5,
+        carbs: 18,
+        image_url: null,
+      })
+      .select("id")
+      .single();
+
+    expect(foodInsertError).toBeNull();
+    expect(foodRow?.id).toBeTruthy();
+
+    const [exerciseResult, foodResult] = await Promise.all([
+      fetchJson<{ data?: { image_url?: string | null } }>(page, {
+        method: "PATCH",
+        url: `/api/admin/users/${targetUserId}/content-assets`,
+        body: {
+          entityType: "exercise",
+          entityId: exerciseRow!.id,
+          imageUrl: "https://example.com/exercise-cover.jpg",
+        },
+      }),
+      fetchJson<{ data?: { image_url?: string | null } }>(page, {
+        method: "PATCH",
+        url: `/api/admin/users/${targetUserId}/content-assets`,
+        body: {
+          entityType: "food",
+          entityId: foodRow!.id,
+          imageUrl: "https://example.com/food-cover.jpg",
+        },
+      }),
+    ]);
+
+    expect(exerciseResult.status).toBe(200);
+    expect(exerciseResult.body?.data?.image_url).toBe(
+      "https://example.com/exercise-cover.jpg",
+    );
+
+    expect(foodResult.status).toBe(200);
+    expect(foodResult.body?.data?.image_url).toBe(
+      "https://example.com/food-cover.jpg",
+    );
+
+    const detailResult = await fetchJson<{
+      data?: {
+        recentExercises?: Array<{ id: string; image_url?: string | null }>;
+        recentFoods?: Array<{ id: string; image_url?: string | null }>;
+      };
+    }>(page, {
+      method: "GET",
+      url: `/api/admin/users/${targetUserId}`,
+    });
+
+    expect(detailResult.status).toBe(200);
+    expect(
+      detailResult.body?.data?.recentExercises?.find(
+        (exercise) => exercise.id === exerciseRow!.id,
+      )?.image_url,
+    ).toBe("https://example.com/exercise-cover.jpg");
+    expect(
+      detailResult.body?.data?.recentFoods?.find((food) => food.id === foodRow!.id)
+        ?.image_url,
+    ).toBe("https://example.com/food-cover.jpg");
+  });
+
   test("root admin gets explicit validation errors for invalid admin user ids", async ({
     page,
   }) => {
@@ -159,6 +259,7 @@ test.describe("admin app", () => {
       supportActionResult,
       suspendResult,
       billingReconcileResult,
+      contentAssetResult,
       bulkResult,
     ] = await Promise.all([
       fetchJson(page, {
@@ -209,6 +310,15 @@ test.describe("admin app", () => {
       fetchJson(page, {
         method: "POST",
         url: "/api/admin/users/not-a-uuid/billing/reconcile",
+      }),
+      fetchJson(page, {
+        method: "PATCH",
+        url: "/api/admin/users/not-a-uuid/content-assets",
+        body: {
+          entityType: "exercise",
+          entityId: crypto.randomUUID(),
+          imageUrl: "https://example.com/exercise-cover.jpg",
+        },
       }),
       fetchJson(page, {
         method: "POST",
@@ -268,6 +378,11 @@ test.describe("admin app", () => {
     expect(billingReconcileResult.status).toBe(400);
     expect((billingReconcileResult.body as { code?: string } | null)?.code).toBe(
       "ADMIN_BILLING_RECONCILE_TARGET_INVALID",
+    );
+
+    expect(contentAssetResult.status).toBe(400);
+    expect((contentAssetResult.body as { code?: string } | null)?.code).toBe(
+      "ADMIN_CONTENT_ASSET_TARGET_INVALID",
     );
 
     expect(bulkResult.status).toBe(400);
