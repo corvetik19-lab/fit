@@ -1279,3 +1279,10 @@
 - [x] Проверка по этому slice зелёная: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:smoke` -> `5 passed`.
 - [x] Таргетированный auth e2e всё ещё не подтверждён как закрытый visual regression gate: `tests/e2e/authenticated-app.spec.ts` в этой среде продолжает застревать на `/` после sign-in bootstrap без видимой UI-ошибки, поэтому финальный auth-based regression checkbox в stitch-workstream остаётся открытым.
 - [x] Общий progress execution checklist по-прежнему остаётся `188 / 196` (`96%`): slice завершает branding и входной поток внутри уже закрытого user-screen tranche, но не закрывает последний внешний auth-regression blocker.
+
+## 2026-04-13 stitch redesign branded manifest + icon follow-up
+
+- [x] Брендовый знак протянут в browser/PWA metadata: [icon.svg](/C:/fit/public/icon.svg) теперь совпадает с утверждённым логотипом, а [layout.tsx](/C:/fit/src/app/layout.tsx) и [manifest.ts](/C:/fit/src/app/manifest.ts) отдают тот же asset как основной SVG icon/shortcut icon.
+- [x] В PWA metadata обновлены визуальные токены нового редизайна: [manifest.ts](/C:/fit/src/app/manifest.ts) теперь использует `background_color=#fcf9f8` и `theme_color=#0040e0`, чтобы install surface и browser chrome соответствовали stitch-style visual system.
+- [x] Проверка по этому slice зелёная: `npm run lint`, `npm run typecheck`, `npm run test:smoke` -> `5 passed`.
+- [x] Общий progress execution checklist не меняется и остаётся `188 / 196` (`96%`): это branded PWA polish поверх уже закрытого redesign baseline, а незакрытым остаётся всё тот же внешний auth-regression blocker.

@@ -55,3 +55,10 @@
 - [x] Auth transport усилен ожиданием клиентской сессии до redirect, но `tests/e2e/authenticated-app.spec.ts` в этой среде всё ещё фиксирует незакрытый auth-bootstrap blocker: после sign-in браузер остаётся на `/` без явной UI-ошибки, а ручной browser-debug подтверждает `Failed to fetch` на `supabase.co/auth/v1/token`.
 - [x] Проверка зелёная: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:smoke`.
 - [x] Подплан stitch redesign не меняется и остаётся `9 / 10` (`90%`): финальным открытым пунктом по-прежнему остаётся только auth-based visual regression pass.
+
+## 2026-04-13 branded manifest + icon follow-up
+
+- [x] [icon.svg](/C:/fit/public/icon.svg) переведён на реальный брендовый логотип, а [layout.tsx](/C:/fit/src/app/layout.tsx) теперь отдаёт его как основной browser icon и shortcut icon.
+- [x] [manifest.ts](/C:/fit/src/app/manifest.ts) синхронизирован с новым stitch-style брендингом: SVG icon added first, `background_color` и `theme_color` совпадают с текущим editorial visual foundation.
+- [x] Проверка зелёная: `npm run lint`, `npm run typecheck`, `npm run test:smoke`.
+- [x] Подплан stitch redesign по-прежнему остаётся `9 / 10` (`90%`): брендовый PWA polish закрыт, но финальный auth-based visual regression blocker не исчез.

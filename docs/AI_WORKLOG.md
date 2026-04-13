@@ -1410,3 +1410,9 @@
 - Полностью пересобраны stitch-style [auth-form.tsx](/C:/fit/src/components/auth-form.tsx) и [onboarding-form.tsx](/C:/fit/src/components/onboarding-form.tsx): вход, регистрация и анкета теперь выглядят как единый premium editorial flow и при этом сохраняют структуру полей, на которой держатся e2e helper’ы.
 - В [auth-form.tsx](/C:/fit/src/components/auth-form.tsx) добавлено ожидание клиентской сессии перед redirect, чтобы уменьшить race между `signInWithPassword()` и server-side `viewer`.
 - Проверка: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:smoke` -> `5 passed`. Таргетированный `tests/e2e/authenticated-app.spec.ts` в этой среде всё ещё упирается в auth-bootstrap и остаётся отдельным blocker; ручной browser-debug на `http://127.0.0.1:3100/` показал `Failed to fetch` на `supabase.co/auth/v1/token`.
+
+### Stitch redesign branded manifest и browser icon
+
+- [icon.svg](/C:/fit/public/icon.svg) переведён на тот же SVG-логотип, что уже используется в shell и entry screens, чтобы браузерный icon и PWA install surface не расходились с новым брендингом.
+- В [layout.tsx](/C:/fit/src/app/layout.tsx) добавлен SVG icon/shortcut icon, а [manifest.ts](/C:/fit/src/app/manifest.ts) синхронизирован с новым editorial palette: `background_color=#fcf9f8`, `theme_color=#0040e0`.
+- Проверка: `npm run lint`, `npm run typecheck`, `npm run test:smoke` -> `5 passed`.
