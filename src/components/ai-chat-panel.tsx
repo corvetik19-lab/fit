@@ -180,8 +180,7 @@ export function AiChatPanel({
             <div>
               <p className="workspace-kicker">Рабочий режим</p>
               <p className="mt-1 text-sm font-semibold text-foreground">
-                Один экран для диалога, фото еды, web search и применения
-                плана.
+                Один экран для диалога, фото еды, web search и применения плана.
               </p>
             </div>
             <span className="pill">

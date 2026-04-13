@@ -1186,3 +1186,32 @@ Desktop не должен просто “растягивать” мобиль
 - даёт сильную mobile-first композицию;
 - улучшает понятность;
 - можно внедрить в текущую архитектуру без ломки основных flows.
+
+## 24. Актуально внедрённый stitch-язык
+
+На текущем этапе в продукт уже внедрён новый visual baseline по референсу `stitch_`. Дизайнеру и разработчику важно опираться не на старый premium-план, а на реально внедрённую систему.
+
+Что уже считается каноническим:
+
+- `Lexend + Manrope` как типографическая пара;
+- светлый editorial canvas с electric blue как главным акцентом;
+- `card card--hero` как базовый hero-сurface;
+- `surface-panel` для вторичных смысловых блоков;
+- `section-chip` и `toggle-chip` для section navigation и visibility controls;
+- чистый mobile-first shell с drawer и bottom navigation без лишних floating-панелей.
+
+Ключевые реализованные экраны нового языка:
+
+- `Dashboard`
+- `Workout day` и mobile focus-mode
+- `Nutrition`
+- `AI`
+- remaining user screens: `/`, `/onboarding`, `/workouts`, `/history`, `/settings`, `/billing/cloudpayments`, `/suspended`
+- `Admin`, `/admin/users`, `/admin/users/[id]`
+
+Если дизайнер делает новые варианты или уточнения, они должны:
+
+- усиливать именно этот stitch-style baseline, а не возвращать проект к старой mixed-style подаче;
+- сохранять mobile-first композицию;
+- уважать уже встроенные состояния `degraded`, `locked`, `empty`, `error`, `success`;
+- быть пригодными для интеграции в текущие shared primitives, а не требовать параллельного второго UI-слоя.

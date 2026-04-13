@@ -147,11 +147,11 @@ export function CloudpaymentsCheckout() {
         </h1>
         <p className="text-sm leading-7 text-muted">
           Мы откроем безопасную форму оплаты и после завершения вернём тебя в
-          центр подписки fit.
+          центр управления подпиской.
         </p>
       </div>
 
-      <div className="mt-6 rounded-3xl border border-border bg-white/80 p-5">
+      <div className="mt-6 rounded-[2rem] border border-border bg-white/82 p-5 shadow-[0_28px_60px_-44px_rgba(20,58,160,0.22)]">
         <div className="grid gap-2 text-sm text-muted">
           <p>
             Статус формы:{" "}

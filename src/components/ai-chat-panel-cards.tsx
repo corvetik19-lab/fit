@@ -8,8 +8,8 @@ import {
   type AssistantProposalListOutput,
   type AssistantProposalOutput,
   type AssistantProposalTarget,
-  type AssistantSearchOutput,
   type AssistantProposalType,
+  type AssistantSearchOutput,
 } from "@/components/ai-chat-panel-model";
 
 function ProposalStatusPill({
@@ -229,9 +229,7 @@ export function ProposalListToolCard({
                 ) : (
                   <Link
                     className="rounded-full border border-border bg-white/80 px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white"
-                    href={
-                      item.proposalType === "workout_plan" ? "/workouts" : "/nutrition"
-                    }
+                    href={item.proposalType === "workout_plan" ? "/workouts" : "/nutrition"}
                   >
                     Открыть раздел
                   </Link>
@@ -282,9 +280,7 @@ export function ProposalActionToolCard({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <span className="pill">
-              {variant === "approve"
-                ? "Шаг 4 · Подтверждение"
-                : "Шаг 5 · Применение"}
+              {variant === "approve" ? "Шаг 4 · Подтверждение" : "Шаг 5 · Применение"}
             </span>
           </div>
           <p className="mt-3 text-sm font-semibold text-foreground">{output.title}</p>

@@ -117,16 +117,14 @@ export function NutritionPhotoAnalysis({
     <section className="card card--hero p-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="workspace-kicker">
-            AI-помощник
-          </p>
+          <p className="workspace-kicker">AI-помощник</p>
           <h2 className="app-display mt-2 text-2xl font-semibold text-foreground sm:text-3xl">
             Фото еды прямо из приложения
           </h2>
           <p className="mt-3 max-w-2xl text-sm leading-7 text-muted">
             Сними блюдо на камеру телефона или выбери фото из галереи. AI
-            оценит состав, ориентировочную калорийность и КБЖУ. Это
-            online-only анализ: данные не записываются в дневник автоматически.
+            оценит состав, ориентировочную калорийность и КБЖУ. Это online-only
+            анализ: данные не записываются в дневник автоматически.
           </p>
           {!access.allowed ? (
             <Link

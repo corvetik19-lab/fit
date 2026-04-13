@@ -35,13 +35,7 @@ export default async function AiPage({ searchParams }: AiPageProps) {
     ]);
 
   return (
-    <AppShell
-      compactHeader
-      eyebrow="AI"
-      hideAssistantWidget
-      immersive
-      title="AI-коуч"
-    >
+    <AppShell compactHeader eyebrow="AI" hideAssistantWidget immersive title="AI-коуч">
       <AiWorkspace
         chatAccess={access.features.ai_chat}
         initialMessages={chatState.messages}

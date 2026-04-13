@@ -154,9 +154,7 @@ export function NutritionOpenFoodFactsCard({
     >
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="workspace-kicker">
-            Open Food Facts
-          </p>
+          <p className="workspace-kicker">Open Food Facts</p>
           <h3 className="mt-2 text-xl font-semibold text-foreground sm:text-2xl">
             Сканер упаковки и быстрый импорт
           </h3>
@@ -263,9 +261,7 @@ export function NutritionOpenFoodFactsCard({
 
               <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 <div className="surface-panel surface-panel--soft p-3">
-                  <p className="workspace-kicker">
-                    Ккал / 100 г
-                  </p>
+                  <p className="workspace-kicker">Ккал / 100 г</p>
                   <p className="mt-2 text-lg font-semibold text-foreground">
                     {lookupResult.product.kcal === null
                       ? "нет данных"
@@ -273,25 +269,19 @@ export function NutritionOpenFoodFactsCard({
                   </p>
                 </div>
                 <div className="surface-panel surface-panel--soft p-3">
-                  <p className="workspace-kicker">
-                    Белки
-                  </p>
+                  <p className="workspace-kicker">Белки</p>
                   <p className="mt-2 text-lg font-semibold text-foreground">
                     {formatMacro(lookupResult.product.protein)}
                   </p>
                 </div>
                 <div className="surface-panel surface-panel--soft p-3">
-                  <p className="workspace-kicker">
-                    Жиры
-                  </p>
+                  <p className="workspace-kicker">Жиры</p>
                   <p className="mt-2 text-lg font-semibold text-foreground">
                     {formatMacro(lookupResult.product.fat)}
                   </p>
                 </div>
                 <div className="surface-panel surface-panel--soft p-3">
-                  <p className="workspace-kicker">
-                    Углеводы
-                  </p>
+                  <p className="workspace-kicker">Углеводы</p>
                   <p className="mt-2 text-lg font-semibold text-foreground">
                     {formatMacro(lookupResult.product.carbs)}
                   </p>
@@ -300,7 +290,7 @@ export function NutritionOpenFoodFactsCard({
 
               <div className="surface-panel surface-panel--accent mt-4 p-4">
                 <div className="flex flex-wrap items-center gap-2">
-                  <Sparkles size={16} strokeWidth={2.2} className="text-accent" />
+                  <Sparkles className="text-accent" size={16} strokeWidth={2.2} />
                   <p className="text-sm font-semibold text-foreground">Состав</p>
                 </div>
                 <p className="mt-2 text-sm leading-6 text-muted">

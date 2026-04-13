@@ -56,8 +56,7 @@ export function AiChatNotices({
         >
           <p className="font-semibold">Доступ к AI закрыт</p>
           <p className="mt-1">
-            {accessReason ??
-              "AI-чат сейчас недоступен для текущего уровня доступа."}
+            {accessReason ?? "AI-чат сейчас недоступен для текущего уровня доступа."}
           </p>
           <Link
             className="mt-3 inline-flex rounded-full border border-amber-400/70 bg-white/80 px-4 py-2 font-semibold text-foreground transition hover:bg-white"

@@ -30,9 +30,7 @@ type NutritionPageProps = {
   }>;
 };
 
-function resolveSearchParam(
-  value: string | string[] | undefined,
-): string | null {
+function resolveSearchParam(value: string | string[] | undefined): string | null {
   return Array.isArray(value) ? value[0] ?? null : value ?? null;
 }
 

@@ -112,9 +112,7 @@ export function AdminUserDetail({
       <section className="card card--hero p-6 sm:p-8">
         <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="workspace-kicker">
-              Пользователь
-            </p>
+            <p className="workspace-kicker">Пользователь</p>
             <h2 className="app-display mt-3 text-2xl text-foreground sm:text-3xl">
               {detail.profile?.full_name ?? "Без имени"}
             </h2>
@@ -149,8 +147,8 @@ export function AdminUserDetail({
 
         {canViewRoleDetails && !detail.superAdminPolicy.targetCanBeSuperAdmin ? (
           <p className="mt-4 rounded-2xl border border-sky-300/60 bg-sky-50 px-4 py-3 text-sm text-sky-800">
-            Главный доступ нельзя назначить этому пользователю. Он закреплён
-            только за {detail.superAdminPolicy.primaryEmail}.
+            Главный доступ нельзя назначить этому пользователю. Он закреплён только
+            за {detail.superAdminPolicy.primaryEmail}.
           </p>
         ) : null}
 
@@ -173,7 +171,7 @@ export function AdminUserDetail({
               className="mt-2 text-xl font-semibold text-foreground"
               data-testid="admin-user-detail-section-heading"
             >
-              Открывайте только нужный раздел
+              Открывай только нужный операторский контекст
             </h2>
           </div>
           <span className="pill">{activeSectionMeta?.label ?? "Профиль"}</span>
@@ -188,7 +186,7 @@ export function AdminUserDetail({
                 aria-pressed={isActive}
                 className={`w-full rounded-3xl border px-4 py-3 text-left transition md:w-auto md:min-w-[14rem] ${
                   isActive
-                    ? "border-accent/20 bg-[color-mix(in_srgb,var(--accent-soft)_78%,white)] text-foreground shadow-[0_16px_38px_-34px_rgba(20,97,75,0.22)]"
+                    ? "border-accent/20 bg-[color-mix(in_srgb,var(--accent-soft)_78%,white)] text-foreground shadow-[0_16px_38px_-34px_rgba(20,58,160,0.22)]"
                     : "border-border bg-white/72 text-foreground hover:bg-white"
                 }`}
                 data-testid={`admin-user-detail-section-${key}`}

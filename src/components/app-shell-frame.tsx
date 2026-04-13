@@ -1,8 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useEffect, useState, useSyncExternalStore } from "react";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
 import { AiAssistantWidget } from "@/components/ai-assistant-widget";
 import { AppShellNav } from "@/components/app-shell-nav";
@@ -11,52 +10,44 @@ import { WorkoutSyncMonitor } from "@/components/workout-sync-monitor";
 type PlatformAdminRole = "super_admin" | "support_admin" | "analyst" | null;
 
 type AppShellFrameProps = {
-  title: string;
-  eyebrow: string;
   children: ReactNode;
   compactHeader?: boolean;
+  eyebrow: string;
   hideAssistantWidget?: boolean;
   immersive?: boolean;
+  title: string;
   viewer: {
-    userId: string;
     email: string | null;
     fullName: string | null;
     isPlatformAdmin: boolean;
     platformAdminRole: PlatformAdminRole;
+    userId: string;
   } | null;
 };
 
-const collapseStorageKey = "fit-app-shell-collapsed";
+function getViewerBadge(viewer: AppShellFrameProps["viewer"]) {
+  if (!viewer) {
+    return "fit";
+  }
 
-function subscribeToStorage(onStoreChange: () => void) {
-  window.addEventListener("storage", onStoreChange);
-  return () => window.removeEventListener("storage", onStoreChange);
+  return viewer.isPlatformAdmin ? "fit admin" : "fit";
 }
 
-function getCollapseSnapshot() {
-  return window.localStorage.getItem(collapseStorageKey) === "true";
-}
-
-function getServerSnapshot() {
-  return false;
+function getViewerInitial(viewer: AppShellFrameProps["viewer"]) {
+  const source = viewer?.fullName?.trim() || viewer?.email?.trim() || "fit";
+  return source[0]?.toUpperCase() ?? "F";
 }
 
 export function AppShellFrame({
-  title,
-  eyebrow,
   children,
-  compactHeader = false,
+  eyebrow,
   hideAssistantWidget = false,
   immersive = false,
+  title,
   viewer,
 }: AppShellFrameProps) {
-  const isCollapsed = useSyncExternalStore(
-    subscribeToStorage,
-    getCollapseSnapshot,
-    getServerSnapshot,
-  );
-  const [isMobile, setIsMobile] = useState(false);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 1023px)");
@@ -68,36 +59,63 @@ export function AppShellFrame({
     return () => mediaQuery.removeEventListener("change", syncViewport);
   }, []);
 
-  function toggleCollapsed() {
-    const nextValue = !isCollapsed;
-    window.localStorage.setItem(collapseStorageKey, String(nextValue));
-    window.dispatchEvent(
-      new StorageEvent("storage", { key: collapseStorageKey }),
-    );
-  }
+  const topPaddingClassName = useMemo(() => {
+    if (immersive) {
+      return "pt-[calc(0.9rem+env(safe-area-inset-top))] sm:pt-5";
+    }
 
-  const shouldUseCompactHeader =
-    !immersive && !isMobile && (compactHeader || isCollapsed);
-  const showMobileHeader = !immersive && isMobile;
+    if (isMobile) {
+      return "pt-[calc(5.8rem+env(safe-area-inset-top))]";
+    }
+
+    return "pt-[calc(7.8rem+env(safe-area-inset-top))] xl:pt-[8.4rem]";
+  }, [immersive, isMobile]);
+
   const showAssistantWidget =
     Boolean(viewer) && !hideAssistantWidget && !isMobileDrawerOpen;
+  const brandLabel = getViewerBadge(viewer);
+  const viewerIdentity = viewer?.fullName ?? viewer?.email ?? "Аккаунт fit";
+  const viewerInitial = getViewerInitial(viewer);
 
   return (
     <div className="min-h-dvh">
-      {showMobileHeader ? (
-        <header className="fixed inset-x-0 top-0 z-30 px-4 pt-[calc(0.65rem+env(safe-area-inset-top))] sm:px-6 lg:hidden">
+      {!immersive ? (
+        <header className="fixed inset-x-0 top-0 z-30 px-4 pt-[calc(0.8rem+env(safe-area-inset-top))] sm:px-6 lg:px-10">
           <div className="mx-auto max-w-[1500px]">
-            <div className="flex items-center gap-3 rounded-[1.6rem] border border-white/65 bg-[color-mix(in_srgb,var(--surface-overlay)_96%,white)] px-3 py-3 shadow-[0_24px_56px_-34px_rgba(18,32,27,0.26)] backdrop-blur-xl">
-              <AppShellNav
-                minimal
-                onDrawerOpenChange={setIsMobileDrawerOpen}
-                viewer={viewer}
-              />
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-mono text-[0.64rem] uppercase tracking-[0.22em] text-muted">
-                  {eyebrow}
-                </p>
-                <p className="app-display mt-1 truncate text-sm font-semibold text-foreground">
+            <div className="card rounded-[2rem] px-4 py-3 sm:px-5 sm:py-4">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#0040e0,#2e5bff)] text-sm font-black text-white shadow-[0_20px_40px_-28px_rgba(0,64,224,0.45)]">
+                    {viewerInitial}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="app-display text-xl font-black tracking-tight text-accent">
+                      {brandLabel}
+                    </p>
+                    <p className="workspace-kicker mt-1">{eyebrow}</p>
+                  </div>
+                </div>
+
+                <div className="hidden min-w-0 flex-1 items-center justify-center px-6 lg:flex">
+                  <p className="truncate text-sm font-semibold uppercase tracking-[0.24em] text-muted">
+                    {title}
+                  </p>
+                </div>
+
+                <div className="flex shrink-0 items-center gap-3">
+                  <div className="hidden xl:flex">
+                    <span className="pill">{viewerIdentity}</span>
+                  </div>
+                  <AppShellNav
+                    minimal={isMobile}
+                    onDrawerOpenChange={setIsMobileDrawerOpen}
+                    viewer={viewer}
+                  />
+                </div>
+              </div>
+
+              <div className="mt-3 lg:hidden">
+                <p className="truncate text-sm font-semibold text-foreground">
                   {title}
                 </p>
               </div>
@@ -106,99 +124,8 @@ export function AppShellFrame({
         </header>
       ) : null}
 
-      {!immersive && !shouldUseCompactHeader ? (
-        <header className="fixed inset-x-0 top-0 z-30 hidden px-4 pt-[calc(0.65rem+env(safe-area-inset-top))] sm:px-6 lg:block lg:px-10">
-          <div className="mx-auto max-w-[1500px]">
-            <div className="card card--hero border-white/60 bg-[color-mix(in_srgb,var(--surface-overlay)_92%,white)] p-4 backdrop-blur-xl sm:p-5">
-              <div className="flex flex-col gap-4">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <div className="inline-flex items-center gap-2 rounded-full border border-border bg-white/72 px-3 py-1.5 text-xs font-medium uppercase tracking-[0.22em] text-muted shadow-[0_16px_30px_-24px_rgba(15,122,96,0.24)]">
-                      <span className="h-2 w-2 rounded-full bg-accent" />
-                      {eyebrow}
-                    </div>
-                    <h1 className="app-display mt-3 max-w-3xl text-2xl font-semibold tracking-tight text-foreground sm:text-4xl">
-                      {title}
-                    </h1>
-                  </div>
-
-                  <button
-                    aria-expanded
-                    className="toggle-chip px-4 py-2.5 text-sm font-semibold"
-                    onClick={toggleCollapsed}
-                    type="button"
-                  >
-                    <ChevronUp size={18} strokeWidth={2.2} />
-                    Свернуть
-                  </button>
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  <span className="pill">
-                    {viewer?.fullName ?? viewer?.email ?? "Аккаунт fit"}
-                  </span>
-                  {viewer?.isPlatformAdmin ? (
-                    <span className="pill">Доступ администратора активен</span>
-                  ) : null}
-                </div>
-
-                <AppShellNav
-                  onDrawerOpenChange={setIsMobileDrawerOpen}
-                  viewer={viewer}
-                />
-              </div>
-            </div>
-          </div>
-        </header>
-      ) : null}
-
-      {!immersive && shouldUseCompactHeader ? (
-        <header className="fixed inset-x-0 top-0 z-30 hidden px-4 pt-[calc(0.5rem+env(safe-area-inset-top))] sm:px-6 lg:block lg:px-10">
-          <div className="mx-auto max-w-[1500px]">
-            <div className="rounded-[1.7rem] border border-white/60 bg-[color-mix(in_srgb,var(--surface-overlay)_96%,white)] px-4 py-3 shadow-[0_24px_56px_-34px_rgba(18,32,27,0.24)] backdrop-blur-xl">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="truncate font-mono text-[0.64rem] uppercase tracking-[0.22em] text-muted">
-                    {eyebrow}
-                  </p>
-                  <p className="app-display mt-1 truncate text-sm font-semibold text-foreground">
-                    {title}
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <AppShellNav
-                    onDrawerOpenChange={setIsMobileDrawerOpen}
-                    viewer={viewer}
-                  />
-                  {!compactHeader ? (
-                    <button
-                      aria-expanded={false}
-                      aria-label="Развернуть верхнюю панель"
-                      className="toggle-chip inline-flex h-11 w-11 items-center justify-center rounded-full px-0 py-0 shadow-[0_18px_34px_-24px_rgba(15,122,96,0.24)]"
-                      onClick={toggleCollapsed}
-                      type="button"
-                    >
-                      <ChevronDown size={18} strokeWidth={2.2} />
-                    </button>
-                  ) : null}
-                </div>
-              </div>
-            </div>
-          </div>
-        </header>
-      ) : null}
-
       <main
-        className={`mx-auto grid max-w-[1500px] gap-6 px-4 pb-[calc(2rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-10 lg:pb-8 ${
-          immersive
-            ? "pt-[calc(0.8rem+env(safe-area-inset-top))] sm:pt-4 lg:pt-5"
-            : showMobileHeader
-              ? "pt-[calc(5.4rem+env(safe-area-inset-top))]"
-              : shouldUseCompactHeader
-                ? "pt-[calc(6.6rem+env(safe-area-inset-top))] sm:pt-[6.9rem] lg:pt-[7.2rem]"
-                : "pt-[calc(10.8rem+env(safe-area-inset-top))] sm:pt-[12.5rem] lg:pt-[12.8rem]"
-        }`}
+        className={`mx-auto grid max-w-[1500px] gap-6 px-4 pb-[calc(6.5rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-10 lg:pb-8 ${topPaddingClassName}`}
       >
         {children}
       </main>

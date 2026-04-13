@@ -182,6 +182,47 @@ async function waitForPostAuthRoute(page: Page) {
   }
 }
 
+async function describeAuthFailure(page: Page, phase: string) {
+  const candidateSelectors = [
+    '[role="alert"]',
+    '[data-testid*="error"]',
+    'text=/failed to fetch/i',
+    'text=/invalid login credentials/i',
+    'text=/не удалось/i',
+    'text=/ошибка/i',
+  ] as const;
+
+  let visibleError = "";
+
+  for (const selector of candidateSelectors) {
+    const locator = page.locator(selector).first();
+    const isVisible = await locator.isVisible().catch(() => false);
+
+    if (!isVisible) {
+      continue;
+    }
+
+    visibleError = (await locator.innerText().catch(() => "")).trim();
+    if (visibleError) {
+      break;
+    }
+  }
+
+  const bodyExcerpt = (await page.locator("body").innerText().catch(() => ""))
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 260);
+
+  const details = [
+    `${phase}.`,
+    `Current URL: ${page.url()}.`,
+    `Visible error: ${visibleError || "none"}.`,
+    `Body excerpt: ${bodyExcerpt || "none"}.`,
+  ];
+
+  return details.join(" ");
+}
+
 async function signInWithCredentials(page: Page, credentials: AuthCredentials) {
   await page.goto("/");
   await page.waitForLoadState("networkidle");
@@ -212,7 +253,11 @@ async function signInWithCredentials(page: Page, credentials: AuthCredentials) {
     await completeOnboarding(page, credentials.fullName);
   }
 
-  await expect(page).toHaveURL(/\/dashboard$/);
+  try {
+    await expect(page).toHaveURL(/\/dashboard$/);
+  } catch {
+    throw new Error(await describeAuthFailure(page, "Auth redirect did not reach /dashboard"));
+  }
 }
 
 async function completeOnboarding(page: Page, fullName: string) {

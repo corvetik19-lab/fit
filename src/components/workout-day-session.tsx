@@ -434,8 +434,8 @@ export function WorkoutDaySession({
             );
           })
         ) : (
-          <section className="card p-6">
-            <p className="text-sm leading-7 text-muted">
+          <section className="rounded-[1.8rem] bg-[color:var(--surface-bright)] px-6 py-6 shadow-[0_24px_64px_-50px_rgba(24,29,63,0.22)]">
+            <p className="text-sm leading-7 text-[color:var(--muted)]">
               В этом тренировочном дне пока нет упражнений.
             </p>
           </section>

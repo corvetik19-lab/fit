@@ -27,7 +27,7 @@ export function SignOutButton({ className = "" }: { className?: string }) {
 
   return (
     <button
-      className={`rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60 ${className}`.trim()}
+      className={`action-button action-button--secondary rounded-full px-4 py-2 text-sm ${className}`.trim()}
       disabled={isPending}
       onClick={signOut}
       type="button"

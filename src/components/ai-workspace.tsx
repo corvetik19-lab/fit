@@ -4,10 +4,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Brain,
-  CheckCircle2,
   Check,
-  ChevronLeft,
+  CheckCircle2,
   ChevronDown,
+  ChevronLeft,
   ChevronUp,
   ClipboardList,
   History,
@@ -19,8 +19,8 @@ import { AiChatPanel } from "@/components/ai-chat-panel";
 import { AiWorkspaceSidebar } from "@/components/ai-workspace-sidebar";
 import type { AiChatMessageRow, AiChatSessionRow } from "@/lib/ai/chat";
 import type { AiPlanProposalRow } from "@/lib/ai/proposals";
-import type { AiStructuredKnowledgeSnapshot } from "@/lib/ai/structured-knowledge";
 import { mealPlanSchema, workoutPlanSchema } from "@/lib/ai/schemas";
+import type { AiStructuredKnowledgeSnapshot } from "@/lib/ai/structured-knowledge";
 import type { FeatureAccessSnapshot } from "@/lib/billing-access";
 
 type WorkspaceSectionKey = "history" | "context" | "plans";
@@ -46,7 +46,7 @@ const sectionMeta: Array<{
   {
     key: "history",
     label: "История",
-    description: "Сохранённые диалоги и быстрый возврат к прошлым сессиям.",
+    description: "Сохранённые диалоги и быстрый возврат к прошлым решениям.",
     icon: History,
   },
   {
@@ -58,7 +58,7 @@ const sectionMeta: Array<{
   {
     key: "plans",
     label: "Планы",
-    description: "Черновики, подтверждение и применение готовых предложений.",
+    description: "Черновики, подтверждение и перенос в тренировки или питание.",
     icon: ClipboardList,
   },
 ];
@@ -71,27 +71,27 @@ const assistantFlowSteps: Array<{
   {
     key: "request",
     label: "Запрос",
-    description: "Сформулируйте задачу или приложите фото еды.",
+    description: "Сформулируй задачу или приложи фото еды.",
   },
   {
     key: "analysis",
     label: "Анализ",
-    description: "AI учитывает историю, факты и текущий контекст.",
+    description: "AI подтягивает контекст, историю и свежие сигналы.",
   },
   {
     key: "proposal",
-    label: "Предложение",
-    description: "Формируется черновик плана или конкретный разбор.",
+    label: "Черновик",
+    description: "Появляется структурированное предложение по плану или разбору.",
   },
   {
     key: "approve",
     label: "Подтверждение",
-    description: "Проверьте черновик и утвердите нужный вариант.",
+    description: "Ты проверяешь детали и утверждаешь нужный вариант.",
   },
   {
     key: "apply",
     label: "Применение",
-    description: "План переносится в тренировки или питание.",
+    description: "План переносится в рабочие разделы приложения.",
   },
 ];
 
@@ -105,9 +105,9 @@ const dateFormatter = new Intl.DateTimeFormat("ru-RU", {
 function formatProposalStatus(value: string) {
   switch (value) {
     case "approved":
-      return "Подтверждено";
+      return "Подтверждён";
     case "applied":
-      return "Применено";
+      return "Применён";
     default:
       return "Черновик";
   }
@@ -210,33 +210,26 @@ function getFlowStepState(step: AssistantFlowKey, current: AssistantFlowKey) {
 function getNextFlowHint(current: AssistantFlowKey) {
   switch (current) {
     case "request":
-      return "Сформулируйте задачу слева, чтобы AI начал анализ.";
+      return "Сформулируй задачу в чате, чтобы AI начал анализ.";
     case "analysis":
-      return "Дождитесь ответа или черновика плана в чате.";
+      return "Дождись ответа или черновика прямо в ленте диалога.";
     case "proposal":
-      return "Откройте раздел «Планы» или используйте карточки в чате для подтверждения.";
+      return "Открой раздел «Планы» или подтверди карточку предложения в чате.";
     case "approve":
-      return "После подтверждения примените план в приложение одним нажатием.";
+      return "После подтверждения можно сразу перенести план в рабочий раздел.";
     case "apply":
-      return "Готово: откройте тренировки или питание и работайте с применённым планом.";
+      return "Готово: переходи в тренировки или питание и работай с новым планом.";
     default:
       return "";
   }
 }
 
-function FlowCard({
-  currentStep,
-}: {
-  currentStep: AssistantFlowKey;
-}) {
+function FlowCard({ currentStep }: { currentStep: AssistantFlowKey }) {
   const currentMeta =
     assistantFlowSteps.find((step) => step.key === currentStep) ?? assistantFlowSteps[0];
 
   return (
-    <section
-      className="card card--hero p-4 sm:p-5"
-      data-testid="ai-assistant-flow"
-    >
+    <section className="card card--hero p-4 sm:p-5" data-testid="ai-assistant-flow">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="workspace-kicker">Сценарий AI</p>
@@ -244,8 +237,8 @@ function FlowCard({
             От запроса до применения
           </h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">
-            AI работает по понятной цепочке: сначала понимает запрос, потом
-            собирает контекст, формирует черновик и только после подтверждения
+            AI не пишет планы за тебя молча. Сначала он понимает задачу, затем
+            собирает контекст, показывает черновик и только после подтверждения
             переносит решение в продукт.
           </p>
         </div>
@@ -262,10 +255,10 @@ function FlowCard({
             <article
               className={`rounded-[1.75rem] border px-4 py-4 text-sm ${
                 isActive
-                  ? "border-accent/28 bg-[color-mix(in_srgb,var(--accent-soft)_78%,white)] shadow-[0_24px_48px_-40px_rgba(15,122,96,0.24)]"
+                  ? "border-accent/24 bg-[color-mix(in_srgb,var(--accent-soft)_76%,white)] shadow-[0_24px_52px_-38px_rgba(0,64,224,0.28)]"
                   : isDone
-                    ? "border-emerald-300/60 bg-[color-mix(in_srgb,#ddf6eb_88%,white)]"
-                    : "border-border bg-white/82"
+                    ? "border-emerald-300/60 bg-[color-mix(in_srgb,#dff6ea_84%,white)]"
+                    : "border-border bg-white/84"
               }`}
               data-flow-state={state}
               key={step.key}
@@ -308,9 +301,7 @@ function WorkspaceStatCard({
   value: string;
 }) {
   return (
-    <article
-      className={`metric-tile p-4 ${tone === "accent" ? "surface-panel--accent" : ""}`}
-    >
+    <article className={`metric-tile p-4 ${tone === "accent" ? "surface-panel--accent" : ""}`}>
       <p className="text-xs uppercase tracking-[0.18em] text-muted">{label}</p>
       <p className="mt-3 text-3xl font-semibold text-foreground">{value}</p>
     </article>
@@ -324,11 +315,12 @@ function PlansSection({ proposals }: { proposals: AiPlanProposalRow[] }) {
         <div>
           <p className="workspace-kicker">Планы</p>
           <h2 className="app-display mt-2 text-2xl font-semibold text-foreground">
-            Черновики, подтверждение и применение
+            Черновики, подтверждение и перенос
           </h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">
-            Все предложения AI остаются здесь как понятная очередь действий:
-            посмотреть, подтвердить, применить в тренировки или питание.
+            Здесь лежат предложения AI по тренировкам и питанию. Их можно
+            спокойно посмотреть, подтвердить и только потом применить в рабочие
+            разделы приложения.
           </p>
         </div>
         <span className="pill">{proposals.length} в работе</span>
@@ -337,17 +329,12 @@ function PlansSection({ proposals }: { proposals: AiPlanProposalRow[] }) {
       <div className="mt-4 grid gap-3" id="ai-plans">
         {proposals.length ? (
           proposals.map((proposal) => (
-            <article
-              className="surface-panel p-4"
-              key={proposal.id}
-            >
+            <article className="surface-panel p-4" key={proposal.id}>
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="pill">
-                      {proposal.proposal_type === "meal_plan"
-                        ? "Питание"
-                        : "Тренировки"}
+                      {proposal.proposal_type === "meal_plan" ? "Питание" : "Тренировки"}
                     </span>
                     <span className="pill">{formatProposalStatus(proposal.status)}</span>
                   </div>
@@ -356,7 +343,7 @@ function PlansSection({ proposals }: { proposals: AiPlanProposalRow[] }) {
                   </p>
                   <p className="mt-2 text-sm leading-6 text-muted">
                     {parseProposalSummary(proposal) ||
-                      "Параметры черновика уже сохранены."}
+                      "Параметры черновика уже сохранены и готовы к проверке."}
                   </p>
                 </div>
                 <p className="text-xs text-muted">
@@ -372,11 +359,7 @@ function PlansSection({ proposals }: { proposals: AiPlanProposalRow[] }) {
                 ) : (
                   <Link
                     className="toggle-chip px-3 py-2 text-sm font-semibold"
-                    href={
-                      proposal.proposal_type === "meal_plan"
-                        ? "/nutrition"
-                        : "/workouts"
-                    }
+                    href={proposal.proposal_type === "meal_plan" ? "/nutrition" : "/workouts"}
                   >
                     Открыть раздел
                   </Link>
@@ -386,8 +369,7 @@ function PlansSection({ proposals }: { proposals: AiPlanProposalRow[] }) {
           ))
         ) : (
           <div className="surface-panel border-dashed px-4 py-6 text-sm leading-6 text-muted">
-            Здесь появятся черновики программ, которые AI соберёт по вашему
-            запросу.
+            Здесь появятся черновики, которые AI соберёт по твоим запросам.
           </div>
         )}
       </div>
@@ -565,26 +547,27 @@ export function AiWorkspace({
   return (
     <div className="grid gap-5">
       <section className="card card--hero overflow-hidden p-5 sm:p-6 lg:p-8">
-        <div className="grid gap-5 xl:grid-cols-[1.06fr_0.94fr]">
+        <div className="grid gap-5 xl:grid-cols-[1.08fr_0.92fr]">
           <div className="space-y-4">
             <div className="flex flex-wrap gap-2">
-              <span className="pill">AI-коуч</span>
+              <span className="pill">AI коуч</span>
               <span className="pill">
                 {mealPhotoAccess.allowed ? "Фото еды включено" : "Фото еды отключено"}
               </span>
               <span className="pill">
-                {chatAccess.allowed ? "Чат активен" : "Доступ ограничен"}
+                {chatAccess.allowed ? "Чат доступен" : "Доступ ограничен"}
               </span>
             </div>
 
             <div className="space-y-3">
               <h1 className="app-display max-w-4xl text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-                Разговор, план и применение в одном рабочем AI-экране.
+                Чат, контекст и перенос решений в один рабочий AI-экран.
               </h1>
               <p className="max-w-3xl text-sm leading-7 text-muted sm:text-base">
-                Здесь остаются только нужные поверхности: сам чат, контекст,
-                история, фото еды и готовые черновики. На телефоне экран ведёт
-                себя как компактная PWA-панель без лишнего шума.
+                Здесь остаются только полезные поверхности: сам диалог, история,
+                факты, предложения по планам и быстрый разбор фото еды. На
+                телефоне экран ощущается как компактная PWA-панель, а не как
+                набор перегруженных виджетов.
               </p>
             </div>
 
@@ -601,12 +584,22 @@ export function AiWorkspace({
           </div>
 
           <div className="grid gap-3">
-            <article className="surface-panel surface-panel--accent p-5">
-              <p className="workspace-kicker">Что удобно делать сразу</p>
-              <div className="mt-3 grid gap-2 text-sm leading-6 text-muted">
-                <p>Разобрать фото еды и тут же получить вывод по составу.</p>
-                <p>Собрать новый план тренировок или питания без ручного брифа.</p>
-                <p>Вернуться к прошлому чату и применить черновик одним нажатием.</p>
+            <article className="athletic-hero-card p-5">
+              <div className="relative z-[1]">
+                <p className="athletic-hero-chip">Сейчас в фокусе</p>
+                <p className="mt-4 text-xl font-semibold text-white">
+                  AI-коуч остаётся proposal-first: сначала анализ, затем
+                  черновик, потом подтверждение и только после этого перенос в
+                  продукт.
+                </p>
+                <div className="mt-5 flex flex-wrap gap-2">
+                  <span className="athletic-hero-chip">
+                    {proposals.length} черновиков
+                  </span>
+                  <span className="athletic-hero-chip">
+                    {structuredKnowledge.facts.length} фактов в контексте
+                  </span>
+                </div>
               </div>
             </article>
 
@@ -662,7 +655,7 @@ export function AiWorkspace({
                 {activeMeta.description}
               </span>
             </span>
-            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-white/88 text-foreground shadow-[0_18px_32px_-26px_rgba(15,122,96,0.22)]">
+            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-white/88 text-foreground shadow-[0_18px_32px_-26px_rgba(0,64,224,0.18)]">
               {isMobileMenuOpen ? (
                 <ChevronUp size={18} strokeWidth={2.2} />
               ) : (

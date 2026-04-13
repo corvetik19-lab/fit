@@ -1,25 +1,27 @@
 import type { Metadata, Viewport } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { IBM_Plex_Mono, Manrope, Sora } from "next/font/google";
-import "./globals.css";
+import { IBM_Plex_Mono, Lexend, Manrope } from "next/font/google";
 
 import { ServiceWorkerRegistration } from "@/components/service-worker-registration";
 import { resolveSiteUrl } from "@/lib/site-url";
 
+import "./globals.css";
+
 const sans = Manrope({
   variable: "--font-geist-sans",
-  subsets: ["latin"],
+  subsets: ["latin", "cyrillic"],
 });
 
-const display = Sora({
+const display = Lexend({
   variable: "--font-display",
   subsets: ["latin"],
+  weight: ["400", "600", "700", "800", "900"],
 });
 
 const mono = IBM_Plex_Mono({
   variable: "--font-geist-mono",
-  subsets: ["latin"],
+  subsets: ["latin", "cyrillic"],
   weight: ["400", "500"],
 });
 
@@ -30,7 +32,7 @@ export const metadata: Metadata = {
     template: "%s · fit",
   },
   description:
-    "Фитнес-платформа с офлайн-поддержкой для тренировок, питания, аналитики, админ-панели и AI-планирования.",
+    "Фитнес-платформа с PWA-подачей для тренировок, питания, AI-коучинга, аналитики и операторской панели.",
   applicationName: "fit",
   appleWebApp: {
     capable: true,
@@ -43,12 +45,14 @@ export const metadata: Metadata = {
       { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
       { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
     ],
-    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0f7a60",
+  themeColor: "#0040e0",
   width: "device-width",
   initialScale: 1,
 };

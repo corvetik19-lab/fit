@@ -39,15 +39,15 @@ export default async function WorkoutsPage() {
     : null;
 
   return (
-    <AppShell eyebrow="Тренировки" title="Программы, недели и упражнения">
+    <AppShell eyebrow="Тренировки" title="Программы, недели и библиотека упражнений">
       <PageWorkspace
         badges={[
           viewer.profile?.full_name ?? viewer.user.email ?? "fit",
           lastUpdatedAt
             ? `Обновлено ${lastUpdatedAt}`
-            : "Библиотека пока пустая",
+            : "Библиотека упражнений пока пустая",
         ]}
-        description="Здесь собраны недельный план, текущая программа и библиотека упражнений. На телефоне разделы открываются по очереди, без длинной ленты из блоков."
+        description="Это рабочая зона для недельного плана: здесь собраны текущая программа, шаблоны и библиотека упражнений. На телефоне разделы открываются по очереди и не превращаются в длинную перегруженную ленту."
         metrics={[
           {
             label: "Активные",
@@ -57,7 +57,7 @@ export default async function WorkoutsPage() {
           {
             label: "В архиве",
             value: String(archivedExercises.length),
-            note: "временно убрано из базы",
+            note: "временно скрыто",
           },
           {
             label: "Черновики",
@@ -74,7 +74,7 @@ export default async function WorkoutsPage() {
           {
             key: "plan",
             label: "План недели",
-            description: "Конструктор, текущая неделя и шаблоны",
+            description: "Конструктор, текущая неделя и шаблоны.",
             content: (
               <WeeklyProgramBuilder
                 activeExercises={activeExercises}
@@ -86,12 +86,12 @@ export default async function WorkoutsPage() {
           {
             key: "library",
             label: "Упражнения",
-            description: "Своя база и быстрые правки",
+            description: "Собственная база и быстрые правки без лишних экранов.",
             content: <ExerciseLibraryManager initialExercises={exercises} />,
           },
         ]}
         storageKey="workouts-page"
-        title="Рабочая зона для недельного плана и библиотеки упражнений"
+        title="Собирай недельный цикл и управляй библиотекой упражнений из одного места"
       />
     </AppShell>
   );

@@ -30,11 +30,11 @@ export function WorkoutStatusActions({
   pendingMutationCount,
 }: WorkoutStatusActionsProps) {
   const primaryButtonClassName = compact
-    ? "rounded-full bg-accent px-4 py-2.5 text-xs font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-    : "rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60";
+    ? "rounded-[1rem] bg-[color:var(--accent)] px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--on-primary)] shadow-[0_20px_40px_-30px_rgba(0,64,224,0.55)] transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-55"
+    : "rounded-[1rem] bg-[color:var(--accent)] px-5 py-3.5 text-sm font-semibold text-[color:var(--on-primary)] shadow-[0_20px_40px_-30px_rgba(0,64,224,0.55)] transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-55";
   const secondaryButtonClassName = compact
-    ? "rounded-full border border-border px-4 py-2.5 text-xs font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
-    : "rounded-full border border-border px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60";
+    ? "rounded-[1rem] bg-[color:var(--surface-container-high)] px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--foreground)] transition hover:bg-[color:var(--surface-container-highest)] disabled:cursor-not-allowed disabled:opacity-55"
+    : "rounded-[1rem] bg-[color:var(--surface-container-high)] px-5 py-3.5 text-sm font-semibold text-[color:var(--foreground)] transition hover:bg-[color:var(--surface-container-highest)] disabled:cursor-not-allowed disabled:opacity-55";
 
   return (
     <>
@@ -95,7 +95,7 @@ export function WorkoutStatusActions({
         onClick={onResetWorkoutDay}
         type="button"
       >
-        {compact ? "Обнулить" : "Обнулить тренировку"}
+        {compact ? "Сбросить" : "Обнулить тренировку"}
       </button>
     </>
   );

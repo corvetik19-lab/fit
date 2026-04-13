@@ -52,13 +52,13 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
   const billingProvider = getActiveBillingProvider();
 
   return (
-    <AppShell eyebrow="Настройки" title="Профиль, доступ и управление данными">
+    <AppShell eyebrow="Настройки" title="Профиль, доступ и управление личными данными">
       <PageWorkspace
         badges={[
           viewer.profile?.full_name ?? viewer.user.email ?? "fit",
           viewer.adminState?.is_suspended ? "Аккаунт ограничен" : "Аккаунт активен",
         ]}
-        description="Настройки тоже разделены по логике: профиль, доступ и личные данные. На мобильном это открывается через понятное меню разделов, без длинной вертикальной стены карточек."
+        description="Настройки разделены на понятные зоны: профиль, доступ и личные данные. На мобильном это работает как компактный центр управления без длинной стены из карточек."
         initialSectionKey={initialSectionKey}
         metrics={[
           {
@@ -76,19 +76,19 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
           {
             label: "Выгрузки",
             value: String(dataSnapshot.exportJobs.length),
-            note: "история выгрузок",
+            note: "история экспорта",
           },
           {
             label: "Приватность",
             value: String(dataSnapshot.privacyEvents.length),
-            note: "событий по данным",
+            note: "операции по данным",
           },
         ]}
         sections={[
           {
             key: "profile",
             label: "Профиль",
-            description: "Аккаунт, анкета и личные параметры.",
+            description: "Аккаунт, анкета и параметры, на которых строится продукт.",
             content: (
               <div className="grid gap-6 lg:grid-cols-2">
                 <PanelCard caption="Аккаунт" title="Профиль и текущая сессия">
@@ -124,19 +124,33 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
                   </div>
                 </PanelCard>
 
-                <PanelCard caption="Личные параметры" title="Что влияет на рекомендации">
+                <PanelCard
+                  caption="Персональный контекст"
+                  title="Что влияет на рекомендации, планы и AI"
+                >
                   <div className="space-y-3 text-sm leading-7 text-muted">
                     <p>
-                      Здесь собраны данные, на которых держатся план тренировок,
+                      Здесь собраны данные, на которых держатся тренировочный план,
                       питание и AI-подсказки.
                     </p>
-                    <div className="rounded-2xl border border-border bg-white/60 px-4 py-3">
-                      <span className="font-semibold text-foreground">Оборудование:</span>{" "}
+                    <div className="rounded-[1.75rem] border border-border bg-white/60 px-4 py-3">
+                      <span className="font-semibold text-foreground">
+                        Оборудование:
+                      </span>{" "}
                       {viewer.onboarding?.equipment?.join(", ") || "Не указано"}
                     </div>
-                    <div className="rounded-2xl border border-border bg-white/60 px-4 py-3">
-                      <span className="font-semibold text-foreground">Питание:</span>{" "}
-                      {viewer.onboarding?.dietary_preferences?.join(", ") || "Не указано"}
+                    <div className="rounded-[1.75rem] border border-border bg-white/60 px-4 py-3">
+                      <span className="font-semibold text-foreground">
+                        Питание:
+                      </span>{" "}
+                      {viewer.onboarding?.dietary_preferences?.join(", ") ||
+                        "Не указано"}
+                    </div>
+                    <div className="rounded-[1.75rem] border border-border bg-white/60 px-4 py-3">
+                      <span className="font-semibold text-foreground">
+                        Ограничения:
+                      </span>{" "}
+                      {viewer.onboarding?.injuries?.join(", ") || "Не указано"}
                     </div>
                   </div>
                 </PanelCard>
@@ -162,11 +176,11 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
           {
             key: "data",
             label: "Данные",
-            description: "Выгрузка, удаление и история операций.",
+            description: "Выгрузка, удаление и история операций по профилю.",
             content: <SettingsDataCenter initialSnapshot={dataSnapshot} />,
           },
         ]}
-        title="Профиль, доступ и личные данные без лишней прокрутки"
+        title="Управляй профилем, доступом и данными без лишней прокрутки"
       />
     </AppShell>
   );

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import type { Route } from "next";
 import Link from "next/link";
@@ -23,10 +23,10 @@ import { SignOutButton } from "@/components/sign-out-button";
 import { canUseRootAdminControls } from "@/lib/admin-permissions";
 
 type AppRouteDefinition = {
-  href: Route;
-  label: string;
   description: string;
+  href: Route;
   icon: LucideIcon;
+  label: string;
 };
 
 type PlatformAdminRole = "super_admin" | "support_admin" | "analyst" | null;
@@ -36,18 +36,18 @@ type AppShellNavProps = {
   minimal?: boolean;
   onDrawerOpenChange?: (isOpen: boolean) => void;
   viewer: {
-    userId: string;
     email: string | null;
     fullName: string | null;
     isPlatformAdmin: boolean;
     platformAdminRole: PlatformAdminRole;
+    userId: string;
   } | null;
 };
 
 const dashboardRoute: AppRouteDefinition = {
   href: "/dashboard",
   label: "Обзор",
-  description: "Главные метрики и прогресс.",
+  description: "Главные сигналы дня.",
   icon: BarChart3,
 };
 
@@ -61,63 +61,53 @@ const workoutsRoute: AppRouteDefinition = {
 const nutritionRoute: AppRouteDefinition = {
   href: "/nutrition",
   label: "Питание",
-  description: "Логи, цели и анализ фото.",
+  description: "Логи, фото и штрихкоды.",
   icon: Activity,
 };
 
 const historyRoute: AppRouteDefinition = {
   href: "/history",
-  label: "История",
-  description: "Прошлые недели и результаты.",
+  label: "Архив",
+  description: "Прошлые циклы и история.",
   icon: History,
 };
 
 const aiRoute: AppRouteDefinition = {
   href: "/ai",
-  label: "AI",
-  description: "Чат и предложения.",
+  label: "AI коуч",
+  description: "Диалог и предложения.",
   icon: Sparkles,
 };
 
 const settingsRoute: AppRouteDefinition = {
   href: "/settings",
   label: "Настройки",
-  description: "Профиль, доступ и данные.",
+  description: "Профиль, данные и доступ.",
   icon: Settings2,
 };
 
 const adminRoute: AppRouteDefinition = {
   href: "/admin",
-  label: "Админ",
-  description: "Пользователи и контроль.",
-  icon: Shield,
-};
-
-const adminControlRoute: AppRouteDefinition = {
-  href: "/admin",
   label: "Центр управления",
-  description: "Очереди, health и системный обзор.",
+  description: "Системное состояние и очереди.",
   icon: Shield,
 };
 
 const adminUsersRoute: AppRouteDefinition = {
   href: "/admin/users",
   label: "Пользователи",
-  description: "Каталог, доступы и операции.",
+  description: "Каталог, роли и операции.",
   icon: Shield,
 };
 
 const coreRoutes = [dashboardRoute, workoutsRoute, nutritionRoute, aiRoute];
 const utilityRoutes = [historyRoute, settingsRoute];
-const sectionRoutes = [
+const mobileBottomRoutes = [
   dashboardRoute,
   workoutsRoute,
   nutritionRoute,
   aiRoute,
   historyRoute,
-  settingsRoute,
-  adminRoute,
-  adminUsersRoute,
 ];
 
 function formatAdminRole(value: PlatformAdminRole) {
@@ -141,24 +131,34 @@ function isRouteActive(pathname: string, href: Route) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-function getCurrentSectionLabel(pathname: string) {
-  if (pathname.startsWith("/admin/users")) {
-    return "Пользователи";
-  }
-
-  const currentRoute =
-    sectionRoutes.find((route) => isRouteActive(pathname, route.href)) ??
-    dashboardRoute;
-
-  return currentRoute.label;
+function DesktopRouteLink({
+  href,
+  isActive,
+  label,
+}: {
+  href: Route;
+  isActive: boolean;
+  label: string;
+}) {
+  return (
+    <Link
+      aria-current={isActive ? "page" : undefined}
+      className={`section-chip rounded-full px-4 py-2 text-sm font-semibold ${
+        isActive ? "section-chip--active" : ""
+      }`}
+      href={href}
+    >
+      {label}
+    </Link>
+  );
 }
 
 function DrawerRouteLink({
-  href,
-  label,
   description,
+  href,
   icon: Icon,
   isActive,
+  label,
   onNavigate,
 }: AppRouteDefinition & {
   isActive: boolean;
@@ -172,19 +172,18 @@ function DrawerRouteLink({
       onClick={onNavigate}
     >
       <span className="app-drawer-link__icon">
-        <Icon size={18} strokeWidth={2.2} />
+        <Icon size={18} strokeWidth={2.1} />
       </span>
       <span className="min-w-0 flex-1">
         <span className="block text-sm font-semibold">{label}</span>
         <span className="mt-1 block text-xs text-muted">{description}</span>
       </span>
-      <ArrowRight size={16} strokeWidth={2.2} />
+      <ArrowRight size={15} strokeWidth={2.1} />
     </Link>
   );
 }
 
 export function AppShellNav({
-  compact = false,
   minimal = false,
   onDrawerOpenChange,
   viewer,
@@ -196,25 +195,26 @@ export function AppShellNav({
     () => false,
   );
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const currentSectionLabel = getCurrentSectionLabel(pathname);
   const adminRoleLabel = formatAdminRole(viewer?.platformAdminRole ?? null);
   const showAdminRole = canUseRootAdminControls(
     viewer?.platformAdminRole ?? null,
     viewer?.email ?? null,
   );
+
   const desktopRoutes: AppRouteDefinition[] = viewer?.isPlatformAdmin
     ? [...coreRoutes, ...utilityRoutes, adminRoute, adminUsersRoute]
     : [...coreRoutes, ...utilityRoutes];
+
   const adminDrawerRoutes: AppRouteDefinition[] = viewer?.isPlatformAdmin
     ? [
-        adminControlRoute,
+        adminRoute,
         adminUsersRoute,
         ...(viewer?.userId
           ? [
               {
                 href: `/admin/users/${viewer.userId}` as Route,
                 label: "Моя карточка",
-                description: "Ваши доступы, аудит и операции.",
+                description: "Ваши доступы и аудит.",
                 icon: Shield,
               },
             ]
@@ -253,69 +253,29 @@ export function AppShellNav({
 
   return (
     <>
-      {!minimal ? (
-        <>
-          <nav className="hidden flex-wrap gap-2 lg:flex">
-            {desktopRoutes.map((route) => {
-                const isActive = isRouteActive(pathname, route.href);
-
-                return (
-                  <Link
-                    aria-current={isActive ? "page" : undefined}
-                    className={`section-chip rounded-full px-4 py-2 text-sm font-semibold ${
-                      isActive ? "section-chip--active" : ""
-                    }`}
-                    href={route.href}
-                    key={route.href}
-                  >
-                    {route.label}
-                  </Link>
-                );
-              })}
-          </nav>
-
-          <div className="grid gap-2 lg:hidden">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0 max-w-[55vw]">
-                {!compact ? (
-                  <p className="font-mono text-[0.68rem] uppercase tracking-[0.22em] text-muted">
-                    Навигация
-                  </p>
-                ) : null}
-                <p
-                  className={`truncate font-semibold text-foreground ${
-                    compact ? "text-sm" : "mt-1 text-sm"
-                  }`}
-                >
-                  {currentSectionLabel}
-                </p>
-              </div>
-
-              <button
-                aria-controls="app-mobile-drawer"
-                aria-expanded={isDrawerOpen}
-                className="toggle-chip shrink-0 px-3.5 py-2.5 text-sm font-semibold shadow-[0_18px_34px_-24px_rgba(15,122,96,0.24)]"
-                onClick={() => setIsDrawerOpen(true)}
-                type="button"
-              >
-                <Menu size={18} strokeWidth={2.2} />
-                Меню
-              </button>
-            </div>
-          </div>
-        </>
-      ) : (
+      {minimal ? (
         <button
           aria-controls="app-mobile-drawer"
           aria-expanded={isDrawerOpen}
           aria-label="Открыть меню"
-          className="toggle-chip inline-flex h-11 w-11 items-center justify-center rounded-full px-0 py-0 shadow-[0_18px_34px_-24px_rgba(15,122,96,0.24)] lg:hidden"
+          className="toggle-chip inline-flex h-11 w-11 items-center justify-center rounded-full px-0 py-0 lg:hidden"
           data-testid="app-mobile-header-drawer-toggle"
           onClick={() => setIsDrawerOpen(true)}
           type="button"
         >
-          <Menu size={18} strokeWidth={2.2} />
+          <Menu size={18} strokeWidth={2.1} />
         </button>
+      ) : (
+        <nav className="hidden flex-wrap gap-2 lg:flex">
+          {desktopRoutes.map((route) => (
+            <DesktopRouteLink
+              href={route.href}
+              isActive={isRouteActive(pathname, route.href)}
+              key={route.href}
+              label={route.label}
+            />
+          ))}
+        </nav>
       )}
 
       {portalRoot
@@ -334,12 +294,10 @@ export function AppShellNav({
                 id="app-mobile-drawer"
               >
                 <div className="app-drawer__surface">
-                  <div className="flex items-start justify-between gap-3 border-b border-border px-5 pb-4 pt-[calc(1.1rem+env(safe-area-inset-top))]">
+                  <div className="flex items-start justify-between gap-3 border-b border-border/60 px-5 pb-4 pt-[calc(1.1rem+env(safe-area-inset-top))]">
                     <div className="min-w-0">
-                      <p className="font-mono text-[0.68rem] uppercase tracking-[0.22em] text-muted">
-                        Меню
-                      </p>
-                      <h2 className="mt-2 text-xl font-semibold text-foreground">
+                      <p className="workspace-kicker">fit</p>
+                      <h2 className="app-display mt-2 text-2xl font-semibold text-foreground">
                         Разделы приложения
                       </h2>
                       <p className="mt-2 truncate text-sm text-muted">
@@ -349,32 +307,31 @@ export function AppShellNav({
 
                     <button
                       aria-label="Закрыть меню"
-                      className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border bg-white/75 text-foreground transition hover:bg-white"
+                      className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border/60 bg-white/90 text-foreground transition hover:bg-white"
                       data-testid="app-mobile-drawer-close"
                       onClick={() => setIsDrawerOpen(false)}
                       type="button"
                     >
-                      <X size={18} strokeWidth={2.2} />
+                      <X size={18} strokeWidth={2.1} />
                     </button>
                   </div>
 
                   <div className="grid min-h-0 flex-1 gap-5 overflow-y-auto px-5 py-5">
-                    <section className="rounded-3xl border border-border bg-white/70 p-4">
+                    <section className="surface-panel p-4">
                       <p className="text-sm font-semibold text-foreground">
                         {viewer?.email ?? "Аккаунт fit"}
                       </p>
                       {showAdminRole ? (
                         <p className="mt-2 text-sm text-muted">
-                          Роль: <span className="text-foreground">{adminRoleLabel}</span>
+                          Роль:{" "}
+                          <span className="text-foreground">{adminRoleLabel}</span>
                         </p>
                       ) : null}
                     </section>
 
                     <section className="grid gap-3">
                       <div>
-                        <p className="font-mono text-[0.68rem] uppercase tracking-[0.22em] text-muted">
-                          Основное
-                        </p>
+                        <p className="workspace-kicker">Основное</p>
                         <h3 className="mt-2 text-lg font-semibold text-foreground">
                           Ежедневная работа
                         </h3>
@@ -394,11 +351,9 @@ export function AppShellNav({
 
                     <section className="grid gap-3">
                       <div>
-                        <p className="font-mono text-[0.68rem] uppercase tracking-[0.22em] text-muted">
-                          Личное
-                        </p>
+                        <p className="workspace-kicker">Личное</p>
                         <h3 className="mt-2 text-lg font-semibold text-foreground">
-                          История и настройки
+                          Архив и настройки
                         </h3>
                       </div>
 
@@ -417,9 +372,7 @@ export function AppShellNav({
                     {viewer?.isPlatformAdmin ? (
                       <section className="grid gap-3">
                         <div>
-                          <p className="font-mono text-[0.68rem] uppercase tracking-[0.22em] text-muted">
-                            Управление
-                          </p>
+                          <p className="workspace-kicker">Операторский доступ</p>
                           <h3 className="mt-2 text-lg font-semibold text-foreground">
                             Платформа и пользователи
                           </h3>
@@ -438,15 +391,40 @@ export function AppShellNav({
                       </section>
                     ) : null}
 
-                    <section className="rounded-3xl border border-border bg-[color-mix(in_srgb,var(--surface)_92%,white)] p-4">
+                    <section className="surface-panel p-4">
                       <p className="font-semibold text-foreground">Аккаунт</p>
                       <div className="mt-4">
-                        <SignOutButton className="w-full justify-center bg-white/75" />
+                        <SignOutButton className="w-full justify-center bg-white" />
                       </div>
                     </section>
                   </div>
                 </div>
               </aside>
+
+              {viewer ? (
+                <div className="app-bottom-nav lg:hidden">
+                  <nav className="app-bottom-nav__inner">
+                    {mobileBottomRoutes.map((route) => {
+                      const isActive = isRouteActive(pathname, route.href);
+                      const Icon = route.icon;
+
+                      return (
+                        <Link
+                          aria-current={isActive ? "page" : undefined}
+                          className={`app-bottom-nav__item ${
+                            isActive ? "app-bottom-nav__item--active" : ""
+                          }`}
+                          href={route.href}
+                          key={route.href}
+                        >
+                          <Icon size={18} strokeWidth={2.1} />
+                          <span>{route.label}</span>
+                        </Link>
+                      );
+                    })}
+                  </nav>
+                </div>
+              ) : null}
             </>,
             portalRoot,
           )

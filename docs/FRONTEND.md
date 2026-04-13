@@ -11,25 +11,27 @@
 
 ## Текущая визуальная стратегия
 
-С марта 2026 фронтенд переводится в направление **premium fitness / mobile-first**.
+С апреля 2026 фронтенд переводится в направление **stitch-style editorial fitness / mobile-first**. Это следующий слой поверх уже закрытого premium redesign и он меняет не только токены, но и композицию ключевых экранов.
 
 Базовые правила:
 
-- основная тема — светлая;
-- интерфейс должен ощущаться спортивным, но не агрессивным;
-- ключевой акцент — насыщённый зелёный;
-- вспомогательный энергичный акцент — тёплый `energy` tone для CTA и сигналов;
-- на mobile/PWA главный приоритет — читаемость, один доминирующий блок и отсутствие горизонтального overflow;
-- shell и workspace должны выглядеть как единая система, а не набор отдельных карточек.
+- основная тема — светлая, на базе `#fcf9f8`;
+- display-типографика — `Lexend`, body/UI — `Manrope`;
+- главный акцент — electric blue `#0040e0 / #2e5bff`;
+- иерархия строится через tonal layers, а не через тяжёлые бордеры;
+- на mobile/PWA главный приоритет — один доминирующий блок, ясный hero и отсутствие горизонтального overflow;
+- shell должен ощущаться как лёгкая editorial-навигация с чистым top bar и bottom nav.
 
-Актуальный execution-doc по этому направлению:
+Актуальные execution-doc по этому направлению:
 
 - [PREMIUM_REDESIGN_PLAN.md](/C:/fit/docs/PREMIUM_REDESIGN_PLAN.md)
+- [STITCH_REDESIGN_EXECUTION.md](/C:/fit/docs/STITCH_REDESIGN_EXECUTION.md)
 
-Уже закрытые consumer-screen tranche:
+Уже закрытые tranche в новом языке:
 
-- `Dashboard` — новый hero, AI-сводка и более направленный слой «что важно сейчас»;
-- `AI` — полноценный premium chat-workspace с mobile-trigger, цельным transcript/composer и history/context surfaces.
+- `Dashboard` — stitch-style hero, stat plates, AI quote и section rail;
+- `Workout day` — focus-first экран с progress bars, крупной timer-plate и новым set-grid;
+- `Shell` — editorial header, light drawer, mobile bottom nav и очищенный utility layer.
 
 ## Базовая архитектура
 
@@ -170,3 +172,31 @@ Frontend делится на три уровня:
 - Для regression suites нельзя переиспользовать случайный старый dev/test server с устаревшими чанками.
 - `playwright.config.ts` работает с `reuseExistingServer: false`, а `scripts/run-playwright.mjs` перед запуском чистит занятый Playwright-порт.
 - Это часть frontend reliability contract: иначе возможны ложные падения с сырым HTML, `500 text/plain` на `_next/static/*` и отсутствующими mobile/admin селекторами при фактически исправном UI.
+
+## Stitch redesign addendum
+
+- В новом tracked-workstream [STITCH_REDESIGN_EXECUTION.md](/C:/fit/docs/STITCH_REDESIGN_EXECUTION.md) source of truth по visual refactor теперь ведётся отдельно от legacy premium-plan.
+- На текущем этапе уже переведены на новый язык:
+  - `Dashboard`
+  - `Workout day` и mobile focus-mode
+  - `Nutrition`
+  - `AI`
+  - remaining user screens: `/`, `/onboarding`, `/workouts`, `/history`, `/settings`, `/billing/cloudpayments`, `/suspended`
+- Общий пользовательский workspace-контракт теперь держится на:
+  - [page-workspace.tsx](/C:/fit/src/components/page-workspace.tsx)
+  - `card card--hero`
+  - `metric-tile`
+  - `section-chip`
+  - `toggle-chip`
+- Для пользовательских экранов действуют три обязательных правила:
+  - mobile-first и один доминирующий контентный блок на экране
+  - чистый русский visible copy без mojibake
+  - athletic editorial hierarchy вместо utility-style сетки одинаковых карточек
+- Следующий frontend tranche по этому потоку — admin surfaces и финальная visual sanitation по всему приложению.
+
+
+## Stitch admin addendum
+
+- `Admin` больше не строится как generic workspace с одинаковыми utility-карточками. Операторский dashboard использует тот же stitch-язык, что и consumer surfaces: крупный hero, KPI-блоки, spotlight-карточки и отдельные health/AI/operator-панели.
+- Для `/admin/users` и `/admin/users/[id]` закреплён тот же visual contract: stitch-style hero, секционный detail-shell, dark action-блоки и понятные operator states без сырого fallback copy.
+- Для frontend-команды это означает новый baseline: visible copy на основных stitch-экранах должен оставаться чистым, а visual regression и mobile acceptance проверяются отдельным redesign execution-doc и связанными Playwright suites.

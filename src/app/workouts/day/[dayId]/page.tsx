@@ -38,7 +38,7 @@ export default async function WorkoutDayPage({
       {!isFocusMode ? (
         <div className="flex flex-wrap gap-3">
           <Link
-            className="rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:bg-white/70"
+            className="rounded-[1rem] bg-[color:var(--surface-container-high)] px-4 py-3 text-sm font-semibold text-[color:var(--foreground)] transition hover:bg-[color:var(--surface-container-highest)]"
             href={"/workouts" as Route}
           >
             Назад к неделям

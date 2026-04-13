@@ -1,3 +1,5 @@
+"use client";
+
 import type { Route } from "next";
 import Link from "next/link";
 
@@ -5,7 +7,6 @@ import { AdminAiEvalRuns } from "@/components/admin-ai-eval-runs";
 import { AdminAiOperations } from "@/components/admin-ai-operations";
 import { AdminHealthDashboard } from "@/components/admin-health-dashboard";
 import { AdminOperationsInbox } from "@/components/admin-operations-inbox";
-import { PageWorkspace } from "@/components/page-workspace";
 import { PanelCard } from "@/components/panel-card";
 import {
   PRIMARY_SUPER_ADMIN_EMAIL,
@@ -118,15 +119,15 @@ function formatSupportAction(value: string) {
     case "billing_access_review":
       return "Проверка доступа к оплате";
     case "purge_user_data":
-      return "Полная очистка данных";
+      return "Очистка данных пользователя";
     case "reindex_knowledge":
       return "Обновление базы знаний";
     case "resync_user_context":
-      return "Пересинхронизация контекста";
+      return "Пересборка контекста";
     case "restore_user":
-      return "Восстановление пользователя";
+      return "Восстановление доступа";
     case "suspend_user":
-      return "Блокировка пользователя";
+      return "Ограничение аккаунта";
     default:
       return value;
   }
@@ -162,7 +163,7 @@ function formatStatus(value: string) {
 function formatRouteKey(value: string) {
   switch (value) {
     case "ai_chat":
-      return "Чат ИИ";
+      return "Чат AI";
     case "meal_plan":
       return "План питания";
     case "workout_plan":
@@ -191,30 +192,84 @@ function formatAuditAction(value: string) {
   }
 }
 
-function StatTile({
+function HeroMetricCard({
+  detail,
+  index,
   label,
   value,
-  detail,
-  tone = "default",
 }: {
-  detail?: string;
+  detail: string;
+  index: number;
   label: string;
-  tone?: "default" | "success" | "warning";
   value: string;
 }) {
   const toneClass =
-    tone === "success"
-      ? "border-emerald-200/70 bg-emerald-50/70"
-      : tone === "warning"
-        ? "border-amber-300/60 bg-amber-50/70"
-        : "border-border bg-white/70";
+    index === 1
+      ? "bg-accent text-white shadow-[0_24px_60px_-36px_rgba(0,64,224,0.55)]"
+      : index === 2
+        ? "bg-[linear-gradient(180deg,#fde2de_0%,#fbd0cb_100%)] text-rose-950"
+        : "bg-white";
+  const mutedClass = index === 1 ? "text-white/78" : "text-muted";
 
   return (
-    <article className={`rounded-3xl border p-5 ${toneClass}`}>
-      <p className="text-sm text-muted">{label}</p>
-      <p className="mt-2 text-2xl font-semibold text-foreground">{value}</p>
-      {detail ? <p className="mt-2 text-sm leading-6 text-muted">{detail}</p> : null}
+    <article className={`rounded-[32px] p-6 ${toneClass}`}>
+      <div className="flex items-start justify-between gap-3">
+        <p className={`font-mono text-[10px] uppercase tracking-[0.24em] ${mutedClass}`}>
+          {label}
+        </p>
+        <span className={`pill ${index === 1 ? "border-white/20 bg-white/10 text-white" : ""}`}>
+          {index === 0 ? "обзор" : index === 1 ? "в фокусе" : index === 2 ? "контроль" : "сводка"}
+        </span>
+      </div>
+      <p className="mt-5 text-4xl font-black tracking-tight">{value}</p>
+      <p className={`mt-3 text-sm leading-6 ${mutedClass}`}>{detail}</p>
     </article>
+  );
+}
+
+function SpotlightCard({
+  caption,
+  children,
+  title,
+}: {
+  caption: string;
+  children: React.ReactNode;
+  title: string;
+}) {
+  return (
+    <article className="rounded-[32px] bg-white p-6 shadow-[0_24px_60px_-42px_rgba(15,23,42,0.22)]">
+      <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-muted">
+        {caption}
+      </p>
+      <h3 className="mt-3 text-xl font-bold text-foreground">{title}</h3>
+      <div className="mt-5 grid gap-3">{children}</div>
+    </article>
+  );
+}
+
+function ActionChip({
+  children,
+  href,
+  testId,
+  tone = "secondary",
+}: {
+  children: React.ReactNode;
+  href: Route;
+  testId?: string;
+  tone?: "primary" | "secondary";
+}) {
+  return (
+    <Link
+      className={
+        tone === "primary"
+          ? "action-button action-button--primary"
+          : "action-button action-button--secondary"
+      }
+      data-testid={testId}
+      href={href}
+    >
+      {children}
+    </Link>
   );
 }
 
@@ -241,382 +296,338 @@ export function AdminDashboardWorkspace({
   viewer,
 }: AdminDashboardWorkspaceProps) {
   const operatorRole = formatAdminRole(viewer.platformAdminRole ?? "analyst");
-  const badges = [
-    `Главный доступ: ${PRIMARY_SUPER_ADMIN_EMAIL}`,
-    canUseSuperAdminConsole ? `Ваша роль: ${operatorRole}` : "Админ-доступ подтверждён",
-    isDegraded ? "Резервный режим" : "Операторская панель",
-  ];
+  const rootCount = adminRoster.filter((item) => item.role === "super_admin").length;
+  const recentUsers = users.slice(0, 4);
+  const recentRoster = adminRoster.slice(0, 4);
+  const recentAudit = adminAuditLogs.slice(0, 4);
 
-  const sections = [
-    {
-      key: "health",
-      label: "Состояние",
-      description: "Сводка по сервисам, быстрые переходы и health-панель.",
-      content: (
-        <div className="grid gap-6">
-          {isDegraded ? (
-            <p
-              className="max-w-4xl rounded-3xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm leading-7 text-amber-900"
-              data-testid="admin-page-degraded-banner"
-            >
-              Панель показана в резервном режиме. Часть служебных источников сейчас
-              недоступна, поэтому показатели и списки могут быть неполными до следующего
-              обновления.
+  return (
+    <div className="grid gap-6">
+      <section className="card card--hero p-6 sm:p-8">
+        <div className="grid gap-8 xl:grid-cols-[1.12fr_0.88fr]">
+          <div className="space-y-5">
+            <div className="flex flex-wrap gap-2">
+              <span className="pill">fit Admin</span>
+              <span className="pill">Роль: {operatorRole}</span>
+              <span className="pill">Главный доступ: {PRIMARY_SUPER_ADMIN_EMAIL}</span>
+            </div>
+
+            <div className="space-y-3">
+              <h1 className="app-display max-w-4xl text-4xl text-foreground sm:text-5xl">
+                Операторский центр для пользователей, качества AI и жизненно важных процессов.
+              </h1>
+              <p className="max-w-3xl text-sm leading-7 text-muted sm:text-base">
+                Экран собран по языку stitch_: крупные KPI, быстрые действия,
+                отдельные сигналы, системное здоровье и AI-операции в одной
+                спокойной вертикали без перегруженной таблицы.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <ActionChip
+                href={"/admin/users" as Route}
+                testId="admin-page-open-users-link"
+                tone="primary"
+              >
+                Открыть пользователей
+              </ActionChip>
+              <ActionChip
+                href={`/admin/users/${viewer.user.id}` as Route}
+                testId="admin-page-open-self-link"
+              >
+                Моя карточка
+              </ActionChip>
+              <ActionChip
+                href={"/dashboard" as Route}
+                testId="admin-page-back-to-dashboard-link"
+              >
+                Вернуться в продукт
+              </ActionChip>
+            </div>
+          </div>
+
+          <div className="rounded-[36px] bg-[#12131a] p-6 text-white shadow-[0_30px_80px_-50px_rgba(0,0,0,0.6)]">
+            <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-white/60">
+              Быстрый статус
             </p>
-          ) : null}
-
-          <PanelCard caption="Быстрые действия" title="Ключевые переходы для оператора">
-            <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
-              <div className="space-y-4">
-                <p className="text-sm leading-7 text-muted">
-                  Панель собрана под единый сценарий главного администратора: быстрый
-                  переход в каталог пользователей, контроль очередей, диагностика системы,
-                  аудит и операции ИИ без длинной стены одинаковых блоков.
+            <div className="mt-5 grid gap-3">
+              <div className="rounded-[28px] bg-white/8 p-4">
+                <p className="text-xs uppercase tracking-[0.18em] text-white/55">
+                  Текущий оператор
                 </p>
-
-                <div className="flex flex-wrap gap-3">
-                  <Link
-                    className="rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90"
-                    data-testid="admin-page-open-users-link"
-                    href={"/admin/users" as Route}
-                  >
-                    Открыть пользователей
-                  </Link>
-                  <Link
-                    className="rounded-full border border-border px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-white/70"
-                    data-testid="admin-page-open-self-link"
-                    href={`/admin/users/${viewer.user.id}` as Route}
-                  >
-                    Моя карточка
-                  </Link>
-                  <Link
-                    className="rounded-full border border-border px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-white/70"
-                    data-testid="admin-page-back-to-dashboard-link"
-                    href={"/dashboard" as Route}
-                  >
-                    Вернуться в продукт
-                  </Link>
+                <p className="mt-2 break-all text-lg font-semibold">
+                  {viewer.user.email ?? "email не найден"}
+                </p>
+                <p className="mt-2 text-sm text-white/60">Роль: {operatorRole}</p>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-[24px] bg-white/8 p-4">
+                  <p className="text-xs uppercase tracking-[0.18em] text-white/55">
+                    Главный доступ
+                  </p>
+                  <p className="mt-2 text-2xl font-black">{rootCount}</p>
+                  <p className="mt-1 text-sm text-white/60">
+                    нарушений: {superAdminPolicyViolations}
+                  </p>
+                </div>
+                <div className="rounded-[24px] bg-white/8 p-4">
+                  <p className="text-xs uppercase tracking-[0.18em] text-white/55">
+                    База AI
+                  </p>
+                  <p className="mt-2 text-2xl font-black">{knowledgeEmbeddingsCount}</p>
+                  <p className="mt-1 text-sm text-white/60">
+                    чанков: {knowledgeChunksCount}
+                  </p>
                 </div>
               </div>
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                <StatTile
-                  detail={
-                    canUseSuperAdminConsole
-                      ? `Роль: ${operatorRole}`
-                      : "Доступ администратора подтверждён"
-                  }
-                  label="Текущий оператор"
-                  value={viewer.user.email ?? "email не найден"}
-                />
-                <StatTile
-                  detail={
-                    rootAdminRecord
-                      ? `Последний вход: ${formatDateTime(rootAdminRecord.lastSignInAt)}`
-                      : "Главный доступ уже закреплён"
-                  }
-                  label="Главный администратор"
-                  tone={superAdminPolicyViolations ? "warning" : "success"}
-                  value={rootAdminRecord?.email ?? PRIMARY_SUPER_ADMIN_EMAIL}
-                />
-                <StatTile
-                  detail={`главный доступ: ${adminRoster.filter((item) => item.role === "super_admin").length}`}
-                  label="Команда админов"
-                  value={String(adminRoster.length)}
-                />
-                <StatTile
-                  detail={`материалы: ${knowledgeChunksCount} · обновления: ${reindexActionsCount}`}
-                  label="База ИИ"
-                  value={String(knowledgeEmbeddingsCount)}
-                />
+              <div className="rounded-[24px] bg-gradient-to-br from-white/12 to-white/4 p-4">
+                <p className="text-xs uppercase tracking-[0.18em] text-white/55">
+                  Последний вход главного администратора
+                </p>
+                <p className="mt-2 text-base font-semibold">
+                  {rootAdminRecord?.email ?? PRIMARY_SUPER_ADMIN_EMAIL}
+                </p>
+                <p className="mt-1 text-sm text-white/60">
+                  {formatDateTime(rootAdminRecord?.lastSignInAt)}
+                </p>
               </div>
             </div>
-          </PanelCard>
+          </div>
+        </div>
+
+        <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {heroMetrics.map((metric, index) => (
+            <HeroMetricCard
+              detail={metric.detail}
+              index={index}
+              key={metric.label}
+              label={metric.label}
+              value={metric.value}
+            />
+          ))}
+        </div>
+
+        {isDegraded ? (
+          <p
+            className="mt-6 rounded-[28px] border border-amber-300/70 bg-amber-50 px-5 py-4 text-sm leading-7 text-amber-900"
+            data-testid="admin-page-degraded-banner"
+          >
+            Панель временно работает из резервного снимка. Часть служебных
+            источников не ответила, поэтому показатели и списки могут быть
+            неполными до следующего обновления.
+          </p>
+        ) : null}
+      </section>
+
+      <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+        <div className="grid gap-6">
+          <SpotlightCard
+            caption="Операции"
+            title="Сигналы, которые требуют решения прямо сейчас"
+          >
+            {supportActions.length ? (
+              supportActions.slice(0, 3).map((action) => (
+                <article
+                  className="flex items-start justify-between gap-3 rounded-[28px] bg-[color-mix(in_srgb,var(--surface-container-low)_78%,white)] px-5 py-4"
+                  key={action.id}
+                >
+                  <div>
+                    <p className="font-semibold text-foreground">
+                      {formatSupportAction(action.action)}
+                    </p>
+                    <p className="mt-1 text-sm text-muted">
+                      {formatStatus(action.status)} · {formatDateTime(action.created_at)}
+                    </p>
+                    <p className="mt-1 break-all text-xs text-muted">
+                      Пользователь: {action.target_user_id ?? "не указан"}
+                    </p>
+                  </div>
+                  <span className="pill">{formatStatus(action.status)}</span>
+                </article>
+              ))
+            ) : (
+              <p className="text-sm leading-7 text-muted">
+                В очереди поддержки сейчас спокойно. Новые ручные действия
+                появятся здесь сразу после постановки в обработку.
+              </p>
+            )}
+          </SpotlightCard>
+
+          <AdminOperationsInbox currentAdminRole={viewer.platformAdminRole ?? "analyst"} />
 
           <AdminHealthDashboard
             canRunAdminJobs={canUseSuperAdminConsole}
             canTriggerSentrySmokeTest={canUseSuperAdminConsole}
           />
         </div>
-      ),
-    },
-    {
-      key: "operations",
-      label: "Очереди",
-      description: "Открытые операции, ручная обработка и продуктовые сигналы.",
-      content: (
-        <div className="grid gap-6">
-          <AdminOperationsInbox currentAdminRole={viewer.platformAdminRole ?? "analyst"} />
 
-          <PanelCard caption="Сигналы" title="Поддержка и события безопасности">
-            <div className="grid gap-5 lg:grid-cols-2">
-              <div className="grid gap-3">
-                <p className="text-sm font-semibold text-foreground">Действия поддержки</p>
-                {supportActions.length ? (
-                  supportActions.map((action) => (
-                    <article
-                      className="rounded-3xl border border-border bg-white/60 px-4 py-4 text-sm"
-                      key={action.id}
-                    >
-                      <p className="font-semibold text-foreground">
-                        {formatSupportAction(action.action)}
-                      </p>
-                      <p className="mt-1 text-muted">
-                        {formatStatus(action.status)} · {formatDateTime(action.created_at)}
-                      </p>
-                      <p className="mt-1 break-all text-muted">
-                        Пользователь: {action.target_user_id ?? "не указан"}
-                      </p>
-                    </article>
-                  ))
-                ) : (
-                  <p className="text-sm text-muted">Действия поддержки ещё не запускались.</p>
-                )}
-              </div>
-
-              <div className="grid gap-3">
-                <p className="text-sm font-semibold text-foreground">События безопасности ИИ</p>
-                {aiSafetyEvents.length ? (
-                  aiSafetyEvents.map((event) => (
-                    <article
-                      className="rounded-3xl border border-border bg-white/60 px-4 py-4 text-sm"
-                      key={event.id}
-                    >
-                      <p className="font-semibold text-foreground">
-                        {formatRouteKey(event.route_key)} · {event.action}
-                      </p>
-                      <p className="mt-1 text-muted">
-                        {formatDateTime(event.created_at)}
-                      </p>
-                      <p className="mt-2 text-muted">
-                        {event.prompt_excerpt || "Фрагмент запроса не сохранён."}
-                      </p>
-                    </article>
-                  ))
-                ) : (
-                  <p className="text-sm text-muted">
-                    События безопасности ИИ пока не зафиксированы.
-                  </p>
-                )}
-              </div>
-            </div>
-          </PanelCard>
-        </div>
-      ),
-    },
-    {
-      key: "users",
-      label: "Пользователи",
-      description: "Каталог, команда админов и аудит доступа.",
-      content: (
         <div className="grid gap-6">
-          <div className="grid gap-6 2xl:grid-cols-[1.05fr_0.95fr]">
-            <PanelCard caption="Пользователи" title="Управление пользователями">
-              <div className="grid gap-5">
-                <p className="text-sm leading-7 text-muted">
-                  Здесь начинается основной рабочий сценарий главного администратора:
-                  перейти в каталог, открыть детальную карточку, выдать доступ,
-                  проверить оплаты, выгрузки, удаление данных и историю операций.
+          <SpotlightCard caption="AI" title="Контур качества и пересборки знаний">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <article className="rounded-[28px] bg-[color-mix(in_srgb,var(--surface-container-low)_78%,white)] p-5">
+                <p className="text-xs uppercase tracking-[0.18em] text-muted">
+                  AI-сигналы
                 </p>
-
-                <div className="flex flex-wrap gap-3">
-                  <Link
-                    className="rounded-full bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
-                    href={"/admin/users" as Route}
-                  >
-                    Полный каталог
-                  </Link>
-                  <Link
-                    className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-white/70"
-                    href={`/admin/users/${viewer.user.id}` as Route}
-                  >
-                    Моя карточка
-                  </Link>
-                </div>
-
-                <div className="grid gap-3">
-                  {users.length ? (
-                    users.map((user) => (
-                      <Link
-                        className="rounded-3xl border border-border bg-white/60 px-4 py-4 text-sm transition hover:bg-white/85"
-                        href={`/admin/users/${user.user_id}` as Route}
-                        key={user.user_id}
-                      >
-                        <p className="font-semibold text-foreground">
-                          {user.full_name ?? "Без имени"}
-                        </p>
-                        <p className="mt-1 break-all text-muted">{user.user_id}</p>
-                        <p className="mt-2 text-muted">
-                          Создан: {formatDateTime(user.created_at)}
-                        </p>
-                      </Link>
-                    ))
-                  ) : (
-                    <p className="text-sm text-muted">Пока нет профилей пользователей.</p>
-                  )}
-                </div>
-              </div>
-            </PanelCard>
-
-            <div className="grid gap-6">
-              <PanelCard caption="Команда" title="Кто управляет платформой">
-                <div className="grid gap-3">
-                  {adminRoster.length ? (
-                    adminRoster.map((admin) => (
-                      <article
-                        className="rounded-3xl border border-border bg-white/60 px-4 py-4 text-sm"
-                        key={`${admin.user_id}-${admin.created_at}`}
-                      >
-                        <div className="flex flex-wrap items-start justify-between gap-3">
-                          <div>
-                            <p className="font-semibold text-foreground">
-                              {admin.email ?? admin.user_id}
-                            </p>
-                            <p className="mt-1 text-muted">{formatAdminRole(admin.role)}</p>
-                          </div>
-                          <div className="text-right text-muted">
-                            <p>{formatDateTime(admin.lastSignInAt)}</p>
-                            {isPrimarySuperAdminEmail(admin.email) ? (
-                              <p className="mt-1 font-semibold text-foreground">
-                                главный доступ
-                              </p>
-                            ) : null}
-                          </div>
-                        </div>
-                      </article>
-                    ))
-                  ) : (
-                    <p className="text-sm text-muted">Назначенных администраторов пока нет.</p>
-                  )}
-                </div>
-              </PanelCard>
-
-              <PanelCard caption="Аудит" title="Последние изменения доступа">
-                <div className="grid gap-3">
-                  {adminAuditLogs.length ? (
-                    adminAuditLogs.map((entry) => (
-                      <article
-                        className="rounded-3xl border border-border bg-white/60 px-4 py-4 text-sm"
-                        key={entry.id}
-                      >
-                        <p className="font-semibold text-foreground">
-                          {formatAuditAction(entry.action)}
-                        </p>
-                        <p className="mt-1 text-muted">
-                          Причина: {entry.reason ?? "Без пояснения"}
-                        </p>
-                        <p className="mt-1 break-all text-muted">
-                          Кто изменил: {entry.actor_user_id ?? "не указан"}
-                        </p>
-                        <p className="mt-1 break-all text-muted">
-                          Для кого: {entry.target_user_id ?? "не указан"}
-                        </p>
-                        <p className="mt-2 text-muted">{formatDateTime(entry.created_at)}</p>
-                      </article>
-                    ))
-                  ) : (
-                    <p className="text-sm text-muted">История изменений доступа пока пуста.</p>
-                  )}
-                </div>
-              </PanelCard>
+                <p className="mt-3 text-3xl font-black text-foreground">
+                  {aiSafetyEventsCount}
+                </p>
+                <p className="mt-2 text-sm leading-6 text-muted">
+                  событий безопасности и контентных ограничений
+                </p>
+              </article>
+              <article className="rounded-[28px] bg-[color-mix(in_srgb,var(--surface-container-low)_78%,white)] p-5">
+                <p className="text-xs uppercase tracking-[0.18em] text-muted">
+                  Планов AI
+                </p>
+                <p className="mt-3 text-3xl font-black text-foreground">
+                  {aiPlanProposalsCount}
+                </p>
+                <p className="mt-2 text-sm leading-6 text-muted">
+                  предложений и применений под контролем оператора
+                </p>
+              </article>
             </div>
-          </div>
-        </div>
-      ),
-    },
-    {
-      key: "ai",
-      label: "ИИ",
-      description: "База знаний, операции ИИ и проверки качества.",
-      content: (
-        <div className="grid gap-6">
-          <PanelCard caption="ИИ" title="ИИ и база знаний">
-            <div className="grid gap-5">
-              <div className="flex flex-wrap gap-2">
-                <span className="pill">
-                  Служебные действия: {canQueueSupportActions ? "доступно" : "только просмотр"}
-                </span>
-                <span className="pill">
-                  Обновление базы знаний: {canRunKnowledgeReindex ? "доступно" : "только просмотр"}
-                </span>
-                <span className="pill">
-                  Проверки ИИ: {canQueueAiEvalRuns ? "доступно" : "только просмотр"}
-                </span>
-              </div>
 
-              <p className="text-sm leading-7 text-muted">
-                Отсюда запускаются проверки ИИ и обновление базы знаний. Блок вынесен
-                отдельно, чтобы не смешивать работу с пользователями и системные задачи.
+            <article className="rounded-[28px] border border-border/70 bg-white/70 p-4 text-sm">
+              <p className="font-semibold text-foreground">
+                Последние обновления базы знаний
               </p>
+              <p className="mt-2 text-muted">
+                Чанков: <span className="text-foreground">{knowledgeChunksCount}</span> ·
+                векторов: <span className="text-foreground">{knowledgeEmbeddingsCount}</span> ·
+                запусков reindex: <span className="text-foreground">{reindexActionsCount}</span>
+              </p>
+            </article>
 
-              <AdminAiOperations
-                currentAdminRole={viewer.platformAdminRole ?? "analyst"}
-                defaultTargetUserId={viewer.user.id}
-              />
+            <div className="flex flex-wrap gap-2">
+              <span className="pill">
+                Поддержка: {canQueueSupportActions ? "можно запускать" : "только просмотр"}
+              </span>
+              <span className="pill">
+                Reindex: {canRunKnowledgeReindex ? "можно запускать" : "только просмотр"}
+              </span>
+              <span className="pill">
+                Evals: {canQueueAiEvalRuns ? "можно запускать" : "только просмотр"}
+              </span>
             </div>
-          </PanelCard>
+
+            {aiSafetyEvents.length ? (
+              <div className="grid gap-3">
+                {aiSafetyEvents.slice(0, 3).map((event) => (
+                  <article
+                    className="rounded-[24px] bg-[color-mix(in_srgb,var(--surface-container-low)_78%,white)] px-4 py-3 text-sm"
+                    key={event.id}
+                  >
+                    <p className="font-semibold text-foreground">
+                      {formatRouteKey(event.route_key)} · {event.action}
+                    </p>
+                    <p className="mt-1 text-muted">{formatDateTime(event.created_at)}</p>
+                    <p className="mt-2 text-muted">
+                      {event.prompt_excerpt || "Фрагмент запроса не сохранён."}
+                    </p>
+                  </article>
+                ))}
+              </div>
+            ) : null}
+
+            <AdminAiOperations
+              currentAdminRole={viewer.platformAdminRole ?? "analyst"}
+              defaultTargetUserId={viewer.user.id}
+            />
+          </SpotlightCard>
 
           <AdminAiEvalRuns
             currentAdminRole={viewer.platformAdminRole ?? "analyst"}
             initialRuns={aiEvalRuns}
           />
+
+          <SpotlightCard caption="Люди" title="Команда доступа и недавний аудит">
+            <div className="grid gap-3">
+              {recentRoster.map((admin) => (
+                <article
+                  className="rounded-[24px] bg-[color-mix(in_srgb,var(--surface-container-low)_78%,white)] px-4 py-3 text-sm"
+                  key={`${admin.user_id}-${admin.created_at}`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-foreground">
+                        {admin.email ?? admin.user_id}
+                      </p>
+                      <p className="mt-1 text-muted">{formatAdminRole(admin.role)}</p>
+                    </div>
+                    {isPrimarySuperAdminEmail(admin.email) ? (
+                      <span className="pill">главный доступ</span>
+                    ) : null}
+                  </div>
+                  <p className="mt-2 text-xs text-muted">
+                    Последний вход: {formatDateTime(admin.lastSignInAt)}
+                  </p>
+                </article>
+              ))}
+            </div>
+
+            <div className="grid gap-3">
+              {recentAudit.length ? (
+                recentAudit.map((entry) => (
+                  <article
+                    className="rounded-[24px] border border-border/70 bg-white/70 px-4 py-3 text-sm"
+                    key={entry.id}
+                  >
+                    <p className="font-semibold text-foreground">
+                      {formatAuditAction(entry.action)}
+                    </p>
+                    <p className="mt-1 text-muted">
+                      {entry.reason ?? "Без пояснения"} · {formatDateTime(entry.created_at)}
+                    </p>
+                  </article>
+                ))
+              ) : (
+                <p className="text-sm leading-7 text-muted">
+                  Недавних административных событий пока нет.
+                </p>
+              )}
+            </div>
+          </SpotlightCard>
+
+          {canUseSuperAdminConsole ? (
+            <SpotlightCard caption="Root" title="Политика главного доступа">
+              <article className="rounded-[28px] bg-[#12131a] p-5 text-white">
+                <p className="text-xs uppercase tracking-[0.18em] text-white/55">
+                  Закреплённый супер-админ
+                </p>
+                <p className="mt-3 text-lg font-semibold">{PRIMARY_SUPER_ADMIN_EMAIL}</p>
+                <p className="mt-2 text-sm leading-6 text-white/65">
+                  Эту роль нельзя переназначить из интерфейса на другой email.
+                  Остальным аккаунтам доступны только обычные административные
+                  роли с аудитом.
+                </p>
+              </article>
+            </SpotlightCard>
+          ) : null}
+
+          {recentUsers.length ? (
+            <PanelCard caption="Новые профили" title="Последние созданные пользователи">
+              <div className="grid gap-3">
+                {recentUsers.map((user) => (
+                  <Link
+                    className="rounded-[24px] bg-[color-mix(in_srgb,var(--surface-container-low)_78%,white)] px-4 py-4 text-sm transition hover:translate-y-[-1px]"
+                    href={`/admin/users/${user.user_id}` as Route}
+                    key={user.user_id}
+                  >
+                    <p className="font-semibold text-foreground">
+                      {user.full_name ?? "Без имени"}
+                    </p>
+                    <p className="mt-1 break-all text-muted">{user.user_id}</p>
+                    <p className="mt-2 text-xs text-muted">
+                      Создан: {formatDateTime(user.created_at)}
+                    </p>
+                  </Link>
+                ))}
+              </div>
+            </PanelCard>
+          ) : null}
         </div>
-      ),
-    },
-  ];
-
-  if (canUseSuperAdminConsole) {
-    sections.push({
-      key: "root",
-      label: "Главный доступ",
-      description: "Закрепление главной роли и контроль политики доступа.",
-      content: (
-        <PanelCard caption="Главный доступ" title="Главный администратор закреплён">
-          <div className="grid gap-4 md:grid-cols-[1.1fr_0.9fr]">
-            <article className="rounded-3xl border border-emerald-200/70 bg-emerald-50/70 p-5 text-sm">
-              <p className="font-semibold text-foreground">
-                Главный администратор: {PRIMARY_SUPER_ADMIN_EMAIL}
-              </p>
-              <p className="mt-3 leading-7 text-muted">
-                Главный доступ закреплён только за этим email. Другой пользователь
-                не сможет получить эту роль через панель.
-              </p>
-            </article>
-
-            <article className="rounded-3xl border border-border bg-white/60 p-5 text-sm">
-              <p className="font-semibold text-foreground">Сводка по главному доступу</p>
-              <p className="mt-3 text-muted">
-                Пользователь:{" "}
-                <span className="font-semibold text-foreground">
-                  {viewer.user.email ?? PRIMARY_SUPER_ADMIN_EMAIL}
-                </span>
-              </p>
-              <p className="mt-2 text-muted">
-                Предложения ИИ: <span className="text-foreground">{aiPlanProposalsCount}</span>
-              </p>
-              <p className="mt-2 text-muted">
-                События безопасности ИИ:{" "}
-                <span className="text-foreground">{aiSafetyEventsCount}</span>
-              </p>
-            </article>
-          </div>
-        </PanelCard>
-      ),
-    });
-  }
-
-  return (
-    <PageWorkspace
-      badges={badges}
-      description="Панель собрана под единый сценарий главного администратора: пользователи, очереди, диагностика системы, аудит и операции ИИ без перегруженной стены блоков. На мобильном экране открывается только нужный раздел."
-      metrics={heroMetrics.map((metric) => ({
-        label: metric.label,
-        note: metric.detail,
-        value: metric.value,
-      }))}
-      sections={sections}
-      storageKey="admin-page"
-      title="Один центр управления для пользователей, задач и AI"
-    />
+      </div>
+    </div>
   );
 }

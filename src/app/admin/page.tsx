@@ -25,7 +25,6 @@ function formatDateTime(value: string | null | undefined) {
   }).format(new Date(value));
 }
 
-
 const adminRoleOrder: Record<string, number> = {
   super_admin: 0,
   support_admin: 1,
@@ -49,26 +48,28 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   if (!viewer.isPlatformAdmin) {
     return (
       <AppShell eyebrow="Админ" title="Доступ к панели управления">
-        <PanelCard caption="Доступ" title="Главный доступ закреплён за одним аккаунтом">
+        <PanelCard
+          caption="Доступ"
+          title="Операторская панель доступна только администраторам платформы"
+        >
           <div className="grid gap-4 md:grid-cols-[1.1fr_0.9fr]">
-            <article className="rounded-3xl border border-border bg-white/60 p-5 text-sm">
+            <article className="surface-panel surface-panel--soft p-5 text-sm">
               <p className="font-semibold text-foreground">
-                Панель управления доступна только администраторам платформы.
+                Главный доступ закреплён за одним email и не открывается обычному аккаунту.
               </p>
               <p className="mt-3 leading-7 text-muted">
-                Главный доступ жёстко закреплён за{" "}
+                Админ-панель видна только назначенным ролям. Главный доступ
+                отдельно закреплён за{" "}
                 <span className="font-semibold text-foreground">
                   {PRIMARY_SUPER_ADMIN_EMAIL}
                 </span>
-                . Если ты вошёл под этим email и всё ещё не видишь доступ, обнови
-                сессию или повторно зайди в приложение.
+                . Если вход уже выполнен под этим email, но панель не видна,
+                обнови сессию или авторизуйся заново.
               </p>
             </article>
 
-            <article className="rounded-3xl border border-border bg-white/60 p-5 text-sm">
-              <p className="font-semibold text-foreground">
-                Текущий пользователь
-              </p>
+            <article className="surface-panel p-5 text-sm">
+              <p className="font-semibold text-foreground">Текущий аккаунт</p>
               <p className="mt-3 text-muted">
                 {viewer.user.email ?? "Email не найден"}
               </p>
@@ -79,9 +80,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 </span>
               </p>
               <div className="mt-4">
-                <AdminBootstrapForm
-                  userEmail={viewer.user.email ?? "неизвестно"}
-                />
+                <AdminBootstrapForm userEmail={viewer.user.email ?? "неизвестно"} />
               </div>
             </article>
           </div>
@@ -331,9 +330,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     adminRoster.find((admin) => admin.role === "super_admin") ?? null;
   const heroMetrics = [
     {
-      label: "Пользователи",
+      label: "Всего пользователей",
       value: String(usersCount),
-      detail: "активная база профилей",
+      detail: "активная база профилей на платформе",
     },
     {
       label: "Активные недели",
@@ -341,22 +340,21 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       detail: "программы, которые сейчас используются",
     },
     {
-      label: "Сообщения ИИ",
+      label: "Нагрузка AI",
       value: String(aiChatMessagesCount),
-      detail: "последняя активность в AI",
+      detail: "сообщения и рабочая активность AI-контура",
     },
     {
-      label: "Контроль главного доступа",
+      label: "Контроль root-доступа",
       value: String(superAdminPolicyViolations),
       detail: superAdminPolicyViolations
         ? "в системе есть лишний главный доступ"
-        : "главный доступ защищён",
-      tone: superAdminPolicyViolations ? ("warning" as const) : ("success" as const),
+        : "главный доступ закреплён корректно",
     },
   ];
 
   return (
-    <AppShell eyebrow="Админ" title="Операционная панель fit">
+    <AppShell eyebrow="Админ" title="Операторский центр fit">
       <AdminDashboardWorkspace
         adminAuditLogs={adminAuditLogs}
         adminRoster={adminRoster}
@@ -388,4 +386,3 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     </AppShell>
   );
 }
-

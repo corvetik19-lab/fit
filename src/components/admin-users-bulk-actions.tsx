@@ -48,27 +48,29 @@ export function AdminUsersBulkActionsPanel({
   selectedUserCount: number;
 }) {
   return (
-    <div className="rounded-[30px] border border-border bg-white/72 p-5 sm:p-6">
+    <div className="rounded-[32px] bg-[#12131a] p-6 text-white shadow-[0_30px_80px_-50px_rgba(0,0,0,0.58)] sm:p-7">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted">
+          <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/55">
             Массовые действия
           </p>
-          <h3 className="mt-2 text-lg font-semibold text-foreground">
-            Массовые действия по выбранным пользователям
+          <h3 className="mt-3 text-xl font-bold">
+            Запускай пакетные сценарии по выбранным пользователям
           </h3>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <span className="pill">Выбрано: {selectedUserCount}</span>
+          <span className="pill border-white/15 bg-white/10 text-white">
+            Выбрано: {selectedUserCount}
+          </span>
           <button
-            className="inline-flex rounded-full border border-border px-3 py-2 text-xs font-semibold text-foreground transition hover:bg-white/70"
+            className="rounded-full border border-white/12 bg-white/6 px-3 py-2 text-xs font-semibold text-white/88 transition hover:bg-white/12"
             onClick={onToggleVisibleSelection}
             type="button"
           >
             {allVisibleSelected ? "Снять видимые" : "Выбрать видимые"}
           </button>
           <button
-            className="inline-flex rounded-full border border-border px-3 py-2 text-xs font-semibold text-foreground transition hover:bg-white/70"
+            className="rounded-full border border-white/12 bg-white/6 px-3 py-2 text-xs font-semibold text-white/88 transition hover:bg-white/12"
             onClick={onClearSelection}
             type="button"
           >
@@ -78,17 +80,17 @@ export function AdminUsersBulkActionsPanel({
       </div>
 
       {!canRunBulkActions ? (
-        <p className="mt-4 rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          Массовые действия доступны только основному супер-админу{" "}
+        <p className="mt-5 rounded-[24px] border border-amber-300/25 bg-amber-300/10 px-4 py-3 text-sm text-amber-100">
+          Массовые действия доступны только закреплённому супер-админу{" "}
           {PRIMARY_SUPER_ADMIN_EMAIL}.
         </p>
       ) : null}
 
-      <div className="mt-4 grid gap-3 lg:grid-cols-[220px_1fr_220px_220px]">
-        <label className="grid gap-2 text-sm text-muted">
+      <div className="mt-6 grid gap-3 lg:grid-cols-[220px_1fr_220px_220px]">
+        <label className="grid gap-2 text-sm text-white/70">
           Действие
           <select
-            className="w-full rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15"
+            className="rounded-[22px] border border-white/12 bg-white/8 px-4 py-3 text-sm text-white outline-none transition focus:border-white/20 focus:ring-2 focus:ring-white/10"
             disabled={!canRunBulkActions || isBulkPending}
             onChange={(event) => onBulkActionChange(event.target.value as BulkAction)}
             value={bulkAction}
@@ -101,22 +103,22 @@ export function AdminUsersBulkActionsPanel({
           </select>
         </label>
 
-        <label className="grid gap-2 text-sm text-muted">
+        <label className="grid gap-2 text-sm text-white/70">
           Причина
           <input
-            className="w-full rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15"
+            className="rounded-[22px] border border-white/12 bg-white/8 px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/35 focus:border-white/20 focus:ring-2 focus:ring-white/10"
             disabled={!canRunBulkActions || isBulkPending}
             onChange={(event) => onBulkReasonChange(event.target.value)}
-            placeholder="Например: весенний триал или повторная синхронизация"
+            placeholder="Например: пробный доступ для группы теста"
             type="text"
             value={bulkReason}
           />
         </label>
 
-        <label className="grid gap-2 text-sm text-muted">
+        <label className="grid gap-2 text-sm text-white/70">
           Дней доступа
           <input
-            className="w-full rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15"
+            className="rounded-[22px] border border-white/12 bg-white/8 px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/35 focus:border-white/20 focus:ring-2 focus:ring-white/10"
             disabled={!canRunBulkActions || isBulkPending || bulkAction !== "grant_trial"}
             onChange={(event) => onBulkTrialDaysChange(event.target.value)}
             placeholder="14"
@@ -125,10 +127,10 @@ export function AdminUsersBulkActionsPanel({
           />
         </label>
 
-        <label className="grid gap-2 text-sm text-muted">
+        <label className="grid gap-2 text-sm text-white/70">
           Функция
           <input
-            className="w-full rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15"
+            className="rounded-[22px] border border-white/12 bg-white/8 px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/35 focus:border-white/20 focus:ring-2 focus:ring-white/10"
             disabled={
               !canRunBulkActions ||
               isBulkPending ||
@@ -144,10 +146,10 @@ export function AdminUsersBulkActionsPanel({
 
       {bulkAction === "enable_entitlement" ? (
         <div className="mt-3 grid gap-3 lg:grid-cols-[220px_1fr]">
-          <label className="grid gap-2 text-sm text-muted">
+          <label className="grid gap-2 text-sm text-white/70">
             Лимит
             <input
-              className="w-full rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15"
+              className="rounded-[22px] border border-white/12 bg-white/8 px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/35 focus:border-white/20 focus:ring-2 focus:ring-white/10"
               disabled={!canRunBulkActions || isBulkPending}
               onChange={(event) => onBulkLimitValueChange(event.target.value)}
               placeholder="1000"
@@ -158,17 +160,17 @@ export function AdminUsersBulkActionsPanel({
         </div>
       ) : null}
 
-      <div className="mt-4 flex flex-wrap gap-3">
+      <div className="mt-5 flex flex-wrap gap-3">
         <button
-          className="rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+          className="rounded-full bg-[#e53935] px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
           disabled={!canRunBulkActions || isBulkPending || !selectedUserCount}
           onClick={onSubmit}
           type="button"
         >
-          {isBulkPending ? "Обработка..." : "Запустить действие"}
+          {isBulkPending ? "Запускаю..." : "Запустить пакет"}
         </button>
         {bulkNotice ? (
-          <p className="rounded-2xl border border-emerald-300/60 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+          <p className="rounded-[22px] border border-emerald-300/25 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
             {bulkNotice}
           </p>
         ) : null}
@@ -183,24 +185,24 @@ export function AdminUsersBulkHistoryPanel({
   recentBulkWaves: RecentBulkWave[];
 }) {
   return (
-    <div className="rounded-[30px] border border-border bg-white/72 p-5 sm:p-6">
+    <div className="rounded-[32px] bg-white p-6 shadow-[0_24px_60px_-42px_rgba(15,23,42,0.22)] sm:p-7">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted">
-            История массовых действий
+          <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted">
+            История пакетов
           </p>
-          <h3 className="mt-2 text-lg font-semibold text-foreground">
-            Последние групповые операции
+          <h3 className="mt-3 text-xl font-bold text-foreground">
+            Последние массовые операции
           </h3>
         </div>
-        <div className="pill">{recentBulkWaves.length}</div>
+        <span className="pill">{recentBulkWaves.length}</span>
       </div>
 
-      <div className="mt-4 grid gap-3">
+      <div className="mt-5 grid gap-3">
         {recentBulkWaves.length ? (
           recentBulkWaves.map((wave) => (
             <article
-              className="rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm"
+              className="rounded-[24px] bg-[color-mix(in_srgb,var(--surface-container-low)_78%,white)] px-4 py-4 text-sm"
               key={wave.id}
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
@@ -209,11 +211,10 @@ export function AdminUsersBulkHistoryPanel({
                     {formatBulkAction(wave.action)}
                   </p>
                   <p className="mt-1 text-muted">
-                    Пакет: {wave.batch_id ?? "нет"} ·{" "}
-                    {formatDateTime(wave.created_at)}
+                    Пакет: {wave.batch_id ?? "не указан"} · {formatDateTime(wave.created_at)}
                   </p>
                   <p className="mt-1 text-muted">
-                    Причина: {wave.reason ?? "без причины"}
+                    Причина: {wave.reason ?? "без пояснения"}
                   </p>
                 </div>
                 <div className="text-left text-sm text-muted sm:text-right">
@@ -230,7 +231,7 @@ export function AdminUsersBulkHistoryPanel({
           ))
         ) : (
           <p className="text-sm leading-7 text-muted">
-            История массовых действий пока пуста.
+            История массовых действий пока пустая.
           </p>
         )}
       </div>

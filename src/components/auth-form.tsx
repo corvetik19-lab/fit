@@ -1,7 +1,5 @@
 ﻿"use client";
 
-import type { Route } from "next";
-import { useRouter } from "next/navigation";
 import { startTransition, useState, type FormEvent } from "react";
 
 import { createClient } from "@/lib/supabase/browser";
@@ -12,7 +10,6 @@ const inputClassName =
   "w-full rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15";
 
 export function AuthForm() {
-  const router = useRouter();
   const supabase = createClient();
   const [mode, setMode] = useState<Mode>("sign-in");
   const [fullName, setFullName] = useState("");
@@ -54,8 +51,7 @@ export function AuthForm() {
             return;
           }
 
-          router.replace("/onboarding" as Route);
-          router.refresh();
+          window.location.assign("/onboarding");
           return;
         }
 
@@ -69,8 +65,7 @@ export function AuthForm() {
           return;
         }
 
-        router.replace("/dashboard" as Route);
-        router.refresh();
+        window.location.assign("/dashboard");
       } finally {
         setIsPending(false);
       }

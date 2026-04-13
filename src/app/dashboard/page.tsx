@@ -26,7 +26,7 @@ export default async function DashboardPage() {
       : "Сводка пересчитана";
 
   return (
-    <AppShell eyebrow="Обзор" title="Ваш прогресс">
+    <AppShell eyebrow="Обзор" title="Статус дня">
       <DashboardWorkspace
         aiContext={aiContext}
         dashboardSourceLabel={dashboardSourceLabel}

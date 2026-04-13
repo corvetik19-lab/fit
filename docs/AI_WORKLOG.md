@@ -1350,3 +1350,56 @@
 - В [FIT_SCREEN_DESIGN_BRIEF.md](/C:/fit/docs/design-handoff/FIT_SCREEN_DESIGN_BRIEF.md) подробно описаны все реальные экраны приложения: старт, онбординг, dashboard, workouts, workout day, nutrition, AI, history, settings, billing, suspended, а также `/admin`, `/admin/users`, `/admin/users/[id]`.
 - Для каждого экрана зафиксированы цель, композиция, mobile/desktop-поведение, состояния и продуктовые ограничения, чтобы новый дизайн можно было интегрировать без слома текущих route-flow и business logic.
 - [docs/README.md](/C:/fit/docs/README.md) и [MASTER_PLAN.md](/C:/fit/docs/MASTER_PLAN.md) синхронизированы с новым дизайнерским handoff-пакетом.
+
+## 2026-04-13
+
+### Stitch redesign foundation + workout anchor
+
+- Добавлен отдельный execution-doc [STITCH_REDESIGN_EXECUTION.md](/C:/fit/docs/STITCH_REDESIGN_EXECUTION.md), а в [MASTER_PLAN.md](/C:/fit/docs/MASTER_PLAN.md) открыт новый tracked-блок по полному visual refactor под reference pack `stitch_`.
+- В [layout.tsx](/C:/fit/src/app/layout.tsx), [globals.css](/C:/fit/src/app/globals.css), [app-shell-frame.tsx](/C:/fit/src/components/app-shell-frame.tsx), [app-shell-nav.tsx](/C:/fit/src/components/app-shell-nav.tsx) и [sign-out-button.tsx](/C:/fit/src/components/sign-out-button.tsx) введён новый visual foundation: `Lexend + Manrope`, светлый editorial canvas, electric blue и mobile bottom nav.
+- В [dashboard-workspace.tsx](/C:/fit/src/components/dashboard-workspace.tsx) собран stitch-style anchor-screen `Dashboard` с blue hero, stat plates и section rail.
+- В [workout-focus-header.tsx](/C:/fit/src/components/workout-session/workout-focus-header.tsx), [workout-step-strip.tsx](/C:/fit/src/components/workout-session/workout-step-strip.tsx), [workout-exercise-card.tsx](/C:/fit/src/components/workout-session/workout-exercise-card.tsx), [workout-status-actions.tsx](/C:/fit/src/components/workout-session/workout-status-actions.tsx), [workout-day-overview-card.tsx](/C:/fit/src/components/workout-session/workout-day-overview-card.tsx), [workout-day-context-card.tsx](/C:/fit/src/components/workout-session/workout-day-context-card.tsx) и [workouts/day/[dayId]/page.tsx](/C:/fit/src/app/workouts/day/[dayId]/page.tsx) экран дня тренировки переведён на тот же язык: progress bars, крупная timer-plate, новый grid подходов и более чистая hierarchy CTA.
+- Проверка зелёная: `npm run lint`, `npm run typecheck`, `npm run build`. Таргетированный `tests/e2e/mobile-pwa-regressions.spec.ts` в этой среде упёрся не в новый UI, а в старый auth-bootstrap redirect на `/` во время `global-auth-setup`.
+- Общий progress execution checklist пересчитан честно: `183 / 196` (`93%`), потому что в план добавлен новый `stitch`-workstream с ещё открытыми screen-tranche.
+
+### Stitch redesign AI + Nutrition
+
+- [ai/page.tsx](/C:/fit/src/app/ai/page.tsx), [ai-workspace.tsx](/C:/fit/src/components/ai-workspace.tsx), [ai-workspace-sidebar.tsx](/C:/fit/src/components/ai-workspace-sidebar.tsx), [ai-chat-panel.tsx](/C:/fit/src/components/ai-chat-panel.tsx), [ai-chat-transcript.tsx](/C:/fit/src/components/ai-chat-transcript.tsx), [ai-chat-composer.tsx](/C:/fit/src/components/ai-chat-composer.tsx), [ai-chat-toolbar.tsx](/C:/fit/src/components/ai-chat-toolbar.tsx), [ai-chat-notices.tsx](/C:/fit/src/components/ai-chat-notices.tsx), [ai-prompt-library.tsx](/C:/fit/src/components/ai-prompt-library.tsx), [ai-chat-panel-cards.tsx](/C:/fit/src/components/ai-chat-panel-cards.tsx) и [ai-chat-panel-model.ts](/C:/fit/src/components/ai-chat-panel-model.ts) переведены на stitch-style chat-first подачу и очищены от битого русского текста.
+- [nutrition/page.tsx](/C:/fit/src/app/nutrition/page.tsx), [nutrition-photo-analysis.tsx](/C:/fit/src/components/nutrition-photo-analysis.tsx), [nutrition-barcode-scanner.tsx](/C:/fit/src/components/nutrition-barcode-scanner.tsx) и [nutrition-open-food-facts-card.tsx](/C:/fit/src/components/nutrition-open-food-facts-card.tsx) собраны в более clean mobile-first surface под тот же visual language.
+- Проверка зелёная: `npm run lint`, `npm run typecheck`, `npm run build`. Таргетированный Playwright по AI history всё ещё может упираться не в новый UI, а во внешний auth-bootstrap redirect на `/`.
+
+### Stitch redesign remaining user screens
+
+- В [page-workspace.tsx](/C:/fit/src/components/page-workspace.tsx) очищен общий workspace-shell: section controls, mobile switcher и visibility controls теперь на чистом русском и в том же electric-blue contract.
+- На новый stitch-язык переведены [history/page.tsx](/C:/fit/src/app/history/page.tsx), [settings/page.tsx](/C:/fit/src/app/settings/page.tsx), [workouts/page.tsx](/C:/fit/src/app/workouts/page.tsx), [billing/cloudpayments/page.tsx](/C:/fit/src/app/billing/cloudpayments/page.tsx), [cloudpayments-checkout.tsx](/C:/fit/src/components/cloudpayments-checkout.tsx), [suspended/page.tsx](/C:/fit/src/app/suspended/page.tsx), [onboarding/page.tsx](/C:/fit/src/app/onboarding/page.tsx) и [onboarding-form.tsx](/C:/fit/src/components/onboarding-form.tsx).
+- Этот tranche закрывает remaining user screens в [STITCH_REDESIGN_EXECUTION.md](/C:/fit/docs/STITCH_REDESIGN_EXECUTION.md) и поднимает общий progress execution checklist до `185 / 196` (`94%`).
+
+### Stitch redesign admin detail slice
+
+- В [admin/users/[id]/page.tsx](/C:/fit/src/app/admin/users/[id]/page.tsx) и [admin-user-detail.tsx](/C:/fit/src/components/admin-user-detail.tsx) переведена на новый visual language операторская карточка пользователя: hero, summary metrics, degraded banners, section switcher и верхний operator copy теперь без mojibake и в том же stitch-style contract.
+- Проверка зелёная: `npm run lint`, `npm run typecheck`, `npm run build`.
+- Общий progress execution checklist пока не меняется и остаётся `185 / 196` (`94%`), потому что admin checkbox ещё не закрыт целиком: dashboard, inbox и health/evals surfaces остаются в следующем tranche.
+
+### Stitch redesign admin AI evals slice
+
+- В [admin-ai-eval-runs.tsx](/C:/fit/src/components/admin-ai-eval-runs.tsx) cleaned operator copy, queue controls и история запусков AI-проверок: экран теперь в том же stitch-style contract и без битого русского текста.
+- Проверка зелёная: `npm run lint`, `npm run typecheck`.
+- Общий progress execution checklist не меняется и остаётся `185 / 196` (`94%`), потому что admin surfaces всё ещё открыты целиком.
+
+
+### Stitch redesign admin dashboard slice
+
+- [admin/page.tsx](/C:/fit/src/app/admin/page.tsx) и [admin-dashboard-workspace.tsx](/C:/fit/src/components/admin-dashboard-workspace.tsx) переведены со старого generic workspace на stitch-style операторский dashboard: крупные KPI, spotlight cards, отдельные AI и roster/audit блоки в том же visual language, что и reference `stitch_`.
+- [admin-users-bulk-actions.tsx](/C:/fit/src/components/admin-users-bulk-actions.tsx) получил тот же operator visual contract: тёмная action-панель для массовых действий и более чистая история волн без служебного визуального шума.
+- Для стабилизации auth-редиректа на новом стартовом экране [auth-form.tsx](/C:/fit/src/components/auth-form.tsx) переведён на явный `window.location.assign(...)` после успешной авторизации.
+- Проверка зелёная: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:smoke` -> `5 passed`. Таргетированный `tests/e2e/admin-app.spec.ts` в этой среде упирался не в UI, а во внешний auth-runtime: `ERR_CONNECTION` на `supabase.co/auth/v1/token`.
+- После этого общий progress execution checklist вырос до `186 / 196` (`95%`): admin surfaces были закрыты, а в stitch-workstream оставались visual regression и handoff tranche.
+
+### Stitch redesign sanitation и handoff sync
+
+- Переписан [STITCH_REDESIGN_EXECUTION.md](/C:/fit/docs/STITCH_REDESIGN_EXECUTION.md) в чистом UTF-8 и приведён к реальному состоянию workstream: admin surfaces закрыты, visible-copy sanitation и handoff sync зафиксированы как выполненные, открытым оставлен только финальный auth-based visual regression.
+- Синхронизированы [FRONTEND.md](/C:/fit/docs/FRONTEND.md), [MASTER_PLAN.md](/C:/fit/docs/MASTER_PLAN.md) и [design-handoff/FIT_SCREEN_DESIGN_BRIEF.md](/C:/fit/docs/design-handoff/FIT_SCREEN_DESIGN_BRIEF.md): дизайнерский и developer-facing handoff теперь описывает уже внедрённый stitch-style baseline, а не старый промежуточный замысел.
+- В [tests/e2e/helpers/auth.ts](/C:/fit/tests/e2e/helpers/auth.ts) добавлена явная диагностика auth-bootstrap failure: при зависании на `/` helper теперь пишет текущий URL, видимую ошибку и фрагмент страницы вместо немого `toHaveURL(/dashboard/)`.
+- В master checklist stitch-блок пересчитан честно: закрыты admin surfaces и developer handoff, поэтому общий progress execution checklist вырос до `188 / 196` (`96%`).
+- Проверка по этому follow-up: `npm run lint`, `npm run typecheck`, `npm run test:smoke` -> `5 passed`, повторный `node scripts/run-playwright.mjs -- test tests/e2e/ui-regressions.spec.ts tests/e2e/mobile-pwa-regressions.spec.ts --workers=1` снова упирается в внешний auth-bootstrap blocker и теперь явно пишет `Auth redirect did not reach /dashboard`.
+- Незакрытым в redesign-потоке остаётся только финальный прогон [ui-regressions.spec.ts](/C:/fit/tests/e2e/ui-regressions.spec.ts) и [mobile-pwa-regressions.spec.ts](/C:/fit/tests/e2e/mobile-pwa-regressions.spec.ts), который по-прежнему зависит от внешней доступности Supabase Auth без `ERR_CONNECTION`.

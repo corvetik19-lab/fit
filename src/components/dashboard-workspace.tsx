@@ -41,41 +41,41 @@ type DashboardSectionKey = "summary" | "workouts" | "nutrition" | "ai";
 
 const dashboardDateFormatter = new Intl.DateTimeFormat("ru-RU", {
   day: "2-digit",
-  month: "2-digit",
   hour: "2-digit",
   minute: "2-digit",
+  month: "2-digit",
 });
 
 const sectionOptions = [
   {
     key: "summary",
     label: "Сводка",
-    description: "Главные цифры и сравнение периодов.",
+    description: "Главные цифры и состояние дня.",
     icon: BarChart3,
   },
   {
     key: "workouts",
     label: "Тренировки",
-    description: "Силовая аналитика и детали по сессиям.",
+    description: "Силовой объём, восстановление и ритм.",
     icon: Dumbbell,
   },
   {
     key: "nutrition",
     label: "Питание",
-    description: "Рацион, восстановление и пищевые привычки.",
+    description: "Калории, белок и дневной контроль.",
     icon: Activity,
   },
   {
     key: "ai",
     label: "AI",
-    description: "Что коуч уже видит и какой следующий шаг.",
+    description: "Контекст коуча и следующий шаг.",
     icon: Sparkles,
   },
 ] as const satisfies Array<{
-  key: DashboardSectionKey;
-  label: string;
   description: string;
   icon: typeof BarChart3;
+  key: DashboardSectionKey;
+  label: string;
 }>;
 
 function formatCount(value: number) {
@@ -88,11 +88,21 @@ function formatNumber(value: number | null, suffix?: string) {
   }
 
   const formatted = value.toLocaleString("ru-RU", {
-    minimumFractionDigits: value % 1 === 0 ? 0 : 1,
     maximumFractionDigits: 1,
+    minimumFractionDigits: value % 1 === 0 ? 0 : 1,
   });
 
   return suffix ? `${formatted} ${suffix}` : formatted;
+}
+
+function getWeekCycleLabel(activePrograms: number) {
+  if (activePrograms <= 0) {
+    return "Готов к старту";
+  }
+
+  return activePrograms === 1
+    ? "1 активный цикл"
+    : `${activePrograms} активных цикла`;
 }
 
 function SectionButton({
@@ -111,7 +121,7 @@ function SectionButton({
   return (
     <button
       aria-pressed={active}
-      className={`section-chip w-full px-4 py-3 text-left md:min-w-[13rem] md:w-auto ${
+      className={`section-chip w-full px-4 py-3 text-left md:min-w-[12.5rem] md:w-auto ${
         active ? "section-chip--active" : ""
       }`}
       onClick={onClick}
@@ -120,12 +130,10 @@ function SectionButton({
       <div className="flex items-start gap-3">
         <span
           className={`inline-flex h-10 w-10 items-center justify-center rounded-2xl ${
-            active
-              ? "border border-accent/15 bg-[color-mix(in_srgb,var(--accent-soft)_72%,white)] text-accent shadow-[0_18px_30px_-22px_rgba(15,122,96,0.24)]"
-              : "bg-accent/8 text-accent"
+            active ? "bg-accent text-white" : "bg-[color-mix(in_srgb,var(--accent-soft)_40%,white)] text-accent"
           }`}
         >
-          <Icon size={18} strokeWidth={2.2} />
+          <Icon size={18} strokeWidth={2.1} />
         </span>
         <span className="min-w-0 flex-1">
           <span className="block text-sm font-semibold">{label}</span>
@@ -138,37 +146,31 @@ function SectionButton({
   );
 }
 
-function SummaryDetailCard({
-  title,
-  summary,
-  action,
+function DashboardStatPlate({
+  label,
+  value,
 }: {
-  title: string;
-  summary: string;
-  action: string;
+  label: string;
+  value: string;
 }) {
   return (
-    <div className="surface-panel p-4">
-      <p className="workspace-kicker">{title}</p>
-      <p className="mt-2 text-sm leading-6 text-muted">{summary}</p>
-      <p className="mt-3 text-sm font-medium text-foreground">
-        Следующий шаг: {action}
-      </p>
+    <div className="athletic-data-plate">
+      <span className="athletic-data-plate__value">{value}</span>
+      <span className="athletic-data-plate__label">{label}</span>
     </div>
   );
 }
 
-function DashboardInsightCard({
-  body,
-  title,
+function DashboardSurfaceCard({
+  children,
+  className = "",
 }: {
-  body: string;
-  title: string;
+  children: React.ReactNode;
+  className?: string;
 }) {
   return (
-    <article className="surface-panel p-4">
-      <p className="workspace-kicker">{title}</p>
-      <p className="mt-2 text-sm leading-6 text-muted">{body}</p>
+    <article className={`surface-panel p-5 sm:p-6 ${className}`.trim()}>
+      {children}
     </article>
   );
 }
@@ -188,38 +190,43 @@ export function DashboardWorkspace({
     useState<DashboardSectionKey>("summary");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const metricCards = useMemo(
-    () => [
-      {
-        label: "Активные недели",
-        value: formatCount(snapshot.activePrograms),
-        note: "программа в работе",
-      },
-      {
-        label: "Тренировок закрыто",
-        value: formatCount(snapshot.completedDays),
-        note: "по факту выполнено",
-      },
-      {
-        label: "Подходов записано",
-        value: formatCount(snapshot.loggedSets),
-        note: "история уже накоплена",
-      },
-      {
-        label: "Дней питания",
-        value: formatCount(snapshot.nutritionDays),
-        note: "есть живые логи",
-      },
-    ],
-    [snapshot],
-  );
-
   const workoutPrioritySignal =
     aiContext.workoutInsights.coachingSignals[0] ?? null;
   const nutritionPrioritySignal =
     aiContext.nutritionInsights.strategy[0] ??
     aiContext.nutritionInsights.coachingSignals[0] ??
     null;
+
+  const heroStats = useMemo(
+    () => [
+      {
+        label: "тренировок",
+        value: formatCount(snapshot.completedDays),
+      },
+      {
+        label: "подходов",
+        value: formatCount(snapshot.loggedSets),
+      },
+      {
+        label: "дней питания",
+        value: formatCount(snapshot.nutritionDays),
+      },
+    ],
+    [snapshot.completedDays, snapshot.loggedSets, snapshot.nutritionDays],
+  );
+
+  const latestSignals = useMemo(
+    () =>
+      [
+        workoutPrioritySignal?.action,
+        nutritionPrioritySignal?.action,
+        aiContext.latestBodyMetrics.weightKg === null
+          ? null
+          : `Последний вес: ${formatNumber(aiContext.latestBodyMetrics.weightKg, "кг")}`,
+      ].filter((value): value is string => Boolean(value)),
+    [aiContext.latestBodyMetrics.weightKg, nutritionPrioritySignal?.action, workoutPrioritySignal?.action],
+  );
+
   const activeSectionMeta =
     sectionOptions.find((section) => section.key === activeSection) ??
     sectionOptions[0];
@@ -230,102 +237,96 @@ export function DashboardWorkspace({
   }
 
   return (
-    <>
-      <section className="card card--hero overflow-hidden p-5 sm:p-6 lg:p-8">
-        <div className="grid gap-5 xl:grid-cols-[1.08fr_0.92fr]">
-          <div className="space-y-4">
+    <div className="grid gap-6">
+      <section className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
+        <article className="athletic-hero-card p-6 sm:p-7">
+          <div className="relative z-10 space-y-5">
             <div className="flex flex-wrap gap-2">
-              <span className="pill">{viewerName ?? "fit"}</span>
-              <span className="pill">{viewerEmail ?? "Аккаунт"}</span>
-              <span className="pill">
-                {dashboardSourceLabel}{" "}
-                {dashboardUpdatedAt
-                  ? dashboardDateFormatter.format(new Date(dashboardUpdatedAt))
-                  : "только что"}
+              <span className="athletic-hero-chip">
+                {viewerName ?? "fit athlete"}
               </span>
+              <span className="athletic-hero-chip">
+                {dashboardSourceLabel}
+                {dashboardUpdatedAt
+                  ? ` · ${dashboardDateFormatter.format(new Date(dashboardUpdatedAt))}`
+                  : ""}
+              </span>
+              {viewerEmail ? (
+                <span className="athletic-hero-chip">{viewerEmail}</span>
+              ) : null}
             </div>
 
             <div className="space-y-3">
-              <h2 className="app-display max-w-4xl text-2xl font-semibold tracking-tight text-foreground sm:text-3xl lg:text-4xl">
-                Сегодняшний статус, прогресс и AI-подсказки в одном спокойном
-                фитнес-экране.
+              <p className="workspace-kicker text-white/74">Статус прогресса</p>
+              <h2 className="athletic-hero-title">
+                Текущий цикл:
+                <br />
+                {getWeekCycleLabel(snapshot.activePrograms)}
               </h2>
-              <p className="max-w-3xl text-sm leading-7 text-muted sm:text-base">
-                Здесь остаются только сильные поверхности: краткая сводка,
-                силовая аналитика, питание и AI-коуч. На телефоне они открываются
-                как компактное меню разделов, а не как бесконечная колонка
-                второстепенных карточек.
+              <p className="max-w-xl text-sm leading-7 text-white/78 sm:text-base">
+                В одном экране собраны тренировочный темп, питание и AI-контекст.
+                Никакого лишнего шума — только то, что помогает держать ритм.
               </p>
             </div>
 
-            <div className="grid gap-3 lg:grid-cols-2">
-              <article className="metric-tile p-4">
-                <p className="text-sm font-semibold text-foreground">
-                  Текущий ритм тренировок
-                </p>
-                <p className="mt-2 text-sm leading-6 text-muted">
-                  {aiContext.workoutInsights.completedDaysLast28} тренировок и{" "}
-                  {aiContext.workoutInsights.loggedSetsLast28} рабочих подходов за
-                  последние 28 дней.
-                </p>
-                <p className="mt-3 text-sm font-medium text-foreground">
-                  Средний рабочий объём:{" "}
-                  {formatNumber(aiContext.workoutInsights.avgActualReps)}
-                </p>
-              </article>
-
-              <article className="metric-tile p-4">
-                <p className="text-sm font-semibold text-foreground">
-                  Текущий ритм питания
-                </p>
-                <p className="mt-2 text-sm leading-6 text-muted">
-                  {aiContext.nutritionInsights.daysTrackedLast7} дней логов за
-                  неделю, средние калории{" "}
-                  {formatNumber(aiContext.nutritionInsights.avgKcalLast7)} и
-                  белок{" "}
-                  {formatNumber(aiContext.nutritionInsights.avgProteinLast7, "г")}
-                  .
-                </p>
-                <p className="mt-3 text-sm font-medium text-foreground">
-                  AI уже использует эти данные в новых рекомендациях.
-                </p>
-              </article>
+            <div className="flex flex-wrap gap-3">
+              {heroStats.map((stat) => (
+                <DashboardStatPlate
+                  key={stat.label}
+                  label={stat.label}
+                  value={stat.value}
+                />
+              ))}
             </div>
           </div>
+        </article>
 
-          <div className="grid grid-cols-2 gap-3">
-            {metricCards.map((metric) => (
-              <article className="metric-tile p-4" key={metric.label}>
-                <p className="text-xs uppercase tracking-[0.18em] text-muted">
-                  {metric.label}
-                </p>
-                <p className="mt-3 text-3xl font-semibold text-foreground">
-                  {metric.value}
-                </p>
-                <p className="mt-2 text-sm text-muted">{metric.note}</p>
-              </article>
-            ))}
-          </div>
+        <div className="grid gap-5">
+          <DashboardSurfaceCard className="flex items-center justify-between gap-4">
+            <div>
+              <p className="workspace-kicker">Энергия</p>
+              <p className="mt-3 text-5xl font-black tracking-tight text-accent">
+                {formatNumber(aiContext.nutritionInsights.avgKcalLast7)}
+                <span className="ml-2 text-xl font-medium text-muted">ккал</span>
+              </p>
+              <p className="mt-3 text-sm leading-6 text-muted">
+                Средняя энергия за последние 7 дней. Белок:{" "}
+                {formatNumber(aiContext.nutritionInsights.avgProteinLast7, "г")}
+              </p>
+            </div>
+            <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-[color-mix(in_srgb,var(--accent-soft)_48%,white)] text-accent">
+              <Sparkles size={22} strokeWidth={2.1} />
+            </div>
+          </DashboardSurfaceCard>
+
+          <DashboardSurfaceCard className="relative overflow-hidden border-l-4 border-l-accent">
+            <p className="workspace-kicker text-accent">Интеллект fit</p>
+            <p className="mt-4 text-lg leading-9 text-foreground sm:text-2xl sm:leading-11">
+              “
+              {workoutPrioritySignal?.summary ??
+                nutritionPrioritySignal?.summary ??
+                "AI уже готов собрать первую рекомендацию по нагрузке и восстановлению."}
+              ”
+            </p>
+          </DashboardSurfaceCard>
         </div>
       </section>
 
-      <section className="card card--hero p-4 sm:p-5">
+      <section className="card p-4 sm:p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
-              Разделы дашборда
-            </p>
-            <h2 className="app-display mt-2 text-xl font-semibold text-foreground">
-              Открывай только тот слой аналитики, который нужен сейчас
+            <p className="workspace-kicker">Разделы обзора</p>
+            <h2 className="app-display mt-2 text-2xl font-semibold text-foreground">
+              Открывай только тот слой аналитики, который нужен прямо сейчас
             </h2>
           </div>
 
           <Link
-            className="toggle-chip px-4 py-2 text-sm font-semibold"
+            className="action-button action-button--primary px-4 py-3 text-sm"
             href={"/ai" as Route}
           >
             Открыть AI
-            <ArrowRight size={16} strokeWidth={2.2} />
+            <ArrowRight size={16} strokeWidth={2.1} />
           </Link>
         </div>
 
@@ -339,7 +340,7 @@ export function DashboardWorkspace({
           >
             <span className="min-w-0 flex-1">
               <span className="block text-xs uppercase tracking-[0.18em] text-muted">
-                Раздел дашборда
+                Текущий раздел
               </span>
               <span className="mt-1 block text-sm font-semibold text-foreground">
                 {activeSectionMeta.label}
@@ -348,17 +349,17 @@ export function DashboardWorkspace({
                 {activeSectionMeta.description}
               </span>
             </span>
-            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-white/88 text-foreground shadow-[0_18px_32px_-26px_rgba(15,122,96,0.22)]">
+            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--accent-soft)_42%,white)] text-accent">
               {isMobileMenuOpen ? (
-                <ChevronUp size={18} strokeWidth={2.2} />
+                <ChevronUp size={18} strokeWidth={2.1} />
               ) : (
-                <ChevronDown size={18} strokeWidth={2.2} />
+                <ChevronDown size={18} strokeWidth={2.1} />
               )}
             </span>
           </button>
 
           {isMobileMenuOpen ? (
-            <div className="mt-3 grid gap-2 rounded-3xl border border-border bg-[color-mix(in_srgb,var(--surface-overlay)_94%,white)] p-3 shadow-[0_30px_60px_-48px_rgba(18,32,27,0.22)]">
+            <div className="mt-3 grid gap-2">
               {sectionOptions.map((section) => {
                 const isActive = activeSection === section.key;
                 const Icon = section.icon;
@@ -367,7 +368,7 @@ export function DashboardWorkspace({
                   <button
                     aria-pressed={isActive}
                     className={`section-chip flex w-full items-start justify-between gap-3 px-3 py-3 text-left ${
-                      isActive ? "section-chip--active" : "border-transparent"
+                      isActive ? "section-chip--active" : ""
                     }`}
                     data-testid={`dashboard-workspace-option-${section.key}`}
                     key={section.key}
@@ -378,11 +379,11 @@ export function DashboardWorkspace({
                       <span
                         className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl ${
                           isActive
-                            ? "border border-accent/15 bg-[color-mix(in_srgb,var(--accent-soft)_72%,white)] text-accent"
-                            : "bg-accent/8 text-accent"
+                            ? "bg-accent text-white"
+                            : "bg-[color-mix(in_srgb,var(--accent-soft)_40%,white)] text-accent"
                         }`}
                       >
-                        <Icon size={17} strokeWidth={2.2} />
+                        <Icon size={17} strokeWidth={2.1} />
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block text-sm font-semibold">
@@ -394,8 +395,8 @@ export function DashboardWorkspace({
                       </span>
                     </span>
                     {isActive ? (
-                      <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 text-emerald-600">
-                        <Check size={16} strokeWidth={2.3} />
+                      <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--accent-soft)_42%,white)] text-accent">
+                        <Check size={16} strokeWidth={2.1} />
                       </span>
                     ) : null}
                   </button>
@@ -405,7 +406,7 @@ export function DashboardWorkspace({
           ) : null}
         </div>
 
-        <div className="mt-4 hidden gap-3 md:flex md:flex-wrap">
+        <div className="mt-4 hidden flex-wrap gap-3 md:flex">
           {sectionOptions.map((section) => (
             <SectionButton
               active={activeSection === section.key}
@@ -422,84 +423,86 @@ export function DashboardWorkspace({
       {activeSection === "summary" ? (
         <div className="grid gap-6">
           <section className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
-            <article className="card p-5 sm:p-6">
+            <DashboardSurfaceCard>
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <p className="workspace-kicker">
-                    Сводка по темпу
-                  </p>
-                  <h3 className="app-display mt-2 text-2xl font-semibold text-foreground">
-                    Что сейчас важнее всего не потерять
+                  <p className="workspace-kicker">Активный план</p>
+                  <h3 className="app-display mt-2 text-3xl font-semibold text-foreground">
+                    {snapshot.activePrograms > 0
+                      ? "План уже в работе"
+                      : "Время собрать первый цикл"}
                   </h3>
                 </div>
                 <span className="pill">
                   {workoutCharts.recovery.goalDaysPerWeek === null
-                    ? "цель по дням не задана"
-                    : `${workoutCharts.recovery.goalDaysPerWeek} трен. в неделю`}
+                    ? "цель не задана"
+                    : `${workoutCharts.recovery.goalDaysPerWeek} дня в неделю`}
                 </span>
               </div>
 
-              <div className="mt-4 grid gap-3 md:grid-cols-2">
-                <SummaryDetailCard
-                  action={
-                    workoutPrioritySignal?.action ??
-                    "Продолжай логировать тренировки и рабочие подходы."
-                  }
-                  summary={
-                    workoutPrioritySignal?.summary ??
-                    "После первых завершённых сессий здесь появится готовый сигнал по нагрузке и восстановлению."
-                  }
-                  title="По тренировкам"
-                />
-                <SummaryDetailCard
-                  action={
-                    nutritionPrioritySignal?.action ??
-                    "Стабилизируй дневные логи и ключевые приёмы пищи."
-                  }
-                  summary={
-                    nutritionPrioritySignal?.summary ??
-                    "Как только логов станет больше, здесь появится приоритетная рекомендация по рациону."
-                  }
-                  title="По питанию"
-                />
-              </div>
-            </article>
+              <div className="mt-5 space-y-4">
+                <p className="text-sm leading-7 text-muted">
+                  {snapshot.activePrograms > 0
+                    ? `Сейчас у тебя ${formatCount(snapshot.activePrograms)} активных программы и ${formatCount(snapshot.completedDays)} закрытых тренировок. Держи ритм и открывай следующий день без лишних кликов.`
+                    : "Открой конструктор недели, собери первую тренировочную сетку и начни вести выполнение в одном ритме с питанием и AI-коучем."}
+                </p>
 
-            <article className="card p-5 sm:p-6">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="athletic-module-card">
+                    <p className="workspace-kicker">Следующий фокус</p>
+                    <p className="mt-3 text-base font-semibold text-foreground">
+                      {workoutPrioritySignal?.action ??
+                        "Собери или продолжай рабочую неделю тренировок."}
+                    </p>
+                  </div>
+                  <div className="athletic-module-card">
+                    <p className="workspace-kicker">Recovery</p>
+                    <p className="mt-3 text-base font-semibold text-foreground">
+                      {formatNumber(workoutCharts.recovery.consistencyRatio, "%")}
+                    </p>
+                    <p className="mt-2 text-sm text-muted">
+                      Доля недель, где тренировочный ритм совпадает с целью.
+                    </p>
+                  </div>
+                </div>
+
+                <Link
+                  className="action-button action-button--primary w-full justify-center px-5 py-4 text-sm sm:w-auto"
+                  href={"/workouts" as Route}
+                >
+                  Открыть тренировки
+                  <ArrowRight size={16} strokeWidth={2.1} />
+                </Link>
+              </div>
+            </DashboardSurfaceCard>
+
+            <DashboardSurfaceCard>
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <p className="workspace-kicker">
-                    AI-контекст
-                  </p>
-                  <h3 className="app-display mt-2 text-2xl font-semibold text-foreground">
-                    Что коуч уже понимает без ручных пояснений
+                  <p className="workspace-kicker">Последние сигналы</p>
+                  <h3 className="app-display mt-2 text-3xl font-semibold text-foreground">
+                    Что важно не потерять сегодня
                   </h3>
                 </div>
                 <span className="pill">
-                  {aiContext.latestBodyMetrics.weightKg === null
-                    ? "без свежего веса"
-                    : formatNumber(aiContext.latestBodyMetrics.weightKg, "кг")}
+                  {latestSignals.length > 0 ? `${latestSignals.length} сигнала` : "ожидаются"}
                 </span>
               </div>
 
-              <div className="mt-4 grid gap-3">
-                <DashboardInsightCard
-                  body="Частота и объём тренировок уже попадают в AI-контекст вместе с тоннажом, лучшими подходами, RPE и сигналами по восстановлению."
-                  title="Силовой слой"
-                />
-                <DashboardInsightCard
-                  body="Питание учитывается не только по КБЖУ, но и по частоте логов, повторяющимся продуктам, стратегии и реальной выполнимости."
-                  title="Пищевой слой"
-                />
-                <Link
-                  className="toggle-chip toggle-chip--active inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold"
-                  href={"/ai#proposal-studio" as Route}
-                >
-                  Перейти в AI и собрать новый план
-                  <ArrowRight size={16} strokeWidth={2.2} />
-                </Link>
+              <div className="mt-5 grid gap-3">
+                {latestSignals.length > 0 ? (
+                  latestSignals.map((signal) => (
+                    <div className="athletic-note-row" key={signal}>
+                      {signal}
+                    </div>
+                  ))
+                ) : (
+                  <div className="athletic-note-row">
+                    Как только появятся новые логы и свежие записи, здесь появится короткая сводка по нагрузке и питанию.
+                  </div>
+                )}
               </div>
-            </article>
+            </DashboardSurfaceCard>
           </section>
 
           <DashboardPeriodComparison
@@ -519,78 +522,60 @@ export function DashboardWorkspace({
 
       {activeSection === "ai" ? (
         <section className="grid gap-6 xl:grid-cols-[1.02fr_0.98fr]">
-          <article className="card card--hero p-5 sm:p-6">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <p className="workspace-kicker">
-                  AI-коуч
+          <DashboardSurfaceCard className="border-l-4 border-l-accent">
+            <p className="workspace-kicker text-accent">AI коуч</p>
+            <h3 className="app-display mt-3 text-3xl font-semibold text-foreground">
+              Вся история уже собрана для следующего решения
+            </h3>
+            <p className="mt-4 text-lg leading-9 text-foreground">
+              “
+              {nutritionPrioritySignal?.summary ??
+                workoutPrioritySignal?.summary ??
+                "Открой AI, чтобы быстро получить следующий план или короткий разбор по текущему ритму."}
+              ”
+            </p>
+
+            <div className="mt-5 grid gap-3 md:grid-cols-2">
+              <div className="athletic-module-card">
+                <p className="workspace-kicker">Что уже учитывается</p>
+                <p className="mt-3 text-sm leading-7 text-muted">
+                  Тоннаж, рабочие веса, RPE, питание, калории, белок, свежие замеры тела и персональные ограничения.
                 </p>
-                <h2 className="app-display mt-2 text-2xl font-semibold text-foreground">
-                  Вся история уже готова для диалога и новых планов
-                </h2>
               </div>
-              <span className="pill">
-                {aiContext.workoutInsights.completedDaysLast28} тренировки /{" "}
-                {aiContext.nutritionInsights.daysTrackedLast7} дней питания
-              </span>
-            </div>
-
-            <div className="mt-4 grid gap-3 md:grid-cols-2">
-              <article className="surface-panel p-4">
-                <p className="workspace-kicker">
-                  Что ассистент уже использует
+              <div className="athletic-module-card">
+                <p className="workspace-kicker">Что можно сделать</p>
+                <p className="mt-3 text-sm leading-7 text-muted">
+                  Собрать новый план, запросить точечный совет или сразу применить подтверждённое предложение.
                 </p>
-                <ul className="mt-3 grid gap-2 text-sm leading-6 text-muted">
-                  <li>Тоннаж, рабочие веса, RPE и сигналы по восстановлению.</li>
-                  <li>Калории, белок, пищевые привычки и стратегию по рациону.</li>
-                  <li>Цели, последние замеры тела и персональные ограничения.</li>
-                </ul>
-              </article>
-
-              <article className="surface-panel surface-panel--accent p-4">
-                <p className="workspace-kicker">
-                  Что можно сделать одним действием
-                </p>
-                <ul className="mt-3 grid gap-2 text-sm leading-6 text-muted">
-                  <li>Собрать новую программу тренировок или питания.</li>
-                  <li>Запросить совет по прогрессии нагрузки и восстановлению.</li>
-                  <li>Сразу применить готовое предложение в приложение.</li>
-                </ul>
-              </article>
-            </div>
-          </article>
-
-          <article className="card card--hero p-5 sm:p-6">
-            <div>
-              <p className="workspace-kicker">
-                Следующий шаг
-              </p>
-              <h2 className="app-display mt-2 text-2xl font-semibold text-foreground">
-                Открывай AI, если нужен новый план, совет или быстрый разбор
-              </h2>
-            </div>
-
-            <div className="mt-4 grid gap-3">
-              <div className="surface-panel p-4 text-sm leading-6 text-muted">
-                Если нужна новая программа, ассистент уже подхватит историю
-                нагрузок, питание, recovery-сигналы и ограничения без ручного
-                копирования данных.
               </div>
-              <div className="surface-panel p-4 text-sm leading-6 text-muted">
-                Если нужен точечный совет, AI уже видит, где держится ритм, где
-                питание попадает в цель и где сейчас узкое место.
-              </div>
-              <Link
-                className="toggle-chip toggle-chip--active inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold"
-                href={"/ai" as Route}
-              >
-                Открыть AI-коуча
-                <ArrowRight size={16} strokeWidth={2.2} />
-              </Link>
             </div>
-          </article>
+          </DashboardSurfaceCard>
+
+          <DashboardSurfaceCard>
+            <p className="workspace-kicker">Следующий шаг</p>
+            <h3 className="app-display mt-3 text-3xl font-semibold text-foreground">
+              Перейти в AI и довести решение до применения
+            </h3>
+
+            <div className="mt-5 grid gap-3">
+              <div className="athletic-note-row">
+                Тренировочный и пищевой контекст уже в системе, поэтому AI не нужно заново объяснять базу.
+              </div>
+              <div className="athletic-note-row">
+                Если нужен новый план, используй чат и proposal flow — черновик сразу появится в рабочем сценарии.
+              </div>
+            </div>
+
+            <Link
+              className="action-button action-button--primary mt-5 w-full justify-center px-5 py-4 text-sm"
+              href={"/ai" as Route}
+            >
+              Открыть AI-коуча
+              <ArrowRight size={16} strokeWidth={2.1} />
+            </Link>
+          </DashboardSurfaceCard>
         </section>
       ) : null}
-    </>
+    </div>
   );
 }

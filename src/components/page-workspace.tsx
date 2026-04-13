@@ -198,10 +198,10 @@ export function PageWorkspace({
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
-              Настройка экрана
+              Рабочая зона
             </p>
             <h2 className="app-display mt-2 text-lg font-semibold text-foreground sm:text-xl">
-              Показывай только нужные блоки
+              Оставь на экране только нужные блоки
             </h2>
           </div>
 
@@ -257,10 +257,7 @@ export function PageWorkspace({
 
             <div className="grid grid-cols-2 gap-3">
               {metrics.map((metric) => (
-                <article
-                  className="metric-tile min-w-0 p-4"
-                  key={metric.label}
-                >
+                <article className="metric-tile min-w-0 p-4" key={metric.label}>
                   <p className="truncate text-xs uppercase tracking-[0.18em] text-muted">
                     {metric.label}
                   </p>
@@ -283,7 +280,7 @@ export function PageWorkspace({
                 Разделы
               </p>
               <h2 className="app-display mt-2 text-xl font-semibold text-foreground">
-                Открывай только нужный блок
+                Держи в фокусе только нужный контекст
               </h2>
             </div>
             {activeSection ? (
@@ -314,7 +311,7 @@ export function PageWorkspace({
                   </span>
                 ) : null}
               </span>
-              <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-white/88 text-foreground shadow-[0_18px_32px_-26px_rgba(15,122,96,0.22)]">
+              <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-white/88 text-foreground shadow-[0_18px_32px_-26px_rgba(20,58,160,0.22)]">
                 {isMobileMenuOpen ? (
                   <ChevronUp size={18} strokeWidth={2.2} />
                 ) : (
@@ -324,7 +321,7 @@ export function PageWorkspace({
             </button>
 
             {isMobileMenuOpen ? (
-              <div className="mt-3 grid gap-2 rounded-3xl border border-border bg-[color-mix(in_srgb,var(--surface-overlay)_94%,white)] p-3 shadow-[0_30px_60px_-48px_rgba(18,32,27,0.22)]">
+              <div className="mt-3 grid gap-2 rounded-3xl border border-border bg-[color-mix(in_srgb,var(--surface-overlay)_94%,white)] p-3 shadow-[0_30px_60px_-48px_rgba(20,58,160,0.22)]">
                 {sections.map((section) => {
                   const isActive = activeSection?.key === section.key;
 
@@ -348,7 +345,7 @@ export function PageWorkspace({
                         </span>
                       </span>
                       {isActive ? (
-                        <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 text-emerald-600">
+                        <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-accent/15 bg-[color-mix(in_srgb,var(--accent-soft)_76%,white)] text-accent">
                           <Check size={16} strokeWidth={2.3} />
                         </span>
                       ) : null}

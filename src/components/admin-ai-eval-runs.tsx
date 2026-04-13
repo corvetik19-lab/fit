@@ -13,13 +13,13 @@ import {
 } from "@/lib/admin-permissions";
 
 type AdminAiEvalRun = {
+  completed_at: string | null;
+  created_at: string;
   id: string;
   label: string;
   model_id: string;
-  status: string;
-  created_at: string;
   started_at: string | null;
-  completed_at: string | null;
+  status: string;
   summary?: {
     isScheduled?: boolean;
     qualityGatePassed?: boolean;
@@ -41,13 +41,13 @@ const dateFormatter = new Intl.DateTimeFormat("ru-RU", {
 function formatStatus(status: string) {
   switch (status) {
     case "queued":
-      return "в очереди";
+      return "В очереди";
     case "running":
-      return "в работе";
+      return "В работе";
     case "completed":
-      return "завершено";
+      return "Завершено";
     case "failed":
-      return "ошибка";
+      return "Ошибка";
     default:
       return status;
   }
@@ -72,8 +72,8 @@ function getSuiteLabel(value: string | null | undefined) {
 async function readJsonSafely(response: Response) {
   return (await response.json().catch(() => null)) as
     | {
-        message?: string;
         data?: AdminAiEvalRun[] | (AdminAiEvalRun & { message?: string });
+        message?: string;
       }
     | null;
 }
@@ -189,7 +189,8 @@ export function AdminAiEvalRuns({
 
       if (!response.ok) {
         setError(
-          payload?.message ?? "Не удалось поставить плановую AI-проверку в очередь.",
+          payload?.message ??
+            "Не удалось поставить плановую AI-проверку в очередь.",
         );
         return;
       }
@@ -234,7 +235,7 @@ export function AdminAiEvalRuns({
       <div className="grid gap-4">
         {!canQueueAiEvalRuns ? (
           <p className="rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            Для этого аккаунта в этом разделе доступен только просмотр.
+            Для этого аккаунта в разделе качества доступен только просмотр.
           </p>
         ) : null}
 
@@ -295,7 +296,7 @@ export function AdminAiEvalRuns({
                 Плановая быстрая проверка
               </p>
               <p className="text-muted">
-                Быстрый контроль ключевых функций AI, который можно запустить
+                Быстрый контроль ключевых функций AI, который можно запускать
                 вручную или по расписанию.
               </p>
             </div>
@@ -332,7 +333,9 @@ export function AdminAiEvalRuns({
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="space-y-1">
                     <p className="font-semibold text-foreground">{run.label}</p>
-                    <p className="text-muted">Набор: {getSuiteLabel(run.summary?.suite)}</p>
+                    <p className="text-muted">
+                      Набор: {getSuiteLabel(run.summary?.suite)}
+                    </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <span className="pill">{formatStatus(run.status)}</span>

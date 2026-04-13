@@ -12,7 +12,7 @@ export default async function CloudpaymentsBillingPage() {
       hideAssistantWidget
       title="CloudPayments"
     >
-      <div className="mx-auto w-full max-w-5xl py-4 sm:py-6">
+      <div className="mx-auto flex w-full max-w-5xl items-start justify-center py-4 sm:py-6">
         <CloudpaymentsCheckout />
       </div>
     </AppShell>

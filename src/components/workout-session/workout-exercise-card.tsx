@@ -1,6 +1,7 @@
-﻿"use client";
+"use client";
 
 import type { Dispatch, SetStateAction } from "react";
+import { CheckCircle2 } from "lucide-react";
 
 import {
   formatPlannedRepTarget,
@@ -9,7 +10,6 @@ import {
 import type { WorkoutDayDetail } from "@/lib/workout/weekly-programs";
 import {
   formatOptionalRpe,
-  formatOptionalWeight,
   getRpeOptions,
 } from "@/components/workout-session/session-utils";
 
@@ -58,34 +58,49 @@ export function WorkoutExerciseCard({
   setActualWeightBySetId: Dispatch<SetStateAction<Record<string, string>>>;
   totalExercises: number;
 }) {
+  const activeEditableSetId = isExerciseEditable
+    ? (exercise.sets.find((set) => {
+        const repsValue = actualRepsBySetId[set.id] ?? "";
+        const weightValue = actualWeightBySetId[set.id] ?? "";
+        const rpeValue = actualRpeBySetId[set.id] ?? "";
+
+        return !(repsValue.trim() && weightValue.trim() && rpeValue.trim());
+      })?.id ?? exercise.sets[exercise.sets.length - 1]?.id ?? null)
+    : null;
+
   return (
     <article
-      className="card card--hero p-4 sm:p-6"
+      className={`overflow-hidden rounded-[1.85rem] px-4 py-5 shadow-[0_26px_64px_-46px_rgba(24,29,63,0.2)] transition sm:px-6 ${
+        isMobileFocusMode
+          ? "bg-[color:var(--surface-bright)]"
+          : "bg-[color:var(--surface-container-low)]"
+      }`}
       data-complete={isExerciseComplete ? "true" : "false"}
       data-editable={isExerciseEditable ? "true" : "false"}
       data-testid={`workout-exercise-card-${index + 1}`}
     >
-      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="workspace-kicker">
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.24em] text-[color:var(--accent)]">
             {isMobileFocusMode ? `Упражнение ${index + 1} из ${totalExercises}` : "Упражнение"}
           </p>
-          <h3 className="mt-2 break-words text-xl font-semibold text-foreground sm:text-2xl">
+          <h3 className="mt-2 break-words font-headline text-[1.9rem] font-bold leading-tight text-[color:var(--foreground)]">
             {exercise.exercise_title_snapshot}
           </h3>
-          <p className="mt-2 text-sm text-muted">
-            Запланировано подходов: {exercise.sets_count}
-          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <span className="rounded-full bg-[color:var(--surface-container-high)] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--on-surface-variant)]">
+              {`${exercise.sets_count} подход.`}
+            </span>
+            <span className="rounded-full bg-[color:var(--surface-container-high)] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--on-surface-variant)]">
+              {isExerciseComplete ? "Сохранено" : "Активный шаг"}
+            </span>
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <span className="pill">
-            {isExerciseComplete ? "Сохранено" : "Текущий шаг"}
-          </span>
-
           {isExerciseComplete && !isExerciseEditable ? (
             <button
-              className="action-button action-button--secondary px-4 py-2 text-sm"
+              className="rounded-[1rem] bg-[color:var(--surface-container-high)] px-4 py-3 text-sm font-semibold text-[color:var(--foreground)] transition hover:bg-[color:var(--surface-container-highest)]"
               data-testid={`workout-exercise-edit-${index + 1}`}
               disabled={!dayIsLocked || isPending || isSyncing}
               onClick={() => onSetExerciseEditing(exercise.id, true)}
@@ -97,7 +112,7 @@ export function WorkoutExerciseCard({
 
           {isExerciseEditable ? (
             <button
-              className="action-button action-button--primary px-4 py-2 text-sm"
+              className="rounded-[1rem] bg-[color:var(--accent)] px-4 py-3 text-sm font-semibold text-[color:var(--on-primary)] shadow-[0_24px_48px_-34px_rgba(0,64,224,0.55)] transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-55"
               data-testid={`workout-exercise-save-${index + 1}`}
               disabled={!dayIsLocked || isPending || isSyncing || !isExerciseReadyToSave}
               onClick={() => onSaveExercise(exercise)}
@@ -110,122 +125,215 @@ export function WorkoutExerciseCard({
       </div>
 
       <div className="grid gap-3">
+        <div className="grid grid-cols-[0.95fr_1fr_1fr_0.8fr] gap-3 px-3 text-center">
+          <p className="text-left text-[10px] font-bold uppercase tracking-[0.2em] text-[color:var(--muted)]">
+            Сет
+          </p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[color:var(--muted)]">
+            Вес (кг)
+          </p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[color:var(--muted)]">
+            Повторы
+          </p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[color:var(--muted)]">
+            RPE
+          </p>
+        </div>
+
         {exercise.sets.map((set) => (
-          <div
-            className="surface-panel surface-panel--soft p-4"
+          <WorkoutSetRow
+            actualRepsBySetId={actualRepsBySetId}
+            actualRpeBySetId={actualRpeBySetId}
+            actualWeightBySetId={actualWeightBySetId}
+            activeEditableSetId={activeEditableSetId}
+            dayIsLocked={dayIsLocked}
+            inputClassName={inputClassName}
+            isExerciseEditable={isExerciseEditable}
+            isPending={isPending}
+            isSyncing={isSyncing}
             key={set.id}
-          >
-            <div className="grid gap-3 lg:grid-cols-[0.8fr_1fr_1fr_1fr] lg:items-end">
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-foreground">
-                  Подход {set.set_number}
-                </p>
-                <p className="mt-1 text-sm text-muted">
-                  План: {formatPlannedRepTarget(set)} повторов
-                </p>
-              </div>
-
-              <label className="grid gap-2 text-sm text-muted">
-                Повторы
-                <select
-                  className={inputClassName}
-                  data-testid={`workout-set-${set.id}-reps`}
-                  disabled={!dayIsLocked || isPending || isSyncing || !isExerciseEditable}
-                  onChange={(event) =>
-                    setActualRepsBySetId((current) => ({
-                      ...current,
-                      [set.id]: event.target.value,
-                    }))
-                  }
-                  value={actualRepsBySetId[set.id] ?? ""}
-                >
-                  <option value="">Выбери повторы</option>
-                  {getActualRepOptions(set).map((value) => (
-                    <option key={value} value={value}>
-                      {value}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="grid gap-2 text-sm text-muted">
-                Вес, кг
-                <input
-                  className={inputClassName}
-                  data-testid={`workout-set-${set.id}-weight`}
-                  disabled={!dayIsLocked || isPending || isSyncing || !isExerciseEditable}
-                  inputMode="decimal"
-                  onChange={(event) =>
-                    setActualWeightBySetId((current) => ({
-                      ...current,
-                      [set.id]: event.target.value,
-                    }))
-                  }
-                  placeholder="Например, 70"
-                  value={actualWeightBySetId[set.id] ?? ""}
-                />
-              </label>
-
-              <label className="grid gap-2 text-sm text-muted">
-                RPE
-                <select
-                  className={inputClassName}
-                  data-testid={`workout-set-${set.id}-rpe`}
-                  disabled={!dayIsLocked || isPending || isSyncing || !isExerciseEditable}
-                  onChange={(event) =>
-                    setActualRpeBySetId((current) => ({
-                      ...current,
-                      [set.id]: event.target.value,
-                    }))
-                  }
-                  value={actualRpeBySetId[set.id] ?? ""}
-                >
-                  <option value="">Выбери RPE</option>
-                  {getRpeOptions().map((value) => (
-                    <option key={value} value={value}>
-                      {value.toLocaleString("ru-RU", {
-                        minimumFractionDigits: value % 1 === 0 ? 0 : 1,
-                        maximumFractionDigits: 1,
-                      })}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-
-            <div className="mt-3 grid gap-3 sm:grid-cols-3">
-              <div className="surface-panel p-3 text-sm text-muted">
-                Последние повторы:{" "}
-                <span className="font-semibold text-foreground">
-                  {set.actual_reps ?? "нет данных"}
-                </span>
-              </div>
-              <div className="surface-panel p-3 text-sm text-muted">
-                Последний вес:{" "}
-                <span className="font-semibold text-foreground">
-                  {formatOptionalWeight(set.actual_weight_kg)}
-                </span>
-              </div>
-              <div className="surface-panel p-3 text-sm text-muted">
-                Последний RPE:{" "}
-                <span className="font-semibold text-foreground">
-                  {formatOptionalRpe(set.actual_rpe)}
-                </span>
-              </div>
-            </div>
-          </div>
+            set={set}
+            setActualRepsBySetId={setActualRepsBySetId}
+            setActualRpeBySetId={setActualRpeBySetId}
+            setActualWeightBySetId={setActualWeightBySetId}
+          />
         ))}
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-2 text-sm text-muted">
-        {isExerciseComplete && !isExerciseDirty ? (
-          <span>Упражнение завершено и сохранено.</span>
-        ) : (
-          <span>
-            Сначала заполни повторы, вес и RPE во всех подходах, затем сохрани упражнение.
-          </span>
-        )}
+      <div className="mt-5 rounded-[1.3rem] border-l-[3px] border-[color:var(--primary-fixed-dim)] bg-[color:var(--surface-container-low)] px-4 py-4">
+        <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[color:var(--muted)]">
+          Подсказка шага
+        </p>
+        <p className="mt-2 text-sm leading-6 text-[color:var(--on-surface-variant)]">
+          {isExerciseComplete && !isExerciseDirty
+            ? "Шаг завершён и зафиксирован. Если нужно поправить данные, нажми «Редактировать» и снова сохрани упражнение."
+            : "Сначала заполни повторы, вес и RPE во всех подходах. После сохранения шаг станет только для чтения, а следующий откроется автоматически."}
+        </p>
       </div>
     </article>
+  );
+}
+
+function WorkoutSetRow({
+  actualRepsBySetId,
+  actualRpeBySetId,
+  actualWeightBySetId,
+  activeEditableSetId,
+  dayIsLocked,
+  inputClassName,
+  isExerciseEditable,
+  isPending,
+  isSyncing,
+  set,
+  setActualRepsBySetId,
+  setActualRpeBySetId,
+  setActualWeightBySetId,
+}: {
+  actualRepsBySetId: Record<string, string>;
+  actualRpeBySetId: Record<string, string>;
+  actualWeightBySetId: Record<string, string>;
+  activeEditableSetId: string | null;
+  dayIsLocked: boolean;
+  inputClassName: string;
+  isExerciseEditable: boolean;
+  isPending: boolean;
+  isSyncing: boolean;
+  set: WorkoutExercise["sets"][number];
+  setActualRepsBySetId: Dispatch<SetStateAction<Record<string, string>>>;
+  setActualRpeBySetId: Dispatch<SetStateAction<Record<string, string>>>;
+  setActualWeightBySetId: Dispatch<SetStateAction<Record<string, string>>>;
+}) {
+  const repsValue = actualRepsBySetId[set.id] ?? "";
+  const weightValue = actualWeightBySetId[set.id] ?? "";
+  const rpeValue = actualRpeBySetId[set.id] ?? "";
+  const hasPersistedValues =
+    set.actual_reps !== null &&
+    set.actual_weight_kg !== null &&
+    set.actual_rpe !== null &&
+    !isExerciseEditable;
+  const isActiveEntry = isExerciseEditable && activeEditableSetId === set.id;
+  const isFutureRow = !isExerciseEditable && !hasPersistedValues;
+  const rowClassName = hasPersistedValues
+    ? "bg-[color:var(--surface-container-low)]"
+    : isActiveEntry
+      ? "bg-[color:var(--surface-container-highest)] ring-2 ring-[color:var(--accent)]"
+      : isFutureRow
+        ? "bg-[color:var(--surface-container-low)] opacity-55"
+        : "bg-[color:var(--surface-container-high)]";
+
+  return (
+    <div className={`rounded-[1.3rem] px-3 py-4 transition ${rowClassName}`}>
+      <div className="grid grid-cols-[0.95fr_1fr_1fr_0.8fr] items-center gap-3 text-center">
+        <div className="flex items-center gap-2 text-left">
+          <span
+            className={`flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-extrabold ${
+              hasPersistedValues || isActiveEntry
+                ? "bg-[color:var(--accent)] text-[color:var(--on-primary)]"
+                : "bg-[color:var(--outline)] text-white"
+            }`}
+          >
+            {set.set_number}
+          </span>
+          {hasPersistedValues ? (
+            <CheckCircle2
+              className="text-[color:var(--accent)]"
+              size={18}
+              strokeWidth={2.15}
+            />
+          ) : null}
+        </div>
+
+        <div className="flex justify-center">
+          {isExerciseEditable ? (
+            <input
+              className={`${inputClassName} h-11 rounded-[0.95rem] border-0 bg-transparent px-0 py-0 text-center font-headline text-xl font-bold shadow-none focus:ring-0`}
+              data-testid={`workout-set-${set.id}-weight`}
+              disabled={!dayIsLocked || isPending || isSyncing || !isExerciseEditable}
+              inputMode="decimal"
+              onChange={(event) =>
+                setActualWeightBySetId((current) => ({
+                  ...current,
+                  [set.id]: event.target.value,
+                }))
+              }
+              placeholder={set.actual_weight_kg?.toString() ?? "—"}
+              value={weightValue}
+            />
+          ) : (
+            <p className="font-headline text-xl font-bold text-[color:var(--foreground)]">
+              {set.actual_weight_kg ?? "—"}
+            </p>
+          )}
+        </div>
+
+        <div className="flex justify-center">
+          {isExerciseEditable ? (
+            <select
+              className={`${inputClassName} h-11 rounded-[0.95rem] border-0 bg-transparent px-0 py-0 text-center font-headline text-xl font-bold text-[color:var(--accent)] shadow-none focus:ring-0`}
+              data-testid={`workout-set-${set.id}-reps`}
+              disabled={!dayIsLocked || isPending || isSyncing || !isExerciseEditable}
+              onChange={(event) =>
+                setActualRepsBySetId((current) => ({
+                  ...current,
+                  [set.id]: event.target.value,
+                }))
+              }
+              value={repsValue}
+            >
+              <option value="">—</option>
+              {getActualRepOptions(set).map((value) => (
+                <option key={value} value={value}>
+                  {value}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <p className="font-headline text-xl font-bold text-[color:var(--accent)]">
+              {set.actual_reps ?? "—"}
+            </p>
+          )}
+        </div>
+
+        <div className="flex justify-center">
+          {isExerciseEditable ? (
+            <select
+              className={`${inputClassName} h-11 rounded-[0.95rem] border-0 bg-transparent px-0 py-0 text-center font-headline text-xl font-bold shadow-none focus:ring-0`}
+              data-testid={`workout-set-${set.id}-rpe`}
+              disabled={!dayIsLocked || isPending || isSyncing || !isExerciseEditable}
+              onChange={(event) =>
+                setActualRpeBySetId((current) => ({
+                  ...current,
+                  [set.id]: event.target.value,
+                }))
+              }
+              value={rpeValue}
+            >
+              <option value="">—</option>
+              {getRpeOptions().map((value) => (
+                <option key={value} value={value}>
+                  {value.toLocaleString("ru-RU", {
+                    minimumFractionDigits: value % 1 === 0 ? 0 : 1,
+                    maximumFractionDigits: 1,
+                  })}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <p className="font-headline text-xl font-bold text-[color:var(--on-surface-variant)]">
+              {set.actual_rpe ?? "—"}
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div className="mt-3 flex items-center justify-between gap-3 px-1">
+        <p className="text-xs text-[color:var(--muted)]">
+          План: {formatPlannedRepTarget(set)} повторов
+        </p>
+        <p className="text-xs text-[color:var(--muted)]">
+          Последний RPE: {formatOptionalRpe(set.actual_rpe)}
+        </p>
+      </div>
+    </div>
   );
 }

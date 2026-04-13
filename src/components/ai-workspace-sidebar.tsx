@@ -21,11 +21,11 @@ type AiWorkspaceSidebarProps = {
 function formatPriority(value: string) {
   switch (value) {
     case "high":
-      return "Важно";
+      return "Критично";
     case "medium":
       return "В фокусе";
     default:
-      return "Основа";
+      return "База";
   }
 }
 
@@ -61,8 +61,8 @@ export function AiWorkspaceSidebar({
               Что AI уже знает
             </h2>
             <p className="mt-2 max-w-xl text-sm leading-6 text-muted">
-              Это не сырые таблицы, а уже собранные сигналы по прогрессу,
-              питанию и восстановлению.
+              Здесь хранятся не сырые таблицы, а уже собранные сигналы по
+              прогрессу, нагрузке, питанию и восстановлению.
             </p>
           </div>
           <span className="pill">{structuredKnowledge.facts.length}</span>
@@ -71,19 +71,14 @@ export function AiWorkspaceSidebar({
         <div className="mt-4 grid gap-3">
           {structuredKnowledge.facts.length ? (
             structuredKnowledge.facts.slice(0, 6).map((fact) => (
-              <article
-                className="surface-panel p-4"
-                key={fact.id}
-              >
+              <article className="surface-panel p-4" key={fact.id}>
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="pill">{formatPriority(fact.priority)}</span>
                   <span className="text-xs uppercase tracking-[0.18em] text-muted">
                     {fact.topic}
                   </span>
                 </div>
-                <p className="mt-3 text-sm font-semibold text-foreground">
-                  {fact.title}
-                </p>
+                <p className="mt-3 text-sm font-semibold text-foreground">{fact.title}</p>
                 <p className="mt-2 text-sm leading-6 text-muted">{fact.summary}</p>
                 {fact.action ? (
                   <p className="mt-3 text-sm leading-6 text-foreground">
@@ -112,8 +107,8 @@ export function AiWorkspaceSidebar({
             Сохранённые чаты
           </h2>
           <p className="mt-2 max-w-xl text-sm leading-6 text-muted">
-            Оставляй только полезные сессии, быстро возвращайся к планам и
-            очищай лишнее без перегруженного списка.
+            Оставляй только полезные сессии, быстро возвращайся к прошлым
+            планам и очищай лишнее без перегруженного списка.
           </p>
         </div>
 
@@ -157,7 +152,7 @@ export function AiWorkspaceSidebar({
                 <article
                   className={`rounded-[1.7rem] border px-4 py-4 text-sm transition ${
                     isActive
-                      ? "border-accent/26 bg-[color-mix(in_srgb,var(--accent-soft)_76%,white)] shadow-[0_24px_54px_-42px_rgba(15,122,96,0.22)]"
+                      ? "border-accent/24 bg-[color-mix(in_srgb,var(--accent-soft)_76%,white)] shadow-[0_24px_54px_-42px_rgba(0,64,224,0.22)]"
                       : "border-border bg-white/76 hover:bg-white"
                   }`}
                   data-testid="ai-session-item"
