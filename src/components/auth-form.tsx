@@ -1,13 +1,39 @@
-﻿"use client";
+"use client";
 
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { Eye, EyeOff, LogIn, Mail, Smartphone } from "lucide-react";
 import { startTransition, useState, type FormEvent } from "react";
 
 import { createClient } from "@/lib/supabase/browser";
 
 type Mode = "sign-in" | "sign-up";
 
-const inputClassName =
-  "w-full rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15";
+const fieldClassName =
+  "w-full rounded-[1.15rem] border-none bg-[#e8e4e3] px-4 py-4 text-sm text-foreground outline-none transition placeholder:text-[#7b7a84] focus:bg-white focus:ring-2 focus:ring-accent/18";
+
+function wait(delayMs: number) {
+  return new Promise((resolve) => setTimeout(resolve, delayMs));
+}
+
+async function waitForClientSession(
+  supabase: SupabaseClient,
+  timeoutMs = 4_000,
+) {
+  const deadline = Date.now() + timeoutMs;
+
+  while (Date.now() < deadline) {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (session?.access_token) {
+      await wait(180);
+      return;
+    }
+
+    await wait(120);
+  }
+}
 
 export function AuthForm() {
   const supabase = createClient();
@@ -15,6 +41,7 @@ export function AuthForm() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
@@ -45,12 +72,13 @@ export function AuthForm() {
 
           if (!data.session) {
             setNotice(
-              "Аккаунт создан. Если нужно подтверждение почты, подтвердите email и затем войдите в приложение.",
+              "Аккаунт создан. Если нужно подтверждение почты, подтверди email и затем войди в приложение.",
             );
             setMode("sign-in");
             return;
           }
 
+          await waitForClientSession(supabase);
           window.location.assign("/onboarding");
           return;
         }
@@ -65,6 +93,7 @@ export function AuthForm() {
           return;
         }
 
+        await waitForClientSession(supabase);
         window.location.assign("/dashboard");
       } finally {
         setIsPending(false);
@@ -73,18 +102,20 @@ export function AuthForm() {
   }
 
   return (
-    <div className="card w-full max-w-xl p-6 sm:p-8">
-      <div className="mb-6 space-y-3">
-        <div className="flex gap-2">
-          {([
-            ["sign-in", "Вход"],
-            ["sign-up", "Регистрация"],
-          ] as const).map(([nextMode, label]) => (
+    <section className="w-full max-w-[34rem] rounded-[2rem] bg-[#f6f3f2] p-6 shadow-[0_28px_64px_-48px_rgba(28,27,27,0.2)] sm:p-8 md:rounded-[2.25rem] md:p-10">
+      <div className="flex gap-7 border-b border-[#d8d5d4] pb-5">
+        {([
+          ["sign-in", "Вход"],
+          ["sign-up", "Регистрация"],
+        ] as const).map(([nextMode, label]) => {
+          const active = mode === nextMode;
+
+          return (
             <button
-              className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-                mode === nextMode
-                  ? "border border-accent/15 bg-[color-mix(in_srgb,var(--accent-soft)_72%,white)] text-accent"
-                  : "border border-border text-foreground hover:bg-white/70"
+              className={`relative pb-1 font-display text-2xl font-bold tracking-[-0.05em] transition ${
+                active
+                  ? "text-accent after:absolute after:bottom-[-1.35rem] after:left-0 after:h-[3px] after:w-full after:rounded-full after:bg-accent"
+                  : "text-[#a7a2a3] hover:text-foreground"
               }`}
               key={nextMode}
               onClick={() => {
@@ -96,26 +127,28 @@ export function AuthForm() {
             >
               {label}
             </button>
-          ))}
-        </div>
-
-        <div>
-          <h2 className="text-2xl font-semibold text-foreground">
-            {mode === "sign-up" ? "Создайте аккаунт" : "Войдите в приложение"}
-          </h2>
-          <p className="mt-2 text-sm leading-7 text-muted">
-            После входа приложение сохранит сессию на этом устройстве, пока вы
-            сами не выйдете из аккаунта.
-          </p>
-        </div>
+          );
+        })}
       </div>
 
-      <form className="grid gap-4" onSubmit={submit}>
+      <div className="mt-7 space-y-2">
+        <h2 className="font-display text-[1.75rem] font-bold tracking-[-0.06em] text-foreground">
+          {mode === "sign-up" ? "Создай профиль" : "Войдите в приложение"}
+        </h2>
+        <p className="max-w-md text-sm leading-7 text-muted">
+          После входа сессия останется на этом устройстве. Ты сможешь сразу
+          вернуться к плану, журналу питания и AI-коучу.
+        </p>
+      </div>
+
+      <form className="mt-8 space-y-5" onSubmit={submit}>
         {mode === "sign-up" ? (
           <label className="grid gap-2 text-sm text-muted">
-            Имя
+            <span className="pl-1 text-[0.65rem] font-extrabold uppercase tracking-[0.22em] text-[#6d7080]">
+              Имя
+            </span>
             <input
-              className={inputClassName}
+              className={fieldClassName}
               onChange={(event) => setFullName(event.target.value)}
               placeholder="Например, Владислав"
               type="text"
@@ -125,43 +158,75 @@ export function AuthForm() {
         ) : null}
 
         <label className="grid gap-2 text-sm text-muted">
-          Email
-          <input
-            autoComplete="email"
-            className={inputClassName}
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="you@example.com"
-            type="email"
-            value={email}
-          />
+          <span className="pl-1 text-[0.65rem] font-extrabold uppercase tracking-[0.22em] text-[#6d7080]">
+            Email
+          </span>
+          <div className="relative">
+            <input
+              autoComplete="email"
+              className={`${fieldClassName} pr-12`}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="example@fit.com"
+              type="email"
+              value={email}
+            />
+            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#7b7a84]">
+              <Mail size={18} strokeWidth={2} />
+            </span>
+          </div>
         </label>
 
         <label className="grid gap-2 text-sm text-muted">
-          Пароль
-          <input
-            autoComplete={mode === "sign-up" ? "new-password" : "current-password"}
-            className={inputClassName}
-            onChange={(event) => setPassword(event.target.value)}
-            placeholder="Минимум 6 символов"
-            type="password"
-            value={password}
-          />
+          <span className="pl-1 text-[0.65rem] font-extrabold uppercase tracking-[0.22em] text-[#6d7080]">
+            Пароль
+          </span>
+          <div className="relative">
+            <input
+              autoComplete={mode === "sign-up" ? "new-password" : "current-password"}
+              className={`${fieldClassName} pr-12`}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="••••••••"
+              type={showPassword ? "text" : "password"}
+              value={password}
+            />
+            <button
+              aria-label={showPassword ? "Скрыть пароль" : "Показать пароль"}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-[#7b7a84] transition hover:text-foreground"
+              onClick={() => setShowPassword((current) => !current)}
+              type="button"
+            >
+              {showPassword ? (
+                <EyeOff size={18} strokeWidth={2} />
+              ) : (
+                <Eye size={18} strokeWidth={2} />
+              )}
+            </button>
+          </div>
         </label>
 
+        <div className="flex justify-end">
+          <button
+            className="text-xs font-bold text-accent transition hover:opacity-80"
+            type="button"
+          >
+            Забыли пароль?
+          </button>
+        </div>
+
         {error ? (
-          <p className="rounded-2xl border border-red-300/60 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <p className="rounded-[1.15rem] border border-red-300/70 bg-red-50 px-4 py-3 text-sm text-red-700">
             {error}
           </p>
         ) : null}
 
         {notice ? (
-          <p className="rounded-2xl border border-emerald-300/60 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+          <p className="rounded-[1.15rem] border border-emerald-300/70 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
             {notice}
           </p>
         ) : null}
 
         <button
-          className="mt-2 rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+          className="w-full rounded-[1.15rem] bg-[linear-gradient(135deg,#0040e0,#2e5bff)] px-5 py-4 text-sm font-extrabold uppercase tracking-[0.12em] text-white shadow-[0_18px_40px_-24px_rgba(0,64,224,0.48)] transition hover:translate-y-[-1px] hover:shadow-[0_24px_44px_-24px_rgba(0,64,224,0.56)] disabled:cursor-not-allowed disabled:opacity-60"
           disabled={
             isPending ||
             !email.trim() ||
@@ -170,13 +235,49 @@ export function AuthForm() {
           }
           type="submit"
         >
-          {isPending
-            ? "Обработка..."
-            : mode === "sign-up"
-              ? "Создать аккаунт"
-              : "Войти"}
+          <span className="inline-flex items-center gap-2">
+            <LogIn size={18} strokeWidth={2.3} />
+            {isPending
+              ? "Обработка..."
+              : mode === "sign-up"
+                ? "Создать аккаунт"
+                : "Войти в систему"}
+          </span>
         </button>
       </form>
-    </div>
+
+      <div className="my-8 flex items-center gap-4">
+        <div className="h-px flex-1 bg-[#d8d5d4]" />
+        <span className="text-[0.65rem] font-bold uppercase tracking-[0.22em] text-[#9f9aa0]">
+          или через
+        </span>
+        <div className="h-px flex-1 bg-[#d8d5d4]" />
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <button
+          className="inline-flex items-center justify-center gap-2 rounded-[1.15rem] bg-[#e8e4e3] px-4 py-4 text-sm font-bold text-foreground opacity-70"
+          type="button"
+        >
+          <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-white text-[0.65rem] font-black text-foreground">
+            G
+          </span>
+          Google
+        </button>
+        <button
+          className="inline-flex items-center justify-center gap-2 rounded-[1.15rem] bg-[#e8e4e3] px-4 py-4 text-sm font-bold text-foreground opacity-70"
+          type="button"
+        >
+          <Smartphone size={16} strokeWidth={2.1} />
+          Apple
+        </button>
+      </div>
+
+      <footer className="mt-8 px-2 text-center text-[0.72rem] leading-6 text-[#8b888d]">
+        Входя, вы соглашаетесь с{" "}
+        <span className="font-bold text-accent">правилами дисциплины</span> и{" "}
+        <span className="font-bold text-accent">протоколом приватности</span>.
+      </footer>
+    </section>
   );
 }

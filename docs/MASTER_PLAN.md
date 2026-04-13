@@ -13,7 +13,7 @@
 
 Р­С‚РѕС‚ С„Р°Р№Р» вЂ” С‚РµРєСѓС‰РёР№ production-hardening backlog РїСЂРѕРµРєС‚Р°. РћРЅ РѕС‚СЂР°Р¶Р°РµС‚ С„Р°РєС‚РёС‡РµСЃРєРѕРµ СЃРѕСЃС‚РѕСЏРЅРёРµ СЂРµРїРѕР·РёС‚РѕСЂРёСЏ РЅР° `2026-03-31`.
 
-Текущий прогресс execution checklist: `185 / 196` (`94%`).
+Текущий прогресс execution checklist: `188 / 196` (`96%`).
 
 ## РўРµРєСѓС‰Р°СЏ Р±Р°Р·Р°
 
@@ -1270,3 +1270,12 @@
 - [x] В [admin-ai-eval-runs.tsx](/C:/fit/src/components/admin-ai-eval-runs.tsx) переведены на новый visual language queue controls и история запусков AI-проверок; operator copy очищен от mojibake.
 - [x] Проверка по этому подэтапу зелёная: `npm run lint`, `npm run typecheck`.
 - [x] Общий progress execution checklist не меняется и остаётся `185 / 196` (`94%`): admin surfaces всё ещё не закрыты целиком.
+
+## 2026-04-13 stitch redesign auth entry + branding follow-up
+
+- [x] В проект добавлен реальный брендовый логотип [fit-logo.svg](/C:/fit/public/fit-logo.svg) из утверждённого SVG-референса; он подключён в [page.tsx](/C:/fit/src/app/page.tsx), [onboarding/page.tsx](/C:/fit/src/app/onboarding/page.tsx) и [app-shell-frame.tsx](/C:/fit/src/components/app-shell-frame.tsx), чтобы входной поток и shell опирались уже на настоящий brand asset.
+- [x] Полностью пересобраны stitch-style входной экран и онбординг: [page.tsx](/C:/fit/src/app/page.tsx), [auth-form.tsx](/C:/fit/src/components/auth-form.tsx), [onboarding/page.tsx](/C:/fit/src/app/onboarding/page.tsx), [onboarding-form.tsx](/C:/fit/src/components/onboarding-form.tsx) теперь следуют референсу `stitch_`, но сохраняют текущие product contracts для sign-in/sign-up и e2e-friendly структуру полей.
+- [x] В auth transport добавлено ожидание клиентской сессии перед переходом на защищённые маршруты: [auth-form.tsx](/C:/fit/src/components/auth-form.tsx) теперь ждёт `supabase.auth.getSession()` перед redirect, чтобы уменьшить race между sign-in и server-side `viewer`.
+- [x] Проверка по этому slice зелёная: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:smoke` -> `5 passed`.
+- [x] Таргетированный auth e2e всё ещё не подтверждён как закрытый visual regression gate: `tests/e2e/authenticated-app.spec.ts` в этой среде продолжает застревать на `/` после sign-in bootstrap без видимой UI-ошибки, поэтому финальный auth-based regression checkbox в stitch-workstream остаётся открытым.
+- [x] Общий progress execution checklist по-прежнему остаётся `188 / 196` (`96%`): slice завершает branding и входной поток внутри уже закрытого user-screen tranche, но не закрывает последний внешний auth-regression blocker.

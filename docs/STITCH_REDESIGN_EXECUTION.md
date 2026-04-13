@@ -47,3 +47,11 @@
 - compile, build, smoke и локальная структурная проверка redesign при этом остаются зелёными.
 
 Итого: редизайн функционально и визуально внедрён, а незакрытым остаётся только внешний regression pass на живом auth-runtime.
+
+## 2026-04-13 logo + auth/onboarding follow-up
+
+- [x] В проект добавлен реальный логотип [fit-logo.svg](/C:/fit/public/fit-logo.svg) из утверждённого SVG-референса; он встроен в [page.tsx](/C:/fit/src/app/page.tsx), [onboarding/page.tsx](/C:/fit/src/app/onboarding/page.tsx) и [app-shell-frame.tsx](/C:/fit/src/components/app-shell-frame.tsx).
+- [x] Входной поток и онбординг заново собраны в stitch-языке: [auth-form.tsx](/C:/fit/src/components/auth-form.tsx) и [onboarding-form.tsx](/C:/fit/src/components/onboarding-form.tsx) получили editorial layout, чистый русский copy и сохранённые e2e-контракты по input/select/button структуре.
+- [x] Auth transport усилен ожиданием клиентской сессии до redirect, но `tests/e2e/authenticated-app.spec.ts` в этой среде всё ещё фиксирует незакрытый auth-bootstrap blocker: после sign-in браузер остаётся на `/` без явной UI-ошибки, а ручной browser-debug подтверждает `Failed to fetch` на `supabase.co/auth/v1/token`.
+- [x] Проверка зелёная: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:smoke`.
+- [x] Подплан stitch redesign не меняется и остаётся `9 / 10` (`90%`): финальным открытым пунктом по-прежнему остаётся только auth-based visual regression pass.

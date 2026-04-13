@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -31,11 +32,6 @@ function getViewerBadge(viewer: AppShellFrameProps["viewer"]) {
   }
 
   return viewer.isPlatformAdmin ? "fit admin" : "fit";
-}
-
-function getViewerInitial(viewer: AppShellFrameProps["viewer"]) {
-  const source = viewer?.fullName?.trim() || viewer?.email?.trim() || "fit";
-  return source[0]?.toUpperCase() ?? "F";
 }
 
 export function AppShellFrame({
@@ -75,7 +71,6 @@ export function AppShellFrame({
     Boolean(viewer) && !hideAssistantWidget && !isMobileDrawerOpen;
   const brandLabel = getViewerBadge(viewer);
   const viewerIdentity = viewer?.fullName ?? viewer?.email ?? "Аккаунт fit";
-  const viewerInitial = getViewerInitial(viewer);
 
   return (
     <div className="min-h-dvh">
@@ -85,8 +80,15 @@ export function AppShellFrame({
             <div className="card rounded-[2rem] px-4 py-3 sm:px-5 sm:py-4">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-3">
-                  <div className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#0040e0,#2e5bff)] text-sm font-black text-white shadow-[0_20px_40px_-28px_rgba(0,64,224,0.45)]">
-                    {viewerInitial}
+                  <div className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/82 p-2 shadow-[0_20px_40px_-28px_rgba(0,64,224,0.22)]">
+                    <Image
+                      alt="fit"
+                      className="h-full w-full object-contain"
+                      height={44}
+                      priority
+                      src="/fit-logo.svg"
+                      width={44}
+                    />
                   </div>
                   <div className="min-w-0">
                     <p className="app-display text-xl font-black tracking-tight text-accent">

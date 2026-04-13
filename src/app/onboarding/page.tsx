@@ -1,28 +1,69 @@
+import { Settings2 } from "lucide-react";
+import Image from "next/image";
+
 import { OnboardingForm } from "@/components/onboarding-form";
 import { requireViewer } from "@/lib/viewer";
 
+function getViewerInitial(email: string | null, fullName: string | null) {
+  const source = fullName?.trim() || email?.trim() || "fit";
+  return source[0]?.toUpperCase() ?? "F";
+}
+
 export default async function OnboardingPage() {
   const viewer = await requireViewer();
+  const viewerInitial = getViewerInitial(
+    viewer.user.email ?? null,
+    viewer.profile?.full_name ?? null,
+  );
 
   return (
-    <main className="mx-auto min-h-screen max-w-6xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-      <section className="grid gap-6 xl:grid-cols-[0.92fr_1.08fr]">
-        <article className="card card--hero p-6 sm:p-8 lg:p-10">
-          <div className="flex flex-wrap gap-2">
-            <span className="pill">онбординг</span>
-            <span className="pill">персональный контекст</span>
+    <main className="min-h-dvh bg-background">
+      <header className="fixed inset-x-0 top-0 z-20 bg-background/88 backdrop-blur-xl">
+        <div className="mx-auto flex w-full max-w-[780px] items-center justify-between px-5 py-4 sm:px-6">
+          <div className="flex items-center gap-3">
+            <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-[linear-gradient(135deg,#0f2536,#1f9db9)] text-sm font-black text-white shadow-[0_16px_34px_-24px_rgba(15,37,54,0.54)]">
+              {viewerInitial}
+            </span>
+            <div className="flex items-center gap-2">
+              <Image
+                alt="fit"
+                className="h-8 w-8 object-contain"
+                height={32}
+                priority
+                src="/fit-logo.svg"
+                width={32}
+              />
+              <span className="font-display text-2xl font-black tracking-[-0.08em] text-accent">
+                fit
+              </span>
+            </div>
           </div>
 
-          <div className="mt-6 space-y-4">
-            <h1 className="app-display max-w-3xl text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
-              Соберём базовый контекст для тренировок, питания и AI.
-            </h1>
-            <p className="max-w-2xl text-base leading-8 text-muted sm:text-lg">
-              Заполни анкету один раз. После этого рекомендации, программы и AI-коуч
-              будут работать уже с твоими реальными целями и ограничениями.
-            </p>
+          <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/72 text-muted shadow-[0_14px_30px_-24px_rgba(28,27,27,0.24)]">
+            <Settings2 size={18} strokeWidth={2.1} />
+          </span>
+        </div>
+      </header>
+
+      <section className="mx-auto flex min-h-dvh w-full max-w-[780px] flex-col px-5 pb-28 pt-24 sm:px-6">
+        <div className="space-y-4 pb-8">
+          <div className="flex items-end justify-between gap-4">
+            <div className="space-y-3">
+              <p className="font-display text-4xl font-black uppercase leading-none tracking-[-0.08em] text-foreground sm:text-5xl">
+                Создай свой
+                <br />
+                профиль
+              </p>
+              <div className="h-1.5 w-32 rounded-full bg-[#c7d3ff]">
+                <div className="h-full w-16 rounded-full bg-accent" />
+              </div>
+            </div>
+
+            <span className="rounded-full bg-[color-mix(in_srgb,var(--accent-soft)_62%,white)] px-3 py-2 text-[0.62rem] font-extrabold uppercase tracking-[0.24em] text-accent">
+              step 02 / 04
+            </span>
           </div>
-        </article>
+        </div>
 
         <OnboardingForm
           initialValues={{
