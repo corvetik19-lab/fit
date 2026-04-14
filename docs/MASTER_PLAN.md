@@ -13,7 +13,7 @@
 
 Р­С‚РѕС‚ С„Р°Р№Р» вЂ” С‚РµРєСѓС‰РёР№ production-hardening backlog РїСЂРѕРµРєС‚Р°. РћРЅ РѕС‚СЂР°Р¶Р°РµС‚ С„Р°РєС‚РёС‡РµСЃРєРѕРµ СЃРѕСЃС‚РѕСЏРЅРёРµ СЂРµРїРѕР·РёС‚РѕСЂРёСЏ РЅР° `2026-03-31`.
 
-Текущий прогресс execution checklist: `205 / 214` (`95%`).
+Текущий прогресс execution checklist: `206 / 214` (`96%`).
 
 ## РўРµРєСѓС‰Р°СЏ Р±Р°Р·Р°
 
@@ -1382,7 +1382,7 @@
 - [x] Переведён foundation tranche: тёмные глобальные токены, PWA theme-color, shell, navigation и входной экран через [globals.css](/C:/fit/src/app/globals.css), [layout.tsx](/C:/fit/src/app/layout.tsx), [manifest.ts](/C:/fit/src/app/manifest.ts), [app-shell-frame.tsx](/C:/fit/src/components/app-shell-frame.tsx), [app-shell-nav.tsx](/C:/fit/src/components/app-shell-nav.tsx), [page.tsx](/C:/fit/src/app/page.tsx), [auth-form.tsx](/C:/fit/src/components/auth-form.tsx).
 - [x] Переведены `/dashboard` и общие workspace-паттерны под compact dark utility.
 - [x] Переведены `/workouts` и `/workouts/day/[dayId]` под главный mobile fitness сценарий.
-- [ ] Переведён `/nutrition` вместе с camera/barcode/Open Food Facts flow.
+- [x] Переведён `/nutrition` вместе с camera/barcode/Open Food Facts flow.
 - [ ] Переведён `/ai` как компактный coaching workspace.
 - [x] Переведены `/history`, `/settings`, `/billing/cloudpayments`, `/suspended`.
 - [ ] Переведены `/admin`, `/admin/users`, `/admin/users/[id]`.
@@ -1403,3 +1403,10 @@
 - [x] Shared workspace-поверхность дочищена до пригодного developer-facing контракта в [page-workspace.tsx](/C:/fit/src/components/page-workspace.tsx), а auth regression harness обновлён под реальные элементы нового layout в [authenticated-app.spec.ts](/C:/fit/tests/e2e/authenticated-app.spec.ts).
 - [x] Проверка tranche зелёная: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:smoke`, `node scripts/run-playwright.mjs PLAYWRIGHT_BASE_URL=http://127.0.0.1:3100 -- test tests/e2e/authenticated-app.spec.ts --workers=1` -> `2 passed`.
 - [x] Общий progress execution checklist после закрытия этого slice: `205 / 214` (`95%`); активный `Dark Utility` execution-doc вырос до `6 / 10` (`60%`).
+
+## 2026-04-15 Dark Utility nutrition tranche
+
+- [x] Экран питания доведён до единого compact dark utility контракта через [nutrition-tracker.tsx](/C:/fit/src/components/nutrition-tracker.tsx), [nutrition-photo-analysis.tsx](/C:/fit/src/components/nutrition-photo-analysis.tsx), [nutrition-open-food-facts-card.tsx](/C:/fit/src/components/nutrition-open-food-facts-card.tsx), [nutrition-barcode-scanner.tsx](/C:/fit/src/components/nutrition-barcode-scanner.tsx), [nutrition-recipes-manager.tsx](/C:/fit/src/components/nutrition-recipes-manager.tsx) и [nutrition-meal-templates-manager.tsx](/C:/fit/src/components/nutrition-meal-templates-manager.tsx).
+- [x] Camera capture, barcode scan и Open Food Facts preview/import больше не выпадают в светлый legacy-слой: input, preview, notice и draft cards переведены на те же тёмные surface-уровни, что и остальной mobile shell.
+- [x] Таргетированный nutrition regression подтверждён зелёно: `npm run lint`, `npm run typecheck`, `npm run build`, `node scripts/run-playwright.mjs PLAYWRIGHT_BASE_URL=http://127.0.0.1:3100 -- test tests/e2e/nutrition-capture.spec.ts --workers=1` -> `3 passed`.
+- [x] Общий progress execution checklist после закрытия этого slice: `206 / 214` (`96%`); активный `Dark Utility` execution-doc вырос до `7 / 10` (`70%`).

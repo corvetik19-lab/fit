@@ -8,7 +8,7 @@ import { NutritionBarcodeScanner } from "@/components/nutrition-barcode-scanner"
 import type { NutritionFood } from "@/lib/nutrition/meal-logging";
 
 const inputClassName =
-  "w-full rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15";
+  "w-full rounded-2xl border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_88%,var(--surface))] px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15";
 
 type LookupPreview = {
   barcode: string;
@@ -212,7 +212,7 @@ export function NutritionOpenFoodFactsCard({
       </div>
 
       {error ? (
-        <p className="mt-4 rounded-2xl border border-red-300/60 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <p className="mt-4 rounded-2xl border border-red-500/25 bg-red-500/12 px-4 py-3 text-sm text-red-100">
           {error}
         </p>
       ) : null}
@@ -223,7 +223,7 @@ export function NutritionOpenFoodFactsCard({
           data-testid={`nutrition-open-food-facts-preview-${mode}`}
         >
           <div className="grid gap-4 lg:grid-cols-[minmax(0,168px)_1fr]">
-            <div className="overflow-hidden rounded-[1.5rem] border border-border bg-white/78">
+            <div className="overflow-hidden rounded-[1.5rem] border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_90%,var(--surface))]">
               {lookupResult.product.imageUrl ? (
                 <Image
                   alt={lookupResult.product.name}
@@ -321,7 +321,7 @@ export function NutritionOpenFoodFactsCard({
                       <Check size={16} strokeWidth={2.2} />
                       {localActionLabel}
                     </button>
-                    <span className="inline-flex items-center rounded-full border border-border bg-white/80 px-4 py-3 text-sm text-muted">
+                    <span className="inline-flex items-center rounded-full border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,var(--surface))] px-4 py-3 text-sm text-muted">
                       Этот продукт уже есть в твоей базе.
                     </span>
                   </>

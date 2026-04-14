@@ -1,6 +1,6 @@
 # Dark Utility Redesign Execution
 
-Текущий прогресс подплана: `6 / 10` (`60%`).
+Текущий прогресс подплана: `7 / 10` (`70%`).
 
 ## Цель
 
@@ -31,7 +31,7 @@
 - [x] Переведены глобальные токены, базовые surface-primitives, shell и входной экран.
 - [x] Переведены `/dashboard` и общие workspace-паттерны под compact dark utility.
 - [x] Переведены `/workouts` и `/workouts/day/[dayId]` с focus-mode.
-- [ ] Переведён `/nutrition` вместе с camera/barcode/Open Food Facts flow.
+- [x] Переведён `/nutrition` вместе с camera/barcode/Open Food Facts flow.
 - [ ] Переведён `/ai` как компактный coaching workspace.
 - [x] Переведены `/history`, `/settings`, `/billing/cloudpayments`, `/suspended`.
 - [ ] Переведены `/admin`, `/admin/users`, `/admin/users/[id]`.
@@ -70,6 +70,13 @@
 - Billing handoff и restricted-state surfaces переведены в единый стиль через [billing/cloudpayments/page.tsx](/C:/fit/src/app/billing/cloudpayments/page.tsx), [cloudpayments-checkout.tsx](/C:/fit/src/components/cloudpayments-checkout.tsx) и [suspended/page.tsx](/C:/fit/src/app/suspended/page.tsx).
 - Auth-based regression suite адаптирована под новый layout: [authenticated-app.spec.ts](/C:/fit/tests/e2e/authenticated-app.spec.ts) больше не ждёт скрытые mobile-триггеры на desktop и подтверждает переходы через реальные hero/workspace surfaces.
 - Проверка tranche зелёная: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:smoke`, `node scripts/run-playwright.mjs PLAYWRIGHT_BASE_URL=http://127.0.0.1:3100 -- test tests/e2e/authenticated-app.spec.ts --workers=1`.
+
+### 2026-04-15 — nutrition capture tranche
+
+- `/nutrition` доведён до единого dark utility вида без светлых legacy-surface в ключевых рабочих потоках: [nutrition-tracker.tsx](/C:/fit/src/components/nutrition-tracker.tsx), [nutrition-photo-analysis.tsx](/C:/fit/src/components/nutrition-photo-analysis.tsx), [nutrition-open-food-facts-card.tsx](/C:/fit/src/components/nutrition-open-food-facts-card.tsx), [nutrition-barcode-scanner.tsx](/C:/fit/src/components/nutrition-barcode-scanner.tsx), [nutrition-recipes-manager.tsx](/C:/fit/src/components/nutrition-recipes-manager.tsx), [nutrition-meal-templates-manager.tsx](/C:/fit/src/components/nutrition-meal-templates-manager.tsx).
+- Camera capture, barcode scan и Open Food Facts preview/import теперь используют те же тёмные input, notice и preview surfaces, что и остальной mobile shell; success/error banners больше не выбиваются в бело-красный legacy-слой.
+- Рабочие сценарии питания сохранены как first-class flows: дневной лог, фотоаналитика, штрихкод и импорт рецептов/шаблонов остаются встроенными в один compact mobile-first экран, а не выглядят как набор разрозненных модалок.
+- Проверка tranche зелёная: `npm run lint`, `npm run typecheck`, `npm run build`, `node scripts/run-playwright.mjs PLAYWRIGHT_BASE_URL=http://127.0.0.1:3100 -- test tests/e2e/nutrition-capture.spec.ts --workers=1` -> `3 passed`.
 
 ## Рабочие правила редизайна
 

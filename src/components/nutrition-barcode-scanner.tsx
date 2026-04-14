@@ -191,7 +191,7 @@ export function NutritionBarcodeScanner({
           </p>
         </div>
         <button
-          className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-white/82 text-foreground transition hover:bg-white"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,var(--surface))] text-foreground transition hover:bg-[color-mix(in_srgb,var(--surface-elevated)_98%,var(--surface))]"
           onClick={onClose}
           type="button"
         >
@@ -227,7 +227,7 @@ export function NutritionBarcodeScanner({
       </div>
 
       {error ? (
-        <div className="mt-4 flex items-start gap-2 rounded-2xl border border-amber-300/70 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <div className="mt-4 flex items-start gap-2 rounded-2xl border border-amber-500/30 bg-amber-500/12 px-4 py-3 text-sm text-amber-100">
           <TriangleAlert className="mt-0.5 shrink-0" size={16} strokeWidth={2.2} />
           <p>{error}</p>
         </div>
@@ -244,7 +244,7 @@ export function NutritionBarcodeScanner({
 
       <div className="mt-4 flex flex-wrap gap-3">
         <button
-          className="rounded-full border border-border bg-white/82 px-4 py-2.5 text-sm font-semibold text-foreground transition hover:bg-white"
+          className="rounded-full border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,var(--surface))] px-4 py-2.5 text-sm font-semibold text-foreground transition hover:bg-[color-mix(in_srgb,var(--surface-elevated)_98%,var(--surface))]"
           onClick={() => fileInputRef.current?.click()}
           type="button"
         >

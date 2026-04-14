@@ -9,7 +9,7 @@ import type {
 } from "@/lib/nutrition/meal-logging";
 
 const inputClassName =
-  "w-full rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15";
+  "w-full rounded-2xl border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_88%,var(--surface))] px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15";
 
 function formatMacro(value: number) {
   return value.toLocaleString("ru-RU", {
@@ -170,13 +170,13 @@ export function NutritionMealTemplatesManager({
       </div>
 
       {error ? (
-        <p className="mb-4 rounded-2xl border border-red-300/60 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <p className="mb-4 rounded-2xl border border-red-500/25 bg-red-500/12 px-4 py-3 text-sm text-red-100">
           {error}
         </p>
       ) : null}
 
       {notice ? (
-        <p className="mb-4 rounded-2xl border border-emerald-300/60 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+        <p className="mb-4 rounded-2xl border border-emerald-500/25 bg-emerald-500/12 px-4 py-3 text-sm text-emerald-100">
           {notice}
         </p>
       ) : null}
@@ -206,7 +206,7 @@ export function NutritionMealTemplatesManager({
         </button>
       </div>
 
-      <div className="mt-6 rounded-3xl border border-border bg-white/55 p-5">
+      <div className="mt-6 rounded-3xl border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_88%,var(--surface))] p-5">
         <p className="text-sm font-medium text-foreground">Текущий черновик для шаблона</p>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
           <p className="text-sm text-muted">
@@ -240,7 +240,7 @@ export function NutritionMealTemplatesManager({
         {templates.length ? (
           templates.map((template) => (
             <article
-              className="rounded-2xl border border-border bg-white/60 p-4"
+              className="rounded-2xl border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_84%,var(--surface))] p-4"
               key={template.id}
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
@@ -260,7 +260,7 @@ export function NutritionMealTemplatesManager({
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <button
-                    className="rounded-full border border-border px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white/70"
+                    className="rounded-full border border-border px-3 py-2 text-sm font-medium text-foreground transition hover:bg-[color-mix(in_srgb,var(--surface-elevated)_96%,var(--surface))]"
                     disabled={template.isReferenceOnly}
                     onClick={() => applyTemplate(template)}
                     type="button"
@@ -268,7 +268,7 @@ export function NutritionMealTemplatesManager({
                     {template.isReferenceOnly ? "Справка" : "Применить"}
                   </button>
                   <button
-                    className="rounded-full border border-border px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white/70"
+                    className="rounded-full border border-border px-3 py-2 text-sm font-medium text-foreground transition hover:bg-[color-mix(in_srgb,var(--surface-elevated)_96%,var(--surface))]"
                     onClick={() => deleteTemplate(template.id)}
                     type="button"
                   >

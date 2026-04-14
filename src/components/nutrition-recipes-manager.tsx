@@ -9,7 +9,7 @@ import type {
 } from "@/lib/nutrition/meal-logging";
 
 const inputClassName =
-  "w-full rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15";
+  "w-full rounded-2xl border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_88%,var(--surface))] px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15";
 
 type RecipeDraftItem = {
   localId: string;
@@ -217,13 +217,13 @@ export function NutritionRecipesManager({
       </div>
 
       {error ? (
-        <p className="mb-4 rounded-2xl border border-red-300/60 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <p className="mb-4 rounded-2xl border border-red-500/25 bg-red-500/12 px-4 py-3 text-sm text-red-100">
           {error}
         </p>
       ) : null}
 
       {notice ? (
-        <p className="mb-4 rounded-2xl border border-emerald-300/60 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+        <p className="mb-4 rounded-2xl border border-emerald-500/25 bg-emerald-500/12 px-4 py-3 text-sm text-emerald-100">
           {notice}
         </p>
       ) : null}
@@ -265,7 +265,7 @@ export function NutritionRecipesManager({
       <div className="mt-5 grid gap-3">
         {items.map((item, index) => (
           <div
-            className="rounded-2xl border border-border bg-white/60 p-4"
+            className="rounded-2xl border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_84%,var(--surface))] p-4"
             key={item.localId}
           >
             <div className="mb-3 flex items-center justify-between gap-3">
@@ -274,7 +274,7 @@ export function NutritionRecipesManager({
               </p>
               {items.length > 1 ? (
                 <button
-                  className="rounded-full border border-border px-3 py-2 text-xs font-medium text-foreground transition hover:bg-white/70"
+                  className="rounded-full border border-border px-3 py-2 text-xs font-medium text-foreground transition hover:bg-[color-mix(in_srgb,var(--surface-elevated)_96%,var(--surface))]"
                   onClick={() => removeItem(item.localId)}
                   type="button"
                 >
@@ -322,7 +322,7 @@ export function NutritionRecipesManager({
 
       <div className="mt-4 flex flex-wrap gap-3">
         <button
-          className="rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:bg-white/70"
+          className="rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:bg-[color-mix(in_srgb,var(--surface-elevated)_96%,var(--surface))]"
           onClick={appendItem}
           type="button"
         >
@@ -330,7 +330,7 @@ export function NutritionRecipesManager({
         </button>
       </div>
 
-      <div className="mt-6 rounded-3xl border border-border bg-white/55 p-5">
+      <div className="mt-6 rounded-3xl border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_88%,var(--surface))] p-5">
         <p className="text-sm font-medium text-foreground">Предварительный расчёт рецепта</p>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
           <p className="text-sm text-muted">
@@ -371,7 +371,7 @@ export function NutritionRecipesManager({
         {recipes.length ? (
           recipes.map((recipe) => (
             <article
-              className="rounded-2xl border border-border bg-white/60 p-4"
+              className="rounded-2xl border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_84%,var(--surface))] p-4"
               key={recipe.id}
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
@@ -384,14 +384,14 @@ export function NutritionRecipesManager({
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <button
-                    className="rounded-full border border-border px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white/70"
+                    className="rounded-full border border-border px-3 py-2 text-sm font-medium text-foreground transition hover:bg-[color-mix(in_srgb,var(--surface-elevated)_96%,var(--surface))]"
                     onClick={() => applyRecipe(recipe)}
                     type="button"
                   >
                     В лог питания
                   </button>
                   <button
-                    className="rounded-full border border-border px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white/70"
+                    className="rounded-full border border-border px-3 py-2 text-sm font-medium text-foreground transition hover:bg-[color-mix(in_srgb,var(--surface-elevated)_96%,var(--surface))]"
                     onClick={() => deleteRecipe(recipe.id)}
                     type="button"
                   >

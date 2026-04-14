@@ -197,3 +197,10 @@ Frontend делится на три уровня:
 - `SettingsBillingCenter` и `SettingsDataCenter` считаются частью общего dark utility self-service контракта: compact cards, ясные статусы, одна главная кнопка на секцию, без oversized CTA и без светлых legacy-input surfaces.
 - `/billing/cloudpayments` и `/suspended` должны выглядеть как нормальные рабочие states продукта, а не как технические заглушки: один основной статус, понятное следующее действие и безопасный возврат в пользовательский контур.
 - Shared `PageWorkspace` остаётся каноническим слоем для heavy workspace-страниц; любые правки в его copy/structure нужно проверять через `tests/e2e/authenticated-app.spec.ts`, потому что этот suite теперь использует реальные hero/workspace surfaces как контракт навигации.
+
+## 2026-04-15 Dark Utility nutrition contract
+
+- `/nutrition` считается закрытым dark utility surface и должен оставаться главным дневным рабочим экраном, а не витриной функций: сначала баланс и быстрые actions, затем лог дня и только потом библиотечные сущности.
+- Camera capture, barcode scan и Open Food Facts import обязательны как first-class flows; их нельзя прятать глубоко, выносить в отдельный визуальный язык или возвращать к белым form-surface.
+- `NutritionPhotoAnalysis`, `NutritionOpenFoodFactsCard`, `NutritionBarcodeScanner`, `NutritionRecipesManager` и `NutritionMealTemplatesManager` теперь входят в единый mobile-first контракт: тёмные elevated surfaces, компактные input, короткие status/notices и один явный action-path на сценарий.
+- Любые следующие правки nutrition UI нужно проверять как минимум через `tests/e2e/nutrition-capture.spec.ts`, чтобы не потерять рабочие flows `photo -> preview -> import` и `barcode -> lookup -> import`.

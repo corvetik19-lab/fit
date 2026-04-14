@@ -31,7 +31,7 @@ type NutritionPhotoAnalysisProps = {
 };
 
 const inputClassName =
-  "w-full rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15 disabled:cursor-not-allowed disabled:opacity-60";
+  "w-full rounded-2xl border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_88%,var(--surface))] px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15 disabled:cursor-not-allowed disabled:opacity-60";
 
 function formatConfidence(value: MealPhotoAnalysis["confidence"]) {
   switch (value) {
@@ -243,19 +243,19 @@ export function NutritionPhotoAnalysis({
           </p>
           <p className="mt-1">Источник доступа: {access.source}</p>
           {access.reason ? (
-            <p className="mt-2 text-amber-700">{access.reason}</p>
+            <p className="mt-2 text-amber-200">{access.reason}</p>
           ) : null}
         </div>
       </div>
 
       {error ? (
-        <p className="mt-5 rounded-2xl border border-red-300/60 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <p className="mt-5 rounded-2xl border border-red-500/25 bg-red-500/12 px-4 py-3 text-sm text-red-100">
           {error}
         </p>
       ) : null}
 
       {notice ? (
-        <div className="mt-5 rounded-2xl border border-emerald-300/60 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+        <div className="mt-5 rounded-2xl border border-emerald-500/25 bg-emerald-500/12 px-4 py-3 text-sm text-emerald-100">
           <p>{notice}</p>
           <div className="mt-3 flex flex-wrap gap-3">
             <Link
@@ -321,7 +321,7 @@ export function NutritionPhotoAnalysis({
 
           {previewUrl ? (
             <div
-              className="overflow-hidden rounded-[28px] border border-white/60 bg-white/80 shadow-[0_22px_60px_rgba(0,64,224,0.12)]"
+              className="overflow-hidden rounded-[28px] border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_90%,var(--surface))] shadow-[0_22px_60px_rgba(0,0,0,0.28)]"
               data-testid="nutrition-photo-preview"
             >
               <Image
