@@ -1,6 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { type AiUserContext, getAiRuntimeContext } from "@/lib/ai/user-context";
+import {
+  createEmptyAiUserContext,
+  type AiUserContext,
+  getAiRuntimeContext,
+} from "@/lib/ai/user-context";
+import { logger } from "@/lib/logger";
+import { withTimeout } from "@/lib/runtime-retry";
 import {
   type BodyMetricRow,
   type ContextSnapshotRow,
@@ -20,6 +26,7 @@ import {
 import { listAllWorkoutSetsWithRepRangeFallback } from "@/lib/workout/workout-sets";
 
 const FETCH_PAGE_SIZE = 500;
+const KNOWLEDGE_SOURCE_TIMEOUT_MS = 12_000;
 
 export type KnowledgeSourceData = {
   aiContext: AiUserContext;
@@ -86,11 +93,70 @@ export async function loadKnowledgeSourceData(
   supabase: SupabaseClient,
   userId: string,
 ): Promise<KnowledgeSourceData> {
+  async function readOptionalValue<T>(
+    label: string,
+    factory: () => Promise<{ data: T | null; error: unknown }>,
+  ) {
+    try {
+      const result = await withTimeout(
+        factory(),
+        KNOWLEDGE_SOURCE_TIMEOUT_MS,
+        label,
+      );
+
+      if (result.error) {
+        throw result.error;
+      }
+
+      return (result.data as T | null) ?? null;
+    } catch (error) {
+      logger.warn("knowledge source optional loader is using fallback", {
+        error,
+        label,
+        userId,
+      });
+      return null;
+    }
+  }
+
+  async function readCollection<T>(label: string, factory: () => Promise<T[]>) {
+    try {
+      return await withTimeout(factory(), KNOWLEDGE_SOURCE_TIMEOUT_MS, label);
+    } catch (error) {
+      logger.warn("knowledge source collection loader is using fallback", {
+        error,
+        label,
+        userId,
+      });
+      return [] as T[];
+    }
+  }
+
+  async function readRuntimeContext() {
+    try {
+      const result = await withTimeout(
+        getAiRuntimeContext(supabase, userId, {
+          forceRefresh: true,
+        }).then((value) => value.context),
+        KNOWLEDGE_SOURCE_TIMEOUT_MS,
+        "knowledge runtime context",
+      );
+
+      return result;
+    } catch (error) {
+      logger.warn("knowledge source runtime context is using fallback", {
+        error,
+        userId,
+      });
+      return createEmptyAiUserContext();
+    }
+  }
+
   const [
     aiContext,
-    onboardingResult,
-    goalResult,
-    nutritionProfileResult,
+    onboarding,
+    goal,
+    nutritionProfile,
     bodyMetrics,
     nutritionSummaries,
     memoryFacts,
@@ -101,69 +167,84 @@ export async function loadKnowledgeSourceData(
     meals,
     mealItems,
   ] = await Promise.all([
-    getAiRuntimeContext(supabase, userId, {
-      forceRefresh: true,
-    }).then((result) => result.context),
-    supabase
-      .from("onboarding_profiles")
-      .select(
-        "id, age, sex, height_cm, weight_kg, fitness_level, equipment, injuries, dietary_preferences",
-      )
-      .eq("user_id", userId)
-      .maybeSingle(),
-    supabase
-      .from("goals")
-      .select("id, goal_type, target_weight_kg, weekly_training_days, updated_at")
-      .eq("user_id", userId)
-      .order("updated_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    supabase
-      .from("nutrition_profiles")
-      .select("id, kcal_target, protein_target, fat_target, carbs_target")
-      .eq("user_id", userId)
-      .maybeSingle(),
-    fetchAllRows<BodyMetricRow>(async (from, to) =>
+    readRuntimeContext(),
+    readOptionalValue<OnboardingRow>("knowledge onboarding profile", async () =>
+      await supabase
+        .from("onboarding_profiles")
+        .select(
+          "id, age, sex, height_cm, weight_kg, fitness_level, equipment, injuries, dietary_preferences",
+        )
+        .eq("user_id", userId)
+        .maybeSingle(),
+    ),
+    readOptionalValue<GoalRow>("knowledge goal", async () =>
+      await supabase
+        .from("goals")
+        .select("id, goal_type, target_weight_kg, weekly_training_days, updated_at")
+        .eq("user_id", userId)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ),
+    readOptionalValue<NutritionProfileRow>("knowledge nutrition profile", async () =>
+      await supabase
+        .from("nutrition_profiles")
+        .select("id, kcal_target, protein_target, fat_target, carbs_target")
+        .eq("user_id", userId)
+        .maybeSingle(),
+    ),
+    readCollection<BodyMetricRow>("knowledge body metrics", async () =>
+      fetchAllRows<BodyMetricRow>(async (from, to) =>
       await supabase
         .from("body_metrics")
         .select("id, weight_kg, body_fat_pct, measured_at")
         .eq("user_id", userId)
         .order("measured_at", { ascending: false })
         .range(from, to),
+      ),
     ),
-    fetchAllRows<NutritionSummaryRow>(async (from, to) =>
+    readCollection<NutritionSummaryRow>("knowledge nutrition summaries", async () =>
+      fetchAllRows<NutritionSummaryRow>(async (from, to) =>
       await supabase
         .from("daily_nutrition_summaries")
         .select("id, summary_date, kcal, protein, fat, carbs")
         .eq("user_id", userId)
         .order("summary_date", { ascending: false })
         .range(from, to),
+      ),
     ),
-    fetchAllRows<UserMemoryRow>(async (from, to) =>
+    readCollection<UserMemoryRow>("knowledge memory facts", async () =>
+      fetchAllRows<UserMemoryRow>(async (from, to) =>
       await supabase
         .from("user_memory_facts")
         .select("id, fact_type, content, confidence, created_at")
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
         .range(from, to),
+      ),
     ),
-    fetchAllRows<ContextSnapshotRow>(async (from, to) =>
+    readCollection<ContextSnapshotRow>("knowledge context snapshots", async () =>
+      fetchAllRows<ContextSnapshotRow>(async (from, to) =>
       await supabase
         .from("user_context_snapshots")
         .select("id, snapshot_reason, payload, created_at")
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
         .range(from, to),
+      ),
     ),
-    fetchAllRows<WeeklyProgramRow>(async (from, to) =>
+    readCollection<WeeklyProgramRow>("knowledge weekly programs", async () =>
+      fetchAllRows<WeeklyProgramRow>(async (from, to) =>
       await supabase
         .from("weekly_programs")
         .select("id, title, status, week_start_date, week_end_date, is_locked")
         .eq("user_id", userId)
         .order("week_start_date", { ascending: false })
         .range(from, to),
+      ),
     ),
-    fetchAllRows<WorkoutDayRow>(async (from, to) =>
+    readCollection<WorkoutDayRow>("knowledge workout days", async () =>
+      fetchAllRows<WorkoutDayRow>(async (from, to) =>
       await supabase
         .from("workout_days")
         .select(
@@ -172,8 +253,10 @@ export async function loadKnowledgeSourceData(
         .eq("user_id", userId)
         .order("updated_at", { ascending: false })
         .range(from, to),
+      ),
     ),
-    fetchAllRows<WorkoutExerciseRow>(async (from, to) =>
+    readCollection<WorkoutExerciseRow>("knowledge workout exercises", async () =>
+      fetchAllRows<WorkoutExerciseRow>(async (from, to) =>
       await supabase
         .from("workout_exercises")
         .select(
@@ -182,16 +265,20 @@ export async function loadKnowledgeSourceData(
         .eq("user_id", userId)
         .order("updated_at", { ascending: false })
         .range(from, to),
+      ),
     ),
-    fetchAllRows<MealRow>(async (from, to) =>
+    readCollection<MealRow>("knowledge meals", async () =>
+      fetchAllRows<MealRow>(async (from, to) =>
       await supabase
         .from("meals")
         .select("id, eaten_at, source")
         .eq("user_id", userId)
         .order("eaten_at", { ascending: false })
         .range(from, to),
+      ),
     ),
-    fetchAllRows<MealItemRow>(async (from, to) =>
+    readCollection<MealItemRow>("knowledge meal items", async () =>
+      fetchAllRows<MealItemRow>(async (from, to) =>
       await supabase
         .from("meal_items")
         .select(
@@ -200,22 +287,13 @@ export async function loadKnowledgeSourceData(
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
         .range(from, to),
+      ),
     ),
   ]);
 
-  if (onboardingResult.error) {
-    throw onboardingResult.error;
-  }
-
-  if (goalResult.error) {
-    throw goalResult.error;
-  }
-
-  if (nutritionProfileResult.error) {
-    throw nutritionProfileResult.error;
-  }
-
-  const workoutSets = await listAllWorkoutSetsWithRepRangeFallback(supabase, userId);
+  const workoutSets = await readCollection<WorkoutSetRow>("knowledge workout sets", async () =>
+    await listAllWorkoutSetsWithRepRangeFallback(supabase, userId),
+  );
   const totalTonnageKg = workoutSets.reduce((sum, set) => {
     if (set.actual_reps === null || set.actual_weight_kg === null) {
       return sum;
@@ -236,13 +314,13 @@ export async function loadKnowledgeSourceData(
     bestSetWeightKg,
     bodyMetrics,
     contextSnapshots,
-    goal: (goalResult.data as GoalRow | null) ?? null,
+    goal,
     mealItems,
     meals,
     memoryFacts,
-    nutritionProfile: (nutritionProfileResult.data as NutritionProfileRow | null) ?? null,
+    nutritionProfile,
     nutritionSummaries,
-    onboarding: (onboardingResult.data as OnboardingRow | null) ?? null,
+    onboarding,
     programs,
     totalTonnageKg,
     workoutDays,

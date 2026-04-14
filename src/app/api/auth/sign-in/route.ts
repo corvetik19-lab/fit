@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import { isAuthProviderUnavailableError } from "@/lib/auth/auth-route-errors";
 import { logger } from "@/lib/logger";
+import { withTransientRetry } from "@/lib/runtime-retry";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 const signInSchema = z.object({
@@ -14,10 +15,12 @@ export async function POST(request: Request) {
   try {
     const payload = signInSchema.parse(await request.json());
     const supabase = await createServerSupabaseClient();
-    const { error } = await supabase.auth.signInWithPassword({
-      email: payload.email,
-      password: payload.password,
-    });
+    const { error } = await withTransientRetry(() =>
+      supabase.auth.signInWithPassword({
+        email: payload.email,
+        password: payload.password,
+      }),
+    );
 
     if (error) {
       return createApiErrorResponse({

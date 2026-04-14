@@ -74,6 +74,10 @@ if (hasUserAuth && hasAdminAuth && aiRuntimeReady) {
       status: 1,
     });
   } else {
+    for (const warning of aiRuntimePreflight.warnings ?? []) {
+      console.log(`[warn] ${warning}`);
+    }
+
     suiteResults.push({
       label: "AI quality gate",
       status: runScript("AI quality gate", "test:ai-gate"),

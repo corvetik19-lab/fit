@@ -10,6 +10,7 @@ import {
   touchAiChatSession,
 } from "@/lib/ai/chat";
 import {
+  buildCompactSportsCoachPrompt,
   buildSportsDomainSystemPrompt,
   detectAssistantGuardrail,
 } from "@/lib/ai/domain-policy";
@@ -22,8 +23,9 @@ import {
 } from "@/lib/ai/chat-runtime-copy";
 import { models } from "@/lib/ai/gateway";
 import { retrieveKnowledgeMatches } from "@/lib/ai/knowledge";
+import { AI_CHAT_MAX_OUTPUT_TOKENS } from "@/lib/ai/runtime-budgets";
 import { isAiProviderConfigurationFailure } from "@/lib/ai/runtime-errors";
-import { getAiRuntimeContext } from "@/lib/ai/user-context";
+import { createEmptyAiUserContext, getAiRuntimeContext } from "@/lib/ai/user-context";
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import {
   BILLING_FEATURE_KEYS,
@@ -33,15 +35,60 @@ import {
 } from "@/lib/billing-access";
 import { hasAiRuntimeEnv } from "@/lib/env";
 import { logger } from "@/lib/logger";
+import { withTimeout, withTransientRetry } from "@/lib/runtime-retry";
 import { hasRiskyIntent } from "@/lib/safety";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
+const CHAT_CONTEXT_TIMEOUT_MS = 10_000;
+const CHAT_KNOWLEDGE_TIMEOUT_MS = 8_000;
+
 const chatRequestSchema = z.object({
   sessionId: z.string().uuid().optional(),
   message: z.string().trim().min(2).max(2000),
 });
+
+async function loadChatContext(
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
+  userId: string,
+) {
+  try {
+    const result = await withTimeout(
+      withTransientRetry(() => getAiRuntimeContext(supabase, userId)),
+      CHAT_CONTEXT_TIMEOUT_MS,
+      "ai chat runtime context",
+    );
+
+    return result.context;
+  } catch (error) {
+    logger.warn("ai chat is using fallback runtime context", {
+      error,
+      userId,
+    });
+    return createEmptyAiUserContext();
+  }
+}
+
+async function loadChatKnowledge(
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
+  userId: string,
+  message: string,
+) {
+  try {
+    return await withTimeout(
+      withTransientRetry(() => retrieveKnowledgeMatches(supabase, userId, message, 6)),
+      CHAT_KNOWLEDGE_TIMEOUT_MS,
+      "ai chat knowledge retrieval",
+    );
+  } catch (error) {
+    logger.warn("ai chat is using fallback knowledge context", {
+      error,
+      userId,
+    });
+    return [];
+  }
+}
 
 export async function POST(request: Request) {
   try {
@@ -64,6 +111,25 @@ export async function POST(request: Request) {
         status: 401,
         code: "UNAUTHORIZED",
         message: AI_CHAT_UNAUTHORIZED_MESSAGE,
+      });
+    }
+
+    if (!body.sessionId && hasRiskyIntent(body.message)) {
+      return Response.json({
+        data: {
+          sessionId: null,
+          sessionTitle: null,
+          blocked: true,
+          userMessage: null,
+          assistantMessage: {
+            id: crypto.randomUUID(),
+            session_id: "",
+            role: "assistant",
+            content: buildAiChatSafetyFallback(),
+            created_at: new Date().toISOString(),
+          },
+          sources: [],
+        },
       });
     }
 
@@ -156,26 +222,26 @@ export async function POST(request: Request) {
       });
     }
 
-    const [retrievedKnowledge, userContext] = await Promise.all([
-      retrieveKnowledgeMatches(supabase, user.id, body.message, 6),
-      getAiRuntimeContext(supabase, user.id).then((result) => result.context),
+    const [retrievedKnowledge, userContext, recentMessages] = await Promise.all([
+      loadChatKnowledge(supabase, user.id, body.message),
+      loadChatContext(supabase, user.id),
+      listAiChatMessages(supabase, user.id, session.id, 12),
     ]);
-    const recentMessages = await listAiChatMessages(
-      supabase,
-      user.id,
-      session.id,
-      12,
-    );
 
-    const result = await generateText({
-      model: models.chat,
-      system: buildSportsDomainSystemPrompt({
-        allowWebSearch: false,
-        context: userContext,
-        knowledge: retrievedKnowledge,
+    const promptBuilder =
+      recentMessages.length > 4 ? buildSportsDomainSystemPrompt : buildCompactSportsCoachPrompt;
+    const result = await withTransientRetry(() =>
+      generateText({
+        maxOutputTokens: AI_CHAT_MAX_OUTPUT_TOKENS,
+        model: models.chat,
+        system: promptBuilder({
+          allowWebSearch: false,
+          context: userContext,
+          knowledge: retrievedKnowledge,
+        }),
+        messages: toModelMessages(recentMessages),
       }),
-      messages: toModelMessages(recentMessages),
-    });
+    );
 
     const assistantMessage = await createAiChatMessage(supabase, {
       userId: user.id,

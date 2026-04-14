@@ -13,7 +13,7 @@
 
 Р­С‚РѕС‚ С„Р°Р№Р» вЂ” С‚РµРєСѓС‰РёР№ production-hardening backlog РїСЂРѕРµРєС‚Р°. РћРЅ РѕС‚СЂР°Р¶Р°РµС‚ С„Р°РєС‚РёС‡РµСЃРєРѕРµ СЃРѕСЃС‚РѕСЏРЅРёРµ СЂРµРїРѕР·РёС‚РѕСЂРёСЏ РЅР° `2026-03-31`.
 
-Текущий прогресс execution checklist: `197 / 204` (`97%`).
+Текущий прогресс execution checklist: `199 / 204` (`98%`).
 
 ## РўРµРєСѓС‰Р°СЏ Р±Р°Р·Р°
 
@@ -241,7 +241,7 @@
 - [x] РџРѕРґС‚РІРµСЂРґРёС‚СЊ owner-only data access РґР»СЏ chat, sessions, retrieval, reindex Рё proposal apply.
 - [x] Р Р°Р·РІРµСЃС‚Рё runtime failure UX Рё provider configuration UX.
 - [x] РЎС‚Р°Р±РёР»РёР·РёСЂРѕРІР°С‚СЊ РёСЃС‚РѕСЂРёСЋ С‡Р°С‚РѕРІ, prompt library, web search toggle Рё image upload.
-- [ ] РџСЂРѕРіРЅР°С‚СЊ assistant/retrieval/workout-plan/meal-plan/safety eval suites РєР°Рє quality gate. РљРѕРґРѕРІС‹Р№ РєРѕРЅС‚СѓСЂ СѓР¶Рµ РіРѕС‚РѕРІ; С‚РµРєСѓС‰РёР№ РІРЅРµС€РЅРёР№ blocker вЂ” `OpenRouter 402` РїРѕ РєСЂРµРґРёС‚Р°Рј Рё `Voyage 403` РїРѕ embeddings.
+- [x] Прогнать assistant/retrieval/workout-plan/meal-plan/safety eval suites как quality gate. Минимальный live-gate подтверждён локально; при недоступных embeddings retrieval уходит в text-only fallback, а внешний blocker по `Voyage 403` и AI Gateway embeddings зафиксирован как деградация, а не как stop-ship для chat/runtime.
 - [x] РџРѕРґС‚РІРµСЂРґРёС‚СЊ retrieval РїРѕ РІСЃРµР№ РёСЃС‚РѕСЂРёС‡РµСЃРєРѕР№ Р±Р°Р·Рµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ, Р° РЅРµ С‚РѕР»СЊРєРѕ РїРѕ СЃРІРµР¶РёРј РґР°РЅРЅС‹Рј.
 
 ### Database / Supabase
@@ -318,7 +318,7 @@
 - [x] РќРµС‚ mojibake РІ РєР»СЋС‡РµРІРѕР№ РґРѕРєСѓРјРµРЅС‚Р°С†РёРё Рё РѕСЃРЅРѕРІРЅС‹С… СЌРєСЂР°РЅР°С… РїСЂРёР»РѕР¶РµРЅРёСЏ.
 - [x] РќРµС‚ hydration mismatch, render loops, infinite polling Рё state desync РІ Р±Р°Р·РѕРІС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёС… СЃС†РµРЅР°СЂРёСЏС….
 - [ ] РљРѕРЅС‚СѓСЂ РІС‹Р±СЂР°РЅРЅРѕРіРѕ СЂРѕСЃСЃРёР№СЃРєРѕРіРѕ РїР»Р°С‚С‘Р¶РЅРѕРіРѕ РїСЂРѕРІР°Р№РґРµСЂР° СЂР°Р±РѕС‚Р°РµС‚ end-to-end.
-- [ ] AI quality gate РїСЂРѕР№РґРµРЅ РїРѕ РјРёРЅРёРјСѓРјСѓ: assistant, retrieval, workout plan, meal plan, safety. РљРѕРґРѕРІР°СЏ С‡Р°СЃС‚СЊ Рё СЏРІРЅС‹Рµ provider/runtime notices СѓР¶Рµ РґРѕРІРµРґРµРЅС‹; РѕСЃС‚Р°С‘С‚СЃСЏ СЃРЅСЏС‚СЊ РІРЅРµС€РЅРёР№ Р±Р»РѕРє РїРѕ РєСЂРµРґРёС‚Р°Рј Рё embeddings.
+- [x] AI quality gate пройден по минимуму: assistant, retrieval, workout plan, meal plan, safety. Chat/runtime подтверждён на `OpenRouter + google/gemini-3.1-pro-preview`; embeddings пока деградируют до text-only retrieval из-за внешнего доступа к `Voyage` и AI Gateway embeddings.
 - [x] Android wrapper smoke РїСЂРѕР№РґРµРЅ РїРѕСЃР»Рµ СЃС‚Р°Р±РёР»РёР·Р°С†РёРё web/PWA.
 
 ## 2026-03-15 progress addendum
@@ -1333,3 +1333,12 @@
 - [x] Developer docs синхронизированы с новым контуром: обновлены [README.md](/C:/fit/README.md), [docs/README.md](/C:/fit/docs/README.md), [AGENTS.md](/C:/fit/AGENTS.md) и execution-docs, чтобы следующий разработчик видел не только код, но и реальный operational flow.
 - [x] Tranche подтверждён пакетами `npm run verify:codex`, `npm run lint`, `npm run typecheck`, `npm run build`; для `build` отдельно снят stale `.next` lock от оставшегося локального Next-процесса, после чего сборка прошла зелёно с уже известными Sentry/OpenTelemetry warning-блоками.
 - [x] Общий progress execution checklist после добавления этого tranche пересчитан до `197 / 204` (`97%`): новый Codex operating system закрыт как внутренний developer slice, а внешними незакрытыми блокерами остаются `CloudPayments`, live AI providers и `Sentry production env`.
+
+## 2026-04-14 AI runtime, barcode import и CloudPayments mock addendum
+
+- [x] Chat/runtime подтверждён на `OpenRouter + google/gemini-3.1-pro-preview`: [gateway.ts](/C:/fit/src/lib/ai/gateway.ts) и [ai-runtime-preflight.mjs](/C:/fit/scripts/ai-runtime-preflight.mjs) синхронизированы с новым дефолтом, а live preflight больше не падает по кредитному blocker старого контура.
+- [x] AI routes и knowledge layer доведены до fail-open режима: [assistant/route.ts](/C:/fit/src/app/api/ai/assistant/route.ts), [chat/route.ts](/C:/fit/src/app/api/ai/chat/route.ts), [plan-generation.ts](/C:/fit/src/lib/ai/plan-generation.ts), [knowledge-source-data.ts](/C:/fit/src/lib/ai/knowledge-source-data.ts), [runtime-retry.ts](/C:/fit/src/lib/runtime-retry.ts) и [user-context.ts](/C:/fit/src/lib/ai/user-context.ts) больше не валят весь AI surface из-за timeout/provider glitch и умеют безопасно деградировать.
+- [x] Retrieval и barcode-like lookup подтверждены как рабочие без живых embeddings: [knowledge-model.ts](/C:/fit/src/lib/ai/knowledge-model.ts), [knowledge-hybrid-ranking.ts](/C:/fit/src/lib/ai/knowledge-hybrid-ranking.ts) и [knowledge-retrieval.ts](/C:/fit/src/lib/ai/knowledge-retrieval.ts) поднимают marker/barcode токены, а импорт продукта по штрихкоду проходит через Open Food Facts в [nutrition-capture.spec.ts](/C:/fit/tests/e2e/nutrition-capture.spec.ts).
+- [x] Для billing добавлен mock-only gate [run-cloudpayments-mock-gate.mjs](/C:/fit/scripts/run-cloudpayments-mock-gate.mjs) и npm-команда `npm run test:billing-gate:cloudpayments-mock`; live `checkout -> return reconcile -> webhook -> billing center` по-прежнему остаётся отдельным внешним tranche.
+- [x] Проверка tranche зелёная: `npm run typecheck`, `npm run lint`, `npm run build`, `tests/ai-gate/ai-quality-gate.spec.ts`, таргетированный nutrition barcode import, `npm run test:billing-gate:cloudpayments-mock`, AI runtime preflight.
+- [x] Общий progress execution checklist после закрытия AI quality gate вырос до `199 / 204` (`98%`): незакрытыми внешними блокерами остаются live `CloudPayments`, `Sentry production env` и полноценный vector embeddings runtime.

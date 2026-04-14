@@ -1,4 +1,5 @@
 import {
+  isExactLookupToken,
   normalizeTextForSearch,
   tokenizeSearchQuery,
   type RetrievedKnowledgeItem,
@@ -150,6 +151,11 @@ function buildRerankScore({
   );
   const exactBoost =
     normalizedQuery && haystack.includes(normalizedQuery) ? 0.1 : 0;
+  const exactLookupBoost = candidate.matchedTerms.some((term) =>
+    isExactLookupToken(term),
+  )
+    ? 0.24
+    : 0;
   const termCoverageBoost = queryTokens.length
     ? (candidate.matchedTerms.length / queryTokens.length) * 0.12
     : 0;
@@ -161,6 +167,7 @@ function buildRerankScore({
   return roundScore(
     candidate.fusedScore +
       exactBoost +
+      exactLookupBoost +
       termCoverageBoost +
       dualSignalBoost +
       sourcePriorBoost +

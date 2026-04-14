@@ -2,12 +2,11 @@ import fs from "node:fs";
 import { chromium, type FullConfig } from "@playwright/test";
 
 import {
+  finishOnboardingIfVisible,
   getAdminE2ECredentials,
   getAuthE2ECredentials,
   hasAdminE2ECredentials,
   hasAuthE2ECredentials,
-  signInAndFinishOnboarding,
-  signInAsAdmin,
 } from "./helpers/auth";
 import {
   ADMIN_STORAGE_STATE_PATH,
@@ -15,122 +14,17 @@ import {
   ensureAuthStateDir,
   writeEmptyStorageState,
 } from "./helpers/auth-state";
-
-type SupabaseAuthResponse = {
-  access_token: string;
-  expires_at?: number;
-  expires_in?: number;
-  refresh_token: string;
-  token_type: string;
-  user: Record<string, unknown>;
-};
-
-type PlaywrightCookie = {
-  name: string;
-  value: string;
-  domain: string;
-  path: string;
-  expires: number;
-  httpOnly: boolean;
-  secure: boolean;
-  sameSite: "Lax";
-};
+import {
+  buildSupabaseAuthCookie,
+  requestSupabasePasswordAuth,
+} from "./helpers/supabase-password-auth";
 
 type AuthCredentials = NonNullable<ReturnType<typeof getAuthE2ECredentials>>;
 
-function getSupabaseProjectRef() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-
-  if (!supabaseUrl) {
-    return null;
-  }
-
-  return new URL(supabaseUrl).host.split(".")[0] ?? null;
-}
-
-function getSupabasePublicKey() {
-  return (
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
-    null
-  );
-}
-
-async function createSupabaseStorageState(
-  baseURL: string,
-  filePath: string,
-  credentials: NonNullable<ReturnType<typeof getAuthE2ECredentials>>,
-) {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabasePublicKey = getSupabasePublicKey();
-  const projectRef = getSupabaseProjectRef();
-
-  if (!supabaseUrl || !supabasePublicKey || !projectRef) {
-    throw new Error("Supabase public env is not configured for Playwright auth bootstrap.");
-  }
-
-  const response = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
-    method: "POST",
-    headers: {
-      apikey: supabasePublicKey,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      email: credentials.email,
-      password: credentials.password,
-    }),
-  });
-
-  const payload = (await response.json().catch(() => null)) as
-    | SupabaseAuthResponse
-    | { error_description?: string; msg?: string }
-    | null;
-
-  if (!response.ok || !payload || !("access_token" in payload)) {
-    throw new Error(
-      payload && "error_description" in payload && payload.error_description
-        ? payload.error_description
-        : payload && "msg" in payload && payload.msg
-          ? payload.msg
-          : "Supabase password auth failed during Playwright bootstrap.",
-    );
-  }
-
-  const origin = new URL(baseURL);
-  const expires =
-    payload.expires_at ??
-    Math.floor(Date.now() / 1_000) + (payload.expires_in ?? 3_600);
-
-  const authCookie: PlaywrightCookie = {
-    name: `sb-${projectRef}-auth-token`,
-    value: `base64-${Buffer.from(JSON.stringify(payload)).toString("base64")}`,
-    domain: origin.hostname,
-    path: "/",
-    expires,
-    httpOnly: false,
-    secure: origin.protocol === "https:",
-    sameSite: "Lax",
-  };
-
-  ensureAuthStateDir();
-  fs.writeFileSync(
-    filePath,
-    JSON.stringify(
-      {
-        cookies: [authCookie],
-        origins: [],
-      },
-      null,
-      2,
-    ),
-  );
-}
-
-async function saveStorageState(
+async function saveSupabaseStorageState(
   baseURL: string,
   filePath: string,
   credentials: AuthCredentials,
-  signIn: (page: Parameters<typeof signInAndFinishOnboarding>[0]) => Promise<void>,
 ) {
   const browser = await chromium.launch();
 
@@ -139,57 +33,22 @@ async function saveStorageState(
       baseURL,
     });
     const page = await context.newPage();
+    const payload = await requestSupabasePasswordAuth(credentials);
 
-    await page.goto("/", {
-      waitUntil: "domcontentloaded",
-      timeout: 30_000,
-    });
-
-    const authResult = await page.evaluate(
-      async (payload) => {
-        const response = await fetch("/api/auth/sign-in", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "same-origin",
-          body: JSON.stringify(payload),
-        });
-
-        const body = (await response.json().catch(() => null)) as
-          | { message?: string }
-          | null;
-
-        return {
-          ok: response.ok,
-          status: response.status,
-          body,
-        };
-      },
-      {
-        email: credentials.email,
-        password: credentials.password,
-      },
-    );
-
-    if (!authResult.ok) {
-      throw new Error(
-        authResult.body?.message ??
-          `App auth route returned ${authResult.status} during Playwright bootstrap.`,
-      );
-    }
+    await context.addCookies([buildSupabaseAuthCookie(baseURL, payload)]);
 
     await page.goto("/dashboard", {
       waitUntil: "domcontentloaded",
       timeout: 30_000,
     });
 
-    if (page.url().includes("/onboarding")) {
-      await signIn(page);
-    } else if (page.url().endsWith("/")) {
-      throw new Error("App auth route did not establish a browser session.");
+    await finishOnboardingIfVisible(page, credentials.fullName);
+
+    if (!page.url().includes("/dashboard")) {
+      throw new Error("Supabase auth bootstrap did not establish a dashboard session.");
     }
 
+    ensureAuthStateDir();
     await context.storageState({
       path: filePath,
     });
@@ -224,16 +83,7 @@ export default async function globalAuthSetup(config: FullConfig) {
     if (!credentials) {
       writeEmptyStorageState(USER_STORAGE_STATE_PATH);
     } else {
-      try {
-        await saveStorageState(
-          baseURL,
-          USER_STORAGE_STATE_PATH,
-          credentials,
-          signInAndFinishOnboarding,
-        );
-      } catch {
-        await createSupabaseStorageState(baseURL, USER_STORAGE_STATE_PATH, credentials);
-      }
+      await saveSupabaseStorageState(baseURL, USER_STORAGE_STATE_PATH, credentials);
     }
   } else {
     writeEmptyStorageState(USER_STORAGE_STATE_PATH);
@@ -245,16 +95,7 @@ export default async function globalAuthSetup(config: FullConfig) {
     if (!credentials) {
       writeEmptyStorageState(ADMIN_STORAGE_STATE_PATH);
     } else {
-      try {
-        await saveStorageState(
-          baseURL,
-          ADMIN_STORAGE_STATE_PATH,
-          credentials,
-          signInAsAdmin,
-        );
-      } catch {
-        await createSupabaseStorageState(baseURL, ADMIN_STORAGE_STATE_PATH, credentials);
-      }
+      await saveSupabaseStorageState(baseURL, ADMIN_STORAGE_STATE_PATH, credentials);
     }
   } else {
     writeEmptyStorageState(ADMIN_STORAGE_STATE_PATH);

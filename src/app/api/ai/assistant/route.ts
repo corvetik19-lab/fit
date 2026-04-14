@@ -34,11 +34,13 @@ import {
   buildAssistantWorkoutPlanApplyLabel,
 } from "@/lib/ai/assistant-runtime-copy";
 import {
+  buildCompactSportsCoachPrompt,
   buildSportsDomainSystemPrompt,
   detectAssistantGuardrail,
 } from "@/lib/ai/domain-policy";
 import { models } from "@/lib/ai/gateway";
 import { retrieveKnowledgeMatches } from "@/lib/ai/knowledge";
+import { AI_ASSISTANT_MAX_OUTPUT_TOKENS } from "@/lib/ai/runtime-budgets";
 import {
   applyAiPlanProposal,
   approveAiPlanProposal,
@@ -51,7 +53,7 @@ import {
 } from "@/lib/ai/plan-generation";
 import { isAiProviderConfigurationFailure } from "@/lib/ai/runtime-errors";
 import { mealPlanSchema, workoutPlanSchema } from "@/lib/ai/schemas";
-import { getAiRuntimeContext } from "@/lib/ai/user-context";
+import { createEmptyAiUserContext, getAiRuntimeContext } from "@/lib/ai/user-context";
 import { searchWebSnippets } from "@/lib/ai/web-search";
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import {
@@ -62,11 +64,15 @@ import {
 } from "@/lib/billing-access";
 import { hasAiRuntimeEnv } from "@/lib/env";
 import { logger } from "@/lib/logger";
+import { withTimeout, withTransientRetry } from "@/lib/runtime-retry";
 import { hasRiskyIntent } from "@/lib/safety";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
+
+const ASSISTANT_CONTEXT_TIMEOUT_MS = 10_000;
+const ASSISTANT_KNOWLEDGE_TIMEOUT_MS = 8_000;
 
 const assistantRequestSchema = z.object({
   allowWebSearch: z.boolean().optional(),
@@ -238,6 +244,57 @@ async function persistAssistantReply(input: {
   await touchAiChatSession(input.supabase, input.userId, input.sessionId);
 }
 
+function shouldUseAssistantTools(message: string, allowWebSearch: boolean) {
+  if (allowWebSearch) {
+    return true;
+  }
+
+  return /(plan|proposal|approve|apply|meal|workout|рацион|план|черновик|подтвер|примен|тренир)/i.test(
+    message,
+  );
+}
+
+async function loadAssistantContext(
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
+  userId: string,
+) {
+  try {
+    const result = await withTimeout(
+      withTransientRetry(() => getAiRuntimeContext(supabase, userId)),
+      ASSISTANT_CONTEXT_TIMEOUT_MS,
+      "ai assistant runtime context",
+    );
+
+    return result.context;
+  } catch (error) {
+    logger.warn("ai assistant is using fallback runtime context", {
+      error,
+      userId,
+    });
+    return createEmptyAiUserContext();
+  }
+}
+
+async function loadAssistantKnowledge(
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
+  userId: string,
+  message: string,
+) {
+  try {
+    return await withTimeout(
+      withTransientRetry(() => retrieveKnowledgeMatches(supabase, userId, message, 6)),
+      ASSISTANT_KNOWLEDGE_TIMEOUT_MS,
+      "ai assistant knowledge retrieval",
+    );
+  } catch (error) {
+    logger.warn("ai assistant is using fallback knowledge context", {
+      error,
+      userId,
+    });
+    return [];
+  }
+}
+
 export async function POST(request: Request) {
   try {
     if (!hasAiRuntimeEnv()) {
@@ -300,6 +357,7 @@ export async function POST(request: Request) {
       });
 
       const result = streamText({
+        maxOutputTokens: AI_ASSISTANT_MAX_OUTPUT_TOKENS,
         model: models.chat,
         onError: ({ error }) => {
           logger.warn("ai assistant stream failed", {
@@ -343,6 +401,7 @@ export async function POST(request: Request) {
       });
 
       const result = streamText({
+        maxOutputTokens: AI_ASSISTANT_MAX_OUTPUT_TOKENS,
         model: models.chat,
         onError: ({ error }) => {
           logger.warn("ai assistant stream failed", {
@@ -381,9 +440,10 @@ export async function POST(request: Request) {
     }
 
     const [knowledge, context] = await Promise.all([
-      retrieveKnowledgeMatches(supabase, user.id, lastUserText, 8),
-      getAiRuntimeContext(supabase, user.id).then((result) => result.context),
+      loadAssistantKnowledge(supabase, user.id, lastUserText),
+      loadAssistantContext(supabase, user.id),
     ]);
+    const useAssistantTools = shouldUseAssistantTools(lastUserText, allowWebSearch);
 
     const tools = {
       createWorkoutPlan: tool({
@@ -562,6 +622,7 @@ export async function POST(request: Request) {
     };
 
     const result = streamText({
+      maxOutputTokens: AI_ASSISTANT_MAX_OUTPUT_TOKENS,
       model: models.chat,
       messages: convertToModelMessages(body.messages),
       onError: ({ error }) => {
@@ -571,13 +632,23 @@ export async function POST(request: Request) {
           userId: user.id,
         });
       },
-      stopWhen: stepCountIs(5),
-      system: buildSportsDomainSystemPrompt({
-        allowWebSearch,
-        context,
-        knowledge,
-      }),
-      tools,
+      ...(useAssistantTools
+        ? {
+            stopWhen: stepCountIs(5),
+            system: buildSportsDomainSystemPrompt({
+              allowWebSearch,
+              context,
+              knowledge,
+            }),
+            tools,
+          }
+        : {
+            system: buildCompactSportsCoachPrompt({
+              allowWebSearch,
+              context,
+              knowledge,
+            }),
+          }),
     });
 
     result.consumeStream({

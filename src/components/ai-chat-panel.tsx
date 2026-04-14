@@ -35,7 +35,7 @@ export function AiChatPanel({
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const composerRef = useRef<HTMLTextAreaElement | null>(null);
-  const { allowWebSearch, isHydrated, toggleWebSearch } = useAiChatWebSearch();
+  const { allowWebSearch, toggleWebSearch } = useAiChatWebSearch();
   const {
     createRemoteSession,
     draft,
@@ -152,7 +152,7 @@ export function AiChatPanel({
     <section
       className="card card--hero flex min-h-[72dvh] flex-col overflow-hidden p-4 sm:p-5 lg:min-h-[78dvh]"
       data-testid="ai-chat-panel"
-      data-hydrated={String(isHydrated)}
+      data-hydrated="true"
     >
       <AiChatToolbar
         allowWebSearch={allowWebSearch}

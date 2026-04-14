@@ -92,6 +92,10 @@ if (aiReady) {
       status: 1,
     });
   } else {
+    for (const warning of aiRuntimePreflight.warnings ?? []) {
+      console.log(`[warn] ${warning}`);
+    }
+
     suiteResults.push({
       label: "AI runtime gate",
       status: runScript("AI runtime gate", "test:ai-gate"),

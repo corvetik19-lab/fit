@@ -16,6 +16,7 @@ import {
   buildMealPhotoUserChatMessage,
   buildMealPhotoVisionPrompt,
 } from "@/lib/ai/meal-photo-runtime-copy";
+import { AI_VISION_MAX_OUTPUT_TOKENS } from "@/lib/ai/runtime-budgets";
 import { mealPhotoAnalysisSchema } from "@/lib/ai/schemas";
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import {
@@ -112,6 +113,7 @@ export async function POST(request: Request) {
 
     const imageBytes = new Uint8Array(await image.arrayBuffer());
     const result = await generateObject({
+      maxOutputTokens: AI_VISION_MAX_OUTPUT_TOKENS,
       model: models.vision,
       schema: mealPhotoAnalysisSchema,
       messages: [

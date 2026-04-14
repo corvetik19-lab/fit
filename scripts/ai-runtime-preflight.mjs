@@ -1,4 +1,5 @@
 import nextEnv from "@next/env";
+import { embed } from "ai";
 
 const { loadEnvConfig } = nextEnv;
 
@@ -6,6 +7,7 @@ loadEnvConfig(process.cwd());
 
 const DEFAULT_OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1";
 const DEFAULT_OPENROUTER_CHAT_MODEL = "google/gemini-3.1-pro-preview";
+const DEFAULT_GATEWAY_EMBEDDING_MODEL = "voyage/voyage-3-large";
 const DEFAULT_VOYAGE_EMBEDDING_MODEL = "voyage-3-large";
 const VOYAGE_EMBEDDINGS_URL = "https://api.voyageai.com/v1/embeddings";
 
@@ -111,8 +113,34 @@ async function verifyVoyage() {
   return `Voyage ${response.status}${payload ? `: ${payload}` : ""}`;
 }
 
+async function verifyGatewayEmbeddings() {
+  const apiKey = process.env.AI_GATEWAY_API_KEY?.trim();
+
+  if (!apiKey) {
+    return null;
+  }
+
+  try {
+    const result = await embed({
+      model: DEFAULT_GATEWAY_EMBEDDING_MODEL,
+      value: "runtime preflight",
+    });
+
+    if (!Array.isArray(result.embedding) || result.embedding.length === 0) {
+      return "AI Gateway embeddings returned an empty vector";
+    }
+
+    return null;
+  } catch (error) {
+    return `AI Gateway embeddings failed: ${
+      error instanceof Error ? trimText(error.message) : trimText(String(error))
+    }`;
+  }
+}
+
 export async function runAiRuntimePreflight() {
   const failures = [];
+  const warnings = [];
 
   try {
     const openRouterFailure = await verifyOpenRouter();
@@ -127,21 +155,64 @@ export async function runAiRuntimePreflight() {
     );
   }
 
-  try {
-    const voyageFailure = await verifyVoyage();
-    if (voyageFailure) {
-      failures.push(voyageFailure);
-    }
-  } catch (error) {
-    failures.push(
-      `Voyage preflight failed: ${
+  const hasVoyage = Boolean(process.env.VOYAGE_API_KEY?.trim());
+  const hasGateway = Boolean(process.env.AI_GATEWAY_API_KEY?.trim());
+
+  if (hasVoyage) {
+    try {
+      const voyageFailure = await verifyVoyage();
+      if (voyageFailure) {
+        if (hasGateway) {
+          const gatewayFailure = await verifyGatewayEmbeddings();
+          if (gatewayFailure) {
+            warnings.push(
+              `Embeddings runtime unavailable; retrieval will run in text-only mode: ${voyageFailure}; ${gatewayFailure}`,
+            );
+          } else {
+            warnings.push(
+              `Voyage direct embeddings unavailable, using AI Gateway fallback: ${voyageFailure}`,
+            );
+          }
+        } else {
+          warnings.push(
+            `Voyage direct embeddings unavailable; retrieval will run in text-only mode: ${voyageFailure}`,
+          );
+        }
+      }
+    } catch (error) {
+      const message = `Voyage preflight failed: ${
         error instanceof Error ? error.message : String(error)
-      }`,
-    );
+      }`;
+
+      if (hasGateway) {
+        const gatewayFailure = await verifyGatewayEmbeddings();
+        if (gatewayFailure) {
+          warnings.push(
+            `Embeddings runtime unavailable; retrieval will run in text-only mode: ${message}; ${gatewayFailure}`,
+          );
+        } else {
+          warnings.push(
+            `Voyage direct embeddings unavailable, using AI Gateway fallback: ${message}`,
+          );
+        }
+      } else {
+        warnings.push(
+          `Voyage direct embeddings unavailable; retrieval will run in text-only mode: ${message}`,
+        );
+      }
+    }
+  } else if (hasGateway) {
+    const gatewayFailure = await verifyGatewayEmbeddings();
+    if (gatewayFailure) {
+      warnings.push(
+        `AI Gateway embeddings unavailable; retrieval will run in text-only mode: ${gatewayFailure}`,
+      );
+    }
   }
 
   return {
     ok: failures.length === 0,
     failures,
+    warnings,
   };
 }

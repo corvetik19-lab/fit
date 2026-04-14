@@ -1,16 +1,19 @@
 import { generateObject } from "ai";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { z } from "zod";
 
 import { models } from "@/lib/ai/gateway";
 import { retrieveKnowledgeMatches } from "@/lib/ai/knowledge";
 import { createAiPlanProposal } from "@/lib/ai/proposals";
+import { AI_PLAN_MAX_OUTPUT_TOKENS } from "@/lib/ai/runtime-budgets";
 import { mealPlanSchema, workoutPlanSchema } from "@/lib/ai/schemas";
-import { formatStructuredKnowledgeForPrompt } from "@/lib/ai/structured-knowledge";
-import { getAiRuntimeContext } from "@/lib/ai/user-context";
-import { formatNutritionCoachingSignalsForPrompt } from "@/lib/nutrition/coaching-signals";
-import { formatNutritionMealPatternsForPrompt } from "@/lib/nutrition/meal-patterns";
-import { formatNutritionStrategyForPrompt } from "@/lib/nutrition/strategy-recommendations";
-import { formatWorkoutCoachingSignalsForPrompt } from "@/lib/workout/coaching-signals";
+import {
+  createEmptyAiUserContext,
+  getAiRuntimeContext,
+  type AiUserContext,
+} from "@/lib/ai/user-context";
+import { logger } from "@/lib/logger";
+import { withTimeout, withTransientRetry } from "@/lib/runtime-retry";
 
 type MealPlanGenerationInput = {
   dietaryNotes?: string;
@@ -26,16 +29,462 @@ type WorkoutPlanGenerationInput = {
   goal?: string | null;
 };
 
-function buildKnowledgeExcerpt(
-  knowledge: Awaited<ReturnType<typeof retrieveKnowledgeMatches>>,
-) {
+type MealPlan = z.infer<typeof mealPlanSchema>;
+type WorkoutPlan = z.infer<typeof workoutPlanSchema>;
+
+const PLAN_CONTEXT_TIMEOUT_MS = 12_000;
+const PLAN_KNOWLEDGE_TIMEOUT_MS = 10_000;
+const PLAN_AI_TIMEOUT_MS = 18_000;
+
+function truncateText(value: string, maxLength: number) {
+  return value.length > maxLength ? `${value.slice(0, maxLength)}...` : value;
+}
+
+function roundPositiveInt(value: number, minimum: number) {
+  return Math.max(minimum, Math.round(value));
+}
+
+function resolveGoalLabel(goal: string) {
+  switch (goal) {
+    case "fat_loss":
+      return "снижение веса";
+    case "muscle_gain":
+      return "набор мышц";
+    case "performance":
+      return "рост спортивной формы";
+    case "maintenance":
+      return "поддержание формы";
+    default:
+      return goal.trim() || "поддержание формы";
+  }
+}
+
+function buildKnowledgeExcerpt(content: string) {
+  return truncateText(content.replace(/\s+/g, " ").trim(), 180);
+}
+
+function buildCompactKnowledgeSection(knowledge: Awaited<ReturnType<typeof retrieveKnowledgeMatches>>) {
   if (!knowledge.length) {
-    return "Исторический RAG-контекст пока пуст. Если данных не хватает, скажи об этом прямо.";
+    return "No personal knowledge snippets are available.";
   }
 
   return knowledge
-    .map((item, index) => `[${index + 1}] ${item.sourceType}: ${item.content}`)
-    .join("\n\n");
+    .slice(0, 3)
+    .map((item, index) => `- [${index + 1}] ${item.sourceType}: ${buildKnowledgeExcerpt(item.content)}`)
+    .join("\n");
+}
+
+function buildCompactContextSummary(context: AiUserContext) {
+  const profileBits = [
+    `goal=${context.goal.goalType ?? "unknown"}`,
+    `weekly_training_days=${context.goal.weeklyTrainingDays ?? "unknown"}`,
+    `weight_kg=${context.latestBodyMetrics.weightKg ?? context.onboarding.weightKg ?? "unknown"}`,
+    `fitness_level=${context.onboarding.fitnessLevel ?? "unknown"}`,
+    `kcal_target=${context.nutritionTargets.kcalTarget ?? "unknown"}`,
+    `protein_target=${context.nutritionTargets.proteinTarget ?? "unknown"}`,
+  ];
+
+  if (context.onboarding.equipment.length) {
+    profileBits.push(`equipment=${context.onboarding.equipment.join(", ")}`);
+  }
+
+  if (context.onboarding.injuries.length) {
+    profileBits.push(`injuries=${context.onboarding.injuries.join(", ")}`);
+  }
+
+  if (context.onboarding.dietaryPreferences.length) {
+    profileBits.push(`dietary_preferences=${context.onboarding.dietaryPreferences.join(", ")}`);
+  }
+
+  return profileBits.join("; ");
+}
+
+async function loadPlanContext(
+  supabase: SupabaseClient,
+  userId: string,
+  proposalType: "meal_plan" | "workout_plan",
+) {
+  try {
+    const result = await withTimeout(
+      withTransientRetry(() => getAiRuntimeContext(supabase, userId)),
+      PLAN_CONTEXT_TIMEOUT_MS,
+      `${proposalType} runtime context`,
+    );
+
+    return result.context;
+  } catch (error) {
+    logger.warn("plan generation is using fallback runtime context", {
+      error,
+      proposalType,
+      userId,
+    });
+    return createEmptyAiUserContext();
+  }
+}
+
+async function loadPlanKnowledge(
+  supabase: SupabaseClient,
+  userId: string,
+  proposalType: "meal_plan" | "workout_plan",
+  query: string,
+) {
+  try {
+    return await withTimeout(
+      withTransientRetry(() => retrieveKnowledgeMatches(supabase, userId, query, 6)),
+      PLAN_KNOWLEDGE_TIMEOUT_MS,
+      `${proposalType} knowledge retrieval`,
+    );
+  } catch (error) {
+    logger.warn("plan generation is using fallback knowledge context", {
+      error,
+      proposalType,
+      userId,
+    });
+    return [];
+  }
+}
+
+async function tryGenerateStructuredPlan<T>({
+  prompt,
+  proposalType,
+  schema,
+  userId,
+}: {
+  prompt: string;
+  proposalType: "meal_plan" | "workout_plan";
+  schema: z.ZodType<T>;
+  userId: string;
+}) {
+  try {
+    const result = await withTimeout(
+      generateObject({
+        maxOutputTokens: AI_PLAN_MAX_OUTPUT_TOKENS,
+        model: models.chat,
+        prompt,
+        schema,
+      }),
+      PLAN_AI_TIMEOUT_MS,
+      `${proposalType} ai generation`,
+    );
+
+    return result.object;
+  } catch (error) {
+    logger.warn("plan generation is using deterministic fallback", {
+      error,
+      proposalType,
+      userId,
+    });
+    return null;
+  }
+}
+
+function distributeIntegers(total: number, weights: number[]) {
+  const rawValues = weights.map((weight) => total * weight);
+  const values = rawValues.map((value) => Math.floor(value));
+  let remainder = total - values.reduce((sum, value) => sum + value, 0);
+
+  const rankedRemainders = rawValues
+    .map((value, index) => ({
+      fraction: value - Math.floor(value),
+      index,
+    }))
+    .sort((left, right) => right.fraction - left.fraction);
+
+  for (const entry of rankedRemainders) {
+    if (remainder <= 0) {
+      break;
+    }
+
+    values[entry.index] += 1;
+    remainder -= 1;
+  }
+
+  return values;
+}
+
+function resolveMealWeights(mealsPerDay: number) {
+  switch (mealsPerDay) {
+    case 3:
+      return [0.3, 0.4, 0.3];
+    case 5:
+      return [0.22, 0.26, 0.14, 0.2, 0.18];
+    case 2:
+      return [0.45, 0.55];
+    default:
+      return [0.25, 0.35, 0.15, 0.25];
+  }
+}
+
+function resolveMealTemplates(options: {
+  dairyFree: boolean;
+  highProtein: boolean;
+  mealsPerDay: number;
+}) {
+  const breakfastItems = options.dairyFree
+    ? ["Овсянка на воде", "Яйца", "Ягоды"]
+    : ["Овсянка", "Греческий йогурт", "Ягоды"];
+  const snackProtein = options.dairyFree
+    ? "Протеиновый напиток без молока"
+    : "Творог или йогурт";
+
+  const templates = [
+    {
+      name: "Завтрак",
+      items: options.highProtein
+        ? [...breakfastItems, "Фрукты"]
+        : breakfastItems,
+    },
+    {
+      name: "Обед",
+      items: ["Курица или индейка", "Рис или гречка", "Овощи"],
+    },
+    {
+      name: "Перекус",
+      items: [snackProtein, "Фрукты", "Орехи"],
+    },
+    {
+      name: "Ужин",
+      items: ["Рыба или постная говядина", "Картофель или киноа", "Салат"],
+    },
+    {
+      name: "Второй перекус",
+      items: options.dairyFree
+        ? ["Хумус с овощами", "Яблоко"]
+        : ["Кефир или йогурт", "Фрукты"],
+    },
+  ];
+
+  return templates.slice(0, options.mealsPerDay);
+}
+
+function buildDeterministicMealPlan(input: {
+  context: AiUserContext;
+  dietaryNotes: string;
+  goal: string;
+  kcalTarget: number;
+  mealsPerDay: number;
+}): MealPlan {
+  const weightKg = input.context.latestBodyMetrics.weightKg ?? input.context.onboarding.weightKg ?? 80;
+  const proteinTarget = roundPositiveInt(
+    input.context.nutritionTargets.proteinTarget ??
+      weightKg * (input.goal === "muscle_gain" ? 2 : 1.8),
+    120,
+  );
+  const fatTarget = roundPositiveInt(
+    input.context.nutritionTargets.fatTarget ?? input.kcalTarget * 0.28 / 9,
+    55,
+  );
+  const remainingCarbs =
+    (input.kcalTarget - proteinTarget * 4 - fatTarget * 9) / 4;
+  const carbsTarget = roundPositiveInt(remainingCarbs, 90);
+  const dairyFree = /без\s*молок|dairy|lactose|milk/iu.test(input.dietaryNotes);
+  const highProtein = /белк|protein/iu.test(input.dietaryNotes);
+  const weights = resolveMealWeights(input.mealsPerDay);
+  const mealCalories = distributeIntegers(input.kcalTarget, weights);
+  const templates = resolveMealTemplates({
+    dairyFree,
+    highProtein,
+    mealsPerDay: input.mealsPerDay,
+  });
+
+  return {
+    title: `План питания: ${resolveGoalLabel(input.goal)}`,
+    caloriesTarget: input.kcalTarget,
+    macros: {
+      protein: proteinTarget,
+      fat: fatTarget,
+      carbs: carbsTarget,
+    },
+    meals: templates.map((template, index) => ({
+      name: template.name,
+      kcal: mealCalories[index] ?? Math.floor(input.kcalTarget / input.mealsPerDay),
+      items: template.items,
+    })),
+  };
+}
+
+function hasEquipment(equipment: string[], patterns: RegExp[]) {
+  return patterns.some((pattern) => equipment.some((item) => pattern.test(item)));
+}
+
+function resolveWorkoutLibrary(equipment: string[]) {
+  const hasDumbbells = hasEquipment(equipment, [/гантел/iu, /dumbbell/iu]);
+  const hasPullUpBar = hasEquipment(equipment, [/турник/iu, /pull/iu, /bar/iu]);
+
+  return {
+    lowerBody: hasDumbbells
+      ? [
+          { name: "Гоблет-присед", sets: 4, reps: "6-8" },
+          { name: "Румынская тяга с гантелями", sets: 3, reps: "8-10" },
+          { name: "Болгарские выпады", sets: 3, reps: "8-10" },
+        ]
+      : [
+          { name: "Приседания с паузой", sets: 4, reps: "10-15" },
+          { name: "Выпады назад", sets: 3, reps: "10-12" },
+          { name: "Ягодичный мост", sets: 3, reps: "12-15" },
+        ],
+    pull: hasPullUpBar
+      ? [
+          { name: "Подтягивания", sets: 4, reps: "5-8" },
+          { name: "Негативные подтягивания или вис", sets: 2, reps: "20-30 сек" },
+        ]
+      : [{ name: "Тяга в наклоне с полотенцем или лентой", sets: 4, reps: "10-12" }],
+    row: hasDumbbells
+      ? [{ name: "Тяга гантели в наклоне", sets: 4, reps: "8-10" }]
+      : [{ name: "Тяга корпуса к столу или опоре", sets: 3, reps: "8-12" }],
+    push: hasDumbbells
+      ? [
+          { name: "Жим гантелей лёжа или на полу", sets: 4, reps: "6-10" },
+          { name: "Жим гантелей стоя", sets: 3, reps: "8-10" },
+        ]
+      : [
+          { name: "Отжимания", sets: 4, reps: "8-15" },
+          { name: "Пайк-отжимания", sets: 3, reps: "6-10" },
+        ],
+    accessory: hasDumbbells
+      ? [
+          { name: "Разведение гантелей в стороны", sets: 3, reps: "12-15" },
+          { name: "Сгибание рук с гантелями", sets: 3, reps: "10-12" },
+        ]
+      : [
+          { name: "Планка с касанием плеч", sets: 3, reps: "20-30 сек" },
+          { name: "Супермен", sets: 3, reps: "12-15" },
+        ],
+    core: [
+      { name: "Планка", sets: 3, reps: "30-45 сек" },
+      { name: "Dead bug", sets: 3, reps: "8-10 на сторону" },
+    ],
+  };
+}
+
+function buildWorkoutDayTemplates(input: {
+  context: AiUserContext;
+  daysPerWeek: number;
+  equipment: string[];
+  focus: string;
+  goal: string;
+}) {
+  const library = resolveWorkoutLibrary(input.equipment);
+  const focusLabel = input.focus.trim() || "базовые движения и контроль техники";
+
+  const templates: WorkoutPlan["days"] = [
+    {
+      day: "День 1",
+      focus: `Спина и тяговые движения (${focusLabel})`,
+      exercises: [
+        ...library.pull,
+        ...library.row,
+        library.accessory[0]!,
+        library.core[0]!,
+      ],
+    },
+    {
+      day: "День 2",
+      focus: "Ноги, жим и устойчивость корпуса",
+      exercises: [
+        ...library.lowerBody.slice(0, 2),
+        library.push[0]!,
+        library.core[1]!,
+        library.lowerBody[2]!,
+      ],
+    },
+    {
+      day: "День 3",
+      focus: "Полное тело и безопасный прогресс",
+      exercises: [
+        library.pull[0]!,
+        library.push[0]!,
+        library.lowerBody[0]!,
+        library.push[1]!,
+        library.core[0]!,
+      ],
+    },
+    {
+      day: "День 4",
+      focus: "Объём без отказа и контроль восстановления",
+      exercises: [
+        library.row[0]!,
+        library.push[1]!,
+        library.lowerBody[1]!,
+        library.accessory[0]!,
+        library.core[1]!,
+      ],
+    },
+    {
+      day: "День 5",
+      focus: "Лёгкий full-body и техника",
+      exercises: [
+        library.lowerBody[0]!,
+        library.pull[0]!,
+        library.push[0]!,
+        library.accessory.at(-1) ?? library.core[0]!,
+      ],
+    },
+  ];
+
+  return templates.slice(0, Math.max(1, Math.min(input.daysPerWeek, templates.length)));
+}
+
+function buildDeterministicWorkoutPlan(input: {
+  context: AiUserContext;
+  daysPerWeek: number;
+  equipment: string[];
+  focus: string;
+  goal: string;
+}): WorkoutPlan {
+  const injuries = input.context.onboarding.injuries.length
+    ? `Учтены ограничения: ${input.context.onboarding.injuries.join(", ")}.`
+    : "Без отказных подходов и с запасом 1-2 повтора.";
+
+  return {
+    title: `План тренировок: ${resolveGoalLabel(input.goal)}`,
+    summary: `Программа на ${input.daysPerWeek} тренировки в неделю с упором на ${input.focus || "базовые движения"}. ${injuries}`,
+    days: buildWorkoutDayTemplates(input),
+  };
+}
+
+function buildMealPlanPrompt(input: {
+  context: AiUserContext;
+  dietaryNotes: string;
+  goal: string;
+  kcalTarget: number;
+  knowledge: Awaited<ReturnType<typeof retrieveKnowledgeMatches>>;
+  mealsPerDay: number;
+}) {
+  return `Create a compact meal plan draft for the fit app.
+Return only a JSON object that matches the schema.
+All visible strings must be in Russian.
+Keep the output compact: exactly ${input.mealsPerDay} meals, 2-4 food items per meal, no markdown.
+
+User goal: ${input.goal}
+Calories target: ${input.kcalTarget}
+Meals per day: ${input.mealsPerDay}
+Dietary notes: ${input.dietaryNotes || "none"}
+Context: ${buildCompactContextSummary(input.context)}
+Knowledge:
+${buildCompactKnowledgeSection(input.knowledge)}`;
+}
+
+function buildWorkoutPlanPrompt(input: {
+  context: AiUserContext;
+  daysPerWeek: number;
+  equipment: string[];
+  focus: string;
+  goal: string;
+  knowledge: Awaited<ReturnType<typeof retrieveKnowledgeMatches>>;
+}) {
+  return `Create a compact workout plan draft for the fit app.
+Return only a JSON object that matches the schema.
+All visible strings must be in Russian.
+Keep the output compact: exactly ${input.daysPerWeek} training days, 4-5 exercises per day, safe volume, no markdown.
+
+User goal: ${input.goal}
+Days per week: ${input.daysPerWeek}
+Equipment: ${input.equipment.join(", ")}
+Focus: ${input.focus}
+Context: ${buildCompactContextSummary(input.context)}
+Knowledge:
+${buildCompactKnowledgeSection(input.knowledge)}`;
 }
 
 export async function generateMealPlanProposalForUser(
@@ -43,84 +492,64 @@ export async function generateMealPlanProposalForUser(
   userId: string,
   input: MealPlanGenerationInput,
 ) {
-  const { context } = await getAiRuntimeContext(supabase, userId);
+  const context = await loadPlanContext(supabase, userId, "meal_plan");
   const goal = input.goal ?? context.goal.goalType ?? "maintenance";
   const kcalTarget = input.kcalTarget ?? context.nutritionTargets.kcalTarget ?? 2200;
   const dietaryNotes =
     input.dietaryNotes ??
     context.onboarding.dietaryPreferences.join(", ") ??
     "без дополнительных ограничений";
-  const mealsPerDay = input.mealsPerDay ?? 4;
-  const knowledge = await retrieveKnowledgeMatches(
+  const mealsPerDay = Math.max(2, Math.min(input.mealsPerDay ?? 4, 5));
+  const knowledge = await loadPlanKnowledge(
     supabase,
     userId,
-    `Питание, рацион, калории, белок и история пользователя. Цель ${goal}. Калории ${kcalTarget}. Ограничения ${dietaryNotes}.`,
-    8,
+    "meal_plan",
+    `Meal plan for ${goal}; kcal ${kcalTarget}; meals ${mealsPerDay}; notes ${dietaryNotes}`,
   );
 
-  const result = await generateObject({
-    model: models.chat,
-    schema: mealPlanSchema,
-    prompt: `Собери proposal плана питания для пользователя фитнес-приложения.
-
-Контекст пользователя:
-- Цель: ${goal}
-- Целевая калорийность: ${kcalTarget}
-- Приёмов пищи в день: ${mealsPerDay}
-- Пол: ${context.onboarding.sex ?? "не указан"}
-- Возраст: ${context.onboarding.age ?? "не указан"}
-- Рост: ${context.onboarding.heightCm ?? "не указан"}
-- Вес: ${context.onboarding.weightKg ?? "не указан"}
-- Уровень подготовки: ${context.onboarding.fitnessLevel ?? "не указан"}
-- Пищевые предпочтения: ${context.onboarding.dietaryPreferences.join(", ") || "не указаны"}
-- Дополнительные комментарии: ${dietaryNotes || "нет"}
-- Свежая сводка по питанию: ${JSON.stringify(context.latestNutritionSummary)}
-- Средняя калорийность за 7 дней: ${context.nutritionInsights.avgKcalLast7 ?? "нет данных"}
-- Средний белок за 7 дней: ${context.nutritionInsights.avgProteinLast7 ?? "нет данных"}
-- Отклонение от цели по калориям: ${context.nutritionInsights.kcalDeltaFromTarget ?? "нет данных"}
-- Отклонение от цели по белку: ${context.nutritionInsights.proteinDeltaFromTarget ?? "нет данных"}
-
-Коуч-сигналы по тренировочной истории:
-${formatWorkoutCoachingSignalsForPrompt(context.workoutInsights.coachingSignals)}
-
-Пищевые коуч-сигналы:
-${formatNutritionCoachingSignalsForPrompt(context.nutritionInsights.coachingSignals)}
-
-Meal-level паттерны питания:
-${formatNutritionMealPatternsForPrompt(context.nutritionInsights.mealPatterns)}
-
-Приоритетные рекомендации по рациону:
-${formatNutritionStrategyForPrompt(context.nutritionInsights.strategy)}
-
-Нормализованные факты и приоритеты:
-${formatStructuredKnowledgeForPrompt(context.structuredKnowledge)}
-
-Исторический RAG-контекст:
-${buildKnowledgeExcerpt(knowledge)}
-
-Правила:
-- ответ должен быть практичным и не медицинским;
-- учитывай цель пользователя, целевую калорийность и всю доступную историю питания;
-- не предлагай экстремальные дефициты, голодание или рискованные схемы;
-- план должен быть реалистичным и пригодным для ежедневного логирования в приложении.`,
+  const prompt = buildMealPlanPrompt({
+    context,
+    dietaryNotes,
+    goal,
+    kcalTarget,
+    knowledge,
+    mealsPerDay,
   });
-
-  return createAiPlanProposal(supabase, {
-    userId,
+  const aiProposal = await tryGenerateStructuredPlan({
+    prompt,
     proposalType: "meal_plan",
-    payload: {
-      kind: "meal_plan",
-      request: {
-        goal,
-        kcalTarget,
-        dietaryNotes,
-        mealsPerDay,
-      },
-      context,
-      knowledge,
-      proposal: result.object,
-    },
+    schema: mealPlanSchema,
+    userId,
   });
+  const proposal =
+    aiProposal ??
+    buildDeterministicMealPlan({
+      context,
+      dietaryNotes,
+      goal,
+      kcalTarget,
+      mealsPerDay,
+    });
+
+  return withTransientRetry(() =>
+    createAiPlanProposal(supabase, {
+      userId,
+      proposalType: "meal_plan",
+      payload: {
+        kind: "meal_plan",
+        request: {
+          goal,
+          kcalTarget,
+          dietaryNotes,
+          mealsPerDay,
+        },
+        context,
+        generationMode: aiProposal ? "model" : "deterministic_fallback",
+        knowledge,
+        proposal,
+      },
+    }),
+  );
 }
 
 export async function generateWorkoutPlanProposalForUser(
@@ -128,87 +557,63 @@ export async function generateWorkoutPlanProposalForUser(
   userId: string,
   input: WorkoutPlanGenerationInput,
 ) {
-  const { context } = await getAiRuntimeContext(supabase, userId);
+  const context = await loadPlanContext(supabase, userId, "workout_plan");
   const goal = input.goal ?? context.goal.goalType ?? "maintenance";
   const equipment = input.equipment?.length
     ? input.equipment
     : context.onboarding.equipment.length
       ? context.onboarding.equipment
       : ["собственный вес"];
-  const daysPerWeek = input.daysPerWeek ?? context.goal.weeklyTrainingDays ?? 3;
-  const focus = input.focus ?? "общий прогресс без перегруза";
-  const knowledge = await retrieveKnowledgeMatches(
+  const daysPerWeek = Math.max(2, Math.min(input.daysPerWeek ?? context.goal.weeklyTrainingDays ?? 3, 5));
+  const focus = input.focus ?? "спина и базовые движения";
+  const knowledge = await loadPlanKnowledge(
     supabase,
     userId,
-    `Тренировки, упражнения, ограничения, восстановление и прогресс пользователя. Цель ${goal}. Дней ${daysPerWeek}. Фокус ${focus}.`,
-    8,
+    "workout_plan",
+    `Workout plan for ${goal}; days ${daysPerWeek}; focus ${focus}; equipment ${equipment.join(", ")}`,
   );
 
-  const result = await generateObject({
-    model: models.chat,
-    schema: workoutPlanSchema,
-    prompt: `Собери proposal тренировочного плана для пользователя фитнес-приложения.
-
-Контекст пользователя:
-- Цель: ${goal}
-- Тренировочных дней в неделю: ${daysPerWeek}
-- Оборудование: ${equipment.join(", ")}
-- Уровень подготовки: ${context.onboarding.fitnessLevel ?? "не указан"}
-- Травмы и ограничения: ${context.onboarding.injuries.join(", ") || "не указаны"}
-- Пол: ${context.onboarding.sex ?? "не указан"}
-- Возраст: ${context.onboarding.age ?? "не указан"}
-- Вес: ${context.onboarding.weightKg ?? "не указан"}
-- Фокус пользователя: ${focus}
-- Завершённых тренировочных дней за 28 дней: ${context.workoutInsights.completedDaysLast28}
-- Залогированных сетов за 28 дней: ${context.workoutInsights.loggedSetsLast28}
-- Средние фактические повторы: ${context.workoutInsights.avgActualReps ?? "нет данных"}
-- Средний рабочий вес: ${context.workoutInsights.avgActualWeightKg ?? "нет данных"} кг
-- Средний RPE: ${context.workoutInsights.avgActualRpe ?? "нет данных"}
-- Доля тяжёлых сетов (RPE 8.5+): ${context.workoutInsights.hardSetShareLast28 ?? "нет данных"}
-- Тоннаж за 28 дней: ${context.workoutInsights.tonnageLast28Kg ?? "нет данных"} кг
-- Лучший зафиксированный вес: ${context.workoutInsights.bestSetWeightKg ?? "нет данных"} кг
-- Лучшая оценка 1ПМ: ${context.workoutInsights.bestEstimatedOneRmKg ?? "нет данных"} кг
-- Последний вес тела в тренировочный день: ${context.workoutInsights.latestSessionBodyWeightKg ?? "нет данных"} кг
-
-Коуч-сигналы по прогрессии и восстановлению:
-${formatWorkoutCoachingSignalsForPrompt(context.workoutInsights.coachingSignals)}
-
-Пищевые коуч-сигналы:
-${formatNutritionCoachingSignalsForPrompt(context.nutritionInsights.coachingSignals)}
-
-Meal-level паттерны питания:
-${formatNutritionMealPatternsForPrompt(context.nutritionInsights.mealPatterns)}
-
-Приоритетные рекомендации по рациону:
-${formatNutritionStrategyForPrompt(context.nutritionInsights.strategy)}
-
-Нормализованные факты и приоритеты:
-${formatStructuredKnowledgeForPrompt(context.structuredKnowledge)}
-
-Исторический RAG-контекст:
-${buildKnowledgeExcerpt(knowledge)}
-
-Правила:
-- план должен быть реалистичным и безопасным;
-- не предлагай медицинские назначения;
-- учитывай ограничения, оборудование, рабочие веса, тоннаж и всю доступную историю тренировок;
-- summary и exercise names делай пригодными для русскоязычного UI.`,
+  const prompt = buildWorkoutPlanPrompt({
+    context,
+    daysPerWeek,
+    equipment,
+    focus,
+    goal,
+    knowledge,
   });
-
-  return createAiPlanProposal(supabase, {
-    userId,
+  const aiProposal = await tryGenerateStructuredPlan({
+    prompt,
     proposalType: "workout_plan",
-    payload: {
-      kind: "workout_plan",
-      request: {
-        goal,
-        equipment,
-        daysPerWeek,
-        focus,
-      },
-      context,
-      knowledge,
-      proposal: result.object,
-    },
+    schema: workoutPlanSchema,
+    userId,
   });
+  const proposal =
+    aiProposal ??
+    buildDeterministicWorkoutPlan({
+      context,
+      daysPerWeek,
+      equipment,
+      focus,
+      goal,
+    });
+
+  return withTransientRetry(() =>
+    createAiPlanProposal(supabase, {
+      userId,
+      proposalType: "workout_plan",
+      payload: {
+        kind: "workout_plan",
+        request: {
+          goal,
+          equipment,
+          daysPerWeek,
+          focus,
+        },
+        context,
+        generationMode: aiProposal ? "model" : "deterministic_fallback",
+        knowledge,
+        proposal,
+      },
+    }),
+  );
 }

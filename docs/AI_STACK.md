@@ -1,192 +1,190 @@
 # Документация по AI-стеку
 
-## Текущий AI runtime
+## Текущий runtime
 
-Основной runtime живёт в:
+Основной AI runtime собран вокруг [gateway.ts](/C:/fit/src/lib/ai/gateway.ts).
+Сейчас проект разделяет два независимых контура:
 
-- `src/lib/ai/gateway.ts`
+- `chat / generation` для assistant, chat, workout plan, meal plan и vision-сценариев;
+- `embeddings / retrieval` для knowledge search, reindex и гибридного контекста.
 
-Сейчас проект использует два отдельных слоя:
+Это разделение принципиально: chat-runtime может быть зелёным, даже если embeddings-провайдер временно деградировал.
 
-- chat/generation runtime;
-- embeddings/retrieval runtime.
-
-## Текущие модели и провайдеры
+## Провайдеры и модели
 
 ### Chat / generation
 
-- основной runtime ориентирован на OpenRouter;
-- рабочая chat-модель задаётся через env и используется в `models.chat`;
-- в коде уже подготовлен production-путь для sports-only assistant, workout plan, meal plan и meal-photo сценариев.
+- Базовый внешний runtime идёт через `OpenRouter`.
+- Дефолтная модель для chat и vision сейчас зафиксирована как `google/gemini-3.1-pro-preview`.
+- Точка правды по дефолтам: [gateway.ts](/C:/fit/src/lib/ai/gateway.ts).
+- Preflight для разработчика: [ai-runtime-preflight.mjs](/C:/fit/scripts/ai-runtime-preflight.mjs).
 
 ### Embeddings
 
-- embeddings идут отдельно от chat runtime;
-- retrieval слой опирается на dedicated embedding runtime;
-- knowledge индекс не жёстко привязан к chat-провайдеру.
+- Embeddings живут отдельно от chat runtime.
+- Код сначала пытается использовать прямой `Voyage`, затем fallback через AI Gateway embeddings.
+- Точка правды: [embeddings.ts](/C:/fit/src/lib/ai/embeddings.ts).
+- Если обе embeddings-ветки недоступны, retrieval не падает целиком, а уходит в text-only режим с явным warning.
+
+## Что сейчас считается рабочим
+
+На `2026-04-14` локально подтверждено:
+
+- `assistant` и `chat` работают на `OpenRouter + google/gemini-3.1-pro-preview`;
+- `meal plan` и `workout plan` возвращают proposal even при деградации model-json пути;
+- `retrieval` сохраняет полезность в text-only fallback;
+- barcode/product import через Open Food Facts подтверждён e2e-сценарием;
+- AI runtime preflight больше не валит весь gate из-за embeddings-провайдера.
+
+Остающийся внешний blocker:
+
+- direct `Voyage` embeddings всё ещё могут отвечать `403`;
+- AI Gateway embeddings могут требовать `customer verification / credit card`.
+
+Это считается внешним provider-access blocker, а не дефектом текущего app-runtime.
 
 ## Основные AI маршруты
 
-- `src/app/api/ai/assistant/route.ts`
-- `src/app/api/ai/chat/route.ts`
-- `src/app/api/ai/meal-photo/route.ts`
-- `src/app/api/ai/meal-plan/route.ts`
-- `src/app/api/ai/workout-plan/route.ts`
-- `src/app/api/ai/reindex/route.ts`
-- `src/app/api/ai/sessions/route.ts`
-- `src/app/api/ai/sessions/[id]/route.ts`
-- `src/app/api/ai/proposals/[id]/approve/route.ts`
-- `src/app/api/ai/proposals/[id]/apply/route.ts`
+- [assistant/route.ts](/C:/fit/src/app/api/ai/assistant/route.ts)
+- [chat/route.ts](/C:/fit/src/app/api/ai/chat/route.ts)
+- [meal-photo/route.ts](/C:/fit/src/app/api/ai/meal-photo/route.ts)
+- [meal-plan/route.ts](/C:/fit/src/app/api/ai/meal-plan/route.ts)
+- [workout-plan/route.ts](/C:/fit/src/app/api/ai/workout-plan/route.ts)
+- [reindex/route.ts](/C:/fit/src/app/api/ai/reindex/route.ts)
+- [sessions/route.ts](/C:/fit/src/app/api/ai/sessions/route.ts)
+- [sessions/[id]/route.ts](/C:/fit/src/app/api/ai/sessions/%5Bid%5D/route.ts)
+- [proposals/[id]/approve/route.ts](/C:/fit/src/app/api/ai/proposals/%5Bid%5D/approve/route.ts)
+- [proposals/[id]/apply/route.ts](/C:/fit/src/app/api/ai/proposals/%5Bid%5D/apply/route.ts)
 
 ## Слои AI-контура
 
-### 1. User context
+### User context
 
-`src/lib/ai/user-context.ts` собирает:
+[user-context.ts](/C:/fit/src/lib/ai/user-context.ts) собирает профиль, onboarding, цели, body metrics, nutrition/workout signals, snapshots и structured knowledge.
 
-- профиль;
-- onboarding;
-- цели;
-- тренировочные сигналы;
-- nutrition сигналы;
-- body metrics;
-- structured knowledge;
-- snapshots.
+Важно:
 
-Это основной персональный контекст для assistant и генерации планов.
+- при частичном runtime-сбое контекст теперь умеет возвращать пустой безопасный результат;
+- helper `createEmptyAiUserContext()` нужен для fail-open сценариев, а не для подмены реального контекста.
 
-### 2. Knowledge / retrieval
+### Runtime retry и timeout budget
 
-Главный оркестратор:
+- [runtime-retry.ts](/C:/fit/src/lib/runtime-retry.ts) задаёт общие timeout/retry helpers;
+- [runtime-budgets.ts](/C:/fit/src/lib/ai/runtime-budgets.ts) держит лимиты для AI-вызовов;
+- эти модули обязательны для difficult-problem slices, где provider может быть медленным или нестабильным.
 
-- `src/lib/ai/knowledge.ts`
+### Knowledge / retrieval
 
-Вынесенные модули:
+Главный orchestrator:
 
-- `src/lib/ai/knowledge-retrieval.ts`
-- `src/lib/ai/knowledge-source-data.ts`
-- `src/lib/ai/knowledge-indexing.ts`
-- `src/lib/ai/knowledge-documents.ts`
+- [knowledge.ts](/C:/fit/src/lib/ai/knowledge.ts)
 
-Что делает knowledge layer:
+Основные вынесенные модули:
 
-- собирает user-scoped corpus;
-- строит knowledge documents из тренировок, питания, snapshots и structured facts;
-- поддерживает retrieval через vector/text fallback;
-- умеет reindex и embeddings refresh;
-- не должен выходить за границы данных текущего пользователя.
+- [knowledge-retrieval.ts](/C:/fit/src/lib/ai/knowledge-retrieval.ts)
+- [knowledge-source-data.ts](/C:/fit/src/lib/ai/knowledge-source-data.ts)
+- [knowledge-indexing.ts](/C:/fit/src/lib/ai/knowledge-indexing.ts)
+- [knowledge-documents.ts](/C:/fit/src/lib/ai/knowledge-documents.ts)
+- [knowledge-model.ts](/C:/fit/src/lib/ai/knowledge-model.ts)
+- [knowledge-hybrid-ranking.ts](/C:/fit/src/lib/ai/knowledge-hybrid-ranking.ts)
 
-### 3. Structured knowledge
+Текущий retrieval contract:
 
-`src/lib/ai/structured-knowledge.ts` нормализует факты:
+- собирает owner-scoped corpus;
+- умеет `vector + lexical + fused` ranking;
+- при недоступных embeddings не падает, а деградирует в text-only retrieval;
+- поднимает exact lookup токены вроде barcode/marker-like значений;
+- возвращает usable `sources`, даже если semantic ветка временно недоступна.
 
-- ключевые сигналы по тренировкам;
-- сигналы по питанию;
-- meal-patterns;
-- nutrition strategy;
-- приоритеты для AI-ответа и планов.
+Это важно для nutrition/barcode сценариев и для исторических lookup-запросов.
 
-Это слой KAG/CAG-подобной нормализации поверх сырой истории.
+### Structured knowledge
 
-### 4. Proposals
+[structured-knowledge.ts](/C:/fit/src/lib/ai/structured-knowledge.ts) нормализует тренировки, питание, паттерны и ключевые факты в слой, который потом используют assistant и plan routes.
 
-`src/lib/ai/proposals.ts` и `src/lib/ai/proposal-actions.ts` обеспечивают flow:
+### Plans и proposal-first contract
 
-- создать proposal;
-- показать draft;
-- подтвердить proposal;
-- применить proposal в приложение.
+Основная логика:
 
-Принцип остаётся proposal-first: AI не должен молча менять пользовательские данные.
+- [plan-generation.ts](/C:/fit/src/lib/ai/plan-generation.ts)
+- [proposals.ts](/C:/fit/src/lib/ai/proposals.ts)
+- [proposal-actions.ts](/C:/fit/src/lib/ai/proposal-actions.ts)
 
-## AI chat workspace
+Текущий контракт plan-generation:
 
-Ключевой клиентский экран:
-
-- `src/app/ai/page.tsx`
-
-Основные клиентские модули:
-
-- `src/components/ai-chat-panel.tsx`
-- `src/components/ai-chat-transcript.tsx`
-- `src/components/ai-chat-composer.tsx`
-- `src/components/ai-chat-toolbar.tsx`
-- `src/components/ai-chat-notices.tsx`
-- `src/components/ai-prompt-library.tsx`
-- `src/components/ai-workspace.tsx`
-- `src/components/ai-workspace-sidebar.tsx`
-
-Вынесенные hook-слои:
-
-- `src/components/use-ai-chat-session-state.ts`
-- `src/components/use-ai-chat-actions.ts`
-- `src/components/use-ai-chat-composer.ts`
-- `src/components/use-ai-chat-view-state.ts`
+- сначала пробует компактную model-driven генерацию;
+- при timeout, обрыве JSON или нестабильном structured output уходит в детерминированный fallback;
+- всегда возвращает `generationMode`, чтобы разработчик видел, был ли использован model-path или fallback-path;
+- не должен молча применять изменения без явного proposal flow.
 
 ## Safety posture
 
-Главный guardrail слой:
+Главный guardrail-модуль:
 
-- `src/lib/ai/domain-policy.ts`
+- [domain-policy.ts](/C:/fit/src/lib/ai/domain-policy.ts)
 
-Что он делает:
+Что он гарантирует:
 
-- ограничивает AI только темами спорта, тренировок, питания, восстановления и фитнес-здоровья;
-- блокирует off-topic запросы;
-- запрещает раскрытие модели, провайдера, system prompt и внутренней архитектуры;
-- требует русскоязычный ответ;
-- запрещает cross-user доступ к данным.
+- AI ограничен доменами спорта, тренировок, питания, восстановления и фитнес-здоровья;
+- off-topic запросы блокируются;
+- запрещено раскрывать system prompt и внутреннюю архитектуру;
+- ответы должны оставаться русскоязычными;
+- cross-user доступ к данным запрещён.
 
-`src/lib/ai/plan-generation.ts` теперь тоже санирован в чистом UTF-8 и использует нормальные русские prompt-строки для workout/meal proposals.
+## AI workspace
 
-## Meal photo flow
+Ключевые клиентские точки:
 
-Маршрут:
+- [ai/page.tsx](/C:/fit/src/app/ai/page.tsx)
+- [ai-workspace.tsx](/C:/fit/src/components/ai-workspace.tsx)
+- [ai-chat-panel.tsx](/C:/fit/src/components/ai-chat-panel.tsx)
 
-- `src/app/api/ai/meal-photo/route.ts`
+Важная деталь текущего состояния:
 
-Что делает flow:
+- AI workspace должен выдерживать отсутствие embeddings и частичные provider timeout’ы без полного обрушения UI;
+- состояние web-search toggle, history и composer не должно зависеть от hydration-заглушек.
 
-- принимает изображение еды;
-- валидирует тип и размер файла;
-- отправляет изображение в vision runtime;
-- возвращает proposal-first разбор блюда: summary, kcal, macros, suggestions.
+## Meal photo и barcode/import
 
-Важно: этот flow не должен автоматически создавать meal log без подтверждения пользователя.
+### Meal photo
 
-## Evaluations
+- Маршрут: [meal-photo/route.ts](/C:/fit/src/app/api/ai/meal-photo/route.ts)
+- Контракт: изображение валидируется, анализируется vision runtime и возвращается как proposal-first разбор блюда.
 
-Отдельный eval-контур лежит в:
+### Barcode / product import
 
-- `ai-evals/README.md`
-- `ai-evals/datasets/README.md`
-- `ai-evals/fit_eval/runner.py`
+- Пользовательский импорт продукта по штрихкоду подтверждён e2e через Open Food Facts.
+- Для retrieval это важно потому, что barcode-like токены теперь специально поднимаются в ранжировании и не теряются при text-only fallback.
 
-Назначение:
+## Evaluator loop и verification
 
-- benchmark assistant/retrieval/meal-plan/workout-plan/safety сценариев;
-- future quality gate через Ragas;
-- сравнение изменений prompt/retrieval/policy до релиза.
+Для сложных AI-задач в репозитории обязателен цикл:
 
-## Текущее состояние
+- `goal`
+- `baseline`
+- `evaluator`
+- `artifacts`
+- `stop condition`
+- `escalation rule`
 
-Уже реализовано:
+Базовые проверочные поверхности:
 
-- assistant/chat runtime;
-- history sessions;
-- fullscreen AI workspace;
-- prompt library;
-- image upload;
-- retrieval по персональной истории;
-- structured knowledge;
-- proposal approve/apply flow;
-- admin reindex/eval surface;
-- sports-only guardrails;
-- чистый prompt/guardrail слой без mojibake.
+- `tests/ai-gate/ai-quality-gate.spec.ts`
+- `npm run test:retrieval-gate`
+- `npm run verify:retrieval-release`
+- `node scripts/ai-runtime-preflight.mjs`
+- таргетированные Playwright-сценарии для user-facing AI surfaces
 
-Ещё не закрыто до production hardening:
+Если провайдер недоступен, это нужно фиксировать как внешний blocker или degrade-mode, а не скрывать в зелёном отчёте.
 
-- полноценный eval quality gate;
-- staging-like verification runtime провайдеров;
-- финальная sanitation-волна по всем AI docs;
-- полное подтверждение owner-only route isolation на каждом AI mutation/read path.
+## Что ещё остаётся внешним блокером
+
+- полноценный vector-runtime на `Voyage`/AI Gateway embeddings;
+- live staging-like проверка с реальными embeddings-кредитами;
+- production-level provider verification вне локального degrade-safe режима.
+
+Пока эти пункты не закрыты, текущий официальный статус такой:
+
+- chat/generation runtime — рабочий;
+- retrieval runtime — рабочий в degrade-safe text-only режиме;
+- AI product surface — можно развивать дальше без ожидания live embeddings unblock.

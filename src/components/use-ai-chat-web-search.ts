@@ -1,8 +1,6 @@
 "use client";
 
 import { useCallback, useSyncExternalStore } from "react";
-
-const subscribeToHydration = () => () => {};
 const WEB_SEARCH_STORAGE_KEY = "fit.ai.web-search";
 const WEB_SEARCH_EVENT = "fit:ai:web-search";
 
@@ -30,11 +28,6 @@ function getWebSearchSnapshot() {
 }
 
 export function useAiChatWebSearch() {
-  const isHydrated = useSyncExternalStore(
-    subscribeToHydration,
-    () => true,
-    () => false,
-  );
   const allowWebSearch = useSyncExternalStore(
     subscribeToWebSearch,
     getWebSearchSnapshot,
@@ -56,7 +49,6 @@ export function useAiChatWebSearch() {
 
   return {
     allowWebSearch,
-    isHydrated,
     toggleWebSearch,
   };
 }

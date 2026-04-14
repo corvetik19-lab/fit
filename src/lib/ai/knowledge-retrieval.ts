@@ -4,8 +4,11 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { embedQueryText } from "@/lib/ai/embeddings";
 import { buildHybridKnowledgeMatches } from "@/lib/ai/knowledge-hybrid-ranking";
 import {
+  isExactLookupToken,
   parseVector,
   rankChunkByTokens,
+  tokenizeSearchQuery,
+  normalizeTextForSearch,
   toVectorLiteral,
   type JsonRecord,
   type KnowledgeChunkRow,
@@ -114,6 +117,55 @@ function chunkArray<T>(items: T[], size: number) {
   }
 
   return chunks;
+}
+
+function mergeRetrievedKnowledgeItems(
+  items: RetrievedKnowledgeItem[],
+  limit: number,
+) {
+  const merged = new Map<string, RetrievedKnowledgeItem>();
+
+  for (const item of items) {
+    const existing = merged.get(item.id);
+
+    if (!existing || item.similarity > existing.similarity) {
+      merged.set(item.id, item);
+    }
+  }
+
+  return [...merged.values()]
+    .sort((left, right) => right.similarity - left.similarity)
+    .slice(0, limit);
+}
+
+function promoteExactLookupMatches(
+  items: RetrievedKnowledgeItem[],
+  query: string,
+) {
+  const lookupTokens = tokenizeSearchQuery(query).filter((token) =>
+    isExactLookupToken(token),
+  );
+
+  if (!lookupTokens.length) {
+    return items;
+  }
+
+  return [...items].sort((left, right) => {
+    const leftHaystack = normalizeTextForSearch(
+      `${left.sourceType} ${left.sourceId ?? ""} ${left.content}`,
+    );
+    const rightHaystack = normalizeTextForSearch(
+      `${right.sourceType} ${right.sourceId ?? ""} ${right.content}`,
+    );
+    const leftLookupHits = lookupTokens.filter((token) => leftHaystack.includes(token)).length;
+    const rightLookupHits = lookupTokens.filter((token) => rightHaystack.includes(token)).length;
+
+    if (rightLookupHits !== leftLookupHits) {
+      return rightLookupHits - leftLookupHits;
+    }
+
+    return right.similarity - left.similarity;
+  });
 }
 
 export function rankKnowledgeChunksByText(
@@ -501,15 +553,21 @@ export async function retrieveKnowledgeMatchesWithPipeline({
     }
   });
 
-  if (!textMatches.length) {
+  if (!queryEmbedding || !textMatches.length) {
     await telemetry.measure("lexicalFallbackMs", async () => {
       try {
-        textMatches = await retrieveKnowledgeMatchesViaTextFallback(
+        const fallbackTextMatches = await retrieveKnowledgeMatchesViaTextFallback(
           supabase,
           userId,
           query,
           Math.max(finalLimit, KNOWLEDGE_RETRIEVAL_LIMITS.lexicalCandidates),
         );
+        textMatches = textMatches.length
+          ? mergeRetrievedKnowledgeItems(
+              [...textMatches, ...fallbackTextMatches],
+              Math.max(finalLimit, KNOWLEDGE_RETRIEVAL_LIMITS.lexicalCandidates),
+            )
+          : fallbackTextMatches;
       } catch (error) {
         logger.warn("knowledge text fallback failed", {
           error,
@@ -518,6 +576,8 @@ export async function retrieveKnowledgeMatchesWithPipeline({
       }
     });
   }
+
+  textMatches = promoteExactLookupMatches(textMatches, query);
 
   if (!semanticMatches.length && !textMatches.length) {
     telemetry.setCandidateCounts({

@@ -27,14 +27,18 @@ export async function fetchJson<T = unknown>(
     url: string;
   },
 ) {
-  for (let attempt = 0; attempt < 3; attempt += 1) {
+  const requestUrl = resolveRequestUrl(page, input.url);
+  const isAiRoute = new URL(requestUrl).pathname.startsWith("/api/ai/");
+  const maxAttempts = isAiRoute ? 2 : 3;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     try {
-      const response = await page.context().request.fetch(resolveRequestUrl(page, input.url), {
+      const response = await page.context().request.fetch(requestUrl, {
         method: input.method,
         headers: input.body ? { "Content-Type": "application/json" } : undefined,
         data: input.body ? JSON.stringify(input.body) : undefined,
         failOnStatusCode: false,
-        timeout: 30_000,
+        timeout: isAiRoute ? 45_000 : 30_000,
       });
 
       const rawBody = await response.text();
@@ -48,7 +52,11 @@ export async function fetchJson<T = unknown>(
         }
       }
 
-      if (response.status() === 401 && attempt < 2) {
+      if (
+        attempt < maxAttempts - 1 &&
+        (response.status() === 401 ||
+          (isAiRoute && (response.status() === 500 || response.status() === 502)))
+      ) {
         await page.waitForTimeout(250 * (attempt + 1));
         continue;
       }
@@ -58,7 +66,7 @@ export async function fetchJson<T = unknown>(
         body: parsedBody as T,
       } satisfies FetchResult<T>;
     } catch (error) {
-      if (attempt < 2 && error instanceof Error) {
+      if (attempt < maxAttempts - 1 && error instanceof Error) {
         continue;
       }
 

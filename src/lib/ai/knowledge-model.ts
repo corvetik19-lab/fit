@@ -237,6 +237,10 @@ export function tokenizeSearchQuery(query: string) {
     .slice(0, 24);
 }
 
+export function isExactLookupToken(token: string) {
+  return token.length >= 6 && /[0-9]/.test(token) && /^[a-z0-9-]+$/i.test(token);
+}
+
 export function rankChunkByTokens(chunk: KnowledgeChunkRow, query: string) {
   const normalizedQuery = normalizeTextForSearch(query).trim();
   const tokens = tokenizeSearchQuery(query);
@@ -260,7 +264,7 @@ export function rankChunkByTokens(chunk: KnowledgeChunkRow, query: string) {
       continue;
     }
 
-    score += 2;
+    score += isExactLookupToken(token) ? 30 : 2;
 
     if (chunk.source_type.toLowerCase().includes(token)) {
       score += 1;
