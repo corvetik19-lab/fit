@@ -90,6 +90,12 @@
 - `output/codex-runs/agent-evolution/<timestamp>/summary.json`
 - `output/codex-runs/agent-evolution/<timestamp>/summary.md`
 
+Если run затрагивает deploy/runtime rollout, в summary дополнительно должен быть зафиксирован
+deployment target и факт того, что rollout не считался завершённым до статуса без ошибок.
+
+Для существенных пользовательских статусов и финального handoff агент обязан показывать текущий
+прогресс из `docs/MASTER_PLAN.md` в формате `done / total (percent%)`.
+
 Для repo-tracked handoff после substantial tranche дополнительно обновляются:
 
 - [CODEX_AGENT_AUTONOMY_PLAN.md](/C:/fit/docs/CODEX_AGENT_AUTONOMY_PLAN.md)

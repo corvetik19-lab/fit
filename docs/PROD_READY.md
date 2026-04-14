@@ -10,6 +10,9 @@
 
 `Prod-ready` означает, что одновременно выполнены automated gates, manual acceptance, env readiness и release-specific проверки.
 
+Для deploy-ориентированных tranche это также означает, что агент не остановился на локальном `build`,
+а дождался реального Vercel deployment до состояния без build/runtime ошибок.
+
 ## 1. Обязательные automated gates
 
 ### Базовый engineering baseline
@@ -34,6 +37,13 @@
 - команды проходят только со второго раза без объяснимой причины;
 - quality gates оставляют неожиданный tracked-noise;
 - тесты зелёные только за счёт skip, а не реального прохождения сценариев.
+
+### Что считается провалом rollout-подтверждения
+
+- deployment не дошёл до `READY`;
+- build logs содержат ошибки;
+- runtime logs показывают свежие 5xx/fatal ошибки на целевом deployment;
+- агент завершил tranche, не дождавшись deploy статуса через Vercel MCP или `npm run wait:vercel-deploy`.
 
 ## 2. Обязательный manual acceptance
 

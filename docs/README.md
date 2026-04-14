@@ -94,6 +94,8 @@
   [CODEX_AGENT_AUTONOMY_PLAN.md](/C:/fit/docs/CODEX_AGENT_AUTONOMY_PLAN.md),
   [CODEX_AGENT_GOVERNANCE.md](/C:/fit/docs/CODEX_AGENT_GOVERNANCE.md) и
   [CODEX_AGENT_REGISTRY.md](/C:/fit/docs/CODEX_AGENT_REGISTRY.md).
+- Для пользовательского статуса по плану использовать `npm run report:master-progress`.
+- Для deploy-oriented tranche подтверждать rollout через Vercel MCP или `npm run wait:vercel-deploy -- <deployment-url-or-id>`.
 
 ## Рекомендуемый порядок чтения
 

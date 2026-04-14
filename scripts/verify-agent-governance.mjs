@@ -23,6 +23,8 @@ const requiredFiles = [
   "scripts/sync-codex-agent-registry.mjs",
   "scripts/verify-agent-governance.mjs",
   "scripts/agent-evolve.mjs",
+  "scripts/master-plan-progress.mjs",
+  "scripts/wait-for-vercel-deployment.mjs",
   ".github/workflows/agent-autonomy.yml",
 ];
 
@@ -62,6 +64,8 @@ async function main() {
     "agent:evolve",
     "agent:evolve:push",
     "verify:agent-governance",
+    "report:master-progress",
+    "wait:vercel-deploy",
   ]) {
     if (!packageJson.scripts?.[scriptName]) {
       errors.push(`package.json: missing script "${scriptName}"`);
@@ -86,6 +90,8 @@ async function main() {
     "agent:evaluate",
     "agent:evolve",
     "verify:agent-governance",
+    "report:master-progress",
+    "wait:vercel-deploy",
   ]) {
     requireSubstring(errors, playbook, "docs/CODEX_PLAYBOOK.md", fragment);
   }
@@ -110,6 +116,8 @@ async function main() {
     "CODEX_AGENT_AUTONOMY_PLAN.md",
     "CODEX_AGENT_GOVERNANCE.md",
     "CODEX_AGENT_REGISTRY.md",
+    "report:master-progress",
+    "wait:vercel-deploy",
   ]) {
     requireSubstring(errors, rootReadme, "README.md", fragment);
   }

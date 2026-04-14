@@ -21,6 +21,7 @@
 - Use `docs/CODEX_AGENT_AUTONOMY_PLAN.md`, `docs/CODEX_AGENT_GOVERNANCE.md`, and `docs/CODEX_AGENT_REGISTRY.md` when the task touches the agent layer itself.
 - Use `code_review.md` as the canonical detailed review contract for local and GitHub review behavior.
 - For difficult AI, UI, backend, or release problems, require an explicit evaluator loop: goal -> baseline -> evaluator -> artifacts -> stop condition.
+- For deploy-affecting work, do not claim rollout success until the Vercel deployment itself reaches a clean terminal state: use Vercel MCP first or fall back to `npm run wait:vercel-deploy -- <deployment-url-or-id>`.
 - For self-evolving or autonomous agent-layer work, require the narrower governance loop: allowlist -> required gates -> artifacts -> commit/push policy.
 - Keep service-role operations server-only and log every privileged admin action.
 - After every substantial change, update `docs/AI_WORKLOG.md`, `docs/MASTER_PLAN.md`, and the relevant topical docs in `docs/`.
@@ -43,6 +44,7 @@
 
 ## Prompt contract
 - For implementation tasks, the result must name what changed, which checks ran, and which external blockers remain.
+- For every substantial status update and final handoff, include the current `MASTER_PLAN` progress in `done / total (percent%)` format; use `npm run report:master-progress` when in doubt.
 - For review tasks, return prioritized findings first with file references and concise impact; do not hide findings behind a summary.
 - Before increasing reasoning effort or adding more process, prefer a clearer output contract, verification loop, tool persistence rule, and dependency check.
 - When context is missing, explore the repository and official docs first. Stop only on a real external blocker, not on ordinary repo discovery work.
@@ -64,6 +66,7 @@
 - Before applying migrations or writing data through MCP, verify the active project with `get_project_url` if there is any doubt about server targeting.
 - Use Supabase CLI only as a fallback when MCP is unavailable or cannot complete the required action.
 - Use Vercel tooling for project/env/deploy setup when available.
+- For deploy status and rollout confirmation, prefer Vercel MCP. If MCP is unavailable, use `vercel inspect <deployment-url-or-id> --wait` via `npm run wait:vercel-deploy -- <deployment-url-or-id>`.
 - Use Playwright for browser verification flows.
 
 ## Current repository state

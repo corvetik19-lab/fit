@@ -1497,3 +1497,11 @@
 - В scripts добавлен полный automation bundle: [agent-governance-config.mjs](/C:/fit/scripts/agent-governance-config.mjs), [agent-inventory.mjs](/C:/fit/scripts/agent-inventory.mjs), [sync-codex-agent-registry.mjs](/C:/fit/scripts/sync-codex-agent-registry.mjs), [verify-agent-governance.mjs](/C:/fit/scripts/verify-agent-governance.mjs), [agent-evolve.mjs](/C:/fit/scripts/agent-evolve.mjs) и npm-команды `agent:*` плюс `verify:agent-governance`.
 - Для CI и scheduled autonomy добавлен [agent-autonomy.yml](/C:/fit/.github/workflows/agent-autonomy.yml), а [quality.yml](/C:/fit/.github/workflows/quality.yml) теперь дополнительно запускает `verify:agent-governance`.
 - Tranche подтверждён командами `npm run agent:sync-registry`, `npm run agent:evaluate`, `npm run verify:codex`, `npm run verify:agent-governance`, `npm run lint`, `npm run typecheck`, `npm run build`.
+
+### Deploy wait и прогресс по MASTER_PLAN
+
+- В agent contract добавлено обязательное правило: deploy-ориентированные tranche не считаются завершёнными, пока Vercel deployment не дошёл до clean terminal state через Vercel MCP или CLI fallback.
+- Для этого в репозиторий добавлен helper [wait-for-vercel-deployment.mjs](/C:/fit/scripts/wait-for-vercel-deployment.mjs) и команда `npm run wait:vercel-deploy -- <deployment-url-or-id>`.
+- Параллельно добавлен helper [master-plan-progress.mjs](/C:/fit/scripts/master-plan-progress.mjs) и команда `npm run report:master-progress`, чтобы агент каждый раз показывал актуальный `MASTER_PLAN` progress в формате `done / total (percent%)`, а `agent-evolve` пишет этот прогресс и в свои artifacts.
+- Обновлены [AGENTS.md](/C:/fit/AGENTS.md), [CODEX_PLAYBOOK.md](/C:/fit/docs/CODEX_PLAYBOOK.md), [CODEX_ONBOARDING.md](/C:/fit/docs/CODEX_ONBOARDING.md), [RELEASE_CHECKLIST.md](/C:/fit/docs/RELEASE_CHECKLIST.md), [PROD_READY.md](/C:/fit/docs/PROD_READY.md), [RUNTIME_ENV_HANDOFF.md](/C:/fit/docs/RUNTIME_ENV_HANDOFF.md), [README.md](/C:/fit/README.md) и [docs/README.md](/C:/fit/docs/README.md).
+- Follow-up подтверждён командами `npm run report:master-progress`, `npm run wait:vercel-deploy -- --help`, `npm run agent:sync-registry`, `npm run verify:codex`, `npm run verify:agent-governance`.

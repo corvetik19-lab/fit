@@ -27,6 +27,8 @@
 - [ ] Если менялись Sentry runtime, global error surface или admin observability flow, прогнан `npm run verify:sentry-runtime`
 - [ ] Если менялись Android/TWA scaffold, asset links или packaging metadata, прогнан `npm run verify:android-twa`
 - [ ] После DDL-изменений применены миграции и проверены advisors `security` и `performance`
+- [ ] После запуска deploy агент дождался терминального статуса Vercel deployment без ошибок через Vercel MCP или `npm run wait:vercel-deploy -- <deployment-url-or-id>`
+- [ ] Если deploy завершился не `READY`, собраны build/runtime logs и зафиксирован blocker вместо ложного зелёного статуса
 - [ ] Для Supabase-проекта отдельно проверены platform-level пункты:
 - [ ] `leaked password protection` включён
 - [ ] По `vector` extension в `public` принято осознанное решение и это отражено в release notes
@@ -51,6 +53,7 @@
 
 ## Smoke после deploy
 
+- [ ] Подтверждён конкретный deployment URL или deployment ID, который дошёл до `READY`
 - [ ] Открывается `/`
 - [ ] Открывается `/smoke`
 - [ ] Отвечает `GET /api/health`

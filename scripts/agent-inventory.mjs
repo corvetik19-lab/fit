@@ -208,7 +208,13 @@ async function loadCommands() {
   const packageJson = JSON.parse(await readUtf8("package.json"));
   const scripts = packageJson.scripts ?? {};
   const relevantEntries = Object.entries(scripts)
-    .filter(([name]) => name.startsWith("agent:") || name.startsWith("verify:"))
+    .filter(
+      ([name]) =>
+        name.startsWith("agent:") ||
+        name.startsWith("verify:") ||
+        name === "report:master-progress" ||
+        name === "wait:vercel-deploy",
+    )
     .sort(([left], [right]) => left.localeCompare(right));
 
   return relevantEntries.map(([name, command]) => ({ name, command }));

@@ -90,3 +90,9 @@
 - Добавлены scripts [agent-governance-config.mjs](/C:/fit/scripts/agent-governance-config.mjs), [agent-inventory.mjs](/C:/fit/scripts/agent-inventory.mjs), [sync-codex-agent-registry.mjs](/C:/fit/scripts/sync-codex-agent-registry.mjs), [verify-agent-governance.mjs](/C:/fit/scripts/verify-agent-governance.mjs), [agent-evolve.mjs](/C:/fit/scripts/agent-evolve.mjs) и npm-команды `agent:*` плюс `verify:agent-governance`.
 - [quality.yml](/C:/fit/.github/workflows/quality.yml) теперь прогоняет `verify:agent-governance`, а новый workflow [agent-autonomy.yml](/C:/fit/.github/workflows/agent-autonomy.yml) даёт scheduled/manual governance sweep и optional direct-to-main lane при включённом `CODEX_AGENT_AUTONOMY_ENABLED=1`.
 - Этот tranche подтверждается пакетами `npm run agent:sync-registry`, `npm run agent:evaluate`, `npm run verify:codex`, `npm run verify:agent-governance`, `npm run lint`, `npm run typecheck`, `npm run build`.
+
+## 2026-04-14 deploy-wait and plan-progress follow-up
+
+- Root [AGENTS.md](/C:/fit/AGENTS.md) и [CODEX_PLAYBOOK.md](/C:/fit/docs/CODEX_PLAYBOOK.md) усилены правилом: deploy-oriented tranche не считаются завершёнными, пока Vercel deployment не дошёл до terminal state без ошибок через Vercel MCP или CLI fallback.
+- В репозиторий добавлены команды [master-plan-progress.mjs](/C:/fit/scripts/master-plan-progress.mjs) и [wait-for-vercel-deployment.mjs](/C:/fit/scripts/wait-for-vercel-deployment.mjs), а `README` и docs теперь закрепляют `npm run report:master-progress` и `npm run wait:vercel-deploy -- <deployment-url-or-id>` как стандартные operational entrypoints.
+- Release docs [RELEASE_CHECKLIST.md](/C:/fit/docs/RELEASE_CHECKLIST.md), [PROD_READY.md](/C:/fit/docs/PROD_READY.md) и [RUNTIME_ENV_HANDOFF.md](/C:/fit/docs/RUNTIME_ENV_HANDOFF.md) синхронизированы с новым deploy-wait contract.

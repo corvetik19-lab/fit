@@ -58,6 +58,8 @@ npm run build
 - `npm run agent:sync-registry` для синхронизации [docs/CODEX_AGENT_REGISTRY.md](/C:/fit/docs/CODEX_AGENT_REGISTRY.md)
 - `npm run agent:evaluate` для dry-run governance sweep
 - `npm run agent:evolve` для локального write-run внутри allowlist
+- `npm run report:master-progress` для текущего процента выполнения [MASTER_PLAN.md](/C:/fit/docs/MASTER_PLAN.md)
+- `npm run wait:vercel-deploy -- <deployment-url-or-id>` для ожидания завершения Vercel deploy без ошибок
 
 ### Что нужно для полного CI regression-контура
 

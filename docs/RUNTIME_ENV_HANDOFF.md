@@ -12,6 +12,19 @@
 - оставшиеся production-блокеры находятся в окружении и внешних кабинетах;
 - основной прогресс проекта в [MASTER_PLAN.md](/C:/fit/docs/MASTER_PLAN.md) сейчас `178 / 186` (`96%`).
 
+## Обязательное правило после любого deploy
+
+- Не считать rollout завершённым по одному факту, что deploy был запущен.
+- Сначала дождаться Vercel deployment до терминального статуса без ошибок.
+- Предпочтительный путь — Vercel MCP.
+- CLI fallback:
+
+```bash
+npm run wait:vercel-deploy -- <deployment-url-or-id>
+```
+
+- Если deployment не дошёл до `READY`, нужно сохранить build/runtime blocker, а не отмечать шаг как выполненный.
+
 ## 1. Где именно это настраивать
 
 ### Vercel

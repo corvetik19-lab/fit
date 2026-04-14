@@ -89,6 +89,7 @@
   - какие поверхности входят в allowlist и denied surfaces;
   - какой verification-пакет нужен для docs/process drift;
   - где лежат artifacts autonomous run-ов.
+  - как подтверждается deploy-ready статус через Vercel MCP или `npm run wait:vercel-deploy`.
 
 ## 3. Формат результата после onboarding
 
@@ -103,6 +104,7 @@
 7. какой reviewer skill или role нужен, если задача дальше переходит в review
    или security-аудит.
 8. если это agent-layer slice — какой governance gate и какой artifact path обязателен.
+9. если это deploy/runtime slice — какой deployment target нужно дождаться и чем будет подтверждён статус без ошибок.
 
 Если этих пунктов нет, onboarding считается незавершённым.
 

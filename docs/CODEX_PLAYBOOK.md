@@ -18,6 +18,7 @@ problems` и `Codebase onboarding` к реальному устройству п
    инструкциями.
 6. После реализации обновить docs, прогнать нужные проверки и зафиксировать факт
    выполнения в `MASTER_PLAN` и `AI_WORKLOG`.
+7. Если tranche влияет на deploy или runtime rollout, дождаться завершения Vercel deployment до состояния без ошибок и только после этого считать rollout подтверждённым.
 
 ## 2. Роли агентов
 
@@ -75,6 +76,14 @@ problems` и `Codebase onboarding` к реальному устройству п
 - Android-навыки из `.agents/skills/` использовать только для `android/` и
   связанных PWA/TWA seams.
 
+## 3a. Плановый прогресс
+
+- Для каждого существенного статуса и финального handoff явно показывать текущий прогресс
+  из [MASTER_PLAN.md](/C:/fit/docs/MASTER_PLAN.md) в формате `done / total (percent%)`.
+- Каноническая локальная команда:
+  `npm run report:master-progress`
+- Если чекбоксы в `MASTER_PLAN` менялись, сначала обновить сам файл, а уже потом сообщать процент пользователю.
+
 ## 4. Локальные аналоги официальных workflow
 
 ### Объяснить кодовую базу
@@ -99,6 +108,15 @@ problems` и `Codebase onboarding` к реальному устройству п
 - После изменения operational flow обязательно синхронизировать
   [docs/README.md](/C:/fit/docs/README.md), а если меняется execution-срез —
   также `MASTER_PLAN` и `AI_WORKLOG`.
+
+### Дождаться deploy
+
+- Для deploy- и runtime-tranche не считать задачу завершённой только потому, что локальные тесты зелёные.
+- Сначала дождаться Vercel deployment до терминального состояния без build/runtime ошибок.
+- Предпочтительный путь: Vercel MCP (`get_deployment`, `get_deployment_build_logs`, `get_runtime_logs`).
+- Fallback через CLI:
+  `npm run wait:vercel-deploy -- <deployment-url-or-id>`
+- Если deploy не дошёл до `READY` или в логах есть build/runtime errors, фиксировать это как blocker, а не как "условно завершено".
 
 ### Сделать review
 
@@ -168,6 +186,7 @@ problems` и `Codebase onboarding` к реальному устройству п
   локальные verify-команды.
 - Browser-проверки — через Playwright.
 - Vercel/runtime/env — через Vercel tooling и профильные `verify:*`.
+- Ожидание и triage deploy — через Vercel MCP, а при недоступности MCP через `npm run wait:vercel-deploy`.
 
 ## 6. Cookbook patterns, которые приняты в `fit`
 

@@ -76,6 +76,7 @@ governance, workflows и developer-facing команды.
 | `agent:evolve:push` | `node scripts/agent-evolve.mjs --write --push` |
 | `agent:inventory` | `node scripts/agent-inventory.mjs --out output/codex-runs/agent-evolution/latest/agent-inventory.json` |
 | `agent:sync-registry` | `node scripts/sync-codex-agent-registry.mjs --write` |
+| `report:master-progress` | `node scripts/master-plan-progress.mjs` |
 | `verify:advisors` | `powershell -ExecutionPolicy Bypass -File scripts/verify-advisors.ps1` |
 | `verify:agent-governance` | `node scripts/verify-agent-governance.mjs` |
 | `verify:android-twa` | `node scripts/verify-android-twa.mjs` |
@@ -86,6 +87,7 @@ governance, workflows и developer-facing команды.
 | `verify:sentry-runtime` | `node scripts/verify-sentry-runtime.mjs` |
 | `verify:staging-runtime` | `node scripts/verify-staging-runtime.mjs` |
 | `verify:supabase-runtime` | `node scripts/verify-supabase-runtime.mjs` |
+| `wait:vercel-deploy` | `node scripts/wait-for-vercel-deployment.mjs` |
 
 ## Workflow Files
 

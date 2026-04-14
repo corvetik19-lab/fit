@@ -50,6 +50,8 @@ const requiredFiles = [
   "scripts/sync-codex-agent-registry.mjs",
   "scripts/verify-agent-governance.mjs",
   "scripts/agent-evolve.mjs",
+  "scripts/master-plan-progress.mjs",
+  "scripts/wait-for-vercel-deployment.mjs",
 ];
 
 async function fileExists(relativePath) {
@@ -192,6 +194,8 @@ async function main() {
   requireSubstring(errors, rootReadme, "README.md", "@codex review");
   requireSubstring(errors, rootReadme, "README.md", "verify:codex");
   requireSubstring(errors, rootReadme, "README.md", "verify:agent-governance");
+  requireSubstring(errors, rootReadme, "README.md", "report:master-progress");
+  requireSubstring(errors, rootReadme, "README.md", "wait:vercel-deploy");
 
   const rootAgents = await readUtf8("AGENTS.md");
   requireSubstring(errors, rootAgents, "AGENTS.md", "docs/CODEX_PLAYBOOK.md");
@@ -203,6 +207,8 @@ async function main() {
   requireSubstring(errors, rootAgents, "AGENTS.md", "code_review.md");
   requireSubstring(errors, rootAgents, "AGENTS.md", "## Review guidelines");
   requireSubstring(errors, rootAgents, "AGENTS.md", "## Prompt contract");
+  requireSubstring(errors, rootAgents, "AGENTS.md", "report:master-progress");
+  requireSubstring(errors, rootAgents, "AGENTS.md", "wait:vercel-deploy");
 
   const reviewContract = await readUtf8("code_review.md");
   requireSubstring(errors, reviewContract, "code_review.md", "@codex review");

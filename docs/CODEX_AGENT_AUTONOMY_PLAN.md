@@ -10,6 +10,8 @@
 
 - orchestration `discover -> route -> execute -> verify -> document` закреплён не только в prose docs,
   но и в ролях, skills и scripts;
+- для deploy-oriented tranche агент не считает работу завершённой, пока Vercel deployment не дошёл до terminal state без ошибок;
+- для каждого существенного статуса агент явно показывает текущий процент выполнения по [MASTER_PLAN.md](/C:/fit/docs/MASTER_PLAN.md);
 - prompt-contract, governance и self-evolving loop оформлены как repo-local knowledge, а не как устные договорённости;
 - у agent layer есть детерминированный inventory и синхронизируемый registry-doc;
 - автономные write-runs ограничены allowlist-поверхностью agent layer, имеют kill switch, diff budget,

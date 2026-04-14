@@ -18,6 +18,7 @@ import {
   isDeniedAutonomyWrite,
 } from "./agent-governance-config.mjs";
 import { buildAgentInventory } from "./agent-inventory.mjs";
+import { readMasterPlanProgress } from "./master-plan-progress.mjs";
 import { syncRegistryDoc } from "./sync-codex-agent-registry.mjs";
 
 const ROOT = process.cwd();
@@ -117,6 +118,7 @@ async function main() {
   }
 
   const inventory = await buildAgentInventory();
+  const masterPlanProgress = await readMasterPlanProgress();
   await writeArtifact(path.join(artifactDir, "agent-inventory.json"), `${JSON.stringify(inventory, null, 2)}\n`);
 
   const registrySync = await syncRegistryDoc({ write: args.write });
@@ -170,6 +172,7 @@ async function main() {
   }
 
   summary.registryChanged = registrySync.changed;
+  summary.masterPlanProgress = masterPlanProgress;
   summary.finishedAt = new Date().toISOString();
 
   await writeArtifact(path.join(artifactDir, "summary.json"), `${JSON.stringify(summary, null, 2)}\n`);
@@ -180,6 +183,7 @@ async function main() {
 - Mode: \`${summary.mode}\`
 - Branch: \`${summary.branch}\`
 - Registry changed: \`${summary.registryChanged}\`
+- Master plan progress: \`${masterPlanProgress.display}\`
 - Commands: \`${summary.commands.join("`, `")}\`
 - Pushed: \`${summary.pushed ?? false}\`
 `,

@@ -24,6 +24,8 @@
     "agent:evaluate": "node scripts/agent-evolve.mjs",
     "agent:evolve": "node scripts/agent-evolve.mjs --write",
     "agent:evolve:push": "node scripts/agent-evolve.mjs --write --push",
+    "report:master-progress": "node scripts/master-plan-progress.mjs",
+    "wait:vercel-deploy": "node scripts/wait-for-vercel-deployment.mjs",
     "pretest:e2e": "node scripts/ensure-next-build.mjs",
     "pretest:e2e:auth": "node scripts/ensure-next-build.mjs",
     "pretest:ai-gate": "node scripts/ensure-next-build.mjs",

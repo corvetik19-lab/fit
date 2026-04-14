@@ -13,4 +13,5 @@ description: Use when Codex must choose and run the minimum defensible verificat
   - `npm run test:retrieval-gate`, `npm run verify:retrieval-release` for AI/retrieval work;
   - `npm run verify:android-twa` for Android/TWA changes;
   - `npm run verify:codex` when touching AGENTS, skills, `.codex`, docs playbooks, or agent configs.
+- If the slice affects preview/production rollout, do not stop at local checks: wait for the Vercel deployment to finish cleanly via Vercel MCP first, or fall back to `npm run wait:vercel-deploy -- <deployment-url-or-id>`.
 - Report which checks passed, which were skipped, and which are blocked externally.
