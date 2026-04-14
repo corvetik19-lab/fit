@@ -37,7 +37,7 @@ type BuilderDay = {
 type BuilderPanelKey = "builder" | "active" | "templates" | "history";
 
 const inputClassName =
-  "w-full rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15";
+  "w-full rounded-[1rem] border border-border bg-[color:var(--surface-container-high)] px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted focus:border-[color:var(--accent)] focus:ring-2 focus:ring-[color:var(--accent-soft)]";
 
 const dayLabels: Record<number, string> = {
   1: "Понедельник",

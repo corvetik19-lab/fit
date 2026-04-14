@@ -67,18 +67,16 @@ export function SettingsBillingCenter({
   });
 
   return (
-    <section className="card p-6" id="billing-center">
+    <section className="surface-panel p-5 sm:p-6" id="billing-center">
       <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
-            Доступ и оплата
-          </p>
-          <h2 className="mt-2 text-2xl font-semibold text-foreground">
+          <p className="workspace-kicker">Доступ и оплата</p>
+          <h2 className="mt-2 text-2xl font-semibold tracking-tight text-foreground">
             Подписка, AI-функции и история доступа
           </h2>
         </div>
         <button
-          className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
+          className="action-button action-button--secondary"
           disabled={isPending}
           onClick={refreshBilling}
           type="button"
@@ -89,10 +87,10 @@ export function SettingsBillingCenter({
 
       {billingReturnNotice ? (
         <div
-          className={`mb-5 rounded-3xl border px-4 py-4 text-sm ${
+          className={`mb-5 rounded-[1.35rem] border px-4 py-4 text-sm ${
             billingReturnNotice.tone === "success"
-              ? "border-emerald-200 bg-emerald-50/80 text-emerald-900"
-              : "border-amber-300/60 bg-amber-50 text-amber-900"
+              ? "border-emerald-500/30 bg-emerald-500/12 text-emerald-100"
+              : "border-amber-400/30 bg-amber-500/10 text-amber-100"
           }`}
         >
           <p className="font-semibold">{billingReturnNotice.title}</p>
@@ -107,7 +105,7 @@ export function SettingsBillingCenter({
                 </span>
               </p>
               <p>
-                Платёж:{" "}
+                Платеж:{" "}
                 <span className="font-semibold">
                   {formatBillingPaymentStatus(checkoutReturn.paymentStatus)}
                 </span>
@@ -120,7 +118,7 @@ export function SettingsBillingCenter({
                     : isCheckoutReturnSyncing
                       ? "проверяю сейчас"
                       : checkoutRetryEnabled
-                        ? `осталось попыток: ${checkoutRetriesRemaining}`
+                        ? `попыток осталось: ${checkoutRetriesRemaining}`
                         : "нужна ручная проверка"}
                 </span>
               </p>
@@ -129,30 +127,28 @@ export function SettingsBillingCenter({
 
           {checkoutReturn && !checkoutReturn.reconciled ? (
             <button
-              className="mt-3 rounded-full border border-amber-400/70 bg-white/80 px-4 py-2 font-semibold text-foreground transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+              className="action-button action-button--secondary mt-3"
               disabled={isPending || isCheckoutReturnSyncing}
               onClick={retryCheckoutSync}
               type="button"
             >
               {isCheckoutReturnSyncing
                 ? "Проверяю оплату..."
-                : "Проверить оплату ещё раз"}
+                : "Проверить оплату еще раз"}
             </button>
           ) : null}
         </div>
       ) : null}
 
-      <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+      <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
         <div className="grid gap-4">
-          <article className="rounded-[28px] border border-border bg-white/70 p-5">
+          <article className="metric-tile p-5">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-sm font-semibold text-foreground">
-                  Текущий план
-                </p>
+                <p className="text-sm font-semibold text-foreground">Текущий план</p>
                 <p className="mt-1 text-sm leading-6 text-muted">
-                  Здесь видно состояние подписки, источники доступа и месячные
-                  лимиты без лишних переходов.
+                  Здесь видно состояние подписки, источник доступа и лимиты по
+                  AI-функциям без лишних переходов.
                 </p>
               </div>
               <span className="pill">
@@ -164,8 +160,8 @@ export function SettingsBillingCenter({
               </span>
             </div>
 
-            <div className="mt-4 grid gap-3 md:grid-cols-2">
-              <div className="rounded-2xl border border-border/70 bg-white/80 px-4 py-3 text-sm text-muted">
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-2xl border border-border bg-background/40 px-4 py-3 text-sm text-muted">
                 <p>
                   Статус:{" "}
                   <span className="text-foreground">
@@ -185,7 +181,8 @@ export function SettingsBillingCenter({
                   </span>
                 </p>
               </div>
-              <div className="rounded-2xl border border-border/70 bg-white/80 px-4 py-3 text-sm text-muted">
+
+              <div className="rounded-2xl border border-border bg-background/40 px-4 py-3 text-sm text-muted">
                 <p>
                   Период до:{" "}
                   <span className="text-foreground">
@@ -203,14 +200,14 @@ export function SettingsBillingCenter({
 
             <div className="mt-4 flex flex-wrap gap-3">
               {isPrivilegedAccess ? (
-                <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-3 text-sm text-emerald-900">
+                <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/12 px-4 py-3 text-sm text-emerald-100">
                   Для корневого администратора все AI и premium-функции открыты
                   постоянно и не зависят от подписки.
                 </div>
               ) : access.subscription.isActive ? (
                 billing.managementReady ? (
                   <button
-                    className="rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="action-button action-button--primary"
                     disabled={isPending}
                     onClick={() =>
                       startBillingFlow(
@@ -223,13 +220,13 @@ export function SettingsBillingCenter({
                     {formatBillingManagementLabel(billing.provider)}
                   </button>
                 ) : (
-                  <span className="rounded-full border border-border px-4 py-3 text-xs font-semibold text-muted">
-                    Управление подпиской сейчас остаётся внутри fit и через поддержку.
+                  <span className="rounded-2xl border border-border px-4 py-3 text-xs font-semibold text-muted">
+                    Управление подпиской пока остается внутри fit и через поддержку.
                   </span>
                 )
               ) : (
                 <button
-                  className="rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="action-button action-button--primary"
                   disabled={!billing.checkoutReady || isPending}
                   onClick={() =>
                     startBillingFlow("/api/billing/checkout", "Открываю оплату...")
@@ -241,7 +238,7 @@ export function SettingsBillingCenter({
               )}
 
               {!isPrivilegedAccess && !access.subscription.isActive ? (
-                <span className="rounded-full border border-border px-4 py-3 text-xs font-semibold text-muted">
+                <span className="rounded-2xl border border-border px-4 py-3 text-xs font-semibold text-muted">
                   Расширенный доступ нужен для AI-плана питания, AI-плана
                   тренировок и анализа фото еды.
                 </span>
@@ -251,26 +248,28 @@ export function SettingsBillingCenter({
             {!isPrivilegedAccess &&
             (!billing.checkoutReady ||
               (access.subscription.isActive && !billing.managementReady)) ? (
-              <div className="mt-4 rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                Платёжный модуль ещё не настроен полностью. Часть действий по
+              <div className="mt-4 rounded-2xl border border-amber-400/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+                Платежный модуль еще не настроен полностью. Часть действий по
                 подписке может быть временно недоступна.
               </div>
             ) : null}
+          </article>
 
-            <div className="mt-4 grid gap-3">
+          <article className="surface-panel surface-panel--soft p-5">
+            <div className="mb-4">
+              <p className="workspace-kicker">Функции</p>
+              <h3 className="mt-2 text-xl font-semibold tracking-tight text-foreground">
+                Что доступно по текущему плану
+              </h3>
+            </div>
+
+            <div className="grid gap-3">
               {featureCards.map((feature) => (
-                <article
-                  className="rounded-2xl border border-border/70 bg-white/80 p-4 text-sm"
-                  key={feature.featureKey}
-                >
+                <article className="metric-tile p-4 text-sm" key={feature.featureKey}>
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="font-semibold text-foreground">
-                        {feature.label}
-                      </p>
-                      <p className="mt-1 leading-6 text-muted">
-                        {feature.description}
-                      </p>
+                      <p className="font-semibold text-foreground">{feature.label}</p>
+                      <p className="mt-1 leading-6 text-muted">{feature.description}</p>
                     </div>
                     <span className="pill">
                       {feature.allowed ? "доступно" : "закрыто"}
@@ -284,11 +283,11 @@ export function SettingsBillingCenter({
                       {` / ${formatUsageLimit(feature.usage.limit)}`}
                     </p>
                     <p>
-                      Следующее обновление лимита:{" "}
+                      Следующий сброс лимита:{" "}
                       {formatSettingsDateTime(feature.usage.resetAt)}
                     </p>
                     {feature.reason ? (
-                      <p className="text-amber-700">{feature.reason}</p>
+                      <p className="text-amber-200">{feature.reason}</p>
                     ) : null}
                   </div>
                 </article>
@@ -298,28 +297,24 @@ export function SettingsBillingCenter({
         </div>
 
         <div className="grid gap-4">
-          <article className="rounded-[28px] border border-border bg-white/70 p-5">
+          <article className="metric-tile p-5">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-sm font-semibold text-foreground">
-                  Запросить доступ
-                </p>
+                <p className="text-sm font-semibold text-foreground">Запросить доступ</p>
                 <p className="mt-1 text-sm leading-6 text-muted">
-                  Если функция закрыта, можно отправить запрос на ручную проверку
-                  доступа.
+                  Если функция закрыта, можно отправить запрос на ручную
+                  проверку доступа.
                 </p>
               </div>
               {activeReviewRequest ? (
-                <span
-                  className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusTone(activeReviewRequest.status)}`}
-                >
+                <span className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusTone(activeReviewRequest.status)}`}>
                   {formatReviewStatus(activeReviewRequest.status)}
                 </span>
               ) : null}
             </div>
 
             {activeReviewRequest ? (
-              <div className="mt-4 rounded-2xl border border-border/70 bg-white/80 px-4 py-3 text-sm text-muted">
+              <div className="mt-4 rounded-2xl border border-border bg-background/40 px-4 py-3 text-sm text-muted">
                 <p>
                   Последний запрос:{" "}
                   <span className="text-foreground">
@@ -346,12 +341,12 @@ export function SettingsBillingCenter({
 
                     return (
                       <label
-                        className="flex items-start gap-3 rounded-2xl border border-border/70 bg-white/80 px-4 py-3 text-sm text-muted"
+                        className="metric-tile flex items-start gap-3 p-4 text-sm text-muted"
                         key={feature.featureKey}
                       >
                         <input
                           checked={checked}
-                          className="mt-1 h-4 w-4 rounded border-border text-accent"
+                          className="mt-1 h-4 w-4 rounded border-border bg-background text-accent"
                           onChange={() => toggleFeature(feature.featureKey)}
                           type="checkbox"
                         />
@@ -379,7 +374,7 @@ export function SettingsBillingCenter({
                 </label>
 
                 <button
-                  className="mt-4 rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="action-button action-button--primary mt-4"
                   disabled={
                     isPending ||
                     selectedFeatures.length === 0 ||
@@ -392,17 +387,15 @@ export function SettingsBillingCenter({
                 </button>
               </>
             ) : (
-              <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50/70 px-4 py-3 text-sm text-emerald-800">
+              <div className="mt-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/12 px-4 py-3 text-sm text-emerald-100">
                 Сейчас все AI-функции доступны по твоему текущему плану.
               </div>
             )}
           </article>
 
-          <article className="rounded-[28px] border border-border bg-white/70 p-5">
+          <article className="metric-tile p-5">
             <div className="mb-4">
-              <p className="text-sm font-semibold text-foreground">
-                История доступа
-              </p>
+              <p className="text-sm font-semibold text-foreground">История доступа</p>
               <p className="mt-1 text-sm leading-6 text-muted">
                 Здесь видны изменения подписки, ручных доступов и твоих запросов.
               </p>
@@ -440,8 +433,8 @@ export function SettingsBillingCenter({
                   </div>
                 ))
               ) : (
-                <div className="rounded-2xl border border-dashed border-border bg-white/70 px-4 py-4 text-sm text-muted">
-                  История доступа пока пуста.
+                <div className="rounded-2xl border border-dashed border-border px-4 py-4 text-sm text-muted">
+                  История доступа пока пустая.
                 </div>
               )}
             </div>
@@ -450,13 +443,13 @@ export function SettingsBillingCenter({
       </div>
 
       {notice ? (
-        <p className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+        <p className="mt-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/12 px-4 py-3 text-sm text-emerald-100">
           {notice}
         </p>
       ) : null}
 
       {error ? (
-        <p className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <p className="mt-4 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
           {error}
         </p>
       ) : null}

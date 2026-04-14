@@ -41,7 +41,7 @@ function formatUppercaseName(name: string | null | undefined) {
   const trimmed = name?.trim();
 
   if (!trimmed) {
-    return "FIT ATHLETE";
+    return "FIT";
   }
 
   return trimmed.toUpperCase();
@@ -73,36 +73,36 @@ export default async function SettingsPage() {
     ? goalTypeLabels[viewer.goal.goal_type] ?? viewer.goal.goal_type
     : "Поддержание формы";
   const weeklyTrainingDays = viewer.goal?.weekly_training_days ?? null;
-  const premiumStatus = viewer.adminState?.is_suspended
+  const accessStatus = viewer.adminState?.is_suspended
     ? "Ограничен"
     : access.subscription.isActive
-      ? "Активен"
-      : "Базовый";
+      ? "Премиум активен"
+      : "Базовый доступ";
 
   return (
     <AppShell
       eyebrow="Настройки"
-      title="Профиль, доступ и управление личными данными"
+      title="Профиль, доступ и личные данные"
       viewer={toAppShellViewer(viewer)}
     >
       <div className="grid gap-6">
-        <section className="grid gap-5">
-          <div className="space-y-3">
-            <p className="workspace-kicker text-accent">Персональный контур</p>
-            <h1 className="app-display text-4xl font-black tracking-[-0.08em] text-foreground sm:text-5xl">
+        <section className="grid gap-4">
+          <div className="grid gap-3">
+            <p className="workspace-kicker text-accent">Личный контур</p>
+            <h1 className="app-display text-3xl font-black tracking-[-0.08em] text-foreground sm:text-4xl">
               {formatUppercaseName(profileName)}
             </h1>
-            <p className="max-w-2xl text-sm leading-7 text-muted sm:text-base">
-              Один экран для профиля, подписки и приватности. На мобильном он
-              должен работать как компактный центр управления без ощущения
-              “сжатой веб-панели”.
+            <p className="max-w-2xl text-sm leading-7 text-muted">
+              Здесь собраны профиль, доступ, история оплаты и действия с личными
+              данными. Экран должен оставаться коротким, понятным и удобным на
+              телефоне, без ощущения перегруженной панели.
             </p>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-3">
             <article className="surface-panel p-5">
               <p className="workspace-kicker">Текущий вес</p>
-              <p className="mt-4 text-4xl font-black tracking-tight text-foreground">
+              <p className="mt-3 text-4xl font-black tracking-tight text-foreground">
                 {formatMetricValue(currentWeightKg, "кг")}
               </p>
             </article>
@@ -111,7 +111,7 @@ export default async function SettingsPage() {
               <p className="workspace-kicker">
                 {bodyFatPct !== null ? "Жировая масса" : "Ритм недели"}
               </p>
-              <p className="mt-4 text-4xl font-black tracking-tight text-foreground">
+              <p className="mt-3 text-4xl font-black tracking-tight text-foreground">
                 {bodyFatPct !== null
                   ? formatMetricValue(bodyFatPct, "%")
                   : weeklyTrainingDays !== null
@@ -119,138 +119,112 @@ export default async function SettingsPage() {
                     : "Не задан"}
               </p>
             </article>
+
+            <article className="surface-panel p-5">
+              <p className="workspace-kicker">Статус доступа</p>
+              <p className="mt-3 text-2xl font-semibold tracking-tight text-foreground">
+                {accessStatus}
+              </p>
+              <p className="mt-2 text-sm text-muted">{goalLabel}</p>
+            </article>
           </div>
         </section>
 
-        <section className="athletic-hero-card p-6 sm:p-7">
-          <div className="relative z-10 flex flex-wrap items-start justify-between gap-4">
+        <section className="surface-panel surface-panel--accent p-6 sm:p-7">
+          <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="space-y-3">
               <div className="flex flex-wrap gap-2">
-                <span className="athletic-hero-chip">{premiumStatus}</span>
-                <span className="athletic-hero-chip">{goalLabel}</span>
+                <span className="pill">{accessStatus}</span>
+                <span className="pill">{goalLabel}</span>
               </div>
-              <h2 className="app-display text-4xl font-black tracking-[-0.08em] text-white">
+              <h2 className="app-display text-3xl font-black tracking-[-0.08em] text-foreground sm:text-4xl">
                 fit access
               </h2>
-              <p className="max-w-xl text-sm leading-7 text-white/78 sm:text-base">
-                Здесь собран доступ к AI, истории оплаты и личным данным. Быстрые
-                действия вынесены наверх, а детальные billing/data сценарии
-                остаются ниже без отдельной перегруженной панели.
+              <p className="max-w-2xl text-sm leading-7 text-muted">
+                Сверху только быстрые действия, ниже — полноценные billing и
+                data-сценарии. Вся информация про доступ должна читаться за пару
+                секунд без длинного скролла и лишних промежуточных экранов.
               </p>
             </div>
 
             <div className="flex flex-wrap gap-3">
-              <a
-                className="action-button action-button--secondary bg-white text-accent"
-                href="#billing-center"
-              >
-                Управлять доступом
+              <a className="action-button action-button--primary" href="#billing-center">
+                Открыть доступ
               </a>
-              <a
-                className="action-button action-button--soft border-white/20 bg-white/12 text-white"
-                href="#billing-center"
-              >
-                История доступа
+              <a className="action-button action-button--secondary" href="#data-center">
+                Мои данные
               </a>
             </div>
           </div>
         </section>
 
-        <section className="grid gap-6 lg:grid-cols-[1.02fr_0.98fr]">
+        <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
           <article className="surface-panel p-5 sm:p-6">
             <div className="mb-5">
-              <p className="workspace-kicker">Информация</p>
-              <h2 className="app-display mt-2 text-3xl font-semibold text-foreground">
-                Личный профиль
+              <p className="workspace-kicker">Профиль</p>
+              <h2 className="mt-2 text-2xl font-semibold tracking-tight text-foreground">
+                Контекст и основные параметры
               </h2>
             </div>
 
             <div className="grid gap-3">
               <Link
-                className="flex items-center justify-between rounded-[1.7rem] bg-white/78 px-4 py-4 text-left text-foreground transition hover:bg-white"
+                className="metric-tile flex items-center justify-between gap-3 p-4 text-left"
                 href={"/onboarding" as Route}
               >
                 <span>
-                  <span className="block text-base font-semibold">
+                  <span className="block text-base font-semibold text-foreground">
                     Обновить анкету
                   </span>
-                  <span className="mt-1 block text-sm text-muted">
+                  <span className="mt-1 block text-sm leading-6 text-muted">
                     Рост, вес, цели, оборудование и ограничения.
                   </span>
                 </span>
-                <span className="text-xl text-muted">›</span>
+                <span className="text-lg text-muted">›</span>
               </Link>
 
               <a
-                className="flex items-center justify-between rounded-[1.7rem] bg-white/78 px-4 py-4 text-left text-foreground transition hover:bg-white"
+                className="metric-tile flex items-center justify-between gap-3 p-4 text-left"
                 href="#profile-context"
               >
                 <span>
-                  <span className="block text-base font-semibold">
+                  <span className="block text-base font-semibold text-foreground">
                     Контекст для рекомендаций
                   </span>
-                  <span className="mt-1 block text-sm text-muted">
-                    То, на чём держатся программы, питание и AI-подсказки.
+                  <span className="mt-1 block text-sm leading-6 text-muted">
+                    То, на чем держатся программы, питание и AI-подсказки.
                   </span>
                 </span>
-                <span className="text-xl text-muted">›</span>
+                <span className="text-lg text-muted">›</span>
+              </a>
+
+              <a
+                className="metric-tile flex items-center justify-between gap-3 p-4 text-left"
+                href="#data-center"
+              >
+                <span>
+                  <span className="block text-base font-semibold text-foreground">
+                    Экспорт и удаление данных
+                  </span>
+                  <span className="mt-1 block text-sm leading-6 text-muted">
+                    В очереди выгрузок: {dataSnapshot.exportJobs.length}
+                  </span>
+                </span>
+                <span className="text-lg text-muted">›</span>
               </a>
             </div>
           </article>
 
-          <article className="surface-panel p-5 sm:p-6">
-            <div className="mb-5">
-              <p className="workspace-kicker">Данные и приватность</p>
-              <h2 className="app-display mt-2 text-3xl font-semibold text-foreground">
-                Быстрые действия
-              </h2>
-            </div>
-
-            <div className="grid gap-3">
-              <a
-                className="flex items-center justify-between rounded-[1.7rem] bg-white/78 px-4 py-4 text-left text-foreground transition hover:bg-white"
-                href="#data-center"
-              >
-                <span>
-                  <span className="block text-base font-semibold">
-                    Экспортировать мои данные
-                  </span>
-                  <span className="mt-1 block text-sm text-muted">
-                    История выгрузок: {dataSnapshot.exportJobs.length}
-                  </span>
-                </span>
-                <span className="text-xl text-muted">›</span>
-              </a>
-
-              <a
-                className="flex items-center justify-between rounded-[1.7rem] bg-[color-mix(in_srgb,#ffe7e4_78%,white)] px-4 py-4 text-left text-red-700 transition hover:bg-[color-mix(in_srgb,#ffe1dd_82%,white)]"
-                href="#data-center"
-              >
-                <span>
-                  <span className="block text-base font-semibold">
-                    Удалить аккаунт
-                  </span>
-                  <span className="mt-1 block text-sm text-red-600/85">
-                    Приватность и контроль над личными данными.
-                  </span>
-                </span>
-                <span className="text-xl text-red-400">›</span>
-              </a>
-            </div>
-          </article>
-        </section>
-
-        <section className="grid gap-6 xl:grid-cols-[0.92fr_1.08fr]">
           <article className="surface-panel p-5 sm:p-6" id="profile-context">
-            <div className="mb-4">
+            <div className="mb-5">
               <p className="workspace-kicker">Профиль</p>
-              <h2 className="app-display mt-2 text-3xl font-semibold text-foreground">
-                Сессия и контекст
+              <h2 className="mt-2 text-2xl font-semibold tracking-tight text-foreground">
+                Сессия и тренерский контекст
               </h2>
             </div>
 
             <div className="grid gap-3 text-sm leading-7 text-muted">
-              <div className="rounded-[1.5rem] bg-white/78 px-4 py-4">
+              <div className="metric-tile p-4">
                 <p>
                   <span className="font-semibold text-foreground">Email:</span>{" "}
                   {viewer.user.email ?? "Неизвестно"}
@@ -269,56 +243,56 @@ export default async function SettingsPage() {
                 </p>
               </div>
 
-              <div className="rounded-[1.5rem] bg-white/78 px-4 py-4">
+              <div className="metric-tile p-4">
                 <p>
-                  <span className="font-semibold text-foreground">
-                    Оборудование:
-                  </span>{" "}
+                  <span className="font-semibold text-foreground">Оборудование:</span>{" "}
                   {viewer.onboarding?.equipment?.join(", ") || "Не указано"}
                 </p>
                 <p className="mt-2">
                   <span className="font-semibold text-foreground">Питание:</span>{" "}
-                  {viewer.onboarding?.dietary_preferences?.join(", ") ||
-                    "Не указано"}
+                  {viewer.onboarding?.dietary_preferences?.join(", ") || "Не указано"}
                 </p>
                 <p className="mt-2">
-                  <span className="font-semibold text-foreground">
-                    Ограничения:
-                  </span>{" "}
+                  <span className="font-semibold text-foreground">Ограничения:</span>{" "}
                   {viewer.onboarding?.injuries?.join(", ") || "Не указано"}
                 </p>
               </div>
             </div>
           </article>
+        </section>
 
-          <div className="grid gap-6">
-            <div id="billing-center">
-              <SettingsBillingCenter
-                access={access}
-                billing={{
-                  provider: billingProvider,
-                  checkoutReady: hasActiveBillingCheckoutEnv(),
-                  managementReady: hasActiveBillingManagementEnv(),
-                }}
-                initialSnapshot={dataSnapshot}
-              />
-            </div>
+        <section className="grid gap-6">
+          <div id="billing-center">
+            <SettingsBillingCenter
+              access={access}
+              billing={{
+                provider: billingProvider,
+                checkoutReady: hasActiveBillingCheckoutEnv(),
+                managementReady: hasActiveBillingManagementEnv(),
+              }}
+              initialSnapshot={dataSnapshot}
+            />
+          </div>
 
-            <div id="data-center">
-              <SettingsDataCenter initialSnapshot={dataSnapshot} />
-            </div>
+          <div id="data-center">
+            <SettingsDataCenter initialSnapshot={dataSnapshot} />
           </div>
         </section>
 
-        <section className="flex flex-col items-center gap-4 py-4">
-          <SignOutButton className="min-w-[15rem] justify-center bg-white" />
-          <div className="text-center">
-            <p className="app-display text-3xl font-black tracking-[-0.08em] text-accent/22">
-              fit
-            </p>
-            <p className="mt-2 text-[0.68rem] font-semibold uppercase tracking-[0.3em] text-muted">
-              mobile first fitness workspace
-            </p>
+        <section className="surface-panel p-5 sm:p-6">
+          <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+            <div>
+              <p className="workspace-kicker">Сессия</p>
+              <h2 className="mt-2 text-2xl font-semibold tracking-tight text-foreground">
+                Завершить сеанс
+              </h2>
+              <p className="mt-2 max-w-xl text-sm leading-7 text-muted">
+                Если нужно выйти с этого устройства, сделай это здесь. После
+                выхода форма входа снова откроется как стартовый экран.
+              </p>
+            </div>
+
+            <SignOutButton className="min-w-[12rem] justify-center" />
           </div>
         </section>
       </div>

@@ -2,16 +2,9 @@
 
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
-import type {
-  WorkoutDayDetail,
-} from "@/lib/workout/weekly-programs";
+import type { WorkoutDayDetail } from "@/lib/workout/weekly-programs";
 import { buildWorkoutDayDerivedState } from "@/components/workout-session/derived-state";
 import {
   areExerciseDraftValuesSaved,
@@ -34,10 +27,9 @@ import { useWorkoutDaySync } from "@/components/workout-session/use-workout-day-
 import { useWorkoutSessionTimer } from "@/components/workout-session/use-workout-session-timer";
 
 const inputClassName =
-  "w-full rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15";
+  "w-full rounded-[1rem] border border-border bg-[color:var(--surface-container-high)] px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted focus:border-[color:var(--accent)] focus:ring-2 focus:ring-[color:var(--accent-soft)]";
 
 const textAreaClassName = `${inputClassName} min-h-28 resize-y`;
-
 
 export function WorkoutDaySession({
   initialDay,
@@ -313,7 +305,7 @@ export function WorkoutDaySession({
   );
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-5">
       {isMobileFocusMode ? (
         <WorkoutFocusHeader
           activeExerciseTitle={activeExercise?.exercise_title_snapshot ?? null}
@@ -434,9 +426,9 @@ export function WorkoutDaySession({
             );
           })
         ) : (
-          <section className="rounded-[1.8rem] bg-[color:var(--surface-bright)] px-6 py-6 shadow-[0_24px_64px_-50px_rgba(24,29,63,0.22)]">
+          <section className="card p-5 sm:p-6">
             <p className="text-sm leading-7 text-[color:var(--muted)]">
-              В этом тренировочном дне пока нет упражнений.
+              В этом дне пока нет упражнений. Вернись к неделе и добавь хотя бы один шаг.
             </p>
           </section>
         )}

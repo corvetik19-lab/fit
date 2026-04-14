@@ -1495,6 +1495,21 @@
 - Для уже подключённых workspace-экранов санирован user-visible copy и подтянут новый тон в [workouts/page.tsx](/C:/fit/src/app/workouts/page.tsx) и [nutrition/page.tsx](/C:/fit/src/app/nutrition/page.tsx).
 - В [AGENTS.md](/C:/fit/AGENTS.md) закреплено правило двойной отчётности: в статусах всегда показывается общий прогресс из `MASTER_PLAN` и отдельный прогресс активного execution-doc, если он существует.
 
+### Dark Utility redesign: workouts и focus-mode tranche
+
+- Перевёл `/workouts` и `/workouts/day/[dayId]` в новый компактный mobile-first стиль: обновлены [weekly-program-builder.tsx](/C:/fit/src/components/weekly-program-builder.tsx), [page.tsx](/C:/fit/src/app/workouts/day/%5BdayId%5D/page.tsx) и [workout-day-session.tsx](/C:/fit/src/components/workout-day-session.tsx).
+- Focus-mode тренировки и execution surfaces собраны в более профессиональный utility-ритм через [workout-focus-header.tsx](/C:/fit/src/components/workout-session/workout-focus-header.tsx), [workout-day-overview-card.tsx](/C:/fit/src/components/workout-session/workout-day-overview-card.tsx), [workout-status-actions.tsx](/C:/fit/src/components/workout-session/workout-status-actions.tsx), [workout-step-strip.tsx](/C:/fit/src/components/workout-session/workout-step-strip.tsx) и [workout-exercise-card.tsx](/C:/fit/src/components/workout-session/workout-exercise-card.tsx).
+- Проверка по code-gates зелёная: `npm run lint`, `npm run typecheck`, `npm run build`.
+
+### Dark Utility redesign: history, settings и self-service tranche
+
+- Перевёл [history/page.tsx](/C:/fit/src/app/history/page.tsx) в компактный dark utility формат: архив программ, AI-предложения и data actions теперь собраны в один рабочий timeline без лишнего визуального шума.
+- Перестроил [settings/page.tsx](/C:/fit/src/app/settings/page.tsx), [settings-billing-center.tsx](/C:/fit/src/components/settings-billing-center.tsx) и [settings-data-center.tsx](/C:/fit/src/components/settings-data-center.tsx) под mobile-first control center с чистым self-service copy и единым визуальным контрактом.
+- Довёл billing/restricted surfaces через [billing/cloudpayments/page.tsx](/C:/fit/src/app/billing/cloudpayments/page.tsx), [cloudpayments-checkout.tsx](/C:/fit/src/components/cloudpayments-checkout.tsx), [suspended/page.tsx](/C:/fit/src/app/suspended/page.tsx), [sign-out-button.tsx](/C:/fit/src/components/sign-out-button.tsx) и [app-shell-frame.tsx](/C:/fit/src/components/app-shell-frame.tsx).
+- Shared workspace и auth regression harness синхронизированы с новым layout: [page-workspace.tsx](/C:/fit/src/components/page-workspace.tsx) очищен как source of truth для разработчиков, а [authenticated-app.spec.ts](/C:/fit/tests/e2e/authenticated-app.spec.ts) теперь проверяет реальные hero/workspace surfaces вместо скрытых mobile-триггеров на desktop.
+- Проверка tranche зелёная: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:smoke`, `node scripts/run-playwright.mjs PLAYWRIGHT_BASE_URL=http://127.0.0.1:3100 -- test tests/e2e/authenticated-app.spec.ts --workers=1` -> `2 passed`.
+- Таргетированный Playwright по workout/mobile сейчас честно упирается не в layout, а во внешний runtime: seed helper периодически ловит timeout/`500` в `Supabase`, поэтому этот хвост зафиксирован как внешний blocker verification, а не как незавершённый UI slice.
+
 ### Agent hardening: review, security и prompt-contract
 
 - Создан [CODEX_AGENT_HARDENING_PLAN.md](/C:/fit/docs/CODEX_AGENT_HARDENING_PLAN.md) как отдельный execution-doc с `[ ] / [x]` чекбоксами для нового tranche по усилению агента.

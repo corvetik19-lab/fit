@@ -179,3 +179,21 @@ Frontend делится на три уровня:
 - [AI_WORKLOG.md](/C:/fit/docs/AI_WORKLOG.md)
 - [DARK_UTILITY_REDESIGN_EXECUTION.md](/C:/fit/docs/DARK_UTILITY_REDESIGN_EXECUTION.md)
 - [design-handoff/DARK_UTILITY_MOBILE_BRIEF.md](/C:/fit/docs/design-handoff/DARK_UTILITY_MOBILE_BRIEF.md)
+
+## 2026-04-15 Dark Utility workouts contract
+
+- `/workouts` и `/workouts/day/[dayId]` теперь считаются частью закрытого dark-utility foundation и должны поддерживать компактный mobile-first ритм без oversized CTA.
+- Workout execution screen обязан оставаться главным рабочим экраном продукта: короткий sticky header, быстрый доступ к таймеру, компактные шаги и одна понятная нижняя группа действий.
+- Focus-mode не должен превращаться в декоративный hero-screen: приоритет у скорости логирования, читаемости на `390px` и безопасного one-hand сценария.
+- Любые следующие правки workout UI должны сохранять совместимость с:
+  - `tests/e2e/workout-focus-flow.spec.ts`
+  - `tests/e2e/workout-sync.spec.ts`
+  - `tests/e2e/mobile-pwa-regressions.spec.ts`
+
+## 2026-04-15 Dark Utility settings/history contract
+
+- `/history` должен читаться как рабочий архив: timeline, AI proposals, программы и data actions собираются в один плотный экран без галереи равнозначных карточек.
+- `/settings` остаётся mobile-first control center с тремя обязательными слоями `profile / billing / data`; secondary copy должен быть коротким и прикладным, без explainers ради explainers.
+- `SettingsBillingCenter` и `SettingsDataCenter` считаются частью общего dark utility self-service контракта: compact cards, ясные статусы, одна главная кнопка на секцию, без oversized CTA и без светлых legacy-input surfaces.
+- `/billing/cloudpayments` и `/suspended` должны выглядеть как нормальные рабочие states продукта, а не как технические заглушки: один основной статус, понятное следующее действие и безопасный возврат в пользовательский контур.
+- Shared `PageWorkspace` остаётся каноническим слоем для heavy workspace-страниц; любые правки в его copy/structure нужно проверять через `tests/e2e/authenticated-app.spec.ts`, потому что этот suite теперь использует реальные hero/workspace surfaces как контракт навигации.

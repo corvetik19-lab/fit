@@ -4,7 +4,7 @@ import type { SettingsDataSnapshot } from "@/lib/settings-data";
 export const CHECKOUT_RETURN_RETRY_DELAYS_MS = [2500, 5000, 8000] as const;
 
 export const settingsBillingInputClassName =
-  "w-full rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15";
+  "w-full rounded-2xl border border-border bg-background/50 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15";
 
 const dateFormatter = new Intl.DateTimeFormat("ru-RU", {
   day: "2-digit",
@@ -71,7 +71,7 @@ export function formatSubscriptionProvider(
   isPrivilegedAccess: boolean,
 ) {
   if (isPrivilegedAccess) {
-    return "встроенный административный доступ";
+    return "административный доступ";
   }
 
   switch (provider) {
@@ -112,13 +112,13 @@ export function formatReviewStatus(value: string) {
 export function getStatusTone(value: string) {
   switch (value) {
     case "completed":
-      return "bg-emerald-50 text-emerald-700";
+      return "bg-emerald-500/12 text-emerald-100 border border-emerald-500/30";
     case "failed":
-      return "bg-red-50 text-red-700";
+      return "bg-red-500/10 text-red-200 border border-red-500/30";
     case "queued":
-      return "bg-amber-50 text-amber-700";
+      return "bg-amber-500/10 text-amber-100 border border-amber-400/30";
     default:
-      return "bg-white/80 text-foreground";
+      return "bg-white/10 text-foreground border border-border";
   }
 }
 
@@ -127,13 +127,13 @@ export function getTimelineTone(
 ) {
   switch (value) {
     case "success":
-      return "border-emerald-200 bg-emerald-50/70";
+      return "border-emerald-500/30 bg-emerald-500/12";
     case "warning":
-      return "border-amber-200 bg-amber-50/70";
+      return "border-amber-400/30 bg-amber-500/10";
     case "danger":
-      return "border-red-200 bg-red-50/70";
+      return "border-red-500/30 bg-red-500/10";
     default:
-      return "border-border/70 bg-white/80";
+      return "border-border bg-background/40";
   }
 }
 
@@ -204,11 +204,11 @@ export function formatBillingPaymentStatus(value: string | null | undefined) {
 export function formatBillingSessionStatus(value: string | null | undefined) {
   switch (value) {
     case "complete":
-      return "завершён";
+      return "завершен";
     case "open":
       return "открыт";
     case "expired":
-      return "истёк";
+      return "истек";
     case "pending":
       return "ожидает подтверждения";
     default:
@@ -218,6 +218,6 @@ export function formatBillingSessionStatus(value: string | null | undefined) {
 
 export function formatBillingManagementLabel(provider: BillingProvider) {
   return provider === "cloudpayments"
-    ? "Управлять в кабинете CloudPayments"
+    ? "Управлять в CloudPayments"
     : "Управлять подпиской";
 }

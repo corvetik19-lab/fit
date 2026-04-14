@@ -13,7 +13,7 @@
 
 Р­С‚РѕС‚ С„Р°Р№Р» вЂ” С‚РµРєСѓС‰РёР№ production-hardening backlog РїСЂРѕРµРєС‚Р°. РћРЅ РѕС‚СЂР°Р¶Р°РµС‚ С„Р°РєС‚РёС‡РµСЃРєРѕРµ СЃРѕСЃС‚РѕСЏРЅРёРµ СЂРµРїРѕР·РёС‚РѕСЂРёСЏ РЅР° `2026-03-31`.
 
-Текущий прогресс execution checklist: `203 / 214` (`95%`).
+Текущий прогресс execution checklist: `205 / 214` (`95%`).
 
 ## РўРµРєСѓС‰Р°СЏ Р±Р°Р·Р°
 
@@ -1381,9 +1381,25 @@
 - [x] Developer-facing frontend docs и дизайнерский handoff переведены на новый active-style source of truth: [FRONTEND.md](/C:/fit/docs/FRONTEND.md), [docs/README.md](/C:/fit/docs/README.md), [design-handoff/README.md](/C:/fit/docs/design-handoff/README.md), [DARK_UTILITY_MOBILE_BRIEF.md](/C:/fit/docs/design-handoff/DARK_UTILITY_MOBILE_BRIEF.md).
 - [x] Переведён foundation tranche: тёмные глобальные токены, PWA theme-color, shell, navigation и входной экран через [globals.css](/C:/fit/src/app/globals.css), [layout.tsx](/C:/fit/src/app/layout.tsx), [manifest.ts](/C:/fit/src/app/manifest.ts), [app-shell-frame.tsx](/C:/fit/src/components/app-shell-frame.tsx), [app-shell-nav.tsx](/C:/fit/src/components/app-shell-nav.tsx), [page.tsx](/C:/fit/src/app/page.tsx), [auth-form.tsx](/C:/fit/src/components/auth-form.tsx).
 - [x] Переведены `/dashboard` и общие workspace-паттерны под compact dark utility.
-- [ ] Переведены `/workouts` и `/workouts/day/[dayId]` под главный mobile fitness сценарий.
+- [x] Переведены `/workouts` и `/workouts/day/[dayId]` под главный mobile fitness сценарий.
 - [ ] Переведён `/nutrition` вместе с camera/barcode/Open Food Facts flow.
 - [ ] Переведён `/ai` как компактный coaching workspace.
-- [ ] Переведены `/history`, `/settings`, `/billing/cloudpayments`, `/suspended`.
+- [x] Переведены `/history`, `/settings`, `/billing/cloudpayments`, `/suspended`.
 - [ ] Переведены `/admin`, `/admin/users`, `/admin/users/[id]`.
 - [ ] Закрыт финальный visual/mobile regression tranche и developer handoff по новому стилю.
+
+## 2026-04-15 Dark Utility workouts tranche
+
+- [x] Workout список и день тренировки переведены в компактный dark utility язык через [weekly-program-builder.tsx](/C:/fit/src/components/weekly-program-builder.tsx), [page.tsx](/C:/fit/src/app/workouts/day/%5BdayId%5D/page.tsx) и [workout-day-session.tsx](/C:/fit/src/components/workout-day-session.tsx).
+- [x] Focus-mode и execution surfaces перестроены под mobile-first сценарий через [workout-focus-header.tsx](/C:/fit/src/components/workout-session/workout-focus-header.tsx), [workout-day-overview-card.tsx](/C:/fit/src/components/workout-session/workout-day-overview-card.tsx), [workout-status-actions.tsx](/C:/fit/src/components/workout-session/workout-status-actions.tsx), [workout-step-strip.tsx](/C:/fit/src/components/workout-session/workout-step-strip.tsx) и [workout-exercise-card.tsx](/C:/fit/src/components/workout-session/workout-exercise-card.tsx).
+- [x] Базовая инженерная проверка tranche зелёная: `npm run lint`, `npm run typecheck`, `npm run build`.
+- [x] Таргетированный e2e для workout/mobile по-прежнему упирается в внешний `Supabase` runtime и flaky seed helper (`apiRequestContext.fetch timeout`, периодические `500` при seed weekly program); это зафиксировано как внешний blocker verification, а не как незавершённый UI slice.
+
+## 2026-04-15 Dark Utility history/settings tranche
+
+- [x] Экран истории переведён в новый компактный рабочий ритм через [history/page.tsx](/C:/fit/src/app/history/page.tsx): архив программ, AI-предложения и data actions теперь читаются как единый timeline, а не как разрозненные карточки.
+- [x] Экран настроек и self-service surfaces синхронизированы с новым dark utility contract через [settings/page.tsx](/C:/fit/src/app/settings/page.tsx), [settings-billing-center.tsx](/C:/fit/src/components/settings-billing-center.tsx), [settings-data-center.tsx](/C:/fit/src/components/settings-data-center.tsx), [settings-billing-center-model.ts](/C:/fit/src/components/settings-billing-center-model.ts) и [settings-data-center-model.ts](/C:/fit/src/components/settings-data-center-model.ts).
+- [x] Billing handoff и restricted account surface доведены до того же языка через [billing/cloudpayments/page.tsx](/C:/fit/src/app/billing/cloudpayments/page.tsx), [cloudpayments-checkout.tsx](/C:/fit/src/components/cloudpayments-checkout.tsx), [suspended/page.tsx](/C:/fit/src/app/suspended/page.tsx), [sign-out-button.tsx](/C:/fit/src/components/sign-out-button.tsx) и [app-shell-frame.tsx](/C:/fit/src/components/app-shell-frame.tsx).
+- [x] Shared workspace-поверхность дочищена до пригодного developer-facing контракта в [page-workspace.tsx](/C:/fit/src/components/page-workspace.tsx), а auth regression harness обновлён под реальные элементы нового layout в [authenticated-app.spec.ts](/C:/fit/tests/e2e/authenticated-app.spec.ts).
+- [x] Проверка tranche зелёная: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:smoke`, `node scripts/run-playwright.mjs PLAYWRIGHT_BASE_URL=http://127.0.0.1:3100 -- test tests/e2e/authenticated-app.spec.ts --workers=1` -> `2 passed`.
+- [x] Общий progress execution checklist после закрытия этого slice: `205 / 214` (`95%`); активный `Dark Utility` execution-doc вырос до `6 / 10` (`60%`).

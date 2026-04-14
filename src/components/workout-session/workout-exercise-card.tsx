@@ -70,37 +70,31 @@ export function WorkoutExerciseCard({
 
   return (
     <article
-      className={`overflow-hidden rounded-[1.85rem] px-4 py-5 shadow-[0_26px_64px_-46px_rgba(24,29,63,0.2)] transition sm:px-6 ${
-        isMobileFocusMode
-          ? "bg-[color:var(--surface-bright)]"
-          : "bg-[color:var(--surface-container-low)]"
+      className={`card p-4 sm:p-5 ${
+        isMobileFocusMode ? "border-[color:var(--accent-soft)]/40" : ""
       }`}
       data-complete={isExerciseComplete ? "true" : "false"}
       data-editable={isExerciseEditable ? "true" : "false"}
       data-testid={`workout-exercise-card-${index + 1}`}
     >
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[10px] font-extrabold uppercase tracking-[0.24em] text-[color:var(--accent)]">
+          <p className="workspace-kicker">
             {isMobileFocusMode ? `Упражнение ${index + 1} из ${totalExercises}` : "Упражнение"}
           </p>
-          <h3 className="mt-2 break-words font-headline text-[1.9rem] font-bold leading-tight text-[color:var(--foreground)]">
+          <h3 className="mt-2 text-xl font-semibold leading-tight text-foreground sm:text-2xl">
             {exercise.exercise_title_snapshot}
           </h3>
           <div className="mt-3 flex flex-wrap gap-2">
-            <span className="rounded-full bg-[color:var(--surface-container-high)] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--on-surface-variant)]">
-              {`${exercise.sets_count} подход.`}
-            </span>
-            <span className="rounded-full bg-[color:var(--surface-container-high)] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--on-surface-variant)]">
-              {isExerciseComplete ? "Сохранено" : "Активный шаг"}
-            </span>
+            <span className="pill">{`${exercise.sets_count} подход.`}</span>
+            <span className="pill">{isExerciseComplete ? "Сохранено" : "Активный шаг"}</span>
           </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           {isExerciseComplete && !isExerciseEditable ? (
             <button
-              className="rounded-[1rem] bg-[color:var(--surface-container-high)] px-4 py-3 text-sm font-semibold text-[color:var(--foreground)] transition hover:bg-[color:var(--surface-container-highest)]"
+              className="action-button action-button--secondary px-4 py-2.5 text-sm"
               data-testid={`workout-exercise-edit-${index + 1}`}
               disabled={!dayIsLocked || isPending || isSyncing}
               onClick={() => onSetExerciseEditing(exercise.id, true)}
@@ -112,30 +106,30 @@ export function WorkoutExerciseCard({
 
           {isExerciseEditable ? (
             <button
-              className="rounded-[1rem] bg-[color:var(--accent)] px-4 py-3 text-sm font-semibold text-[color:var(--on-primary)] shadow-[0_24px_48px_-34px_rgba(0,64,224,0.55)] transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-55"
+              className="action-button action-button--primary px-4 py-2.5 text-sm"
               data-testid={`workout-exercise-save-${index + 1}`}
               disabled={!dayIsLocked || isPending || isSyncing || !isExerciseReadyToSave}
               onClick={() => onSaveExercise(exercise)}
               type="button"
             >
-              {isExerciseComplete ? "Сохранить изменения" : "Сохранить упражнение"}
+              {isExerciseComplete ? "Сохранить изменения" : "Сохранить"}
             </button>
           ) : null}
         </div>
       </div>
 
-      <div className="grid gap-3">
-        <div className="grid grid-cols-[0.95fr_1fr_1fr_0.8fr] gap-3 px-3 text-center">
-          <p className="text-left text-[10px] font-bold uppercase tracking-[0.2em] text-[color:var(--muted)]">
+      <div className="mt-5 grid gap-3">
+        <div className="grid grid-cols-[0.95fr_1fr_1fr_0.8fr] gap-3 px-2 text-center">
+          <p className="text-left text-[10px] font-bold uppercase tracking-[0.2em] text-muted">
             Сет
           </p>
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[color:var(--muted)]">
-            Вес (кг)
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted">
+            Вес
           </p>
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[color:var(--muted)]">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted">
             Повторы
           </p>
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[color:var(--muted)]">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted">
             RPE
           </p>
         </div>
@@ -160,14 +154,12 @@ export function WorkoutExerciseCard({
         ))}
       </div>
 
-      <div className="mt-5 rounded-[1.3rem] border-l-[3px] border-[color:var(--primary-fixed-dim)] bg-[color:var(--surface-container-low)] px-4 py-4">
-        <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[color:var(--muted)]">
-          Подсказка шага
-        </p>
-        <p className="mt-2 text-sm leading-6 text-[color:var(--on-surface-variant)]">
+      <div className="surface-panel mt-4 p-4">
+        <p className="workspace-kicker">Подсказка</p>
+        <p className="mt-2 text-sm leading-6 text-muted">
           {isExerciseComplete && !isExerciseDirty
-            ? "Шаг завершён и зафиксирован. Если нужно поправить данные, нажми «Редактировать» и снова сохрани упражнение."
-            : "Сначала заполни повторы, вес и RPE во всех подходах. После сохранения шаг станет только для чтения, а следующий откроется автоматически."}
+            ? "Шаг уже сохранён. Если нужно поправить цифры, открой редактирование и сохрани упражнение заново."
+            : "Сначала заполни повторы, вес и RPE во всех подходах. После сохранения откроется следующий шаг."}
         </p>
       </div>
     </article>
@@ -216,13 +208,13 @@ function WorkoutSetRow({
   const rowClassName = hasPersistedValues
     ? "bg-[color:var(--surface-container-low)]"
     : isActiveEntry
-      ? "bg-[color:var(--surface-container-highest)] ring-2 ring-[color:var(--accent)]"
+      ? "bg-[color:var(--surface-container-high)] ring-1 ring-[color:var(--accent)]"
       : isFutureRow
         ? "bg-[color:var(--surface-container-low)] opacity-55"
         : "bg-[color:var(--surface-container-high)]";
 
   return (
-    <div className={`rounded-[1.3rem] px-3 py-4 transition ${rowClassName}`}>
+    <div className={`rounded-[1.15rem] px-3 py-4 transition ${rowClassName}`}>
       <div className="grid grid-cols-[0.95fr_1fr_1fr_0.8fr] items-center gap-3 text-center">
         <div className="flex items-center gap-2 text-left">
           <span
@@ -235,18 +227,14 @@ function WorkoutSetRow({
             {set.set_number}
           </span>
           {hasPersistedValues ? (
-            <CheckCircle2
-              className="text-[color:var(--accent)]"
-              size={18}
-              strokeWidth={2.15}
-            />
+            <CheckCircle2 className="text-[color:var(--accent)]" size={18} strokeWidth={2.15} />
           ) : null}
         </div>
 
         <div className="flex justify-center">
           {isExerciseEditable ? (
             <input
-              className={`${inputClassName} h-11 rounded-[0.95rem] border-0 bg-transparent px-0 py-0 text-center font-headline text-xl font-bold shadow-none focus:ring-0`}
+              className={`${inputClassName} h-11 rounded-[0.95rem] border-0 bg-transparent px-0 py-0 text-center font-semibold shadow-none focus:ring-0`}
               data-testid={`workout-set-${set.id}-weight`}
               disabled={!dayIsLocked || isPending || isSyncing || !isExerciseEditable}
               inputMode="decimal"
@@ -260,7 +248,7 @@ function WorkoutSetRow({
               value={weightValue}
             />
           ) : (
-            <p className="font-headline text-xl font-bold text-[color:var(--foreground)]">
+            <p className="text-lg font-semibold text-foreground">
               {set.actual_weight_kg ?? "—"}
             </p>
           )}
@@ -269,7 +257,7 @@ function WorkoutSetRow({
         <div className="flex justify-center">
           {isExerciseEditable ? (
             <select
-              className={`${inputClassName} h-11 rounded-[0.95rem] border-0 bg-transparent px-0 py-0 text-center font-headline text-xl font-bold text-[color:var(--accent)] shadow-none focus:ring-0`}
+              className={`${inputClassName} h-11 rounded-[0.95rem] border-0 bg-transparent px-0 py-0 text-center font-semibold text-[color:var(--accent)] shadow-none focus:ring-0`}
               data-testid={`workout-set-${set.id}-reps`}
               disabled={!dayIsLocked || isPending || isSyncing || !isExerciseEditable}
               onChange={(event) =>
@@ -288,7 +276,7 @@ function WorkoutSetRow({
               ))}
             </select>
           ) : (
-            <p className="font-headline text-xl font-bold text-[color:var(--accent)]">
+            <p className="text-lg font-semibold text-[color:var(--accent)]">
               {set.actual_reps ?? "—"}
             </p>
           )}
@@ -297,7 +285,7 @@ function WorkoutSetRow({
         <div className="flex justify-center">
           {isExerciseEditable ? (
             <select
-              className={`${inputClassName} h-11 rounded-[0.95rem] border-0 bg-transparent px-0 py-0 text-center font-headline text-xl font-bold shadow-none focus:ring-0`}
+              className={`${inputClassName} h-11 rounded-[0.95rem] border-0 bg-transparent px-0 py-0 text-center font-semibold shadow-none focus:ring-0`}
               data-testid={`workout-set-${set.id}-rpe`}
               disabled={!dayIsLocked || isPending || isSyncing || !isExerciseEditable}
               onChange={(event) =>
@@ -319,7 +307,7 @@ function WorkoutSetRow({
               ))}
             </select>
           ) : (
-            <p className="font-headline text-xl font-bold text-[color:var(--on-surface-variant)]">
+            <p className="text-lg font-semibold text-[color:var(--on-surface-variant)]">
               {set.actual_rpe ?? "—"}
             </p>
           )}
@@ -327,12 +315,8 @@ function WorkoutSetRow({
       </div>
 
       <div className="mt-3 flex items-center justify-between gap-3 px-1">
-        <p className="text-xs text-[color:var(--muted)]">
-          План: {formatPlannedRepTarget(set)} повторов
-        </p>
-        <p className="text-xs text-[color:var(--muted)]">
-          Последний RPE: {formatOptionalRpe(set.actual_rpe)}
-        </p>
+        <p className="text-xs text-muted">План: {formatPlannedRepTarget(set)} повторов</p>
+        <p className="text-xs text-muted">Последний RPE: {formatOptionalRpe(set.actual_rpe)}</p>
       </div>
     </div>
   );

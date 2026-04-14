@@ -28,21 +28,16 @@ test.describe("authenticated app", () => {
 
     await navigateStable(page, "/workouts", /\/workouts$/);
     await page
-      .locator('button[aria-pressed]')
-      .first()
+      .getByText(/Собрать черновик недели/i)
       .waitFor({ state: "visible", timeout: 15_000 });
 
     await navigateStable(page, "/nutrition", /\/nutrition$/);
     await page
-      .locator('button[aria-pressed]')
-      .first()
+      .getByText(/Рацион, камера и журнал питания в одном рабочем экране/i)
       .waitFor({ state: "visible", timeout: 15_000 });
 
     await navigateStable(page, "/ai", /\/ai$/);
-    await page
-      .locator("textarea")
-      .first()
-      .waitFor({ state: "visible", timeout: 15_000 });
+    await page.locator("textarea").first().waitFor({ state: "visible", timeout: 15_000 });
 
     await navigateStable(page, "/settings", /\/settings$/);
     await page
@@ -55,7 +50,7 @@ test.describe("authenticated app", () => {
     await navigateStable(page, "/dashboard", /\/(dashboard|onboarding)$/);
     await finishOnboardingIfVisible(page);
     await page
-      .getByRole("heading", { name: /текущий цикл/i })
+      .getByText(/Открой только тот слой аналитики, который нужен сейчас/i)
       .waitFor({ state: "visible", timeout: 15_000 });
     await page
       .getByRole("link", { name: /^AI$/ })

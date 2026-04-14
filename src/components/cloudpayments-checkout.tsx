@@ -18,6 +18,22 @@ declare global {
 
 type CheckoutState = "idle" | "loading" | "ready" | "running";
 
+function getCheckoutStatusLabel(state: CheckoutState, isReady: boolean) {
+  if (state === "loading") {
+    return "Готовим оплату";
+  }
+
+  if (state === "running") {
+    return "Форма открыта";
+  }
+
+  if (isReady) {
+    return "Готово";
+  }
+
+  return "Ожидание";
+}
+
 export function CloudpaymentsCheckout() {
   const searchParams = useSearchParams();
   const [intent, setIntent] = useState<CloudpaymentsCheckoutIntent | null>(null);
@@ -28,7 +44,9 @@ export function CloudpaymentsCheckout() {
   const requestedReferenceId = searchParams.get("reference");
 
   const referenceId = intent?.externalId ?? null;
-  const isReady = scriptReady && intent && checkoutState !== "loading";
+  const isReady = Boolean(
+    scriptReady && intent && checkoutState !== "loading",
+  );
 
   const successUrl = useMemo(() => {
     if (!referenceId) {
@@ -62,7 +80,7 @@ export function CloudpaymentsCheckout() {
       }
 
       setError(
-        "Форма оплаты не завершилась. Проверь подключение и попробуй ещё раз.",
+        "Форма оплаты не завершилась. Проверь подключение и попробуй еще раз.",
       );
       setCheckoutState("ready");
     }
@@ -128,7 +146,7 @@ export function CloudpaymentsCheckout() {
 
   return (
     <section
-      className="card card--hero mx-auto max-w-2xl p-6 sm:p-8"
+      className="surface-panel surface-panel--accent mx-auto max-w-2xl p-6 sm:p-7"
       data-testid="cloudpayments-checkout-page"
     >
       <Script
@@ -137,78 +155,68 @@ export function CloudpaymentsCheckout() {
         strategy="afterInteractive"
       />
 
-      <div className="space-y-4">
-        <p className="workspace-kicker">CloudPayments</p>
+      <div className="space-y-3">
+        <p className="workspace-kicker text-accent">CloudPayments</p>
         <h1
-          className="text-3xl font-semibold tracking-tight text-foreground"
+          className="app-display text-3xl font-black tracking-[-0.08em] text-foreground sm:text-4xl"
           data-testid="cloudpayments-checkout-heading"
         >
           Оплата подписки fit Premium
         </h1>
-        <p className="text-sm leading-7 text-muted">
-          Мы откроем безопасную форму оплаты и после завершения вернём тебя в
-          центр управления подпиской.
+        <p className="max-w-xl text-sm leading-7 text-muted">
+          Откроем безопасную форму оплаты и после завершения вернем тебя в
+          центр управления доступом.
         </p>
       </div>
 
-      <div className="mt-6 rounded-[2rem] border border-border bg-white/82 p-5 shadow-[0_28px_60px_-44px_rgba(20,58,160,0.22)]">
-        <div className="grid gap-2 text-sm text-muted">
-          <p>
-            Статус формы:{" "}
-            <span className="font-semibold text-foreground">
-              {checkoutState === "loading"
-                ? "готовлю оплату"
-                : checkoutState === "running"
-                  ? "форма открыта"
-                  : isReady
-                    ? "готово"
-                    : "ожидание"}
-            </span>
+      <div className="mt-6 grid gap-3 sm:grid-cols-3">
+        <article className="metric-tile p-4 text-sm text-muted">
+          <p className="workspace-kicker">Статус формы</p>
+          <p className="mt-3 text-base font-semibold text-foreground">
+            {getCheckoutStatusLabel(checkoutState, isReady)}
           </p>
-          {intent ? (
-            <>
-              <p>
-                Сумма:{" "}
-                <span className="font-semibold text-foreground">
-                  {intent.amount.toLocaleString("ru-RU")} ₽
-                </span>
-              </p>
-              <p>
-                Тариф:{" "}
-                <span className="font-semibold text-foreground">
-                  {intent.description}
-                </span>
-              </p>
-            </>
-          ) : null}
-        </div>
+        </article>
 
-        <div className="mt-5 flex flex-wrap gap-3">
-          <button
-            className="rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-            data-testid="cloudpayments-checkout-open"
-            disabled={!isReady || checkoutState === "running"}
-            onClick={() => void openWidget()}
-            type="button"
-          >
-            {checkoutState === "running" ? "Открываю форму..." : "Открыть оплату"}
-          </button>
-
-          <a
-            className="rounded-full border border-border px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-white/70"
-            data-testid="cloudpayments-checkout-back"
-            href="/settings?section=billing"
-          >
-            Вернуться в настройки
-          </a>
-        </div>
-
-        {error ? (
-          <p className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {error}
+        <article className="metric-tile p-4 text-sm text-muted">
+          <p className="workspace-kicker">Сумма</p>
+          <p className="mt-3 text-base font-semibold text-foreground">
+            {intent ? `${intent.amount.toLocaleString("ru-RU")} ₽` : "Ожидание"}
           </p>
-        ) : null}
+        </article>
+
+        <article className="metric-tile p-4 text-sm text-muted">
+          <p className="workspace-kicker">Тариф</p>
+          <p className="mt-3 text-base font-semibold text-foreground">
+            {intent?.description ?? "fit Premium"}
+          </p>
+        </article>
       </div>
+
+      <div className="mt-6 flex flex-wrap gap-3">
+        <button
+          className="action-button action-button--primary"
+          data-testid="cloudpayments-checkout-open"
+          disabled={!isReady || checkoutState === "running"}
+          onClick={() => void openWidget()}
+          type="button"
+        >
+          {checkoutState === "running" ? "Открываю форму..." : "Открыть оплату"}
+        </button>
+
+        <a
+          className="action-button action-button--secondary"
+          data-testid="cloudpayments-checkout-back"
+          href="/settings?section=billing"
+        >
+          Вернуться в настройки
+        </a>
+      </div>
+
+      {error ? (
+        <p className="mt-4 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          {error}
+        </p>
+      ) : null}
     </section>
   );
 }

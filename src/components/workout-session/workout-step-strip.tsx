@@ -23,12 +23,10 @@ export function WorkoutStepStrip({
   }
 
   return (
-    <div className="mt-5 space-y-3">
+    <div className="space-y-3">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-[10px] font-extrabold uppercase tracking-[0.24em] text-[color:var(--muted)]">
-          Шаги тренировки
-        </p>
-        <p className="text-xs text-[color:var(--muted)]">Открываются по порядку</p>
+        <p className="workspace-kicker">Шаги тренировки</p>
+        <p className="text-xs text-muted">Открываются по порядку</p>
       </div>
 
       <div className="flex gap-1.5" aria-hidden="true">
@@ -92,7 +90,7 @@ export function WorkoutStepStrip({
                 </span>
                 <span className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-80">
                   {isExerciseStepComplete
-                    ? "Ок"
+                    ? "Готов"
                     : isActive
                       ? "Сейчас"
                       : isStepUnlocked
@@ -114,7 +112,7 @@ export function WorkoutStepStrip({
           return (
             <button
               aria-pressed={isActive}
-              className={`min-w-[8.9rem] shrink-0 rounded-[1.2rem] px-3 py-3 text-left transition ${
+              className={`min-w-[8.9rem] shrink-0 rounded-[1.1rem] px-3 py-3 text-left transition ${
                 isActive
                   ? "bg-[color:var(--surface-container-high)] text-[color:var(--foreground)]"
                   : isStepUnlocked
@@ -134,7 +132,7 @@ export function WorkoutStepStrip({
               type="button"
             >
               <div className="min-w-0">
-                <span className="block text-[10px] font-bold uppercase tracking-[0.2em] text-[color:var(--muted)]">
+                <span className="block text-[10px] font-bold uppercase tracking-[0.2em] text-muted">
                   {`Шаг ${index + 1}`}
                 </span>
                 <span className="mt-1 block truncate text-sm font-semibold">

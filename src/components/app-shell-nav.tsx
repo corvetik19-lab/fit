@@ -61,14 +61,14 @@ const workoutsRoute: AppRouteDefinition = {
 const nutritionRoute: AppRouteDefinition = {
   href: "/nutrition",
   label: "Питание",
-  description: "Лог, фото и штрихкоды.",
+  description: "Журнал, фото и штрихкоды.",
   icon: Activity,
 };
 
 const historyRoute: AppRouteDefinition = {
   href: "/history",
   label: "История",
-  description: "Прошлые циклы и архив действий.",
+  description: "Архив циклов и действий.",
   icon: History,
 };
 
@@ -214,7 +214,7 @@ export function AppShellNav({
               {
                 href: `/admin/users/${viewer.userId}` as Route,
                 label: "Моя карточка",
-                description: "Ваши доступы и аудит.",
+                description: "Доступы, аудит и контент.",
                 icon: Shield,
               },
             ]
@@ -323,8 +323,7 @@ export function AppShellNav({
                       </p>
                       {showAdminRole ? (
                         <p className="mt-2 text-sm text-muted">
-                          Роль:{" "}
-                          <span className="text-foreground">{adminRoleLabel}</span>
+                          Роль: <span className="text-foreground">{adminRoleLabel}</span>
                         </p>
                       ) : null}
                     </section>
