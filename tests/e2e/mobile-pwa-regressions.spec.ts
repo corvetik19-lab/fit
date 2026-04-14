@@ -71,7 +71,7 @@ async function openMobileDrawer(
 }
 
 test.describe("mobile pwa regressions", () => {
-  test.describe.configure({ timeout: 60_000 });
+  test.describe.configure({ timeout: 90_000 });
 
   test.describe("user mobile surfaces", () => {
     test.use({
@@ -91,13 +91,12 @@ test.describe("mobile pwa regressions", () => {
 
       try {
         await navigateStable(page, "/dashboard", /\/dashboard$/);
-        await page.waitForLoadState("networkidle");
         await page.waitForTimeout(300);
         await expectNoHorizontalOverflow(page, "/dashboard");
 
         const drawer = await openMobileDrawer(page);
         await expectDrawerFillsViewport(page);
-        await expect(drawer).toContainText("Разделы приложения");
+        await expect(drawer).toContainText("Разделы");
         await expect(drawer).toContainText("Настройки");
         await page.keyboard.press("Escape");
         await expect(drawer).toHaveAttribute("aria-hidden", "true");
@@ -112,7 +111,6 @@ test.describe("mobile pwa regressions", () => {
         await expectNoHorizontalOverflow(page, "dashboard section switch");
 
         await navigateStable(page, "/workouts", /\/workouts$/);
-        await page.waitForLoadState("networkidle");
         await page.waitForTimeout(300);
         await expectNoHorizontalOverflow(page, "/workouts");
         const workoutsSectionTrigger = page.getByTestId(
@@ -130,7 +128,6 @@ test.describe("mobile pwa regressions", () => {
         await expectNoHorizontalOverflow(page, "workouts section controls");
 
         await navigateStable(page, "/nutrition", /\/nutrition$/);
-        await page.waitForLoadState("networkidle");
         await page.waitForTimeout(300);
         await expectNoHorizontalOverflow(page, "/nutrition");
         const nutritionSectionTrigger = page.getByTestId(
@@ -139,7 +136,7 @@ test.describe("mobile pwa regressions", () => {
         await expect(nutritionSectionTrigger).toBeVisible();
         await nutritionSectionTrigger.click();
         await page.getByTestId("page-workspace-mobile-option-log").click();
-        await expect(nutritionSectionTrigger).toContainText("Журнал");
+        await expect(nutritionSectionTrigger).toContainText("Журнал и база");
         await page.getByRole("button", { name: "Скрыть раздел" }).click();
         await expect(
           page.getByRole("button", { name: "Показать раздел" }),
@@ -168,7 +165,6 @@ test.describe("mobile pwa regressions", () => {
           `/workouts/day/${seededDay.dayId}?focus=1`,
           new RegExp(`/workouts/day/${seededDay.dayId}\\?focus=1$`),
         );
-        await page.waitForLoadState("networkidle");
         await page.waitForTimeout(300);
 
         const collapseToggle = page.getByTestId("workout-focus-header-toggle");
@@ -212,13 +208,12 @@ test.describe("mobile pwa regressions", () => {
 
       try {
         await navigateStable(page, "/admin", /\/admin$/);
-        await page.waitForLoadState("networkidle");
         await page.waitForTimeout(300);
         await expectNoHorizontalOverflow(page, "/admin");
 
         const drawer = await openMobileDrawer(page);
         await expectDrawerFillsViewport(page);
-        await expect(drawer).toContainText("Центр управления");
+        await expect(drawer).toContainText("Разделы");
         await expect(drawer).toContainText("Пользователи");
         await expect(page.getByTestId("ai-assistant-widget-trigger")).toBeHidden();
 

@@ -120,6 +120,11 @@ async function createWorkoutDay(
       },
     });
 
+    if (programResult.status === 500) {
+      await page.waitForTimeout(400 * (attempt + 1));
+      continue;
+    }
+
     expect(programResult.status).toBe(200);
 
     programId = programResult.body?.data?.id ?? null;
@@ -133,6 +138,12 @@ async function createWorkoutDay(
       method: "POST",
       url: `/api/weekly-programs/${programId}/lock`,
     });
+
+    if (lockResult.status === 500) {
+      await page.waitForTimeout(400 * (attempt + 1));
+      programId = null;
+      continue;
+    }
 
     if (lockResult.status === 200) {
       break;

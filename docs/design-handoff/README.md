@@ -2,33 +2,35 @@
 
 Эта папка — отдельный handoff-пакет для продуктового дизайнера.
 
-Цель пакета:
+Сейчас активный визуальный курс проекта:
 
-- быстро передать контекст по приложению `fit`;
-- описать все реальные пользовательские и admin-экраны;
-- зафиксировать продуктовые ограничения, чтобы дизайн можно было интегрировать без перелома логики;
-- дать единый источник для нового визуального языка приложения.
+- **Dark Utility Fitness**
+- **Compact**
+- **User First, Admin Align**
 
-## Содержимое
+Это означает:
 
-- [FIT_SCREEN_DESIGN_BRIEF.md](/C:/fit/docs/design-handoff/FIT_SCREEN_DESIGN_BRIEF.md) — главный подробный экранный бриф по всем страницам, mobile/desktop-логике, состояниям и интеграционным ограничениям.
+- тёмный, собранный, коммерчески понятный mobile-first UI;
+- без oversized-кнопок и лендинговой подачи;
+- с акцентом на удобство ежедневного использования на телефоне;
+- в едином стиле для `Dashboard`, `Workouts`, `Nutrition`, `AI`, `Settings`, `History` и `Admin`.
 
-## Как использовать
+## Что смотреть в первую очередь
 
-1. Сначала открыть [FIT_SCREEN_DESIGN_BRIEF.md](/C:/fit/docs/design-handoff/FIT_SCREEN_DESIGN_BRIEF.md).
-2. По нему собрать:
-   - общую визуальную систему;
-   - мобильные и desktop-композиции;
-   - ключевые состояния экранов;
-   - component variants для handoff в разработку.
-3. При отдаче дизайна разработке держаться описанных route-flow, states и business constraints.
+1. [DARK_UTILITY_MOBILE_BRIEF.md](/C:/fit/docs/design-handoff/DARK_UTILITY_MOBILE_BRIEF.md)
+2. [FIT_SCREEN_DESIGN_BRIEF.md](/C:/fit/docs/design-handoff/FIT_SCREEN_DESIGN_BRIEF.md)
 
-## Что важно не потерять
+## Роли документов
 
-- `fit` — mobile/PWA-first продукт.
-- Тренировка — самый критичный сценарий на телефоне.
-- `AI` — chat-first поверхность.
-- `Nutrition` обязана сохранить фото еды, штрихкод и импорт из Open Food Facts.
-- `Settings` обязаны сохранить `profile / billing / data`.
-- `Admin` остаётся операторским интерфейсом, а не consumer-дашбордом.
-- `CloudPayments` уже является активным billing-провайдером для РФ rollout.
+- [DARK_UTILITY_MOBILE_BRIEF.md](/C:/fit/docs/design-handoff/DARK_UTILITY_MOBILE_BRIEF.md) — активный дизайнерский source of truth по новому стилю.
+- [FIT_SCREEN_DESIGN_BRIEF.md](/C:/fit/docs/design-handoff/FIT_SCREEN_DESIGN_BRIEF.md) — подробная карта экранов, сценариев, состояний и продуктовых ограничений.
+
+## Что нельзя терять
+
+- mobile/PWA-first использование;
+- workout focus-mode;
+- nutrition camera + barcode + Open Food Facts;
+- AI как chat-first surface;
+- settings с `profile / billing / data`;
+- admin как operator-first интерфейс;
+- billing через `CloudPayments`.

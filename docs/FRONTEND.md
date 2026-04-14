@@ -9,44 +9,80 @@
 - PWA shell + service worker
 - AI UI на `@ai-sdk/react`
 
-## Текущая визуальная стратегия
+## Текущий визуальный source of truth
 
-С апреля 2026 фронтенд переводится в направление **stitch-style editorial fitness / mobile-first**. Это следующий слой поверх уже закрытого premium redesign и он меняет не только токены, но и композицию ключевых экранов.
+С апреля 2026 фронтенд `fit` переводится в направление **Dark Utility Fitness / mobile-first**.
 
-Базовые правила:
+Это новый основной визуальный контракт поверх уже существующего продукта. Он заменяет прежний
+`stitch-style editorial` baseline как активное направление для разработки.
 
-- основная тема — светлая, на базе `#fcf9f8`;
-- display-типографика — `Lexend`, body/UI — `Manrope`;
-- главный акцент — electric blue `#0040e0 / #2e5bff`;
-- иерархия строится через tonal layers, а не через тяжёлые бордеры;
-- на mobile/PWA главный приоритет — один доминирующий блок, ясный hero и отсутствие горизонтального overflow;
-- shell должен ощущаться как лёгкая editorial-навигация с чистым top bar и bottom nav.
+Новый дизайн должен быть:
 
-Актуальные execution-doc по этому направлению:
+- тёмным, но не cyberpunk и не pure black;
+- компактным и удобным на телефоне;
+- ближе к usability сильных fitness products, чем к маркетинговому лендингу;
+- единым на всех пользовательских и admin-поверхностях;
+- совместимым с текущими route map, workout flow, nutrition capture/barcode/import,
+  AI chat/proposals, settings и admin-операциями.
 
-- [PREMIUM_REDESIGN_PLAN.md](/C:/fit/docs/PREMIUM_REDESIGN_PLAN.md)
+Активные execution-docs по этому направлению:
+
+- [DARK_UTILITY_REDESIGN_EXECUTION.md](/C:/fit/docs/DARK_UTILITY_REDESIGN_EXECUTION.md)
+- [design-handoff/DARK_UTILITY_MOBILE_BRIEF.md](/C:/fit/docs/design-handoff/DARK_UTILITY_MOBILE_BRIEF.md)
+
+Исторические документы сохраняются как reference/handoff:
+
 - [STITCH_REDESIGN_EXECUTION.md](/C:/fit/docs/STITCH_REDESIGN_EXECUTION.md)
+- [PREMIUM_REDESIGN_PLAN.md](/C:/fit/docs/PREMIUM_REDESIGN_PLAN.md)
 
-Уже закрытые tranche в новом языке:
+## Новый визуальный контракт
 
-- `Dashboard` — stitch-style hero, stat plates, AI quote и section rail;
-- `Workout day` — focus-first экран с progress bars, крупной timer-plate и новым set-grid;
-- `Shell` — editorial header, light drawer, mobile bottom nav и очищенный utility layer.
+### Основные принципы
 
-## Базовая архитектура
+- Mobile/PWA first.
+- Один главный сценарий на экран.
+- Нормальные рабочие размеры кнопок, без oversized CTA.
+- Плотная, но читаемая иерархия.
+- Секции важнее декоративных hero-блоков.
+- Один акцентный брендовый язык на основе сине-бирюзовой палитры логотипа.
+
+### Цвета и поверхности
+
+- базовый фон: тёмный графит, не чёрный;
+- `surface`: 2-3 уровня глубины без тяжёлых рамок;
+- текст: высокий контраст, вторичный текст чуть приглушён;
+- акцент: сине-бирюзовый язык логотипа;
+- статусные цвета использовать экономно.
+
+### Типографика
+
+- рабочий UI-шрифт: `Manrope`;
+- display-акценты возможны только точечно;
+- заголовки короткие;
+- объясняющий текст минимальный.
+
+### Компоновка
+
+- основной паттерн: `top app bar -> content -> bottom nav`;
+- drawer только как secondary-navigation;
+- sticky lower action bar только там, где она помогает действию;
+- длинные страницы разбиваются на секции, а не на россыпь одинаковых карт.
+
+## Базовая архитектура frontend-слоя
 
 Frontend делится на три уровня:
 
 1. `src/app/**` — server pages и route-level orchestration
 2. `src/components/**` — UI-компоненты, shell, формы, workspace и screen surfaces
-3. `src/lib/**` — helpers, derive-слой, форматтеры, runtime plumbing и доменные правила
+3. `src/lib/**` — derive-слой, helper'ы, форматтеры, runtime plumbing и доменные правила
 
-Текущее правило production hardening:
+Правила production hardening:
 
 - страницы должны быть тонкими orchestrator-компонентами;
 - async/data orchestration не должна жить прямо в JSX;
-- hydration-sensitive и sync-sensitive logic нужно выносить в hooks и helper-модули;
-- пользовательский UI не должен показывать служебные или битые технические тексты.
+- hydration-sensitive и sync-sensitive logic выносится в hooks и helper-модули;
+- visible copy на ключевых поверхностях должен быть на чистом русском без mojibake;
+- любые заметные UI-срезы должны синхронизировать `MASTER_PLAN`, `AI_WORKLOG` и профильные docs.
 
 ## Shell и навигация
 
@@ -58,11 +94,11 @@ Frontend делится на три уровня:
 
 Текущий контракт shell:
 
-- на desktop используется стабильный top nav без обрезанных пунктов;
-- на mobile/PWA используется burger drawer без hydration mismatch и portal-глюков;
-- AI widget остаётся вторичным действием и не мешает основному контенту;
-- shell не должен ломать workout focus-mode и fullscreen AI workspace;
-- общие visual primitives shell управляются через `src/app/globals.css`.
+- на mobile/PWA главный navigation слой — compact top bar + bottom nav;
+- drawer не должен перекрывать critical CTA и не должен ломать safe areas;
+- AI widget и вторичные floating-элементы не должны мешать основному контенту;
+- shell обязан работать одинаково аккуратно на `360 / 390 / 430px`;
+- desktop остаётся вторичным представлением той же дизайн-системы, а не отдельным продуктом.
 
 ## Workspace-паттерн
 
@@ -76,64 +112,44 @@ Frontend делится на три уровня:
 
 Ожидаемое поведение:
 
-- пользователь открывает только нужный раздел, а не длинную ленту одинаковых блоков;
-- на mobile одновременно открыт один основной логический блок;
-- обзор, меню и активный раздел можно скрывать независимо;
-- section switchers и mobile triggers должны быть одинаково читаемы на desktop и mobile.
+- пользователь быстро понимает, что сейчас главное;
+- на mobile одновременно доминирует один основной блок;
+- secondary content либо ниже, либо за section switcher / bottom sheet;
+- overview, menu и текущий раздел можно скрывать предсказуемо, если это предусмотрено экраном.
 
 Ключевой shared-файл:
 
 - `src/components/page-workspace.tsx`
 
-## Тренировки
+## Ключевые продуктовые инварианты
 
-Ключевые файлы:
+### Тренировки
 
-- `src/app/workouts/page.tsx`
-- `src/app/workouts/day/[dayId]/page.tsx`
-- `src/components/workout-day-session.tsx`
-- `src/components/workout-session/**`
+- workout flow остаётся пошаговым;
+- `focus-mode` — критический mobile surface;
+- таймер, сохранение, reset и read-only состояния сохраняются.
 
-Продуктовый контракт:
+### Питание
 
-- шаги тренировки видны заранее;
-- будущие упражнения закрыты до сохранения текущего;
-- сохранение упражнения требует полностью заполненных `повторов`, `веса`, `RPE`;
-- после сохранения шаг становится read-only до явного `Редактировать`;
-- есть mobile focus-mode;
-- таймер умеет старт, паузу, завершение и сохранение времени;
-- `Обнулить тренировку` сбрасывает и UI, и server-side execution state.
+- сохраняются `photo capture`, `barcode scan` и `Open Food Facts import`;
+- дневной лог остаётся primary surface;
+- продуктовые карточки и импорт не должны ломаться на узком экране.
 
-## Питание
+### AI
 
-Ключевые файлы:
+- AI остаётся chat-first workspace;
+- transcript, composer, history и proposal actions остаются частью одного сценария.
 
-- `src/app/nutrition/page.tsx`
-- `src/components/nutrition-tracker.tsx`
-- `src/components/nutrition-photo-analysis.tsx`
-- `src/components/nutrition-open-food-facts-card.tsx`
-- `src/components/nutrition-barcode-scanner.tsx`
-- `src/lib/nutrition/**`
+### Settings и billing
 
-Продуктовый контракт:
+- settings сохраняют секции `profile / billing / data`;
+- billing остаётся на `CloudPayments`;
+- self-service состояния должны проектироваться как часть интерфейса, а не как post-fix.
 
-- есть секционный интерфейс вместо одной длинной страницы;
-- есть in-app photo capture;
-- есть barcode scan и lookup/import через Open Food Facts;
-- найденный продукт можно сохранить в базу или сразу добавить в текущий приём пищи;
-- карточки продуктов не должны ломаться на узких экранах и не должны иметь случайных переносов бейджей.
+### Admin
 
-Подробный execution-doc по camera/barcode flow:
-
-- [NUTRITION_CAPTURE_OFF_PLAN.md](/C:/fit/docs/NUTRITION_CAPTURE_OFF_PLAN.md)
-
-## AI и Admin
-
-`AI` и `Admin` используют тот же визуальный язык, но с разной плотностью:
-
-- `AI` — consumer-first fullscreen workspace;
-- `Admin` — плотнее и операторнее, но без сырых технических fallback-текстов;
-- degraded states должны быть явно показаны в UI, а не прятаться за пустыми блоками.
+- admin остаётся operator-first, а не consumer-dashboard;
+- degraded и warning states должны быть визуально оформлены как нормальный operator UI.
 
 ## Regression expectations
 
@@ -144,71 +160,22 @@ Frontend делится на три уровня:
 - `npm run build`
 - `npm run test:smoke`
 
-Для mobile/shell изменений дополнительно:
+Для shell/mobile изменений дополнительно:
 
 - `tests/e2e/mobile-pwa-regressions.spec.ts`
+- `tests/e2e/ui-regressions.spec.ts`
 
-Для nutrition UI и barcode/photo flow дополнительно:
+Для auth/workspace flow дополнительно:
+
+- `tests/e2e/authenticated-app.spec.ts`
+
+Для nutrition camera/barcode/import дополнительно:
 
 - `tests/e2e/nutrition-capture.spec.ts`
 
-Если меняется workspace/navigation UX, нужно синхронизировать:
+Если меняется shell, visual contract или screen hierarchy, нужно синхронизировать:
 
 - [MASTER_PLAN.md](/C:/fit/docs/MASTER_PLAN.md)
 - [AI_WORKLOG.md](/C:/fit/docs/AI_WORKLOG.md)
-- [PREMIUM_REDESIGN_PLAN.md](/C:/fit/docs/PREMIUM_REDESIGN_PLAN.md)
-
-## Premium redesign status
-
-- Premium redesign закрыт для `Dashboard`, `AI`, `Workouts`, `Nutrition` и `Admin`.
-- Consumer surfaces используют единый visual contract через shared primitives:
-  - `card card--hero`
-  - `surface-panel`
-  - `action-button`
-- Workout focus-mode, nutrition capture/import и admin operator surfaces подтверждены как regression-critical части нового visual language.
-
-## Playwright regression contract
-
-- Для regression suites нельзя переиспользовать случайный старый dev/test server с устаревшими чанками.
-- `playwright.config.ts` работает с `reuseExistingServer: false`, а `scripts/run-playwright.mjs` перед запуском чистит занятый Playwright-порт.
-- Это часть frontend reliability contract: иначе возможны ложные падения с сырым HTML, `500 text/plain` на `_next/static/*` и отсутствующими mobile/admin селекторами при фактически исправном UI.
-
-## Stitch redesign addendum
-
-- В новом tracked-workstream [STITCH_REDESIGN_EXECUTION.md](/C:/fit/docs/STITCH_REDESIGN_EXECUTION.md) source of truth по visual refactor теперь ведётся отдельно от legacy premium-plan.
-- На текущем этапе уже переведены на новый язык:
-  - `Dashboard`
-  - `Workout day` и mobile focus-mode
-  - `Nutrition`
-  - `AI`
-  - remaining user screens: `/`, `/onboarding`, `/workouts`, `/history`, `/settings`, `/billing/cloudpayments`, `/suspended`
-- Общий пользовательский workspace-контракт теперь держится на:
-  - [page-workspace.tsx](/C:/fit/src/components/page-workspace.tsx)
-  - `card card--hero`
-  - `metric-tile`
-  - `section-chip`
-  - `toggle-chip`
-- Для пользовательских экранов действуют три обязательных правила:
-  - mobile-first и один доминирующий контентный блок на экране
-  - чистый русский visible copy без mojibake
-  - athletic editorial hierarchy вместо utility-style сетки одинаковых карточек
-- Следующий frontend tranche по этому потоку — admin surfaces и финальная visual sanitation по всему приложению.
-
-
-## Stitch admin addendum
-
-- `Admin` больше не строится как generic workspace с одинаковыми utility-карточками. Операторский dashboard использует тот же stitch-язык, что и consumer surfaces: крупный hero, KPI-блоки, spotlight-карточки и отдельные health/AI/operator-панели.
-- Для `/admin/users` и `/admin/users/[id]` закреплён тот же visual contract: stitch-style hero, секционный detail-shell, dark action-блоки и понятные operator states без сырого fallback copy.
-- Для frontend-команды это означает новый baseline: visible copy на основных stitch-экранах должен оставаться чистым, а visual regression и mobile acceptance проверяются отдельным redesign execution-doc и связанными Playwright suites.
-## Content imagery addendum
-
-- РџРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёРµ Р±РёР±Р»РёРѕС‚РµРєРё СѓРїСЂР°Р¶РЅРµРЅРёР№ Рё РїСЂРѕРґСѓРєС‚РѕРІ С‚РµРїРµСЂСЊ РїРѕРґРґРµСЂР¶РёРІР°СЋС‚ `image_url` РєР°Рє С‡Р°СЃС‚СЊ РѕСЃРЅРѕРІРЅРѕРіРѕ frontend-РєРѕРЅС‚СЂР°РєС‚Р°: С„РѕСЂРјС‹ РїСЂРёРЅРёРјР°СЋС‚ С‚РѕР»СЊРєРѕ Р°Р±СЃРѕР»СЋС‚РЅС‹Рµ `http/https` СЃСЃС‹Р»РєРё Рё СЃСЂР°Р·Сѓ РїРѕРєР°Р·С‹РІР°СЋС‚ preview РґРѕ СЃРѕС…СЂР°РЅРµРЅРёСЏ.
-- Р”Р»СЏ СѓРїСЂР°Р¶РЅРµРЅРёР№ РёСЃС‚РѕС‡РЅРёРє РёСЃС‚РёРЅС‹ РїРѕ РєР°СЂС‚РёРЅРєРµ вЂ” `exercise_library.image_url`, РґР»СЏ РїСЂРѕРґСѓРєС‚РѕРІ вЂ” `foods.image_url`; UI РґРѕР»Р¶РµРЅ СЂР°Р±РѕС‚Р°С‚СЊ РѕРґРёРЅР°РєРѕРІРѕ РІ СЃС†РµРЅР°СЂРёСЏС… `СЃРІРѕСЏ РєР°СЂС‚РѕС‡РєР°`, `Open Food Facts import` Рё `СЂСѓС‡РЅРѕРµ СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёРµ`.
-- Р•СЃР»Рё `image_url` РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚ РёР»Рё РЅРµРІР°Р»РёРґРµРЅ, РёРЅС‚РµСЂС„РµР№СЃ РѕР±СЏР·Р°РЅ РїРѕРєР°Р·С‹РІР°С‚СЊ Р°РєРєСѓСЂР°С‚РЅС‹Р№ fallback, Р° РЅРµ Р±РёС‚С‹Р№ `next/image`.
-- Р’ operator-РєРѕРЅС‚СѓСЂРµ РїРѕСЏРІРёР»СЃСЏ РѕС‚РґРµР»СЊРЅС‹Р№ СЂР°Р·РґРµР» СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёСЏ РєРѕРЅС‚РµРЅС‚РЅС‹С… РёР·РѕР±СЂР°Р¶РµРЅРёР№ РІ `/admin/users/[id]`: super-admin РјРѕР¶РµС‚ РїСЂР°РІРёС‚СЊ РєР°СЂС‚РёРЅРєРё РїРѕСЃР»РµРґРЅРёС… СѓРїСЂР°Р¶РЅРµРЅРёР№ Рё РїСЂРѕРґСѓРєС‚РѕРІ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ, Р° РѕР±С‹С‡РЅС‹Р№ admin РІРёРґРёС‚ СЌС‚РѕС‚ СЂР°Р·РґРµР» С‚РѕР»СЊРєРѕ РІ read-only РІРёРґРµ.
-- Р›СЋР±С‹Рµ Р±СѓРґСѓС‰РёРµ redesign-tranche РїРѕ `Workouts`, `Nutrition` Рё `Admin user detail` РґРѕР»Р¶РЅС‹ СЃРѕС…СЂР°РЅСЏС‚СЊ СЌС‚РѕС‚ РєРѕРЅС‚СЂР°РєС‚: РёР·РѕР±СЂР°Р¶РµРЅРёСЏ РєРѕРЅС‚РµРЅС‚Р° вЂ” С‡Р°СЃС‚СЊ UX, Р° РЅРµ С„Р°РєСѓР»СЊС‚Р°С‚РёРІРЅС‹Р№ РґРµРєРѕСЂ.
-## 2026-04-14 camera/import runtime addendum
-
-- После восстановления Supabase frontend runtime снова подтверждён на живом проекте `fit`: `npm run verify:supabase-runtime` зелёный, а auth-based e2e больше не блокируются старым DNS-ошибкой.
-- Для nutrition camera surface закреплён новый UX-контракт: видимая кнопка-триггер загрузки, скрытый file input только как transport layer, стабильный `nutrition-photo-analyze`, превью локального фото и сохранение в базу/дневник через `/api/nutrition/photo-import`.
-- Auth-based regression теперь обязан учитывать post-restore путь через онбординг: если тестовый пользователь попадает на `/onboarding`, helper завершает профиль и только потом продолжает проверки `Dashboard`, `AI` и `Nutrition`.
+- [DARK_UTILITY_REDESIGN_EXECUTION.md](/C:/fit/docs/DARK_UTILITY_REDESIGN_EXECUTION.md)
+- [design-handoff/DARK_UTILITY_MOBILE_BRIEF.md](/C:/fit/docs/design-handoff/DARK_UTILITY_MOBILE_BRIEF.md)

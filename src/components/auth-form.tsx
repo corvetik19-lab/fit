@@ -7,7 +7,7 @@ import { startTransition, useState, type FormEvent } from "react";
 type Mode = "sign-in" | "sign-up";
 
 const fieldClassName =
-  "w-full rounded-[1.4rem] border border-white/70 bg-white/82 px-4 py-4 text-sm text-foreground outline-none transition placeholder:text-[#7b7a84] focus:bg-white focus:ring-2 focus:ring-accent/18";
+  "w-full rounded-2xl border border-white/8 bg-white/4 px-4 py-3.5 text-sm text-foreground outline-none transition placeholder:text-[#6f7d8f] focus:border-[#24bcb5]/40 focus:bg-white/7 focus:ring-2 focus:ring-[#24bcb5]/15";
 
 export function AuthForm() {
   const [mode, setMode] = useState<Mode>("sign-in");
@@ -98,130 +98,130 @@ export function AuthForm() {
   }
 
   return (
-    <section className="w-full max-w-[28rem] px-1 sm:px-2">
-      <div className="flex items-center justify-center gap-7 border-b border-[#d8d5d4]/75 pb-5">
-        {([
-          ["sign-in", "Вход"],
-          ["sign-up", "Регистрация"],
-        ] as const).map(([nextMode, label]) => {
-          const active = mode === nextMode;
+    <section className="w-full max-w-[25rem]">
+      <div className="grid gap-5 rounded-[1.75rem] border border-white/8 bg-[linear-gradient(180deg,rgba(21,29,39,0.96),rgba(13,18,24,0.94))] p-4 shadow-[0_26px_60px_-40px_rgba(0,0,0,0.72)] sm:p-5">
+        <div className="inline-flex rounded-2xl border border-white/8 bg-white/4 p-1">
+          {([
+            ["sign-in", "Вход"],
+            ["sign-up", "Регистрация"],
+          ] as const).map(([nextMode, label]) => {
+            const active = mode === nextMode;
 
-          return (
-            <button
-              className={`relative pb-1 font-display text-2xl font-bold tracking-[-0.05em] transition ${
-                active
-                  ? "text-accent after:absolute after:bottom-[-1.35rem] after:left-0 after:h-[3px] after:w-full after:rounded-full after:bg-accent"
-                  : "text-[#a7a2a3] hover:text-foreground"
-              }`}
-              key={nextMode}
-              onClick={() => {
-                setMode(nextMode);
-                setError(null);
-                setNotice(null);
-              }}
-              type="button"
-            >
-              {label}
-            </button>
-          );
-        })}
-      </div>
+            return (
+              <button
+                className={`flex-1 rounded-[0.95rem] px-3 py-2 text-sm font-semibold transition ${
+                  active
+                    ? "bg-[linear-gradient(135deg,#2063af,#24bcb5)] text-white shadow-[0_14px_28px_-20px_rgba(35,152,185,0.65)]"
+                    : "text-[#95a4b5] hover:text-foreground"
+                }`}
+                key={nextMode}
+                onClick={() => {
+                  setMode(nextMode);
+                  setError(null);
+                  setNotice(null);
+                }}
+                type="button"
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
 
-      <form className="mt-8 space-y-5" onSubmit={submit}>
-        {mode === "sign-up" ? (
-          <label className="grid gap-2 text-sm text-muted">
-            <span className="pl-1 text-[0.65rem] font-extrabold uppercase tracking-[0.22em] text-[#6d7080]">
-              Имя
+        <form className="grid gap-4" onSubmit={submit}>
+          {mode === "sign-up" ? (
+            <label className="grid gap-2">
+              <span className="px-1 text-[0.68rem] font-bold uppercase tracking-[0.16em] text-[#90a0b1]">
+                Имя
+              </span>
+              <input
+                className={fieldClassName}
+                onChange={(event) => setFullName(event.target.value)}
+                placeholder="Например, Владислав"
+                type="text"
+                value={fullName}
+              />
+            </label>
+          ) : null}
+
+          <label className="grid gap-2">
+            <span className="px-1 text-[0.68rem] font-bold uppercase tracking-[0.16em] text-[#90a0b1]">
+              Email
             </span>
-            <input
-              className={fieldClassName}
-              onChange={(event) => setFullName(event.target.value)}
-              placeholder="Например, Владислав"
-              type="text"
-              value={fullName}
-            />
+            <div className="relative">
+              <input
+                autoComplete="email"
+                className={`${fieldClassName} pr-12`}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="example@fit.app"
+                type="email"
+                value={email}
+              />
+              <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#6f7d8f]">
+                <Mail size={18} strokeWidth={2} />
+              </span>
+            </div>
           </label>
-        ) : null}
 
-        <label className="grid gap-2 text-sm text-muted">
-          <span className="pl-1 text-[0.65rem] font-extrabold uppercase tracking-[0.22em] text-[#6d7080]">
-            Email
-          </span>
-          <div className="relative">
-            <input
-              autoComplete="email"
-              className={`${fieldClassName} pr-12`}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder="example@fit.com"
-              type="email"
-              value={email}
-            />
-            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#7b7a84]">
-              <Mail size={18} strokeWidth={2} />
+          <label className="grid gap-2">
+            <span className="px-1 text-[0.68rem] font-bold uppercase tracking-[0.16em] text-[#90a0b1]">
+              Пароль
             </span>
-          </div>
-        </label>
+            <div className="relative">
+              <input
+                autoComplete={mode === "sign-up" ? "new-password" : "current-password"}
+                className={`${fieldClassName} pr-12`}
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder="••••••••"
+                type={showPassword ? "text" : "password"}
+                value={password}
+              />
+              <button
+                aria-label={showPassword ? "Скрыть пароль" : "Показать пароль"}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-[#6f7d8f] transition hover:text-foreground"
+                onClick={() => setShowPassword((current) => !current)}
+                type="button"
+              >
+                {showPassword ? (
+                  <EyeOff size={18} strokeWidth={2} />
+                ) : (
+                  <Eye size={18} strokeWidth={2} />
+                )}
+              </button>
+            </div>
+          </label>
 
-        <label className="grid gap-2 text-sm text-muted">
-          <span className="pl-1 text-[0.65rem] font-extrabold uppercase tracking-[0.22em] text-[#6d7080]">
-            Пароль
-          </span>
-          <div className="relative">
-            <input
-              autoComplete={mode === "sign-up" ? "new-password" : "current-password"}
-              className={`${fieldClassName} pr-12`}
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder="••••••••"
-              type={showPassword ? "text" : "password"}
-              value={password}
-            />
-            <button
-              aria-label={showPassword ? "Скрыть пароль" : "Показать пароль"}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-[#7b7a84] transition hover:text-foreground"
-              onClick={() => setShowPassword((current) => !current)}
-              type="button"
-            >
-              {showPassword ? (
-                <EyeOff size={18} strokeWidth={2} />
-              ) : (
-                <Eye size={18} strokeWidth={2} />
-              )}
-            </button>
-          </div>
-        </label>
+          {error ? (
+            <p className="rounded-2xl border border-[#ff7f7b]/30 bg-[#ff7f7b]/12 px-4 py-3 text-sm text-[#ffc8c5]">
+              {error}
+            </p>
+          ) : null}
 
-        {error ? (
-          <p className="rounded-[1.35rem] border border-red-300/70 bg-red-50/92 px-4 py-3 text-sm text-red-700">
-            {error}
-          </p>
-        ) : null}
+          {notice ? (
+            <p className="rounded-2xl border border-[#24bcb5]/25 bg-[#24bcb5]/12 px-4 py-3 text-sm text-[#b7f8f4]">
+              {notice}
+            </p>
+          ) : null}
 
-        {notice ? (
-          <p className="rounded-[1.35rem] border border-emerald-300/70 bg-emerald-50/92 px-4 py-3 text-sm text-emerald-700">
-            {notice}
-          </p>
-        ) : null}
-
-        <button
-          className="w-full rounded-[1.4rem] bg-[linear-gradient(135deg,#0040e0,#2e5bff)] px-5 py-4 text-sm font-extrabold uppercase tracking-[0.12em] text-white shadow-[0_18px_40px_-24px_rgba(0,64,224,0.48)] transition hover:translate-y-[-1px] hover:shadow-[0_24px_44px_-24px_rgba(0,64,224,0.56)] disabled:cursor-not-allowed disabled:opacity-60"
-          disabled={
-            isPending ||
-            !email.trim() ||
-            !password.trim() ||
-            (mode === "sign-up" && !fullName.trim())
-          }
-          type="submit"
-        >
-          <span className="inline-flex items-center gap-2">
+          <button
+            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border border-[#24bcb5]/18 bg-[linear-gradient(135deg,#2063af,#2398b9,#24bcb5)] px-5 py-3 text-sm font-bold text-white shadow-[0_18px_36px_-24px_rgba(35,152,185,0.65)] transition hover:translate-y-[-1px] disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={
+              isPending ||
+              !email.trim() ||
+              !password.trim() ||
+              (mode === "sign-up" && !fullName.trim())
+            }
+            type="submit"
+          >
             <LogIn size={18} strokeWidth={2.3} />
             {isPending
               ? "Обработка..."
               : mode === "sign-up"
                 ? "Создать аккаунт"
-                : "Войти в систему"}
-          </span>
-        </button>
-      </form>
+                : "Войти"}
+          </button>
+        </form>
+      </div>
     </section>
   );
 }

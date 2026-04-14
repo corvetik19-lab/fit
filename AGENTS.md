@@ -45,6 +45,8 @@
 ## Prompt contract
 - For implementation tasks, the result must name what changed, which checks ran, and which external blockers remain.
 - For every substantial status update and final handoff, include the current `MASTER_PLAN` progress in `done / total (percent%)` format; use `npm run report:master-progress` when in doubt.
+- If work is being tracked through a separate active execution-doc with `[ ] / [x]` checkboxes, report both numbers explicitly: overall `MASTER_PLAN` progress and current-plan progress for that active execution-doc.
+- Do not reuse the overall `MASTER_PLAN` percentage as a substitute for the active subplan. When a focused redesign, rollout, or hardening stream is active, show both percentages so the user can see local and global progress separately.
 - For review tasks, return prioritized findings first with file references and concise impact; do not hide findings behind a summary.
 - Before increasing reasoning effort or adding more process, prefer a clearer output contract, verification loop, tool persistence rule, and dependency check.
 - When context is missing, explore the repository and official docs first. Stop only on a real external blocker, not on ordinary repo discovery work.

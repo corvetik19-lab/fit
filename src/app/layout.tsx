@@ -37,7 +37,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     title: "fit",
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
   },
   manifest: "/manifest.webmanifest",
   icons: {
@@ -58,7 +58,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0040e0",
+  themeColor: "#0d1218",
   width: "device-width",
   initialScale: 1,
 };

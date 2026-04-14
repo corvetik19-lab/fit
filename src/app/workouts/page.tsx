@@ -108,7 +108,7 @@ export default async function WorkoutsPage() {
             ? `Обновлено ${lastUpdatedAt}`
             : "Библиотека упражнений пока пустая",
         ]}
-        description="Это рабочая зона для недельного плана: здесь собраны текущая программа, шаблоны и библиотека упражнений. На телефоне разделы открываются по очереди и не превращаются в длинную перегруженную ленту."
+        description="Это рабочая зона для недельного плана: сверху активная программа и шаблоны, ниже библиотека упражнений и быстрые правки без лишних экранов."
         metrics={[
           {
             label: "Активные",
@@ -126,7 +126,7 @@ export default async function WorkoutsPage() {
             note: "недель ждут фиксации",
           },
           {
-            label: "Программ",
+            label: "Программы",
             value: String(programs.length),
             note: "в истории профиля",
           },
@@ -135,7 +135,7 @@ export default async function WorkoutsPage() {
           {
             key: "plan",
             label: "План недели",
-            description: "Конструктор, текущая неделя и шаблоны.",
+            description: "Конструктор, текущая неделя и шаблоны",
             content: (
               <WeeklyProgramBuilder
                 activeExercises={activeExercises}
@@ -147,7 +147,7 @@ export default async function WorkoutsPage() {
           {
             key: "library",
             label: "Упражнения",
-            description: "Собственная база и быстрые правки без лишних экранов.",
+            description: "Своя база и быстрые правки без лишних переходов",
             content: (
               <ExerciseLibraryManager
                 initialExercises={exercises}

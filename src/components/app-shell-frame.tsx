@@ -61,10 +61,10 @@ export function AppShellFrame({
     }
 
     if (isMobile) {
-      return "pt-[calc(5.8rem+env(safe-area-inset-top))]";
+      return "pt-[calc(5rem+env(safe-area-inset-top))]";
     }
 
-    return "pt-[calc(7.8rem+env(safe-area-inset-top))] xl:pt-[8.4rem]";
+    return "pt-[calc(6.4rem+env(safe-area-inset-top))] xl:pt-[6.8rem]";
   }, [immersive, isMobile]);
 
   const showAssistantWidget =
@@ -75,59 +75,63 @@ export function AppShellFrame({
   return (
     <div className="min-h-dvh">
       {!immersive ? (
-        <header className="fixed inset-x-0 top-0 z-30 overflow-x-clip pt-[calc(0.8rem+env(safe-area-inset-top))]">
+        <header className="fixed inset-x-0 top-0 z-30 overflow-x-clip pt-[calc(0.65rem+env(safe-area-inset-top))]">
           <div className="mx-4 sm:mx-6 lg:mx-auto lg:max-w-[1500px] lg:px-10">
-            <div className="card w-full rounded-[2rem] px-4 py-3 sm:px-5 sm:py-4">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex min-w-0 items-center gap-3">
-                  <div className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/82 p-2 shadow-[0_20px_40px_-28px_rgba(0,64,224,0.22)]">
-                    <Image
-                      alt="fit"
-                      className="h-full w-full object-contain"
-                      height={44}
-                      priority
-                      src="/fit-logo.svg"
-                      width={44}
-                    />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="app-display text-xl font-black tracking-tight text-accent">
-                      {brandLabel}
-                    </p>
-                    <p className="workspace-kicker mt-1">{eyebrow}</p>
-                  </div>
+            <div className="surface-panel flex w-full items-center justify-between gap-3 rounded-[1.4rem] px-3 py-3 sm:px-4">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/8 bg-white/5 p-2">
+                  <Image
+                    alt="fit"
+                    className="h-full w-full object-contain"
+                    height={44}
+                    priority
+                    src="/fit-logo.svg"
+                    width={44}
+                  />
                 </div>
 
-                <div className="hidden min-w-0 flex-1 items-center justify-center px-6 lg:flex">
-                  <p className="truncate text-sm font-semibold uppercase tracking-[0.24em] text-muted">
+                <div className="min-w-0">
+                  <p className="app-display truncate text-lg font-black tracking-[-0.08em] text-white">
+                    {brandLabel}
+                  </p>
+                  <p className="workspace-kicker mt-1">{eyebrow}</p>
+                </div>
+              </div>
+
+              <div className="hidden min-w-0 flex-1 items-center justify-center px-6 lg:flex">
+                <div className="truncate text-center">
+                  <p className="truncate text-sm font-semibold text-white">
                     {title}
                   </p>
                 </div>
+              </div>
 
-                <div className="flex shrink-0 items-center gap-3">
-                  <div className="hidden xl:flex">
-                    <span className="pill">{viewerIdentity}</span>
-                  </div>
-                  <AppShellNav
-                    minimal={isMobile}
-                    onDrawerOpenChange={setIsMobileDrawerOpen}
-                    viewer={viewer}
-                  />
+              <div className="flex shrink-0 items-center gap-3">
+                <div className="hidden xl:flex">
+                  <span className="pill max-w-[14rem]" title={viewerIdentity}>
+                    {viewerIdentity}
+                  </span>
                 </div>
-              </div>
 
-              <div className="mt-3 lg:hidden">
-                <p className="truncate text-sm font-semibold text-foreground">
-                  {title}
-                </p>
+                <AppShellNav
+                  minimal={isMobile}
+                  onDrawerOpenChange={setIsMobileDrawerOpen}
+                  viewer={viewer}
+                />
               </div>
+            </div>
+
+            <div className="px-1 pb-1 pt-2 lg:hidden">
+              <p className="truncate text-xs font-semibold uppercase tracking-[0.14em] text-[#aab7c6]">
+                {title}
+              </p>
             </div>
           </div>
         </header>
       ) : null}
 
       <main
-        className={`mx-auto grid w-full max-w-[1500px] grid-cols-[minmax(0,1fr)] gap-6 overflow-x-clip px-4 pb-[calc(6.5rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-10 lg:pb-8 ${topPaddingClassName}`}
+        className={`mx-auto grid w-full max-w-[1500px] grid-cols-[minmax(0,1fr)] gap-6 overflow-x-clip px-4 pb-[calc(6.2rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-10 lg:pb-8 ${topPaddingClassName}`}
       >
         {children}
       </main>

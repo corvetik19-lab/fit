@@ -201,7 +201,7 @@ export default async function NutritionPage({ searchParams }: NutritionPageProps
           viewer.profile?.full_name ?? viewer.user.email ?? "fit",
           `Сегодня: ${todaySummaryDate}`,
         ]}
-        description="Экран питания разбит на отдельные разделы: баланс дня, AI-анализ фото и журнал питания. На телефоне открывается только нужный блок, без сплошной длинной ленты."
+        description="Экран питания собран как рабочий дневник: сверху баланс дня, дальше быстрые действия через фото и штрихкод, ниже журнал, база продуктов и история."
         metrics={[
           {
             label: "Продукты",
@@ -241,14 +241,14 @@ export default async function NutritionPage({ searchParams }: NutritionPageProps
           },
           {
             key: "photo",
-            label: "AI-фото",
-            description: "Разбор блюда по фотографии",
+            label: "Фото и штрихкод",
+            description: "Быстрый ввод через камеру и упаковку",
             content: <NutritionPhotoAnalysis access={access.features.meal_photo} />,
           },
           {
             key: "log",
-            label: "Журнал",
-            description: "Продукты, рецепты и ручной лог",
+            label: "Журнал и база",
+            description: "Продукты, рецепты, шаблоны и ручной лог",
             content: (
               <NutritionTracker
                 initialFoods={foods}
@@ -265,7 +265,7 @@ export default async function NutritionPage({ searchParams }: NutritionPageProps
         ]}
         initialSectionKey={initialSectionKey}
         storageKey="nutrition-page"
-        title="Рацион, AI-анализ фото и журнал питания в одном экране"
+        title="Рацион, камера и журнал питания в одном рабочем экране"
       />
     </AppShell>
   );

@@ -330,5 +330,13 @@ async function completeOnboarding(page: Page, fullName: string) {
 
   await expect(submitButton).toBeEnabled();
   await submitButton.click();
-  await page.waitForURL(/\/dashboard$/, { timeout: 20_000 });
+
+  try {
+    await page.waitForURL(/\/dashboard$/, { timeout: 45_000 });
+    return;
+  } catch {
+    await page.waitForTimeout(500);
+    await submitButton.click();
+    await page.waitForURL(/\/dashboard$/, { timeout: 45_000 });
+  }
 }

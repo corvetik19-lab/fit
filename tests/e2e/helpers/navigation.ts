@@ -7,7 +7,7 @@ export async function navigateStable(
 ) {
   let lastError: unknown = null;
 
-  for (let attempt = 0; attempt < 3; attempt += 1) {
+  for (let attempt = 0; attempt < 5; attempt += 1) {
     try {
       await page.goto(targetPath, {
         waitUntil: "domcontentloaded",
@@ -21,11 +21,13 @@ export async function navigateStable(
     } catch (error) {
       lastError = error;
 
-      if (
-        attempt === 2 ||
-        (!String(error).includes("ERR_ABORTED") &&
-          !String(error).includes("Timeout"))
-      ) {
+      const serializedError = String(error);
+      const isRecoverable =
+        serializedError.includes("ERR_ABORTED") ||
+        serializedError.includes("Timeout") ||
+        serializedError.includes("frame was detached");
+
+      if (attempt === 4 || !isRecoverable) {
         throw error;
       }
 

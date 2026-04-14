@@ -13,7 +13,7 @@
 
 Р­С‚РѕС‚ С„Р°Р№Р» вЂ” С‚РµРєСѓС‰РёР№ production-hardening backlog РїСЂРѕРµРєС‚Р°. РћРЅ РѕС‚СЂР°Р¶Р°РµС‚ С„Р°РєС‚РёС‡РµСЃРєРѕРµ СЃРѕСЃС‚РѕСЏРЅРёРµ СЂРµРїРѕР·РёС‚РѕСЂРёСЏ РЅР° `2026-03-31`.
 
-Текущий прогресс execution checklist: `199 / 204` (`98%`).
+Текущий прогресс execution checklist: `203 / 214` (`95%`).
 
 ## РўРµРєСѓС‰Р°СЏ Р±Р°Р·Р°
 
@@ -1374,3 +1374,16 @@
 - [x] Для этого добавлены команды [master-plan-progress.mjs](/C:/fit/scripts/master-plan-progress.mjs) и [wait-for-vercel-deployment.mjs](/C:/fit/scripts/wait-for-vercel-deployment.mjs), обновлены [AGENTS.md](/C:/fit/AGENTS.md), [CODEX_PLAYBOOK.md](/C:/fit/docs/CODEX_PLAYBOOK.md), [CODEX_ONBOARDING.md](/C:/fit/docs/CODEX_ONBOARDING.md), [README.md](/C:/fit/README.md), [docs/README.md](/C:/fit/docs/README.md), [RELEASE_CHECKLIST.md](/C:/fit/docs/RELEASE_CHECKLIST.md), [PROD_READY.md](/C:/fit/docs/PROD_READY.md) и [RUNTIME_ENV_HANDOFF.md](/C:/fit/docs/RUNTIME_ENV_HANDOFF.md).
 - [x] Follow-up подтверждён пакетами `npm run report:master-progress`, `npm run wait:vercel-deploy -- --help`, `npm run agent:sync-registry`, `npm run verify:codex`, `npm run verify:agent-governance`.
 - [x] Общий progress execution checklist не меняется и остаётся `199 / 204` (`98%`), потому что это ещё одно developer-facing hardening-правило, а не новый product milestone.
+
+## 2026-04-15 Dark Utility redesign
+
+- [x] Создан отдельный execution-doc [DARK_UTILITY_REDESIGN_EXECUTION.md](/C:/fit/docs/DARK_UTILITY_REDESIGN_EXECUTION.md) с чекбоксами `[ ] / [x]`.
+- [x] Developer-facing frontend docs и дизайнерский handoff переведены на новый active-style source of truth: [FRONTEND.md](/C:/fit/docs/FRONTEND.md), [docs/README.md](/C:/fit/docs/README.md), [design-handoff/README.md](/C:/fit/docs/design-handoff/README.md), [DARK_UTILITY_MOBILE_BRIEF.md](/C:/fit/docs/design-handoff/DARK_UTILITY_MOBILE_BRIEF.md).
+- [x] Переведён foundation tranche: тёмные глобальные токены, PWA theme-color, shell, navigation и входной экран через [globals.css](/C:/fit/src/app/globals.css), [layout.tsx](/C:/fit/src/app/layout.tsx), [manifest.ts](/C:/fit/src/app/manifest.ts), [app-shell-frame.tsx](/C:/fit/src/components/app-shell-frame.tsx), [app-shell-nav.tsx](/C:/fit/src/components/app-shell-nav.tsx), [page.tsx](/C:/fit/src/app/page.tsx), [auth-form.tsx](/C:/fit/src/components/auth-form.tsx).
+- [x] Переведены `/dashboard` и общие workspace-паттерны под compact dark utility.
+- [ ] Переведены `/workouts` и `/workouts/day/[dayId]` под главный mobile fitness сценарий.
+- [ ] Переведён `/nutrition` вместе с camera/barcode/Open Food Facts flow.
+- [ ] Переведён `/ai` как компактный coaching workspace.
+- [ ] Переведены `/history`, `/settings`, `/billing/cloudpayments`, `/suspended`.
+- [ ] Переведены `/admin`, `/admin/users`, `/admin/users/[id]`.
+- [ ] Закрыт финальный visual/mobile regression tranche и developer handoff по новому стилю.

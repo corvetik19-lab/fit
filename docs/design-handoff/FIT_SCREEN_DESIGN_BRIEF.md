@@ -1,5 +1,9 @@
 # Полный экранный дизайн-бриф `fit`
 
+> Актуальный визуальный курс для этого брифа: **Dark Utility Fitness / Compact / User First, Admin Align**.
+> Краткий active-style handoff находится в [DARK_UTILITY_MOBILE_BRIEF.md](/C:/fit/docs/design-handoff/DARK_UTILITY_MOBILE_BRIEF.md).
+> Этот файл остаётся полной картой экранов, сценариев, состояний и продуктовых ограничений.
+
 ## 1. Что это за продукт
 
 `fit` — это web-first fitness-платформа с PWA-подачей, в которой пользователь:

@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { test } from "@playwright/test";
 
 import {
   finishOnboardingIfVisible,
@@ -23,7 +23,7 @@ test.describe("authenticated app", () => {
     await navigateStable(page, "/dashboard", /\/(dashboard|onboarding)$/);
     await finishOnboardingIfVisible(page);
     await page
-      .getByRole("link", { name: "AI коуч" })
+      .getByRole("link", { name: /^AI$/ })
       .waitFor({ state: "visible", timeout: 15_000 });
 
     await navigateStable(page, "/workouts", /\/workouts$/);
@@ -39,7 +39,10 @@ test.describe("authenticated app", () => {
       .waitFor({ state: "visible", timeout: 15_000 });
 
     await navigateStable(page, "/ai", /\/ai$/);
-    await page.locator("textarea").first().waitFor({ state: "visible", timeout: 15_000 });
+    await page
+      .locator("textarea")
+      .first()
+      .waitFor({ state: "visible", timeout: 15_000 });
 
     await navigateStable(page, "/settings", /\/settings$/);
     await page
@@ -55,7 +58,7 @@ test.describe("authenticated app", () => {
       .getByRole("heading", { name: /текущий цикл/i })
       .waitFor({ state: "visible", timeout: 15_000 });
     await page
-      .getByRole("link", { name: "AI коуч" })
+      .getByRole("link", { name: /^AI$/ })
       .waitFor({ state: "visible", timeout: 15_000 });
   });
 });

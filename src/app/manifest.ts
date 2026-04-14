@@ -8,8 +8,8 @@ export default function manifest(): MetadataRoute.Manifest {
       "Фитнес-платформа с офлайн-поддержкой для тренировок, питания, статистики и AI-планирования.",
     start_url: "/dashboard",
     display: "standalone",
-    background_color: "#fcf9f8",
-    theme_color: "#0040e0",
+    background_color: "#0d1218",
+    theme_color: "#0d1218",
     lang: "ru",
     icons: [
       {

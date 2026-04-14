@@ -1482,6 +1482,19 @@
 - В [verify-codex.mjs](/C:/fit/scripts/verify-codex.mjs) добавлена структурная проверка Codex-конфига: скрипт теперь валит gate, если `project_doc_max_bytes` стоит не на top-level, если budget потерян или если в `[features]` появляются не-boolean значения.
 - Follow-up подтверждён локально командой `npm run verify:codex`; это отдельный hardening для developer-facing контура, чтобы ошибка `invalid type: integer 65536, expected a boolean` больше не возвращалась тихо при следующих правках.
 
+### Dark Utility redesign: foundation tranche
+
+- Создан новый execution-doc [DARK_UTILITY_REDESIGN_EXECUTION.md](/C:/fit/docs/DARK_UTILITY_REDESIGN_EXECUTION.md) и активный дизайнерский handoff [DARK_UTILITY_MOBILE_BRIEF.md](/C:/fit/docs/design-handoff/DARK_UTILITY_MOBILE_BRIEF.md); [FRONTEND.md](/C:/fit/docs/FRONTEND.md) и [docs/README.md](/C:/fit/docs/README.md) переведены на новый source of truth.
+- Глобальная тема переведена в тёмный compact fitness-стиль через [globals.css](/C:/fit/src/app/globals.css), а shell и входной экран обновлены в [app-shell-frame.tsx](/C:/fit/src/components/app-shell-frame.tsx), [app-shell-nav.tsx](/C:/fit/src/components/app-shell-nav.tsx), [page.tsx](/C:/fit/src/app/page.tsx) и [auth-form.tsx](/C:/fit/src/components/auth-form.tsx).
+- Для PWA синхронизированы [layout.tsx](/C:/fit/src/app/layout.tsx) и [manifest.ts](/C:/fit/src/app/manifest.ts), чтобы theme-color и фон соответствовали новому Android/PWA-first baseline.
+
+### Dark Utility redesign: dashboard и workspace tranche
+
+- Общий workspace-слой переведён в компактный тёмный mobile-first паттерн через [page-workspace.tsx](/C:/fit/src/components/page-workspace.tsx): настройки видимости, обзор и меню разделов теперь собраны в единый плотный сценарий без oversized блоков.
+- Экран обзора полностью переведён в новый язык в [dashboard-workspace.tsx](/C:/fit/src/components/dashboard-workspace.tsx): короткий hero, next-action, компактные summary-карточки и чистый AI-блок.
+- Для уже подключённых workspace-экранов санирован user-visible copy и подтянут новый тон в [workouts/page.tsx](/C:/fit/src/app/workouts/page.tsx) и [nutrition/page.tsx](/C:/fit/src/app/nutrition/page.tsx).
+- В [AGENTS.md](/C:/fit/AGENTS.md) закреплено правило двойной отчётности: в статусах всегда показывается общий прогресс из `MASTER_PLAN` и отдельный прогресс активного execution-doc, если он существует.
+
 ### Agent hardening: review, security и prompt-contract
 
 - Создан [CODEX_AGENT_HARDENING_PLAN.md](/C:/fit/docs/CODEX_AGENT_HARDENING_PLAN.md) как отдельный execution-doc с `[ ] / [x]` чекбоксами для нового tranche по усилению агента.

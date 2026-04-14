@@ -15,23 +15,24 @@ export default async function Home() {
   }
 
   return (
-    <main className="relative flex min-h-dvh items-center justify-center overflow-hidden bg-background px-5 py-10 sm:px-8">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(46,91,255,0.12),transparent_34%),linear-gradient(180deg,#fcf9f8_0%,#f6f3f2_100%)]" />
-      <div className="relative z-10 w-full max-w-[32rem]">
+    <main className="relative flex min-h-dvh items-center justify-center overflow-hidden bg-background px-5 py-8 sm:px-8">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(36,188,181,0.12),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(32,99,175,0.16),transparent_24%),linear-gradient(180deg,#0b1015_0%,#0d1218_42%,#101720_100%)]" />
+
+      <div className="relative z-10 w-full max-w-[28rem]">
         <header className="mb-8 flex flex-col items-center text-center sm:mb-10">
           <Image
             alt="fit"
-            className="h-28 w-28 object-contain drop-shadow-[0_22px_46px_rgba(0,64,224,0.18)] sm:h-32 sm:w-32"
-            height={128}
+            className="h-24 w-24 object-contain drop-shadow-[0_24px_42px_rgba(35,152,185,0.28)] sm:h-28 sm:w-28"
+            height={112}
             priority
             src="/fit-logo.svg"
-            width={128}
+            width={112}
           />
-          <p className="mt-5 font-display text-5xl font-black tracking-[-0.1em] text-accent sm:text-6xl">
+          <p className="mt-4 font-display text-5xl font-black tracking-[-0.1em] text-white sm:text-6xl">
             fit
           </p>
-          <p className="mt-3 max-w-sm text-sm font-medium leading-6 text-muted sm:text-[0.95rem]">
-            Тренируйся точно. Восстанавливайся умно.
+          <p className="mt-3 max-w-xs text-sm font-medium leading-6 text-[#9cabbc] sm:text-[0.95rem]">
+            Ежедневный контроль тренировок, питания и прогресса без лишнего шума.
           </p>
         </header>
 

@@ -47,7 +47,7 @@ type AppShellNavProps = {
 const dashboardRoute: AppRouteDefinition = {
   href: "/dashboard",
   label: "Обзор",
-  description: "Главные сигналы дня.",
+  description: "Статус дня и главные сигналы.",
   icon: BarChart3,
 };
 
@@ -61,35 +61,35 @@ const workoutsRoute: AppRouteDefinition = {
 const nutritionRoute: AppRouteDefinition = {
   href: "/nutrition",
   label: "Питание",
-  description: "Логи, фото и штрихкоды.",
+  description: "Лог, фото и штрихкоды.",
   icon: Activity,
 };
 
 const historyRoute: AppRouteDefinition = {
   href: "/history",
-  label: "Архив",
-  description: "Прошлые циклы и история.",
+  label: "История",
+  description: "Прошлые циклы и архив действий.",
   icon: History,
 };
 
 const aiRoute: AppRouteDefinition = {
   href: "/ai",
-  label: "AI коуч",
-  description: "Диалог и предложения.",
+  label: "AI",
+  description: "Коуч, предложения и контекст.",
   icon: Sparkles,
 };
 
 const settingsRoute: AppRouteDefinition = {
   href: "/settings",
   label: "Настройки",
-  description: "Профиль, данные и доступ.",
+  description: "Профиль, доступ и данные.",
   icon: Settings2,
 };
 
 const adminRoute: AppRouteDefinition = {
   href: "/admin",
-  label: "Центр управления",
-  description: "Системное состояние и очереди.",
+  label: "Админ",
+  description: "Состояние платформы и очереди.",
   icon: Shield,
 };
 
@@ -143,7 +143,7 @@ function DesktopRouteLink({
   return (
     <Link
       aria-current={isActive ? "page" : undefined}
-      className={`section-chip rounded-full px-4 py-2 text-sm font-semibold ${
+      className={`section-chip rounded-2xl px-3 py-2 text-sm font-semibold ${
         isActive ? "section-chip--active" : ""
       }`}
       href={href}
@@ -258,7 +258,7 @@ export function AppShellNav({
           aria-controls="app-mobile-drawer"
           aria-expanded={isDrawerOpen}
           aria-label="Открыть меню"
-          className="toggle-chip inline-flex h-11 w-11 items-center justify-center rounded-full px-0 py-0 lg:hidden"
+          className="toggle-chip inline-flex h-11 w-11 items-center justify-center rounded-2xl px-0 py-0 lg:hidden"
           data-testid="app-mobile-header-drawer-toggle"
           onClick={() => setIsDrawerOpen(true)}
           type="button"
@@ -294,11 +294,11 @@ export function AppShellNav({
                 id="app-mobile-drawer"
               >
                 <div className="app-drawer__surface">
-                  <div className="flex items-start justify-between gap-3 border-b border-border/60 px-5 pb-4 pt-[calc(1.1rem+env(safe-area-inset-top))]">
+                  <div className="flex items-start justify-between gap-3 border-b border-white/8 px-5 pb-4 pt-[calc(1.1rem+env(safe-area-inset-top))]">
                     <div className="min-w-0">
                       <p className="workspace-kicker">fit</p>
-                      <h2 className="app-display mt-2 text-2xl font-semibold text-foreground">
-                        Разделы приложения
+                      <h2 className="mt-2 text-2xl font-semibold tracking-tight text-white">
+                        Разделы
                       </h2>
                       <p className="mt-2 truncate text-sm text-muted">
                         {viewer?.fullName ?? viewer?.email ?? "Аккаунт fit"}
@@ -307,7 +307,7 @@ export function AppShellNav({
 
                     <button
                       aria-label="Закрыть меню"
-                      className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border/60 bg-white/90 text-foreground transition hover:bg-white"
+                      className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/8 bg-white/4 text-foreground transition hover:bg-white/8"
                       data-testid="app-mobile-drawer-close"
                       onClick={() => setIsDrawerOpen(false)}
                       type="button"
@@ -353,7 +353,7 @@ export function AppShellNav({
                       <div>
                         <p className="workspace-kicker">Личное</p>
                         <h3 className="mt-2 text-lg font-semibold text-foreground">
-                          Архив и настройки
+                          История и контроль
                         </h3>
                       </div>
 
@@ -392,9 +392,9 @@ export function AppShellNav({
                     ) : null}
 
                     <section className="surface-panel p-4">
-                      <p className="font-semibold text-foreground">Аккаунт</p>
+                      <p className="text-sm font-semibold text-foreground">Аккаунт</p>
                       <div className="mt-4">
-                        <SignOutButton className="w-full justify-center bg-white" />
+                        <SignOutButton className="w-full justify-center" />
                       </div>
                     </section>
                   </div>

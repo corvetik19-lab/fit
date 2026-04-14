@@ -1,0 +1,88 @@
+# Dark Utility Mobile Brief `fit`
+
+## Коротко
+
+Новый стиль `fit` — это не витринный editorial UI и не чистый Material 3.
+
+Нужен **практичный коммерческий fitness-интерфейс**, который:
+
+- выглядит профессионально;
+- хорошо работает на Android и в PWA;
+- быстро считывается на ходу;
+- не перегружает пользователя большими карточками и слишком крупными кнопками;
+- остаётся единым на `Dashboard`, `Workouts`, `Nutrition`, `AI`, `Settings`, `History` и `Admin`.
+
+## Визуальный курс
+
+### Основа
+
+- Фон: тёмный графит.
+- Surface: 2-3 уровня глубины.
+- Акцент: сине-бирюзовый язык логотипа `fit`.
+- Радиусы: умеренные, без «пухлости».
+- Бордеры: тонкие и редкие.
+- Тени: минимальные.
+
+### Типографика
+
+- Базовый UI-шрифт: `Manrope`.
+- Заголовки короткие и плотные.
+- Display-типографика допускается только точечно: hero, лого, ключевая метрика.
+- Длинные объясняющие тексты не приветствуются.
+
+### Контентная иерархия
+
+- На мобильном экране всегда должен быть один доминирующий блок.
+- Логирование, прогресс и текущие действия важнее декоративных секций.
+- Если блок не помогает действию, он должен быть вторичным или скрываемым.
+
+## Что проектировать
+
+### Главный user shell
+
+- compact top bar;
+- bottom nav как главный способ перемещения по пользовательским разделам;
+- drawer только для вторичного доступа;
+- fixed элементы не должны съедать рабочую площадь.
+
+### Главные пользовательские экраны
+
+- `/dashboard` — экран «что делать сегодня»
+- `/workouts` — активная неделя, программы, библиотека упражнений
+- `/workouts/day/[dayId]` — главный экран тренировки
+- `/nutrition` — дневной лог + быстрые actions `Фото / Штрихкод / Добавить`
+- `/ai` — компактный coach-workspace
+- `/history` — плотный журнал
+- `/settings` — utility control center
+
+### Admin
+
+- operator-first, без consumer-мягкости;
+- плотный список, ясные статусы, рабочие действия;
+- degraded/error states выглядят как часть системы, а не как разваленный UI.
+
+## Нельзя ломать
+
+- workout step-flow и focus-mode;
+- nutrition camera capture;
+- barcode scan и Open Food Facts import;
+- AI chat-first;
+- billing через `CloudPayments`;
+- settings `profile / billing / data`;
+- admin operator states и аудит.
+
+## Что дизайнер должен отдать
+
+- mobile frames для `360 / 390 / 430px`;
+- desktop frames для ключевых экранов;
+- component variants для:
+  - top app bar
+  - bottom nav
+  - compact card
+  - metric row
+  - sticky action bar
+  - form row
+  - state banner
+  - list item
+- default/empty/error/success/degraded states;
+- interaction notes по drawer, sticky actions и collapsible sections.
