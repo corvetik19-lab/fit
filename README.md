@@ -44,6 +44,7 @@ npm run build
 ### Baseline quality gate
 
 - `npm run verify:codex` — проверка Codex operating system
+- `npm run verify:agent-governance` — проверка orchestration/governance/autonomy слоя агента
 - `npm run lint`
 - `npm run typecheck`
 - `npm run build`
@@ -53,6 +54,10 @@ npm run build
 - `npm run verify:android-twa` при Android/TWA изменениях
 - `npm run verify:runtime-env` для быстрой проверки env readiness
 - `npm run verify:supabase-runtime` для диагностики Supabase runtime
+- `npm run agent:inventory` для снимка agent layer
+- `npm run agent:sync-registry` для синхронизации [docs/CODEX_AGENT_REGISTRY.md](/C:/fit/docs/CODEX_AGENT_REGISTRY.md)
+- `npm run agent:evaluate` для dry-run governance sweep
+- `npm run agent:evolve` для локального write-run внутри allowlist
 
 ### Что нужно для полного CI regression-контура
 
@@ -142,6 +147,12 @@ Source of truth по production-ready состоянию вынесен в
   [docs/CODEX_ROLLOUT_PLAN.md](/C:/fit/docs/CODEX_ROLLOUT_PLAN.md)
 - agent hardening:
   [docs/CODEX_AGENT_HARDENING_PLAN.md](/C:/fit/docs/CODEX_AGENT_HARDENING_PLAN.md)
+- agent autonomy:
+  [docs/CODEX_AGENT_AUTONOMY_PLAN.md](/C:/fit/docs/CODEX_AGENT_AUTONOMY_PLAN.md)
+- agent governance:
+  [docs/CODEX_AGENT_GOVERNANCE.md](/C:/fit/docs/CODEX_AGENT_GOVERNANCE.md)
+- agent registry:
+  [docs/CODEX_AGENT_REGISTRY.md](/C:/fit/docs/CODEX_AGENT_REGISTRY.md)
 - playbook:
   [docs/CODEX_PLAYBOOK.md](/C:/fit/docs/CODEX_PLAYBOOK.md)
 - onboarding:
@@ -152,6 +163,7 @@ Source of truth по production-ready состоянию вынесен в
 - repo-specific skills живут в `.agents/skills/`
 - GitHub review использует advisory-first contract из PR template и `@codex review`
 - для проверки этого контура используется `npm run verify:codex`
+- для orchestration/governance/autonomy контура используется `npm run verify:agent-governance`
 
 ## Правила разработки
 

@@ -1,0 +1,95 @@
+name: Agent Autonomy
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Run mode for the agent autonomy lane
+        required: true
+        default: dry-run
+        type: choice
+        options:
+          - dry-run
+          - write-push
+  schedule:
+    - cron: "0 3 * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: agent-autonomy-${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  governance-sweep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_dummy
+      SUPABASE_SERVICE_ROLE_KEY: service_role_dummy
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Agent governance dry-run
+        run: npm run agent:evaluate
+
+      - name: Upload governance artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-autonomy-dry-run
+          path: output/codex-runs/agent-evolution
+
+  write-push:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    needs: governance-sweep
+    if: ${{ vars.CODEX_AGENT_AUTONOMY_ENABLED == '1' && (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'write-push')) }}
+    env:
+      FIT_CODEX_AUTONOMY_ENABLED: "1"
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_dummy
+      SUPABASE_SERVICE_ROLE_KEY: service_role_dummy
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Configure Git identity
+        run: |
+          git config user.name "codex-agent"
+          git config user.email "codex-agent@users.noreply.github.com"
+
+      - name: Autonomous write-run
+        run: npm run agent:evolve:push
+
+      - name: Upload write-run artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-autonomy-write-run
+          path: output/codex-runs/agent-evolution

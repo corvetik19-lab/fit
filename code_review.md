@@ -66,6 +66,15 @@ GitHub PR review и ручных комментариев вроде `@codex rev
   скрывают ошибки оплаты, webhook reconcile или access review.
 - Secrets, webhook keys, provider tokens и env drift всегда reportable.
 
+### Agent layer и autonomous writes
+
+- Для правок `AGENTS.md`, `.codex`, `agents/`, `.agents/skills/`, workflow docs и automation scripts
+  отдельно проверяй governance drift, allowlist/denylist правила и то, что `verify:agent-governance`
+  реально покрывает новый контракт.
+- Если diff называет себя autonomous или self-evolving, но трогает product surfaces, migrations,
+  secrets, env или пропускает audit artifacts, это как минимум reportable P2, а при реальном риске
+  privileged drift — выше.
+
 ## Как оформлять findings
 
 - Сначала перечисляй findings по убыванию риска.

@@ -45,6 +45,12 @@
   внедрению Codex operating system в репозиторий.
 - [CODEX_AGENT_HARDENING_PLAN.md](/C:/fit/docs/CODEX_AGENT_HARDENING_PLAN.md) —
   execution-doc по усилению review/security/prompt-contract слоя агента.
+- [CODEX_AGENT_AUTONOMY_PLAN.md](/C:/fit/docs/CODEX_AGENT_AUTONOMY_PLAN.md) —
+  execution-doc по orchestration/governance/self-evolving слою dev-агента.
+- [CODEX_AGENT_GOVERNANCE.md](/C:/fit/docs/CODEX_AGENT_GOVERNANCE.md) —
+  allowlist, denied surfaces, budgets, kill switch и required gates для autonomous writes.
+- [CODEX_AGENT_REGISTRY.md](/C:/fit/docs/CODEX_AGENT_REGISTRY.md) —
+  синхронизированный реестр ролей, skills, workflows и команд agent layer.
 - [CODEX_PLAYBOOK.md](/C:/fit/docs/CODEX_PLAYBOOK.md) — рабочий playbook:
   AGENTS, роли агентов, skills, workflow и evaluator-first loop.
 - [CODEX_ONBOARDING.md](/C:/fit/docs/CODEX_ONBOARDING.md) — обязательный
@@ -84,6 +90,10 @@
   [CODEX_ROLLOUT_PLAN.md](/C:/fit/docs/CODEX_ROLLOUT_PLAN.md),
   [MASTER_PLAN.md](/C:/fit/docs/MASTER_PLAN.md) и
   [AI_WORKLOG.md](/C:/fit/docs/AI_WORKLOG.md).
+- Для agent-autonomy follow-up дополнительно держать синхронными
+  [CODEX_AGENT_AUTONOMY_PLAN.md](/C:/fit/docs/CODEX_AGENT_AUTONOMY_PLAN.md),
+  [CODEX_AGENT_GOVERNANCE.md](/C:/fit/docs/CODEX_AGENT_GOVERNANCE.md) и
+  [CODEX_AGENT_REGISTRY.md](/C:/fit/docs/CODEX_AGENT_REGISTRY.md).
 
 ## Рекомендуемый порядок чтения
 

@@ -76,6 +76,20 @@
   - provider requirements;
   - где лежат output artifacts.
 
+### Agent operating system и governance
+
+- Стартовые точки:
+  [CODEX_PLAYBOOK.md](/C:/fit/docs/CODEX_PLAYBOOK.md),
+  [CODEX_AGENT_AUTONOMY_PLAN.md](/C:/fit/docs/CODEX_AGENT_AUTONOMY_PLAN.md),
+  [CODEX_AGENT_GOVERNANCE.md](/C:/fit/docs/CODEX_AGENT_GOVERNANCE.md),
+  [CODEX_AGENT_REGISTRY.md](/C:/fit/docs/CODEX_AGENT_REGISTRY.md),
+  `.codex/config.toml`, `agents/`, `.agents/skills/`, `scripts/agent-*.mjs`.
+- Обязательно понять:
+  - какие роли и skills уже покрывают workflow;
+  - какие поверхности входят в allowlist и denied surfaces;
+  - какой verification-пакет нужен для docs/process drift;
+  - где лежат artifacts autonomous run-ов.
+
 ## 3. Формат результата после onboarding
 
 После первичного анализа агент обязан вернуть:
@@ -88,6 +102,7 @@
 6. минимальный verification plan для изменений в этом срезе.
 7. какой reviewer skill или role нужен, если задача дальше переходит в review
    или security-аудит.
+8. если это agent-layer slice — какой governance gate и какой artifact path обязателен.
 
 Если этих пунктов нет, onboarding считается незавершённым.
 

@@ -1,0 +1,8 @@
+model_reasoning_effort = "high"
+sandbox_mode = "workspace-write"
+developer_instructions = """
+Run self-evolving fit agent improvements in small tranches.
+Start from inventory and governance, make one narrow agent-layer improvement, sync the registry, run the required checks, and record artifacts.
+Do not touch product runtime, data schema, or secrets; this role is for the developer-facing Codex operating system only.
+Favor deterministic docs and tooling updates over vague attempts to 'improve' the agent without a measurable contract.
+"""

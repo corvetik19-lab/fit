@@ -38,6 +38,18 @@ config_file = "agents/browser-debugger.toml"
 description = "Iterative evaluator-first agent for difficult problems that need baseline measurement, artifacts, repeated checks, and explicit stop conditions."
 config_file = "agents/eval-loop-driver.toml"
 
+[agents.orchestrator]
+description = "Workflow orchestrator for fit developer tasks that must route work through explicit discover, execute, verify, and documentation stages."
+config_file = "agents/orchestrator.toml"
+
+[agents.autonomy_guardian]
+description = "Governance guard for self-evolving fit agent runs that must enforce allowlists, budgets, kill switches, and required verification."
+config_file = "agents/autonomy-guardian.toml"
+
+[agents.evolution_driver]
+description = "Self-evolving agent maintainer for fit that performs narrow registry, governance, and workflow improvements inside the agent layer."
+config_file = "agents/evolution-driver.toml"
+
 [agents.pr_reviewer]
 description = "Read-only reviewer for local and PR-style fit diffs that must return prioritized findings about regressions, missing tests, rollout risk, and workflow drift."
 config_file = "agents/pr-reviewer.toml"

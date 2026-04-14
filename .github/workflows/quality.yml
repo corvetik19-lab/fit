@@ -82,6 +82,9 @@ jobs:
       - name: Verify Codex operating system
         run: npm run verify:codex
 
+      - name: Verify agent governance
+        run: npm run verify:agent-governance
+
       - name: Lint
         run: npm run lint
 

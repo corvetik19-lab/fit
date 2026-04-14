@@ -14,6 +14,7 @@
 ## Проверки
 
 - [ ] `npm run verify:codex`
+- [ ] `npm run verify:agent-governance` для agent-layer / docs / skills / workflows
 - [ ] `npm run lint`
 - [ ] `npm run typecheck`
 - [ ] `npm run build`

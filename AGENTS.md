@@ -18,8 +18,10 @@
 - Prefer explicit data contracts, small server utilities, and composable route handlers.
 - Do not guess library APIs or infra behavior when current docs are available.
 - Use `docs/CODEX_PLAYBOOK.md` and `docs/CODEX_ONBOARDING.md` as the canonical workflow and onboarding contracts for Codex work in this repository.
+- Use `docs/CODEX_AGENT_AUTONOMY_PLAN.md`, `docs/CODEX_AGENT_GOVERNANCE.md`, and `docs/CODEX_AGENT_REGISTRY.md` when the task touches the agent layer itself.
 - Use `code_review.md` as the canonical detailed review contract for local and GitHub review behavior.
 - For difficult AI, UI, backend, or release problems, require an explicit evaluator loop: goal -> baseline -> evaluator -> artifacts -> stop condition.
+- For self-evolving or autonomous agent-layer work, require the narrower governance loop: allowlist -> required gates -> artifacts -> commit/push policy.
 - Keep service-role operations server-only and log every privileged admin action.
 - After every substantial change, update `docs/AI_WORKLOG.md`, `docs/MASTER_PLAN.md`, and the relevant topical docs in `docs/`.
 - `docs/MASTER_PLAN.md` is the source of truth for delivery progress. After each substantial change, the agent must explicitly update its checklist items, switching completed items from `[ ]` to `[x]` where appropriate.
@@ -45,6 +47,7 @@
 - Before increasing reasoning effort or adding more process, prefer a clearer output contract, verification loop, tool persistence rule, and dependency check.
 - When context is missing, explore the repository and official docs first. Stop only on a real external blocker, not on ordinary repo discovery work.
 - Do not mask provider degradation, permission gaps, or skipped verification as success.
+- Autonomous writes may touch only the agent-layer allowlist from `docs/CODEX_AGENT_GOVERNANCE.md` and must keep artifacts in `output/codex-runs/agent-evolution/`.
 
 ## Data and security rules
 - All business data is user-scoped by default through `user_id`.
@@ -69,3 +72,4 @@
 - The `docs/` folder is the persistent handoff surface for future developers and AI agents.
 - The Codex operating system rollout is tracked in `docs/CODEX_ROLLOUT_PLAN.md`.
 - The agent hardening tranche for review/security/prompt-contract work is tracked in `docs/CODEX_AGENT_HARDENING_PLAN.md`.
+- The orchestration/governance/autonomy tranche for the agent layer is tracked in `docs/CODEX_AGENT_AUTONOMY_PLAN.md`.

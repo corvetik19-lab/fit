@@ -10,10 +10,14 @@ const requiredFiles = [
   ".codex/config.toml",
   "docs/CODEX_ROLLOUT_PLAN.md",
   "docs/CODEX_AGENT_HARDENING_PLAN.md",
+  "docs/CODEX_AGENT_AUTONOMY_PLAN.md",
+  "docs/CODEX_AGENT_GOVERNANCE.md",
+  "docs/CODEX_AGENT_REGISTRY.md",
   "docs/CODEX_PLAYBOOK.md",
   "docs/CODEX_ONBOARDING.md",
   "code_review.md",
   ".github/PULL_REQUEST_TEMPLATE.md",
+  ".github/workflows/agent-autonomy.yml",
   "src/app/AGENTS.md",
   "src/lib/ai/AGENTS.md",
   "supabase/AGENTS.md",
@@ -21,6 +25,9 @@ const requiredFiles = [
   "android/AGENTS.md",
   "agents/onboarding-mapper.toml",
   "agents/eval-loop-driver.toml",
+  "agents/orchestrator.toml",
+  "agents/autonomy-guardian.toml",
+  "agents/evolution-driver.toml",
   "agents/pr-reviewer.toml",
   "agents/security-reviewer.toml",
   "agents/prompt-contract-editor.toml",
@@ -34,6 +41,15 @@ const requiredFiles = [
   ".agents/skills/fit-prompt-contracts/SKILL.md",
   ".agents/skills/fit-prompt-contracts/references/prompt-contract-patterns.md",
   ".agents/skills/fit-github-review-ops/SKILL.md",
+  ".agents/skills/fit-agent-orchestration/SKILL.md",
+  ".agents/skills/fit-agent-governance/SKILL.md",
+  ".agents/skills/fit-agent-governance/references/agent-governance-guardrails.md",
+  ".agents/skills/fit-agent-evolution/SKILL.md",
+  "scripts/agent-governance-config.mjs",
+  "scripts/agent-inventory.mjs",
+  "scripts/sync-codex-agent-registry.mjs",
+  "scripts/verify-agent-governance.mjs",
+  "scripts/agent-evolve.mjs",
 ];
 
 async function fileExists(relativePath) {
@@ -152,10 +168,16 @@ async function main() {
   requireSubstring(errors, codexConfig, ".codex/config.toml", "[agents.security_reviewer]");
   requireSubstring(errors, codexConfig, ".codex/config.toml", "[agents.prompt_contract_editor]");
   requireSubstring(errors, codexConfig, ".codex/config.toml", "[agents.workflow_maintainer]");
+  requireSubstring(errors, codexConfig, ".codex/config.toml", "[agents.orchestrator]");
+  requireSubstring(errors, codexConfig, ".codex/config.toml", "[agents.autonomy_guardian]");
+  requireSubstring(errors, codexConfig, ".codex/config.toml", "[agents.evolution_driver]");
 
   const docsReadme = await readUtf8("docs/README.md");
   requireSubstring(errors, docsReadme, "docs/README.md", "CODEX_ROLLOUT_PLAN.md");
   requireSubstring(errors, docsReadme, "docs/README.md", "CODEX_AGENT_HARDENING_PLAN.md");
+  requireSubstring(errors, docsReadme, "docs/README.md", "CODEX_AGENT_AUTONOMY_PLAN.md");
+  requireSubstring(errors, docsReadme, "docs/README.md", "CODEX_AGENT_GOVERNANCE.md");
+  requireSubstring(errors, docsReadme, "docs/README.md", "CODEX_AGENT_REGISTRY.md");
   requireSubstring(errors, docsReadme, "docs/README.md", "CODEX_PLAYBOOK.md");
   requireSubstring(errors, docsReadme, "docs/README.md", "CODEX_ONBOARDING.md");
   requireSubstring(errors, docsReadme, "docs/README.md", "code_review.md");
@@ -163,14 +185,21 @@ async function main() {
   const rootReadme = await readUtf8("README.md");
   requireSubstring(errors, rootReadme, "README.md", "CODEX_ROLLOUT_PLAN.md");
   requireSubstring(errors, rootReadme, "README.md", "CODEX_AGENT_HARDENING_PLAN.md");
+  requireSubstring(errors, rootReadme, "README.md", "CODEX_AGENT_AUTONOMY_PLAN.md");
+  requireSubstring(errors, rootReadme, "README.md", "CODEX_AGENT_GOVERNANCE.md");
+  requireSubstring(errors, rootReadme, "README.md", "CODEX_AGENT_REGISTRY.md");
   requireSubstring(errors, rootReadme, "README.md", "code_review.md");
   requireSubstring(errors, rootReadme, "README.md", "@codex review");
   requireSubstring(errors, rootReadme, "README.md", "verify:codex");
+  requireSubstring(errors, rootReadme, "README.md", "verify:agent-governance");
 
   const rootAgents = await readUtf8("AGENTS.md");
   requireSubstring(errors, rootAgents, "AGENTS.md", "docs/CODEX_PLAYBOOK.md");
   requireSubstring(errors, rootAgents, "AGENTS.md", "docs/CODEX_ONBOARDING.md");
   requireSubstring(errors, rootAgents, "AGENTS.md", "docs/CODEX_AGENT_HARDENING_PLAN.md");
+  requireSubstring(errors, rootAgents, "AGENTS.md", "docs/CODEX_AGENT_AUTONOMY_PLAN.md");
+  requireSubstring(errors, rootAgents, "AGENTS.md", "docs/CODEX_AGENT_GOVERNANCE.md");
+  requireSubstring(errors, rootAgents, "AGENTS.md", "docs/CODEX_AGENT_REGISTRY.md");
   requireSubstring(errors, rootAgents, "AGENTS.md", "code_review.md");
   requireSubstring(errors, rootAgents, "AGENTS.md", "## Review guidelines");
   requireSubstring(errors, rootAgents, "AGENTS.md", "## Prompt contract");
@@ -180,6 +209,7 @@ async function main() {
   requireSubstring(errors, reviewContract, "code_review.md", "P0");
   requireSubstring(errors, reviewContract, "code_review.md", "P1");
   requireSubstring(errors, reviewContract, "code_review.md", "P2");
+  requireSubstring(errors, reviewContract, "code_review.md", "verify:agent-governance");
 
   if (errors.length > 0) {
     console.error("verify:codex failed\n");

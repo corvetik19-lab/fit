@@ -73,3 +73,9 @@ GitHub-поверхность для advisory review и prompt-contract прав
 - [ ] GitHub-side включение внешнего Codex Cloud review остаётся отдельным
   операционным шагом вне кода репозитория, если команда захочет активировать
   именно облачную интеграцию OpenAI вместо одного только repo-local contour.
+
+## 2026-04-14 follow-up
+
+- [x] Следующий tranche по orchestration/governance/self-evolving слою вынесен в
+  [CODEX_AGENT_AUTONOMY_PLAN.md](/C:/fit/docs/CODEX_AGENT_AUTONOMY_PLAN.md), чтобы review-contract
+  и autonomous mainline lane развивались раздельно и не смешивали GitHub review с automation policy.

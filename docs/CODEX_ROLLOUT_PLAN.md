@@ -53,9 +53,10 @@
 
 1. Начинать работу с [AGENTS.md](/C:/fit/AGENTS.md) и [CODEX_ONBOARDING.md](/C:/fit/docs/CODEX_ONBOARDING.md).
 2. Для review и workflow-hardening дополнительно читать [code_review.md](/C:/fit/code_review.md) и [CODEX_AGENT_HARDENING_PLAN.md](/C:/fit/docs/CODEX_AGENT_HARDENING_PLAN.md).
-3. Для повседневного operational flow использовать [CODEX_PLAYBOOK.md](/C:/fit/docs/CODEX_PLAYBOOK.md).
-4. Для сложных AI/UI/backend/release задач не пропускать evaluator loop и явно фиксировать baseline, артефакты и stop condition.
-5. После каждого существенного tranche обновлять:
+3. Для orchestration/governance/self-evolving слоя дополнительно читать [CODEX_AGENT_AUTONOMY_PLAN.md](/C:/fit/docs/CODEX_AGENT_AUTONOMY_PLAN.md), [CODEX_AGENT_GOVERNANCE.md](/C:/fit/docs/CODEX_AGENT_GOVERNANCE.md) и [CODEX_AGENT_REGISTRY.md](/C:/fit/docs/CODEX_AGENT_REGISTRY.md).
+4. Для повседневного operational flow использовать [CODEX_PLAYBOOK.md](/C:/fit/docs/CODEX_PLAYBOOK.md).
+5. Для сложных AI/UI/backend/release задач не пропускать evaluator loop и явно фиксировать baseline, артефакты и stop condition.
+6. После каждого существенного tranche обновлять:
    - [CODEX_ROLLOUT_PLAN.md](/C:/fit/docs/CODEX_ROLLOUT_PLAN.md)
    - [MASTER_PLAN.md](/C:/fit/docs/MASTER_PLAN.md)
    - [AI_WORKLOG.md](/C:/fit/docs/AI_WORKLOG.md)
@@ -81,3 +82,11 @@
 - В `.agents/skills/` добавлены self-contained навыки `fit-pr-review`, `fit-security-review`, `fit-prompt-contracts`, `fit-github-review-ops`, а repo-local reference-файлы закрепляют security checklist и prompt-contract patterns внутри репозитория.
 - GitHub-facing контур усилен через [PULL_REQUEST_TEMPLATE.md](/C:/fit/.github/PULL_REQUEST_TEMPLATE.md), обновлённый [CODEX_PLAYBOOK.md](/C:/fit/docs/CODEX_PLAYBOOK.md), [CODEX_ONBOARDING.md](/C:/fit/docs/CODEX_ONBOARDING.md) и execution-doc [CODEX_AGENT_HARDENING_PLAN.md](/C:/fit/docs/CODEX_AGENT_HARDENING_PLAN.md) с чекбоксами прогресса.
 - [verify-codex.mjs](/C:/fit/scripts/verify-codex.mjs) теперь проверяет не только базовый Codex rollout, но и новый review/security/prompt-contract слой: обязательные docs, `code_review.md`, PR template, agent configs и repo-local skills.
+
+## 2026-04-14 agent autonomy and governance addendum
+
+- В репозитории добавлены execution-doc [CODEX_AGENT_AUTONOMY_PLAN.md](/C:/fit/docs/CODEX_AGENT_AUTONOMY_PLAN.md), governance-doc [CODEX_AGENT_GOVERNANCE.md](/C:/fit/docs/CODEX_AGENT_GOVERNANCE.md) и generated registry [CODEX_AGENT_REGISTRY.md](/C:/fit/docs/CODEX_AGENT_REGISTRY.md), чтобы orchestration, self-evolving loop и direct-to-main policy были зафиксированы так же явно, как rollout и review-contract слой.
+- [`.codex/config.toml`](/C:/fit/.codex/config.toml) теперь включает роли `orchestrator`, `autonomy_guardian` и `evolution_driver`, а `.agents/skills/` дополнен навыками `fit-agent-orchestration`, `fit-agent-governance`, `fit-agent-evolution`.
+- Добавлены scripts [agent-governance-config.mjs](/C:/fit/scripts/agent-governance-config.mjs), [agent-inventory.mjs](/C:/fit/scripts/agent-inventory.mjs), [sync-codex-agent-registry.mjs](/C:/fit/scripts/sync-codex-agent-registry.mjs), [verify-agent-governance.mjs](/C:/fit/scripts/verify-agent-governance.mjs), [agent-evolve.mjs](/C:/fit/scripts/agent-evolve.mjs) и npm-команды `agent:*` плюс `verify:agent-governance`.
+- [quality.yml](/C:/fit/.github/workflows/quality.yml) теперь прогоняет `verify:agent-governance`, а новый workflow [agent-autonomy.yml](/C:/fit/.github/workflows/agent-autonomy.yml) даёт scheduled/manual governance sweep и optional direct-to-main lane при включённом `CODEX_AGENT_AUTONOMY_ENABLED=1`.
+- Этот tranche подтверждается пакетами `npm run agent:sync-registry`, `npm run agent:evaluate`, `npm run verify:codex`, `npm run verify:agent-governance`, `npm run lint`, `npm run typecheck`, `npm run build`.
