@@ -1436,6 +1436,15 @@
 - [mobile-pwa-regressions.spec.ts](/C:/fit/tests/e2e/mobile-pwa-regressions.spec.ts) переведён на новый mobile contract для admin surface, после чего прошли зелёно `authenticated-app`, `ui-regressions`, `mobile-pwa-regressions` и `smoke`.
 - Stitch redesign после этого закрыт полностью: `10 / 10` (`100%`), общий master-progress — `189 / 196` (`96%`).
 
+### Supabase runtime и nutrition camera/import follow-up
+
+- Подтвердил, что рабочий Supabase-проект `nactzaxrjzsdkyfqwecf` снова доступен: `npm run verify:supabase-runtime` зелёный, старый DNS-blocker снят.
+- Довёл `nutrition-photo-analysis.tsx` до реального mobile camera/import flow: фото выбирается по user gesture, кнопка анализа больше не сбрасывается вторым input-event, а AI-результат сохраняется через `/api/nutrition/photo-import` в продукт, storage и дневник питания.
+- Устранил e2e-флаки после восстановления базы: в `authenticated-app.spec.ts` и `nutrition-capture.spec.ts` тестовый пользователь теперь завершает онбординг при редиректе на `/onboarding`, а в `tests/e2e/helpers/ai.ts` появился батчевый `replaceAiChatHistory` с усиленным retry для Supabase seeding.
+- Проверил tranche пакетами `npm run lint`, `npm run typecheck`, `npm run build`, `npm run verify:migrations`, `npm run verify:supabase-runtime`, `npm run test:smoke` и общим таргетированным Playwright-прогоном `authenticated-app + ai-workspace + nutrition-capture` -> `7 passed`.
+- Progress по master plan не меняется и остаётся `191 / 198` (`96%`): локально закрыт очередной кодовый slice, а дальше остаются только внешние live env/provider блокеры.
+- Повторный полный `npm run test:e2e:auth` после восстановления базы выявил уже не feature-gap, а внешний runtime blocker: часть admin/workout/API сценариев периодически ловит транзиентные `ECONNRESET` между приложением и Supabase. Camera/import flow при этом остаётся зелёным, а нестабильность зафиксирована как внешний сетевой фактор, а не как регресс nutrition UX.
+
 ## 2026-04-14
 
 ### Изображения упражнений и продуктов

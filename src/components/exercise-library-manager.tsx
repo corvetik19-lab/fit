@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { startTransition, useMemo, useState } from "react";
+import { startTransition, useEffect, useMemo, useState } from "react";
 
 import { isAbsoluteHttpUrl } from "@/lib/image-url";
 
@@ -66,10 +66,17 @@ function ExercisePreview({
 
 export function ExerciseLibraryManager({
   initialExercises,
+  initialNextOffset = null,
+  initialTotalCount = initialExercises.length,
 }: {
   initialExercises: Exercise[];
+  initialNextOffset?: number | null;
+  initialTotalCount?: number;
 }) {
   const router = useRouter();
+  const [loadedExercises, setLoadedExercises] = useState(initialExercises);
+  const [nextOffset, setNextOffset] = useState<number | null>(initialNextOffset);
+  const [totalCount, setTotalCount] = useState(initialTotalCount);
   const [title, setTitle] = useState("");
   const [muscleGroup, setMuscleGroup] = useState("");
   const [description, setDescription] = useState("");
@@ -79,15 +86,24 @@ export function ExerciseLibraryManager({
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  useEffect(() => {
+    setLoadedExercises(initialExercises);
+    setNextOffset(initialNextOffset);
+    setTotalCount(initialTotalCount);
+  }, [initialExercises, initialNextOffset, initialTotalCount]);
 
   const activeExercises = useMemo(
-    () => initialExercises.filter((exercise) => !exercise.is_archived),
-    [initialExercises],
+    () => loadedExercises.filter((exercise) => !exercise.is_archived),
+    [loadedExercises],
   );
   const archivedExercises = useMemo(
-    () => initialExercises.filter((exercise) => exercise.is_archived),
-    [initialExercises],
+    () => loadedExercises.filter((exercise) => exercise.is_archived),
+    [loadedExercises],
   );
+
+  const hasMore = nextOffset !== null && loadedExercises.length < totalCount;
 
   function resetForm() {
     setEditingId(null);
@@ -193,6 +209,59 @@ export function ExerciseLibraryManager({
         router.refresh();
       } finally {
         setIsPending(false);
+      }
+    });
+  }
+
+  function loadMoreExercises() {
+    if (nextOffset === null || isLoadingMore) {
+      return;
+    }
+
+    setError(null);
+    setIsLoadingMore(true);
+
+    startTransition(async () => {
+      try {
+        const searchParams = new URLSearchParams({
+          includeArchived: "true",
+          limit: "120",
+          offset: String(nextOffset),
+        });
+        const response = await fetch(`/api/exercises?${searchParams.toString()}`);
+        const payload = (await response.json().catch(() => null)) as
+          | {
+              data?: Exercise[];
+              message?: string;
+              meta?: {
+                nextOffset?: number | null;
+                total?: number;
+              };
+            }
+          | null;
+
+        if (!response.ok) {
+          setError(
+            payload?.message ??
+              "Не удалось подгрузить оставшиеся упражнения библиотеки.",
+          );
+          return;
+        }
+
+        const appendedExercises = payload?.data ?? [];
+        setLoadedExercises((currentExercises) => [
+          ...currentExercises,
+          ...appendedExercises.filter(
+            (nextExercise) =>
+              !currentExercises.some(
+                (currentExercise) => currentExercise.id === nextExercise.id,
+              ),
+          ),
+        ]);
+        setNextOffset(payload?.meta?.nextOffset ?? null);
+        setTotalCount(payload?.meta?.total ?? totalCount);
+      } finally {
+        setIsLoadingMore(false);
       }
     });
   }
@@ -393,6 +462,21 @@ export function ExerciseLibraryManager({
               </p>
             )}
           </div>
+
+          {hasMore ? (
+            <div className="mt-4">
+              <button
+                className="action-button action-button--secondary"
+                disabled={isLoadingMore}
+                onClick={loadMoreExercises}
+                type="button"
+              >
+                {isLoadingMore
+                  ? "Подгружаю ещё..."
+                  : `Загрузить ещё упражнения (${loadedExercises.length} из ${totalCount})`}
+              </button>
+            </div>
+          ) : null}
         </section>
 
         <section className="card p-6">

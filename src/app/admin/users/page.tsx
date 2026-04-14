@@ -2,7 +2,7 @@
 import Link from "next/link";
 
 import { AdminUsersDirectory } from "@/components/admin-users-directory";
-import { AppShell } from "@/components/app-shell";
+import { AppShell, toAppShellViewer } from "@/components/app-shell";
 import {
   PRIMARY_SUPER_ADMIN_EMAIL,
   canUseRootAdminControls,
@@ -21,6 +21,7 @@ export default async function AdminUsersPage() {
       eyebrow="Админ"
       hideAssistantWidget
       title="Пользователи и управление доступом"
+      viewer={toAppShellViewer(viewer)}
     >
       <section className="card overflow-hidden p-6 sm:p-8">
         <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">

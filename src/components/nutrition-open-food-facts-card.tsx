@@ -160,7 +160,7 @@ export function NutritionOpenFoodFactsCard({
           </h3>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">
             Найдём продукт по штрихкоду, покажем состав и картинку, а потом
-            сохраним его в твою базу без ручного набора КБЖУ.
+            сохраним его в твою базу без ручного ввода КБЖУ.
           </p>
         </div>
 
@@ -312,6 +312,7 @@ export function NutritionOpenFoodFactsCard({
                   <>
                     <button
                       className="action-button border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-semibold text-emerald-700 hover:bg-emerald-100"
+                      data-testid={`nutrition-open-food-facts-use-existing-${mode}`}
                       onClick={() =>
                         onResolveFood(lookupResult.existingFood as NutritionFood, "existing")
                       }

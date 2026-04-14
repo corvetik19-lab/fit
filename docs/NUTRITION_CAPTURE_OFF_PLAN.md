@@ -116,3 +116,9 @@
 
 - Feature полностью закрыт.
 - Следующий соседний tranche по nutrition UX можно брать уже отдельно от этого плана.
+
+## 2026-04-14 follow-up
+
+- После восстановления Supabase повторно подтверждён весь mobile flow: barcode preview/import, добавление существующего продукта в текущий приём пищи и photo analysis -> save meal.
+- Для photo-flow закреплён рабочий UX-контракт: видимый trigger открытия галереи, стабильный `nutrition-photo-analyze`, сохранение изображения в storage bucket `nutrition-captures` и запись нового продукта в дневник без ручного обхода.
+- Повторная проверка: `node scripts/run-playwright.mjs PLAYWRIGHT_BASE_URL=http://127.0.0.1:3111 -- test tests/e2e/nutrition-capture.spec.ts --workers=1` -> `3 passed`.

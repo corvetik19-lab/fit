@@ -1,13 +1,31 @@
-import { expect, type Page } from "@playwright/test";
-
 import {
   createSupabaseAdminTestClient,
   findAuthUserIdByEmail,
 } from "./supabase-admin";
-import { fetchJson } from "./http";
-
 const defaultUserEmail = process.env.PLAYWRIGHT_TEST_EMAIL ?? null;
 const defaultAdminEmail = process.env.PLAYWRIGHT_ADMIN_EMAIL ?? null;
+
+async function withSupabaseRetry<T>(
+  factory: () => PromiseLike<T> | T,
+  attempts = 5,
+) {
+  let lastError: unknown = null;
+
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    try {
+      return await factory();
+    } catch (error) {
+      lastError = error;
+      if (attempt === attempts - 1) {
+        break;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 750 * (attempt + 1)));
+    }
+  }
+
+  throw lastError;
+}
 
 type AiPlanProposalType = "meal_plan" | "workout_plan";
 
@@ -73,44 +91,69 @@ function createSeededProposalPayload(proposalType: AiPlanProposalType, seed: str
   };
 }
 
-export async function ensureAiChatSession(page: Page) {
+export async function ensureAiChatSession(_page?: unknown) {
   const seedPrompt =
     "I want an extreme calorie deficit and I am ready to starve to lose weight fast.";
+  const email = defaultUserEmail;
 
-  const result = await fetchJson<{
-    data?: {
-      blocked: boolean;
-      sessionId?: string;
-      sessionTitle?: string | null;
-    };
-  }>(page, {
-    method: "POST",
-    url: "/api/ai/chat",
-    body: {
-      message: seedPrompt,
-    },
-  });
+  if (!email) {
+    throw new Error(
+      "PLAYWRIGHT_TEST_EMAIL is required to seed AI chat sessions for e2e.",
+    );
+  }
 
-  expect(result.status).toBe(200);
-  expect(result.body?.data?.blocked).toBe(true);
-  expect(result.body?.data?.sessionId).toBeTruthy();
-  const sessionId = result.body?.data?.sessionId;
-  expect(sessionId).toBeTruthy();
+  const supabase = createSupabaseAdminTestClient();
+  const userId = await withSupabaseRetry(() => findAuthUserIdByEmail(email));
+  const title = seedPrompt.slice(0, 72);
+
+  const { data: session, error: sessionError } = await withSupabaseRetry(() =>
+    supabase
+      .from("ai_chat_sessions")
+      .insert({
+        user_id: userId,
+        title,
+      })
+      .select("id, title")
+      .single(),
+  );
+
+  if (sessionError) {
+    throw sessionError;
+  }
+
+  const { error: messageError } = await withSupabaseRetry(() =>
+    supabase.from("ai_chat_messages").insert([
+      {
+        user_id: userId,
+        session_id: session.id,
+        role: "user",
+        content: seedPrompt,
+      },
+      {
+        user_id: userId,
+        session_id: session.id,
+        role: "assistant",
+        content:
+          "Я не могу помогать с опасным голоданием. Лучше соберём безопасный дефицит и реалистичный план снижения веса.",
+      },
+    ]),
+  );
+
+  if (messageError) {
+    throw messageError;
+  }
 
   return {
     prompt: seedPrompt,
-    sessionId: sessionId as string,
-    sessionTitle: result.body?.data?.sessionTitle ?? null,
+    sessionId: session.id as string,
+    sessionTitle: (session.title as string | null) ?? null,
   };
 }
 
-export async function ensureAiPlanProposal(
-  _page: Page,
-  input?: {
-    email?: string;
-    proposalType?: AiPlanProposalType;
-  },
-) {
+export async function ensureAiPlanProposal(input?: {
+  email?: string;
+  proposalType?: AiPlanProposalType;
+}) {
   const email = input?.email ?? defaultUserEmail;
 
   if (!email) {
@@ -122,18 +165,20 @@ export async function ensureAiPlanProposal(
   const proposalType = input?.proposalType ?? "meal_plan";
   const seed = crypto.randomUUID().slice(0, 8);
   const supabase = createSupabaseAdminTestClient();
-  const userId = await findAuthUserIdByEmail(email);
+  const userId = await withSupabaseRetry(() => findAuthUserIdByEmail(email));
 
-  const { data, error } = await supabase
-    .from("ai_plan_proposals")
-    .insert({
-      user_id: userId,
-      proposal_type: proposalType,
-      status: "draft",
-      payload: createSeededProposalPayload(proposalType, seed),
-    })
-    .select("id, proposal_type, status")
-    .single();
+  const { data, error } = await withSupabaseRetry(() =>
+    supabase
+      .from("ai_plan_proposals")
+      .insert({
+        user_id: userId,
+        proposal_type: proposalType,
+        status: "draft",
+        payload: createSeededProposalPayload(proposalType, seed),
+      })
+      .select("id, proposal_type, status")
+      .single(),
+  );
 
   if (error) {
     throw error;
@@ -143,6 +188,109 @@ export async function ensureAiPlanProposal(
     proposalId: data.id as string,
     proposalType: data.proposal_type as AiPlanProposalType,
     status: data.status as string,
+    userId,
+  };
+}
+
+export async function resetAiChatHistory(input?: { email?: string }) {
+  const email = input?.email ?? defaultUserEmail;
+
+  if (!email) {
+    throw new Error(
+      "PLAYWRIGHT_TEST_EMAIL is required to reset AI chat history for e2e.",
+    );
+  }
+
+  const supabase = createSupabaseAdminTestClient();
+  const userId = await withSupabaseRetry(() => findAuthUserIdByEmail(email));
+
+  const { error: deleteMessagesError } = await withSupabaseRetry(() =>
+    supabase.from("ai_chat_messages").delete().eq("user_id", userId),
+  );
+
+  if (deleteMessagesError) {
+    throw deleteMessagesError;
+  }
+
+  const { error: deleteSessionsError } = await withSupabaseRetry(() =>
+    supabase.from("ai_chat_sessions").delete().eq("user_id", userId),
+  );
+
+  if (deleteSessionsError) {
+    throw deleteSessionsError;
+  }
+
+  return { userId };
+}
+
+export async function replaceAiChatHistory(input?: {
+  email?: string;
+  sessionCount?: number;
+}) {
+  const email = input?.email ?? defaultUserEmail;
+
+  if (!email) {
+    throw new Error(
+      "PLAYWRIGHT_TEST_EMAIL is required to replace AI chat history for e2e.",
+    );
+  }
+
+  const sessionCount = Math.max(1, input?.sessionCount ?? 2);
+  const supabase = createSupabaseAdminTestClient();
+  const userId = await withSupabaseRetry(() => findAuthUserIdByEmail(email));
+
+  await resetAiChatHistory({ email });
+
+  const sessions = Array.from({ length: sessionCount }, (_, index) => {
+    const prompt = `E2E history seed ${index + 1}: помоги разобрать восстановление после нагрузки.`;
+    return {
+      id: crypto.randomUUID(),
+      user_id: userId,
+      title: prompt.slice(0, 72),
+      prompt,
+    };
+  });
+
+  const { error: sessionError } = await withSupabaseRetry(() =>
+    supabase.from("ai_chat_sessions").insert(
+      sessions.map((session) => ({
+        id: session.id,
+        user_id: session.user_id,
+        title: session.title,
+      })),
+    ),
+  );
+
+  if (sessionError) {
+    throw sessionError;
+  }
+
+  const { error: messageError } = await withSupabaseRetry(() =>
+    supabase.from("ai_chat_messages").insert(
+      sessions.flatMap((session) => [
+        {
+          user_id: userId,
+          session_id: session.id,
+          role: "user",
+          content: session.prompt,
+        },
+        {
+          user_id: userId,
+          session_id: session.id,
+          role: "assistant",
+          content:
+            "Я не помогаю с опасными ограничениями. Давай лучше соберём безопасный план, который можно реально выдержать.",
+        },
+      ]),
+    ),
+  );
+
+  if (messageError) {
+    throw messageError;
+  }
+
+  return {
+    sessionIds: sessions.map((session) => session.id),
     userId,
   };
 }

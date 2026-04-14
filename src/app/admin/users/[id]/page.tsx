@@ -1,5 +1,5 @@
 import { AdminUserDetail } from "@/components/admin-user-detail";
-import { AppShell } from "@/components/app-shell";
+import { AppShell, toAppShellViewer } from "@/components/app-shell";
 import { requirePlatformAdminViewer } from "@/lib/viewer";
 
 export default async function AdminUserDetailPage({
@@ -12,6 +12,7 @@ export default async function AdminUserDetailPage({
 
   return (
     <AppShell
+      viewer={toAppShellViewer(viewer)}
       eyebrow="Админ"
       hideAssistantWidget
       title="Операторская карточка пользователя"

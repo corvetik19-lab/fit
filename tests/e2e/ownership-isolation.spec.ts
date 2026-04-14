@@ -610,7 +610,7 @@ test.describe("user-owned isolation", () => {
     await navigateStable(userPage, "/ai", /\/ai$/);
     await expect(userPage.getByTestId("ai-chat-panel").first()).toBeVisible();
 
-    const seededProposal = await ensureAiPlanProposal(userPage, {
+    const seededProposal = await ensureAiPlanProposal({
       proposalType: "meal_plan",
     });
 

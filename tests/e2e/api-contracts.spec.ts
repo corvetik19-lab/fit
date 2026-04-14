@@ -1121,7 +1121,7 @@ test.describe("api contracts with admin access", () => {
     await expect(page).toHaveURL(/\/ai$/);
     await page.waitForLoadState("networkidle");
 
-    const proposal = await ensureAiPlanProposal(page, {
+    const proposal = await ensureAiPlanProposal({
       email: process.env.PLAYWRIGHT_ADMIN_EMAIL ?? undefined,
       proposalType: "meal_plan",
     });

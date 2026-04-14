@@ -6,10 +6,9 @@ import { useRouter } from "next/navigation";
 import { Check, ChevronDown, ChevronUp } from "lucide-react";
 import { startTransition, useState } from "react";
 
-import type { WeeklyProgramSummary } from "@/lib/workout/weekly-programs";
+import type { WeeklyProgramOverviewSummary } from "@/lib/workout/weekly-programs";
 import {
   defaultRepRangePresetKey,
-  formatPlannedRepTarget,
   repRangePresets,
   resolveRepRangePreset,
   type RepRangePresetKey,
@@ -103,7 +102,7 @@ function getCurrentWeekStartDate() {
   return formatDateInputValue(nextDate);
 }
 
-function renderProgramRange(program: WeeklyProgramSummary) {
+function renderProgramRange(program: WeeklyProgramOverviewSummary) {
   const startDate = dateFormatter.format(
     new Date(`${program.week_start_date}T00:00:00`),
   );
@@ -125,7 +124,7 @@ export function WeeklyProgramBuilder({
   activeExercises,
   initialTemplates,
 }: {
-  initialPrograms: WeeklyProgramSummary[];
+  initialPrograms: WeeklyProgramOverviewSummary[];
   activeExercises: ExerciseOption[];
   initialTemplates: WorkoutTemplateSummary[];
 }) {
@@ -354,7 +353,7 @@ export function WeeklyProgramBuilder({
     });
   }
 
-  function cloneProgram(program: WeeklyProgramSummary) {
+  function cloneProgram(program: WeeklyProgramOverviewSummary) {
     setError(null);
     setNotice(null);
     setIsPending(true);
@@ -388,7 +387,7 @@ export function WeeklyProgramBuilder({
     });
   }
 
-  function saveTemplate(program: WeeklyProgramSummary) {
+  function saveTemplate(program: WeeklyProgramOverviewSummary) {
     setError(null);
     setNotice(null);
     setIsPending(true);
@@ -983,10 +982,7 @@ export function WeeklyProgramBuilder({
                           <div className="mt-2 grid gap-2 text-sm text-muted">
                             {day.exercises.map((exercise) => (
                               <p key={exercise.id}>
-                                {exercise.exercise_title_snapshot} · {exercise.sets_count} x{" "}
-                                {exercise.sets[0]
-                                  ? formatPlannedRepTarget(exercise.sets[0])
-                                  : "?"}
+                                {exercise.exercise_title_snapshot} · {exercise.sets_count} подход.
                               </p>
                             ))}
                           </div>

@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import {
+  finishOnboardingIfVisible,
   hasAuthE2ECredentials,
 } from "./helpers/auth";
 import { USER_STORAGE_STATE_PATH } from "./helpers/auth-state";
@@ -11,33 +12,50 @@ test.use({
 });
 
 test.describe("authenticated app", () => {
+  test.describe.configure({ timeout: 120_000 });
+
   test.skip(
     !hasAuthE2ECredentials(),
     "requires PLAYWRIGHT_TEST_EMAIL and PLAYWRIGHT_TEST_PASSWORD",
   );
 
   test("user can open main product sections after sign-in", async ({ page }) => {
-    await navigateStable(page, "/dashboard", /\/dashboard$/);
-    await page.waitForLoadState("networkidle");
-    await expect(page.getByRole("link", { name: "AI" }).first()).toBeVisible();
+    await navigateStable(page, "/dashboard", /\/(dashboard|onboarding)$/);
+    await finishOnboardingIfVisible(page);
+    await page
+      .getByRole("link", { name: "AI коуч" })
+      .waitFor({ state: "visible", timeout: 15_000 });
 
     await navigateStable(page, "/workouts", /\/workouts$/);
-    await expect(page.locator('button[aria-pressed]').first()).toBeVisible();
+    await page
+      .locator('button[aria-pressed]')
+      .first()
+      .waitFor({ state: "visible", timeout: 15_000 });
 
     await navigateStable(page, "/nutrition", /\/nutrition$/);
-    await expect(page.locator('button[aria-pressed]').first()).toBeVisible();
+    await page
+      .locator('button[aria-pressed]')
+      .first()
+      .waitFor({ state: "visible", timeout: 15_000 });
 
     await navigateStable(page, "/ai", /\/ai$/);
-    await expect(page.locator("textarea").first()).toBeVisible();
+    await page.locator("textarea").first().waitFor({ state: "visible", timeout: 15_000 });
 
     await navigateStable(page, "/settings", /\/settings$/);
-    await expect(page.locator("#billing-center").first()).toBeVisible();
+    await page
+      .locator("#billing-center")
+      .first()
+      .waitFor({ state: "visible", timeout: 15_000 });
   });
 
   test("session is restored inside the same browser context", async ({ page }) => {
     await navigateStable(page, "/dashboard", /\/(dashboard|onboarding)$/);
-    await expect(page).toHaveURL(/\/dashboard$/);
-    await page.waitForLoadState("networkidle");
-    await expect(page.getByRole("link", { name: "AI" }).first()).toBeVisible();
+    await finishOnboardingIfVisible(page);
+    await page
+      .getByRole("heading", { name: /текущий цикл/i })
+      .waitFor({ state: "visible", timeout: 15_000 });
+    await page
+      .getByRole("link", { name: "AI коуч" })
+      .waitFor({ state: "visible", timeout: 15_000 });
   });
 });

@@ -15,6 +15,8 @@ const exerciseCreateSchema = z.object({
 
 const exerciseSelect =
   "id, title, muscle_group, description, note, image_url, is_archived, created_at, updated_at";
+const DEFAULT_EXERCISE_PAGE_SIZE = 120;
+const MAX_EXERCISE_PAGE_SIZE = 240;
 
 export async function GET(request: Request) {
   try {
@@ -33,25 +35,42 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const includeArchived = searchParams.get("includeArchived") === "true";
+    const limitValue = Number(searchParams.get("limit") ?? DEFAULT_EXERCISE_PAGE_SIZE);
+    const offsetValue = Number(searchParams.get("offset") ?? 0);
+    const limit = Number.isInteger(limitValue)
+      ? Math.min(Math.max(limitValue, 1), MAX_EXERCISE_PAGE_SIZE)
+      : DEFAULT_EXERCISE_PAGE_SIZE;
+    const offset =
+      Number.isInteger(offsetValue) && offsetValue >= 0 ? offsetValue : 0;
 
     let query = supabase
       .from("exercise_library")
-      .select(exerciseSelect)
+      .select(exerciseSelect, { count: "exact" })
       .eq("user_id", user.id)
-      .order("updated_at", { ascending: false });
+      .order("updated_at", { ascending: false })
+      .range(offset, offset + limit - 1);
 
     if (!includeArchived) {
       query = query.eq("is_archived", false);
     }
 
-    const { data, error } = await query;
+    const { data, error, count } = await query;
 
     if (error) {
       throw error;
     }
 
+    const total = count ?? 0;
+    const nextOffset = offset + (data?.length ?? 0) < total ? offset + limit : null;
+
     return Response.json({
       data: data ?? [],
+      meta: {
+        limit,
+        nextOffset,
+        offset,
+        total,
+      },
     });
   } catch (error) {
     logger.error("exercise list route failed", { error });

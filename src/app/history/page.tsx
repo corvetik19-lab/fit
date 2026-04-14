@@ -1,7 +1,7 @@
 import type { Route } from "next";
 import Link from "next/link";
 
-import { AppShell } from "@/components/app-shell";
+import { AppShell, toAppShellViewer } from "@/components/app-shell";
 import { listAiPlanProposals } from "@/lib/ai/proposals";
 import { loadSettingsDataSnapshot } from "@/lib/settings-data-server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -98,7 +98,11 @@ export default async function HistoryPage() {
   ].sort((left, right) => right.when - left.when);
 
   return (
-    <AppShell eyebrow="История" title="Прошлые циклы, AI-решения и операции с данными">
+    <AppShell
+      eyebrow="История"
+      title="Прошлые циклы, AI-решения и операции с данными"
+      viewer={toAppShellViewer(viewer)}
+    >
       <div className="grid gap-6">
         <section className="grid gap-5">
           <div className="space-y-3">

@@ -60,6 +60,17 @@ export async function signInAndFinishOnboarding(page: Page) {
   return signInWithCredentials(page, credentials);
 }
 
+export async function finishOnboardingIfVisible(
+  page: Page,
+  fullName = onboardingName,
+) {
+  if (!page.url().includes("/onboarding")) {
+    return;
+  }
+
+  await completeOnboarding(page, fullName);
+}
+
 export async function signInAsAdmin(page: Page) {
   const credentials = getAdminE2ECredentials();
 

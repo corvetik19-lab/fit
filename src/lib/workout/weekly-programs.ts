@@ -21,6 +21,22 @@ export type WeeklyProgramExerciseSummary = {
   sets: WeeklyProgramSetSummary[];
 };
 
+export type WeeklyProgramExerciseOverview = Omit<
+  WeeklyProgramExerciseSummary,
+  "sets"
+>;
+
+export type WeeklyProgramDayOverview = {
+  id: string;
+  day_of_week: number;
+  status: string;
+  exercises: WeeklyProgramExerciseOverview[];
+};
+
+export type WeeklyProgramOverviewSummary = Omit<WeeklyProgramSummary, "days"> & {
+  days: WeeklyProgramDayOverview[];
+};
+
 export type WeeklyProgramDaySummary = {
   id: string;
   day_of_week: number;
@@ -207,6 +223,98 @@ export async function listWeeklyPrograms(
     ...program,
     days: daysByProgramId.get(program.id) ?? [],
   }));
+}
+
+export async function listWeeklyProgramsOverview(
+  supabase: SupabaseClient,
+  userId: string,
+  limit = 6,
+) {
+  const { data: programs, error: programsError } = await supabase
+    .from("weekly_programs")
+    .select(
+      "id, title, status, week_start_date, week_end_date, is_locked, created_at",
+    )
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (programsError) {
+    throw programsError;
+  }
+
+  const weeklyPrograms = (programs as WeeklyProgramRow[] | null) ?? [];
+
+  if (!weeklyPrograms.length) {
+    return [];
+  }
+
+  const programIds = weeklyPrograms.map((program) => program.id);
+  const { data: days, error: daysError } = await supabase
+    .from("workout_days")
+    .select("id, weekly_program_id, day_of_week, status")
+    .eq("user_id", userId)
+    .in("weekly_program_id", programIds)
+    .order("day_of_week", { ascending: true });
+
+  if (daysError) {
+    throw daysError;
+  }
+
+  const workoutDays = (days as WorkoutDayRow[] | null) ?? [];
+
+  if (!workoutDays.length) {
+    return weeklyPrograms.map((program) => ({
+      ...program,
+      days: [],
+    })) satisfies WeeklyProgramOverviewSummary[];
+  }
+
+  const dayIds = workoutDays.map((day) => day.id);
+  const { data: exercises, error: exercisesError } = await supabase
+    .from("workout_exercises")
+    .select(
+      "id, workout_day_id, exercise_title_snapshot, sets_count, sort_order",
+    )
+    .eq("user_id", userId)
+    .in("workout_day_id", dayIds)
+    .order("sort_order", { ascending: true });
+
+  if (exercisesError) {
+    throw exercisesError;
+  }
+
+  const workoutExercises = (exercises as WorkoutExerciseRow[] | null) ?? [];
+  const exercisesByDayId = new Map<string, WeeklyProgramExerciseOverview[]>();
+
+  for (const exercise of workoutExercises) {
+    const currentExercises = exercisesByDayId.get(exercise.workout_day_id) ?? [];
+    currentExercises.push({
+      id: exercise.id,
+      exercise_title_snapshot: exercise.exercise_title_snapshot,
+      sets_count: exercise.sets_count,
+      sort_order: exercise.sort_order,
+    });
+    exercisesByDayId.set(exercise.workout_day_id, currentExercises);
+  }
+
+  const daysByProgramId = new Map<string, WeeklyProgramDayOverview[]>();
+
+  for (const day of workoutDays) {
+    const currentDays = daysByProgramId.get(day.weekly_program_id) ?? [];
+    currentDays.push({
+      id: day.id,
+      day_of_week: day.day_of_week,
+      status: day.status,
+      exercises: exercisesByDayId.get(day.id) ?? [],
+    });
+    daysByProgramId.set(day.weekly_program_id, currentDays);
+  }
+
+  return weeklyPrograms.map((program) => ({
+    ...program,
+    days: daysByProgramId.get(program.id) ?? [],
+  })) satisfies WeeklyProgramOverviewSummary[];
 }
 
 export async function getWorkoutDayDetail(

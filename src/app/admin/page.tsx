@@ -1,6 +1,6 @@
 import { AdminBootstrapForm } from "@/components/admin-bootstrap-form";
 import { AdminDashboardWorkspace } from "@/components/admin-dashboard-workspace";
-import { AppShell } from "@/components/app-shell";
+import { AppShell, toAppShellViewer } from "@/components/app-shell";
 import { PanelCard } from "@/components/panel-card";
 import {
   PRIMARY_SUPER_ADMIN_EMAIL,
@@ -51,6 +51,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       eyebrow="Админ"
       hideAssistantWidget
       title="Доступ к панели управления"
+      viewer={toAppShellViewer(viewer)}
     >
         <PanelCard
           caption="Доступ"
@@ -362,6 +363,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       eyebrow="Админ"
       hideAssistantWidget
       title="Операторский центр fit"
+      viewer={toAppShellViewer(viewer)}
     >
       <AdminDashboardWorkspace
         adminAuditLogs={adminAuditLogs}

@@ -2,7 +2,7 @@ import type { Route } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { AppShell } from "@/components/app-shell";
+import { AppShell, toAppShellViewer } from "@/components/app-shell";
 import { WorkoutDaySession } from "@/components/workout-day-session";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireReadyViewer } from "@/lib/viewer";
@@ -29,6 +29,7 @@ export default async function WorkoutDayPage({
 
   return (
     <AppShell
+      viewer={toAppShellViewer(viewer)}
       compactHeader={isFocusMode}
       eyebrow="Тренировка"
       hideAssistantWidget={isFocusMode}

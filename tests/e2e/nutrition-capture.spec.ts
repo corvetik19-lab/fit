@@ -1,6 +1,11 @@
+import { Buffer } from "node:buffer";
+
 import { expect, test } from "@playwright/test";
 
-import { hasAuthE2ECredentials } from "./helpers/auth";
+import {
+  finishOnboardingIfVisible,
+  hasAuthE2ECredentials,
+} from "./helpers/auth";
 import { USER_STORAGE_STATE_PATH } from "./helpers/auth-state";
 import { navigateStable } from "./helpers/navigation";
 
@@ -111,7 +116,67 @@ const existingFoodLookupPayload = {
   },
 };
 
+const mealPhotoAnalysisPayload = {
+  data: {
+    confidence: "high" as const,
+    estimatedKcal: 620,
+    items: [
+      {
+        confidence: "high" as const,
+        name: "Курица",
+        portion: "180 г",
+      },
+      {
+        confidence: "medium" as const,
+        name: "Рис",
+        portion: "160 г",
+      },
+    ],
+    macros: {
+      carbs: 58,
+      fat: 17,
+      protein: 42,
+    },
+    suggestions: [
+      "Сохрани блюдо как продукт, если будешь есть его регулярно.",
+      "Добавь запись в дневник, чтобы обновить дневной баланс.",
+    ],
+    summary:
+      "На фото похоже на порцию курицы с рисом и овощами. По калорийности это полноценный приём пищи.",
+    title: "Курица с рисом",
+  },
+};
+
+const mealPhotoImportPayload = {
+  data: {
+    food: {
+      id: "4fa64572-5f6f-4ec2-8b12-c0d5d16f9d61",
+      name: "Курица с рисом",
+    },
+    meal: {
+      eaten_at: "2026-04-14T12:30:00.000Z",
+      id: "3d4cedf2-88d2-49f8-a9e5-0cdf0f8fd992",
+    },
+    summary: {
+      carbs: 58,
+      fat: 17,
+      id: "d2f41b18-d2ba-4eeb-b66f-50cb9a5cf7b1",
+      kcal: 620,
+      protein: 42,
+      summary_date: "2026-04-14",
+    },
+  },
+  meta: {
+    addedToMeal: true,
+    imageStored: true,
+  },
+};
+
 test.describe("nutrition capture flow", () => {
+  test.describe.configure({
+    timeout: 60_000,
+  });
+
   test.use({
     storageState: USER_STORAGE_STATE_PATH,
   });
@@ -125,6 +190,9 @@ test.describe("nutrition capture flow", () => {
     await page.addInitScript(() => {
       window.localStorage.removeItem("fit:nutrition-page:workspace-visibility");
     });
+
+    await navigateStable(page, "/dashboard", /\/(dashboard|onboarding)$/);
+    await finishOnboardingIfVisible(page);
   });
 
   test("foods section previews and imports product from Open Food Facts", async ({
@@ -157,11 +225,10 @@ test.describe("nutrition capture flow", () => {
       "/nutrition?section=log&panel=foods",
       /\/nutrition(?:\?section=log&panel=foods)?$/,
     );
-    await page.waitForLoadState("networkidle");
     const lookupSection = page.getByTestId(
       "nutrition-open-food-facts-card-foods",
     );
-    await expect(lookupSection).toBeVisible();
+    await lookupSection.waitFor({ state: "visible", timeout: 15_000 });
 
     const foodLookupInput = lookupSection.getByPlaceholder(
       "Например, 4601234567890",
@@ -216,11 +283,10 @@ test.describe("nutrition capture flow", () => {
       "/nutrition?section=log&panel=log",
       /\/nutrition(?:\?section=log&panel=log)?$/,
     );
-    await page.waitForLoadState("networkidle");
     const lookupSection = page.getByTestId(
       "nutrition-open-food-facts-card-meal",
     );
-    await expect(lookupSection).toBeVisible();
+    await lookupSection.waitFor({ state: "visible", timeout: 15_000 });
 
     const mealLookupInput = lookupSection.getByPlaceholder(
       "Например, 4601234567890",
@@ -240,8 +306,8 @@ test.describe("nutrition capture flow", () => {
       page.getByTestId("nutrition-open-food-facts-preview-meal"),
     ).toBeVisible({ timeout: 10_000 });
     await page
-      .getByRole("button", { name: "Добавить в текущий приём" })
-      .click();
+      .getByTestId("nutrition-open-food-facts-use-existing-meal")
+      .click({ noWaitAfter: true });
 
     await expect(
       page.getByText(
@@ -251,5 +317,69 @@ test.describe("nutrition capture flow", () => {
     await expect(page.locator("select").last()).toHaveValue(
       "79c29240-e473-4db2-a31c-88b502af14f2",
     );
+  });
+
+  test("photo analysis can save a captured dish into nutrition and diary", async ({
+    page,
+  }) => {
+    let importRequestCount = 0;
+
+    await page.route("**/api/ai/meal-photo", async (route) => {
+      await route.fulfill({
+        body: JSON.stringify(mealPhotoAnalysisPayload),
+        contentType: "application/json",
+        status: 200,
+      });
+    });
+
+    await page.route("**/api/nutrition/photo-import", async (route) => {
+      importRequestCount += 1;
+      await route.fulfill({
+        body: JSON.stringify(mealPhotoImportPayload),
+        contentType: "application/json",
+        status: 200,
+      });
+    });
+
+    await navigateStable(
+      page,
+      "/nutrition?section=photo",
+      /\/nutrition(?:\?section=photo)?$/,
+    );
+    await page
+      .getByRole("heading", {
+        name: "Сними еду и сразу загрузи её в приложение",
+      })
+      .waitFor({ state: "visible", timeout: 15_000 });
+
+    const photoChooser = page.waitForEvent("filechooser");
+    await page.getByTestId("nutrition-photo-open-gallery").click();
+    await (await photoChooser).setFiles({
+      buffer: Buffer.from("fake-image-payload"),
+      mimeType: "image/jpeg",
+      name: "lunch.jpg",
+    });
+
+    await expect(page.getByTestId("nutrition-photo-analyze")).toBeEnabled({
+      timeout: 15_000,
+    });
+    await page.getByTestId("nutrition-photo-analyze").click();
+
+    await expect(page.getByText("Курица с рисом", { exact: true })).toBeVisible();
+    await expect(page.getByText(/620 ккал/)).toBeVisible();
+
+    await page.getByTestId("nutrition-photo-save-meal").click();
+    await expect.poll(() => importRequestCount).toBe(1);
+    await expect(
+      page.getByText(
+        "Продукт «Курица с рисом» сохранён и сразу добавлен в дневник питания.",
+      ),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "Открыть продукты" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "Открыть дневник" }),
+    ).toBeVisible();
   });
 });

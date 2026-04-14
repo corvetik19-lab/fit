@@ -152,7 +152,7 @@ export function AiChatPanel({
     <section
       className="card card--hero flex min-h-[72dvh] flex-col overflow-hidden p-4 sm:p-5 lg:min-h-[78dvh]"
       data-testid="ai-chat-panel"
-      data-hydrated={isHydrated ? "true" : "false"}
+      data-hydrated={String(isHydrated)}
     >
       <AiChatToolbar
         allowWebSearch={allowWebSearch}

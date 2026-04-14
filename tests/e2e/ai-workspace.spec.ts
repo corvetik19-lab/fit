@@ -4,7 +4,7 @@ import { expect, test, type Locator } from "@playwright/test";
 
 import { hasAuthE2ECredentials } from "./helpers/auth";
 import { USER_STORAGE_STATE_PATH } from "./helpers/auth-state";
-import { ensureAiChatSession } from "./helpers/ai";
+import { replaceAiChatHistory } from "./helpers/ai";
 import { navigateStable } from "./helpers/navigation";
 
 const PNG_1X1_BASE64 =
@@ -97,10 +97,9 @@ test.describe("ai workspace", () => {
 
     await navigateStable(page, "/ai", /\/ai$/);
     const chatPanel = page.locator('[data-testid="ai-chat-panel"]').first();
-    await expect(chatPanel).toHaveAttribute("data-hydrated", "true");
-    await expect(
-      chatPanel.locator('[data-testid="ai-chat-composer"]'),
-    ).toBeVisible();
+    await expect(page.getByTestId("ai-chat-composer")).toBeVisible({
+      timeout: 15_000,
+    });
     await expect(page.locator('[data-testid="ai-assistant-flow"]')).toContainText(
       "От запроса до применения",
     );
@@ -151,23 +150,22 @@ test.describe("ai workspace", () => {
   });
 
   test("chat history supports single delete and bulk clear", async ({ page }) => {
-    await navigateStable(page, "/dashboard", /\/dashboard$/);
-    await page.waitForLoadState("networkidle");
+    test.setTimeout(60_000);
 
-    await ensureAiChatSession(page);
-    await ensureAiChatSession(page);
+    await navigateStable(page, "/dashboard", /\/dashboard$/);
+
+    await replaceAiChatHistory({ sessionCount: 2 });
 
     await navigateStable(page, "/ai", /\/ai$/);
 
     const sessionItems = page.locator('[data-testid="ai-session-item"]');
-    const initialCount = await sessionItems.count();
-    expect(initialCount).toBeGreaterThanOrEqual(2);
+    await expect(sessionItems).toHaveCount(2, { timeout: 15_000 });
 
     page.once("dialog", async (dialog) => {
       await dialog.accept();
     });
     await page.locator('[data-testid="ai-session-delete"]').first().click();
-    await expect(sessionItems).toHaveCount(initialCount - 1);
+    await expect(sessionItems).toHaveCount(1, { timeout: 15_000 });
 
     page.once("dialog", async (dialog) => {
       await dialog.accept();

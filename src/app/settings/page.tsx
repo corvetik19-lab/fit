@@ -1,7 +1,7 @@
 import type { Route } from "next";
 import Link from "next/link";
 
-import { AppShell } from "@/components/app-shell";
+import { AppShell, toAppShellViewer } from "@/components/app-shell";
 import { SettingsBillingCenter } from "@/components/settings-billing-center";
 import { SettingsDataCenter } from "@/components/settings-data-center";
 import { SignOutButton } from "@/components/sign-out-button";
@@ -80,7 +80,11 @@ export default async function SettingsPage() {
       : "Базовый";
 
   return (
-    <AppShell eyebrow="Настройки" title="Профиль, доступ и управление личными данными">
+    <AppShell
+      eyebrow="Настройки"
+      title="Профиль, доступ и управление личными данными"
+      viewer={toAppShellViewer(viewer)}
+    >
       <div className="grid gap-6">
         <section className="grid gap-5">
           <div className="space-y-3">

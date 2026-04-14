@@ -1,8 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
-import { Camera, ImagePlus } from "lucide-react";
-import { startTransition, useMemo, useRef, useState } from "react";
+import { Camera, ImagePlus, LoaderCircle } from "lucide-react";
+import { startTransition, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import type { FeatureAccessSnapshot } from "@/lib/billing-access";
 
@@ -43,16 +45,38 @@ function formatConfidence(value: MealPhotoAnalysis["confidence"]) {
   }
 }
 
+function readSelectedFile(element: HTMLInputElement | null) {
+  return element?.files?.[0] ?? null;
+}
+
 export function NutritionPhotoAnalysis({
   access,
 }: NutritionPhotoAnalysisProps) {
+  const router = useRouter();
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
   const galleryInputRef = useRef<HTMLInputElement | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [notes, setNotes] = useState("");
   const [result, setResult] = useState<MealPhotoAnalysis | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
+  const [activeImportMode, setActiveImportMode] = useState<"food" | "meal" | null>(
+    null,
+  );
+
+  const previewUrl = useMemo(
+    () => (file ? URL.createObjectURL(file) : null),
+    [file],
+  );
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
 
   const fileLabel = useMemo(() => {
     if (!file) {
@@ -62,6 +86,17 @@ export function NutritionPhotoAnalysis({
     const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
     return `${file.name} · ${sizeMb} МБ`;
   }, [file]);
+
+  function handleNextFile(nextFile: File | null) {
+    setFile(nextFile);
+    setResult(null);
+    setError(null);
+    setNotice(null);
+  }
+
+  function handleFileSelection(input: HTMLInputElement | null) {
+    handleNextFile(readSelectedFile(input));
+  }
 
   function runAnalysis() {
     if (!access.allowed) {
@@ -80,6 +115,7 @@ export function NutritionPhotoAnalysis({
     }
 
     setError(null);
+    setNotice(null);
     setIsPending(true);
 
     startTransition(async () => {
@@ -89,8 +125,8 @@ export function NutritionPhotoAnalysis({
         formData.set("notes", notes.trim());
 
         const response = await fetch("/api/ai/meal-photo", {
-          method: "POST",
           body: formData,
+          method: "POST",
         });
 
         const payload = (await response.json().catch(() => null)) as
@@ -113,18 +149,82 @@ export function NutritionPhotoAnalysis({
     });
   }
 
+  function importResult(mode: "food" | "meal") {
+    if (!file || !result) {
+      setError("Сначала получи AI-разбор фото, а потом сохраняй его в питание.");
+      return;
+    }
+
+    setActiveImportMode(mode);
+    setError(null);
+    setNotice(null);
+
+    startTransition(async () => {
+      try {
+        const formData = new FormData();
+        formData.set("image", file);
+        formData.set("analysis", JSON.stringify(result));
+        formData.set("mode", mode);
+
+        if (notes.trim()) {
+          formData.set("notes", notes.trim());
+        }
+
+        const response = await fetch("/api/nutrition/photo-import", {
+          body: formData,
+          method: "POST",
+        });
+
+        const payload = (await response.json().catch(() => null)) as
+          | {
+              data?: {
+                food?: { id: string; name: string };
+              };
+              message?: string;
+              meta?: {
+                addedToMeal?: boolean;
+                imageStored?: boolean;
+              };
+            }
+          | null;
+
+        if (!response.ok || !payload?.data?.food) {
+          setError(
+            payload?.message ??
+              "Не удалось сохранить результат фотоанализа в питание.",
+          );
+          return;
+        }
+
+        const baseNotice =
+          mode === "meal"
+            ? `Продукт «${payload.data.food.name}» сохранён и сразу добавлен в дневник питания.`
+            : `Продукт «${payload.data.food.name}» сохранён в твою базу продуктов.`;
+
+        setNotice(
+          payload.meta?.imageStored === false
+            ? `${baseNotice} Изображение не удалось сохранить в storage, но запись в питании уже создана.`
+            : baseNotice,
+        );
+
+        router.refresh();
+      } finally {
+        setActiveImportMode(null);
+      }
+    });
+  }
+
   return (
     <section className="card card--hero p-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="workspace-kicker">AI-помощник</p>
           <h2 className="app-display mt-2 text-2xl font-semibold text-foreground sm:text-3xl">
-            Фото еды прямо из приложения
+            Сними еду и сразу загрузи её в приложение
           </h2>
           <p className="mt-3 max-w-2xl text-sm leading-7 text-muted">
-            Сними блюдо на камеру телефона или выбери фото из галереи. AI
-            оценит состав, ориентировочную калорийность и КБЖУ. Это online-only
-            анализ: данные не записываются в дневник автоматически.
+            Камера нужна не только для оценки КБЖУ. После анализа снимок можно
+            сохранить как новый продукт и сразу добавить в дневник питания.
           </p>
           {!access.allowed ? (
             <Link
@@ -139,9 +239,7 @@ export function NutritionPhotoAnalysis({
         <div className="surface-panel surface-panel--soft px-5 py-4 text-sm text-muted">
           <p>
             Использовано: {access.usage.count}
-            {typeof access.usage.limit === "number"
-              ? ` / ${access.usage.limit}`
-              : ""}
+            {typeof access.usage.limit === "number" ? ` / ${access.usage.limit}` : ""}
           </p>
           <p className="mt-1">Источник доступа: {access.source}</p>
           {access.reason ? (
@@ -156,27 +254,50 @@ export function NutritionPhotoAnalysis({
         </p>
       ) : null}
 
+      {notice ? (
+        <div className="mt-5 rounded-2xl border border-emerald-300/60 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          <p>{notice}</p>
+          <div className="mt-3 flex flex-wrap gap-3">
+            <Link
+              className="action-button action-button--secondary"
+              href="/nutrition?section=log&panel=foods"
+            >
+              Открыть продукты
+            </Link>
+            <Link
+              className="action-button action-button--soft"
+              href="/nutrition?section=log&panel=log"
+            >
+              Открыть дневник
+            </Link>
+          </div>
+        </div>
+      ) : null}
+
       <input
         accept="image/*"
         capture="environment"
         className="hidden"
-        onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+        data-testid="nutrition-photo-camera-input"
+        onChange={(event) => handleFileSelection(event.currentTarget)}
         ref={cameraInputRef}
         type="file"
       />
       <input
         accept="image/*"
         className="hidden"
-        onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+        data-testid="nutrition-photo-gallery-input"
+        onChange={(event) => handleFileSelection(event.currentTarget)}
         ref={galleryInputRef}
         type="file"
       />
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+      <div className="mt-6 grid gap-6 xl:grid-cols-[0.92fr_1.08fr]">
         <div className="grid gap-4">
           <div className="grid gap-3 sm:grid-cols-2">
             <button
               className="action-button action-button--soft"
+              data-testid="nutrition-photo-open-camera"
               disabled={!access.allowed}
               onClick={() => cameraInputRef.current?.click()}
               type="button"
@@ -186,6 +307,7 @@ export function NutritionPhotoAnalysis({
             </button>
             <button
               className="action-button action-button--secondary"
+              data-testid="nutrition-photo-open-gallery"
               disabled={!access.allowed}
               onClick={() => galleryInputRef.current?.click()}
               type="button"
@@ -196,6 +318,27 @@ export function NutritionPhotoAnalysis({
           </div>
 
           <p className="text-sm text-muted">{fileLabel}</p>
+
+          {previewUrl ? (
+            <div
+              className="overflow-hidden rounded-[28px] border border-white/60 bg-white/80 shadow-[0_22px_60px_rgba(0,64,224,0.12)]"
+              data-testid="nutrition-photo-preview"
+            >
+              <Image
+                alt="Предпросмотр фото блюда"
+                className="h-72 w-full object-cover"
+                height={288}
+                src={previewUrl}
+                unoptimized
+                width={640}
+              />
+            </div>
+          ) : (
+            <div className="surface-panel surface-panel--soft flex min-h-72 items-center justify-center rounded-[28px] px-5 py-6 text-center text-sm leading-7 text-muted">
+              Здесь появится кадр с камеры. Лучше всего работают чёткие фото
+              тарелки или упаковки при хорошем свете.
+            </div>
+          )}
 
           <label className="grid gap-2 text-sm text-muted">
             Контекст для AI
@@ -210,6 +353,7 @@ export function NutritionPhotoAnalysis({
 
           <button
             className="action-button action-button--primary"
+            data-testid="nutrition-photo-analyze"
             disabled={isPending || !file || !access.allowed}
             onClick={runAnalysis}
             type="button"
@@ -289,21 +433,50 @@ export function NutritionPhotoAnalysis({
                 </div>
               </div>
 
-              <p className="text-sm leading-7 text-muted">
-                Если оценка выглядит правдоподобно, потом можно вручную занести
-                приём пищи в лог и использовать этот разбор как ориентир по
-                составу и КБЖУ.
-              </p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <button
+                  className="action-button action-button--secondary"
+                  data-testid="nutrition-photo-save-food"
+                  disabled={activeImportMode !== null}
+                  onClick={() => importResult("food")}
+                  type="button"
+                >
+                  {activeImportMode === "food" ? (
+                    <>
+                      <LoaderCircle className="animate-spin" size={16} strokeWidth={2.2} />
+                      Сохраняю продукт...
+                    </>
+                  ) : (
+                    "Сохранить как продукт"
+                  )}
+                </button>
+                <button
+                  className="action-button action-button--primary"
+                  data-testid="nutrition-photo-save-meal"
+                  disabled={activeImportMode !== null}
+                  onClick={() => importResult("meal")}
+                  type="button"
+                >
+                  {activeImportMode === "meal" ? (
+                    <>
+                      <LoaderCircle className="animate-spin" size={16} strokeWidth={2.2} />
+                      Добавляю в дневник...
+                    </>
+                  ) : (
+                    "Сохранить и добавить в дневник"
+                  )}
+                </button>
+              </div>
             </div>
           ) : (
             <div className="grid gap-3 text-sm leading-7 text-muted">
               <p>
-                Здесь появится оценка блюда после анализа фото: основные
-                ингредиенты, ориентировочные калории и КБЖУ.
+                После анализа здесь появятся состав блюда, ориентировочные калории и
+                КБЖУ.
               </p>
               <p>
-                Лучше всего работают чёткие фотографии тарелки или упаковки при
-                хорошем освещении и без лишних объектов в кадре.
+                Дальше результат можно будет одним нажатием сохранить как новый
+                продукт или сразу занести в дневник питания.
               </p>
             </div>
           )}
