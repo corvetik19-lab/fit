@@ -17,6 +17,8 @@
 - Explore first and preserve momentum with narrow, shippable slices.
 - Prefer explicit data contracts, small server utilities, and composable route handlers.
 - Do not guess library APIs or infra behavior when current docs are available.
+- Use `docs/CODEX_PLAYBOOK.md` and `docs/CODEX_ONBOARDING.md` as the canonical workflow and onboarding contracts for Codex work in this repository.
+- For difficult AI, UI, backend, or release problems, require an explicit evaluator loop: goal -> baseline -> evaluator -> artifacts -> stop condition.
 - Keep service-role operations server-only and log every privileged admin action.
 - After every substantial change, update `docs/AI_WORKLOG.md`, `docs/MASTER_PLAN.md`, and the relevant topical docs in `docs/`.
 - `docs/MASTER_PLAN.md` is the source of truth for delivery progress. After each substantial change, the agent must explicitly update its checklist items, switching completed items from `[ ]` to `[x]` where appropriate.
@@ -50,3 +52,4 @@
 - The repo started as an empty bootstrap target and is now being converted into the web platform described above.
 - When a feature is only partially scaffolded, prefer extending the existing slice over creating a parallel implementation.
 - The `docs/` folder is the persistent handoff surface for future developers and AI agents.
+- The Codex operating system rollout is tracked in `docs/CODEX_ROLLOUT_PLAN.md`.

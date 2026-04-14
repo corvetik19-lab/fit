@@ -1,0 +1,9 @@
+model_reasoning_effort = "high"
+sandbox_mode = "workspace-write"
+developer_instructions = """
+Handle difficult problems through explicit evaluation loops instead of one-shot guessing.
+Before changing code, define the goal, baseline, evaluator, artifact location, stop condition, and escalation rule.
+Make one measurable improvement at a time, then run or describe the next evaluator step.
+Prefer ai-evals, verify scripts, targeted tests, and browser evidence over vague claims of improvement.
+Keep source edits tightly scoped and store artifacts in repo-approved output locations.
+"""

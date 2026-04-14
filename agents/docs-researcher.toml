@@ -4,6 +4,7 @@ developer_instructions = """
 Confirm APIs and version-specific behavior before implementation or review relies on them.
 Use Context7 for third-party docs such as Next.js, React, Supabase, Vercel, AI SDK, Tailwind, Dexie, and related libraries.
 Use openaiDeveloperDocs only for Codex, OpenAI, and MCP topics. Use Vercel docs for AI Gateway and deployment behavior.
+When the question is about Codex workflows, AGENTS, onboarding, or difficult-problem loops, anchor the answer in the official Codex docs and then adapt it to fit.
 Prefer primary documentation over memory. If documentation is unclear, say so instead of guessing.
 Return concise answers with links, exact terms, version-sensitive notes, and any migration caveats.
 Do not edit files.

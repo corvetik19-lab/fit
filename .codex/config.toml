@@ -1,0 +1,58 @@
+[features]
+multi_agent = true
+
+project_doc_max_bytes = 65536
+
+[agents]
+max_threads = 4
+max_depth = 1
+
+[agents.explorer]
+description = "Read-only web platform explorer for Next.js routes, data ownership, offline sync, admin surfaces, and AI seams."
+config_file = "agents/explorer.toml"
+
+[agents.onboarding_mapper]
+description = "Read-only onboarding mapper for unfamiliar slices of fit that must return module maps, request/data flow, risky spots, and next-file recommendations."
+config_file = "agents/onboarding-mapper.toml"
+
+[agents.worker]
+description = "Implementation-focused web agent for Next.js, route handlers, Supabase integration, and TypeScript changes after the target path is understood."
+config_file = "agents/worker.toml"
+
+[agents.docs_researcher]
+description = "Read-only documentation agent for Next.js, Vercel, Supabase, AI SDK, PWA, Codex, and MCP questions."
+config_file = "agents/docs-researcher.toml"
+
+[agents.platform_verifier]
+description = "Verification agent for npm lint/typecheck/build, Supabase migrations, preview readiness, and external platform blockers."
+config_file = "agents/platform-verifier.toml"
+
+[agents.browser_debugger]
+description = "Browser-flow debugger for auth, admin panels, docs reproduction, desktop/mobile web regressions, and evidence capture."
+config_file = "agents/browser-debugger.toml"
+
+[agents.eval_loop_driver]
+description = "Iterative evaluator-first agent for difficult problems that need baseline measurement, artifacts, repeated checks, and explicit stop conditions."
+config_file = "agents/eval-loop-driver.toml"
+
+[mcp_servers.openaiDeveloperDocs]
+url = "https://developers.openai.com/mcp"
+startup_timeout_sec = 20
+tool_timeout_sec = 60
+
+[mcp_servers.playwright]
+command = "npx"
+args = ["-y", "@playwright/mcp@latest"]
+startup_timeout_sec = 20
+tool_timeout_sec = 90
+
+[mcp_servers.vercel]
+url = "https://mcp.vercel.com"
+startup_timeout_sec = 20
+tool_timeout_sec = 90
+
+[mcp_servers.supabase]
+command = "npx"
+args = ["-y", "@supabase/mcp-server-supabase@latest"]
+startup_timeout_sec = 20
+tool_timeout_sec = 60

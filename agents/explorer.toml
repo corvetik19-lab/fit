@@ -5,6 +5,7 @@ Map the web product slice before implementation starts.
 Work read-only.
 Identify App Router entry points, layouts, route handlers, server/client boundaries, Supabase ownership, offline state stores, and existing tests.
 For UI work, name the route segment, state owner, data contract, and where server-side effects should live.
+Return risky spots and the next files to read, not just a list of paths.
 For greenfield tasks in this repository, propose the smallest folder and contract footprint needed for the requested slice.
 Return concise findings with concrete file or path recommendations.
 Do not edit files.

@@ -31,8 +31,19 @@ function runCommand(command, args) {
 
 function countTypeFiles(dir) {
   let total = 0;
+  let entries = [];
 
-  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+  try {
+    entries = readdirSync(dir, { withFileTypes: true });
+  } catch (error) {
+    if (error && typeof error === "object" && "code" in error && error.code === "ENOENT") {
+      return 0;
+    }
+
+    throw error;
+  }
+
+  for (const entry of entries) {
     const fullPath = join(dir, entry.name);
 
     if (entry.isDirectory()) {
@@ -89,7 +100,11 @@ runCommand(npxCommand, ["next", "typegen"]);
 const typegenCreatedFullRouteWrappers = requiredFiles.every((filePath) => existsSync(filePath));
 
 if (typegenCreatedFullRouteWrappers) {
-  await waitForStableTypegenOutput();
+  try {
+    await waitForStableTypegenOutput();
+  } catch {
+    await sleep(500);
+  }
 } else {
   runCommand(npmCommand, ["run", "build"]);
 }

@@ -13,7 +13,7 @@
 
 Р­С‚РѕС‚ С„Р°Р№Р» вЂ” С‚РµРєСѓС‰РёР№ production-hardening backlog РїСЂРѕРµРєС‚Р°. РћРЅ РѕС‚СЂР°Р¶Р°РµС‚ С„Р°РєС‚РёС‡РµСЃРєРѕРµ СЃРѕСЃС‚РѕСЏРЅРёРµ СЂРµРїРѕР·РёС‚РѕСЂРёСЏ РЅР° `2026-03-31`.
 
-Текущий прогресс execution checklist: `191 / 198` (`96%`).
+Текущий прогресс execution checklist: `197 / 204` (`97%`).
 
 ## РўРµРєСѓС‰Р°СЏ Р±Р°Р·Р°
 
@@ -1322,3 +1322,14 @@
 - [x] Проверка по tranche зелёная: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run verify:migrations`, `npm run verify:supabase-runtime`, `npm run test:smoke`, `node scripts/run-playwright.mjs PLAYWRIGHT_BASE_URL=http://127.0.0.1:3111 -- test tests/e2e/authenticated-app.spec.ts tests/e2e/ai-workspace.spec.ts tests/e2e/nutrition-capture.spec.ts --workers=1` -> `7 passed`.
 - [x] Повторный полный `npm run test:e2e:auth` после восстановления Supabase показал уже внешний runtime blocker, а не новый product gap: часть admin/workout/API сценариев периодически падает на транзиентных `ECONNRESET` к Supabase. Этот фактор зафиксирован отдельно и не отменяет того, что camera/import flow и таргетированные user/AI regression-пакеты зелёные.
 - [x] Общий progress execution checklist не меняется и остаётся `191 / 198` (`96%`): кодовый и UX-контур закрыт, а незавершёнными остаются только внешние live-блокеры `CloudPayments`, `AI providers` и `Sentry production env`.
+
+## 2026-04-14 codex operating system rollout
+
+- [x] Открыт execution-doc [CODEX_ROLLOUT_PLAN.md](/C:/fit/docs/CODEX_ROLLOUT_PLAN.md) и созданы новые handoff-доки [CODEX_PLAYBOOK.md](/C:/fit/docs/CODEX_PLAYBOOK.md) и [CODEX_ONBOARDING.md](/C:/fit/docs/CODEX_ONBOARDING.md), чтобы у репозитория появился явный рабочий контракт для Codex и других AI-агентов.
+- [x] В репозитории оформлен instruction chain: добавлены вложенные `AGENTS.md` для `src/app`, `src/lib/ai`, `supabase`, `ai-evals`, `android`, а root [AGENTS.md](/C:/fit/AGENTS.md) теперь ссылается на playbook, onboarding и evaluator-first loop.
+- [x] В [\.codex/config.toml](/C:/fit/.codex/config.toml) добавлены роли `onboarding_mapper` и `eval_loop_driver`, а существующие `explorer`, `docs_researcher`, `platform_verifier` синхронизированы с Codex workflow для `fit`.
+- [x] В `.agents/skills/` добавлены навыки `fit-web-onboarding`, `fit-ai-eval-ops`, `fit-release-verification`, чтобы onboarding, AI eval ops и release verification больше не держались на неявных знаниях.
+- [x] Добавлен quality gate `npm run verify:codex` на базе [verify-codex.mjs](/C:/fit/scripts/verify-codex.mjs), а [quality.yml](/C:/fit/.github/workflows/quality.yml) теперь прогоняет этот gate до основного quality job.
+- [x] Developer docs синхронизированы с новым контуром: обновлены [README.md](/C:/fit/README.md), [docs/README.md](/C:/fit/docs/README.md), [AGENTS.md](/C:/fit/AGENTS.md) и execution-docs, чтобы следующий разработчик видел не только код, но и реальный operational flow.
+- [x] Tranche подтверждён пакетами `npm run verify:codex`, `npm run lint`, `npm run typecheck`, `npm run build`; для `build` отдельно снят stale `.next` lock от оставшегося локального Next-процесса, после чего сборка прошла зелёно с уже известными Sentry/OpenTelemetry warning-блоками.
+- [x] Общий progress execution checklist после добавления этого tranche пересчитан до `197 / 204` (`97%`): новый Codex operating system закрыт как внутренний developer slice, а внешними незакрытыми блокерами остаются `CloudPayments`, live AI providers и `Sentry production env`.

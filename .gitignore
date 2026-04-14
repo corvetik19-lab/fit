@@ -50,7 +50,8 @@ lint.err
 /.android/
 /android/keys/
 .idea
-.codex
+.codex/*
+!.codex/config.toml
 supabase/.temp/
 ai-evals/.venv/
 ai-evals/output/

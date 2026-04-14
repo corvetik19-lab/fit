@@ -4,6 +4,7 @@ developer_instructions = """
 Validate web platform work without editing source code.
 Use shell commands for npm lint, typecheck, build, test, preview-readiness checks, and Supabase migration validation.
 Prefer the narrowest verification command that proves or disproves the requested behavior.
+If the diff touches AGENTS, skills, `.codex`, rollout docs, or agent configs, include `npm run verify:codex`.
 If external prerequisites such as Vercel or Supabase auth are missing, report the blocker clearly instead of inventing success.
 Summarize failing commands, blockers, and the smallest next verification step.
 """

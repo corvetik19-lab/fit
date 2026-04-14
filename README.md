@@ -1,18 +1,25 @@
 # fit
 
-`fit` — это web-first fitness platform в формате PWA. Приложение объединяет тренировки, питание, аналитику, AI-коучинг и операторскую админ-панель в одном продукте.
+`fit` — web-first fitness platform в формате PWA. Приложение объединяет
+тренировки, питание, аналитику, AI-коучинг и операторскую админ-панель в одном
+продукте.
 
 ## Текущее состояние
 
-Сейчас репозиторий находится в фазе production hardening:
+Репозиторий находится в фазе production hardening:
 
-- уже есть рабочие пользовательские поверхности `Dashboard`, `Workouts`, `Nutrition`, `AI`, `History`, `Settings`;
-- уже есть `Admin`-контур с управлением пользователями, операциями и health dashboard;
-- уже есть Supabase schema, migrations, RLS, offline sync для тренировок и AI retrieval stack;
-- уже есть Stripe foundation, Sentry foundation и Vercel cron jobs;
-- при этом проект ещё доводится до production-ready baseline по quality gates, UX, тестам и release process.
+- уже есть пользовательские поверхности `Dashboard`, `Workouts`, `Nutrition`,
+  `AI`, `History`, `Settings`;
+- уже есть `Admin`-контур с пользователями, операциями и health/dashboard
+  сценариями;
+- уже есть Supabase schema, migrations, RLS, offline sync для тренировок и AI
+  retrieval stack;
+- уже есть billing/Sentry/Vercel foundation;
+- проект всё ещё доводится до production-ready baseline по quality gates, UX,
+  release process и внешним runtime/env блокерам.
 
-Источник правды по текущему статусу: [docs/MASTER_PLAN.md](/C:/fit/docs/MASTER_PLAN.md)
+Источник правды по текущему статусу:
+[docs/MASTER_PLAN.md](/C:/fit/docs/MASTER_PLAN.md).
 
 ## Стек
 
@@ -20,8 +27,8 @@
 - React 19
 - TypeScript strict
 - Supabase Auth + Postgres + pgvector + RLS
-- OpenRouter / AI Gateway + Voyage embeddings
-- Stripe
+- Vercel AI Gateway / OpenRouter + Voyage embeddings
+- Stripe / CloudPayments runtime foundation
 - Sentry
 - Vercel
 
@@ -34,22 +41,23 @@ npm run typecheck
 npm run build
 ```
 
-### Что считается baseline quality gate
+### Baseline quality gate
 
+- `npm run verify:codex` — проверка Codex operating system
 - `npm run lint`
 - `npm run typecheck`
 - `npm run build`
 - `npm run test:smoke`
 - `npm run verify:migrations` при изменениях в `supabase/migrations`
-- `npm run verify:advisors` при изменениях в `supabase/migrations`, если доступны Supabase management secrets
-- `npm run verify:android-twa` при изменениях Android/TWA scaffolding или PWA packaging
-- `npm run verify:runtime-env` чтобы быстро увидеть, каких env не хватает для AI, Stripe, Sentry, CI и Android/TWA
-
-Цель проекта — чтобы все три команды проходили стабильно за один запуск и были готовы для CI.
+- `npm run verify:advisors` при DB-изменениях и наличии management secrets
+- `npm run verify:android-twa` при Android/TWA изменениях
+- `npm run verify:runtime-env` для быстрой проверки env readiness
+- `npm run verify:supabase-runtime` для диагностики Supabase runtime
 
 ### Что нужно для полного CI regression-контура
 
-Чтобы в GitHub Actions включались `test:rls` и `test:e2e:auth`, в secrets репозитория должны быть:
+Чтобы в GitHub Actions включались `test:rls`, `test:e2e:auth` и профильные
+quality gates, в secrets репозитория должны быть:
 
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
@@ -61,26 +69,28 @@ npm run build
 - `PLAYWRIGHT_ADMIN_EMAIL`
 - `PLAYWRIGHT_ADMIN_PASSWORD`
 
-### Что считается `prod-ready`
+Если этих secrets нет, workflow всё равно прогоняет `verify:codex`, `lint`,
+`typecheck`, `build` и `test:smoke`, а полные auth/RLS/AI jobs просто
+пропускаются.
 
-Source of truth по production-ready состоянию теперь вынесен в [docs/PROD_READY.md](./docs/PROD_READY.md). Там зафиксированы:
+## Production readiness
+
+Source of truth по production-ready состоянию вынесен в
+[docs/PROD_READY.md](/C:/fit/docs/PROD_READY.md). Там зафиксированы:
 
 - обязательные automated gates;
 - обязательные manual acceptance сценарии;
 - env readiness;
 - release blockers для web/PWA, AI, billing и Android.
 
-Подробный Android/TWA handoff зафиксирован в [docs/ANDROID_TWA.md](/C:/fit/docs/ANDROID_TWA.md).
-
-Если этих secrets нет, workflow всё равно прогоняет `lint`, `typecheck`, `build` и `test:smoke`, а полные auth/RLS regression jobs просто пропускаются.
-
-Если в diff есть файлы из `supabase/migrations`, CI дополнительно запускает `npm run verify:migrations`, а при наличии `SUPABASE_PROJECT_REF` и `SUPABASE_ACCESS_TOKEN` ещё и `npm run verify:advisors`. Для миграций по-прежнему требуются синхронные обновления `docs/MASTER_PLAN.md` и `docs/AI_WORKLOG.md`.
+Подробный Android/TWA handoff лежит в
+[docs/ANDROID_TWA.md](/C:/fit/docs/ANDROID_TWA.md).
 
 ## Переменные окружения
 
 Скопируй `.env.example` в `.env.local` и заполни нужные значения.
 
-Основные переменные:
+Основные env:
 
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` или `NEXT_PUBLIC_SUPABASE_ANON_KEY`
@@ -105,13 +115,14 @@ Source of truth по production-ready состоянию теперь вынес
 - `src/components` — UI-компоненты
 - `src/lib` — доменная логика, Supabase, AI, offline, billing, observability
 - `supabase/migrations` — SQL migrations и schema evolution
-- `public` — PWA assets, SVG demos, offline page
+- `public` — PWA assets и SVG
 - `ai-evals` — AI eval workspace и датасеты
 - `docs` — пользовательская и техническая документация
 
 ## Документация
 
-Вся проектная документация лежит в [docs/README.md](/C:/fit/docs/README.md).
+Вся проектная документация лежит в
+[docs/README.md](/C:/fit/docs/README.md).
 
 Главные документы:
 
@@ -125,9 +136,27 @@ Source of truth по production-ready состоянию теперь вынес
 - [docs/RELEASE_CHECKLIST.md](/C:/fit/docs/RELEASE_CHECKLIST.md)
 - [docs/BUILD_WARNINGS.md](/C:/fit/docs/BUILD_WARNINGS.md)
 
+## Codex operating system
+
+- execution-doc:
+  [docs/CODEX_ROLLOUT_PLAN.md](/C:/fit/docs/CODEX_ROLLOUT_PLAN.md)
+- playbook:
+  [docs/CODEX_PLAYBOOK.md](/C:/fit/docs/CODEX_PLAYBOOK.md)
+- onboarding:
+  [docs/CODEX_ONBOARDING.md](/C:/fit/docs/CODEX_ONBOARDING.md)
+- локальные роли агентов живут в `.codex/config.toml` и `agents/*.toml`
+- repo-specific skills живут в `.agents/skills/`
+- для проверки этого контура используется `npm run verify:codex`
+
 ## Правила разработки
 
 - Все существенные изменения фиксируются в `docs/AI_WORKLOG.md`.
 - Прогресс по production hardening отмечается в `docs/MASTER_PLAN.md`.
 - Изменения схемы БД вносятся только через migrations.
-- Для Supabase-задач по этому репозиторию основным инструментом считается MCP для проекта `fit`.
+- Для Supabase-задач по этому репозиторию основным инструментом считается MCP
+  проекта `fit`.
+- Если меняются `AGENTS.md`, `.codex`, `agents/`, `.agents/skills/` или Codex
+  workflow docs, нужно синхронно обновлять
+  [docs/CODEX_ROLLOUT_PLAN.md](/C:/fit/docs/CODEX_ROLLOUT_PLAN.md),
+  [docs/MASTER_PLAN.md](/C:/fit/docs/MASTER_PLAN.md) и
+  [docs/AI_WORKLOG.md](/C:/fit/docs/AI_WORKLOG.md).
