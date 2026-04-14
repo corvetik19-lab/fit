@@ -43,10 +43,14 @@
 
 - [CODEX_ROLLOUT_PLAN.md](/C:/fit/docs/CODEX_ROLLOUT_PLAN.md) — execution-doc по
   внедрению Codex operating system в репозиторий.
+- [CODEX_AGENT_HARDENING_PLAN.md](/C:/fit/docs/CODEX_AGENT_HARDENING_PLAN.md) —
+  execution-doc по усилению review/security/prompt-contract слоя агента.
 - [CODEX_PLAYBOOK.md](/C:/fit/docs/CODEX_PLAYBOOK.md) — рабочий playbook:
   AGENTS, роли агентов, skills, workflow и evaluator-first loop.
 - [CODEX_ONBOARDING.md](/C:/fit/docs/CODEX_ONBOARDING.md) — обязательный
   onboarding-поток для нового домена в `fit`.
+- [code_review.md](/C:/fit/code_review.md) — детальный reviewer contract для
+  локального `/review` и GitHub PR review.
 
 ## Пакет для дизайнера
 
@@ -75,7 +79,8 @@
 - Developer-facing документация в проекте ведётся на русском языке.
 - Секреты, реальные токены и приватные ключи в документацию не записываются.
 - Если меняются `AGENTS.md`, `.codex`, `agents/`, `.agents/skills/`, Codex
-  workflow-доки или verification этого контура, нужно синхронно обновлять
+  workflow-доки, `code_review.md`, `.github/PULL_REQUEST_TEMPLATE.md` или
+  verification этого контура, нужно синхронно обновлять
   [CODEX_ROLLOUT_PLAN.md](/C:/fit/docs/CODEX_ROLLOUT_PLAN.md),
   [MASTER_PLAN.md](/C:/fit/docs/MASTER_PLAN.md) и
   [AI_WORKLOG.md](/C:/fit/docs/AI_WORKLOG.md).
@@ -92,5 +97,7 @@
    - release и readiness — [RELEASE_CHECKLIST.md](/C:/fit/docs/RELEASE_CHECKLIST.md),
      [PROD_READY.md](/C:/fit/docs/PROD_READY.md)
 4. Для Codex-specific workflow использовать
-   [CODEX_PLAYBOOK.md](/C:/fit/docs/CODEX_PLAYBOOK.md) и
-   [CODEX_ONBOARDING.md](/C:/fit/docs/CODEX_ONBOARDING.md).
+   [CODEX_PLAYBOOK.md](/C:/fit/docs/CODEX_PLAYBOOK.md),
+   [CODEX_ONBOARDING.md](/C:/fit/docs/CODEX_ONBOARDING.md),
+   [CODEX_AGENT_HARDENING_PLAN.md](/C:/fit/docs/CODEX_AGENT_HARDENING_PLAN.md) и
+   [code_review.md](/C:/fit/code_review.md).

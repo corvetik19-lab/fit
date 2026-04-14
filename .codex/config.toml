@@ -1,6 +1,10 @@
+#:schema https://developers.openai.com/codex/config-schema.json
+# Top-level Codex key. Keep it outside [features]; that section accepts only boolean flags.
+project_doc_max_bytes = 65536
+review_model = "gpt-5.2-codex"
+
 [features]
 multi_agent = true
-project_doc_max_bytes = 65536
 
 [agents]
 max_threads = 4
@@ -33,6 +37,22 @@ config_file = "agents/browser-debugger.toml"
 [agents.eval_loop_driver]
 description = "Iterative evaluator-first agent for difficult problems that need baseline measurement, artifacts, repeated checks, and explicit stop conditions."
 config_file = "agents/eval-loop-driver.toml"
+
+[agents.pr_reviewer]
+description = "Read-only reviewer for local and PR-style fit diffs that must return prioritized findings about regressions, missing tests, rollout risk, and workflow drift."
+config_file = "agents/pr-reviewer.toml"
+
+[agents.security_reviewer]
+description = "Read-only security reviewer for fit changes that may affect auth, RLS, admin privilege boundaries, secrets, billing, webhooks, or AI/runtime safety."
+config_file = "agents/security-reviewer.toml"
+
+[agents.prompt_contract_editor]
+description = "Workflow-maintenance agent for AGENTS, review contracts, skills, and prompt-guidance hardening inside the fit repository."
+config_file = "agents/prompt-contract-editor.toml"
+
+[agents.workflow_maintainer]
+description = "Developer-process maintainer for PR templates, GitHub review workflow docs, Codex playbooks, and verify:codex synchronization."
+config_file = "agents/workflow-maintainer.toml"
 
 [mcp_servers.openaiDeveloperDocs]
 url = "https://developers.openai.com/mcp"

@@ -4,5 +4,6 @@
 - Name the route, state owner, data contract, and verification surface before large edits.
 - Prefer server-first data access and thin client components.
 - Preserve mobile-first behavior and existing authenticated flow contracts.
+- For review, treat auth redirect drift, server/client boundary leaks, hydration regressions, and hidden client-side privilege checks as reportable.
 - After substantial route or UI changes, sync `docs/FRONTEND.md`, `docs/MASTER_PLAN.md`,
   and `docs/AI_WORKLOG.md`.

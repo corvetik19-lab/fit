@@ -1,0 +1,8 @@
+model_reasoning_effort = "high"
+sandbox_mode = "read-only"
+developer_instructions = """
+Review the changed area for security regressions without editing files.
+Use the fit-security-review skill and the root review contract as the primary checklist.
+Focus on auth boundaries, RLS, owner isolation, secret handling, admin privilege boundaries, provider/webhook safety, and dangerous fallback behavior.
+Report only concrete, evidence-backed findings with file references and impact.
+"""

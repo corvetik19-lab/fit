@@ -140,12 +140,17 @@ Source of truth по production-ready состоянию вынесен в
 
 - execution-doc:
   [docs/CODEX_ROLLOUT_PLAN.md](/C:/fit/docs/CODEX_ROLLOUT_PLAN.md)
+- agent hardening:
+  [docs/CODEX_AGENT_HARDENING_PLAN.md](/C:/fit/docs/CODEX_AGENT_HARDENING_PLAN.md)
 - playbook:
   [docs/CODEX_PLAYBOOK.md](/C:/fit/docs/CODEX_PLAYBOOK.md)
 - onboarding:
   [docs/CODEX_ONBOARDING.md](/C:/fit/docs/CODEX_ONBOARDING.md)
+- review contract:
+  [code_review.md](/C:/fit/code_review.md)
 - локальные роли агентов живут в `.codex/config.toml` и `agents/*.toml`
 - repo-specific skills живут в `.agents/skills/`
+- GitHub review использует advisory-first contract из PR template и `@codex review`
 - для проверки этого контура используется `npm run verify:codex`
 
 ## Правила разработки
@@ -156,7 +161,8 @@ Source of truth по production-ready состоянию вынесен в
 - Для Supabase-задач по этому репозиторию основным инструментом считается MCP
   проекта `fit`.
 - Если меняются `AGENTS.md`, `.codex`, `agents/`, `.agents/skills/` или Codex
-  workflow docs, нужно синхронно обновлять
+  workflow docs, `code_review.md` или `.github/PULL_REQUEST_TEMPLATE.md`, нужно
+  синхронно обновлять
   [docs/CODEX_ROLLOUT_PLAN.md](/C:/fit/docs/CODEX_ROLLOUT_PLAN.md),
   [docs/MASTER_PLAN.md](/C:/fit/docs/MASTER_PLAN.md) и
   [docs/AI_WORKLOG.md](/C:/fit/docs/AI_WORKLOG.md).

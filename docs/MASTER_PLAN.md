@@ -1342,3 +1342,18 @@
 - [x] Для billing добавлен mock-only gate [run-cloudpayments-mock-gate.mjs](/C:/fit/scripts/run-cloudpayments-mock-gate.mjs) и npm-команда `npm run test:billing-gate:cloudpayments-mock`; live `checkout -> return reconcile -> webhook -> billing center` по-прежнему остаётся отдельным внешним tranche.
 - [x] Проверка tranche зелёная: `npm run typecheck`, `npm run lint`, `npm run build`, `tests/ai-gate/ai-quality-gate.spec.ts`, таргетированный nutrition barcode import, `npm run test:billing-gate:cloudpayments-mock`, AI runtime preflight.
 - [x] Общий progress execution checklist после закрытия AI quality gate вырос до `199 / 204` (`98%`): незакрытыми внешними блокерами остаются live `CloudPayments`, `Sentry production env` и полноценный vector embeddings runtime.
+
+## 2026-04-14 codex config guardrails addendum
+
+- [x] В [`.codex/config.toml`](/C:/fit/.codex/config.toml) добавлен schema-hint и явный комментарий к `project_doc_max_bytes`, чтобы top-level Codex-настройки не уезжали обратно в `[features]`.
+- [x] [verify-codex.mjs](/C:/fit/scripts/verify-codex.mjs) теперь проверяет структуру `.codex/config.toml`: `project_doc_max_bytes` обязан оставаться top-level integer, а значения внутри `[features]` обязаны быть boolean.
+- [x] Follow-up подтверждён `npm run verify:codex`; общий progress execution checklist не меняется и остаётся `199 / 204` (`98%`), потому что это hardening уже закрытого developer-facing контура.
+
+## 2026-04-14 agent hardening rollout addendum
+
+- [x] Создан execution-doc [CODEX_AGENT_HARDENING_PLAN.md](/C:/fit/docs/CODEX_AGENT_HARDENING_PLAN.md) с чекбоксами rollout-а, чтобы усиление review/security/prompt-contract слоя велось так же прозрачно, как и другие tranche проекта.
+- [x] Root [AGENTS.md](/C:/fit/AGENTS.md) усилен секциями `Review guidelines` и `Prompt contract`, а подробный reviewer contract вынесен в [code_review.md](/C:/fit/code_review.md) для локального `/review` и будущего GitHub review.
+- [x] В [`.codex/config.toml`](/C:/fit/.codex/config.toml) добавлены `review_model = "gpt-5.2-codex"` и новые reviewer/process роли `pr_reviewer`, `security_reviewer`, `prompt_contract_editor`, `workflow_maintainer`; параллельно добавлены repo-local skills `fit-pr-review`, `fit-security-review`, `fit-prompt-contracts`, `fit-github-review-ops`.
+- [x] GitHub-facing слой синхронизирован с новым контрактом: добавлен [PULL_REQUEST_TEMPLATE.md](/C:/fit/.github/PULL_REQUEST_TEMPLATE.md), обновлены [CODEX_PLAYBOOK.md](/C:/fit/docs/CODEX_PLAYBOOK.md), [CODEX_ONBOARDING.md](/C:/fit/docs/CODEX_ONBOARDING.md), [README.md](/C:/fit/README.md) и [docs/README.md](/C:/fit/docs/README.md).
+- [x] [verify-codex.mjs](/C:/fit/scripts/verify-codex.mjs) расширен проверкой нового review/security/prompt-contract слоя и подтверждён пакетами `npm run verify:codex`, `npm run lint`, `npm run typecheck`, `npm run build`.
+- [x] Общий progress execution checklist не меняется и остаётся `199 / 204` (`98%`), потому что этот tranche усиливает уже закрытый developer-facing контур, а не открывает новый product blocker.

@@ -1,0 +1,9 @@
+model_reasoning_effort = "medium"
+sandbox_mode = "read-only"
+developer_instructions = """
+Review diffs without editing files.
+Follow AGENTS.md review guidelines and code_review.md before reporting findings.
+Prioritize concrete regressions, missing tests, rollout risk, and contract drift over style notes.
+Return findings first with file references and concise impact statements.
+Treat review as advisory unless the prompt explicitly asks for a stricter gate.
+"""

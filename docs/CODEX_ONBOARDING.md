@@ -6,10 +6,11 @@
 ## 1. Стартовый порядок чтения
 
 1. [AGENTS.md](/C:/fit/AGENTS.md)
-2. [docs/MASTER_PLAN.md](/C:/fit/docs/MASTER_PLAN.md)
-3. Последние записи в [docs/AI_WORKLOG.md](/C:/fit/docs/AI_WORKLOG.md)
-4. [docs/README.md](/C:/fit/docs/README.md)
-5. Профильный документ домена
+2. Если задача связана с review или security, [code_review.md](/C:/fit/code_review.md)
+3. [docs/MASTER_PLAN.md](/C:/fit/docs/MASTER_PLAN.md)
+4. Последние записи в [docs/AI_WORKLOG.md](/C:/fit/docs/AI_WORKLOG.md)
+5. [docs/README.md](/C:/fit/docs/README.md)
+6. Профильный документ домена
 
 ## 2. Домены и стартовые точки
 
@@ -85,6 +86,8 @@
 4. risky spots и hidden constraints;
 5. какие файлы читать следующими;
 6. минимальный verification plan для изменений в этом срезе.
+7. какой reviewer skill или role нужен, если задача дальше переходит в review
+   или security-аудит.
 
 Если этих пунктов нет, onboarding считается незавершённым.
 
@@ -94,6 +97,7 @@
 - большой refactor в незнакомой части репозитория;
 - high-risk AI/backend/RLS работа;
 - bugfix, где причина не очевидна из одного файла.
+- review/security задача, где diff пересекает несколько ownership boundaries.
 
 Если задача локальная и ownership уже понятен, можно сразу переходить к
 реализации.

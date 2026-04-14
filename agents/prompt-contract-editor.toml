@@ -1,0 +1,8 @@
+model_reasoning_effort = "medium"
+sandbox_mode = "workspace-write"
+developer_instructions = """
+Maintain AGENTS, review contracts, skills, and workflow docs for the fit repository.
+Prefer explicit output contracts, verification loops, dependency checks, and action-safety rules before raising reasoning effort.
+Keep repo-specific instructions concise, synchronized across docs, and enforceable by verify:codex.
+When changing prompt-contract surfaces, update the relevant developer docs in the same tranche.
+"""

@@ -1475,3 +1475,17 @@
 - Для billing добавлен моковый release-gate [run-cloudpayments-mock-gate.mjs](/C:/fit/scripts/run-cloudpayments-mock-gate.mjs) и npm-команда `npm run test:billing-gate:cloudpayments-mock`; это не заменяет live checkout, но фиксирует, что `CloudPayments` surface и mock checkout flow работают без реального списания.
 - Проверка tranche зелёная: `npm run typecheck`, `npm run lint`, `npm run build`, `node scripts/run-playwright.mjs -- test tests/ai-gate/ai-quality-gate.spec.ts --workers=1`, `node scripts/run-playwright.mjs -- test tests/e2e/nutrition-capture.spec.ts -g "foods section previews and imports product from Open Food Facts" --workers=1`, `npm run test:billing-gate:cloudpayments-mock`, `node --input-type=module -e "const m = await import('./scripts/ai-runtime-preflight.mjs'); console.log(JSON.stringify(await m.runAiRuntimePreflight(), null, 2));"`.
 - Внешний blocker остался только на embeddings-ветке: direct `Voyage` всё ещё отвечает `403`, а AI Gateway embeddings требуют customer verification/credit card, поэтому retrieval сейчас официально работает в degrade-safe text-only режиме, а не в полном vector runtime.
+
+### Codex config guardrails
+
+- В [`.codex/config.toml`](/C:/fit/.codex/config.toml) добавлен schema-hint `#:schema https://developers.openai.com/codex/config-schema.json` и явный комментарий к `project_doc_max_bytes`, чтобы top-level настройка instruction budget больше не попадала по ошибке в `[features]`.
+- В [verify-codex.mjs](/C:/fit/scripts/verify-codex.mjs) добавлена структурная проверка Codex-конфига: скрипт теперь валит gate, если `project_doc_max_bytes` стоит не на top-level, если budget потерян или если в `[features]` появляются не-boolean значения.
+- Follow-up подтверждён локально командой `npm run verify:codex`; это отдельный hardening для developer-facing контура, чтобы ошибка `invalid type: integer 65536, expected a boolean` больше не возвращалась тихо при следующих правках.
+
+### Agent hardening: review, security и prompt-contract
+
+- Создан [CODEX_AGENT_HARDENING_PLAN.md](/C:/fit/docs/CODEX_AGENT_HARDENING_PLAN.md) как отдельный execution-doc с `[ ] / [x]` чекбоксами для нового tranche по усилению агента.
+- В [AGENTS.md](/C:/fit/AGENTS.md) добавлены `Review guidelines` и `Prompt contract`, а подробный reviewer contract вынесен в [code_review.md](/C:/fit/code_review.md), чтобы локальный `/review` и GitHub review читали один и тот же rule-set.
+- В [`.codex/config.toml`](/C:/fit/.codex/config.toml) добавлены `review_model = "gpt-5.2-codex"` и роли `pr_reviewer`, `security_reviewer`, `prompt_contract_editor`, `workflow_maintainer`; одновременно в `.agents/skills/` оформлены repo-local навыки `fit-pr-review`, `fit-security-review`, `fit-prompt-contracts`, `fit-github-review-ops`.
+- Для GitHub review добавлен [PULL_REQUEST_TEMPLATE.md](/C:/fit/.github/PULL_REQUEST_TEMPLATE.md), а [CODEX_PLAYBOOK.md](/C:/fit/docs/CODEX_PLAYBOOK.md), [CODEX_ONBOARDING.md](/C:/fit/docs/CODEX_ONBOARDING.md), [README.md](/C:/fit/README.md) и [docs/README.md](/C:/fit/docs/README.md) синхронизированы с новым advisory-first review flow и `@codex review`.
+- [verify-codex.mjs](/C:/fit/scripts/verify-codex.mjs) расширен обязательной проверкой нового review/security/prompt-contract слоя; tranche подтверждён локально командами `npm run verify:codex`, `npm run lint`, `npm run typecheck`, `npm run build`.

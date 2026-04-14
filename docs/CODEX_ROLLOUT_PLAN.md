@@ -52,9 +52,10 @@
 ## Как использовать дальше
 
 1. Начинать работу с [AGENTS.md](/C:/fit/AGENTS.md) и [CODEX_ONBOARDING.md](/C:/fit/docs/CODEX_ONBOARDING.md).
-2. Для повседневного operational flow использовать [CODEX_PLAYBOOK.md](/C:/fit/docs/CODEX_PLAYBOOK.md).
-3. Для сложных AI/UI/backend/release задач не пропускать evaluator loop и явно фиксировать baseline, артефакты и stop condition.
-4. После каждого существенного tranche обновлять:
+2. Для review и workflow-hardening дополнительно читать [code_review.md](/C:/fit/code_review.md) и [CODEX_AGENT_HARDENING_PLAN.md](/C:/fit/docs/CODEX_AGENT_HARDENING_PLAN.md).
+3. Для повседневного operational flow использовать [CODEX_PLAYBOOK.md](/C:/fit/docs/CODEX_PLAYBOOK.md).
+4. Для сложных AI/UI/backend/release задач не пропускать evaluator loop и явно фиксировать baseline, артефакты и stop condition.
+5. После каждого существенного tranche обновлять:
    - [CODEX_ROLLOUT_PLAN.md](/C:/fit/docs/CODEX_ROLLOUT_PLAN.md)
    - [MASTER_PLAN.md](/C:/fit/docs/MASTER_PLAN.md)
    - [AI_WORKLOG.md](/C:/fit/docs/AI_WORKLOG.md)
@@ -66,3 +67,17 @@
 - `npm run lint`
 - `npm run typecheck`
 - `npm run build`
+
+## 2026-04-14 config guardrails addendum
+
+- В [`.codex/config.toml`](/C:/fit/.codex/config.toml) добавлен schema-hint `#:schema https://developers.openai.com/codex/config-schema.json`, чтобы редактор сразу подсвечивал невалидные ключи и неверные типы в Codex-конфиге.
+- [verify-codex.mjs](/C:/fit/scripts/verify-codex.mjs) усилен структурной проверкой `.codex/config.toml`: guard теперь валит проверку, если `project_doc_max_bytes` попадает внутрь `[features]`, если top-level budget отсутствует или если в `[features]` появляются не-boolean значения.
+- Этот follow-up специально закрывает уже пойманный drift по Codex-конфигу, чтобы ошибка `invalid type: integer 65536, expected a boolean` не возвращалась незаметно при следующих правках.
+
+## 2026-04-14 agent hardening addendum
+
+- В [AGENTS.md](/C:/fit/AGENTS.md) добавлены `Review guidelines` и `Prompt contract`, а детальный reviewer contract вынесен в новый [code_review.md](/C:/fit/code_review.md), чтобы локальный `/review` и GitHub review читали один и тот же набор правил.
+- В [`.codex/config.toml`](/C:/fit/.codex/config.toml) добавлены `review_model = "gpt-5.2-codex"` и новые роли `pr_reviewer`, `security_reviewer`, `prompt_contract_editor`, `workflow_maintainer`, чтобы reviewer/process работа не смешивалась с обычным implementation flow.
+- В `.agents/skills/` добавлены self-contained навыки `fit-pr-review`, `fit-security-review`, `fit-prompt-contracts`, `fit-github-review-ops`, а repo-local reference-файлы закрепляют security checklist и prompt-contract patterns внутри репозитория.
+- GitHub-facing контур усилен через [PULL_REQUEST_TEMPLATE.md](/C:/fit/.github/PULL_REQUEST_TEMPLATE.md), обновлённый [CODEX_PLAYBOOK.md](/C:/fit/docs/CODEX_PLAYBOOK.md), [CODEX_ONBOARDING.md](/C:/fit/docs/CODEX_ONBOARDING.md) и execution-doc [CODEX_AGENT_HARDENING_PLAN.md](/C:/fit/docs/CODEX_AGENT_HARDENING_PLAN.md) с чекбоксами прогресса.
+- [verify-codex.mjs](/C:/fit/scripts/verify-codex.mjs) теперь проверяет не только базовый Codex rollout, но и новый review/security/prompt-contract слой: обязательные docs, `code_review.md`, PR template, agent configs и repo-local skills.
