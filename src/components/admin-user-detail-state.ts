@@ -6,6 +6,7 @@ import type {
   AdminUserDetailData,
   AdminUserDetailResponse,
 } from "@/components/admin-user-detail-model";
+import { withTransientRetry } from "@/lib/runtime-retry";
 
 export type AdminUserDetailSection =
   | "profile"
@@ -46,25 +47,43 @@ export const adminUserDetailSections: Array<{
   },
 ];
 
-export function useAdminUserDetailState(userId: string) {
-  const [detail, setDetail] = useState<AdminUserDetailData | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [isDegraded, setIsDegraded] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+export function useAdminUserDetailState(
+  userId: string,
+  options?: {
+    initialDetail?: AdminUserDetailData | null;
+    initialError?: string | null;
+    initialIsDegraded?: boolean;
+  },
+) {
+  const hasInitialPayload =
+    Object.prototype.hasOwnProperty.call(options ?? {}, "initialDetail") ||
+    Object.prototype.hasOwnProperty.call(options ?? {}, "initialError");
+  const [detail, setDetail] = useState<AdminUserDetailData | null>(
+    options?.initialDetail ?? null,
+  );
+  const [error, setError] = useState<string | null>(options?.initialError ?? null);
+  const [isDegraded, setIsDegraded] = useState(options?.initialIsDegraded ?? false);
+  const [isLoading, setIsLoading] = useState(!hasInitialPayload);
   const [reloadVersion, setReloadVersion] = useState(0);
   const [activeSection, setActiveSection] =
     useState<AdminUserDetailSection>("profile");
 
   useEffect(() => {
+    if (hasInitialPayload && reloadVersion === 0) {
+      return;
+    }
+
     let isActive = true;
 
     async function loadDetail() {
       setIsLoading(true);
 
       try {
-        const response = await fetch(`/api/admin/users/${userId}`, {
-          cache: "no-store",
-        });
+        const response = await withTransientRetry(() =>
+          fetch(`/api/admin/users/${userId}`, {
+            cache: "no-store",
+          }),
+        );
         const payload = (await response
           .json()
           .catch(() => null)) as AdminUserDetailResponse;
@@ -83,6 +102,16 @@ export function useAdminUserDetailState(userId: string) {
           setError(null);
           setIsDegraded(Boolean(payload?.meta?.degraded));
         }
+      } catch (error) {
+        if (isActive) {
+          setError(
+            error instanceof Error
+              ? error.message
+              : "Не удалось загрузить карточку пользователя.",
+          );
+          setDetail(null);
+          setIsDegraded(false);
+        }
       } finally {
         if (isActive) {
           setIsLoading(false);
@@ -95,7 +124,7 @@ export function useAdminUserDetailState(userId: string) {
     return () => {
       isActive = false;
     };
-  }, [reloadVersion, userId]);
+  }, [hasInitialPayload, reloadVersion, userId]);
 
   const reload = useCallback(() => {
     setReloadVersion((current) => current + 1);

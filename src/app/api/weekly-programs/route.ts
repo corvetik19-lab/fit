@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import { logger } from "@/lib/logger";
+import { withTransientRetry } from "@/lib/runtime-retry";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import {
   defaultRepRangePresetKey,
@@ -50,7 +51,7 @@ export async function GET() {
     const supabase = await createServerSupabaseClient();
     const {
       data: { user },
-    } = await supabase.auth.getUser();
+    } = await withTransientRetry(async () => await supabase.auth.getUser());
 
     if (!user) {
       return createApiErrorResponse({
@@ -60,7 +61,9 @@ export async function GET() {
       });
     }
 
-    const data = await listWeeklyPrograms(supabase, user.id);
+    const data = await withTransientRetry(async () =>
+      await listWeeklyPrograms(supabase, user.id),
+    );
 
     return Response.json({ data });
   } catch (error) {
@@ -81,7 +84,7 @@ export async function POST(request: Request) {
     const supabase = await createServerSupabaseClient();
     const {
       data: { user },
-    } = await supabase.auth.getUser();
+    } = await withTransientRetry(async () => await supabase.auth.getUser());
 
     if (!user) {
       return createApiErrorResponse({
@@ -114,11 +117,14 @@ export async function POST(request: Request) {
       ),
     );
 
-    const { data: exerciseRows, error: exerciseRowsError } = await supabase
-      .from("exercise_library")
-      .select("id, title")
-      .in("id", exerciseIds)
-      .eq("is_archived", false);
+    const { data: exerciseRows, error: exerciseRowsError } =
+      await withTransientRetry(async () =>
+        await supabase
+          .from("exercise_library")
+          .select("id, title")
+          .in("id", exerciseIds)
+          .eq("is_archived", false),
+      );
 
     if (exerciseRowsError) {
       throw exerciseRowsError;
@@ -230,10 +236,9 @@ export async function POST(request: Request) {
   } catch (error) {
     if (createdProgramId) {
       const supabase = await createServerSupabaseClient();
-      const rollbackResult = await supabase
-        .from("weekly_programs")
-        .delete()
-        .eq("id", createdProgramId);
+      const rollbackResult = await withTransientRetry(async () =>
+        await supabase.from("weekly_programs").delete().eq("id", createdProgramId),
+      );
 
       if (rollbackResult.error) {
         logger.warn("weekly program rollback failed", {

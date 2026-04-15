@@ -16,30 +16,40 @@ import {
   toggleSelectedUserId,
   toggleVisibleUserSelection,
   type ActivityFilter,
-  type AdminUsersBulkResponse,
-  type AdminUsersFetchResponse,
   type AdminRoleFilter,
   type AdminUserRow,
+  type AdminUsersBulkResponse,
+  type AdminUsersDirectoryInitialState,
+  type AdminUsersFetchResponse,
   type AdminUsersSegments,
   type AdminUsersSortKey,
   type AdminUsersSummary,
   type BulkAction,
   type RecentBulkWave,
 } from "@/components/admin-users-directory-model";
+import { withTransientRetry } from "@/lib/runtime-retry";
 
 export function useAdminUsersDirectoryState(params: {
   canRunBulkActions: boolean;
   canViewRoleDetails: boolean;
+  initialState?: AdminUsersDirectoryInitialState;
 }) {
-  const { canRunBulkActions, canViewRoleDetails } = params;
-  const [users, setUsers] = useState<AdminUserRow[]>([]);
+  const { canRunBulkActions, canViewRoleDetails, initialState } = params;
+  const hasInitialPayload =
+    Object.prototype.hasOwnProperty.call(initialState ?? {}, "users") ||
+    Object.prototype.hasOwnProperty.call(initialState ?? {}, "error");
+  const [users, setUsers] = useState<AdminUserRow[]>(initialState?.users ?? []);
   const [catalogSummary, setCatalogSummary] =
-    useState<AdminUsersSummary>(emptySummary);
-  const [segments, setSegments] = useState<AdminUsersSegments>(emptySegments);
-  const [recentBulkWaves, setRecentBulkWaves] = useState<RecentBulkWave[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [isDegraded, setIsDegraded] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+    useState<AdminUsersSummary>(initialState?.summary ?? emptySummary);
+  const [segments, setSegments] = useState<AdminUsersSegments>(
+    initialState?.segments ?? emptySegments,
+  );
+  const [recentBulkWaves, setRecentBulkWaves] = useState<RecentBulkWave[]>(
+    initialState?.recentBulkWaves ?? [],
+  );
+  const [error, setError] = useState<string | null>(initialState?.error ?? null);
+  const [isDegraded, setIsDegraded] = useState(initialState?.isDegraded ?? false);
+  const [isLoading, setIsLoading] = useState(!hasInitialPayload);
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<AdminRoleFilter>("all");
   const [activityFilter, setActivityFilter] = useState<ActivityFilter>("all");
@@ -56,6 +66,10 @@ export function useAdminUsersDirectoryState(params: {
   const deferredSearchQuery = useDeferredValue(searchQuery);
 
   useEffect(() => {
+    if (hasInitialPayload && reloadToken === 0) {
+      return;
+    }
+
     let isActive = true;
 
     async function loadUsers() {
@@ -70,11 +84,10 @@ export function useAdminUsersDirectoryState(params: {
           sortKey,
         });
         const queryString = searchParams.toString();
-        const response = await fetch(
-          queryString ? `/api/admin/users?${queryString}` : "/api/admin/users",
-          {
+        const response = await withTransientRetry(() =>
+          fetch(queryString ? `/api/admin/users?${queryString}` : "/api/admin/users", {
             cache: "no-store",
-          },
+          }),
         );
         const payload = (await response
           .json()
@@ -82,7 +95,7 @@ export function useAdminUsersDirectoryState(params: {
 
         if (!response.ok) {
           if (isActive) {
-            setError(payload?.message ?? "Не удалось загрузить пользователей.");
+            setError(payload?.message ?? "Не удалось загрузить каталог пользователей.");
             setUsers([]);
             setCatalogSummary(emptySummary);
             setSegments(emptySegments);
@@ -102,6 +115,19 @@ export function useAdminUsersDirectoryState(params: {
           );
           setError(null);
         }
+      } catch (fetchError) {
+        if (isActive) {
+          setError(
+            fetchError instanceof Error
+              ? fetchError.message
+              : "Не удалось загрузить каталог пользователей.",
+          );
+          setUsers([]);
+          setCatalogSummary(emptySummary);
+          setSegments(emptySegments);
+          setRecentBulkWaves([]);
+          setIsDegraded(false);
+        }
       } finally {
         if (isActive) {
           setIsLoading(false);
@@ -114,7 +140,14 @@ export function useAdminUsersDirectoryState(params: {
     return () => {
       isActive = false;
     };
-  }, [activityFilter, deferredSearchQuery, reloadToken, roleFilter, sortKey]);
+  }, [
+    activityFilter,
+    deferredSearchQuery,
+    hasInitialPayload,
+    reloadToken,
+    roleFilter,
+    sortKey,
+  ]);
 
   const summary = useMemo(
     () => buildVisibleUsersSummary(users, catalogSummary),
@@ -198,6 +231,12 @@ export function useAdminUsersDirectoryState(params: {
         setBulkNotice(buildBulkActionNotice(payload));
         setSelectedUserIds([]);
         reloadCatalog();
+      } catch (fetchError) {
+        setError(
+          fetchError instanceof Error
+            ? fetchError.message
+            : "Не удалось выполнить массовое действие.",
+        );
       } finally {
         setIsBulkPending(false);
       }

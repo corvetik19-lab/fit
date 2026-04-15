@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import { logger } from "@/lib/logger";
+import { withTransientRetry } from "@/lib/runtime-retry";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 const paramsSchema = z.object({
@@ -16,7 +17,7 @@ export async function POST(
     const supabase = await createServerSupabaseClient();
     const {
       data: { user },
-    } = await supabase.auth.getUser();
+    } = await withTransientRetry(async () => await supabase.auth.getUser());
 
     if (!user) {
       return createApiErrorResponse({
@@ -27,12 +28,15 @@ export async function POST(
     }
 
     const { id } = paramsSchema.parse(await params);
-    const { data: program, error: programError } = await supabase
-      .from("weekly_programs")
-      .select("id, title, status, is_locked, week_start_date, week_end_date, created_at")
-      .eq("id", id)
-      .eq("user_id", user.id)
-      .maybeSingle();
+    const { data: program, error: programError } = await withTransientRetry(
+      async () =>
+        await supabase
+          .from("weekly_programs")
+          .select("id, title, status, is_locked, week_start_date, week_end_date, created_at")
+          .eq("id", id)
+          .eq("user_id", user.id)
+          .maybeSingle(),
+    );
 
     if (programError) {
       throw programError;
@@ -54,17 +58,20 @@ export async function POST(
       });
     }
 
-    const { data: lockedProgram, error: lockedProgramError } = await supabase
-      .from("weekly_programs")
-      .update({
-        is_locked: true,
-        status: "active",
-      })
-      .eq("id", id)
-      .eq("user_id", user.id)
-      .eq("is_locked", false)
-      .select("id, title, status, is_locked, week_start_date, week_end_date, created_at")
-      .maybeSingle();
+    const { data: lockedProgram, error: lockedProgramError } =
+      await withTransientRetry(async () =>
+        await supabase
+          .from("weekly_programs")
+          .update({
+            is_locked: true,
+            status: "active",
+          })
+          .eq("id", id)
+          .eq("user_id", user.id)
+          .eq("is_locked", false)
+          .select("id, title, status, is_locked, week_start_date, week_end_date, created_at")
+          .maybeSingle(),
+      );
 
     if (lockedProgramError) {
       if (lockedProgramError.code === "23505") {

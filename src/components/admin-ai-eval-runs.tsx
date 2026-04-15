@@ -29,7 +29,7 @@ type AdminAiEvalRun = {
 };
 
 const inputClassName =
-  "w-full rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15";
+  "w-full rounded-2xl border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,var(--surface))] px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15";
 
 const dateFormatter = new Intl.DateTimeFormat("ru-RU", {
   day: "2-digit",
@@ -223,7 +223,7 @@ export function AdminAiEvalRuns({
           </h2>
         </div>
         <button
-          className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
+          className="action-button action-button--secondary disabled:cursor-not-allowed disabled:opacity-60"
           disabled={isRefreshing}
           onClick={() => void refreshRuns()}
           type="button"
@@ -234,7 +234,7 @@ export function AdminAiEvalRuns({
 
       <div className="grid gap-4">
         {!canQueueAiEvalRuns ? (
-          <p className="rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <p className="rounded-2xl border border-amber-500/25 bg-amber-500/12 px-4 py-3 text-sm text-amber-100">
             Для этого аккаунта в разделе качества доступен только просмотр.
           </p>
         ) : null}
@@ -279,7 +279,7 @@ export function AdminAiEvalRuns({
 
           <div className="flex items-end">
             <button
-              className="inline-flex w-full justify-center rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 lg:w-auto"
+              className="action-button action-button--primary inline-flex w-full justify-center px-5 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-60 lg:w-auto"
               disabled={!canQueueAiEvalRuns || isSubmitting}
               onClick={() => void queueRun()}
               type="button"
@@ -290,7 +290,7 @@ export function AdminAiEvalRuns({
         </div>
 
         {canRunScheduledJobs ? (
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-white/60 px-4 py-4 text-sm">
+          <div className="surface-panel surface-panel--soft flex flex-wrap items-center justify-between gap-3 px-4 py-4 text-sm">
             <div className="space-y-1">
               <p className="font-semibold text-foreground">
                 Плановая быстрая проверка
@@ -301,7 +301,7 @@ export function AdminAiEvalRuns({
               </p>
             </div>
             <button
-              className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
+              className="action-button action-button--secondary disabled:cursor-not-allowed disabled:opacity-60"
               disabled={isScheduling}
               onClick={() => void queueScheduledSmokeRun()}
               type="button"
@@ -312,13 +312,13 @@ export function AdminAiEvalRuns({
         ) : null}
 
         {error ? (
-          <p className="rounded-2xl border border-red-300/60 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <p className="rounded-2xl border border-red-500/25 bg-red-500/12 px-4 py-3 text-sm text-red-100">
             {error}
           </p>
         ) : null}
 
         {notice ? (
-          <p className="rounded-2xl border border-emerald-300/60 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+          <p className="rounded-2xl border border-emerald-500/25 bg-emerald-500/12 px-4 py-3 text-sm text-emerald-100">
             {notice}
           </p>
         ) : null}
@@ -327,7 +327,7 @@ export function AdminAiEvalRuns({
           {runs.length ? (
             runs.map((run) => (
               <article
-                className="rounded-2xl border border-border bg-white/60 p-4 text-sm"
+                className="surface-panel text-sm"
                 key={run.id}
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
@@ -340,17 +340,17 @@ export function AdminAiEvalRuns({
                   <div className="flex flex-wrap gap-2">
                     <span className="pill">{formatStatus(run.status)}</span>
                     {run.summary?.isScheduled ? (
-                      <span className="pill bg-sky-100 text-sky-700">
+                      <span className="rounded-full border border-sky-500/25 bg-sky-500/12 px-3 py-1 text-xs font-semibold text-sky-100">
                         по расписанию
                       </span>
                     ) : null}
                     {run.summary?.qualityGatePassed === true ? (
-                      <span className="pill bg-emerald-100 text-emerald-700">
+                      <span className="rounded-full border border-emerald-500/25 bg-emerald-500/12 px-3 py-1 text-xs font-semibold text-emerald-100">
                         порог пройден
                       </span>
                     ) : null}
                     {run.summary?.qualityGatePassed === false ? (
-                      <span className="pill bg-red-100 text-red-700">
+                      <span className="rounded-full border border-red-500/25 bg-red-500/12 px-3 py-1 text-xs font-semibold text-red-100">
                         нужен разбор
                       </span>
                     ) : null}

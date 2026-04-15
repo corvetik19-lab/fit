@@ -9,8 +9,11 @@ import {
   isPrimarySuperAdminEmail,
 } from "@/lib/admin-permissions";
 import { logger } from "@/lib/logger";
+import { withTimeout, withTransientRetry } from "@/lib/runtime-retry";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { requireViewer } from "@/lib/viewer";
+
+const ADMIN_DASHBOARD_TIMEOUT_MS = 4_000;
 
 function formatDateTime(value: string | null | undefined) {
   if (!value) {
@@ -47,12 +50,12 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
   if (!viewer.isPlatformAdmin) {
     return (
-    <AppShell
-      eyebrow="Админ"
-      hideAssistantWidget
-      title="Доступ к панели управления"
-      viewer={toAppShellViewer(viewer)}
-    >
+      <AppShell
+        eyebrow="Админ"
+        hideAssistantWidget
+        title="Доступ к панели управления"
+        viewer={toAppShellViewer(viewer)}
+      >
         <PanelCard
           caption="Доступ"
           title="Операторская панель доступна только администраторам платформы"
@@ -63,21 +66,19 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 Главный доступ закреплён за одним email и не открывается обычному аккаунту.
               </p>
               <p className="mt-3 leading-7 text-muted">
-                Админ-панель видна только назначенным ролям. Главный доступ
-                отдельно закреплён за{" "}
+                Админ-панель видна только назначенным ролям. Главный доступ отдельно
+                закреплён за{" "}
                 <span className="font-semibold text-foreground">
                   {PRIMARY_SUPER_ADMIN_EMAIL}
                 </span>
-                . Если вход уже выполнен под этим email, но панель не видна,
-                обнови сессию или авторизуйся заново.
+                . Если вход уже выполнен под этим email, но панель не видна, обнови
+                сессию или авторизуйся заново.
               </p>
             </article>
 
             <article className="surface-panel p-5 text-sm">
               <p className="font-semibold text-foreground">Текущий аккаунт</p>
-              <p className="mt-3 text-muted">
-                {viewer.user.email ?? "Email не найден"}
-              </p>
+              <p className="mt-3 text-muted">{viewer.user.email ?? "Email не найден"}</p>
               <p className="mt-2 text-muted">
                 Последний вход:{" "}
                 <span className="text-foreground">
@@ -174,66 +175,72 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       reindexActionsCountResult,
       authUsersResult,
       adminAuditLogsResult,
-    ] = await Promise.all([
-      adminSupabase
-        .from("profiles")
-        .select("user_id, full_name, created_at")
-        .order("created_at", { ascending: false })
-        .limit(8),
-      adminSupabase
-        .from("platform_admins")
-        .select("user_id, role, created_at")
-        .order("created_at", { ascending: false })
-        .limit(20),
-      adminSupabase
-        .from("support_actions")
-        .select("id, action, status, created_at, target_user_id")
-        .order("created_at", { ascending: false })
-        .limit(8),
-      adminSupabase
-        .from("ai_eval_runs")
-        .select("id, label, model_id, status, created_at, started_at, completed_at")
-        .order("created_at", { ascending: false })
-        .limit(8),
-      adminSupabase
-        .from("ai_safety_events")
-        .select("id, route_key, action, prompt_excerpt, created_at")
-        .order("created_at", { ascending: false })
-        .limit(8),
-      adminSupabase.from("profiles").select("*", { count: "exact", head: true }),
-      adminSupabase
-        .from("weekly_programs")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "active"),
-      adminSupabase
-        .from("ai_chat_messages")
-        .select("*", { count: "exact", head: true }),
-      adminSupabase
-        .from("ai_plan_proposals")
-        .select("*", { count: "exact", head: true }),
-      adminSupabase
-        .from("ai_safety_events")
-        .select("*", { count: "exact", head: true }),
-      adminSupabase
-        .from("knowledge_chunks")
-        .select("*", { count: "exact", head: true }),
-      adminSupabase
-        .from("knowledge_embeddings")
-        .select("*", { count: "exact", head: true }),
-      adminSupabase
-        .from("support_actions")
-        .select("*", { count: "exact", head: true })
-        .eq("action", "reindex_knowledge"),
-      adminSupabase.auth.admin.listUsers({
-        page: 1,
-        perPage: 100,
-      }),
-      adminSupabase
-        .from("admin_audit_logs")
-        .select("id, action, reason, created_at, actor_user_id, target_user_id")
-        .order("created_at", { ascending: false })
-        .limit(8),
-    ]);
+    ] = await withTimeout(
+      Promise.all([
+        adminSupabase
+          .from("profiles")
+          .select("user_id, full_name, created_at")
+          .order("created_at", { ascending: false })
+          .limit(8),
+        adminSupabase
+          .from("platform_admins")
+          .select("user_id, role, created_at")
+          .order("created_at", { ascending: false })
+          .limit(20),
+        adminSupabase
+          .from("support_actions")
+          .select("id, action, status, created_at, target_user_id")
+          .order("created_at", { ascending: false })
+          .limit(8),
+        adminSupabase
+          .from("ai_eval_runs")
+          .select("id, label, model_id, status, created_at, started_at, completed_at")
+          .order("created_at", { ascending: false })
+          .limit(8),
+        adminSupabase
+          .from("ai_safety_events")
+          .select("id, route_key, action, prompt_excerpt, created_at")
+          .order("created_at", { ascending: false })
+          .limit(8),
+        adminSupabase.from("profiles").select("*", { count: "exact", head: true }),
+        adminSupabase
+          .from("weekly_programs")
+          .select("*", { count: "exact", head: true })
+          .eq("status", "active"),
+        adminSupabase
+          .from("ai_chat_messages")
+          .select("*", { count: "exact", head: true }),
+        adminSupabase
+          .from("ai_plan_proposals")
+          .select("*", { count: "exact", head: true }),
+        adminSupabase
+          .from("ai_safety_events")
+          .select("*", { count: "exact", head: true }),
+        adminSupabase
+          .from("knowledge_chunks")
+          .select("*", { count: "exact", head: true }),
+        adminSupabase
+          .from("knowledge_embeddings")
+          .select("*", { count: "exact", head: true }),
+        adminSupabase
+          .from("support_actions")
+          .select("*", { count: "exact", head: true })
+          .eq("action", "reindex_knowledge"),
+        withTransientRetry(() =>
+          adminSupabase.auth.admin.listUsers({
+            page: 1,
+            perPage: 100,
+          }),
+        ),
+        adminSupabase
+          .from("admin_audit_logs")
+          .select("id, action, reason, created_at, actor_user_id, target_user_id")
+          .order("created_at", { ascending: false })
+          .limit(8),
+      ]),
+      ADMIN_DASHBOARD_TIMEOUT_MS,
+      "admin dashboard snapshot",
+    );
 
     if (authUsersResult.error) {
       throw authUsersResult.error;

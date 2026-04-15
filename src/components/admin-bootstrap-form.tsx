@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { startTransition, useState } from "react";
 
 const inputClassName =
-  "w-full rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15";
+  "w-full rounded-2xl border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,var(--surface))] px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15";
 
 export function AdminBootstrapForm({
   userEmail,
@@ -51,7 +51,7 @@ export function AdminBootstrapForm({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-border bg-white/60 p-4 text-sm leading-7 text-muted">
+      <div className="surface-panel surface-panel--soft p-4 text-sm leading-7 text-muted">
         Текущий пользователь: <span className="font-semibold text-foreground">{userEmail}</span>
       </div>
 
@@ -67,19 +67,19 @@ export function AdminBootstrapForm({
       </label>
 
       {error ? (
-        <p className="rounded-2xl border border-red-300/60 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <p className="rounded-2xl border border-red-500/25 bg-red-500/12 px-4 py-3 text-sm text-red-100">
           {error}
         </p>
       ) : null}
 
       {notice ? (
-        <p className="rounded-2xl border border-emerald-300/60 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+        <p className="rounded-2xl border border-emerald-500/25 bg-emerald-500/12 px-4 py-3 text-sm text-emerald-100">
           {notice}
         </p>
       ) : null}
 
       <button
-        className="rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+        className="action-button action-button--primary px-5 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-60"
         disabled={isPending || !token.trim()}
         onClick={submit}
         type="button"

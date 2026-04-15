@@ -100,7 +100,7 @@ export function SearchToolCard({
   }
 
   return (
-    <div className="rounded-3xl border border-border bg-white/90 p-4">
+    <div className="surface-panel p-4">
       <p className="text-sm font-semibold text-foreground">
         Поиск в интернете: {output.query}
       </p>
@@ -108,7 +108,7 @@ export function SearchToolCard({
         {output.results.length ? (
           output.results.map((result) => (
             <a
-              className="rounded-2xl border border-border bg-white/80 px-3 py-3 text-sm transition hover:border-accent/40 hover:bg-white"
+              className="rounded-2xl border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_84%,var(--surface))] px-3 py-3 text-sm transition hover:border-accent/40 hover:bg-[color-mix(in_srgb,var(--surface-elevated)_92%,var(--surface))]"
               href={result.url}
               key={`${output.query}-${result.url}`}
               rel="noreferrer"
@@ -150,7 +150,7 @@ export function ProposalListToolCard({
   }
 
   return (
-    <div className="rounded-3xl border border-border bg-white/90 p-4">
+    <div className="surface-panel p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-sm font-semibold text-foreground">
@@ -168,7 +168,7 @@ export function ProposalListToolCard({
         {output.items.length ? (
           output.items.slice(0, 4).map((item) => (
             <div
-              className="rounded-2xl border border-border bg-white/80 px-3 py-3"
+              className="rounded-2xl border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_84%,var(--surface))] px-3 py-3"
               key={item.proposalId}
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
@@ -194,7 +194,7 @@ export function ProposalListToolCard({
               <div className="mt-3 flex flex-wrap gap-2">
                 {item.status === "draft" ? (
                   <button
-                    className="rounded-full border border-border bg-white/80 px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                    className="rounded-full border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,var(--surface))] px-3 py-2 text-sm font-medium text-foreground transition hover:bg-[color-mix(in_srgb,var(--surface-elevated)_98%,var(--surface))] disabled:cursor-not-allowed disabled:opacity-60"
                     disabled={actionBusyKey === `approve:${item.proposalId}`}
                     onClick={() =>
                       onApprove({
@@ -228,7 +228,7 @@ export function ProposalListToolCard({
                   </button>
                 ) : (
                   <Link
-                    className="rounded-full border border-border bg-white/80 px-3 py-2 text-sm font-medium text-foreground transition hover:bg-white"
+                    className="rounded-full border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,var(--surface))] px-3 py-2 text-sm font-medium text-foreground transition hover:bg-[color-mix(in_srgb,var(--surface-elevated)_98%,var(--surface))]"
                     href={item.proposalType === "workout_plan" ? "/workouts" : "/nutrition"}
                   >
                     Открыть раздел
@@ -275,7 +275,7 @@ export function ProposalActionToolCard({
   }
 
   return (
-    <div className="rounded-3xl border border-border bg-white/90 p-4">
+    <div className="surface-panel p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -312,7 +312,7 @@ export function ProposalActionToolCard({
         ) : null}
 
         <Link
-          className="rounded-full border border-border bg-white/80 px-4 py-2 text-sm font-medium text-foreground transition hover:bg-white"
+          className="rounded-full border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,var(--surface))] px-4 py-2 text-sm font-medium text-foreground transition hover:bg-[color-mix(in_srgb,var(--surface-elevated)_98%,var(--surface))]"
           href={output.proposalType === "workout_plan" ? "/workouts" : "/nutrition"}
         >
           Открыть раздел

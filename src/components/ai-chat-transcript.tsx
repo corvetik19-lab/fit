@@ -161,7 +161,7 @@ export function AiChatTranscript({
                   if (part.type === "tool-call") {
                     return (
                       <div
-                        className="rounded-2xl border border-border bg-white/70 px-4 py-3 text-sm text-muted"
+                        className="rounded-2xl border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_84%,var(--surface))] px-4 py-3 text-sm text-muted"
                         key={`${message.id}-tool-call-${index}`}
                       >
                         Выполняю действие: {part.toolName}

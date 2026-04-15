@@ -9,6 +9,7 @@ import {
   parseAdminUserIdParam,
 } from "@/lib/admin-route-params";
 import { logger } from "@/lib/logger";
+import { withTransientRetry } from "@/lib/runtime-retry";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 
 export async function GET(
@@ -27,7 +28,9 @@ export async function GET(
     });
     const currentAdmin = await requireAdminRouteAccess("view_admin_user_details");
     const adminSupabase = createAdminSupabaseClient();
-    const authUserResult = await adminSupabase.auth.admin.getUserById(userId);
+    const authUserResult = await withTransientRetry(() =>
+      adminSupabase.auth.admin.getUserById(userId),
+    );
 
     if (authUserResult.error) {
       throw authUserResult.error;
@@ -43,13 +46,15 @@ export async function GET(
 
     try {
       return Response.json(
-        await loadAdminUserDetailData({
-          adminSupabase,
-          authUser: authUserResult.data.user,
-          currentAdminRole: currentAdmin.role,
-          forceFallback,
-          userId,
-        }),
+        await withTransientRetry(() =>
+          loadAdminUserDetailData({
+            adminSupabase,
+            authUser: authUserResult.data.user,
+            currentAdminRole: currentAdmin.role,
+            forceFallback,
+            userId,
+          }),
+        ),
       );
     } catch (error) {
       logger.warn("admin user detail route degraded to fallback", {

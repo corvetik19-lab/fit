@@ -17,6 +17,7 @@ import {
 import {
   adminRoleLabels,
   formatDateTime,
+  type AdminUserDetailData,
   type PlatformAdminRole,
 } from "@/components/admin-user-detail-model";
 import { canUseRootAdminControls } from "@/lib/admin-permissions";
@@ -40,11 +41,17 @@ export function AdminUserDetail({
   currentUserId,
   currentUserEmail,
   currentUserRole,
+  initialDetail,
+  initialError,
+  initialIsDegraded = false,
   userId,
 }: {
   currentUserId: string;
   currentUserEmail: string | null;
   currentUserRole: PlatformAdminRole;
+  initialDetail?: AdminUserDetailData | null;
+  initialError?: string | null;
+  initialIsDegraded?: boolean;
   userId: string;
 }) {
   const {
@@ -55,7 +62,11 @@ export function AdminUserDetail({
     isLoading,
     reload,
     setActiveSection,
-  } = useAdminUserDetailState(userId);
+  } = useAdminUserDetailState(userId, {
+    initialDetail,
+    initialError,
+    initialIsDegraded,
+  });
   const canViewRoleDetails = canUseRootAdminControls(
     currentUserRole,
     currentUserEmail,
@@ -79,7 +90,7 @@ export function AdminUserDetail({
         >
           Назад к каталогу
         </Link>
-        <p className="rounded-2xl border border-red-300/60 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <p className="rounded-2xl border border-red-500/25 bg-red-500/12 px-4 py-3 text-sm text-red-100">
           {error ?? "Карточка пользователя не найдена."}
         </p>
       </section>
@@ -139,7 +150,7 @@ export function AdminUserDetail({
 
         {isDegraded ? (
           <p
-            className="mt-4 rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+            className="mt-4 rounded-2xl border border-amber-400/25 bg-amber-500/12 px-4 py-3 text-sm text-amber-100"
             data-testid="admin-user-detail-degraded-banner"
           >
             Часть служебных данных временно недоступна. Карточка показана из
@@ -148,14 +159,14 @@ export function AdminUserDetail({
         ) : null}
 
         {canViewRoleDetails && !detail.superAdminPolicy.targetCanBeSuperAdmin ? (
-          <p className="mt-4 rounded-2xl border border-sky-300/60 bg-sky-50 px-4 py-3 text-sm text-sky-800">
+          <p className="mt-4 rounded-2xl border border-sky-400/25 bg-sky-500/12 px-4 py-3 text-sm text-sky-100">
             Главный доступ нельзя назначить этому пользователю. Он закреплён только
             за {detail.superAdminPolicy.primaryEmail}.
           </p>
         ) : null}
 
         {detail.adminState?.is_suspended ? (
-          <p className="mt-4 rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <p className="mt-4 rounded-2xl border border-amber-400/25 bg-amber-500/12 px-4 py-3 text-sm text-amber-100">
             Аккаунт сейчас ограничен. С какого момента:{" "}
             {formatDateTime(detail.adminState.suspended_at)}. Причина:{" "}
             {detail.adminState.state_reason ?? "не указана"}.
@@ -189,7 +200,7 @@ export function AdminUserDetail({
                 className={`w-full rounded-3xl border px-4 py-3 text-left transition md:w-auto md:min-w-[14rem] ${
                   isActive
                     ? "border-accent/20 bg-[color-mix(in_srgb,var(--accent-soft)_78%,white)] text-foreground shadow-[0_16px_38px_-34px_rgba(20,58,160,0.22)]"
-                    : "border-border bg-white/72 text-foreground hover:bg-white"
+                    : "border-border bg-[color-mix(in_srgb,var(--surface-elevated)_88%,var(--surface))] text-foreground hover:bg-[color-mix(in_srgb,var(--surface-elevated)_96%,var(--surface))]"
                 }`}
                 data-testid={`admin-user-detail-section-${key}`}
                 key={key}

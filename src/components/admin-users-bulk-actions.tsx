@@ -185,7 +185,7 @@ export function AdminUsersBulkHistoryPanel({
   recentBulkWaves: RecentBulkWave[];
 }) {
   return (
-    <div className="rounded-[32px] bg-white p-6 shadow-[0_24px_60px_-42px_rgba(15,23,42,0.22)] sm:p-7">
+    <div className="surface-panel p-6 sm:p-7">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted">

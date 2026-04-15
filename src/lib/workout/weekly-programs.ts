@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { withTransientRetry } from "@/lib/runtime-retry";
 import { listWorkoutSetsWithRepRangeFallback } from "@/lib/workout/workout-sets";
 
 export type WeeklyProgramSetSummary = {
@@ -92,14 +93,17 @@ export async function listWeeklyPrograms(
   userId: string,
   limit = 6,
 ) {
-  const { data: programs, error: programsError } = await supabase
-    .from("weekly_programs")
-    .select(
-      "id, title, status, week_start_date, week_end_date, is_locked, created_at",
-    )
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false })
-    .limit(limit);
+  const { data: programs, error: programsError } = await withTransientRetry(
+    async () =>
+      await supabase
+        .from("weekly_programs")
+        .select(
+          "id, title, status, week_start_date, week_end_date, is_locked, created_at",
+        )
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(limit),
+  );
 
   if (programsError) {
     throw programsError;
@@ -112,12 +116,14 @@ export async function listWeeklyPrograms(
   }
 
   const programIds = weeklyPrograms.map((program) => program.id);
-  const { data: days, error: daysError } = await supabase
-    .from("workout_days")
-    .select("id, weekly_program_id, day_of_week, status")
-    .eq("user_id", userId)
-    .in("weekly_program_id", programIds)
-    .order("day_of_week", { ascending: true });
+  const { data: days, error: daysError } = await withTransientRetry(async () =>
+    await supabase
+      .from("workout_days")
+      .select("id, weekly_program_id, day_of_week, status")
+      .eq("user_id", userId)
+      .in("weekly_program_id", programIds)
+      .order("day_of_week", { ascending: true }),
+  );
 
   if (daysError) {
     throw daysError;
@@ -133,14 +139,17 @@ export async function listWeeklyPrograms(
   }
 
   const dayIds = workoutDays.map((day) => day.id);
-  const { data: exercises, error: exercisesError } = await supabase
-    .from("workout_exercises")
-    .select(
-      "id, workout_day_id, exercise_title_snapshot, sets_count, sort_order",
-    )
-    .eq("user_id", userId)
-    .in("workout_day_id", dayIds)
-    .order("sort_order", { ascending: true });
+  const { data: exercises, error: exercisesError } = await withTransientRetry(
+    async () =>
+      await supabase
+        .from("workout_exercises")
+        .select(
+          "id, workout_day_id, exercise_title_snapshot, sets_count, sort_order",
+        )
+        .eq("user_id", userId)
+        .in("workout_day_id", dayIds)
+        .order("sort_order", { ascending: true }),
+  );
 
   if (exercisesError) {
     throw exercisesError;
@@ -230,14 +239,17 @@ export async function listWeeklyProgramsOverview(
   userId: string,
   limit = 6,
 ) {
-  const { data: programs, error: programsError } = await supabase
-    .from("weekly_programs")
-    .select(
-      "id, title, status, week_start_date, week_end_date, is_locked, created_at",
-    )
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false })
-    .limit(limit);
+  const { data: programs, error: programsError } = await withTransientRetry(
+    async () =>
+      await supabase
+        .from("weekly_programs")
+        .select(
+          "id, title, status, week_start_date, week_end_date, is_locked, created_at",
+        )
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(limit),
+  );
 
   if (programsError) {
     throw programsError;
@@ -250,12 +262,14 @@ export async function listWeeklyProgramsOverview(
   }
 
   const programIds = weeklyPrograms.map((program) => program.id);
-  const { data: days, error: daysError } = await supabase
-    .from("workout_days")
-    .select("id, weekly_program_id, day_of_week, status")
-    .eq("user_id", userId)
-    .in("weekly_program_id", programIds)
-    .order("day_of_week", { ascending: true });
+  const { data: days, error: daysError } = await withTransientRetry(async () =>
+    await supabase
+      .from("workout_days")
+      .select("id, weekly_program_id, day_of_week, status")
+      .eq("user_id", userId)
+      .in("weekly_program_id", programIds)
+      .order("day_of_week", { ascending: true }),
+  );
 
   if (daysError) {
     throw daysError;
@@ -271,14 +285,17 @@ export async function listWeeklyProgramsOverview(
   }
 
   const dayIds = workoutDays.map((day) => day.id);
-  const { data: exercises, error: exercisesError } = await supabase
-    .from("workout_exercises")
-    .select(
-      "id, workout_day_id, exercise_title_snapshot, sets_count, sort_order",
-    )
-    .eq("user_id", userId)
-    .in("workout_day_id", dayIds)
-    .order("sort_order", { ascending: true });
+  const { data: exercises, error: exercisesError } = await withTransientRetry(
+    async () =>
+      await supabase
+        .from("workout_exercises")
+        .select(
+          "id, workout_day_id, exercise_title_snapshot, sets_count, sort_order",
+        )
+        .eq("user_id", userId)
+        .in("workout_day_id", dayIds)
+        .order("sort_order", { ascending: true }),
+  );
 
   if (exercisesError) {
     throw exercisesError;
@@ -322,14 +339,16 @@ export async function getWorkoutDayDetail(
   userId: string,
   dayId: string,
 ) {
-  const { data: dayRow, error: dayError } = await supabase
-    .from("workout_days")
-    .select(
-      "id, weekly_program_id, day_of_week, status, body_weight_kg, session_note, session_duration_seconds",
-    )
-    .eq("id", dayId)
-    .eq("user_id", userId)
-    .maybeSingle();
+  const { data: dayRow, error: dayError } = await withTransientRetry(async () =>
+    await supabase
+      .from("workout_days")
+      .select(
+        "id, weekly_program_id, day_of_week, status, body_weight_kg, session_note, session_duration_seconds",
+      )
+      .eq("id", dayId)
+      .eq("user_id", userId)
+      .maybeSingle(),
+  );
 
   if (dayError) {
     throw dayError;
@@ -339,12 +358,15 @@ export async function getWorkoutDayDetail(
     return null;
   }
 
-  const { data: programRow, error: programError } = await supabase
-    .from("weekly_programs")
-    .select("id, title, status, week_start_date, week_end_date, is_locked")
-    .eq("id", dayRow.weekly_program_id)
-    .eq("user_id", userId)
-    .maybeSingle();
+  const { data: programRow, error: programError } = await withTransientRetry(
+    async () =>
+      await supabase
+        .from("weekly_programs")
+        .select("id, title, status, week_start_date, week_end_date, is_locked")
+        .eq("id", dayRow.weekly_program_id)
+        .eq("user_id", userId)
+        .maybeSingle(),
+  );
 
   if (programError) {
     throw programError;
@@ -354,14 +376,15 @@ export async function getWorkoutDayDetail(
     return null;
   }
 
-  const { data: exercises, error: exercisesError } = await supabase
-    .from("workout_exercises")
-    .select(
-      "id, exercise_title_snapshot, sets_count, sort_order",
-    )
-    .eq("user_id", userId)
-    .eq("workout_day_id", dayId)
-    .order("sort_order", { ascending: true });
+  const { data: exercises, error: exercisesError } = await withTransientRetry(
+    async () =>
+      await supabase
+        .from("workout_exercises")
+        .select("id, exercise_title_snapshot, sets_count, sort_order")
+        .eq("user_id", userId)
+        .eq("workout_day_id", dayId)
+        .order("sort_order", { ascending: true }),
+  );
 
   if (exercisesError) {
     throw exercisesError;

@@ -180,6 +180,20 @@ Frontend делится на три уровня:
 - [DARK_UTILITY_REDESIGN_EXECUTION.md](/C:/fit/docs/DARK_UTILITY_REDESIGN_EXECUTION.md)
 - [design-handoff/DARK_UTILITY_MOBILE_BRIEF.md](/C:/fit/docs/design-handoff/DARK_UTILITY_MOBILE_BRIEF.md)
 
+## 2026-04-15 Финальный regression-пакет Dark Utility
+
+- `Dark Utility` подплан закрыт как `10 / 10`: базовый visual/mobile regression пакет для нового стиля подтверждён зелёными `authenticated-app`, `admin-app` и `mobile-pwa-regressions`.
+- Для auth/workspace-контракта теперь опираемся на реальные заголовки экранов и shell-title, а не на скрытые mobile toggles. Это зафиксировано в [authenticated-app.spec.ts](/C:/fit/tests/e2e/authenticated-app.spec.ts).
+- Для workout focus-mode regression базовым контрактом считается `data-testid="workout-regular-mode-button"` из [workout-focus-header.tsx](/C:/fit/src/components/workout-session/workout-focus-header.tsx); test не должен зависеть от текстового label кнопки.
+- При следующих визуальных правках в `Dark Utility`-слое minimum regression package:
+  - `npm run lint`
+  - `npm run typecheck`
+  - `npm run build`
+  - `npm run test:smoke`
+  - `node scripts/run-playwright.mjs -- test tests/e2e/authenticated-app.spec.ts --workers=1`
+  - `node scripts/run-playwright.mjs -- test tests/e2e/admin-app.spec.ts --workers=1`
+  - `node scripts/run-playwright.mjs -- test tests/e2e/mobile-pwa-regressions.spec.ts --workers=1`
+
 ## 2026-04-15 Dark Utility workouts contract
 
 - `/workouts` и `/workouts/day/[dayId]` теперь считаются частью закрытого dark-utility foundation и должны поддерживать компактный mobile-first ритм без oversized CTA.
@@ -204,3 +218,11 @@ Frontend делится на три уровня:
 - Camera capture, barcode scan и Open Food Facts import обязательны как first-class flows; их нельзя прятать глубоко, выносить в отдельный визуальный язык или возвращать к белым form-surface.
 - `NutritionPhotoAnalysis`, `NutritionOpenFoodFactsCard`, `NutritionBarcodeScanner`, `NutritionRecipesManager` и `NutritionMealTemplatesManager` теперь входят в единый mobile-first контракт: тёмные elevated surfaces, компактные input, короткие status/notices и один явный action-path на сценарий.
 - Любые следующие правки nutrition UI нужно проверять как минимум через `tests/e2e/nutrition-capture.spec.ts`, чтобы не потерять рабочие flows `photo -> preview -> import` и `barcode -> lookup -> import`.
+
+## 2026-04-15 Dark Utility AI и admin contract
+
+- `/ai` теперь считается закрытым compact coaching workspace: transcript, composer, prompt library, history и proposal-actions живут в одном плотном мобильном сценарии без декоративных secondary-panels.
+- История AI-чата обязана оставаться отзывчивой на телефоне даже при нестабильном runtime: `delete` и `clear all` проектируются как optimistic flows, а не как долгие блокирующие спиннеры. Базовый regression-контракт закреплён в `tests/e2e/ai-workspace.spec.ts`.
+- `/admin`, `/admin/users`, `/admin/users/[id]` считаются частью того же dark utility языка, но с operator-first плотностью: тёмные рабочие surfaces, короткие статусы, ясные action-points, без consumer-style hero-блоков.
+- Для admin detail обязательны server-first fallback states: если Supabase/Auth деградирует, экран должен показать пригодный degraded snapshot, а не бесконечный loading-state. Этот контракт держат [admin-user-detail-state.ts](/C:/fit/src/components/admin-user-detail-state.ts), [admin/users/[id]/page.tsx](/C:/fit/src/app/admin/users/[id]/page.tsx) и [admin user detail route](/C:/fit/src/app/api/admin/users/[id]/route.ts).
+- Полный admin e2e-пакет пока нельзя считать окончательным visual gate из-за внешнего `Supabase/Auth` runtime; при точечных UI-правках опираемся на таргетированные admin-сценарии и отдельно фиксируем внешний blocker, если снова появляются `ECONNRESET`, `ConnectTimeout` или `502`.

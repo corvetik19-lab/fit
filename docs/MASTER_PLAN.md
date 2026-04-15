@@ -13,7 +13,7 @@
 
 Р­С‚РѕС‚ С„Р°Р№Р» вЂ” С‚РµРєСѓС‰РёР№ production-hardening backlog РїСЂРѕРµРєС‚Р°. РћРЅ РѕС‚СЂР°Р¶Р°РµС‚ С„Р°РєС‚РёС‡РµСЃРєРѕРµ СЃРѕСЃС‚РѕСЏРЅРёРµ СЂРµРїРѕР·РёС‚РѕСЂРёСЏ РЅР° `2026-03-31`.
 
-Текущий прогресс execution checklist: `206 / 214` (`96%`).
+Текущий прогресс execution checklist: `209 / 214` (`98%`).
 
 ## РўРµРєСѓС‰Р°СЏ Р±Р°Р·Р°
 
@@ -1383,10 +1383,10 @@
 - [x] Переведены `/dashboard` и общие workspace-паттерны под compact dark utility.
 - [x] Переведены `/workouts` и `/workouts/day/[dayId]` под главный mobile fitness сценарий.
 - [x] Переведён `/nutrition` вместе с camera/barcode/Open Food Facts flow.
-- [ ] Переведён `/ai` как компактный coaching workspace.
+- [x] Переведён `/ai` как компактный coaching workspace.
 - [x] Переведены `/history`, `/settings`, `/billing/cloudpayments`, `/suspended`.
-- [ ] Переведены `/admin`, `/admin/users`, `/admin/users/[id]`.
-- [ ] Закрыт финальный visual/mobile regression tranche и developer handoff по новому стилю.
+- [x] Переведены `/admin`, `/admin/users`, `/admin/users/[id]`.
+- [x] Закрыт финальный visual/mobile regression tranche и developer handoff по новому стилю.
 
 ## 2026-04-15 Dark Utility workouts tranche
 
@@ -1410,3 +1410,21 @@
 - [x] Camera capture, barcode scan и Open Food Facts preview/import больше не выпадают в светлый legacy-слой: input, preview, notice и draft cards переведены на те же тёмные surface-уровни, что и остальной mobile shell.
 - [x] Таргетированный nutrition regression подтверждён зелёно: `npm run lint`, `npm run typecheck`, `npm run build`, `node scripts/run-playwright.mjs PLAYWRIGHT_BASE_URL=http://127.0.0.1:3100 -- test tests/e2e/nutrition-capture.spec.ts --workers=1` -> `3 passed`.
 - [x] Общий progress execution checklist после закрытия этого slice: `206 / 214` (`96%`); активный `Dark Utility` execution-doc вырос до `7 / 10` (`70%`).
+
+## 2026-04-15 Dark Utility AI и admin tranche
+
+- [x] `/ai` переведён в компактный coaching workspace через [ai-workspace.tsx](/C:/fit/src/components/ai-workspace.tsx), [ai-workspace-sidebar.tsx](/C:/fit/src/components/ai-workspace-sidebar.tsx), [ai-chat-composer.tsx](/C:/fit/src/components/ai-chat-composer.tsx), [ai-chat-notices.tsx](/C:/fit/src/components/ai-chat-notices.tsx), [ai-chat-panel-cards.tsx](/C:/fit/src/components/ai-chat-panel-cards.tsx), [ai-chat-transcript.tsx](/C:/fit/src/components/ai-chat-transcript.tsx), [ai-prompt-library.tsx](/C:/fit/src/components/ai-prompt-library.tsx) и [use-ai-chat-web-search.ts](/C:/fit/src/components/use-ai-chat-web-search.ts).
+- [x] История AI-чата теперь переживает transient Supabase-сбои и не ре-гидрирует stale session после `delete/clear all`: обновлены [chat.ts](/C:/fit/src/lib/ai/chat.ts), [ai-workspace.tsx](/C:/fit/src/components/ai-workspace.tsx) и [ai-workspace.spec.ts](/C:/fit/tests/e2e/ai-workspace.spec.ts).
+- [x] Admin surfaces приведены к тому же dark utility контракту через [admin-dashboard-workspace.tsx](/C:/fit/src/components/admin-dashboard-workspace.tsx), [admin-users-directory.tsx](/C:/fit/src/components/admin-users-directory.tsx), [admin-user-detail.tsx](/C:/fit/src/components/admin-user-detail.tsx) и related detail/action modules; для detail page добавлены server-first initial payload и runtime retry/fallback в [admin/users/[id]/page.tsx](/C:/fit/src/app/admin/users/[id]/page.tsx), [admin-user-detail-state.ts](/C:/fit/src/components/admin-user-detail-state.ts), [admin-auth.ts](/C:/fit/src/lib/admin-auth.ts) и [admin user detail route](/C:/fit/src/app/api/admin/users/[id]/route.ts).
+- [x] Проверки tranche: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:smoke`, `npx playwright test tests/e2e/ai-workspace.spec.ts --workers=1` с `PLAYWRIGHT_SKIP_AUTH_SETUP=1` и `PLAYWRIGHT_BASE_URL=http://127.0.0.1:3100` -> `2 passed`; для admin таргетированные сценарии `degraded fallback`, `invalid reindex payload` и `content asset images` подтверждены по отдельности, а full `tests/e2e/admin-app.spec.ts` по-прежнему периодически упирается в внешний `Supabase/Auth` runtime (`ECONNRESET`, `ConnectTimeout`, `502`) и поэтому не маскируется как success.
+- [x] Общий progress execution checklist после закрытия AI/admin design-slice: `208 / 214` (`97%`); активный `Dark Utility` execution-doc вырос до `9 / 10` (`90%`).
+
+## 2026-04-15 Dark Utility final regression tranche
+
+- [x] Финальный regression-пакет по новому стилю подтверждён зелёно на живом приложении:
+  - `node scripts/run-playwright.mjs -- test tests/e2e/authenticated-app.spec.ts --workers=1` -> `2 passed`
+  - `node scripts/run-playwright.mjs -- test tests/e2e/admin-app.spec.ts --workers=1` -> `7 passed`
+  - `node scripts/run-playwright.mjs -- test tests/e2e/mobile-pwa-regressions.spec.ts --workers=1` -> `3 passed`
+- [x] `authenticated-app.spec.ts` переведён на кросс-layout селекторы по реальным заголовкам и больше не ждёт скрытые mobile-trigger элементы на desktop shell.
+- [x] `mobile-pwa-regressions.spec.ts` синхронизирован с текущим workout focus-header через `data-testid="workout-regular-mode-button"`, поэтому regression теперь проверяет поведение, а не устаревший текстовый label.
+- [x] Общий progress execution checklist после закрытия `Dark Utility` подплана вырос до `209 / 214` (`98%`); активный execution-doc [DARK_UTILITY_REDESIGN_EXECUTION.md](/C:/fit/docs/DARK_UTILITY_REDESIGN_EXECUTION.md) закрыт как `10 / 10` (`100%`).

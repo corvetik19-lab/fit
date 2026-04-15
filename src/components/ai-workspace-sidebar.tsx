@@ -136,7 +136,7 @@ export function AiWorkspaceSidebar({
       </div>
 
       {historyError ? (
-        <div className="mt-4 rounded-3xl border border-red-300/60 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="mt-4 rounded-3xl border border-red-500/25 bg-red-500/12 px-4 py-3 text-sm text-red-100">
           {historyError}
         </div>
       ) : null}
@@ -153,7 +153,7 @@ export function AiWorkspaceSidebar({
                   className={`rounded-[1.7rem] border px-4 py-4 text-sm transition ${
                     isActive
                       ? "border-accent/24 bg-[color-mix(in_srgb,var(--accent-soft)_76%,white)] shadow-[0_24px_54px_-42px_rgba(0,64,224,0.22)]"
-                      : "border-border bg-white/76 hover:bg-white"
+                      : "border-border bg-[color-mix(in_srgb,var(--surface-elevated)_84%,var(--surface))] hover:bg-[color-mix(in_srgb,var(--surface-elevated)_92%,var(--surface))]"
                   }`}
                   data-testid="ai-session-item"
                   key={session.id}

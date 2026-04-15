@@ -1,13 +1,23 @@
-﻿import type { Route } from "next";
+import type { Route } from "next";
 import Link from "next/link";
 
 import { AdminUsersDirectory } from "@/components/admin-users-directory";
+import type { AdminUsersDirectoryInitialState } from "@/components/admin-users-directory-model";
 import { AppShell, toAppShellViewer } from "@/components/app-shell";
 import {
   PRIMARY_SUPER_ADMIN_EMAIL,
   canUseRootAdminControls,
 } from "@/lib/admin-permissions";
+import {
+  createFallbackAdminUsersResponse,
+  loadAdminUsersData,
+} from "@/lib/admin-users-data";
+import { logger } from "@/lib/logger";
+import { withTimeout, withTransientRetry } from "@/lib/runtime-retry";
+import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { requirePlatformAdminViewer } from "@/lib/viewer";
+
+const ADMIN_USERS_PAGE_TIMEOUT_MS = 4_000;
 
 export default async function AdminUsersPage() {
   const viewer = await requirePlatformAdminViewer();
@@ -15,6 +25,49 @@ export default async function AdminUsersPage() {
     viewer.platformAdminRole,
     viewer.user.email ?? null,
   );
+  let initialState: AdminUsersDirectoryInitialState;
+
+  try {
+    const payload = await withTimeout(
+      withTransientRetry(() =>
+        loadAdminUsersData({
+          activityFilter: "all",
+          adminSupabase: createAdminSupabaseClient(),
+          query: "",
+          roleFilter: "all",
+          sortKey: "created_desc",
+        }),
+      ),
+      ADMIN_USERS_PAGE_TIMEOUT_MS,
+      "admin users page snapshot",
+    );
+
+    initialState = {
+      users: payload.data,
+      summary: payload.summary,
+      segments: payload.segments,
+      recentBulkWaves: payload.recentBulkWaves,
+      isDegraded: false,
+      error: null,
+    };
+  } catch (error) {
+    logger.warn("admin users page degraded to fallback", { error });
+
+    const fallback = createFallbackAdminUsersResponse({
+      activityFilter: "all",
+      roleFilter: "all",
+      sortKey: "created_desc",
+    });
+
+    initialState = {
+      users: fallback.data,
+      summary: fallback.summary,
+      segments: fallback.segments,
+      recentBulkWaves: fallback.recentBulkWaves,
+      isDegraded: true,
+      error: null,
+    };
+  }
 
   return (
     <AppShell
@@ -31,7 +84,7 @@ export default async function AdminUsersPage() {
               {showAdminRoles ? (
                 <>
                   <span className="pill">Главный доступ: {PRIMARY_SUPER_ADMIN_EMAIL}</span>
-                  <span className="pill">Роли видны только вам</span>
+                  <span className="pill">Роли и привилегии видны только вам</span>
                 </>
               ) : null}
             </div>
@@ -42,8 +95,8 @@ export default async function AdminUsersPage() {
               </h2>
               <p className="max-w-3xl text-sm leading-7 text-muted sm:text-base">
                 Здесь удобно искать пользователя по email или ID, проверять активность,
-                подписку, очередь задач и сразу переходить в полную карточку без
-                лишних экранов и служебных подписей.
+                подписку, очередь задач и сразу переходить в полную карточку без лишних
+                экранов и служебного шума.
               </p>
             </div>
 
@@ -55,7 +108,7 @@ export default async function AdminUsersPage() {
                 Вернуться в центр управления
               </Link>
               <Link
-                className="rounded-full border border-border px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-white/70"
+                className="action-button action-button--secondary px-5 py-3 text-sm"
                 href={`/admin/users/${viewer.user.id}` as Route}
               >
                 Открыть мою карточку
@@ -83,7 +136,7 @@ export default async function AdminUsersPage() {
               ],
             ].map(([label, detail]) => (
               <article
-                className="rounded-3xl border border-border bg-white/70 p-5 text-sm"
+                className="surface-panel surface-panel--soft p-5 text-sm"
                 key={label}
               >
                 <p className="font-semibold text-foreground">{label}</p>
@@ -97,6 +150,7 @@ export default async function AdminUsersPage() {
       <AdminUsersDirectory
         currentAdminRole={viewer.platformAdminRole ?? "support_admin"}
         currentUserEmail={viewer.user.email ?? null}
+        initialState={initialState}
       />
     </AppShell>
   );

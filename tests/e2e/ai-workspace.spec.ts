@@ -2,7 +2,7 @@ import { Buffer } from "node:buffer";
 
 import { expect, test, type Locator } from "@playwright/test";
 
-import { hasAuthE2ECredentials } from "./helpers/auth";
+import { finishOnboardingIfVisible, hasAuthE2ECredentials } from "./helpers/auth";
 import { USER_STORAGE_STATE_PATH } from "./helpers/auth-state";
 import { replaceAiChatHistory } from "./helpers/ai";
 import { navigateStable } from "./helpers/navigation";
@@ -63,7 +63,9 @@ async function openPromptLibrary(
 }
 
 async function openPromptCreateForm(promptLibrary: Locator, createToggle: Locator) {
-  const newTitleInput = promptLibrary.locator('[data-testid="ai-prompt-library-new-title"]');
+  const newTitleInput = promptLibrary.locator(
+    '[data-testid="ai-prompt-library-new-title"]',
+  );
 
   await expect
     .poll(async () => {
@@ -91,10 +93,14 @@ test.describe("ai workspace", () => {
   test("prompt library, web search toggle and image upload stay usable", async ({
     page,
   }) => {
+    test.setTimeout(90_000);
+
     const customPromptTitle = `E2E шаблон ${crypto.randomUUID().slice(0, 6)}`;
     const customPromptText =
       "Собери короткий разбор восстановления после последних тренировок.";
 
+    await navigateStable(page, "/dashboard", /\/(dashboard|onboarding)$/);
+    await finishOnboardingIfVisible(page);
     await navigateStable(page, "/ai", /\/ai$/);
     const chatPanel = page.locator('[data-testid="ai-chat-panel"]').first();
     await expect(page.getByTestId("ai-chat-composer")).toBeVisible({
@@ -150,9 +156,10 @@ test.describe("ai workspace", () => {
   });
 
   test("chat history supports single delete and bulk clear", async ({ page }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(90_000);
 
-    await navigateStable(page, "/dashboard", /\/dashboard$/);
+    await navigateStable(page, "/dashboard", /\/(dashboard|onboarding)$/);
+    await finishOnboardingIfVisible(page);
 
     await replaceAiChatHistory({ sessionCount: 2 });
 

@@ -171,9 +171,9 @@ test.describe("mobile pwa regressions", () => {
         await expect(collapseToggle).toBeVisible();
         await expectNoHorizontalOverflow(page, "workout focus mode");
 
-        const normalViewButton = page.getByRole("button", {
-          name: "Обычный вид",
-        });
+        const normalViewButton = page.getByTestId(
+          "workout-regular-mode-button",
+        );
         if (!(await normalViewButton.isVisible().catch(() => false))) {
           await page.waitForTimeout(400);
         }

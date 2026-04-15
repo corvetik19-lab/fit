@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { logger } from "@/lib/logger";
+import { withTransientRetry } from "@/lib/runtime-retry";
 import {
   buildNutritionCoachingSignals,
 } from "@/lib/nutrition/coaching-signals";
@@ -132,94 +133,96 @@ async function loadDashboardNutritionSourceData(
   userId: string,
   oldestDate: string,
 ): Promise<DashboardNutritionSourceData> {
-  const mealPatternWindowStart = getIsoTimestampDaysAgo(14);
-  const [
-    summariesResult,
-    targetsResult,
-    bodyMetricsResult,
-    goalResult,
-    mealsResult,
-  ] = await Promise.all([
-    supabase
-      .from("daily_nutrition_summaries")
-      .select("summary_date, kcal, protein, fat, carbs")
-      .eq("user_id", userId)
-      .gte("summary_date", oldestDate)
-      .lt("summary_date", getTomorrowDateString()),
-    supabase
-      .from("nutrition_profiles")
-      .select("kcal_target, protein_target, fat_target, carbs_target")
-      .eq("user_id", userId)
-      .maybeSingle(),
-    supabase
-      .from("body_metrics")
-      .select("weight_kg, body_fat_pct, measured_at")
-      .eq("user_id", userId)
-      .order("measured_at", { ascending: false })
-      .limit(2),
-    supabase
-      .from("goals")
-      .select("goal_type, target_weight_kg")
-      .eq("user_id", userId)
-      .order("updated_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    supabase
-      .from("meals")
-      .select("id, eaten_at")
-      .eq("user_id", userId)
-      .gte("eaten_at", mealPatternWindowStart)
-      .order("eaten_at", { ascending: false }),
-  ]);
-
-  if (summariesResult.error) {
-    throw summariesResult.error;
-  }
-
-  if (targetsResult.error) {
-    throw targetsResult.error;
-  }
-
-  if (bodyMetricsResult.error) {
-    throw bodyMetricsResult.error;
-  }
-
-  if (goalResult.error) {
-    throw goalResult.error;
-  }
-
-  if (mealsResult.error) {
-    throw mealsResult.error;
-  }
-
-  const summaryRows = (summariesResult.data as NutritionSummaryRow[] | null) ?? [];
-  const mealRows = (mealsResult.data as NutritionMealAnalyticsRow[] | null) ?? [];
-  const mealItemsResult = mealRows.length
-    ? await supabase
-        .from("meal_items")
-        .select(
-          "meal_id, food_name_snapshot, servings, kcal, protein, fat, carbs",
-        )
+  return withTransientRetry(async () => {
+    const mealPatternWindowStart = getIsoTimestampDaysAgo(14);
+    const [
+      summariesResult,
+      targetsResult,
+      bodyMetricsResult,
+      goalResult,
+      mealsResult,
+    ] = await Promise.all([
+      supabase
+        .from("daily_nutrition_summaries")
+        .select("summary_date, kcal, protein, fat, carbs")
         .eq("user_id", userId)
-        .in(
-          "meal_id",
-          mealRows.map((meal) => meal.id),
-        )
-    : { data: [], error: null };
+        .gte("summary_date", oldestDate)
+        .lt("summary_date", getTomorrowDateString()),
+      supabase
+        .from("nutrition_profiles")
+        .select("kcal_target, protein_target, fat_target, carbs_target")
+        .eq("user_id", userId)
+        .maybeSingle(),
+      supabase
+        .from("body_metrics")
+        .select("weight_kg, body_fat_pct, measured_at")
+        .eq("user_id", userId)
+        .order("measured_at", { ascending: false })
+        .limit(2),
+      supabase
+        .from("goals")
+        .select("goal_type, target_weight_kg")
+        .eq("user_id", userId)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from("meals")
+        .select("id, eaten_at")
+        .eq("user_id", userId)
+        .gte("eaten_at", mealPatternWindowStart)
+        .order("eaten_at", { ascending: false }),
+    ]);
 
-  if (mealItemsResult.error) {
-    throw mealItemsResult.error;
-  }
+    if (summariesResult.error) {
+      throw summariesResult.error;
+    }
 
-  return {
-    bodyMetricsRows: (bodyMetricsResult.data as BodyMetricRow[] | null) ?? [],
-    goal: (goalResult.data as GoalNutritionAnalyticsRow | null) ?? null,
-    mealItemsRows:
-      (mealItemsResult.data as NutritionMealItemAnalyticsRow[] | null) ?? [],
-    mealRows,
-    summaryRows,
-    targets: (targetsResult.data as NutritionTargetsRow | null) ?? null,
-  };
+    if (targetsResult.error) {
+      throw targetsResult.error;
+    }
+
+    if (bodyMetricsResult.error) {
+      throw bodyMetricsResult.error;
+    }
+
+    if (goalResult.error) {
+      throw goalResult.error;
+    }
+
+    if (mealsResult.error) {
+      throw mealsResult.error;
+    }
+
+    const summaryRows = (summariesResult.data as NutritionSummaryRow[] | null) ?? [];
+    const mealRows = (mealsResult.data as NutritionMealAnalyticsRow[] | null) ?? [];
+    const mealItemsResult = mealRows.length
+      ? await supabase
+          .from("meal_items")
+          .select(
+            "meal_id, food_name_snapshot, servings, kcal, protein, fat, carbs",
+          )
+          .eq("user_id", userId)
+          .in(
+            "meal_id",
+            mealRows.map((meal) => meal.id),
+          )
+      : { data: [], error: null };
+
+    if (mealItemsResult.error) {
+      throw mealItemsResult.error;
+    }
+
+    return {
+      bodyMetricsRows: (bodyMetricsResult.data as BodyMetricRow[] | null) ?? [],
+      goal: (goalResult.data as GoalNutritionAnalyticsRow | null) ?? null,
+      mealItemsRows:
+        (mealItemsResult.data as NutritionMealItemAnalyticsRow[] | null) ?? [],
+      mealRows,
+      summaryRows,
+      targets: (targetsResult.data as NutritionTargetsRow | null) ?? null,
+    };
+  });
 }
 
 function buildRecentNutritionDays(

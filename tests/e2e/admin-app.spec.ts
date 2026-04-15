@@ -20,20 +20,20 @@ test.describe("admin app", () => {
   );
 
   test("root admin can open core operator surfaces", async ({ page }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(90_000);
+    const targetUserEmail = process.env.PLAYWRIGHT_TEST_EMAIL;
+    expect(targetUserEmail).toBeTruthy();
+    const targetUserId = await findAuthUserIdByEmail(targetUserEmail!);
 
     await navigateStable(page, "/admin", /\/admin$/);
-    await page.waitForLoadState("networkidle");
     await expect(page.locator("main")).toBeVisible();
 
     await navigateStable(page, "/admin/users", /\/admin\/users$/);
-    await page.waitForLoadState("networkidle");
-    const myCardLink = page.locator('a[href^="/admin/users/"]').first();
-    await expect(myCardLink).toBeVisible();
-    const myCardHref = await myCardLink.getAttribute("href");
-    expect(myCardHref).toBeTruthy();
+    await expect(
+      page.locator('[data-testid="admin-users-directory"]'),
+    ).toBeVisible();
 
-    await navigateStable(page, myCardHref!, /\/admin\/users\/.+$/);
+    await navigateStable(page, `/admin/users/${targetUserId}`, /\/admin\/users\/.+$/);
     await expect(page).toHaveURL(/\/admin\/users\/.+$/);
     await expect(
       page.locator('[data-testid="admin-user-detail-section-heading"]'),
@@ -50,7 +50,6 @@ test.describe("admin app", () => {
       "/admin?__test_admin_dashboard_fallback=1",
       /\/admin\?__test_admin_dashboard_fallback=1$/,
     );
-    await page.waitForLoadState("networkidle");
     await expect(page.locator('[data-testid="admin-page-degraded-banner"]')).toBeVisible();
     await expect(
       page.locator('[data-testid="admin-page-open-users-link"]'),
@@ -89,7 +88,10 @@ test.describe("admin app", () => {
   test("root admin sees billing health and user billing controls", async ({
     page,
   }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(90_000);
+    const targetUserEmail = process.env.PLAYWRIGHT_TEST_EMAIL;
+    expect(targetUserEmail).toBeTruthy();
+    const targetUserId = await findAuthUserIdByEmail(targetUserEmail!);
 
     await navigateStable(page, "/admin", /\/admin$/);
     await expect(
@@ -106,12 +108,11 @@ test.describe("admin app", () => {
     ).toBeVisible();
 
     await navigateStable(page, "/admin/users", /\/admin\/users$/);
-    const firstUserLink = page.locator('a[href^="/admin/users/"]').first();
-    await expect(firstUserLink).toBeVisible();
-    const userHref = await firstUserLink.getAttribute("href");
-    expect(userHref).toBeTruthy();
+    await expect(
+      page.locator('[data-testid="admin-users-directory"]'),
+    ).toBeVisible();
 
-    await navigateStable(page, userHref!, /\/admin\/users\/.+$/);
+    await navigateStable(page, `/admin/users/${targetUserId}`, /\/admin\/users\/.+$/);
     await expect(
       page.getByTestId("admin-user-actions-billing-panel"),
     ).toBeVisible();
@@ -131,7 +132,6 @@ test.describe("admin app", () => {
     page,
   }) => {
     await navigateStable(page, "/admin", /\/admin$/);
-    await page.waitForLoadState("networkidle");
 
     const reindexResult = await fetchJson(page, {
       method: "POST",
@@ -248,87 +248,72 @@ test.describe("admin app", () => {
   test("root admin gets explicit validation errors for invalid admin user ids", async ({
     page,
   }) => {
-    const [
-      detailResult,
-      billingResult,
-      deletionQueueResult,
-      deletionCancelResult,
-      exportResult,
-      restoreResult,
-      roleResult,
-      supportActionResult,
-      suspendResult,
-      billingReconcileResult,
-      contentAssetResult,
-      bulkResult,
-    ] = await Promise.all([
-      fetchJson(page, {
-        method: "GET",
-        url: "/api/admin/users/not-a-uuid",
-      }),
-      fetchJson(page, {
-        method: "POST",
-        url: "/api/admin/users/not-a-uuid/billing",
-        body: {
-          action: "grant_trial",
-        },
-      }),
-      fetchJson(page, {
-        method: "POST",
-        url: "/api/admin/users/not-a-uuid/deletion",
-      }),
-      fetchJson(page, {
-        method: "DELETE",
-        url: "/api/admin/users/not-a-uuid/deletion",
-      }),
-      fetchJson(page, {
-        method: "POST",
-        url: "/api/admin/users/not-a-uuid/export",
-      }),
-      fetchJson(page, {
-        method: "POST",
-        url: "/api/admin/users/not-a-uuid/restore",
-      }),
-      fetchJson(page, {
-        method: "PATCH",
-        url: "/api/admin/users/not-a-uuid/role",
-        body: {
-          role: "analyst",
-        },
-      }),
-      fetchJson(page, {
-        method: "POST",
-        url: "/api/admin/users/not-a-uuid/support-action",
-        body: {
-          action: "resync_user_context",
-        },
-      }),
-      fetchJson(page, {
-        method: "POST",
-        url: "/api/admin/users/not-a-uuid/suspend",
-      }),
-      fetchJson(page, {
-        method: "POST",
-        url: "/api/admin/users/not-a-uuid/billing/reconcile",
-      }),
-      fetchJson(page, {
-        method: "PATCH",
-        url: "/api/admin/users/not-a-uuid/content-assets",
-        body: {
-          entityType: "exercise",
-          entityId: crypto.randomUUID(),
-          imageUrl: "https://example.com/exercise-cover.jpg",
-        },
-      }),
-      fetchJson(page, {
-        method: "POST",
-        url: "/api/admin/users/bulk",
-        body: {
-          action: "queue_resync",
-          user_ids: ["not-a-uuid"],
-        },
-      }),
-    ]);
+    const detailResult = await fetchJson(page, {
+      method: "GET",
+      url: "/api/admin/users/not-a-uuid",
+    });
+    const billingResult = await fetchJson(page, {
+      method: "POST",
+      url: "/api/admin/users/not-a-uuid/billing",
+      body: {
+        action: "grant_trial",
+      },
+    });
+    const deletionQueueResult = await fetchJson(page, {
+      method: "POST",
+      url: "/api/admin/users/not-a-uuid/deletion",
+    });
+    const deletionCancelResult = await fetchJson(page, {
+      method: "DELETE",
+      url: "/api/admin/users/not-a-uuid/deletion",
+    });
+    const exportResult = await fetchJson(page, {
+      method: "POST",
+      url: "/api/admin/users/not-a-uuid/export",
+    });
+    const restoreResult = await fetchJson(page, {
+      method: "POST",
+      url: "/api/admin/users/not-a-uuid/restore",
+    });
+    const roleResult = await fetchJson(page, {
+      method: "PATCH",
+      url: "/api/admin/users/not-a-uuid/role",
+      body: {
+        role: "analyst",
+      },
+    });
+    const supportActionResult = await fetchJson(page, {
+      method: "POST",
+      url: "/api/admin/users/not-a-uuid/support-action",
+      body: {
+        action: "resync_user_context",
+      },
+    });
+    const suspendResult = await fetchJson(page, {
+      method: "POST",
+      url: "/api/admin/users/not-a-uuid/suspend",
+    });
+    const billingReconcileResult = await fetchJson(page, {
+      method: "POST",
+      url: "/api/admin/users/not-a-uuid/billing/reconcile",
+    });
+    const contentAssetResult = await fetchJson(page, {
+      method: "PATCH",
+      url: "/api/admin/users/not-a-uuid/content-assets",
+      body: {
+        entityType: "exercise",
+        entityId: crypto.randomUUID(),
+        imageUrl: "https://example.com/exercise-cover.jpg",
+      },
+    });
+    const bulkResult = await fetchJson(page, {
+      method: "POST",
+      url: "/api/admin/users/bulk",
+      body: {
+        action: "queue_resync",
+        user_ids: ["not-a-uuid"],
+      },
+    });
 
     expect(detailResult.status).toBe(400);
     expect((detailResult.body as { code?: string } | null)?.code).toBe(

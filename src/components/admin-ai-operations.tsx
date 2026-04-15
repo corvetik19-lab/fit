@@ -8,7 +8,7 @@ import {
 } from "@/lib/admin-permissions";
 
 const inputClassName =
-  "w-full rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15";
+  "w-full rounded-2xl border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,var(--surface))] px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15";
 
 export function AdminAiOperations({
   defaultTargetUserId,
@@ -84,19 +84,19 @@ export function AdminAiOperations({
   return (
     <div className="grid gap-4">
       {error ? (
-        <p className="rounded-2xl border border-red-300/60 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <p className="rounded-2xl border border-red-500/25 bg-red-500/12 px-4 py-3 text-sm text-red-100">
           {error}
         </p>
       ) : null}
 
       {notice ? (
-        <p className="rounded-2xl border border-emerald-300/60 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+        <p className="rounded-2xl border border-emerald-500/25 bg-emerald-500/12 px-4 py-3 text-sm text-emerald-100">
           {notice}
         </p>
       ) : null}
 
       {!canRunReindex ? (
-        <p className="rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <p className="rounded-2xl border border-amber-500/25 bg-amber-500/12 px-4 py-3 text-sm text-amber-100">
           Для этого аккаунта в этом разделе доступен только просмотр.
         </p>
       ) : null}
@@ -107,8 +107,8 @@ export function AdminAiOperations({
           <button
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${
               mode === "full"
-                ? "border border-accent/15 bg-[color-mix(in_srgb,var(--accent-soft)_72%,white)] text-accent"
-                : "border border-border bg-white/80 text-foreground hover:bg-white"
+                ? "border border-accent/20 bg-[color-mix(in_srgb,var(--accent)_18%,var(--surface-elevated))] text-accent-foreground"
+                : "border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,var(--surface))] text-foreground hover:bg-[color-mix(in_srgb,var(--surface-elevated)_96%,var(--surface))]"
             }`}
             disabled={!canRunReindex}
             onClick={() => setMode("full")}
@@ -119,8 +119,8 @@ export function AdminAiOperations({
           <button
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${
               mode === "embeddings"
-                ? "border border-accent/15 bg-[color-mix(in_srgb,var(--accent-soft)_72%,white)] text-accent"
-                : "border border-border bg-white/80 text-foreground hover:bg-white"
+                ? "border border-accent/20 bg-[color-mix(in_srgb,var(--accent)_18%,var(--surface-elevated))] text-accent-foreground"
+                : "border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,var(--surface))] text-foreground hover:bg-[color-mix(in_srgb,var(--surface-elevated)_96%,var(--surface))]"
             }`}
             disabled={!canRunReindex}
             onClick={() => setMode("embeddings")}
@@ -153,7 +153,7 @@ export function AdminAiOperations({
       </label>
 
       <button
-        className="inline-flex w-fit rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+        className="action-button action-button--primary inline-flex w-fit px-5 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-60"
         disabled={pending || !targetUserId.trim() || !canRunReindex}
         onClick={runReindex}
         type="button"

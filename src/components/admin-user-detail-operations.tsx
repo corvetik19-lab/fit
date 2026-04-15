@@ -26,7 +26,7 @@ function TimelineCard({
   title: string;
 }) {
   return (
-    <article className="rounded-3xl border border-border bg-white/60 p-4 text-sm">
+    <article className="surface-panel p-4 text-sm">
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
           <p className="font-semibold text-foreground">{title}</p>
@@ -41,7 +41,7 @@ function TimelineCard({
 
 function TimelineEntry({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-border/80 bg-white/80 px-4 py-3">
+    <div className="surface-panel surface-panel--soft px-4 py-3">
       {children}
     </div>
   );
@@ -208,7 +208,7 @@ export function AdminUserOperationAuditSection({
 
             return (
               <article
-                className="rounded-2xl border border-border bg-white/60 p-4 text-sm"
+                className="surface-panel p-4 text-sm"
                 key={entry.id}
               >
                 <p className="font-semibold text-foreground">
@@ -296,7 +296,7 @@ export function AdminUserAdminAuditSection({
         {detail.recentAdminAuditLogs.length ? (
           detail.recentAdminAuditLogs.map((entry) => (
             <article
-              className="rounded-2xl border border-border bg-white/60 p-4 text-sm"
+              className="surface-panel p-4 text-sm"
               key={entry.id}
             >
               <p className="font-semibold text-foreground">

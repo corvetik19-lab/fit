@@ -214,8 +214,8 @@ function formatPercent(value: number | null) {
 
 function getStatusTone(active: boolean) {
   return active
-    ? "bg-emerald-50 text-emerald-700"
-    : "bg-amber-50 text-amber-700";
+    ? "border border-emerald-500/25 bg-emerald-500/12 text-emerald-100"
+    : "border border-amber-500/25 bg-amber-500/12 text-amber-100";
 }
 
 function formatConfigState(missingKeys: string[]) {
@@ -591,17 +591,17 @@ export function AdminHealthDashboard({
             </div>
           </div>
 
-          {error ? <p className="rounded-2xl border border-red-300/60 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p> : null}
+          {error ? <p className="rounded-2xl border border-red-500/25 bg-red-500/12 px-4 py-3 text-sm text-red-100">{error}</p> : null}
           {isDegraded ? (
-            <p className="rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <p className="rounded-2xl border border-amber-500/25 bg-amber-500/12 px-4 py-3 text-sm text-amber-100">
               Часть служебных источников сейчас недоступна. Панель показывает безопасный резервный снимок и может временно не отражать последние изменения.
             </p>
           ) : null}
-          {smokeTestMessage ? <p className="rounded-2xl border border-sky-300/60 bg-sky-50 px-4 py-3 text-sm text-sky-800">{smokeTestMessage}</p> : null}
-          {dashboardWarmMessage ? <p className="rounded-2xl border border-sky-300/60 bg-sky-50 px-4 py-3 text-sm text-sky-800">{dashboardWarmMessage}</p> : null}
-          {nutritionSummariesMessage ? <p className="rounded-2xl border border-sky-300/60 bg-sky-50 px-4 py-3 text-sm text-sky-800">{nutritionSummariesMessage}</p> : null}
-          {knowledgeReindexMessage ? <p className="rounded-2xl border border-sky-300/60 bg-sky-50 px-4 py-3 text-sm text-sky-800">{knowledgeReindexMessage}</p> : null}
-          {billingReconcileMessage ? <p className="rounded-2xl border border-sky-300/60 bg-sky-50 px-4 py-3 text-sm text-sky-800">{billingReconcileMessage}</p> : null}
+          {smokeTestMessage ? <p className="rounded-2xl border border-sky-500/25 bg-sky-500/12 px-4 py-3 text-sm text-sky-100">{smokeTestMessage}</p> : null}
+          {dashboardWarmMessage ? <p className="rounded-2xl border border-sky-500/25 bg-sky-500/12 px-4 py-3 text-sm text-sky-100">{dashboardWarmMessage}</p> : null}
+          {nutritionSummariesMessage ? <p className="rounded-2xl border border-sky-500/25 bg-sky-500/12 px-4 py-3 text-sm text-sky-100">{nutritionSummariesMessage}</p> : null}
+          {knowledgeReindexMessage ? <p className="rounded-2xl border border-sky-500/25 bg-sky-500/12 px-4 py-3 text-sm text-sky-100">{knowledgeReindexMessage}</p> : null}
+          {billingReconcileMessage ? <p className="rounded-2xl border border-sky-500/25 bg-sky-500/12 px-4 py-3 text-sm text-sky-100">{billingReconcileMessage}</p> : null}
 
           <div className="flex flex-wrap gap-2">
             {readinessCards.map(([label, ready]) => (
@@ -736,12 +736,12 @@ export function AdminHealthDashboard({
 
       <PanelCard caption="Операции" title="Очереди и действия">
         <div className="grid gap-4">
-          <p className={`rounded-2xl border px-4 py-3 text-sm ${hasSyncBacklog ? "border-amber-300/60 bg-amber-50 text-amber-800" : "border-emerald-300/60 bg-emerald-50 text-emerald-700"}`}>
+          <p className={`rounded-2xl border px-4 py-3 text-sm ${hasSyncBacklog ? "border-amber-500/25 bg-amber-500/12 text-amber-100" : "border-emerald-500/25 bg-emerald-500/12 text-emerald-100"}`}>
             {hasSyncBacklog
               ? "Есть накопившиеся задачи. Проверь ниже, где уже нужен операторский контроль."
               : "Критичных очередей сейчас нет. Основные процессы проходят штатно."}
           </p>
-          <p className={`rounded-2xl border px-4 py-3 text-sm ${hasBillingAttention ? "border-amber-300/60 bg-amber-50 text-amber-800" : "border-emerald-300/60 bg-emerald-50 text-emerald-700"}`}>
+          <p className={`rounded-2xl border px-4 py-3 text-sm ${hasBillingAttention ? "border-amber-500/25 bg-amber-500/12 text-amber-100" : "border-emerald-500/25 bg-emerald-500/12 text-emerald-100"}`}>
             {hasBillingAttention
               ? "В оплатах есть задачи, которым нужен контроль: просрочки, ручные проверки или ошибки сверки."
               : "По оплате всё спокойно: активные подписки и свежая сверка на месте."}
@@ -761,7 +761,7 @@ export function AdminHealthDashboard({
           </div>
 
           <div className="grid gap-3 md:grid-cols-2">
-            <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm">
+            <article className={adminSoftPanelClassName}>
               <p className="font-semibold text-foreground">Поддержка пользователей</p>
               <div className="mt-3 grid gap-1 text-muted">
                 <p>Ждут обработки: {syncHealth?.queuedSupportActions ?? 0}</p>
@@ -770,7 +770,7 @@ export function AdminHealthDashboard({
                 <p>Последняя активность: {formatDateTime(syncHealth?.latestSupportActionAt ?? null)}</p>
               </div>
             </article>
-            <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm">
+            <article className={adminSoftPanelClassName}>
               <p className="font-semibold text-foreground">Проверка качества ИИ</p>
               <div className="mt-3 grid gap-1 text-muted">
                 <p>Ждут запуска: {syncHealth?.queuedAiEvalRuns ?? 0}</p>
@@ -782,14 +782,14 @@ export function AdminHealthDashboard({
           </div>
 
           <div className="grid gap-3 md:grid-cols-2">
-            <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm">
+            <article className={adminSoftPanelClassName}>
               <p className="font-semibold text-foreground">Выгрузка данных</p>
               <div className="mt-3 grid gap-1 text-muted">
                 <p>Ждут или обрабатываются: {syncHealth?.queuedExportJobs ?? 0}</p>
                 <p>Последняя активность: {formatDateTime(syncHealth?.latestExportJobAt ?? null)}</p>
               </div>
             </article>
-            <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm">
+            <article className={adminSoftPanelClassName}>
               <p className="font-semibold text-foreground">Удаление данных</p>
               <div className="mt-3 grid gap-1 text-muted">
                 <p>Активные удержания: {syncHealth?.activeDeletionRequests ?? 0}</p>
@@ -800,7 +800,7 @@ export function AdminHealthDashboard({
           </div>
 
           <div className="grid gap-3 md:grid-cols-2">
-            <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm" data-testid="admin-health-billing-review-card">
+            <article className={adminSoftPanelClassName} data-testid="admin-health-billing-review-card">
               <p className="font-semibold text-foreground">Проверка оплат</p>
               <div className="mt-3 grid gap-1 text-muted">
                 <p>Ждут ручной проверки: {billingHealth?.queuedBillingReviews ?? 0}</p>
@@ -811,7 +811,7 @@ export function AdminHealthDashboard({
                 <p>Последняя автоматическая сверка: {formatDateTime(billingHealth?.latestBillingReconcileAt ?? null)}</p>
               </div>
             </article>
-            <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm" data-testid="admin-health-billing-subscriptions-card">
+            <article className={adminSoftPanelClassName} data-testid="admin-health-billing-subscriptions-card">
               <p className="font-semibold text-foreground">
                 Подписки {billingHealth?.providerLabel ? `(${billingHealth.providerLabel})` : ""}
               </p>
@@ -829,7 +829,7 @@ export function AdminHealthDashboard({
             </article>
           </div>
 
-          <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm">
+          <article className={adminSoftPanelClassName}>
             <p className="font-semibold text-foreground">Синхронизация тренировок</p>
             <p className="mt-2 text-muted">Последнее обновление подходов: {formatDateTime(syncHealth?.latestWorkoutSetAt ?? null)}</p>
             <p className="mt-1 text-muted">Возврат из оплаты обработан: {formatDateTime(billingHealth?.latestCheckoutReturnReconcileAt ?? null)}</p>

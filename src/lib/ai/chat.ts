@@ -1,6 +1,8 @@
 import type { ModelMessage, UIMessage } from "ai";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { withTransientRetry } from "@/lib/runtime-retry";
+
 export type AiChatSessionRow = {
   id: string;
   title: string | null;
@@ -47,14 +49,16 @@ export async function createAiChatSession(
   userId: string,
   firstPrompt: string,
 ) {
-  const { data, error } = await supabase
-    .from("ai_chat_sessions")
-    .insert({
-      user_id: userId,
-      title: buildSessionTitle(firstPrompt),
-    })
-    .select("id, title, created_at, updated_at")
-    .single();
+  const { data, error } = await withTransientRetry(async () =>
+    await supabase
+      .from("ai_chat_sessions")
+      .insert({
+        user_id: userId,
+        title: buildSessionTitle(firstPrompt),
+      })
+      .select("id, title, created_at, updated_at")
+      .single(),
+  );
 
   if (error) {
     throw error;
@@ -70,12 +74,14 @@ export async function ensureAiChatSession(
   firstPrompt: string,
 ) {
   if (sessionId) {
-    const { data, error } = await supabase
-      .from("ai_chat_sessions")
-      .select("id, title, created_at, updated_at")
-      .eq("id", sessionId)
-      .eq("user_id", userId)
-      .maybeSingle();
+    const { data, error } = await withTransientRetry(async () =>
+      await supabase
+        .from("ai_chat_sessions")
+        .select("id, title, created_at, updated_at")
+        .eq("id", sessionId)
+        .eq("user_id", userId)
+        .maybeSingle(),
+    );
 
     if (error) {
       throw error;
@@ -109,11 +115,13 @@ export async function touchAiChatSession(
     payload.title = title;
   }
 
-  const { error } = await supabase
-    .from("ai_chat_sessions")
-    .update(payload)
-    .eq("id", sessionId)
-    .eq("user_id", userId);
+  const { error } = await withTransientRetry(async () =>
+    await supabase
+      .from("ai_chat_sessions")
+      .update(payload)
+      .eq("id", sessionId)
+      .eq("user_id", userId),
+  );
 
   if (error) {
     throw error;
@@ -129,16 +137,18 @@ export async function createAiChatMessage(
     content: string;
   },
 ) {
-  const { data, error } = await supabase
-    .from("ai_chat_messages")
-    .insert({
-      user_id: input.userId,
-      session_id: input.sessionId,
-      role: input.role,
-      content: input.content,
-    })
-    .select("id, session_id, role, content, created_at")
-    .single();
+  const { data, error } = await withTransientRetry(async () =>
+    await supabase
+      .from("ai_chat_messages")
+      .insert({
+        user_id: input.userId,
+        session_id: input.sessionId,
+        role: input.role,
+        content: input.content,
+      })
+      .select("id, session_id, role, content, created_at")
+      .single(),
+  );
 
   if (error) {
     throw error;
@@ -153,13 +163,15 @@ export async function listAiChatMessages(
   sessionId: string,
   limit = 20,
 ) {
-  const { data, error } = await supabase
-    .from("ai_chat_messages")
-    .select("id, session_id, role, content, created_at")
-    .eq("user_id", userId)
-    .eq("session_id", sessionId)
-    .order("created_at", { ascending: true })
-    .limit(limit);
+  const { data, error } = await withTransientRetry(async () =>
+    await supabase
+      .from("ai_chat_messages")
+      .select("id, session_id, role, content, created_at")
+      .eq("user_id", userId)
+      .eq("session_id", sessionId)
+      .order("created_at", { ascending: true })
+      .limit(limit),
+  );
 
   if (error) {
     throw error;
@@ -180,12 +192,15 @@ export async function listAiChatSessions(
   userId: string,
   limit = 8,
 ) {
-  const { data: sessionData, error: sessionError } = await supabase
-    .from("ai_chat_sessions")
-    .select("id, title, created_at, updated_at")
-    .eq("user_id", userId)
-    .order("updated_at", { ascending: false })
-    .limit(limit);
+  const { data: sessionData, error: sessionError } = await withTransientRetry(
+    async () =>
+      await supabase
+        .from("ai_chat_sessions")
+        .select("id, title, created_at, updated_at")
+        .eq("user_id", userId)
+        .order("updated_at", { ascending: false })
+        .limit(limit),
+  );
 
   if (sessionError) {
     throw sessionError;
@@ -206,12 +221,15 @@ export async function getAiChatState(
   let session: AiChatSessionRow | null = null;
 
   if (sessionId) {
-    const { data: requestedSession, error: requestedSessionError } = await supabase
-      .from("ai_chat_sessions")
-      .select("id, title, created_at, updated_at")
-      .eq("user_id", userId)
-      .eq("id", sessionId)
-      .maybeSingle();
+    const { data: requestedSession, error: requestedSessionError } =
+      await withTransientRetry(async () =>
+        await supabase
+          .from("ai_chat_sessions")
+          .select("id, title, created_at, updated_at")
+          .eq("user_id", userId)
+          .eq("id", sessionId)
+          .maybeSingle(),
+      );
 
     if (requestedSessionError) {
       throw requestedSessionError;
@@ -221,13 +239,16 @@ export async function getAiChatState(
   }
 
   if (!session && fallbackToLatest) {
-    const { data: latestSession, error: latestSessionError } = await supabase
-      .from("ai_chat_sessions")
-      .select("id, title, created_at, updated_at")
-      .eq("user_id", userId)
-      .order("updated_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    const { data: latestSession, error: latestSessionError } =
+      await withTransientRetry(async () =>
+        await supabase
+          .from("ai_chat_sessions")
+          .select("id, title, created_at, updated_at")
+          .eq("user_id", userId)
+          .order("updated_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+      );
 
     if (latestSessionError) {
       throw latestSessionError;
@@ -281,12 +302,15 @@ export async function deleteAiChatSession(
   userId: string,
   sessionId: string,
 ) {
-  const { data: existingSession, error: sessionLookupError } = await supabase
-    .from("ai_chat_sessions")
-    .select("id")
-    .eq("user_id", userId)
-    .eq("id", sessionId)
-    .maybeSingle();
+  const { data: existingSession, error: sessionLookupError } =
+    await withTransientRetry(async () =>
+      await supabase
+        .from("ai_chat_sessions")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("id", sessionId)
+        .maybeSingle(),
+    );
 
   if (sessionLookupError) {
     throw sessionLookupError;
@@ -300,21 +324,25 @@ export async function deleteAiChatSession(
     );
   }
 
-  const { error: messageDeleteError } = await supabase
-    .from("ai_chat_messages")
-    .delete()
-    .eq("user_id", userId)
-    .eq("session_id", sessionId);
+  const { error: messageDeleteError } = await withTransientRetry(async () =>
+    await supabase
+      .from("ai_chat_messages")
+      .delete()
+      .eq("user_id", userId)
+      .eq("session_id", sessionId),
+  );
 
   if (messageDeleteError) {
     throw messageDeleteError;
   }
 
-  const { error: sessionDeleteError } = await supabase
-    .from("ai_chat_sessions")
-    .delete()
-    .eq("user_id", userId)
-    .eq("id", sessionId);
+  const { error: sessionDeleteError } = await withTransientRetry(async () =>
+    await supabase
+      .from("ai_chat_sessions")
+      .delete()
+      .eq("user_id", userId)
+      .eq("id", sessionId),
+  );
 
   if (sessionDeleteError) {
     throw sessionDeleteError;
@@ -325,19 +353,23 @@ export async function deleteAllAiChatSessions(
   supabase: SupabaseClient,
   userId: string,
 ) {
-  const { error: messageDeleteError } = await supabase
-    .from("ai_chat_messages")
-    .delete()
-    .eq("user_id", userId);
+  const { error: messageDeleteError } = await withTransientRetry(async () =>
+    await supabase
+      .from("ai_chat_messages")
+      .delete()
+      .eq("user_id", userId),
+  );
 
   if (messageDeleteError) {
     throw messageDeleteError;
   }
 
-  const { error: sessionDeleteError } = await supabase
-    .from("ai_chat_sessions")
-    .delete()
-    .eq("user_id", userId);
+  const { error: sessionDeleteError } = await withTransientRetry(async () =>
+    await supabase
+      .from("ai_chat_sessions")
+      .delete()
+      .eq("user_id", userId),
+  );
 
   if (sessionDeleteError) {
     throw sessionDeleteError;

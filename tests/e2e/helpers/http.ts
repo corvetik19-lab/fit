@@ -28,8 +28,10 @@ export async function fetchJson<T = unknown>(
   },
 ) {
   const requestUrl = resolveRequestUrl(page, input.url);
-  const isAiRoute = new URL(requestUrl).pathname.startsWith("/api/ai/");
-  const maxAttempts = isAiRoute ? 2 : 3;
+  const requestPath = new URL(requestUrl).pathname;
+  const isAiRoute = requestPath.startsWith("/api/ai/");
+  const isAdminRoute = requestPath.startsWith("/api/admin/");
+  const maxAttempts = isAiRoute ? 2 : isAdminRoute ? 4 : 3;
 
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     try {
@@ -38,7 +40,7 @@ export async function fetchJson<T = unknown>(
         headers: input.body ? { "Content-Type": "application/json" } : undefined,
         data: input.body ? JSON.stringify(input.body) : undefined,
         failOnStatusCode: false,
-        timeout: isAiRoute ? 45_000 : 30_000,
+        timeout: isAiRoute ? 45_000 : isAdminRoute ? 45_000 : 30_000,
       });
 
       const rawBody = await response.text();
@@ -55,6 +57,11 @@ export async function fetchJson<T = unknown>(
       if (
         attempt < maxAttempts - 1 &&
         (response.status() === 401 ||
+          (isAdminRoute &&
+            (response.status() === 500 ||
+              response.status() === 502 ||
+              response.status() === 503 ||
+              response.status() === 504)) ||
           (isAiRoute && (response.status() === 500 || response.status() === 502)))
       ) {
         await page.waitForTimeout(250 * (attempt + 1));
@@ -67,6 +74,7 @@ export async function fetchJson<T = unknown>(
       } satisfies FetchResult<T>;
     } catch (error) {
       if (attempt < maxAttempts - 1 && error instanceof Error) {
+        await page.waitForTimeout(250 * (attempt + 1));
         continue;
       }
 

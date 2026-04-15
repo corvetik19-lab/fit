@@ -20,7 +20,7 @@ type AdminRoleManagerProps = {
 };
 
 const inputClassName =
-  "w-full rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15";
+  "w-full rounded-2xl border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,var(--surface))] px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15";
 
 async function readJsonSafely(response: Response) {
   return (await response.json().catch(() => null)) as { message?: string } | null;
@@ -160,14 +160,14 @@ export function AdminRoleManager({
       </div>
 
       <div className="mb-4 grid gap-3 md:grid-cols-2">
-        <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm">
+        <article className="surface-panel surface-panel--soft p-4 text-sm">
           <p className="text-muted">Текущая роль</p>
           <p className="mt-2 text-lg font-semibold text-foreground">
             {targetAdminRole ? getAdminRoleLabel(targetAdminRole) : "Обычный пользователь"}
           </p>
         </article>
 
-        <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm">
+        <article className="surface-panel surface-panel--soft p-4 text-sm">
           <p className="text-muted">Ваш уровень доступа</p>
           <p className="mt-2 text-lg font-semibold text-foreground">
             {currentAdminRole ? getAdminRoleLabel(currentAdminRole) : "Нет доступа"}
@@ -200,7 +200,7 @@ export function AdminRoleManager({
         </label>
 
         {!targetCanBeSuperAdmin ? (
-          <p className="rounded-2xl border border-sky-300/60 bg-sky-50 px-4 py-3 text-sm text-sky-800">
+          <p className="rounded-2xl border border-sky-500/25 bg-sky-500/12 px-4 py-3 text-sm text-sky-100">
             Главный доступ закреплён только за {PRIMARY_SUPER_ADMIN_EMAIL}.
           </p>
         ) : null}
@@ -218,7 +218,7 @@ export function AdminRoleManager({
 
         <div className="flex flex-wrap gap-3">
           <button
-            className="rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+            className="action-button action-button--primary px-5 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-60"
             disabled={!canManageRoles || isPending}
             onClick={() => void applyRole()}
             type="button"
@@ -227,7 +227,7 @@ export function AdminRoleManager({
           </button>
 
           <button
-            className="rounded-full border border-border px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
+            className="action-button action-button--secondary px-5 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-60"
             disabled={!canManageRoles || isPending || !targetAdminRole || isSelf}
             onClick={() => void revokeRole()}
             type="button"
@@ -237,26 +237,26 @@ export function AdminRoleManager({
         </div>
 
         {!canManageRoles ? (
-          <p className="rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <p className="rounded-2xl border border-amber-500/25 bg-amber-500/12 px-4 py-3 text-sm text-amber-100">
             Менять роли может только главный супер-админ.
           </p>
         ) : null}
 
         {isSelf ? (
-          <p className="rounded-2xl border border-sky-300/60 bg-sky-50 px-4 py-3 text-sm text-sky-800">
+          <p className="rounded-2xl border border-sky-500/25 bg-sky-500/12 px-4 py-3 text-sm text-sky-100">
             Нельзя снять административный доступ с собственного аккаунта.
           </p>
         ) : null}
       </div>
 
       {error ? (
-        <p className="mt-4 rounded-2xl border border-red-300/60 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <p className="mt-4 rounded-2xl border border-red-500/25 bg-red-500/12 px-4 py-3 text-sm text-red-100">
           {error}
         </p>
       ) : null}
 
       {notice ? (
-        <p className="mt-4 rounded-2xl border border-emerald-300/60 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+        <p className="mt-4 rounded-2xl border border-emerald-500/25 bg-emerald-500/12 px-4 py-3 text-sm text-emerald-100">
           {notice}
         </p>
       ) : null}

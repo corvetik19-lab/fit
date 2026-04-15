@@ -22,6 +22,7 @@ import {
   roleLabels,
   type ActivityBucket,
   type ActivityFilter,
+  type AdminUsersDirectoryInitialState,
   type AdminUsersSortKey,
 } from "@/components/admin-users-directory-model";
 import { useAdminUsersDirectoryState } from "@/components/use-admin-users-directory-state";
@@ -47,9 +48,11 @@ function DirectoryMetricCard({
 export function AdminUsersDirectory({
   currentAdminRole,
   currentUserEmail,
+  initialState,
 }: {
   currentAdminRole: PlatformAdminRole;
   currentUserEmail: string | null;
+  initialState?: AdminUsersDirectoryInitialState;
 }) {
   const canRunBulkActions = canUseRootAdminControls(
     currentAdminRole,
@@ -98,6 +101,7 @@ export function AdminUsersDirectory({
   } = useAdminUsersDirectoryState({
     canRunBulkActions,
     canViewRoleDetails,
+    initialState,
   });
 
   if (isLoading) {
@@ -111,7 +115,7 @@ export function AdminUsersDirectory({
   if (error) {
     return (
       <section className="card p-6">
-        <p className="rounded-2xl border border-red-300/60 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <p className="rounded-2xl border border-red-500/25 bg-red-500/12 px-4 py-3 text-sm text-red-100">
           {error}
         </p>
       </section>
@@ -119,7 +123,7 @@ export function AdminUsersDirectory({
   }
 
   return (
-    <section className="card card--hero p-6 sm:p-8">
+    <section className="card card--hero p-6 sm:p-8" data-testid="admin-users-directory">
       <div className="grid gap-6 2xl:grid-cols-[1.12fr_0.88fr]">
         <div className="space-y-5">
           <div className="flex flex-wrap gap-2">
@@ -185,7 +189,7 @@ export function AdminUsersDirectory({
       </div>
 
       {isDegraded ? (
-        <div className="mt-6 rounded-[28px] border border-amber-300/70 bg-amber-50/90 px-5 py-4 text-sm text-amber-900">
+        <div className="mt-6 rounded-[28px] border border-amber-400/25 bg-amber-500/12 px-5 py-4 text-sm text-amber-100">
           Каталог пользователей показан из резервного снимка. Часть служебных источников
           временно не ответила, поэтому отдельные сигналы и сводки могут быть неполными.
         </div>
@@ -218,7 +222,7 @@ export function AdminUsersDirectory({
         <label className="grid gap-2 text-sm text-muted lg:col-span-1">
           Поиск по имени, email или ID
           <input
-            className="w-full rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15"
+            className="w-full rounded-2xl border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,var(--surface))] px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15"
             onChange={(event) => setSearchQuery(event.target.value)}
             placeholder="Например: corvetik1@yandex.ru"
             type="text"
@@ -230,7 +234,7 @@ export function AdminUsersDirectory({
           <label className="grid gap-2 text-sm text-muted">
             Роль
             <select
-              className="w-full rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15"
+              className="w-full rounded-2xl border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,var(--surface))] px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15"
               onChange={(event) =>
                 setRoleFilter(
                   event.target.value as
@@ -255,7 +259,7 @@ export function AdminUsersDirectory({
         <label className="grid gap-2 text-sm text-muted">
           Активность
           <select
-            className="w-full rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15"
+            className="w-full rounded-2xl border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,var(--surface))] px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15"
             onChange={(event) => setActivityFilter(event.target.value as ActivityFilter)}
             value={activityFilter}
           >
@@ -271,7 +275,7 @@ export function AdminUsersDirectory({
         <label className="grid gap-2 text-sm text-muted">
           Сортировка
           <select
-            className="w-full rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15"
+            className="w-full rounded-2xl border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,var(--surface))] px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15"
             onChange={(event) => setSortKey(event.target.value as AdminUsersSortKey)}
             value={sortKey}
           >
@@ -310,7 +314,7 @@ export function AdminUsersDirectory({
 
       <div className="mt-6 grid gap-4 2xl:grid-cols-[1.15fr_0.85fr]">
         {canViewRoleDetails ? (
-          <article className="rounded-[30px] border border-sky-300/60 bg-sky-50/85 p-5 text-sm text-sky-900">
+          <article className="surface-panel surface-panel--soft border border-sky-400/25 p-5 text-sm text-sky-100">
             <p className="font-semibold text-foreground">
               Главный доступ закреплён отдельно и защищён от случайных изменений.
             </p>
@@ -320,7 +324,7 @@ export function AdminUsersDirectory({
             </p>
           </article>
         ) : (
-          <article className="rounded-[30px] border border-border bg-white/72 p-5 text-sm">
+          <article className="surface-panel surface-panel--soft p-5 text-sm">
             <p className="font-semibold text-foreground">
               Каталог показывает только рабочие данные по пользователям.
             </p>
@@ -331,7 +335,7 @@ export function AdminUsersDirectory({
           </article>
         )}
 
-        <article className="rounded-[30px] border border-border bg-white/72 p-5 text-sm">
+        <article className="surface-panel surface-panel--soft p-5 text-sm">
           <p className="font-semibold text-foreground">Что видно в одном экране</p>
           <p className="mt-2 leading-7 text-muted">
             Активность по тренировкам, питанию и ИИ, очередь задач, выгрузка данных, удаление,
@@ -366,7 +370,7 @@ export function AdminUsersDirectory({
       </div>
 
       <div className="mb-5 grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
-        <article className="rounded-[28px] border border-border bg-white/70 p-5">
+        <article className="surface-panel p-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted">
@@ -445,7 +449,7 @@ export function AdminUsersDirectory({
               ["Нарушения главного доступа", catalogSummary.hygiene.rootPolicyViolations],
             ].map(([label, value]) => (
               <div
-                className="rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm"
+                className="surface-panel surface-panel--soft px-4 py-3 text-sm"
                 key={label}
               >
                 <p className="text-muted">{label}</p>
@@ -455,7 +459,7 @@ export function AdminUsersDirectory({
           </div>
         </article>
 
-        <article className="rounded-[28px] border border-border bg-white/70 p-5">
+        <article className="surface-panel p-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted">
@@ -466,7 +470,7 @@ export function AdminUsersDirectory({
               </h3>
             </div>
             <button
-              className="inline-flex rounded-full border border-border px-3 py-2 text-xs font-semibold text-foreground transition hover:bg-white/70"
+              className="action-button action-button--secondary px-3 py-2 text-xs"
               onClick={() => setActivityFilter("backlog")}
               type="button"
             >
@@ -484,7 +488,7 @@ export function AdminUsersDirectory({
               ["Платящих без активности", catalogSummary.billing.paidButStale],
             ].map(([label, value]) => (
               <div
-                className="rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm"
+                className="surface-panel surface-panel--soft px-4 py-3 text-sm"
                 key={label}
               >
                 <p className="text-muted">{label}</p>
@@ -496,7 +500,7 @@ export function AdminUsersDirectory({
       </div>
 
       <div className="mb-5 grid gap-4 xl:grid-cols-2">
-        <article className="rounded-[28px] border border-border bg-white/70 p-5">
+        <article className="surface-panel p-5">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted">
@@ -513,7 +517,7 @@ export function AdminUsersDirectory({
             {segments.priorityQueue.length ? (
               segments.priorityQueue.map((user) => (
                 <Link
-                  className="rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm transition hover:border-accent/40 hover:bg-white"
+                  className="surface-panel surface-panel--soft px-4 py-3 text-sm transition hover:border-accent/40 hover:bg-[color-mix(in_srgb,var(--surface-elevated)_96%,var(--surface))]"
                   href={`/admin/users/${user.user_id}` as Route}
                   key={user.user_id}
                 >
@@ -566,7 +570,7 @@ export function AdminUsersDirectory({
         </article>
 
         <div className="grid gap-4">
-          <article className="rounded-[28px] border border-border bg-white/70 p-5">
+          <article className="surface-panel p-5">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted">
@@ -577,7 +581,7 @@ export function AdminUsersDirectory({
                 </h3>
               </div>
               <button
-                className="inline-flex rounded-full border border-border px-3 py-2 text-xs font-semibold text-foreground transition hover:bg-white/70"
+                className="action-button action-button--secondary px-3 py-2 text-xs"
                 onClick={() => setActivityFilter("paid")}
                 type="button"
               >
@@ -589,7 +593,7 @@ export function AdminUsersDirectory({
               {segments.inactivePaid.length ? (
                 segments.inactivePaid.map((user) => (
                   <Link
-                    className="rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm transition hover:border-accent/40 hover:bg-white"
+                    className="surface-panel surface-panel--soft px-4 py-3 text-sm transition hover:border-accent/40 hover:bg-[color-mix(in_srgb,var(--surface-elevated)_96%,var(--surface))]"
                     href={`/admin/users/${user.user_id}` as Route}
                     key={user.user_id}
                   >
@@ -618,7 +622,7 @@ export function AdminUsersDirectory({
             </div>
           </article>
 
-          <article className="rounded-[28px] border border-border bg-white/70 p-5">
+          <article className="surface-panel p-5">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted">
@@ -634,7 +638,7 @@ export function AdminUsersDirectory({
               <div className="grid gap-3">
                 {segments.newestUsers.map((user) => (
                   <Link
-                    className="rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm transition hover:border-accent/40 hover:bg-white"
+                    className="surface-panel surface-panel--soft px-4 py-3 text-sm transition hover:border-accent/40 hover:bg-[color-mix(in_srgb,var(--surface-elevated)_96%,var(--surface))]"
                     href={`/admin/users/${user.user_id}` as Route}
                     key={user.user_id}
                   >
@@ -656,7 +660,7 @@ export function AdminUsersDirectory({
               <div className="grid gap-3">
                 {segments.topWorkoutUsers.map((user) => (
                   <Link
-                    className="rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm transition hover:border-accent/40 hover:bg-white"
+                    className="surface-panel surface-panel--soft px-4 py-3 text-sm transition hover:border-accent/40 hover:bg-[color-mix(in_srgb,var(--surface-elevated)_96%,var(--surface))]"
                     href={`/admin/users/${user.user_id}` as Route}
                     key={user.user_id}
                   >
@@ -685,7 +689,7 @@ export function AdminUsersDirectory({
 
             return (
               <article
-                className="rounded-[28px] border border-border bg-white/70 p-5 shadow-[0_18px_60px_-42px_rgba(15,23,42,0.28)]"
+                className="surface-panel p-5 shadow-[0_18px_60px_-42px_rgba(15,23,42,0.28)]"
                 key={user.user_id}
               >
                 <div className="flex flex-wrap items-start justify-between gap-4">
@@ -732,34 +736,34 @@ export function AdminUsersDirectory({
                     {activityLabels[user.activity.bucket]}
                   </span>
                   {user.flags.is_primary_super_admin ? (
-                    <span className="rounded-full border border-amber-300/70 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">
+                    <span className="rounded-full border border-amber-400/25 bg-amber-500/12 px-3 py-1 text-xs font-semibold text-amber-100">
                       Главный супер-админ
                     </span>
                   ) : null}
                   {user.operations.has_backlog ? (
-                    <span className="rounded-full border border-rose-300/70 bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-800">
+                    <span className="rounded-full border border-rose-400/25 bg-rose-500/12 px-3 py-1 text-xs font-semibold text-rose-100">
                       Есть очередь
                     </span>
                   ) : null}
                   {user.billing.is_active ? (
-                    <span className="rounded-full border border-emerald-300/70 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
+                    <span className="rounded-full border border-emerald-500/25 bg-emerald-500/12 px-3 py-1 text-xs font-semibold text-emerald-100">
                       Подписка активна
                     </span>
                   ) : null}
                   {user.flags.never_signed_in ? (
-                    <span className="rounded-full border border-slate-300/70 bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                    <span className="rounded-full border border-slate-500/25 bg-slate-500/12 px-3 py-1 text-xs font-semibold text-slate-100">
                       Без входов
                     </span>
                   ) : null}
                   {!user.flags.has_profile ? (
-                    <span className="rounded-full border border-amber-300/70 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">
+                    <span className="rounded-full border border-amber-400/25 bg-amber-500/12 px-3 py-1 text-xs font-semibold text-amber-100">
                       Без профиля
                     </span>
                   ) : null}
                 </div>
 
                 <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                  <article className="rounded-2xl border border-border bg-white/80 p-4">
+                  <article className="surface-panel surface-panel--soft p-4">
                     <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted">
                       Тренировки
                     </p>
@@ -774,7 +778,7 @@ export function AdminUsersDirectory({
                     </p>
                   </article>
 
-                  <article className="rounded-2xl border border-border bg-white/80 p-4">
+                  <article className="surface-panel surface-panel--soft p-4">
                     <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted">
                       Питание
                     </p>
@@ -787,7 +791,7 @@ export function AdminUsersDirectory({
                     </p>
                   </article>
 
-                  <article className="rounded-2xl border border-border bg-white/80 p-4">
+                  <article className="surface-panel surface-panel--soft p-4">
                     <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted">
                       ИИ
                     </p>
@@ -800,7 +804,7 @@ export function AdminUsersDirectory({
                     </p>
                   </article>
 
-                  <article className="rounded-2xl border border-border bg-white/80 p-4">
+                  <article className="surface-panel surface-panel--soft p-4">
                     <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted">
                       Операции
                     </p>
@@ -860,7 +864,7 @@ export function AdminUsersDirectory({
                   </div>
 
                   <Link
-                    className="inline-flex rounded-full border border-border px-4 py-2 font-semibold text-foreground transition hover:bg-white/70"
+                    className="action-button action-button--secondary px-4 py-2"
                     href={`/admin/users/${user.user_id}` as Route}
                   >
                     Открыть карточку

@@ -82,7 +82,7 @@ export function AiChatComposer({
       ) : null}
 
       <textarea
-        className="min-h-32 w-full resize-none rounded-[1.7rem] border border-border bg-white/88 px-4 py-4 text-sm leading-7 text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15 disabled:cursor-not-allowed disabled:opacity-60"
+        className="min-h-32 w-full resize-none rounded-[1.7rem] border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_90%,var(--surface))] px-4 py-4 text-sm leading-7 text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15 disabled:cursor-not-allowed disabled:opacity-60"
         data-testid="ai-chat-composer"
         disabled={!accessAllowed}
         onChange={(event) => onDraftChange(event.target.value)}

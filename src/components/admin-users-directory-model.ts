@@ -184,6 +184,15 @@ export type AdminUsersFetchResponse = {
   summary?: AdminUsersSummary;
 } | null;
 
+export type AdminUsersDirectoryInitialState = {
+  error?: string | null;
+  isDegraded?: boolean;
+  recentBulkWaves?: RecentBulkWave[];
+  segments?: AdminUsersSegments;
+  summary?: AdminUsersSummary;
+  users?: AdminUserRow[];
+};
+
 export type AdminUsersBulkResponse = {
   data?: {
     failed?: number;
@@ -271,11 +280,11 @@ export const activitySourceLabels: Record<
 };
 
 export const activityToneClasses: Record<ActivityBucket, string> = {
-  today: "border-emerald-300/70 bg-emerald-50 text-emerald-800",
-  seven_days: "border-sky-300/70 bg-sky-50 text-sky-800",
-  thirty_days: "border-amber-300/70 bg-amber-50 text-amber-800",
-  stale: "border-rose-300/70 bg-rose-50 text-rose-800",
-  never: "border-slate-300/70 bg-slate-100 text-slate-700",
+  today: "border-emerald-500/25 bg-emerald-500/12 text-emerald-100",
+  seven_days: "border-sky-500/25 bg-sky-500/12 text-sky-100",
+  thirty_days: "border-amber-500/25 bg-amber-500/12 text-amber-100",
+  stale: "border-rose-500/25 bg-rose-500/12 text-rose-100",
+  never: "border-white/10 bg-white/6 text-slate-200",
 };
 
 export function formatDate(value: string | null) {

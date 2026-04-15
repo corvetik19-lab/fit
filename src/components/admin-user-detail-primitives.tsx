@@ -10,7 +10,7 @@ export function MetricCard({
   value: string;
 }) {
   return (
-    <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm">
+    <article className="surface-panel surface-panel--soft p-4 text-sm">
       <p className="text-muted">{label}</p>
       <p className="mt-2 font-semibold text-foreground">{value}</p>
     </article>
@@ -20,12 +20,17 @@ export function MetricCard({
 export function KeyValueCard({
   title,
   rows,
+  testId,
 }: {
   title: string;
   rows: Array<{ label: string; value: string }>;
+  testId?: string;
 }) {
   return (
-    <article className="rounded-2xl border border-border bg-white/60 p-4 text-sm">
+    <article
+      className="surface-panel surface-panel--soft p-4 text-sm"
+      data-testid={testId}
+    >
       <p className="font-semibold text-foreground">{title}</p>
       <div className="mt-3 grid gap-2">
         {rows.map((row) => (

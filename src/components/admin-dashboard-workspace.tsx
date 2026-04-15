@@ -207,9 +207,10 @@ function HeroMetricCard({
     index === 1
       ? "bg-accent text-white shadow-[0_24px_60px_-36px_rgba(0,64,224,0.55)]"
       : index === 2
-        ? "bg-[linear-gradient(180deg,#fde2de_0%,#fbd0cb_100%)] text-rose-950"
-        : "bg-white";
-  const mutedClass = index === 1 ? "text-white/78" : "text-muted";
+        ? "border border-rose-500/20 bg-[linear-gradient(180deg,rgba(244,63,94,0.18),rgba(21,29,39,0.96))] text-rose-50"
+        : "surface-panel surface-panel--soft text-foreground";
+  const mutedClass =
+    index === 1 ? "text-white/78" : index === 2 ? "text-rose-100/78" : "text-muted";
 
   return (
     <article className={`rounded-[32px] p-6 ${toneClass}`}>
@@ -237,7 +238,7 @@ function SpotlightCard({
   title: string;
 }) {
   return (
-    <article className="rounded-[32px] bg-white p-6 shadow-[0_24px_60px_-42px_rgba(15,23,42,0.22)]">
+    <article className="surface-panel p-6">
       <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-muted">
         {caption}
       </p>
@@ -416,7 +417,7 @@ export function AdminDashboardWorkspace({
 
         {isDegraded ? (
           <p
-            className="mt-6 rounded-[28px] border border-amber-300/70 bg-amber-50 px-5 py-4 text-sm leading-7 text-amber-900"
+            className="mt-6 rounded-[28px] border border-amber-400/25 bg-amber-500/12 px-5 py-4 text-sm leading-7 text-amber-100"
             data-testid="admin-page-degraded-banner"
           >
             Панель временно работает из резервного снимка. Часть служебных
@@ -495,7 +496,7 @@ export function AdminDashboardWorkspace({
               </article>
             </div>
 
-            <article className="rounded-[28px] border border-border/70 bg-white/70 p-4 text-sm">
+              <article className="surface-panel surface-panel--soft p-4 text-sm">
               <p className="font-semibold text-foreground">
                 Последние обновления базы знаний
               </p>
@@ -522,7 +523,7 @@ export function AdminDashboardWorkspace({
               <div className="grid gap-3">
                 {aiSafetyEvents.slice(0, 3).map((event) => (
                   <article
-                    className="rounded-[24px] bg-[color-mix(in_srgb,var(--surface-container-low)_78%,white)] px-4 py-3 text-sm"
+                    className="surface-panel surface-panel--soft px-4 py-3 text-sm"
                     key={event.id}
                   >
                     <p className="font-semibold text-foreground">
@@ -577,7 +578,7 @@ export function AdminDashboardWorkspace({
               {recentAudit.length ? (
                 recentAudit.map((entry) => (
                   <article
-                    className="rounded-[24px] border border-border/70 bg-white/70 px-4 py-3 text-sm"
+                    className="surface-panel surface-panel--soft px-4 py-3 text-sm"
                     key={entry.id}
                   >
                     <p className="font-semibold text-foreground">

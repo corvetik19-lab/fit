@@ -20,6 +20,35 @@ type AuthCredentials = {
   password: string;
 };
 
+type OnboardingPayload = {
+  age: number;
+  dietaryPreferences: string[];
+  equipment: string[];
+  fitnessLevel: string;
+  fullName: string;
+  goalType: "fat_loss" | "maintenance" | "muscle_gain" | "performance";
+  heightCm: number;
+  injuries: string[];
+  sex: string;
+  targetWeightKg: number | null;
+  weeklyTrainingDays: number;
+  weightKg: number;
+};
+
+const defaultOnboardingPayload = {
+  age: 30,
+  dietaryPreferences: ["high_protein"],
+  equipment: ["barbell", "dumbbells"],
+  fitnessLevel: "intermediate",
+  goalType: "maintenance",
+  heightCm: 180,
+  injuries: [],
+  sex: "male",
+  targetWeightKg: 76,
+  weeklyTrainingDays: 4,
+  weightKg: 80,
+} satisfies Omit<OnboardingPayload, "fullName">;
+
 export function getAuthE2ECredentials(): AuthCredentials | null {
   if (!authEmail || !authPassword) {
     return null;
@@ -252,6 +281,47 @@ async function bootstrapSessionFromSupabase(
   ]);
 }
 
+function resolveRequestUrl(page: Page, url: string) {
+  if (/^https?:\/\//iu.test(url)) {
+    return url;
+  }
+
+  const currentUrl = page.url();
+  const baseUrl =
+    currentUrl && /^https?:\/\//iu.test(currentUrl)
+      ? currentUrl
+      : process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3100";
+
+  return new URL(url, baseUrl).toString();
+}
+
+async function completeOnboardingViaApi(page: Page, fullName: string) {
+  const payload: OnboardingPayload = {
+    ...defaultOnboardingPayload,
+    fullName,
+  };
+
+  const response = await page.context().request.fetch(
+    resolveRequestUrl(page, "/api/onboarding"),
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      data: JSON.stringify(payload),
+      failOnStatusCode: false,
+      timeout: 30_000,
+    },
+  );
+
+  if (!response.ok()) {
+    const bodyText = await response.text().catch(() => "");
+    throw new Error(
+      `Onboarding API completion failed with ${response.status()}: ${bodyText || "empty body"}`,
+    );
+  }
+}
+
 async function signInWithCredentials(page: Page, credentials: AuthCredentials) {
   await page.goto("/");
   await page.waitForLoadState("networkidle");
@@ -308,6 +378,18 @@ async function signInWithCredentials(page: Page, credentials: AuthCredentials) {
 }
 
 async function completeOnboarding(page: Page, fullName: string) {
+  try {
+    await completeOnboardingViaApi(page, fullName);
+    await page.goto("/dashboard", {
+      waitUntil: "domcontentloaded",
+      timeout: 30_000,
+    });
+    await page.waitForURL(/\/dashboard$/, { timeout: 45_000 });
+    return;
+  } catch {
+    // Fall back to the visible onboarding form when the API path is unavailable.
+  }
+
   await page.waitForLoadState("networkidle");
   await page.waitForTimeout(250);
 

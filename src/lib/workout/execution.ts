@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { withTransientRetry } from "@/lib/runtime-retry";
 import { getWorkoutDayDetail } from "@/lib/workout/weekly-programs";
 
 export type WorkoutDayStatus = "planned" | "in_progress" | "done";
@@ -69,14 +70,16 @@ async function getLockedWorkoutDayContext(
   userId: string,
   dayId: string,
 ) {
-  const { data: dayRow, error: dayError } = await supabase
-    .from("workout_days")
-    .select(
-      "id, weekly_program_id, status, body_weight_kg, session_note, session_duration_seconds",
-    )
-    .eq("id", dayId)
-    .eq("user_id", userId)
-    .maybeSingle();
+  const { data: dayRow, error: dayError } = await withTransientRetry(async () =>
+    await supabase
+      .from("workout_days")
+      .select(
+        "id, weekly_program_id, status, body_weight_kg, session_note, session_duration_seconds",
+      )
+      .eq("id", dayId)
+      .eq("user_id", userId)
+      .maybeSingle(),
+  );
 
   if (dayError) {
     throw dayError;
@@ -90,12 +93,15 @@ async function getLockedWorkoutDayContext(
     );
   }
 
-  const { data: programRow, error: programError } = await supabase
-    .from("weekly_programs")
-    .select("id, is_locked")
-    .eq("id", dayRow.weekly_program_id)
-    .eq("user_id", userId)
-    .maybeSingle();
+  const { data: programRow, error: programError } = await withTransientRetry(
+    async () =>
+      await supabase
+        .from("weekly_programs")
+        .select("id, is_locked")
+        .eq("id", dayRow.weekly_program_id)
+        .eq("user_id", userId)
+        .maybeSingle(),
+  );
 
   if (programError) {
     throw programError;
@@ -123,11 +129,14 @@ async function ensureWorkoutDayCanBeCompleted(
   userId: string,
   dayId: string,
 ) {
-  const { data: exerciseRows, error: exerciseError } = await supabase
-    .from("workout_exercises")
-    .select("id")
-    .eq("workout_day_id", dayId)
-    .eq("user_id", userId);
+  const { data: exerciseRows, error: exerciseError } = await withTransientRetry(
+    async () =>
+      await supabase
+        .from("workout_exercises")
+        .select("id")
+        .eq("workout_day_id", dayId)
+        .eq("user_id", userId),
+  );
 
   if (exerciseError) {
     throw exerciseError;
@@ -143,11 +152,13 @@ async function ensureWorkoutDayCanBeCompleted(
     );
   }
 
-  const { data: setRows, error: setError } = await supabase
-    .from("workout_sets")
-    .select("id, actual_reps, actual_weight_kg, actual_rpe")
-    .eq("user_id", userId)
-    .in("workout_exercise_id", exerciseIds);
+  const { data: setRows, error: setError } = await withTransientRetry(async () =>
+    await supabase
+      .from("workout_sets")
+      .select("id, actual_reps, actual_weight_kg, actual_rpe")
+      .eq("user_id", userId)
+      .in("workout_exercise_id", exerciseIds),
+  );
 
   if (setError) {
     throw setError;
@@ -232,26 +243,28 @@ export async function updateWorkoutDayExecution(
     }
   }
 
-  const { data, error } = await supabase
-    .from("workout_days")
-    .update({
-      ...(input.status !== undefined ? { status: input.status } : {}),
-      ...(input.bodyWeightKg !== undefined
-        ? { body_weight_kg: input.bodyWeightKg }
-        : {}),
-      ...(input.sessionNote !== undefined
-        ? { session_note: input.sessionNote }
-        : {}),
-      ...(input.sessionDurationSeconds !== undefined
-        ? { session_duration_seconds: input.sessionDurationSeconds }
-        : {}),
-    })
-    .eq("id", dayId)
-    .eq("user_id", userId)
-    .select(
-      "id, status, body_weight_kg, session_note, session_duration_seconds",
-    )
-    .single();
+  const { data, error } = await withTransientRetry(async () =>
+    await supabase
+      .from("workout_days")
+      .update({
+        ...(input.status !== undefined ? { status: input.status } : {}),
+        ...(input.bodyWeightKg !== undefined
+          ? { body_weight_kg: input.bodyWeightKg }
+          : {}),
+        ...(input.sessionNote !== undefined
+          ? { session_note: input.sessionNote }
+          : {}),
+        ...(input.sessionDurationSeconds !== undefined
+          ? { session_duration_seconds: input.sessionDurationSeconds }
+          : {}),
+      })
+      .eq("id", dayId)
+      .eq("user_id", userId)
+      .select(
+        "id, status, body_weight_kg, session_note, session_duration_seconds",
+      )
+      .single(),
+  );
 
   if (error) {
     throw error;
@@ -289,11 +302,14 @@ export async function resetWorkoutDayExecution(
     return lockedDayContext;
   }
 
-  const { data: exerciseRows, error: exerciseError } = await supabase
-    .from("workout_exercises")
-    .select("id")
-    .eq("workout_day_id", dayId)
-    .eq("user_id", userId);
+  const { data: exerciseRows, error: exerciseError } = await withTransientRetry(
+    async () =>
+      await supabase
+        .from("workout_exercises")
+        .select("id")
+        .eq("workout_day_id", dayId)
+        .eq("user_id", userId),
+  );
 
   if (exerciseError) {
     throw exerciseError;
@@ -302,31 +318,35 @@ export async function resetWorkoutDayExecution(
   const exerciseIds = (exerciseRows ?? []).map((exercise) => exercise.id);
 
   if (exerciseIds.length) {
-    const { error: resetSetsError } = await supabase
-      .from("workout_sets")
-      .update({
-        actual_reps: null,
-        actual_weight_kg: null,
-        actual_rpe: null,
-      })
-      .eq("user_id", userId)
-      .in("workout_exercise_id", exerciseIds);
+    const { error: resetSetsError } = await withTransientRetry(async () =>
+      await supabase
+        .from("workout_sets")
+        .update({
+          actual_reps: null,
+          actual_weight_kg: null,
+          actual_rpe: null,
+        })
+        .eq("user_id", userId)
+        .in("workout_exercise_id", exerciseIds),
+    );
 
     if (resetSetsError) {
       throw resetSetsError;
     }
   }
 
-  const { error: resetDayError } = await supabase
-    .from("workout_days")
-    .update({
-      status: "planned",
-      body_weight_kg: null,
-      session_note: null,
-      session_duration_seconds: 0,
-    })
-    .eq("id", dayId)
-    .eq("user_id", userId);
+  const { error: resetDayError } = await withTransientRetry(async () =>
+    await supabase
+      .from("workout_days")
+      .update({
+        status: "planned",
+        body_weight_kg: null,
+        session_note: null,
+        session_duration_seconds: 0,
+      })
+      .eq("id", dayId)
+      .eq("user_id", userId),
+  );
 
   if (resetDayError) {
     throw resetDayError;
@@ -378,12 +398,15 @@ export async function updateWorkoutSetActualReps(
     );
   }
 
-  const { data: workoutSetRow, error: workoutSetError } = await supabase
-    .from("workout_sets")
-    .select("id, workout_exercise_id")
-    .eq("id", setId)
-    .eq("user_id", userId)
-    .maybeSingle();
+  const { data: workoutSetRow, error: workoutSetError } = await withTransientRetry(
+    async () =>
+      await supabase
+        .from("workout_sets")
+        .select("id, workout_exercise_id")
+        .eq("id", setId)
+        .eq("user_id", userId)
+        .maybeSingle(),
+  );
 
   if (workoutSetError) {
     throw workoutSetError;
@@ -401,12 +424,14 @@ export async function updateWorkoutSetActualReps(
   }
 
   const { data: workoutExerciseRow, error: workoutExerciseError } =
-    await supabase
-      .from("workout_exercises")
-      .select("id, workout_day_id")
-      .eq("id", workoutSetRow.workout_exercise_id)
-      .eq("user_id", userId)
-      .maybeSingle();
+    await withTransientRetry(async () =>
+      await supabase
+        .from("workout_exercises")
+        .select("id, workout_day_id")
+        .eq("id", workoutSetRow.workout_exercise_id)
+        .eq("user_id", userId)
+        .maybeSingle(),
+    );
 
   if (workoutExerciseError) {
     throw workoutExerciseError;
@@ -433,17 +458,19 @@ export async function updateWorkoutSetActualReps(
     return lockedDayContext;
   }
 
-  const { data, error } = await supabase
-    .from("workout_sets")
-    .update({
-      actual_reps: actualReps,
-      actual_weight_kg: actualWeightKg,
-      actual_rpe: actualRpe,
-    })
-    .eq("id", setId)
-    .eq("user_id", userId)
-    .select("id, actual_reps, actual_weight_kg, actual_rpe")
-    .single();
+  const { data, error } = await withTransientRetry(async () =>
+    await supabase
+      .from("workout_sets")
+      .update({
+        actual_reps: actualReps,
+        actual_weight_kg: actualWeightKg,
+        actual_rpe: actualRpe,
+      })
+      .eq("id", setId)
+      .eq("user_id", userId)
+      .select("id, actual_reps, actual_weight_kg, actual_rpe")
+      .single(),
+  );
 
   if (error) {
     throw error;

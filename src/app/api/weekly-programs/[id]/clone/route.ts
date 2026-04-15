@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import { logger } from "@/lib/logger";
+import { withTransientRetry } from "@/lib/runtime-retry";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import {
   insertWorkoutSetWithRepRangeFallback,
@@ -33,7 +34,7 @@ export async function POST(
     const supabase = await createServerSupabaseClient();
     const {
       data: { user },
-    } = await supabase.auth.getUser();
+    } = await withTransientRetry(async () => await supabase.auth.getUser());
 
     if (!user) {
       return createApiErrorResponse({
@@ -46,12 +47,15 @@ export async function POST(
     const { id } = paramsSchema.parse(await params);
     const payload = weeklyProgramCloneSchema.parse(await request.json());
 
-    const { data: sourceProgram, error: sourceProgramError } = await supabase
-      .from("weekly_programs")
-      .select("id, title, week_start_date")
-      .eq("id", id)
-      .eq("user_id", user.id)
-      .maybeSingle();
+    const { data: sourceProgram, error: sourceProgramError } =
+      await withTransientRetry(async () =>
+        await supabase
+          .from("weekly_programs")
+          .select("id, title, week_start_date")
+          .eq("id", id)
+          .eq("user_id", user.id)
+          .maybeSingle(),
+      );
 
     if (sourceProgramError) {
       throw sourceProgramError;
@@ -65,12 +69,15 @@ export async function POST(
       });
     }
 
-    const { data: sourceDays, error: sourceDaysError } = await supabase
-      .from("workout_days")
-      .select("id, day_of_week")
-      .eq("user_id", user.id)
-      .eq("weekly_program_id", sourceProgram.id)
-      .order("day_of_week", { ascending: true });
+    const { data: sourceDays, error: sourceDaysError } = await withTransientRetry(
+      async () =>
+        await supabase
+          .from("workout_days")
+          .select("id, day_of_week")
+          .eq("user_id", user.id)
+          .eq("weekly_program_id", sourceProgram.id)
+          .order("day_of_week", { ascending: true }),
+    );
 
     if (sourceDaysError) {
       throw sourceDaysError;
@@ -212,10 +219,9 @@ export async function POST(
 
     if (createdProgramId) {
       const supabase = await createServerSupabaseClient();
-      const rollbackResult = await supabase
-        .from("weekly_programs")
-        .delete()
-        .eq("id", createdProgramId);
+      const rollbackResult = await withTransientRetry(async () =>
+        await supabase.from("weekly_programs").delete().eq("id", createdProgramId),
+      );
 
       if (rollbackResult.error) {
         logger.warn("weekly program clone rollback failed", {

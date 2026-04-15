@@ -4,6 +4,7 @@ import {
   createDashboardAggregateSnapshotPayload,
   parseDashboardAggregateSnapshotPayload,
 } from "@/lib/dashboard/dashboard-snapshot";
+import { withTransientRetry } from "@/lib/runtime-retry";
 import {
   getDateDaysAgo,
   getIsoTimestampDaysAgo,
@@ -64,85 +65,87 @@ export async function getDashboardRuntimeFreshnessCursor(
     nutritionSummariesResult,
     bodyMetricsResult,
     mealsResult,
-  ] = await Promise.all([
-    supabase
-      .from("weekly_programs")
-      .select("updated_at")
-      .eq("user_id", userId)
-      .order("updated_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    supabase
-      .from("workout_days")
-      .select("updated_at")
-      .eq("user_id", userId)
-      .order("updated_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    supabase
-      .from("workout_sets")
-      .select("updated_at")
-      .eq("user_id", userId)
-      .order("updated_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    supabase
-      .from("exercise_library")
-      .select("updated_at")
-      .eq("user_id", userId)
-      .order("updated_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    supabase
-      .from("workout_templates")
-      .select("updated_at")
-      .eq("user_id", userId)
-      .order("updated_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    supabase
-      .from("ai_chat_sessions")
-      .select("updated_at")
-      .eq("user_id", userId)
-      .order("updated_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    supabase
-      .from("goals")
-      .select("updated_at")
-      .eq("user_id", userId)
-      .order("updated_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    supabase
-      .from("nutrition_profiles")
-      .select("updated_at")
-      .eq("user_id", userId)
-      .order("updated_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    supabase
-      .from("daily_nutrition_summaries")
-      .select("summary_date")
-      .eq("user_id", userId)
-      .order("summary_date", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    supabase
-      .from("body_metrics")
-      .select("measured_at")
-      .eq("user_id", userId)
-      .order("measured_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    supabase
-      .from("meals")
-      .select("eaten_at")
-      .eq("user_id", userId)
-      .order("eaten_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-  ]);
+  ] = await withTransientRetry(async () =>
+    await Promise.all([
+      supabase
+        .from("weekly_programs")
+        .select("updated_at")
+        .eq("user_id", userId)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from("workout_days")
+        .select("updated_at")
+        .eq("user_id", userId)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from("workout_sets")
+        .select("updated_at")
+        .eq("user_id", userId)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from("exercise_library")
+        .select("updated_at")
+        .eq("user_id", userId)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from("workout_templates")
+        .select("updated_at")
+        .eq("user_id", userId)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from("ai_chat_sessions")
+        .select("updated_at")
+        .eq("user_id", userId)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from("goals")
+        .select("updated_at")
+        .eq("user_id", userId)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from("nutrition_profiles")
+        .select("updated_at")
+        .eq("user_id", userId)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from("daily_nutrition_summaries")
+        .select("summary_date")
+        .eq("user_id", userId)
+        .order("summary_date", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from("body_metrics")
+        .select("measured_at")
+        .eq("user_id", userId)
+        .order("measured_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from("meals")
+        .select("eaten_at")
+        .eq("user_id", userId)
+        .order("eaten_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ]),
+  );
 
   const failedResult = [
     weeklyProgramsResult,
@@ -353,14 +356,16 @@ export async function getDashboardAggregateBundle(
     options.snapshotReason ?? options.defaultSnapshotReason;
 
   if (!options.forceRefresh) {
-    const { data, error } = await supabase
-      .from("user_context_snapshots")
-      .select("id, snapshot_reason, payload, created_at")
-      .eq("user_id", userId)
-      .eq("snapshot_reason", snapshotReason)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    const { data, error } = await withTransientRetry(async () =>
+      await supabase
+        .from("user_context_snapshots")
+        .select("id, snapshot_reason, payload, created_at")
+        .eq("user_id", userId)
+        .eq("snapshot_reason", snapshotReason)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    );
 
     if (!error && data) {
       const parsed = parseDashboardAggregateSnapshotPayload<DashboardAggregateBundle>(
@@ -402,19 +407,19 @@ export async function getDashboardAggregateBundle(
     }
   }
 
-  const bundle = await buildDashboardAggregateBundle(
-    supabase,
-    userId,
-    options.lookbackDays,
+  const bundle = await withTransientRetry(async () =>
+    await buildDashboardAggregateBundle(supabase, userId, options.lookbackDays),
   );
 
   if (options.persistSnapshot !== false) {
     try {
-      const persisted = await persistDashboardAggregateSnapshot(
-        supabase,
-        userId,
-        bundle,
-        snapshotReason,
+      const persisted = await withTransientRetry(async () =>
+        await persistDashboardAggregateSnapshot(
+          supabase,
+          userId,
+          bundle,
+          snapshotReason,
+        ),
       );
 
       return {

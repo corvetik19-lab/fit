@@ -8,7 +8,7 @@ import { EmptyState } from "@/components/admin-user-detail-primitives";
 import { isAbsoluteHttpUrl } from "@/lib/image-url";
 
 const inputClassName =
-  "w-full rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15";
+  "w-full rounded-2xl border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,var(--surface))] px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15";
 
 type ContentAssetType = "exercise" | "food";
 
@@ -27,7 +27,7 @@ function AssetPreview({
       : null;
 
   return (
-    <div className="overflow-hidden rounded-[1.25rem] border border-border bg-white/78">
+    <div className="overflow-hidden rounded-[1.25rem] border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_88%,var(--surface))]">
       {resolvedImageUrl ? (
         <Image
           alt={title}
@@ -38,7 +38,7 @@ function AssetPreview({
           width={96}
         />
       ) : (
-        <div className="flex h-24 items-center justify-center bg-[color-mix(in_srgb,var(--accent-soft)_52%,white)] px-3 text-center text-xs font-medium text-accent">
+        <div className="flex h-24 items-center justify-center bg-[color-mix(in_srgb,var(--accent-soft)_22%,var(--surface-elevated))] px-3 text-center text-xs font-medium text-accent">
           {fallback}
         </div>
       )}
@@ -202,13 +202,13 @@ export function AdminUserContentSection({
         </div>
 
         {error ? (
-          <p className="mb-4 rounded-2xl border border-red-300/60 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <p className="mb-4 rounded-2xl border border-red-500/25 bg-red-500/12 px-4 py-3 text-sm text-red-100">
             {error}
           </p>
         ) : null}
 
         {notice ? (
-          <p className="mb-4 rounded-2xl border border-emerald-300/60 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+          <p className="mb-4 rounded-2xl border border-emerald-500/25 bg-emerald-500/12 px-4 py-3 text-sm text-emerald-100">
             {notice}
           </p>
         ) : null}

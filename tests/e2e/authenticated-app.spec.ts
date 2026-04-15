@@ -23,17 +23,22 @@ test.describe("authenticated app", () => {
     await navigateStable(page, "/dashboard", /\/(dashboard|onboarding)$/);
     await finishOnboardingIfVisible(page);
     await page
-      .getByRole("link", { name: /^AI$/ })
+      .getByText("Статус дня", { exact: true })
+      .first()
       .waitFor({ state: "visible", timeout: 15_000 });
 
     await navigateStable(page, "/workouts", /\/workouts$/);
     await page
-      .getByText(/Собрать черновик недели/i)
+      .getByText("Программы, недели и библиотека упражнений", {
+        exact: true,
+      })
+      .first()
       .waitFor({ state: "visible", timeout: 15_000 });
 
     await navigateStable(page, "/nutrition", /\/nutrition$/);
     await page
-      .getByText(/Рацион, камера и журнал питания в одном рабочем экране/i)
+      .getByText("Дневник питания и ежедневный баланс", { exact: true })
+      .first()
       .waitFor({ state: "visible", timeout: 15_000 });
 
     await navigateStable(page, "/ai", /\/ai$/);
@@ -50,7 +55,8 @@ test.describe("authenticated app", () => {
     await navigateStable(page, "/dashboard", /\/(dashboard|onboarding)$/);
     await finishOnboardingIfVisible(page);
     await page
-      .getByText(/Открой только тот слой аналитики, который нужен сейчас/i)
+      .getByText("Статус дня", { exact: true })
+      .first()
       .waitFor({ state: "visible", timeout: 15_000 });
     await page
       .getByRole("link", { name: /^AI$/ })

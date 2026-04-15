@@ -4,6 +4,7 @@ import {
   getAdminCapabilityErrorMessage,
   hasAdminCapability,
 } from "@/lib/admin-permissions";
+import { withTransientRetry } from "@/lib/runtime-retry";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 const ROOT_ONLY_CAPABILITIES: AdminCapability[] = [
@@ -50,17 +51,19 @@ export async function requireAdminRouteAccess(capability?: AdminCapability) {
   const supabase = await createServerSupabaseClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await withTransientRetry(() => supabase.auth.getUser());
 
   if (!user) {
     throw new AdminAccessError(401, "ADMIN_AUTH_REQUIRED", "Admin auth required.");
   }
 
-  const { data: platformAdmin, error } = await supabase
-    .from("platform_admins")
-    .select("role")
-    .eq("user_id", user.id)
-    .maybeSingle();
+  const { data: platformAdmin, error } = await withTransientRetry(async () =>
+    await supabase
+      .from("platform_admins")
+      .select("role")
+      .eq("user_id", user.id)
+      .maybeSingle(),
+  );
 
   if (error) {
     throw error;

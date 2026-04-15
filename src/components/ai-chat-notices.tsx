@@ -14,12 +14,12 @@ type AiChatNoticesProps = {
 function NoticeCard({ notice }: { notice: AiSurfaceNotice }) {
   const styles =
     notice.kind === "success"
-      ? "border-emerald-300/60 bg-emerald-50 text-emerald-800"
+      ? "border-emerald-500/25 bg-emerald-500/12 text-emerald-100"
       : notice.kind === "info"
-        ? "border-sky-300/60 bg-sky-50 text-sky-800"
+        ? "border-sky-500/25 bg-sky-500/12 text-sky-100"
         : notice.kind === "provider"
-          ? "border-amber-300/60 bg-amber-50 text-amber-800"
-          : "border-red-300/60 bg-red-50 text-red-700";
+          ? "border-amber-500/25 bg-amber-500/12 text-amber-100"
+          : "border-red-500/25 bg-red-500/12 text-red-100";
 
   const title =
     notice.kind === "success"
@@ -51,7 +51,7 @@ export function AiChatNotices({
     <>
       {!accessAllowed ? (
         <div
-          className="mt-4 rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800"
+          className="mt-4 rounded-2xl border border-amber-500/25 bg-amber-500/12 px-4 py-3 text-sm text-amber-100"
           data-testid="ai-access-closed"
         >
           <p className="font-semibold">Доступ к AI закрыт</p>
@@ -59,7 +59,7 @@ export function AiChatNotices({
             {accessReason ?? "AI-чат сейчас недоступен для текущего уровня доступа."}
           </p>
           <Link
-            className="mt-3 inline-flex rounded-full border border-amber-400/70 bg-white/80 px-4 py-2 font-semibold text-foreground transition hover:bg-white"
+            className="mt-3 inline-flex rounded-full border border-amber-400/30 bg-[color-mix(in_srgb,var(--surface-elevated)_92%,var(--surface))] px-4 py-2 font-semibold text-foreground transition hover:bg-[color-mix(in_srgb,var(--surface-elevated)_98%,var(--surface))]"
             href="/settings#billing-center"
           >
             Открыть доступ

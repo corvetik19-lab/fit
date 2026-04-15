@@ -224,6 +224,34 @@ function getNextFlowHint(current: AssistantFlowKey) {
   }
 }
 
+async function fetchMutationWithTimeout(
+  input: Parameters<typeof fetch>[0],
+  init?: RequestInit,
+  timeoutMs = 10_000,
+) {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(input, {
+      ...init,
+      signal: controller.signal,
+    });
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
+function clearSessionQueryParam() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const url = new URL(window.location.href);
+  url.searchParams.delete("session");
+  window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+}
+
 function FlowCard({ currentStep }: { currentStep: AssistantFlowKey }) {
   const currentMeta =
     assistantFlowSteps.find((step) => step.key === currentStep) ?? assistantFlowSteps[0];
@@ -257,8 +285,8 @@ function FlowCard({ currentStep }: { currentStep: AssistantFlowKey }) {
                 isActive
                   ? "border-accent/24 bg-[color-mix(in_srgb,var(--accent-soft)_76%,white)] shadow-[0_24px_52px_-38px_rgba(0,64,224,0.28)]"
                   : isDone
-                    ? "border-emerald-300/60 bg-[color-mix(in_srgb,#dff6ea_84%,white)]"
-                    : "border-border bg-white/84"
+                    ? "border-emerald-500/25 bg-emerald-500/12"
+                    : "border-border bg-[color-mix(in_srgb,var(--surface-elevated)_84%,var(--surface))]"
               }`}
               data-flow-state={state}
               key={step.key}
@@ -269,8 +297,8 @@ function FlowCard({ currentStep }: { currentStep: AssistantFlowKey }) {
                     isActive
                       ? "bg-accent text-white"
                       : isDone
-                        ? "bg-emerald-600 text-white"
-                        : "bg-slate-200 text-slate-700"
+                      ? "bg-emerald-500 text-white"
+                        : "bg-[color-mix(in_srgb,var(--surface-elevated)_96%,var(--surface))] text-muted"
                   }`}
                 >
                   {isDone ? <CheckCircle2 size={14} strokeWidth={2.2} /> : index + 1}
@@ -390,15 +418,12 @@ export function AiWorkspace({
   const router = useRouter();
   const [activeSection, setActiveSection] = useState<WorkspaceSectionKey>("history");
   const [activeChatSessionId, setActiveChatSessionId] = useState(initialSessionId);
-  const [sessionList, setSessionList] = useState(recentSessions);
+  const [sessionList, setSessionList] = useState(() => recentSessions);
   const [historyError, setHistoryError] = useState<string | null>(null);
   const [busySessionId, setBusySessionId] = useState<string | null>(null);
   const [isClearingAll, setIsClearingAll] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  useEffect(() => {
-    setSessionList(recentSessions);
-  }, [recentSessions]);
+  const [chatPanelResetVersion, setChatPanelResetVersion] = useState(0);
 
   useEffect(() => {
     setActiveChatSessionId(initialSessionId);
@@ -424,9 +449,21 @@ export function AiWorkspace({
 
     setHistoryError(null);
     setBusySessionId(sessionId);
+    const previousSessions = sessionList;
+    const previousActiveSessionId = activeChatSessionId;
+    const nextSessions = previousSessions.filter((item) => item.id !== sessionId);
+    const isDeletingActiveSession = sessionId === activeChatSessionId;
+
+    setSessionList(nextSessions);
 
     try {
-      const response = await fetch(`/api/ai/sessions/${sessionId}`, {
+      if (isDeletingActiveSession) {
+        setActiveChatSessionId(null);
+        clearSessionQueryParam();
+        setChatPanelResetVersion((current) => current + 1);
+      }
+
+      const response = await fetchMutationWithTimeout(`/api/ai/sessions/${sessionId}`, {
         method: "DELETE",
       });
       const payload = (await response.json().catch(() => null)) as {
@@ -436,18 +473,20 @@ export function AiWorkspace({
       if (!response.ok) {
         throw new Error(payload?.message ?? "Не удалось удалить чат.");
       }
+    } catch (error) {
+      setSessionList(previousSessions);
+      setActiveChatSessionId(previousActiveSessionId);
 
-      setSessionList((current) => current.filter((item) => item.id !== sessionId));
-
-      if (sessionId === activeChatSessionId) {
-        setActiveChatSessionId(null);
-        router.push("/ai");
+      if (isDeletingActiveSession) {
+        setChatPanelResetVersion((current) => current + 1);
       }
 
-      router.refresh();
-    } catch (error) {
       setHistoryError(
-        error instanceof Error ? error.message : "Не удалось удалить чат.",
+        error instanceof Error
+          ? error.name === "AbortError"
+            ? "Сессия не удалилась вовремя. Попробуй ещё раз."
+            : error.message
+          : "Не удалось удалить чат.",
       );
     } finally {
       setBusySessionId(null);
@@ -465,9 +504,16 @@ export function AiWorkspace({
 
     setHistoryError(null);
     setIsClearingAll(true);
+    const previousSessions = sessionList;
+    const previousActiveSessionId = activeChatSessionId;
+
+    setSessionList([]);
+    setActiveChatSessionId(null);
+    clearSessionQueryParam();
+    setChatPanelResetVersion((current) => current + 1);
 
     try {
-      const response = await fetch("/api/ai/sessions", {
+      const response = await fetchMutationWithTimeout("/api/ai/sessions", {
         method: "DELETE",
       });
       const payload = (await response.json().catch(() => null)) as {
@@ -477,15 +523,15 @@ export function AiWorkspace({
       if (!response.ok) {
         throw new Error(payload?.message ?? "Не удалось очистить историю чатов.");
       }
-
-      setSessionList([]);
-      setActiveChatSessionId(null);
-      router.push("/ai");
-      router.refresh();
     } catch (error) {
+      setSessionList(previousSessions);
+      setActiveChatSessionId(previousActiveSessionId);
+      setChatPanelResetVersion((current) => current + 1);
       setHistoryError(
         error instanceof Error
-          ? error.message
+          ? error.name === "AbortError"
+            ? "История не очистилась вовремя. Попробуй ещё раз."
+            : error.message
           : "Не удалось очистить историю чатов.",
       );
     } finally {
@@ -512,6 +558,8 @@ export function AiWorkspace({
 
   const activeMeta =
     sectionMeta.find((item) => item.key === activeSection) ?? sectionMeta[0];
+  const shouldReuseServerSession =
+    activeChatSessionId !== null && activeChatSessionId === initialSessionId;
   const summaryCards = [
     {
       label: "Чатов в истории",
@@ -655,7 +703,7 @@ export function AiWorkspace({
                 {activeMeta.description}
               </span>
             </span>
-            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-white/88 text-foreground shadow-[0_18px_32px_-26px_rgba(0,64,224,0.18)]">
+            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,var(--surface))] text-foreground shadow-[0_18px_32px_-26px_rgba(0,64,224,0.18)]">
               {isMobileMenuOpen ? (
                 <ChevronUp size={18} strokeWidth={2.2} />
               ) : (
@@ -665,7 +713,7 @@ export function AiWorkspace({
           </button>
 
           {isMobileMenuOpen ? (
-            <div className="mt-3 grid gap-2 rounded-3xl border border-border bg-[color-mix(in_srgb,var(--surface-overlay)_94%,white)] p-3 shadow-[0_30px_60px_-48px_rgba(18,32,27,0.22)]">
+            <div className="mt-3 grid gap-2 rounded-3xl border border-border bg-[color-mix(in_srgb,var(--surface-overlay)_92%,var(--surface-elevated))] p-3 shadow-[0_30px_60px_-48px_rgba(18,32,27,0.34)]">
               {sectionMeta.map((section) => {
                 const Icon = section.icon;
                 const isActive = section.key === activeSection;
@@ -701,7 +749,7 @@ export function AiWorkspace({
                       </span>
                     </span>
                     {isActive ? (
-                      <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 text-emerald-600">
+                      <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-emerald-500/25 bg-emerald-500/12 text-emerald-200">
                         <Check size={16} strokeWidth={2.3} />
                       </span>
                     ) : null}
@@ -744,9 +792,10 @@ export function AiWorkspace({
         <div className="min-w-0">
           <AiChatPanel
             access={chatAccess}
-            initialMessages={initialMessages}
-            initialSessionId={initialSessionId}
-            initialSessionTitle={initialSessionTitle}
+            initialMessages={shouldReuseServerSession ? initialMessages : []}
+            initialSessionId={shouldReuseServerSession ? initialSessionId : null}
+            initialSessionTitle={shouldReuseServerSession ? initialSessionTitle : null}
+            key={`${chatPanelResetVersion}:${activeChatSessionId ?? "new-chat"}`}
             mealPhotoAccess={mealPhotoAccess}
             onSessionTouched={upsertSession}
           />

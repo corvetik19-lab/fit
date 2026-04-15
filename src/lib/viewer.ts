@@ -4,6 +4,7 @@ import { cache } from "react";
 import { redirect } from "next/navigation";
 
 import type { PlatformAdminRole } from "@/lib/admin-permissions";
+import { withTransientRetry } from "@/lib/runtime-retry";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 type ProfileRow = {
@@ -75,7 +76,7 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
   const supabase = await createServerSupabaseClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await withTransientRetry(async () => await supabase.auth.getUser());
 
   if (!user) {
     return null;
@@ -87,37 +88,39 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
     goalResult,
     adminResult,
     userAdminStateResult,
-  ] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("full_name")
-      .eq("user_id", user.id)
-      .maybeSingle(),
-    supabase
-      .from("onboarding_profiles")
-      .select(
-        "age, sex, height_cm, weight_kg, fitness_level, equipment, injuries, dietary_preferences",
-      )
-      .eq("user_id", user.id)
-      .maybeSingle(),
-    supabase
-      .from("goals")
-      .select("goal_type, target_weight_kg, weekly_training_days")
-      .eq("user_id", user.id)
-      .order("updated_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    supabase
-      .from("platform_admins")
-      .select("id, role")
-      .eq("user_id", user.id)
-      .maybeSingle(),
-    supabase
-      .from("user_admin_states")
-      .select("is_suspended, suspended_at, restored_at, state_reason, metadata")
-      .eq("user_id", user.id)
-      .maybeSingle(),
-  ]);
+  ] = await withTransientRetry(async () =>
+    await Promise.all([
+      supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("user_id", user.id)
+        .maybeSingle(),
+      supabase
+        .from("onboarding_profiles")
+        .select(
+          "age, sex, height_cm, weight_kg, fitness_level, equipment, injuries, dietary_preferences",
+        )
+        .eq("user_id", user.id)
+        .maybeSingle(),
+      supabase
+        .from("goals")
+        .select("goal_type, target_weight_kg, weekly_training_days")
+        .eq("user_id", user.id)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from("platform_admins")
+        .select("id, role")
+        .eq("user_id", user.id)
+        .maybeSingle(),
+      supabase
+        .from("user_admin_states")
+        .select("is_suspended, suspended_at, restored_at, state_reason, metadata")
+        .eq("user_id", user.id)
+        .maybeSingle(),
+    ]),
+  );
 
   if (
     userAdminStateResult.error &&

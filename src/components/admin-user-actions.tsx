@@ -16,7 +16,7 @@ type AdminUserActionsProps = {
 };
 
 const inputClassName =
-  "w-full rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15";
+  "w-full rounded-2xl border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,var(--surface))] px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15";
 
 export function AdminUserActions({
   currentAdminRole,
@@ -98,7 +98,7 @@ export function AdminUserActions({
       <div className="grid gap-6">
         <div className="grid gap-4">
           {!canQueueSupportActions ? (
-            <p className="rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <p className="rounded-2xl border border-amber-500/25 bg-amber-500/12 px-4 py-3 text-sm text-amber-100">
               Для этого аккаунта доступен только просмотр этого блока.
             </p>
           ) : null}
@@ -115,7 +115,7 @@ export function AdminUserActions({
 
           <div className="flex flex-wrap gap-3">
             <button
-              className="rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+              className="action-button action-button--primary px-5 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-60"
               disabled={!canQueueSupportActions || isPending}
               onClick={() =>
                 submitJsonAction(
@@ -130,7 +130,7 @@ export function AdminUserActions({
             </button>
 
             <button
-              className="rounded-full border border-border px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
+              className="action-button action-button--secondary px-5 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-60"
               disabled={!canQueueSupportActions || isPending}
               onClick={() =>
                 submitJsonAction(
@@ -145,7 +145,7 @@ export function AdminUserActions({
             </button>
 
             <button
-              className="rounded-full border border-border px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
+              className="action-button action-button--secondary px-5 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-60"
               disabled={!canQueueSupportActions || isPending}
               onClick={() =>
                 submitJsonAction(
@@ -160,7 +160,7 @@ export function AdminUserActions({
             </button>
 
             <button
-              className="rounded-full border border-border px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
+              className="action-button action-button--secondary px-5 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-60"
               disabled={!canQueueSupportActions || isPending}
               onClick={() =>
                 submitJsonAction(
@@ -175,7 +175,7 @@ export function AdminUserActions({
             </button>
 
             <button
-              className="rounded-full border border-border px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
+              className="action-button action-button--secondary px-5 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-60"
               disabled={!canQueueSupportActions || isPending}
               onClick={() =>
                 submitJsonAction(
@@ -191,7 +191,7 @@ export function AdminUserActions({
             </button>
 
             <button
-              className="rounded-full border border-border px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
+              className="action-button action-button--secondary px-5 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-60"
               disabled={!canQueueSupportActions || isPending}
               onClick={() =>
                 submitJsonAction(
@@ -239,7 +239,7 @@ export function AdminUserActions({
               </label>
 
               <button
-                className="rounded-full border border-border px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
+                className="action-button action-button--secondary px-5 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={isPending || !customAction.trim()}
                 onClick={() =>
                   submitJsonAction(
@@ -263,7 +263,7 @@ export function AdminUserActions({
         </div>
 
         <div
-          className="rounded-3xl border border-border bg-white/60 p-5"
+          className="surface-panel p-5"
           data-testid="admin-user-actions-billing-panel"
         >
           <div className="mb-4">
@@ -276,7 +276,7 @@ export function AdminUserActions({
           </div>
 
           {!canManageBilling ? (
-            <p className="rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <p className="rounded-2xl border border-amber-500/25 bg-amber-500/12 px-4 py-3 text-sm text-amber-100">
               Управление оплатой и доступами доступно только корневому администратору.
             </p>
           ) : null}
@@ -323,7 +323,7 @@ export function AdminUserActions({
               </label>
 
               <button
-                className="rounded-full border border-border px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
+                className="action-button action-button--secondary px-5 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-60"
                 data-testid="admin-user-actions-billing-reconcile"
                 disabled={!canManageBilling || isPending}
                 onClick={() =>
@@ -344,7 +344,7 @@ export function AdminUserActions({
               </button>
 
               <button
-                className="rounded-full border border-border px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
+                className="action-button action-button--secondary px-5 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={!canManageBilling || isPending}
                 onClick={() =>
                   submitJsonAction(
@@ -398,7 +398,7 @@ export function AdminUserActions({
               </label>
 
               <button
-                className="rounded-full border border-border px-5 py-3 text-sm font-semibold text-foreground transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
+                className="action-button action-button--secondary px-5 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={!canManageBilling || isPending || !featureKey.trim()}
                 onClick={() =>
                   submitJsonAction(
@@ -423,13 +423,13 @@ export function AdminUserActions({
       </div>
 
       {error ? (
-        <p className="mt-4 rounded-2xl border border-red-300/60 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <p className="mt-4 rounded-2xl border border-red-500/25 bg-red-500/12 px-4 py-3 text-sm text-red-100">
           {error}
         </p>
       ) : null}
 
       {notice ? (
-        <p className="mt-4 rounded-2xl border border-emerald-300/60 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+        <p className="mt-4 rounded-2xl border border-emerald-500/25 bg-emerald-500/12 px-4 py-3 text-sm text-emerald-100">
           {notice}
         </p>
       ) : null}

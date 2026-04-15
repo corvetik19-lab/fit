@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { logger } from "@/lib/logger";
+import { withTransientRetry } from "@/lib/runtime-retry";
 
 type PostgrestLikeError = {
   code?: string;
@@ -82,14 +83,16 @@ export async function listWorkoutSetsWithRepRangeFallback(
     return [] satisfies WorkoutSetRow[];
   }
 
-  const fullResult = await supabase
-    .from("workout_sets")
-    .select(
-      "id, workout_exercise_id, set_number, planned_reps, planned_reps_min, planned_reps_max, actual_reps, actual_weight_kg, actual_rpe",
-    )
-    .eq("user_id", userId)
-    .in("workout_exercise_id", exerciseIds)
-    .order("set_number", { ascending: true });
+  const fullResult = await withTransientRetry(async () =>
+    await supabase
+      .from("workout_sets")
+      .select(
+        "id, workout_exercise_id, set_number, planned_reps, planned_reps_min, planned_reps_max, actual_reps, actual_weight_kg, actual_rpe",
+      )
+      .eq("user_id", userId)
+      .in("workout_exercise_id", exerciseIds)
+      .order("set_number", { ascending: true }),
+  );
 
   if (!fullResult.error) {
     return (fullResult.data as WorkoutSetRow[] | null) ?? [];
@@ -105,12 +108,14 @@ export async function listWorkoutSetsWithRepRangeFallback(
     error: fullResult.error,
   });
 
-  const legacyResult = await supabase
-    .from("workout_sets")
-    .select("id, workout_exercise_id, set_number, planned_reps, actual_reps")
-    .eq("user_id", userId)
-    .in("workout_exercise_id", exerciseIds)
-    .order("set_number", { ascending: true });
+  const legacyResult = await withTransientRetry(async () =>
+    await supabase
+      .from("workout_sets")
+      .select("id, workout_exercise_id, set_number, planned_reps, actual_reps")
+      .eq("user_id", userId)
+      .in("workout_exercise_id", exerciseIds)
+      .order("set_number", { ascending: true }),
+  );
 
   if (legacyResult.error) {
     throw legacyResult.error;
@@ -125,13 +130,15 @@ export async function listAllWorkoutSetsWithRepRangeFallback(
   supabase: SupabaseClient,
   userId: string,
 ) {
-  const fullResult = await supabase
-    .from("workout_sets")
-    .select(
-      "id, workout_exercise_id, set_number, planned_reps, planned_reps_min, planned_reps_max, actual_reps, actual_weight_kg, actual_rpe",
-    )
-    .eq("user_id", userId)
-    .order("updated_at", { ascending: false });
+  const fullResult = await withTransientRetry(async () =>
+    await supabase
+      .from("workout_sets")
+      .select(
+        "id, workout_exercise_id, set_number, planned_reps, planned_reps_min, planned_reps_max, actual_reps, actual_weight_kg, actual_rpe",
+      )
+      .eq("user_id", userId)
+      .order("updated_at", { ascending: false }),
+  );
 
   if (!fullResult.error) {
     return (fullResult.data as WorkoutSetRow[] | null) ?? [];
@@ -146,11 +153,13 @@ export async function listAllWorkoutSetsWithRepRangeFallback(
     error: fullResult.error,
   });
 
-  const legacyResult = await supabase
-    .from("workout_sets")
-    .select("id, workout_exercise_id, set_number, planned_reps, actual_reps")
-    .eq("user_id", userId)
-    .order("updated_at", { ascending: false });
+  const legacyResult = await withTransientRetry(async () =>
+    await supabase
+      .from("workout_sets")
+      .select("id, workout_exercise_id, set_number, planned_reps, actual_reps")
+      .eq("user_id", userId)
+      .order("updated_at", { ascending: false }),
+  );
 
   if (legacyResult.error) {
     throw legacyResult.error;
@@ -169,7 +178,9 @@ export async function insertWorkoutSetsWithRepRangeFallback(
     return;
   }
 
-  const fullResult = await supabase.from("workout_sets").insert(payload);
+  const fullResult = await withTransientRetry(async () =>
+    await supabase.from("workout_sets").insert(payload),
+  );
 
   if (!fullResult.error) {
     return;
@@ -192,7 +203,9 @@ export async function insertWorkoutSetsWithRepRangeFallback(
     actual_reps: set.actual_reps,
   }));
 
-  const legacyResult = await supabase.from("workout_sets").insert(legacyPayload);
+  const legacyResult = await withTransientRetry(async () =>
+    await supabase.from("workout_sets").insert(legacyPayload),
+  );
 
   if (legacyResult.error) {
     throw legacyResult.error;
