@@ -11,27 +11,28 @@
 
 ## Текущий визуальный source of truth
 
-С апреля 2026 фронтенд `fit` переводится в направление **Dark Utility Fitness / mobile-first**.
+С апреля 2026 фронтенд `fit` переводится в направление **Light Compact Mobile / utility-first**.
 
 Это новый основной визуальный контракт поверх уже существующего продукта. Он заменяет прежний
-`stitch-style editorial` baseline как активное направление для разработки.
+`Dark Utility Fitness` как активное направление для разработки.
 
 Новый дизайн должен быть:
 
-- тёмным, но не cyberpunk и не pure black;
-- компактным и удобным на телефоне;
-- ближе к usability сильных fitness products, чем к маркетинговому лендингу;
+- светлым, спокойным и мобильным;
+- компактным и удобным на телефоне одной рукой;
+- ближе к usability сильных fitness products, чем к декоративному лендингу;
 - единым на всех пользовательских и admin-поверхностях;
 - совместимым с текущими route map, workout flow, nutrition capture/barcode/import,
   AI chat/proposals, settings и admin-операциями.
 
 Активные execution-docs по этому направлению:
 
-- [DARK_UTILITY_REDESIGN_EXECUTION.md](/C:/fit/docs/DARK_UTILITY_REDESIGN_EXECUTION.md)
-- [design-handoff/DARK_UTILITY_MOBILE_BRIEF.md](/C:/fit/docs/design-handoff/DARK_UTILITY_MOBILE_BRIEF.md)
+- [LIGHT_COMPACT_REDESIGN_EXECUTION.md](/C:/fit/docs/LIGHT_COMPACT_REDESIGN_EXECUTION.md)
+- [design-handoff/LIGHT_COMPACT_MOBILE_BRIEF.md](/C:/fit/docs/design-handoff/LIGHT_COMPACT_MOBILE_BRIEF.md)
 
 Исторические документы сохраняются как reference/handoff:
 
+- [DARK_UTILITY_REDESIGN_EXECUTION.md](/C:/fit/docs/DARK_UTILITY_REDESIGN_EXECUTION.md)
 - [STITCH_REDESIGN_EXECUTION.md](/C:/fit/docs/STITCH_REDESIGN_EXECUTION.md)
 - [PREMIUM_REDESIGN_PLAN.md](/C:/fit/docs/PREMIUM_REDESIGN_PLAN.md)
 
@@ -41,16 +42,16 @@
 
 - Mobile/PWA first.
 - Один главный сценарий на экран.
-- Нормальные рабочие размеры кнопок, без oversized CTA.
+- Рабочие размеры кнопок `40-44px`, без oversized CTA.
 - Плотная, но читаемая иерархия.
 - Секции важнее декоративных hero-блоков.
 - Один акцентный брендовый язык на основе сине-бирюзовой палитры логотипа.
 
 ### Цвета и поверхности
 
-- базовый фон: тёмный графит, не чёрный;
+- базовый фон: светлый тёплый нейтрал, не pure white;
 - `surface`: 2-3 уровня глубины без тяжёлых рамок;
-- текст: высокий контраст, вторичный текст чуть приглушён;
+- текст: тёмный графит, вторичный текст чуть приглушён;
 - акцент: сине-бирюзовый язык логотипа;
 - статусные цвета использовать экономно.
 
@@ -66,7 +67,8 @@
 - основной паттерн: `top app bar -> content -> bottom nav`;
 - drawer только как secondary-navigation;
 - sticky lower action bar только там, где она помогает действию;
-- длинные страницы разбиваются на секции, а не на россыпь одинаковых карт.
+- длинные страницы разбиваются на секции, а не на россыпь одинаковых карт;
+- hero-блоки допустимы только как короткий status-summary, а не как первый гигантский экран.
 
 ## Базовая архитектура frontend-слоя
 
@@ -180,9 +182,11 @@ Frontend делится на три уровня:
 - [DARK_UTILITY_REDESIGN_EXECUTION.md](/C:/fit/docs/DARK_UTILITY_REDESIGN_EXECUTION.md)
 - [design-handoff/DARK_UTILITY_MOBILE_BRIEF.md](/C:/fit/docs/design-handoff/DARK_UTILITY_MOBILE_BRIEF.md)
 
-## 2026-04-15 Финальный regression-пакет Dark Utility
+## 2026-04-15 Light Compact redesign reset
 
-- `Dark Utility` подплан закрыт как `10 / 10`: базовый visual/mobile regression пакет для нового стиля подтверждён зелёными `authenticated-app`, `admin-app` и `mobile-pwa-regressions`.
+- `Light Compact Mobile` теперь считается активным redesign-потоком. Закрытый `Dark Utility` остаётся историческим baseline, но больше не является текущим visual source of truth.
+- Главный целевой UX-критерий: на телефоне интерфейс не должен разваливаться в длинные растянутые hero/card-блоки. Приоритет у компактного daily-use rhythm, особенно на `/nutrition`, `/workouts` и `focus-mode`.
+- Для активного light compact направления текущий execution-doc: [LIGHT_COMPACT_REDESIGN_EXECUTION.md](/C:/fit/docs/LIGHT_COMPACT_REDESIGN_EXECUTION.md).
 - Для auth/workspace-контракта теперь опираемся на реальные заголовки экранов и shell-title, а не на скрытые mobile toggles. Это зафиксировано в [authenticated-app.spec.ts](/C:/fit/tests/e2e/authenticated-app.spec.ts).
 - Для workout focus-mode regression базовым контрактом считается `data-testid="workout-regular-mode-button"` из [workout-focus-header.tsx](/C:/fit/src/components/workout-session/workout-focus-header.tsx); test не должен зависеть от текстового label кнопки.
 - При следующих визуальных правках в `Dark Utility`-слое minimum regression package:

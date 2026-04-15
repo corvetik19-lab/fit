@@ -4,25 +4,27 @@
 
 Сейчас активный визуальный курс проекта:
 
-- **Dark Utility Fitness**
-- **Compact**
+- **Light Compact Mobile**
+- **Utility First**
 - **User First, Admin Align**
 
 Это означает:
 
-- тёмный, собранный, коммерчески понятный mobile-first UI;
-- без oversized-кнопок и лендинговой подачи;
-- с акцентом на удобство ежедневного использования на телефоне;
+- светлый, спокойный и действительно мобильный UI;
+- без oversized-кнопок, толстых hero-блоков и длинных explainers;
+- с акцентом на быстрый daily-use сценарий на телефоне;
 - в едином стиле для `Dashboard`, `Workouts`, `Nutrition`, `AI`, `Settings`, `History` и `Admin`.
 
 ## Что смотреть в первую очередь
 
 1. [DARK_UTILITY_MOBILE_BRIEF.md](/C:/fit/docs/design-handoff/DARK_UTILITY_MOBILE_BRIEF.md)
-2. [FIT_SCREEN_DESIGN_BRIEF.md](/C:/fit/docs/design-handoff/FIT_SCREEN_DESIGN_BRIEF.md)
+2. [LIGHT_COMPACT_MOBILE_BRIEF.md](/C:/fit/docs/design-handoff/LIGHT_COMPACT_MOBILE_BRIEF.md)
+3. [FIT_SCREEN_DESIGN_BRIEF.md](/C:/fit/docs/design-handoff/FIT_SCREEN_DESIGN_BRIEF.md)
 
 ## Роли документов
 
-- [DARK_UTILITY_MOBILE_BRIEF.md](/C:/fit/docs/design-handoff/DARK_UTILITY_MOBILE_BRIEF.md) — активный дизайнерский source of truth по новому стилю.
+- [LIGHT_COMPACT_MOBILE_BRIEF.md](/C:/fit/docs/design-handoff/LIGHT_COMPACT_MOBILE_BRIEF.md) — активный дизайнерский source of truth по новому стилю.
+- [DARK_UTILITY_MOBILE_BRIEF.md](/C:/fit/docs/design-handoff/DARK_UTILITY_MOBILE_BRIEF.md) — исторический brief предыдущего закрытого направления.
 - [FIT_SCREEN_DESIGN_BRIEF.md](/C:/fit/docs/design-handoff/FIT_SCREEN_DESIGN_BRIEF.md) — подробная карта экранов, сценариев, состояний и продуктовых ограничений.
 
 ## Что нельзя терять

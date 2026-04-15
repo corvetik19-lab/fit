@@ -7,7 +7,7 @@ import { startTransition, useState, type FormEvent } from "react";
 type Mode = "sign-in" | "sign-up";
 
 const fieldClassName =
-  "w-full rounded-2xl border border-white/8 bg-white/4 px-4 py-3.5 text-sm text-foreground outline-none transition placeholder:text-[#6f7d8f] focus:border-[#24bcb5]/40 focus:bg-white/7 focus:ring-2 focus:ring-[#24bcb5]/15";
+  "w-full rounded-[1rem] border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted focus:border-accent focus:ring-2 focus:ring-accent/10";
 
 export function AuthForm() {
   const [mode, setMode] = useState<Mode>("sign-in");
@@ -99,8 +99,8 @@ export function AuthForm() {
 
   return (
     <section className="w-full max-w-[25rem]">
-      <div className="grid gap-5 rounded-[1.75rem] border border-white/8 bg-[linear-gradient(180deg,rgba(21,29,39,0.96),rgba(13,18,24,0.94))] p-4 shadow-[0_26px_60px_-40px_rgba(0,0,0,0.72)] sm:p-5">
-        <div className="inline-flex rounded-2xl border border-white/8 bg-white/4 p-1">
+      <div className="grid gap-5 rounded-[1.3rem] border border-border bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(247,241,232,0.98))] p-4 shadow-[0_18px_38px_-26px_rgba(31,43,56,0.18)] sm:p-5">
+        <div className="inline-flex rounded-[1rem] border border-border bg-[color-mix(in_srgb,var(--surface-strong)_92%,white)] p-1">
           {([
             ["sign-in", "Вход"],
             ["sign-up", "Регистрация"],
@@ -111,8 +111,8 @@ export function AuthForm() {
               <button
                 className={`flex-1 rounded-[0.95rem] px-3 py-2 text-sm font-semibold transition ${
                   active
-                    ? "bg-[linear-gradient(135deg,#2063af,#24bcb5)] text-white shadow-[0_14px_28px_-20px_rgba(35,152,185,0.65)]"
-                    : "text-[#95a4b5] hover:text-foreground"
+                    ? "bg-[linear-gradient(135deg,#2063af,#24bcb5)] text-white shadow-[0_12px_22px_-18px_rgba(35,152,185,0.45)]"
+                    : "text-muted hover:text-foreground"
                 }`}
                 key={nextMode}
                 onClick={() => {
@@ -131,7 +131,7 @@ export function AuthForm() {
         <form className="grid gap-4" onSubmit={submit}>
           {mode === "sign-up" ? (
             <label className="grid gap-2">
-              <span className="px-1 text-[0.68rem] font-bold uppercase tracking-[0.16em] text-[#90a0b1]">
+              <span className="px-1 text-[0.68rem] font-bold uppercase tracking-[0.16em] text-muted">
                 Имя
               </span>
               <input
@@ -145,7 +145,7 @@ export function AuthForm() {
           ) : null}
 
           <label className="grid gap-2">
-            <span className="px-1 text-[0.68rem] font-bold uppercase tracking-[0.16em] text-[#90a0b1]">
+            <span className="px-1 text-[0.68rem] font-bold uppercase tracking-[0.16em] text-muted">
               Email
             </span>
             <div className="relative">
@@ -157,14 +157,14 @@ export function AuthForm() {
                 type="email"
                 value={email}
               />
-              <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#6f7d8f]">
+              <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-muted">
                 <Mail size={18} strokeWidth={2} />
               </span>
             </div>
           </label>
 
           <label className="grid gap-2">
-            <span className="px-1 text-[0.68rem] font-bold uppercase tracking-[0.16em] text-[#90a0b1]">
+            <span className="px-1 text-[0.68rem] font-bold uppercase tracking-[0.16em] text-muted">
               Пароль
             </span>
             <div className="relative">
@@ -178,7 +178,7 @@ export function AuthForm() {
               />
               <button
                 aria-label={showPassword ? "Скрыть пароль" : "Показать пароль"}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-[#6f7d8f] transition hover:text-foreground"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-muted transition hover:text-foreground"
                 onClick={() => setShowPassword((current) => !current)}
                 type="button"
               >
@@ -192,19 +192,19 @@ export function AuthForm() {
           </label>
 
           {error ? (
-            <p className="rounded-2xl border border-[#ff7f7b]/30 bg-[#ff7f7b]/12 px-4 py-3 text-sm text-[#ffc8c5]">
+            <p className="rounded-[1rem] border border-[#d86a68]/25 bg-[#d86a68]/10 px-4 py-3 text-sm text-[#8f3735]">
               {error}
             </p>
           ) : null}
 
           {notice ? (
-            <p className="rounded-2xl border border-[#24bcb5]/25 bg-[#24bcb5]/12 px-4 py-3 text-sm text-[#b7f8f4]">
+            <p className="rounded-[1rem] border border-accent/20 bg-accent/10 px-4 py-3 text-sm text-accent-strong">
               {notice}
             </p>
           ) : null}
 
           <button
-            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border border-[#24bcb5]/18 bg-[linear-gradient(135deg,#2063af,#2398b9,#24bcb5)] px-5 py-3 text-sm font-bold text-white shadow-[0_18px_36px_-24px_rgba(35,152,185,0.65)] transition hover:translate-y-[-1px] disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[1rem] border border-[#24bcb5]/18 bg-[linear-gradient(135deg,#2063af,#2398b9,#24bcb5)] px-5 py-3 text-sm font-bold text-white shadow-[0_14px_24px_-18px_rgba(35,152,185,0.45)] transition hover:translate-y-[-1px] disabled:cursor-not-allowed disabled:opacity-60"
             disabled={
               isPending ||
               !email.trim() ||

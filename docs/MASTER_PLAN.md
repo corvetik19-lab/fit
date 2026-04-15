@@ -13,7 +13,7 @@
 
 Р­С‚РѕС‚ С„Р°Р№Р» вЂ” С‚РµРєСѓС‰РёР№ production-hardening backlog РїСЂРѕРµРєС‚Р°. РћРЅ РѕС‚СЂР°Р¶Р°РµС‚ С„Р°РєС‚РёС‡РµСЃРєРѕРµ СЃРѕСЃС‚РѕСЏРЅРёРµ СЂРµРїРѕР·РёС‚РѕСЂРёСЏ РЅР° `2026-03-31`.
 
-Текущий прогресс execution checklist: `209 / 214` (`98%`).
+Текущий прогресс execution checklist: `213 / 222` (`96%`).
 
 ## РўРµРєСѓС‰Р°СЏ Р±Р°Р·Р°
 
@@ -1428,3 +1428,14 @@
 - [x] `authenticated-app.spec.ts` переведён на кросс-layout селекторы по реальным заголовкам и больше не ждёт скрытые mobile-trigger элементы на desktop shell.
 - [x] `mobile-pwa-regressions.spec.ts` синхронизирован с текущим workout focus-header через `data-testid="workout-regular-mode-button"`, поэтому regression теперь проверяет поведение, а не устаревший текстовый label.
 - [x] Общий progress execution checklist после закрытия `Dark Utility` подплана вырос до `209 / 214` (`98%`); активный execution-doc [DARK_UTILITY_REDESIGN_EXECUTION.md](/C:/fit/docs/DARK_UTILITY_REDESIGN_EXECUTION.md) закрыт как `10 / 10` (`100%`).
+
+## 2026-04-15 Light Compact redesign
+
+- [x] Создан новый execution-doc [LIGHT_COMPACT_REDESIGN_EXECUTION.md](/C:/fit/docs/LIGHT_COMPACT_REDESIGN_EXECUTION.md) и handoff [LIGHT_COMPACT_MOBILE_BRIEF.md](/C:/fit/docs/design-handoff/LIGHT_COMPACT_MOBILE_BRIEF.md), потому что пользовательский фидбек показал: текущий dark-utility UI остаётся слишком тяжёлым и bulky на телефоне.
+- [x] [FRONTEND.md](/C:/fit/docs/FRONTEND.md), [docs/README.md](/C:/fit/docs/README.md) и [AGENTS.md](/C:/fit/AGENTS.md) переведены на новый active source of truth: теперь текущий прогресс нужно показывать по новому active execution-doc, а не по историческому закрытому redesign-плану.
+- [x] Глобальный visual contract, shell и shared workspace переведены на светлый compact mobile-first язык через [globals.css](/C:/fit/src/app/globals.css), [app-shell-frame.tsx](/C:/fit/src/components/app-shell-frame.tsx), [app-shell-nav.tsx](/C:/fit/src/components/app-shell-nav.tsx) и [page-workspace.tsx](/C:/fit/src/components/page-workspace.tsx).
+- [x] `/nutrition` и связанные nutrition surfaces переведены на новый компактный светлый daily-use ритм через [nutrition/page.tsx](/C:/fit/src/app/nutrition/page.tsx), [nutrition-tracker.tsx](/C:/fit/src/components/nutrition-tracker.tsx) и [nutrition-goal-adherence.tsx](/C:/fit/src/components/nutrition-goal-adherence.tsx).
+- [ ] `/dashboard` и `/workouts` ещё нужно довести до того же light compact контракта без старых oversized hero/card blocks.
+- [ ] `/workouts/day/[dayId]` и focus-mode ещё нужно довести до более плотного рабочего mobile layout.
+- [ ] `/ai`, `/history` и `/settings` ещё нужно выровнять под единый light compact style.
+- [ ] `/admin`, `/admin/users`, `/admin/users/[id]` и финальный mobile regression tranche остаются следующим открытым slice.

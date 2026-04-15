@@ -19,7 +19,7 @@ import type {
 } from "@/lib/nutrition/meal-logging";
 
 const inputClassName =
-  "w-full rounded-2xl border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_88%,var(--surface))] px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15";
+  "w-full rounded-[0.95rem] border border-border bg-white px-3.5 py-2.5 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/10";
 
 type MealDraftItem = {
   localId: string;
@@ -607,19 +607,16 @@ export function NutritionTracker({
   }
 
   return (
-    <div className="grid gap-6">
-      <section className="card card--hero p-5 sm:p-6">
+    <div className="grid gap-4">
+      <section className="surface-panel surface-panel--soft p-4 sm:p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="workspace-kicker">
-              Меню питания
-            </p>
-            <h2 className="app-display mt-2 text-2xl font-semibold text-foreground sm:text-3xl">
-              Держи питание под контролем без лишних экранов
+            <p className="workspace-kicker">Питание</p>
+            <h2 className="mt-2 text-lg font-semibold text-foreground sm:text-xl">
+              Баланс дня, база продуктов и быстрый лог
             </h2>
-            <p className="mt-3 max-w-3xl text-sm leading-7 text-muted">
-              Баланс дня, импорт по штрихкоду, база продуктов и живой лог открываются по одному,
-              чтобы на телефоне всё ощущалось как быстрый пищевой контроль, а не таблица из форм.
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
+              Всё важное держим под рукой: дневной баланс, фото, штрихкод и текущий приём пищи.
             </p>
           </div>
           <span className="pill">
@@ -627,34 +624,34 @@ export function NutritionTracker({
           </span>
         </div>
 
-        <div className="mt-5 grid gap-3 sm:grid-cols-3">
-          <article className="surface-panel surface-panel--soft p-4">
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          <article className="metric-tile p-3.5">
             <p className="workspace-kicker">Сегодня</p>
-            <p className="mt-2 text-2xl font-semibold text-foreground">
+            <p className="mt-2 text-xl font-semibold text-foreground">
               {summary.kcal.toLocaleString("ru-RU")} ккал
             </p>
-            <p className="mt-1 text-sm text-muted">съедено за текущий день</p>
+            <p className="mt-1 text-xs text-muted">съедено за день</p>
           </article>
-          <article className="surface-panel surface-panel--soft p-4">
+          <article className="metric-tile p-3.5">
             <p className="workspace-kicker">Цели</p>
-            <p className="mt-2 text-2xl font-semibold text-foreground">
+            <p className="mt-2 text-xl font-semibold text-foreground">
               {completedMacroTargets} / {nutritionCards.length}
             </p>
-            <p className="mt-1 text-sm text-muted">макро-ориентиров уже закрыто</p>
+            <p className="mt-1 text-xs text-muted">ориентиров закрыто</p>
           </article>
-          <article className="surface-panel surface-panel--accent p-4">
+          <article className="metric-tile p-3.5">
             <p className="workspace-kicker">Текущий лог</p>
-            <p className="mt-2 text-2xl font-semibold text-foreground">
+            <p className="mt-2 text-xl font-semibold text-foreground">
               {currentMealItemsCount}
             </p>
-            <p className="mt-1 text-sm text-muted">позиций сейчас в сборке приёма пищи</p>
+            <p className="mt-1 text-xs text-muted">позиций в сборке</p>
           </article>
         </div>
 
         <div className="mt-4 md:hidden">
           <button
             aria-expanded={isMobilePanelMenuOpen}
-            className="section-chip flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
+            className="section-chip flex w-full items-center justify-between gap-3 px-3.5 py-2.5 text-left"
             onClick={() => setIsMobilePanelMenuOpen((current) => !current)}
             type="button"
           >
@@ -669,7 +666,7 @@ export function NutritionTracker({
                 {activePanel?.description ?? "Выбери нужный блок"}
               </span>
             </span>
-            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-white/82 text-foreground">
+            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-white text-foreground">
               {isMobilePanelMenuOpen ? (
                 <ChevronUp size={18} strokeWidth={2.2} />
               ) : (
@@ -679,14 +676,14 @@ export function NutritionTracker({
           </button>
 
           {isMobilePanelMenuOpen ? (
-            <div className="mt-3 grid gap-2 rounded-[1.75rem] border border-border bg-[color-mix(in_srgb,var(--surface)_94%,white)] p-3">
+            <div className="mt-3 grid gap-2 rounded-[1rem] border border-border bg-[color-mix(in_srgb,var(--surface)_94%,white)] p-3">
               {trackerPanels.map((panel) => {
                 const isActive = panel.key === activePanelKey;
 
                 return (
                   <button
                     aria-pressed={isActive}
-                    className={`section-chip flex items-start justify-between gap-3 px-3 py-3 text-left ${
+                    className={`section-chip flex items-start justify-between gap-3 px-3 py-2.5 text-left ${
                       isActive ? "section-chip--active" : ""
                     }`}
                     data-testid={`nutrition-panel-mobile-${panel.key}`}
@@ -703,7 +700,7 @@ export function NutritionTracker({
                       </span>
                     </span>
                     {isActive ? (
-                      <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-emerald-500/30 bg-emerald-500/12 text-emerald-200">
+                      <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-accent/20 bg-accent/10 text-accent-strong">
                         <Check size={16} strokeWidth={2.3} />
                       </span>
                     ) : null}
@@ -714,14 +711,14 @@ export function NutritionTracker({
           ) : null}
         </div>
 
-        <div className="mt-4 hidden gap-3 md:flex md:flex-wrap">
+            <div className="mt-4 hidden gap-2.5 md:flex md:flex-wrap">
           {trackerPanels.map((panel) => {
             const isActive = panel.key === activePanelKey;
 
             return (
               <button
                 aria-pressed={isActive}
-                className={`section-chip min-w-[11rem] px-4 py-3 text-left ${
+                className={`section-chip min-w-[10.5rem] px-3.5 py-2.5 text-left ${
                   isActive ? "section-chip--active" : ""
                 }`}
                 data-testid={`nutrition-panel-${panel.key}`}
@@ -739,29 +736,29 @@ export function NutritionTracker({
         </div>
 
         {error ? (
-          <p className="mt-4 rounded-2xl border border-red-500/25 bg-red-500/12 px-4 py-3 text-sm text-red-100">
+          <p className="mt-4 rounded-[1rem] border border-[#d86a68]/25 bg-[#d86a68]/10 px-4 py-3 text-sm text-[#8f3735]">
             {error}
           </p>
         ) : null}
 
         {notice ? (
-          <p className="mt-4 rounded-2xl border border-emerald-500/25 bg-emerald-500/12 px-4 py-3 text-sm text-emerald-100">
+          <p className="mt-4 rounded-[1rem] border border-accent/20 bg-accent/10 px-4 py-3 text-sm text-accent-strong">
             {notice}
           </p>
         ) : null}
       </section>
 
       {activePanelKey === "targets" ? (
-        <section className="grid gap-6">
+        <section className="grid gap-4">
           <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {nutritionCards.map((card) => (
               <article
-                className={`surface-panel p-5 ${card.progress && card.progress >= 100 ? "surface-panel--accent" : "surface-panel--soft"}`}
+                className={`surface-panel p-4 ${card.progress && card.progress >= 100 ? "surface-panel--accent" : "surface-panel--soft"}`}
                 key={card.label}
               >
                 <p className="workspace-kicker">{card.label}</p>
-                <p className="mt-3 text-2xl font-semibold text-foreground">{card.value}</p>
-                <p className="mt-2 text-sm text-muted">
+                <p className="mt-2 text-xl font-semibold text-foreground">{card.value}</p>
+                <p className="mt-1.5 text-sm text-muted">
                   {card.target ? `Цель: ${card.target}` : "Цель не задана"}
                 </p>
                 <div className="mt-4 h-2 overflow-hidden rounded-full bg-border/70">
@@ -774,17 +771,14 @@ export function NutritionTracker({
             ))}
           </section>
 
-          <section className="card card--hero p-6">
+          <section className="surface-panel p-4 sm:p-5">
             <div className="mb-5">
-              <p className="workspace-kicker">
-                Цели
-              </p>
-              <h2 className="app-display mt-2 text-2xl font-semibold text-foreground sm:text-3xl">
+              <p className="workspace-kicker">Цели</p>
+              <h2 className="mt-2 text-xl font-semibold text-foreground sm:text-2xl">
                 Дневные ориентиры по КБЖУ
               </h2>
-              <p className="mt-3 max-w-3xl text-sm leading-7 text-muted">
-                Держи одну понятную планку на день: приложение покажет, сколько уже съедено,
-                сколько осталось и где рацион уходит в сторону.
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">
+                Держи одну понятную планку на день и быстро обновляй цели.
               </p>
             </div>
 
@@ -807,7 +801,7 @@ export function NutritionTracker({
               </label>
             </div>
 
-            <button className="action-button action-button--primary mt-6" disabled={isPending} onClick={saveTargets} type="button">
+            <button className="action-button action-button--primary mt-5" disabled={isPending} onClick={saveTargets} type="button">
               {isPending ? "Сохраняю..." : "Сохранить цели"}
             </button>
           </section>
@@ -815,18 +809,15 @@ export function NutritionTracker({
       ) : null}
 
       {activePanelKey === "foods" ? (
-        <section className="grid gap-6">
-          <section className="card card--hero p-6">
+        <section className="grid gap-4">
+          <section className="surface-panel p-4 sm:p-5">
             <div className="mb-5">
-              <p className="workspace-kicker">
-                База продуктов
-              </p>
-              <h2 className="app-display mt-2 text-2xl font-semibold text-foreground sm:text-3xl">
+              <p className="workspace-kicker">База продуктов</p>
+              <h2 className="mt-2 text-xl font-semibold text-foreground sm:text-2xl">
                 Свои продукты и справочник
               </h2>
-              <p className="mt-3 max-w-3xl text-sm leading-7 text-muted">
-                Храни свои продукты, импортируй упаковку по штрихкоду и собирай понятную базу
-                для быстрого логирования без ручного ввода каждого макроэлемента.
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">
+                Добавляй свои позиции, импортируй упаковку по штрихкоду и держи базу в одном месте.
               </p>
             </div>
 
@@ -861,7 +852,7 @@ export function NutritionTracker({
               </label>
             </div>
 
-            <div className="mt-4 overflow-hidden rounded-[1.5rem] border border-border bg-white/78">
+            <div className="mt-4 overflow-hidden rounded-[1rem] border border-border bg-white/88">
               {isAbsoluteHttpUrl(foodImageUrl) ? (
                 <Image
                   alt={foodName.trim() || "Предпросмотр продукта"}
@@ -872,14 +863,13 @@ export function NutritionTracker({
                   width={640}
                 />
               ) : (
-                <div className="flex h-40 items-center justify-center bg-[color-mix(in_srgb,var(--accent-soft)_58%,white)] px-5 text-center">
+                <div className="flex h-36 items-center justify-center bg-[color-mix(in_srgb,var(--accent-soft)_50%,white)] px-5 text-center">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.22em] text-accent">
                       Обложка продукта
                     </p>
                     <p className="mt-2 text-sm text-foreground">
-                      Добавь свою ссылку на изображение, чтобы карточка продукта выглядела
-                      аккуратно в базе и при логировании.
+                      Добавь ссылку на фото, чтобы продукт было проще узнавать в базе.
                     </p>
                   </div>
                 </div>
@@ -904,23 +894,23 @@ export function NutritionTracker({
               />
             </div>
 
-            <div className="mt-6 grid gap-3">
+            <div className="mt-5 grid gap-3">
               {foods.length ? (
                 foods.map((food) => (
-                  <article className="surface-panel surface-panel--soft p-4" key={food.id}>
-                    <div className="grid gap-4 sm:grid-cols-[104px_1fr]">
-                      <div className="overflow-hidden rounded-[1.25rem] border border-border bg-white/78">
+                  <article className="surface-panel surface-panel--soft p-3.5" key={food.id}>
+                    <div className="grid gap-3 sm:grid-cols-[88px_1fr]">
+                      <div className="overflow-hidden rounded-[0.95rem] border border-border bg-white/88">
                         {food.image_url ? (
                           <Image
                             alt={food.name}
-                            className="h-[104px] w-full object-cover"
-                            height={104}
+                            className="h-[88px] w-full object-cover"
+                            height={88}
                             src={food.image_url}
                             unoptimized
-                            width={104}
+                            width={88}
                           />
                         ) : (
-                          <div className="flex h-[104px] items-center justify-center bg-[color-mix(in_srgb,var(--accent-soft)_52%,white)] px-3 text-center text-xs font-medium text-accent">
+                          <div className="flex h-[88px] items-center justify-center bg-[color-mix(in_srgb,var(--accent-soft)_52%,white)] px-3 text-center text-xs font-medium text-accent">
                             {food.source === "open_food_facts" ? "Импорт без фото" : "Своя карточка"}
                           </div>
                         )}
@@ -929,7 +919,7 @@ export function NutritionTracker({
                       <div>
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div>
-                            <p className="text-lg font-semibold text-foreground">{food.name}</p>
+                            <p className="text-base font-semibold text-foreground">{food.name}</p>
                             <p className="mt-1 text-sm text-muted">
                               {food.brand ?? "Без бренда"}
                               {food.quantity ? ` · ${food.quantity}` : ""}
@@ -940,10 +930,10 @@ export function NutritionTracker({
                             </p>
                           </div>
                           <div className="flex flex-wrap gap-2">
-                            <button className="action-button action-button--secondary px-4 py-2 text-sm" onClick={() => selectFoodForEdit(food)} type="button">
+                            <button className="action-button action-button--secondary px-3.5 py-2 text-sm" onClick={() => selectFoodForEdit(food)} type="button">
                               Редактировать
                             </button>
-                            <button className="action-button action-button--secondary px-4 py-2 text-sm" onClick={() => removeFood(food.id)} type="button">
+                            <button className="action-button action-button--secondary px-3.5 py-2 text-sm" onClick={() => removeFood(food.id)} type="button">
                               Удалить
                             </button>
                           </div>
@@ -980,26 +970,21 @@ export function NutritionTracker({
       ) : null}
 
       {activePanelKey === "log" ? (
-        <section className="card card--hero p-6">
+        <section className="surface-panel p-4 sm:p-5">
           <div className="mb-5">
-            <p className="workspace-kicker">
-              Логирование
-            </p>
-            <h2 className="app-display mt-2 text-2xl font-semibold text-foreground sm:text-3xl">
+            <p className="workspace-kicker">Логирование</p>
+            <h2 className="mt-2 text-xl font-semibold text-foreground sm:text-2xl">
               Текущий приём пищи
             </h2>
-            <p className="mt-3 max-w-3xl text-sm leading-7 text-muted">
-              Добавляй еду так, как это реально происходит в жизни: по своему продукту, по
-              штрихкоду, из шаблона или прямо с импортом упаковки.
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">
+              Добавляй еду по продукту, штрихкоду, шаблону или прямо с упаковки.
             </p>
           </div>
 
           <div className="surface-panel surface-panel--soft mb-5 p-4">
-            <p className="workspace-kicker">
-              Быстрое добавление по штрихкоду
-            </p>
-            <p className="mt-2 text-sm leading-7 text-muted">
-              Поиск идёт по твоей собственной базе продуктов. Если продукт уже сохранён со штрихкодом, его можно сразу добавить в текущий приём пищи.
+            <p className="workspace-kicker">Быстрое добавление по штрихкоду</p>
+            <p className="mt-2 text-sm leading-6 text-muted">
+              Если продукт уже есть в твоей базе, его можно сразу подставить в текущий лог.
             </p>
             <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]">
               <input
@@ -1071,7 +1056,7 @@ export function NutritionTracker({
             </button>
           </div>
 
-          <div className="surface-panel surface-panel--accent mt-6 p-5">
+          <div className="surface-panel surface-panel--accent mt-5 p-4">
             <p className="workspace-kicker">Предварительный расчёт</p>
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               <p className="text-sm text-muted">Калории: <span className="font-semibold text-foreground">{Math.round(mealPreview.kcal)}</span></p>
@@ -1088,14 +1073,12 @@ export function NutritionTracker({
       ) : null}
 
       {activePanelKey === "history" ? (
-        <section className="grid gap-6">
-          <section className="card card--hero p-6">
+        <section className="grid gap-4">
+          <section className="surface-panel p-4 sm:p-5">
             <div className="mb-5 flex items-center justify-between gap-3">
               <div>
-                <p className="workspace-kicker">
-                  История
-                </p>
-                <h2 className="app-display mt-2 text-2xl font-semibold text-foreground sm:text-3xl">
+                <p className="workspace-kicker">История</p>
+                <h2 className="mt-2 text-xl font-semibold text-foreground sm:text-2xl">
                   Последние приёмы пищи
                 </h2>
               </div>
@@ -1108,7 +1091,7 @@ export function NutritionTracker({
                   <article className="surface-panel surface-panel--soft p-4" key={meal.id}>
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
-                        <p className="text-lg font-semibold text-foreground">{formatDateTime(meal.eaten_at)}</p>
+                        <p className="text-base font-semibold text-foreground">{formatDateTime(meal.eaten_at)}</p>
                         <p className="text-sm text-muted">
                           {meal.totals.kcal.toLocaleString("ru-RU")} ккал · Б {formatMacro(meal.totals.protein)} · Ж {formatMacro(meal.totals.fat)} · У {formatMacro(meal.totals.carbs)}
                         </p>

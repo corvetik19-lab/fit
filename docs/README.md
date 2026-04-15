@@ -21,13 +21,14 @@
 
 ## Активные execution-docs
 
-- [DARK_UTILITY_REDESIGN_EXECUTION.md](/C:/fit/docs/DARK_UTILITY_REDESIGN_EXECUTION.md) — новый mobile-first redesign в стиле dark utility fitness.
+- [LIGHT_COMPACT_REDESIGN_EXECUTION.md](/C:/fit/docs/LIGHT_COMPACT_REDESIGN_EXECUTION.md) — новый светлый compact mobile-first redesign.
 - [NUTRITION_CAPTURE_OFF_PLAN.md](/C:/fit/docs/NUTRITION_CAPTURE_OFF_PLAN.md) — camera, barcode и Open Food Facts flow.
 - [RAG_V2_EXECUTION.md](/C:/fit/docs/RAG_V2_EXECUTION.md) — hybrid retrieval, reranking, chunking и AI quality gate.
 - [RUSSIAN_BILLING_PROVIDER_PLAN.md](/C:/fit/docs/RUSSIAN_BILLING_PROVIDER_PLAN.md) — миграция billing-слоя на российского провайдера.
 
 ## Исторические execution-docs
 
+- [DARK_UTILITY_REDESIGN_EXECUTION.md](/C:/fit/docs/DARK_UTILITY_REDESIGN_EXECUTION.md) — закрытый предыдущий dark utility redesign-срез.
 - [STITCH_REDESIGN_EXECUTION.md](/C:/fit/docs/STITCH_REDESIGN_EXECUTION.md) — закрытый предыдущий redesign-срез.
 - [PREMIUM_REDESIGN_PLAN.md](/C:/fit/docs/PREMIUM_REDESIGN_PLAN.md) — закрытый premium redesign baseline.
 
@@ -45,6 +46,7 @@
 ## Пакет для дизайнера
 
 - [design-handoff/README.md](/C:/fit/docs/design-handoff/README.md)
+- [design-handoff/LIGHT_COMPACT_MOBILE_BRIEF.md](/C:/fit/docs/design-handoff/LIGHT_COMPACT_MOBILE_BRIEF.md)
 - [design-handoff/DARK_UTILITY_MOBILE_BRIEF.md](/C:/fit/docs/design-handoff/DARK_UTILITY_MOBILE_BRIEF.md)
 - [design-handoff/FIT_SCREEN_DESIGN_BRIEF.md](/C:/fit/docs/design-handoff/FIT_SCREEN_DESIGN_BRIEF.md)
 

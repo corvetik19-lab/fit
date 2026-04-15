@@ -6,6 +6,23 @@
 - Во время production hardening журнал был сжат и переписан в чистый UTF-8.
 - Ниже остаются только ключевые tranche, которые помогают понять текущее состояние продукта и инженерного контура.
 
+## 2026-04-15
+
+### Light compact redesign reset
+
+- Запущен новый активный UI-подплан [LIGHT_COMPACT_REDESIGN_EXECUTION.md](/C:/fit/docs/LIGHT_COMPACT_REDESIGN_EXECUTION.md): пользовательский фидбек показал, что `Dark Utility` остаётся слишком тяжёлым для телефона, особенно на `/nutrition`.
+- В [AGENTS.md](/C:/fit/AGENTS.md) дополнительно зафиксировано правило: если старый execution-doc закрыт и запускается новый активный подплан, текущий процент нужно считать только по новому подплану, а не по историческому.
+- Создан новый handoff для дизайна и разработки [LIGHT_COMPACT_MOBILE_BRIEF.md](/C:/fit/docs/design-handoff/LIGHT_COMPACT_MOBILE_BRIEF.md), а [FRONTEND.md](/C:/fit/docs/FRONTEND.md) переведён на новый source of truth: светлый, компактный, utility-first mobile UX.
+
+### Light compact foundation + nutrition tranche
+
+- Светлый compact foundation внедрён в общий visual layer: [globals.css](/C:/fit/src/app/globals.css) переведён с dark-токенов на тёплый light canvas, меньшие радиусы, более короткие кнопки и более лёгкие surface-уровни.
+- Shell и shared workspace уплотнены под телефон через [app-shell-frame.tsx](/C:/fit/src/components/app-shell-frame.tsx), [app-shell-nav.tsx](/C:/fit/src/components/app-shell-nav.tsx) и [page-workspace.tsx](/C:/fit/src/components/page-workspace.tsx): верхний бар стал легче, drawer и bottom-nav — светлыми и компактными, visibility/menu controls больше не выглядят как отдельные большие карточки.
+- Входной экран и сама форма входа переведены в тот же light compact стиль через [page.tsx](/C:/fit/src/app/page.tsx) и [auth-form.tsx](/C:/fit/src/components/auth-form.tsx).
+- `/nutrition` перепакован как рабочий дневной экран, а не как длинная лента крупных блоков: обновлены [nutrition/page.tsx](/C:/fit/src/app/nutrition/page.tsx), [nutrition-tracker.tsx](/C:/fit/src/components/nutrition-tracker.tsx) и [nutrition-goal-adherence.tsx](/C:/fit/src/components/nutrition-goal-adherence.tsx). Убрано дублирование гигантского hero, укорочены тексты, уменьшены paddings/cards, ускорен доступ к `Фото`, `Штрихкоду`, продуктам и текущему логу.
+- Проверка tranche: `git diff --check`, `npm run lint`, `npm run typecheck`, `npm run build`, `npx eslint tests/e2e/mobile-pwa-regressions.spec.ts`, `npm run test:smoke`, `node scripts/run-playwright.mjs -- test tests/e2e/authenticated-app.spec.ts tests/e2e/mobile-pwa-regressions.spec.ts tests/e2e/nutrition-capture.spec.ts --workers=1` -> `7 passed / 8`, где единственный red был уже текстовым контрактом mobile suite, а после фикса проверки suite упёрся во внешний `Supabase` runtime (`ECONNRESET`, `page.goto timeout`) вместо layout-регрессии.
+- Общий прогресс `MASTER_PLAN`: `213 / 222` (`96%`). Прогресс текущего light compact подплана: `4 / 10` (`40%`).
+
 ## 2026-03-30
 
 ## 2026-03-31

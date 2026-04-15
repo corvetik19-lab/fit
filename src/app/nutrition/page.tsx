@@ -201,7 +201,7 @@ export default async function NutritionPage({ searchParams }: NutritionPageProps
           viewer.profile?.full_name ?? viewer.user.email ?? "fit",
           `Сегодня: ${todaySummaryDate}`,
         ]}
-        description="Экран питания собран как рабочий дневник: сверху баланс дня, дальше быстрые действия через фото и штрихкод, ниже журнал, база продуктов и история."
+        description="Сначала баланс и быстрые действия, затем журнал, база продуктов и история."
         metrics={[
           {
             label: "Продукты",
@@ -265,7 +265,7 @@ export default async function NutritionPage({ searchParams }: NutritionPageProps
         ]}
         initialSectionKey={initialSectionKey}
         storageKey="nutrition-page"
-        title="Рацион, камера и журнал питания в одном рабочем экране"
+        title="Рацион и дневной журнал в одном экране"
       />
     </AppShell>
   );

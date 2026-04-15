@@ -120,11 +120,13 @@ test.describe("mobile pwa regressions", () => {
         await workoutsSectionTrigger.click();
         await page.getByTestId("page-workspace-mobile-option-library").click();
         await expect(workoutsSectionTrigger).toContainText("Упражнения");
-        await page.getByRole("button", { name: "Скрыть меню" }).click();
-        await expect(
-          page.getByRole("button", { name: "Показать меню" }),
-        ).toBeVisible();
-        await page.getByRole("button", { name: "Показать меню" }).click();
+        const menuVisibilityButton = page.getByTestId(
+          "page-workspace-visibility-menu",
+        );
+        await menuVisibilityButton.click();
+        await expect(menuVisibilityButton).toHaveAttribute("aria-pressed", "false");
+        await menuVisibilityButton.click();
+        await expect(menuVisibilityButton).toHaveAttribute("aria-pressed", "true");
         await expectNoHorizontalOverflow(page, "workouts section controls");
 
         await navigateStable(page, "/nutrition", /\/nutrition$/);
@@ -137,11 +139,19 @@ test.describe("mobile pwa regressions", () => {
         await nutritionSectionTrigger.click();
         await page.getByTestId("page-workspace-mobile-option-log").click();
         await expect(nutritionSectionTrigger).toContainText("Журнал и база");
-        await page.getByRole("button", { name: "Скрыть раздел" }).click();
-        await expect(
-          page.getByRole("button", { name: "Показать раздел" }),
-        ).toBeVisible();
-        await page.getByRole("button", { name: "Показать раздел" }).click();
+        const sectionVisibilityButton = page.getByTestId(
+          "page-workspace-visibility-section",
+        );
+        await sectionVisibilityButton.click();
+        await expect(sectionVisibilityButton).toHaveAttribute(
+          "aria-pressed",
+          "false",
+        );
+        await sectionVisibilityButton.click();
+        await expect(sectionVisibilityButton).toHaveAttribute(
+          "aria-pressed",
+          "true",
+        );
         await expectNoHorizontalOverflow(page, "nutrition section controls");
 
         regressionCapture.assertNone();
