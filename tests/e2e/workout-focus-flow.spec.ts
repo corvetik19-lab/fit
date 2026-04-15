@@ -173,7 +173,7 @@ test.describe("workout focus flow", () => {
     await finishDialog;
 
     await expect(
-      page.getByRole("button", { name: "Вернуть в процесс" }),
+      page.getByRole("button", { name: "Снова в работу" }),
     ).toBeVisible();
     await expect(page.getByText("Тренировка завершена, время сохранено.")).toBeVisible();
   });

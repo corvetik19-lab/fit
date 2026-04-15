@@ -17,7 +17,7 @@ import {
   type UserBillingAccessSnapshot,
 } from "@/lib/billing-access";
 import { logger } from "@/lib/logger";
-import { withTimeout } from "@/lib/runtime-retry";
+import { withTimeout, withTransientRetry } from "@/lib/runtime-retry";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireReadyViewer } from "@/lib/viewer";
 
@@ -43,7 +43,13 @@ async function loadAiPageResource<T>(
   fallback: () => T,
 ) {
   try {
-    return await withTimeout(factory(), AI_PAGE_DATA_TIMEOUT_MS, label);
+    return await withTransientRetry(
+      async () => await withTimeout(factory(), AI_PAGE_DATA_TIMEOUT_MS, label),
+      {
+        attempts: 3,
+        delaysMs: [500, 1_500, 3_000],
+      },
+    );
   } catch (error) {
     logger.warn("AI page is using fallback data", {
       error,

@@ -6,6 +6,8 @@ import { buildDefaultOnboardingPayload } from "./auth";
 loadEnvConfig(process.cwd());
 
 let adminClient: SupabaseClient | null = null;
+const ADMIN_RETRY_DELAYS_MS = [750, 1_500, 3_000, 5_000] as const;
+const authUserIdByEmailCache = new Map<string, string>();
 
 function getRequiredEnv(name: "NEXT_PUBLIC_SUPABASE_URL" | "SUPABASE_SERVICE_ROLE_KEY") {
   const value = process.env[name]?.trim();
@@ -36,18 +38,48 @@ export function createSupabaseAdminTestClient() {
   return adminClient;
 }
 
+async function withAdminRetry<T>(factory: () => Promise<T>) {
+  let lastError: unknown = null;
+
+  for (let attempt = 0; attempt < ADMIN_RETRY_DELAYS_MS.length; attempt += 1) {
+    try {
+      return await factory();
+    } catch (error) {
+      lastError = error;
+
+      if (attempt === ADMIN_RETRY_DELAYS_MS.length - 1) {
+        break;
+      }
+
+      await new Promise((resolve) =>
+        setTimeout(resolve, ADMIN_RETRY_DELAYS_MS[attempt]),
+      );
+    }
+  }
+
+  throw lastError;
+}
+
 export async function findAuthUserIdByEmail(email: string) {
   const normalizedEmail = email.trim().toLowerCase();
+  const cached = authUserIdByEmailCache.get(normalizedEmail);
+
+  if (cached) {
+    return cached;
+  }
+
   const supabase = createSupabaseAdminTestClient();
 
   for (let page = 1; page <= 10; page += 1) {
     const {
       data: { users },
       error,
-    } = await supabase.auth.admin.listUsers({
-      page,
-      perPage: 200,
-    });
+    } = await withAdminRetry(async () =>
+      await supabase.auth.admin.listUsers({
+        page,
+        perPage: 200,
+      }),
+    );
 
     if (error) {
       throw error;
@@ -58,6 +90,7 @@ export async function findAuthUserIdByEmail(email: string) {
     );
 
     if (targetUser) {
+      authUserIdByEmailCache.set(normalizedEmail, targetUser.id);
       return targetUser.id;
     }
 
@@ -77,47 +110,54 @@ export async function ensureOnboardingTestData(
   const supabase = createSupabaseAdminTestClient();
   const payload = buildDefaultOnboardingPayload(fullName);
 
-  const { error: profileError } = await supabase.from("profiles").upsert(
-    {
-      id: userId,
-      user_id: userId,
-      full_name: payload.fullName,
-    },
-    { onConflict: "id" },
+  const { error: profileUpsertError } = await withAdminRetry(async () =>
+    await supabase.from("profiles").upsert(
+      {
+        id: userId,
+        user_id: userId,
+        full_name: payload.fullName,
+      },
+      { onConflict: "id" },
+    ),
   );
 
-  if (profileError) {
-    throw profileError;
+  if (profileUpsertError) {
+    throw profileUpsertError;
   }
 
-  const { error: onboardingError } = await supabase
-    .from("onboarding_profiles")
-    .upsert(
-      {
-        user_id: userId,
-        age: payload.age,
-        sex: payload.sex,
-        height_cm: payload.heightCm,
-        weight_kg: payload.weightKg,
-        fitness_level: payload.fitnessLevel,
-        equipment: payload.equipment,
-        injuries: payload.injuries,
-        dietary_preferences: payload.dietaryPreferences,
-      },
-      { onConflict: "user_id" },
-    );
+  const { error: onboardingError } = await withAdminRetry(async () =>
+    await supabase
+      .from("onboarding_profiles")
+      .upsert(
+        {
+          user_id: userId,
+          age: payload.age,
+          sex: payload.sex,
+          height_cm: payload.heightCm,
+          weight_kg: payload.weightKg,
+          fitness_level: payload.fitnessLevel,
+          equipment: payload.equipment,
+          injuries: payload.injuries,
+          dietary_preferences: payload.dietaryPreferences,
+        },
+        { onConflict: "user_id" },
+      ),
+  );
 
   if (onboardingError) {
     throw onboardingError;
   }
 
-  const { data: existingGoal, error: goalLookupError } = await supabase
-    .from("goals")
-    .select("id")
-    .eq("user_id", userId)
-    .order("updated_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const { data: existingGoal, error: goalLookupError } = await withAdminRetry(
+    async () =>
+      await supabase
+        .from("goals")
+        .select("id")
+        .eq("user_id", userId)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+  );
 
   if (goalLookupError) {
     throw goalLookupError;
@@ -134,36 +174,40 @@ export async function ensureOnboardingTestData(
     ? supabase.from("goals").update(goalPayload).eq("id", existingGoal.id)
     : supabase.from("goals").insert(goalPayload);
 
-  const { error: goalMutationError } = await goalMutation;
+  const { error: goalMutationError } = await withAdminRetry(
+    async () => await goalMutation,
+  );
 
   if (goalMutationError) {
     throw goalMutationError;
   }
 
-  const { error: snapshotError } = await supabase
-    .from("user_context_snapshots")
-    .insert({
-      user_id: userId,
-      snapshot_reason: "playwright_onboarding_bootstrap",
-      payload: {
-        profile: {
-          fullName: payload.fullName,
-          age: payload.age,
-          sex: payload.sex,
-          heightCm: payload.heightCm,
-          weightKg: payload.weightKg,
-          fitnessLevel: payload.fitnessLevel,
+  const { error: snapshotError } = await withAdminRetry(async () =>
+    await supabase
+      .from("user_context_snapshots")
+      .insert({
+        user_id: userId,
+        snapshot_reason: "playwright_onboarding_bootstrap",
+        payload: {
+          profile: {
+            fullName: payload.fullName,
+            age: payload.age,
+            sex: payload.sex,
+            heightCm: payload.heightCm,
+            weightKg: payload.weightKg,
+            fitnessLevel: payload.fitnessLevel,
+          },
+          goal: {
+            goalType: payload.goalType,
+            targetWeightKg: payload.targetWeightKg,
+            weeklyTrainingDays: payload.weeklyTrainingDays,
+          },
+          equipment: payload.equipment,
+          injuries: payload.injuries,
+          dietaryPreferences: payload.dietaryPreferences,
         },
-        goal: {
-          goalType: payload.goalType,
-          targetWeightKg: payload.targetWeightKg,
-          weeklyTrainingDays: payload.weeklyTrainingDays,
-        },
-        equipment: payload.equipment,
-        injuries: payload.injuries,
-        dietaryPreferences: payload.dietaryPreferences,
-      },
-    });
+      }),
+  );
 
   if (snapshotError) {
     throw snapshotError;

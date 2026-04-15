@@ -21,7 +21,9 @@ test.describe("settings billing center", () => {
     await navigateStable(page, "/settings?section=billing", /\/settings\?section=billing$/);
 
     await expect(
-      page.getByRole("heading", { name: "Подписка, функции и история доступа" }),
+      page.getByRole("heading", {
+        name: "Подписка, AI-функции и история доступа",
+      }),
     ).toBeVisible();
     await expect(page.getByText("Текущий план").first()).toBeVisible();
     await expect(page.getByText("Запросить доступ").first()).toBeVisible();

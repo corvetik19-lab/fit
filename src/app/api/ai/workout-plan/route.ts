@@ -18,14 +18,20 @@ import {
 } from "@/lib/billing-access";
 import { hasAiRuntimeEnv } from "@/lib/env";
 import { logger } from "@/lib/logger";
+import { withTimeout, withTransientRetry } from "@/lib/runtime-retry";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+
+const WORKOUT_PLAN_USAGE_TIMEOUT_MS = 5_000;
 
 export async function POST(request: Request) {
   try {
     const supabase = await createServerSupabaseClient();
     const {
       data: { user },
-    } = await supabase.auth.getUser();
+    } = await withTransientRetry(async () => await supabase.auth.getUser(), {
+      attempts: 4,
+      delaysMs: [500, 1_500, 3_000, 5_000],
+    });
 
     if (!user) {
       return createApiErrorResponse({
@@ -47,9 +53,16 @@ export async function POST(request: Request) {
       });
     }
 
-    const access = await readUserBillingAccessOrFallback(supabase, user.id, {
-      email: user.email,
-    });
+    const access = await withTransientRetry(
+      async () =>
+        await readUserBillingAccessOrFallback(supabase, user.id, {
+          email: user.email,
+        }),
+      {
+        attempts: 3,
+        delaysMs: [500, 1_500, 3_000],
+      },
+    );
     const feature = access.features[BILLING_FEATURE_KEYS.workoutPlan];
 
     if (!feature.allowed) {
@@ -63,11 +76,29 @@ export async function POST(request: Request) {
       focus: body.focus ?? null,
     });
 
-    await incrementFeatureUsage(
-      supabase,
-      user.id,
-      BILLING_FEATURE_KEYS.workoutPlan,
-    );
+    try {
+      await withTransientRetry(
+        async () =>
+          await withTimeout(
+            incrementFeatureUsage(
+              supabase,
+              user.id,
+              BILLING_FEATURE_KEYS.workoutPlan,
+            ),
+            WORKOUT_PLAN_USAGE_TIMEOUT_MS,
+            "workout plan usage increment",
+          ),
+        {
+          attempts: 2,
+          delaysMs: [500, 1_500],
+        },
+      );
+    } catch (error) {
+      logger.warn("workout plan usage increment skipped", {
+        error,
+        userId: user.id,
+      });
+    }
 
     return Response.json({ data: proposal });
   } catch (error) {

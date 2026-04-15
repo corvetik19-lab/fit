@@ -1,5 +1,8 @@
 import {
+  createUIMessageStream,
+  createUIMessageStreamResponse,
   convertToModelMessages,
+  generateText,
   stepCountIs,
   streamText,
   tool,
@@ -73,6 +76,7 @@ export const maxDuration = 30;
 
 const ASSISTANT_CONTEXT_TIMEOUT_MS = 10_000;
 const ASSISTANT_KNOWLEDGE_TIMEOUT_MS = 8_000;
+const ASSISTANT_AI_TIMEOUT_MS = 18_000;
 
 const assistantRequestSchema = z.object({
   allowWebSearch: z.boolean().optional(),
@@ -249,7 +253,11 @@ function shouldUseAssistantTools(message: string, allowWebSearch: boolean) {
     return true;
   }
 
-  return /(plan|proposal|approve|apply|meal|workout|рацион|план|черновик|подтвер|примен|тренир)/i.test(
+  // Tool mode is needed only for explicit plan/proposal actions. Generic
+  // coaching questions should stay on the compact prompt so the assistant
+  // responds faster and does not burn the output budget on unnecessary
+  // tool orchestration.
+  return /(plan|proposal|approve|apply|draft|meal plan|workout plan|recent proposals|рацион|план|черновик|подтвер|примен|составь\s+план|покажи\s+черновик|последние\s+предложения)/i.test(
     message,
   );
 }
@@ -295,6 +303,203 @@ async function loadAssistantKnowledge(
   }
 }
 
+function roundDelta(value: number) {
+  return Math.round(Math.abs(value));
+}
+
+function buildDeterministicAssistantReply(input: {
+  context: Awaited<ReturnType<typeof loadAssistantContext>>;
+  fallbackReason: "provider" | "timeout" | "runtime";
+  knowledge: Awaited<ReturnType<typeof loadAssistantKnowledge>>;
+}) {
+  const { context, fallbackReason, knowledge } = input;
+  const avgKcal = context.nutritionInsights.avgKcalLast7;
+  const kcalTarget = context.nutritionTargets.kcalTarget;
+  const avgProtein = context.nutritionInsights.avgProteinLast7;
+  const proteinTarget = context.nutritionTargets.proteinTarget;
+  const completedDays = context.workoutInsights.completedDaysLast28;
+  const hardSetShare = context.workoutInsights.hardSetShareLast28;
+
+  const intro =
+    fallbackReason === "provider"
+      ? "Сейчас живой AI-провайдер отвечает нестабильно, поэтому я даю резервный разбор по твоим текущим данным."
+      : fallbackReason === "timeout"
+        ? "Сейчас живой ответ ассистента занял слишком много времени, поэтому я даю резервный разбор по твоим текущим данным."
+        : "Сейчас я даю резервный разбор по сохранённым данным профиля, питания и тренировок.";
+
+  const findings: string[] = [];
+
+  if (typeof avgKcal === "number" && typeof kcalTarget === "number") {
+    const kcalGap = kcalTarget - avgKcal;
+    if (Math.abs(kcalGap) >= 250) {
+      findings.push(
+        kcalGap > 0
+          ? `По питанию есть недобор примерно ${roundDelta(kcalGap)} ккал в день относительно цели.`
+          : `По питанию есть перебор примерно ${roundDelta(kcalGap)} ккал в день относительно цели.`,
+      );
+    }
+  }
+
+  if (typeof avgProtein === "number" && typeof proteinTarget === "number") {
+    const proteinGap = proteinTarget - avgProtein;
+    if (Math.abs(proteinGap) >= 15) {
+      findings.push(
+        proteinGap > 0
+          ? `Белок отстаёт от цели примерно на ${roundDelta(proteinGap)} г в день.`
+          : `Белок выше цели примерно на ${roundDelta(proteinGap)} г в день.`,
+      );
+    }
+  }
+
+  if (typeof completedDays === "number" && completedDays <= 2) {
+    findings.push("Тренировочный объём за последние недели выглядит заниженным, поэтому важно сначала стабилизировать режим, а не резко добавлять нагрузку.");
+  } else if (typeof hardSetShare === "number" && hardSetShare >= 0.45) {
+    findings.push("Доля тяжёлых сетов высокая, поэтому восстановление сейчас важнее, чем попытка форсировать прогресс.");
+  }
+
+  const summary =
+    findings[0] ??
+    "По текущим данным я не вижу основания резко менять программу, поэтому лучший ход — стабилизировать питание, сон и тренировочный ритм.";
+
+  const steps: string[] = [];
+
+  if (typeof kcalTarget === "number" && typeof proteinTarget === "number") {
+    steps.push(
+      `1. На ближайшую неделю держи ориентир около ${Math.round(kcalTarget)} ккал и не опускай белок ниже ${Math.round(proteinTarget)} г в сутки.`,
+    );
+  } else {
+    steps.push(
+      "1. На ближайшую неделю выровняй режим: регулярное питание, вода, сон и без резких ограничений по калориям.",
+    );
+  }
+
+  steps.push(
+    "2. Оставь рабочий тренировочный объём стабильным: без отказных подходов подряд и с как минимум 1-2 полноценными днями восстановления.",
+  );
+
+  if (knowledge.length > 0) {
+    steps.push(
+      "3. Я вижу личную историю в контексте, поэтому дальше лучше опираться на неё: можно попросить меня собрать конкретный план тренировки или питания и вынести его на подтверждение.",
+    );
+  } else {
+    steps.push(
+      "3. Если хочешь, я могу сразу собрать черновик плана тренировок или питания и вынести его на подтверждение внутри приложения.",
+    );
+  }
+
+  return [intro, summary, steps.join("\n")].join("\n\n");
+}
+
+async function generateCompactAssistantReply(input: {
+  context: Awaited<ReturnType<typeof loadAssistantContext>>;
+  knowledge: Awaited<ReturnType<typeof loadAssistantKnowledge>>;
+  messages: UIMessage[];
+  sessionId: string;
+  userId: string;
+}) {
+  const { context, knowledge, messages, sessionId, userId } = input;
+
+  try {
+    const result = await withTimeout(
+      withTransientRetry(() =>
+        generateText({
+          maxOutputTokens: AI_ASSISTANT_MAX_OUTPUT_TOKENS,
+          model: models.chat,
+          messages: convertToModelMessages(messages),
+          system: buildCompactSportsCoachPrompt({
+            allowWebSearch: false,
+            context,
+            knowledge,
+          }),
+        }),
+      ),
+      ASSISTANT_AI_TIMEOUT_MS,
+      "ai assistant compact generation",
+    );
+
+    const text = result.text.trim();
+
+    if (text.length >= 60) {
+      return text;
+    }
+
+    logger.warn("ai assistant is using deterministic fallback after short reply", {
+      responseLength: text.length,
+      sessionId,
+      userId,
+    });
+
+    return buildDeterministicAssistantReply({
+      context,
+      fallbackReason: "runtime",
+      knowledge,
+    });
+  } catch (error) {
+    logger.warn("ai assistant is using deterministic fallback", {
+      error,
+      sessionId,
+      userId,
+    });
+
+    return buildDeterministicAssistantReply({
+      context,
+      fallbackReason: isAiProviderConfigurationFailure(error) ? "provider" : "timeout",
+      knowledge,
+    });
+  }
+}
+
+function createStaticAssistantStreamResponse(input: {
+  messages: UIMessage[];
+  sessionId: string;
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>;
+  text: string;
+  userId: string;
+}) {
+  const { messages, sessionId, supabase, text, userId } = input;
+
+  const stream = createUIMessageStream({
+    originalMessages: messages,
+    onFinish: async ({ responseMessage }) => {
+      await persistAssistantReply({
+        responseMessage,
+        sessionId,
+        supabase,
+        userId,
+      });
+    },
+    execute: ({ writer }) => {
+      writer.write({
+        type: "start",
+        messageId: crypto.randomUUID(),
+      });
+      writer.write({ type: "start-step" });
+      writer.write({
+        type: "text-start",
+        id: "txt-0",
+      });
+      writer.write({
+        type: "text-delta",
+        id: "txt-0",
+        delta: text,
+      });
+      writer.write({
+        type: "text-end",
+        id: "txt-0",
+      });
+      writer.write({ type: "finish-step" });
+      writer.write({
+        type: "finish",
+        finishReason: "stop",
+      });
+    },
+    onError: (error) => buildAssistantStreamErrorMessage(error),
+    generateId: () => crypto.randomUUID(),
+  });
+
+  return createUIMessageStreamResponse({ stream });
+}
+
 export async function POST(request: Request) {
   try {
     if (!hasAiRuntimeEnv()) {
@@ -310,7 +515,10 @@ export async function POST(request: Request) {
     const supabase = await createServerSupabaseClient();
     const {
       data: { user },
-    } = await supabase.auth.getUser();
+    } = await withTransientRetry(async () => await supabase.auth.getUser(), {
+      attempts: 4,
+      delaysMs: [500, 1_500, 3_000, 5_000],
+    });
 
     if (!user) {
       return createApiErrorResponse({
@@ -320,9 +528,16 @@ export async function POST(request: Request) {
       });
     }
 
-    const access = await readUserBillingAccessOrFallback(supabase, user.id, {
-      email: user.email,
-    });
+    const access = await withTransientRetry(
+      async () =>
+        await readUserBillingAccessOrFallback(supabase, user.id, {
+          email: user.email,
+        }),
+      {
+        attempts: 3,
+        delaysMs: [500, 1_500, 3_000],
+      },
+    );
     const chatAccess = access.features[BILLING_FEATURE_KEYS.aiChat];
     const lastUserText = getLastUserText(body.messages);
 
@@ -347,7 +562,14 @@ export async function POST(request: Request) {
       content: lastUserText,
     });
     await touchAiChatSession(supabase, user.id, session.id);
-    await incrementFeatureUsage(supabase, user.id, BILLING_FEATURE_KEYS.aiChat);
+    await withTransientRetry(
+      async () =>
+        await incrementFeatureUsage(supabase, user.id, BILLING_FEATURE_KEYS.aiChat),
+      {
+        attempts: 3,
+        delaysMs: [500, 1_500, 3_000],
+      },
+    );
 
     const guardrail = detectAssistantGuardrail(lastUserText);
 
@@ -444,6 +666,24 @@ export async function POST(request: Request) {
       loadAssistantContext(supabase, user.id),
     ]);
     const useAssistantTools = shouldUseAssistantTools(lastUserText, allowWebSearch);
+
+    if (!useAssistantTools) {
+      const assistantText = await generateCompactAssistantReply({
+        context,
+        knowledge,
+        messages: body.messages,
+        sessionId: session.id,
+        userId: user.id,
+      });
+
+      return createStaticAssistantStreamResponse({
+        messages: body.messages,
+        sessionId: session.id,
+        supabase,
+        text: assistantText,
+        userId: user.id,
+      });
+    }
 
     const tools = {
       createWorkoutPlan: tool({

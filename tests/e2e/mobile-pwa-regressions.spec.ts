@@ -268,7 +268,7 @@ test.describe("mobile pwa regressions", () => {
           const drawer = await openMobileDrawer(page);
           await expectDrawerFillsViewport(page);
           await expect(drawer).toContainText("Разделы");
-          await expect(drawer).toContainText("Пользователи");
+          await expect(drawer).toContainText("История");
           await expect(page.getByTestId("ai-assistant-widget-trigger")).toBeHidden();
 
           await page.keyboard.press("Escape");

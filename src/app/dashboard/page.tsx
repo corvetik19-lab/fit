@@ -16,6 +16,7 @@ import {
 import { logger } from "@/lib/logger";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireReadyViewer } from "@/lib/viewer";
+import { withTransientRetry } from "@/lib/runtime-retry";
 
 const DASHBOARD_PAGE_RUNTIME_TIMEOUT_MS = 8_000;
 
@@ -267,10 +268,17 @@ async function loadDashboardRuntime(
   userId: string,
 ) {
   try {
-    return await withTimeout(
-      getDashboardRuntimeMetrics(supabase, userId),
-      DASHBOARD_PAGE_RUNTIME_TIMEOUT_MS,
-      "dashboard runtime metrics",
+    return await withTransientRetry(
+      async () =>
+        await withTimeout(
+          getDashboardRuntimeMetrics(supabase, userId),
+          DASHBOARD_PAGE_RUNTIME_TIMEOUT_MS,
+          "dashboard runtime metrics",
+        ),
+      {
+        attempts: 3,
+        delaysMs: [500, 1_500, 3_000],
+      },
     );
   } catch (error) {
     logger.warn("dashboard page is using runtime fallback", { error, userId });
@@ -283,10 +291,17 @@ async function loadAiRuntime(
   userId: string,
 ) {
   try {
-    return await withTimeout(
-      getAiRuntimeContext(supabase, userId),
-      DASHBOARD_PAGE_RUNTIME_TIMEOUT_MS,
-      "AI runtime context",
+    return await withTransientRetry(
+      async () =>
+        await withTimeout(
+          getAiRuntimeContext(supabase, userId),
+          DASHBOARD_PAGE_RUNTIME_TIMEOUT_MS,
+          "AI runtime context",
+        ),
+      {
+        attempts: 3,
+        delaysMs: [500, 1_500, 3_000],
+      },
     );
   } catch (error) {
     logger.warn("dashboard page is using AI runtime fallback", { error, userId });

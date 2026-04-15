@@ -435,7 +435,17 @@ export function AiWorkspace({
   );
 
   function upsertSession(session: AiChatSessionRow) {
-    setActiveChatSessionId(session.id);
+    const sessionAlreadyKnown = sessionList.some((item) => item.id === session.id);
+
+    // Do not force-remount the active chat panel when a brand-new local
+    // session is created from inside the panel itself. The panel already owns
+    // that session locally, and flipping the outer active session id here would
+    // change the keyed AiChatPanel instance mid-request and drop the in-flight
+    // assistant stream before the transcript can render.
+    if (sessionAlreadyKnown || session.id === initialSessionId) {
+      setActiveChatSessionId(session.id);
+    }
+
     setSessionList((current) => [
       session,
       ...current.filter((item) => item.id !== session.id),

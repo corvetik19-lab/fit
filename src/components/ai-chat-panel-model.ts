@@ -244,6 +244,44 @@ export function dedupeUiMessages<T extends { id: string }>(messages: T[]): T[] {
   );
 }
 
+function getUiMessageText(message: UIMessage) {
+  return message.parts
+    .flatMap((part) => {
+      if (part.type === "text") {
+        return [part.text];
+      }
+
+      if ("output" in part && typeof part.output === "string") {
+        return [part.output];
+      }
+
+      return [];
+    })
+    .join(" ")
+    .trim();
+}
+
+export function hasRenderableAssistantReply(messages: UIMessage[]) {
+  const lastUserIndex = [...messages]
+    .map((message, index) => ({ index, role: message.role }))
+    .reverse()
+    .find((entry) => entry.role === "user")?.index;
+
+  if (typeof lastUserIndex !== "number") {
+    return messages.some(
+      (message) =>
+        message.role === "assistant" && getUiMessageText(message).length > 0,
+    );
+  }
+
+  return messages
+    .slice(lastUserIndex + 1)
+    .some(
+      (message) =>
+        message.role === "assistant" && getUiMessageText(message).length > 0,
+    );
+}
+
 export function buildMealPhotoMarkdown(result: MealPhotoAnalysis) {
   const items =
     result.items.length > 0

@@ -39,22 +39,31 @@ export async function createAiPlanProposal(
     status?: string;
   },
 ) {
-  const { data, error } = await supabase
+  const proposalId = crypto.randomUUID();
+  const nowIso = new Date().toISOString();
+  const proposalStatus = input.status ?? "draft";
+  const { error } = await supabase
     .from("ai_plan_proposals")
     .insert({
+      id: proposalId,
       user_id: input.userId,
       proposal_type: input.proposalType,
-      status: input.status ?? "draft",
+      status: proposalStatus,
       payload: input.payload,
-    })
-    .select("id, proposal_type, status, payload, created_at, updated_at")
-    .single();
+    });
 
   if (error) {
     throw error;
   }
 
-  return data as AiPlanProposalRow;
+  return {
+    id: proposalId,
+    proposal_type: input.proposalType,
+    status: proposalStatus,
+    payload: input.payload,
+    created_at: nowIso,
+    updated_at: nowIso,
+  } satisfies AiPlanProposalRow;
 }
 
 export async function getAiPlanProposal(

@@ -71,7 +71,7 @@ test.describe("ui regressions", () => {
           page.getByRole("link", { name: "Настройки", exact: true }),
         ).toBeVisible();
         await expect(
-          page.getByRole("link", { name: "Архив", exact: true }),
+          page.getByRole("link", { name: "История", exact: true }),
         ).toBeVisible();
 
         regressionCapture.assertNone();
@@ -106,9 +106,7 @@ test.describe("ui regressions", () => {
           `/workouts/day/${seededDay.dayId}?focus=1`,
           new RegExp(`/workouts/day/${seededDay.dayId}\\?focus=1$`),
         );
-        await expect(
-          page.getByRole("button", { name: "Обычный вид" }),
-        ).toBeVisible();
+        await expect(page.getByTestId("workout-regular-mode-button")).toBeVisible();
 
         await page.waitForTimeout(8000);
 

@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { AppShell, toAppShellViewer } from "@/components/app-shell";
 import { listAiPlanProposals } from "@/lib/ai/proposals";
+import { withTransientRetry } from "@/lib/runtime-retry";
 import { loadSettingsDataSnapshot } from "@/lib/settings-data-server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { listWeeklyPrograms } from "@/lib/workout/weekly-programs";
@@ -78,9 +79,18 @@ export default async function HistoryPage() {
   const viewer = await requireReadyViewer();
   const supabase = await createServerSupabaseClient();
   const [programs, proposals, settingsSnapshot] = await Promise.all([
-    listWeeklyPrograms(supabase, viewer.user.id, 24),
-    listAiPlanProposals(supabase, viewer.user.id, 12),
-    loadSettingsDataSnapshot(supabase, viewer.user.id),
+    withTransientRetry(async () => await listWeeklyPrograms(supabase, viewer.user.id, 24), {
+      attempts: 3,
+      delaysMs: [500, 1_500, 3_000],
+    }),
+    withTransientRetry(async () => await listAiPlanProposals(supabase, viewer.user.id, 12), {
+      attempts: 3,
+      delaysMs: [500, 1_500, 3_000],
+    }),
+    withTransientRetry(async () => await loadSettingsDataSnapshot(supabase, viewer.user.id), {
+      attempts: 3,
+      delaysMs: [500, 1_500, 3_000],
+    }),
   ]);
 
   const completedPrograms = programs.filter((program) => program.is_locked);

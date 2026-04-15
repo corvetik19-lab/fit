@@ -19,15 +19,21 @@ import {
 } from "@/lib/billing-access";
 import { hasAiRuntimeEnv } from "@/lib/env";
 import { logger } from "@/lib/logger";
+import { withTimeout, withTransientRetry } from "@/lib/runtime-retry";
 import { hasRiskyIntent } from "@/lib/safety";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+
+const MEAL_PLAN_USAGE_TIMEOUT_MS = 5_000;
 
 export async function POST(request: Request) {
   try {
     const supabase = await createServerSupabaseClient();
     const {
       data: { user },
-    } = await supabase.auth.getUser();
+    } = await withTransientRetry(async () => await supabase.auth.getUser(), {
+      attempts: 4,
+      delaysMs: [500, 1_500, 3_000, 5_000],
+    });
 
     if (!user) {
       return createApiErrorResponse({
@@ -49,9 +55,16 @@ export async function POST(request: Request) {
       });
     }
 
-    const access = await readUserBillingAccessOrFallback(supabase, user.id, {
-      email: user.email,
-    });
+    const access = await withTransientRetry(
+      async () =>
+        await readUserBillingAccessOrFallback(supabase, user.id, {
+          email: user.email,
+        }),
+      {
+        attempts: 3,
+        delaysMs: [500, 1_500, 3_000],
+      },
+    );
     const feature = access.features[BILLING_FEATURE_KEYS.mealPlan];
 
     if (!feature.allowed) {
@@ -73,7 +86,29 @@ export async function POST(request: Request) {
       mealsPerDay: body.mealsPerDay ?? null,
     });
 
-    await incrementFeatureUsage(supabase, user.id, BILLING_FEATURE_KEYS.mealPlan);
+    try {
+      await withTransientRetry(
+        async () =>
+          await withTimeout(
+            incrementFeatureUsage(
+              supabase,
+              user.id,
+              BILLING_FEATURE_KEYS.mealPlan,
+            ),
+            MEAL_PLAN_USAGE_TIMEOUT_MS,
+            "meal plan usage increment",
+          ),
+        {
+          attempts: 2,
+          delaysMs: [500, 1_500],
+        },
+      );
+    } catch (error) {
+      logger.warn("meal plan usage increment skipped", {
+        error,
+        userId: user.id,
+      });
+    }
 
     return Response.json({ data: proposal });
   } catch (error) {

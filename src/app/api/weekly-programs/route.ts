@@ -141,20 +141,27 @@ export async function POST(request: Request) {
     const exerciseTitleMap = buildExerciseTitleMap(exerciseRows ?? []);
     const weekEndDate = computeWeekEndDate(payload.weekStartDate);
 
-    const { data: programRow, error: programError } = await supabase
-      .from("weekly_programs")
-      .insert({
-        user_id: user.id,
-        title: payload.title,
-        status: "draft",
-        week_start_date: payload.weekStartDate,
-        week_end_date: weekEndDate,
-        is_locked: false,
-      })
-      .select(
-        "id, title, status, week_start_date, week_end_date, is_locked, created_at",
-      )
-      .single();
+    const { data: programRow, error: programError } = await withTransientRetry(
+      async () =>
+        await supabase
+          .from("weekly_programs")
+          .insert({
+            user_id: user.id,
+            title: payload.title,
+            status: "draft",
+            week_start_date: payload.weekStartDate,
+            week_end_date: weekEndDate,
+            is_locked: false,
+          })
+          .select(
+            "id, title, status, week_start_date, week_end_date, is_locked, created_at",
+          )
+          .single(),
+      {
+        attempts: 4,
+        delaysMs: [500, 1_500, 3_000, 5_000],
+      },
+    );
 
     if (programError) {
       throw programError;
@@ -163,16 +170,23 @@ export async function POST(request: Request) {
     createdProgramId = programRow.id;
 
     for (const day of payload.days) {
-      const { data: dayRow, error: dayError } = await supabase
-        .from("workout_days")
-        .insert({
-          user_id: user.id,
-          weekly_program_id: createdProgramId,
-          day_of_week: day.dayOfWeek,
-          status: "planned",
-        })
-        .select("id")
-        .single();
+      const { data: dayRow, error: dayError } = await withTransientRetry(
+        async () =>
+          await supabase
+            .from("workout_days")
+            .insert({
+              user_id: user.id,
+              weekly_program_id: createdProgramId,
+              day_of_week: day.dayOfWeek,
+              status: "planned",
+            })
+            .select("id")
+            .single(),
+        {
+          attempts: 4,
+          delaysMs: [500, 1_500, 3_000, 5_000],
+        },
+      );
 
       if (dayError) {
         throw dayError;
@@ -192,7 +206,9 @@ export async function POST(request: Request) {
         }
 
         const { data: workoutExerciseRow, error: workoutExerciseError } =
-          await supabase
+          await withTransientRetry(
+            async () =>
+              await supabase
             .from("workout_exercises")
             .insert({
               user_id: user.id,
@@ -205,7 +221,12 @@ export async function POST(request: Request) {
               sort_order: index,
             })
             .select("id")
-            .single();
+            .single(),
+            {
+              attempts: 4,
+              delaysMs: [500, 1_500, 3_000, 5_000],
+            },
+          );
 
         if (workoutExerciseError) {
           throw workoutExerciseError;

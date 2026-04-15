@@ -11,6 +11,7 @@ import {
   hasActiveBillingManagementEnv,
 } from "@/lib/billing-provider";
 import { readUserBillingAccessOrFallback } from "@/lib/billing-access";
+import { withTransientRetry } from "@/lib/runtime-retry";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { loadSettingsDataSnapshotOrFallback } from "@/lib/settings-data-server";
 import { requireReadyViewer } from "@/lib/viewer";
@@ -55,13 +56,20 @@ export default async function SettingsPage() {
     readUserBillingAccessOrFallback(supabase, viewer.user.id, {
       email: viewer.user.email,
     }),
-    supabase
-      .from("body_metrics")
-      .select("weight_kg, body_fat_pct, measured_at")
-      .eq("user_id", viewer.user.id)
-      .order("measured_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
+    withTransientRetry(
+      async () =>
+        await supabase
+          .from("body_metrics")
+          .select("weight_kg, body_fat_pct, measured_at")
+          .eq("user_id", viewer.user.id)
+          .order("measured_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+      {
+        attempts: 3,
+        delaysMs: [500, 1_500, 3_000],
+      },
+    ),
   ]);
   const billingProvider = getActiveBillingProvider();
 

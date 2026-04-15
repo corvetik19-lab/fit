@@ -117,6 +117,12 @@
 - всегда возвращает `generationMode`, чтобы разработчик видел, был ли использован model-path или fallback-path;
 - не должен молча применять изменения без явного proposal flow.
 
+Дополнение по текущему runtime-контракту:
+
+- [plan-generation.ts](/C:/fit/src/lib/ai/plan-generation.ts) теперь сохраняет proposal в компактном виде: `contextSnapshot` и сокращённый `knowledge` вместо тяжёлого полного payload;
+- [proposals.ts](/C:/fit/src/lib/ai/proposals.ts) создаёт `id` локально и делает insert без дополнительного post-insert select, чтобы proposal-path не подвисал на лишнем roundtrip;
+- [meal-plan route](/C:/fit/src/app/api/ai/meal-plan/route.ts) и [workout-plan route](/C:/fit/src/app/api/ai/workout-plan/route.ts) считают usage best-effort и не блокируют ответ пользователю, если metering-слой медленный.
+
 ## Safety posture
 
 Главный guardrail-модуль:
@@ -143,6 +149,11 @@
 
 - AI workspace должен выдерживать отсутствие embeddings и частичные provider timeout’ы без полного обрушения UI;
 - состояние web-search toggle, history и composer не должно зависеть от hydration-заглушек.
+
+Текущий UI-контракт для деградации:
+
+- если assistant уже вернул осмысленный fallback-ответ, [ai-chat-panel.tsx](/C:/fit/src/components/ai-chat-panel.tsx) не должен одновременно показывать ложный runtime-banner;
+- баннер ошибки допустим только когда у пользователя нет renderable assistant-reply и он действительно остался без usable результата.
 
 ## Meal photo и barcode/import
 

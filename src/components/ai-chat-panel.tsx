@@ -19,6 +19,7 @@ import { useAiChatWebSearch } from "@/components/use-ai-chat-web-search";
 import {
   classifyAiSurfaceErrorMessage,
   dedupeUiMessages,
+  hasRenderableAssistantReply,
   timeFormatter,
   type AiChatPanelProps,
 } from "@/components/ai-chat-panel-model";
@@ -76,14 +77,20 @@ export function AiChatPanel({
       api: "/api/ai/assistant",
     }),
   });
+  const transcriptMessages = useMemo(() => dedupeUiMessages(messages), [messages]);
+  const hasCompletedAssistantReply = useMemo(
+    () => hasRenderableAssistantReply(transcriptMessages),
+    [transcriptMessages],
+  );
   const errorNotice = useMemo(
     () =>
       error?.message?.includes("AI_CHAT_SESSION_NOT_FOUND")
         ? null
-        : classifyAiSurfaceErrorMessage(error?.message ?? null),
-    [error?.message],
+        : hasCompletedAssistantReply
+          ? null
+          : classifyAiSurfaceErrorMessage(error?.message ?? null),
+    [error?.message, hasCompletedAssistantReply],
   );
-  const transcriptMessages = useMemo(() => dedupeUiMessages(messages), [messages]);
 
   const isBusy = status === "submitted" || status === "streaming";
   const {

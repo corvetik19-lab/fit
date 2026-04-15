@@ -32,9 +32,10 @@ type WorkoutPlanGenerationInput = {
 type MealPlan = z.infer<typeof mealPlanSchema>;
 type WorkoutPlan = z.infer<typeof workoutPlanSchema>;
 
-const PLAN_CONTEXT_TIMEOUT_MS = 12_000;
-const PLAN_KNOWLEDGE_TIMEOUT_MS = 10_000;
-const PLAN_AI_TIMEOUT_MS = 18_000;
+const PLAN_CONTEXT_TIMEOUT_MS = 8_000;
+const PLAN_KNOWLEDGE_TIMEOUT_MS = 6_000;
+const PLAN_AI_TIMEOUT_MS = 10_000;
+const PLAN_PROPOSAL_PERSIST_TIMEOUT_MS = 8_000;
 
 function truncateText(value: string, maxLength: number) {
   return value.length > maxLength ? `${value.slice(0, maxLength)}...` : value;
@@ -97,6 +98,54 @@ function buildCompactContextSummary(context: AiUserContext) {
   }
 
   return profileBits.join("; ");
+}
+
+function buildPersistedContextSnapshot(context: AiUserContext) {
+  return {
+    goalType: context.goal.goalType ?? null,
+    weeklyTrainingDays: context.goal.weeklyTrainingDays ?? null,
+    weightKg: context.latestBodyMetrics.weightKg ?? context.onboarding.weightKg ?? null,
+    fitnessLevel: context.onboarding.fitnessLevel ?? null,
+    kcalTarget: context.nutritionTargets.kcalTarget ?? null,
+    proteinTarget: context.nutritionTargets.proteinTarget ?? null,
+    equipment: context.onboarding.equipment.slice(0, 8),
+    injuries: context.onboarding.injuries.slice(0, 6),
+    dietaryPreferences: context.onboarding.dietaryPreferences.slice(0, 6),
+  };
+}
+
+function buildPersistedKnowledgeSummary(
+  knowledge: Awaited<ReturnType<typeof retrieveKnowledgeMatches>>,
+) {
+  return knowledge.slice(0, 3).map((item) => ({
+    contentPreview: buildKnowledgeExcerpt(item.content),
+    matchedTerms: item.matchedTerms?.slice(0, 6) ?? [],
+    sourceId: item.sourceId,
+    sourceKind: item.sourceKind ?? item.sourceType,
+    sourceType: item.sourceType,
+  }));
+}
+
+async function persistPlanProposal(
+  supabase: SupabaseClient,
+  input: {
+    userId: string;
+    proposalType: "meal_plan" | "workout_plan";
+    payload: Record<string, unknown>;
+  },
+) {
+  return withTransientRetry(
+    async () =>
+      withTimeout(
+        createAiPlanProposal(supabase, input),
+        PLAN_PROPOSAL_PERSIST_TIMEOUT_MS,
+        `${input.proposalType} proposal persistence`,
+      ),
+    {
+      attempts: 2,
+      delaysMs: [500, 1_500],
+    },
+  );
 }
 
 async function loadPlanContext(
@@ -531,25 +580,23 @@ export async function generateMealPlanProposalForUser(
       mealsPerDay,
     });
 
-  return withTransientRetry(() =>
-    createAiPlanProposal(supabase, {
-      userId,
-      proposalType: "meal_plan",
-      payload: {
-        kind: "meal_plan",
-        request: {
-          goal,
-          kcalTarget,
-          dietaryNotes,
-          mealsPerDay,
-        },
-        context,
-        generationMode: aiProposal ? "model" : "deterministic_fallback",
-        knowledge,
-        proposal,
+  return persistPlanProposal(supabase, {
+    userId,
+    proposalType: "meal_plan",
+    payload: {
+      kind: "meal_plan",
+      request: {
+        goal,
+        kcalTarget,
+        dietaryNotes,
+        mealsPerDay,
       },
-    }),
-  );
+      contextSnapshot: buildPersistedContextSnapshot(context),
+      generationMode: aiProposal ? "model" : "deterministic_fallback",
+      knowledge: buildPersistedKnowledgeSummary(knowledge),
+      proposal,
+    },
+  });
 }
 
 export async function generateWorkoutPlanProposalForUser(
@@ -597,23 +644,21 @@ export async function generateWorkoutPlanProposalForUser(
       goal,
     });
 
-  return withTransientRetry(() =>
-    createAiPlanProposal(supabase, {
-      userId,
-      proposalType: "workout_plan",
-      payload: {
-        kind: "workout_plan",
-        request: {
-          goal,
-          equipment,
-          daysPerWeek,
-          focus,
-        },
-        context,
-        generationMode: aiProposal ? "model" : "deterministic_fallback",
-        knowledge,
-        proposal,
+  return persistPlanProposal(supabase, {
+    userId,
+    proposalType: "workout_plan",
+    payload: {
+      kind: "workout_plan",
+      request: {
+        goal,
+        equipment,
+        daysPerWeek,
+        focus,
       },
-    }),
-  );
+      contextSnapshot: buildPersistedContextSnapshot(context),
+      generationMode: aiProposal ? "model" : "deterministic_fallback",
+      knowledge: buildPersistedKnowledgeSummary(knowledge),
+      proposal,
+    },
+  });
 }

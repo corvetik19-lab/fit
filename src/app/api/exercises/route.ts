@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import { normalizeOptionalImageUrl, optionalImageUrlSchema } from "@/lib/image-url";
 import { logger } from "@/lib/logger";
+import { withTransientRetry } from "@/lib/runtime-retry";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 const exerciseCreateSchema = z.object({
@@ -23,7 +24,10 @@ export async function GET(request: Request) {
     const supabase = await createServerSupabaseClient();
     const {
       data: { user },
-    } = await supabase.auth.getUser();
+    } = await withTransientRetry(async () => await supabase.auth.getUser(), {
+      attempts: 5,
+      delaysMs: [500, 1_500, 3_000, 5_000],
+    });
 
     if (!user) {
       return createApiErrorResponse({
@@ -54,7 +58,10 @@ export async function GET(request: Request) {
       query = query.eq("is_archived", false);
     }
 
-    const { data, error, count } = await query;
+    const { data, error, count } = await withTransientRetry(async () => await query, {
+      attempts: 4,
+      delaysMs: [500, 1_500, 3_000, 5_000],
+    });
 
     if (error) {
       throw error;
@@ -88,7 +95,10 @@ export async function POST(request: Request) {
     const supabase = await createServerSupabaseClient();
     const {
       data: { user },
-    } = await supabase.auth.getUser();
+    } = await withTransientRetry(async () => await supabase.auth.getUser(), {
+      attempts: 5,
+      delaysMs: [500, 1_500, 3_000, 5_000],
+    });
 
     if (!user) {
       return createApiErrorResponse({
@@ -100,18 +110,25 @@ export async function POST(request: Request) {
 
     const payload = exerciseCreateSchema.parse(await request.json());
 
-    const { data, error } = await supabase
-      .from("exercise_library")
-      .insert({
-        user_id: user.id,
-        title: payload.title,
-        muscle_group: payload.muscleGroup,
-        description: payload.description || null,
-        note: payload.note || null,
-        image_url: normalizeOptionalImageUrl(payload.imageUrl),
-      })
-      .select(exerciseSelect)
-      .single();
+    const { data, error } = await withTransientRetry(
+      async () =>
+        await supabase
+          .from("exercise_library")
+          .insert({
+            user_id: user.id,
+            title: payload.title,
+            muscle_group: payload.muscleGroup,
+            description: payload.description || null,
+            note: payload.note || null,
+            image_url: normalizeOptionalImageUrl(payload.imageUrl),
+          })
+          .select(exerciseSelect)
+          .single(),
+      {
+        attempts: 4,
+        delaysMs: [500, 1_500, 3_000, 5_000],
+      },
+    );
 
     if (error) {
       throw error;

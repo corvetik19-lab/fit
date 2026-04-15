@@ -5,6 +5,7 @@ import { NutritionTracker } from "@/components/nutrition-tracker";
 import { PageWorkspace } from "@/components/page-workspace";
 import { readUserBillingAccessOrFallback } from "@/lib/billing-access";
 import { logger } from "@/lib/logger";
+import { withTransientRetry } from "@/lib/runtime-retry";
 import {
   getNutritionSummary,
   type NutritionFood,
@@ -115,7 +116,10 @@ async function loadNutritionResource<T>(
   userId: string,
 ) {
   try {
-    return await withTimeout(promise, label);
+    return await withTransientRetry(async () => await withTimeout(promise, label), {
+      attempts: 3,
+      delaysMs: [500, 1_500, 3_000],
+    });
   } catch (error) {
     logger.warn("nutrition page fallback activated", { error, label, userId });
     return fallback;

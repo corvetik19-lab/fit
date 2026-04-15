@@ -3,6 +3,7 @@ import { ExerciseLibraryManager } from "@/components/exercise-library-manager";
 import { PageWorkspace } from "@/components/page-workspace";
 import { WeeklyProgramBuilder } from "@/components/weekly-program-builder";
 import { logger } from "@/lib/logger";
+import { withTransientRetry } from "@/lib/runtime-retry";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { listWorkoutTemplates } from "@/lib/workout/templates";
 import { listWeeklyProgramsOverview } from "@/lib/workout/weekly-programs";
@@ -29,7 +30,10 @@ async function loadWorkoutsResource<T>(
   userId: string,
 ) {
   try {
-    return await withTimeout(promise, label);
+    return await withTransientRetry(async () => await withTimeout(promise, label), {
+      attempts: 3,
+      delaysMs: [500, 1_500, 3_000],
+    });
   } catch (error) {
     logger.warn("workouts page fallback activated", { error, label, userId });
     return fallback;

@@ -23,6 +23,7 @@ import {
 } from "@/lib/ai/chat-runtime-copy";
 import { models } from "@/lib/ai/gateway";
 import { retrieveKnowledgeMatches } from "@/lib/ai/knowledge";
+import { isExactLookupToken, tokenizeSearchQuery, type RetrievedKnowledgeItem } from "@/lib/ai/knowledge-model";
 import { AI_CHAT_MAX_OUTPUT_TOKENS } from "@/lib/ai/runtime-budgets";
 import { isAiProviderConfigurationFailure } from "@/lib/ai/runtime-errors";
 import { createEmptyAiUserContext, getAiRuntimeContext } from "@/lib/ai/user-context";
@@ -43,6 +44,7 @@ export const runtime = "nodejs";
 
 const CHAT_CONTEXT_TIMEOUT_MS = 10_000;
 const CHAT_KNOWLEDGE_TIMEOUT_MS = 8_000;
+const CHAT_AI_TIMEOUT_MS = 12_000;
 
 const chatRequestSchema = z.object({
   sessionId: z.string().uuid().optional(),
@@ -90,6 +92,107 @@ async function loadChatKnowledge(
   }
 }
 
+function buildDeterministicChatReply(input: {
+  knowledge: Awaited<ReturnType<typeof loadChatKnowledge>>;
+  message: string;
+}) {
+  const topKnowledge = input.knowledge[0];
+  const intro =
+    "Сейчас живой AI-ответ недоступен, поэтому я даю резервный разбор по сохранённому контексту и истории.";
+  const focus = `Запрос: ${input.message.trim()}`;
+
+  if (!topKnowledge) {
+    return [
+      intro,
+      focus,
+      "В контексте сейчас нет достаточно свежих персональных фактов. Попробуй уточнить цель, приложить фото еды или попросить собрать черновик плана.",
+    ].join("\n\n");
+  }
+
+  const excerpt =
+    topKnowledge.content.length > 220
+      ? `${topKnowledge.content.slice(0, 220)}...`
+      : topKnowledge.content;
+
+  return [
+    intro,
+    focus,
+    `Опираюсь на сохранённый факт (${topKnowledge.sourceType}): ${excerpt}`,
+    "Если нужно, я могу продолжить с этим контекстом и собрать более конкретный черновик по питанию или тренировкам.",
+  ].join("\n\n");
+}
+
+async function ensureExactKnowledgeSources(input: {
+  knowledge: RetrievedKnowledgeItem[];
+  limit: number;
+  message: string;
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>;
+  userId: string;
+}) {
+  const lookupTokens = tokenizeSearchQuery(input.message).filter((token) =>
+    isExactLookupToken(token),
+  );
+
+  if (!lookupTokens.length) {
+    return input.knowledge;
+  }
+
+  const existingExactMatch = input.knowledge.some((item) => {
+    const haystack = `${item.sourceType} ${item.sourceId ?? ""} ${item.content}`.toLowerCase();
+    return lookupTokens.some((token) => haystack.includes(token));
+  });
+
+  if (existingExactMatch) {
+    return input.knowledge;
+  }
+
+  try {
+    const { data, error } = await input.supabase
+      .from("user_memory_facts")
+      .select("id, fact_type, content, created_at")
+      .eq("user_id", input.userId)
+      .order("created_at", { ascending: false })
+      .limit(40);
+
+    if (error) {
+      throw error;
+    }
+
+    const matchedFacts =
+      (data ?? [])
+        .filter((fact) =>
+          lookupTokens.some((token) => fact.content.toLowerCase().includes(token)),
+        )
+        .map((fact) => ({
+          id: fact.id,
+          sourceType: "user_memory_fact",
+          sourceId: fact.id,
+          content: fact.content,
+          metadata: {
+            factType: fact.fact_type,
+            createdAt: fact.created_at,
+          },
+          similarity: 999,
+        })) satisfies RetrievedKnowledgeItem[];
+
+    if (!matchedFacts.length) {
+      return input.knowledge;
+    }
+
+    return [...matchedFacts, ...input.knowledge]
+      .filter(
+        (item, index, items) => items.findIndex((candidate) => candidate.id === item.id) === index,
+      )
+      .slice(0, input.limit);
+  } catch (error) {
+    logger.warn("ai chat exact lookup fallback failed", {
+      error,
+      userId: input.userId,
+    });
+    return input.knowledge;
+  }
+}
+
 export async function POST(request: Request) {
   try {
     if (!hasAiRuntimeEnv()) {
@@ -104,7 +207,10 @@ export async function POST(request: Request) {
     const supabase = await createServerSupabaseClient();
     const {
       data: { user },
-    } = await supabase.auth.getUser();
+    } = await withTransientRetry(async () => await supabase.auth.getUser(), {
+      attempts: 4,
+      delaysMs: [500, 1_500, 3_000, 5_000],
+    });
 
     if (!user) {
       return createApiErrorResponse({
@@ -133,9 +239,16 @@ export async function POST(request: Request) {
       });
     }
 
-    const access = await readUserBillingAccessOrFallback(supabase, user.id, {
-      email: user.email,
-    });
+    const access = await withTransientRetry(
+      async () =>
+        await readUserBillingAccessOrFallback(supabase, user.id, {
+          email: user.email,
+        }),
+      {
+        attempts: 3,
+        delaysMs: [500, 1_500, 3_000],
+      },
+    );
     const feature = access.features[BILLING_FEATURE_KEYS.aiChat];
 
     if (!feature.allowed) {
@@ -150,7 +263,14 @@ export async function POST(request: Request) {
     );
 
     await touchAiChatSession(supabase, user.id, session.id);
-    await incrementFeatureUsage(supabase, user.id, BILLING_FEATURE_KEYS.aiChat);
+    await withTransientRetry(
+      async () =>
+        await incrementFeatureUsage(supabase, user.id, BILLING_FEATURE_KEYS.aiChat),
+      {
+        attempts: 3,
+        delaysMs: [500, 1_500, 3_000],
+      },
+    );
 
     const userMessage = await createAiChatMessage(supabase, {
       userId: user.id,
@@ -227,27 +347,53 @@ export async function POST(request: Request) {
       loadChatContext(supabase, user.id),
       listAiChatMessages(supabase, user.id, session.id, 12),
     ]);
+    const finalKnowledge = await ensureExactKnowledgeSources({
+      knowledge: retrievedKnowledge,
+      limit: 6,
+      message: body.message,
+      supabase,
+      userId: user.id,
+    });
 
     const promptBuilder =
       recentMessages.length > 4 ? buildSportsDomainSystemPrompt : buildCompactSportsCoachPrompt;
-    const result = await withTransientRetry(() =>
-      generateText({
-        maxOutputTokens: AI_CHAT_MAX_OUTPUT_TOKENS,
-        model: models.chat,
-        system: promptBuilder({
-          allowWebSearch: false,
-          context: userContext,
-          knowledge: retrievedKnowledge,
-        }),
-        messages: toModelMessages(recentMessages),
-      }),
-    );
+    let assistantContent: string;
+
+    try {
+      const result = await withTimeout(
+        withTransientRetry(() =>
+          generateText({
+            maxOutputTokens: AI_CHAT_MAX_OUTPUT_TOKENS,
+            model: models.chat,
+            system: promptBuilder({
+              allowWebSearch: false,
+              context: userContext,
+              knowledge: finalKnowledge,
+            }),
+            messages: toModelMessages(recentMessages),
+          }),
+        ),
+        CHAT_AI_TIMEOUT_MS,
+        "ai chat generation",
+      );
+      assistantContent = result.text;
+    } catch (error) {
+      logger.warn("ai chat is using deterministic fallback reply", {
+        error,
+        sessionId: session.id,
+        userId: user.id,
+      });
+      assistantContent = buildDeterministicChatReply({
+        knowledge: finalKnowledge,
+        message: body.message,
+      });
+    }
 
     const assistantMessage = await createAiChatMessage(supabase, {
       userId: user.id,
       sessionId: session.id,
       role: "assistant",
-      content: result.text,
+      content: assistantContent,
     });
 
     await touchAiChatSession(supabase, user.id, session.id);
@@ -259,7 +405,7 @@ export async function POST(request: Request) {
         blocked: false,
         userMessage,
         assistantMessage,
-        sources: retrievedKnowledge.map((item) => ({
+        sources: finalKnowledge.map((item) => ({
           id: item.id,
           sourceType: item.sourceType,
           sourceId: item.sourceId,
