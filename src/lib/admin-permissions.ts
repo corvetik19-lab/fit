@@ -1,5 +1,6 @@
 export type PlatformAdminRole = "super_admin" | "support_admin" | "analyst";
 
+// Legacy compatibility export for old snapshots/docs. Runtime authorization is role-based.
 export const PRIMARY_SUPER_ADMIN_EMAIL = "corvetik1@yandex.ru";
 
 export type AdminCapability =
@@ -62,20 +63,19 @@ export function isPrimarySuperAdminEmail(email: string | null | undefined) {
 
 export function canUseRootAdminControls(
   role: PlatformAdminRole | null | undefined,
-  email: string | null | undefined,
+  _email: string | null | undefined,
 ) {
-  return role === "super_admin" && isPrimarySuperAdminEmail(email);
+  void _email;
+  return role === "super_admin";
 }
 
 export function canAssignAdminRole(
-  role: PlatformAdminRole,
-  email: string | null | undefined,
+  _role: PlatformAdminRole,
+  _email: string | null | undefined,
 ) {
-  if (role !== "super_admin") {
-    return true;
-  }
-
-  return isPrimarySuperAdminEmail(email);
+  void _role;
+  void _email;
+  return true;
 }
 
 export function hasAdminCapability(
@@ -105,19 +105,19 @@ export function getAdminRoleLabel(role: PlatformAdminRole | null | undefined) {
 export function getAdminCapabilityErrorMessage(capability: AdminCapability) {
   switch (capability) {
     case "manage_admin_roles":
-      return "Управлять ролями может только главный супер-админ.";
+      return "Управлять ролями может только super-admin.";
     case "manage_user_content_assets":
-      return "Редактировать изображения в пользовательском контенте может только главный супер-админ.";
+      return "Редактировать изображения в пользовательском контенте может только super-admin.";
     case "manage_billing":
-      return "Управлять оплатой и доступами может только главный супер-админ.";
+      return "Управлять оплатой и доступами может только super-admin.";
     case "bulk_manage_users":
-      return "Массовые действия по пользователям доступны только главному супер-админу.";
+      return "Массовые действия по пользователям доступны только super-admin.";
     case "queue_support_actions":
       return "Для этой роли недоступны действия по поддержке.";
     case "run_knowledge_reindex":
       return "Для этой роли недоступно обновление базы знаний.";
     case "run_admin_jobs":
-      return "Внутренние задачи может запускать только главный супер-админ.";
+      return "Внутренние задачи может запускать только super-admin.";
     case "queue_ai_eval_runs":
       return "Для этой роли недоступен запуск проверок ИИ.";
     default:

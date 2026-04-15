@@ -1,10 +1,7 @@
 import { z } from "zod";
 
+import { ensureSuperAdminSlotAvailable } from "@/lib/admin-role-management";
 import { createApiErrorResponse } from "@/lib/api/error-response";
-import {
-  PRIMARY_SUPER_ADMIN_EMAIL,
-  isPrimarySuperAdminEmail,
-} from "@/lib/admin-permissions";
 import { serverEnv } from "@/lib/env";
 import { logger } from "@/lib/logger";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
@@ -47,15 +44,17 @@ export async function POST(request: Request) {
       });
     }
 
-    if (!isPrimarySuperAdminEmail(user.email ?? null)) {
-      return createApiErrorResponse({
-        status: 403,
-        code: "PRIMARY_SUPER_ADMIN_EMAIL_REQUIRED",
-        message: `Роль super_admin закреплена только за ${PRIMARY_SUPER_ADMIN_EMAIL}.`,
-      });
-    }
-
     const adminSupabase = createAdminSupabaseClient();
+    const superAdminSlotGuard = await ensureSuperAdminSlotAvailable({
+      adminSupabase,
+      nextRole: "super_admin",
+      previousRole: null,
+      targetUserId: user.id,
+    });
+
+    if (superAdminSlotGuard) {
+      return superAdminSlotGuard;
+    }
 
     const { error: platformAdminError } = await adminSupabase
       .from("platform_admins")

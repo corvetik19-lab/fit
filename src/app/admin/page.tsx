@@ -3,10 +3,8 @@ import { AdminDashboardWorkspace } from "@/components/admin-dashboard-workspace"
 import { AppShell, toAppShellViewer } from "@/components/app-shell";
 import { PanelCard } from "@/components/panel-card";
 import {
-  PRIMARY_SUPER_ADMIN_EMAIL,
   canUseRootAdminControls,
   hasAdminCapability,
-  isPrimarySuperAdminEmail,
 } from "@/lib/admin-permissions";
 import { logger } from "@/lib/logger";
 import { withTimeout, withTransientRetry } from "@/lib/runtime-retry";
@@ -68,9 +66,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               <p className="mt-3 leading-7 text-muted">
                 Админ-панель видна только назначенным ролям. Главный доступ отдельно
                 закреплён за{" "}
-                <span className="font-semibold text-foreground">
-                  {PRIMARY_SUPER_ADMIN_EMAIL}
-                </span>
+                <span className="font-semibold text-foreground">ролью super-admin</span>
                 . Если вход уже выполнен под этим email, но панель не видна, обнови
                 сессию или авторизуйся заново.
               </p>
@@ -335,9 +331,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     viewer.platformAdminRole,
     viewer.user.email ?? null,
   );
-  const superAdminPolicyViolations = adminRoster.filter(
-    (admin) => admin.role === "super_admin" && !isPrimarySuperAdminEmail(admin.email),
+  const superAdminCount = adminRoster.filter(
+    (admin) => admin.role === "super_admin",
   ).length;
+  const superAdminPolicyViolations = Math.max(superAdminCount - 1, 0);
   const rootAdminRecord =
     adminRoster.find((admin) => admin.role === "super_admin") ?? null;
   const heroMetrics = [

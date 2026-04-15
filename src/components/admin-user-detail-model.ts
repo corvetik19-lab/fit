@@ -53,7 +53,7 @@ export type AdminUserDetailData = {
     suspended_at: string | null;
   } | null;
   superAdminPolicy: {
-    primaryEmail: string;
+    primaryEmail: string | null;
     targetCanBeSuperAdmin: boolean;
   };
   stats: {

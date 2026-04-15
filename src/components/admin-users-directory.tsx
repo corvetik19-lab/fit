@@ -8,7 +8,6 @@ import {
   AdminUsersBulkHistoryPanel,
 } from "@/components/admin-users-bulk-actions";
 import {
-  PRIMARY_SUPER_ADMIN_EMAIL,
   canUseRootAdminControls,
   type PlatformAdminRole,
 } from "@/lib/admin-permissions";
@@ -175,10 +174,10 @@ export function AdminUsersDirectory({
           <DirectoryMetricCard
             detail={
               canViewRoleDetails
-                ? "главный доступ закреплён только за corvetik1@yandex.ru"
+                ? "учётных записей с ролью super_admin"
                 : "пользователи с последней активностью за 7 дней"
             }
-            label={canViewRoleDetails ? "Главный администратор" : "Активны за неделю"}
+            label={canViewRoleDetails ? "Super-admin" : "Активны за неделю"}
             value={String(canViewRoleDetails ? summary.superAdmins : summary.active7d)}
           />
           <DirectoryMetricCard
@@ -317,11 +316,11 @@ export function AdminUsersDirectory({
         {canViewRoleDetails ? (
           <article className="surface-panel surface-panel--soft border border-sky-400/25 p-4 text-sm text-sky-900">
             <p className="font-semibold text-foreground">
-              Главный доступ закреплён отдельно и защищён от случайных изменений.
+              Роль super-admin управляет критичными admin-действиями.
             </p>
             <p className="mt-2 leading-7">
-              Этот уровень доступа закреплён за <strong>{PRIMARY_SUPER_ADMIN_EMAIL}</strong>.
-              Остальным пользователям можно назначать только обычные административные роли.
+              Здесь видно все административные роли, а массовые действия и критичные
+              операции доступны только пользователям с ролью <strong>super-admin</strong>.
             </p>
           </article>
         ) : (
@@ -738,7 +737,7 @@ export function AdminUsersDirectory({
                   </span>
                   {user.flags.is_primary_super_admin ? (
                     <span className="rounded-full border border-amber-400/25 bg-amber-500/12 px-3 py-1 text-xs font-semibold text-amber-900">
-                      Главный супер-админ
+                      Super-admin
                     </span>
                   ) : null}
                   {user.operations.has_backlog ? (

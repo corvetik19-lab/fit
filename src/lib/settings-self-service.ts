@@ -1,8 +1,4 @@
 import {
-  PRIMARY_SUPER_ADMIN_EMAIL,
-  isPrimarySuperAdminEmail,
-} from "@/lib/admin-permissions";
-import {
   BILLING_FEATURE_KEYS,
   readUserBillingAccessOrFallback,
 } from "@/lib/billing-access";
@@ -170,19 +166,9 @@ export async function requestSettingsDeletion(
   supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
   input: {
     reason?: string | null;
-    userEmail?: string | null;
     userId: string;
   },
 ) {
-  if (isPrimarySuperAdminEmail(input.userEmail ?? null)) {
-    return {
-      code: "PRIMARY_SUPER_ADMIN_PROTECTED" as const,
-      message: `Основной супер-админ ${PRIMARY_SUPER_ADMIN_EMAIL} не может запустить удаление аккаунта.`,
-      ok: false as const,
-      status: 403,
-    };
-  }
-
   const holdUntil = getDefaultDeletionHoldUntil();
 
   const { error: deletionRequestError } = await supabase

@@ -1,6 +1,5 @@
 "use client";
 
-import { PRIMARY_SUPER_ADMIN_EMAIL } from "@/lib/admin-permissions";
 import {
   formatBulkAction,
   formatDateTime,
@@ -59,9 +58,7 @@ export function AdminUsersBulkActionsPanel({
           </h3>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <span className="pill">
-            Выбрано: {selectedUserCount}
-          </span>
+          <span className="pill">Выбрано: {selectedUserCount}</span>
           <button
             className="action-button action-button--secondary px-3 py-2 text-xs"
             onClick={onToggleVisibleSelection}
@@ -81,8 +78,7 @@ export function AdminUsersBulkActionsPanel({
 
       {!canRunBulkActions ? (
         <p className="mt-4 rounded-[1rem] border border-amber-300/25 bg-amber-300/10 px-4 py-3 text-sm text-amber-900">
-          Массовые действия доступны только закреплённому супер-админу{" "}
-          {PRIMARY_SUPER_ADMIN_EMAIL}.
+          Массовые действия доступны только роли super-admin.
         </p>
       ) : null}
 
@@ -109,7 +105,7 @@ export function AdminUsersBulkActionsPanel({
             className="rounded-[1rem] border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,white)] px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted focus:border-accent focus:ring-2 focus:ring-accent/15"
             disabled={!canRunBulkActions || isBulkPending}
             onChange={(event) => onBulkReasonChange(event.target.value)}
-            placeholder="Например: пробный доступ для группы теста"
+            placeholder="Например: пробный доступ для тестовой группы"
             type="text"
             value={bulkReason}
           />
@@ -201,17 +197,15 @@ export function AdminUsersBulkHistoryPanel({
       <div className="mt-4 grid gap-3">
         {recentBulkWaves.length ? (
           recentBulkWaves.map((wave) => (
-            <article
-              className="metric-tile px-3.5 py-3 text-sm"
-              key={wave.id}
-            >
+            <article className="metric-tile px-3.5 py-3 text-sm" key={wave.id}>
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <p className="font-semibold text-foreground">
                     {formatBulkAction(wave.action)}
                   </p>
                   <p className="mt-1 text-muted">
-                    Пакет: {wave.batch_id ?? "не указан"} · {formatDateTime(wave.created_at)}
+                    Пакет: {wave.batch_id ?? "не указан"} ·{" "}
+                    {formatDateTime(wave.created_at)}
                   </p>
                   <p className="mt-1 text-muted">
                     Причина: {wave.reason ?? "без пояснения"}

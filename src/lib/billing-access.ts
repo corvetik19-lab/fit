@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { isPrimarySuperAdminEmail } from "@/lib/admin-permissions";
+import type { PlatformAdminRole } from "@/lib/admin-permissions";
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import { logger } from "@/lib/logger";
 
@@ -79,6 +79,10 @@ type UsageCounterRow = {
   metric_window: string;
   reset_at: string | null;
   usage_count: number | string;
+};
+
+type PlatformAdminRow = {
+  role: PlatformAdminRole;
 };
 
 const ACTIVE_SUBSCRIPTION_STATUSES = new Set(["active", "trial"]);
@@ -244,17 +248,87 @@ function buildFeatureAccess(
   };
 }
 
+function isPrivilegedBillingAccess(input?: {
+  email?: string | null;
+  role?: PlatformAdminRole | null;
+}) {
+  void input?.email;
+  return input?.role === "super_admin";
+}
+
+function buildPrivilegedBillingAccessSnapshot(
+  featureKeys: BillingFeatureKey[],
+): UserBillingAccessSnapshot {
+  const privilegedFeatures = Object.fromEntries(
+    featureKeys.map((featureKey) => {
+      const config = FEATURE_CONFIG[featureKey];
+
+      return [
+        featureKey,
+        {
+          featureKey,
+          label: config.label,
+          description: config.description,
+          allowed: true,
+          reason: null,
+          source: "privileged",
+          usage: resolveUsageSnapshot(config.metricKey, null, null),
+        } satisfies FeatureAccessSnapshot,
+      ];
+    }),
+  ) as Record<BillingFeatureKey, FeatureAccessSnapshot>;
+
+  return {
+    subscription: {
+      status: "root_access",
+      provider: "admin",
+      currentPeriodEnd: null,
+      updatedAt: null,
+      isActive: true,
+      isPrivilegedAccess: true,
+    },
+    features: privilegedFeatures,
+  };
+}
+
 export async function readUserBillingAccess(
   supabase: Pick<SupabaseClient, "from">,
   userId: string,
   options?: {
     email?: string | null;
+    role?: PlatformAdminRole | null;
   },
 ): Promise<UserBillingAccessSnapshot> {
   const featureKeys = Object.values(BILLING_FEATURE_KEYS);
   const metricKeys = Object.values(FEATURE_CONFIG).map(
     (feature) => feature.metricKey,
   );
+
+  if (isPrivilegedBillingAccess(options)) {
+    return buildPrivilegedBillingAccessSnapshot(featureKeys);
+  }
+
+  const platformAdminResult = await supabase
+    .from("platform_admins")
+    .select("role")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (platformAdminResult.error) {
+    throw platformAdminResult.error;
+  }
+
+  const platformAdmin =
+    (platformAdminResult.data as PlatformAdminRow | null) ?? null;
+
+  if (
+    isPrivilegedBillingAccess({
+      email: options?.email,
+      role: platformAdmin?.role ?? null,
+    })
+  ) {
+    return buildPrivilegedBillingAccessSnapshot(featureKeys);
+  }
 
   const [subscriptionResult, entitlementsResult, usageCountersResult] =
     await Promise.all([
@@ -305,44 +379,6 @@ export async function readUserBillingAccess(
     ]),
   );
 
-  if (isPrimarySuperAdminEmail(options?.email)) {
-    const privilegedFeatures = Object.fromEntries(
-      featureKeys.map((featureKey) => {
-        const config = FEATURE_CONFIG[featureKey];
-        const usage = resolveUsageSnapshot(
-          config.metricKey,
-          null,
-          usageByMetric.get(config.metricKey),
-        );
-
-        return [
-          featureKey,
-          {
-            featureKey,
-            label: config.label,
-            description: config.description,
-            allowed: true,
-            reason: null,
-            source: "privileged",
-            usage,
-          } satisfies FeatureAccessSnapshot,
-        ];
-      }),
-    ) as Record<BillingFeatureKey, FeatureAccessSnapshot>;
-
-    return {
-      subscription: {
-        status: "root_access",
-        provider: "admin",
-        currentPeriodEnd: null,
-        updatedAt: null,
-        isActive: true,
-        isPrivilegedAccess: true,
-      },
-      features: privilegedFeatures,
-    };
-  }
-
   const features = Object.fromEntries(
     featureKeys.map((featureKey) => [
       featureKey,
@@ -370,40 +406,12 @@ export async function readUserBillingAccess(
 
 export function createFallbackUserBillingAccessSnapshot(options?: {
   email?: string | null;
+  role?: PlatformAdminRole | null;
 }): UserBillingAccessSnapshot {
   const featureKeys = Object.values(BILLING_FEATURE_KEYS);
 
-  if (isPrimarySuperAdminEmail(options?.email)) {
-    const privilegedFeatures = Object.fromEntries(
-      featureKeys.map((featureKey) => {
-        const config = FEATURE_CONFIG[featureKey];
-
-        return [
-          featureKey,
-          {
-            allowed: true,
-            description: config.description,
-            featureKey,
-            label: config.label,
-            reason: null,
-            source: "privileged",
-            usage: resolveUsageSnapshot(config.metricKey, null, null),
-          } satisfies FeatureAccessSnapshot,
-        ];
-      }),
-    ) as Record<BillingFeatureKey, FeatureAccessSnapshot>;
-
-    return {
-      subscription: {
-        currentPeriodEnd: null,
-        isActive: true,
-        isPrivilegedAccess: true,
-        provider: "admin",
-        status: "root_access",
-        updatedAt: null,
-      },
-      features: privilegedFeatures,
-    };
+  if (isPrivilegedBillingAccess(options)) {
+    return buildPrivilegedBillingAccessSnapshot(featureKeys);
   }
 
   const features = Object.fromEntries(
@@ -431,6 +439,7 @@ export async function readUserBillingAccessOrFallback(
   userId: string,
   options?: {
     email?: string | null;
+    role?: PlatformAdminRole | null;
   },
 ): Promise<UserBillingAccessSnapshot> {
   try {

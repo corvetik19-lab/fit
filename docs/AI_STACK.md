@@ -43,6 +43,32 @@
 
 Это считается внешним provider-access blocker, а не дефектом текущего app-runtime.
 
+## Привилегированный доступ super-admin
+
+Для `platform_admins.role = super_admin` AI и billing-функции считаются
+неограниченными по продуктовой модели:
+
+- `ai_chat`
+- `meal_plan`
+- `workout_plan`
+- `meal_photo`
+
+Текущий контракт такой:
+
+- [billing-access.ts](/C:/fit/src/lib/billing-access.ts) выдаёт privileged snapshot
+  любому `super_admin`, а не только одному специальному email;
+- `meal-photo`, `meal-plan` и `workout-plan` для super-admin доходят до обычной
+  payload/runtime-валидации и не режутся billing gate;
+- root-only admin actions вроде Sentry smoke, назначения admin-ролей и правки
+  пользовательских assets тоже завязаны на роль `super_admin`, а не на legacy
+  email-only правило.
+
+При этом в базе по-прежнему сохраняется только один слот `super_admin`:
+
+- uniqueness держится на `platform_admins_single_super_admin_idx`;
+- попытка назначить второго `super_admin` теперь режется явным
+  `409 SUPER_ADMIN_ALREADY_ASSIGNED`, а не падает в необработанный `500`.
+
 ## Основные AI маршруты
 
 - [assistant/route.ts](/C:/fit/src/app/api/ai/assistant/route.ts)

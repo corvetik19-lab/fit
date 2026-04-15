@@ -1,9 +1,5 @@
 import type { User } from "@supabase/supabase-js";
 
-import {
-  PRIMARY_SUPER_ADMIN_EMAIL,
-  isPrimarySuperAdminEmail,
-} from "@/lib/admin-permissions";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 
 type AdminUserDetailSupabase = ReturnType<typeof createAdminSupabaseClient>;
@@ -124,8 +120,8 @@ export function createFallbackAdminUserDetailResponse(input: {
       adminRole: null,
       adminState: null,
       superAdminPolicy: {
-        primaryEmail: PRIMARY_SUPER_ADMIN_EMAIL,
-        targetCanBeSuperAdmin: isPrimarySuperAdminEmail(authEmail),
+        primaryEmail: null,
+        targetCanBeSuperAdmin: true,
       },
       stats: {
         workout: {
@@ -586,8 +582,8 @@ export async function loadAdminUserDetailData(params: {
       adminRole: adminRoleResult.data,
       adminState: userAdminStateResult.error ? null : userAdminStateResult.data,
       superAdminPolicy: {
-        primaryEmail: PRIMARY_SUPER_ADMIN_EMAIL,
-        targetCanBeSuperAdmin: isPrimarySuperAdminEmail(targetEmail),
+        primaryEmail: null,
+        targetCanBeSuperAdmin: true,
       },
       stats: {
         workout: {

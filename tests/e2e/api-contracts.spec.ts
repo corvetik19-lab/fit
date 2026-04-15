@@ -1114,6 +1114,31 @@ test.describe("api contracts with admin access", () => {
     ).toBe("ADMIN_OPERATIONS_PROCESS_INVALID");
   });
 
+  test("super-admin bypasses billing gate for meal photo and reaches payload validation", async ({
+    page,
+  }) => {
+    await navigateStable(page, "/ai", /\/ai$/);
+
+    const response = await page.context().request.fetch(
+      new URL("/api/ai/meal-photo", page.url()).toString(),
+      {
+        method: "POST",
+        failOnStatusCode: false,
+        multipart: {
+          notes: "admin meal photo gate contract",
+        },
+        timeout: 45_000,
+      },
+    );
+
+    const body = (await response.json().catch(() => null)) as
+      | { code?: string }
+      | null;
+
+    expect(response.status()).toBe(400);
+    expect(body?.code).toBe("MEAL_PHOTO_IMAGE_REQUIRED");
+  });
+
   test("proposal approve/apply actions stay idempotent on repeated requests", async ({
     page,
   }) => {

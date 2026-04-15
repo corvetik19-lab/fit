@@ -1,18 +1,19 @@
 import { z } from "zod";
 
-import {
-  ensureAdminRoleAssignmentAllowed,
-  ensurePrimarySuperAdminDowngradeAllowed,
-  ensurePrimarySuperAdminRevokeAllowed,
-  loadAdminRoleTarget,
-  recordAdminRoleAudit,
-} from "@/lib/admin-role-management";
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import { isAdminAccessError, requireAdminRouteAccess } from "@/lib/admin-auth";
 import {
   isAdminRouteParamError,
   parseAdminUserIdParam,
 } from "@/lib/admin-route-params";
+import {
+  ensureAdminRoleAssignmentAllowed,
+  ensurePrimarySuperAdminDowngradeAllowed,
+  ensurePrimarySuperAdminRevokeAllowed,
+  ensureSuperAdminSlotAvailable,
+  loadAdminRoleTarget,
+  recordAdminRoleAudit,
+} from "@/lib/admin-role-management";
 import { logger } from "@/lib/logger";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 
@@ -39,7 +40,7 @@ export async function PATCH(
       return createApiErrorResponse({
         status: 400,
         code: "ADMIN_SELF_ROLE_CHANGE_BLOCKED",
-        message: "Главный супер-администратор не может понизить себе доступ.",
+        message: "Super-admin не может понизить себе роль из этого интерфейса.",
       });
     }
 
@@ -67,6 +68,17 @@ export async function PATCH(
 
     if (downgradeGuard) {
       return downgradeGuard;
+    }
+
+    const superAdminSlotGuard = await ensureSuperAdminSlotAvailable({
+      adminSupabase,
+      nextRole: payload.role,
+      previousRole: target.previousRoleRow?.role ?? null,
+      targetUserId: id,
+    });
+
+    if (superAdminSlotGuard) {
+      return superAdminSlotGuard;
     }
 
     const { data, error } = await adminSupabase
@@ -167,7 +179,7 @@ export async function DELETE(
       return createApiErrorResponse({
         status: 400,
         code: "ADMIN_SELF_REVOKE_BLOCKED",
-        message: "Главный супер-администратор не может отозвать себе доступ.",
+        message: "Super-admin не может отозвать у себя доступ из этого интерфейса.",
       });
     }
 

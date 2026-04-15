@@ -82,19 +82,10 @@ export async function POST(request: Request) {
     }
 
     if (payload.action === "request_deletion") {
-      const deletionResult = await requestSettingsDeletion(context.supabase, {
+      await requestSettingsDeletion(context.supabase, {
         reason: payload.reason,
-        userEmail: context.user.email,
         userId: context.user.id,
       });
-
-      if (!deletionResult.ok) {
-        return createApiErrorResponse({
-          status: deletionResult.status,
-          code: deletionResult.code,
-          message: deletionResult.message,
-        });
-      }
     }
 
     const snapshot = await loadSettingsDataSnapshotOrFallback(

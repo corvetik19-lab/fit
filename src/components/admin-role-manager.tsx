@@ -3,10 +3,8 @@
 import { useEffect, useState } from "react";
 
 import {
-  PRIMARY_SUPER_ADMIN_EMAIL,
   canUseRootAdminControls,
   getAdminRoleLabel,
-  isPrimarySuperAdminEmail,
 } from "@/lib/admin-permissions";
 
 type AdminRoleManagerProps = {
@@ -62,17 +60,9 @@ export function AdminRoleManager({
     currentAdminRole,
     currentUserEmail,
   );
-  const targetCanBeSuperAdmin = isPrimarySuperAdminEmail(userEmail);
-
   useEffect(() => {
     setSelectedRole(targetAdminRole ?? "support_admin");
   }, [targetAdminRole]);
-
-  useEffect(() => {
-    if (!targetCanBeSuperAdmin && selectedRole === "super_admin") {
-      setSelectedRole("support_admin");
-    }
-  }, [selectedRole, targetCanBeSuperAdmin]);
 
   async function applyRole() {
     if (!canManageRoles || isPending) {
@@ -193,17 +183,9 @@ export function AdminRoleManager({
           >
             <option value="support_admin">Поддержка</option>
             <option value="analyst">Аналитик</option>
-            <option disabled={!targetCanBeSuperAdmin} value="super_admin">
-              Супер-админ
-            </option>
+            <option value="super_admin">Супер-админ</option>
           </select>
         </label>
-
-        {!targetCanBeSuperAdmin ? (
-          <p className="rounded-2xl border border-sky-500/25 bg-sky-500/12 px-4 py-3 text-sm text-sky-900">
-            Главный доступ закреплён только за {PRIMARY_SUPER_ADMIN_EMAIL}.
-          </p>
-        ) : null}
 
         <label className="grid gap-2 text-sm text-muted">
           Комментарий
@@ -238,7 +220,7 @@ export function AdminRoleManager({
 
         {!canManageRoles ? (
           <p className="rounded-2xl border border-amber-500/25 bg-amber-500/12 px-4 py-3 text-sm text-amber-900">
-            Менять роли может только главный супер-админ.
+            Менять роли может только super-admin.
           </p>
         ) : null}
 

@@ -34,16 +34,16 @@ export function isAdminAccessError(error: unknown): error is AdminAccessError {
 function getRootOnlyCapabilityMessage(capability: AdminCapability) {
   switch (capability) {
     case "manage_billing":
-      return "Управлять оплатой и доступами может только основной super-admin.";
+      return "Управлять оплатой и доступами может только super-admin.";
     case "manage_user_content_assets":
-      return "Редактировать изображения в пользовательском контенте может только основной super-admin.";
+      return "Редактировать изображения в пользовательском контенте может только super-admin.";
     case "bulk_manage_users":
-      return "Запускать bulk-операции по пользователям может только основной super-admin.";
+      return "Запускать массовые операции по пользователям может только super-admin.";
     case "run_admin_jobs":
-      return "Запускать внутренние admin jobs может только основной super-admin.";
+      return "Запускать внутренние admin jobs может только super-admin.";
     case "manage_admin_roles":
     default:
-      return "Управлять admin-ролями может только основной super-admin.";
+      return "Управлять admin-ролями может только super-admin.";
   }
 }
 
@@ -82,7 +82,7 @@ export async function requireAdminRouteAccess(capability?: AdminCapability) {
   ) {
     throw new AdminAccessError(
       403,
-      "PRIMARY_SUPER_ADMIN_REQUIRED",
+      "SUPER_ADMIN_REQUIRED",
       getRootOnlyCapabilityMessage(capability),
     );
   }

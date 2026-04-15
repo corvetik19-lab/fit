@@ -1,6 +1,5 @@
 import type { User } from "@supabase/supabase-js";
 
-import { isPrimarySuperAdminEmail } from "@/lib/admin-permissions";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 
 type AdminUsersSupabase = ReturnType<typeof createAdminSupabaseClient>;
@@ -702,10 +701,15 @@ export async function loadAdminUsersData(params: {
       flags: {
         has_profile: Boolean(profile),
         never_signed_in: !authUser.last_sign_in_at,
-        is_primary_super_admin: isPrimarySuperAdminEmail(authUser.email ?? null),
+        is_primary_super_admin: admin?.role === "super_admin",
       },
     };
   });
+
+  const superAdminCount = mergedUsers.filter(
+    (user) => user.admin_role === "super_admin",
+  ).length;
+  const superAdminSlotConflicts = Math.max(superAdminCount - 1, 0);
 
   const filteredUsers = sortUsers(
     mergedUsers
@@ -781,10 +785,7 @@ export async function loadAdminUsersData(params: {
     hygiene: {
       neverSignedIn: mergedUsers.filter((user) => user.flags.never_signed_in).length,
       withoutProfile: mergedUsers.filter((user) => !user.flags.has_profile).length,
-      rootPolicyViolations: mergedUsers.filter(
-        (user) =>
-          user.admin_role === "super_admin" && !user.flags.is_primary_super_admin,
-      ).length,
+      rootPolicyViolations: superAdminSlotConflicts,
     },
   };
 

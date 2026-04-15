@@ -4,10 +4,7 @@ import Link from "next/link";
 import { AdminUsersDirectory } from "@/components/admin-users-directory";
 import type { AdminUsersDirectoryInitialState } from "@/components/admin-users-directory-model";
 import { AppShell, toAppShellViewer } from "@/components/app-shell";
-import {
-  PRIMARY_SUPER_ADMIN_EMAIL,
-  canUseRootAdminControls,
-} from "@/lib/admin-permissions";
+import { canUseRootAdminControls } from "@/lib/admin-permissions";
 import {
   createFallbackAdminUsersResponse,
   loadAdminUsersData,
@@ -83,7 +80,7 @@ export default async function AdminUsersPage() {
               <span className="pill">Пользователи</span>
               {showAdminRoles ? (
                 <>
-                  <span className="pill">Главный доступ: {PRIMARY_SUPER_ADMIN_EMAIL}</span>
+                  <span className="pill">Режим: super-admin</span>
                   <span className="pill">Роли и привилегии видны только вам</span>
                 </>
               ) : null}
@@ -94,9 +91,9 @@ export default async function AdminUsersPage() {
                 Удобный каталог для поиска пользователей, доступа и важных случаев.
               </h2>
               <p className="max-w-3xl text-sm leading-6 text-muted">
-                Здесь удобно искать пользователя по email или ID, проверять активность,
-                подписку, очередь задач и сразу переходить в полную карточку без лишних
-                экранов и служебного шума.
+                Здесь удобно искать пользователя по email или ID, проверять
+                активность, подписку, очередь задач и сразу переходить в полную
+                карточку без лишних экранов и служебного шума.
               </p>
             </div>
 
@@ -135,10 +132,7 @@ export default async function AdminUsersPage() {
                 "Тренировки, питание, ИИ, оплата и история действий в одном месте.",
               ],
             ].map(([label, detail]) => (
-              <article
-                className="metric-tile p-3.5 text-sm"
-                key={label}
-              >
+              <article className="metric-tile p-3.5 text-sm" key={label}>
                 <p className="font-semibold text-foreground">{label}</p>
                 <p className="mt-2 leading-6 text-muted">{detail}</p>
               </article>

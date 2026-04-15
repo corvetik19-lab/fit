@@ -13,9 +13,9 @@ export async function POST() {
     if (!canUseRootAdminControls(role, user.email ?? null)) {
       return createApiErrorResponse({
         status: 403,
-        code: "PRIMARY_SUPER_ADMIN_REQUIRED",
+        code: "SUPER_ADMIN_REQUIRED",
         message:
-          "Тестовое событие в Sentry может отправлять только корневой администратор.",
+          "Тестовое событие в Sentry может отправлять только super-admin.",
       });
     }
 

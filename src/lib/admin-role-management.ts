@@ -1,8 +1,3 @@
-import {
-  PRIMARY_SUPER_ADMIN_EMAIL,
-  canAssignAdminRole,
-  isPrimarySuperAdminEmail,
-} from "@/lib/admin-permissions";
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 
@@ -11,6 +6,7 @@ type AdminRoleSupabase = ReturnType<typeof createAdminSupabaseClient>;
 export type AdminRoleValue = "analyst" | "super_admin" | "support_admin";
 
 type PlatformAdminRoleRow = {
+  user_id?: string;
   role: AdminRoleValue;
 };
 
@@ -48,52 +44,64 @@ export async function loadAdminRoleTarget(
 }
 
 export function ensureAdminRoleAssignmentAllowed(
-  nextRole: AdminRoleValue,
-  targetEmail: string | null,
+  _nextRole: AdminRoleValue,
+  _targetEmail: string | null,
 ) {
-  if (!canAssignAdminRole(nextRole, targetEmail)) {
-    return createApiErrorResponse({
-      status: 400,
-      code: "PRIMARY_SUPER_ADMIN_EMAIL_ONLY",
-      message: `Роль super_admin закреплена только за ${PRIMARY_SUPER_ADMIN_EMAIL}.`,
-    });
-  }
-
+  void _nextRole;
+  void _targetEmail;
   return null;
 }
 
 export function ensurePrimarySuperAdminDowngradeAllowed(
-  previousRole: AdminRoleValue | null,
-  nextRole: AdminRoleValue,
-  targetEmail: string | null,
+  _previousRole: AdminRoleValue | null,
+  _nextRole: AdminRoleValue,
+  _targetEmail: string | null,
 ) {
-  if (
-    previousRole === "super_admin" &&
-    nextRole !== "super_admin" &&
-    isPrimarySuperAdminEmail(targetEmail)
-  ) {
-    return createApiErrorResponse({
-      status: 400,
-      code: "PRIMARY_SUPER_ADMIN_DOWNGRADE_BLOCKED",
-      message: "Основного super-admin нельзя понизить.",
-    });
-  }
-
+  void _previousRole;
+  void _nextRole;
+  void _targetEmail;
   return null;
 }
 
 export function ensurePrimarySuperAdminRevokeAllowed(
-  previousRole: AdminRoleValue,
-  targetEmail: string | null,
+  _previousRole: AdminRoleValue,
+  _targetEmail: string | null,
 ) {
-  if (
-    previousRole === "super_admin" &&
-    isPrimarySuperAdminEmail(targetEmail)
-  ) {
+  void _previousRole;
+  void _targetEmail;
+  return null;
+}
+
+export async function ensureSuperAdminSlotAvailable(params: {
+  adminSupabase: AdminRoleSupabase;
+  nextRole: AdminRoleValue;
+  previousRole: AdminRoleValue | null;
+  targetUserId: string;
+}) {
+  const { adminSupabase, nextRole, previousRole, targetUserId } = params;
+
+  if (nextRole !== "super_admin" || previousRole === "super_admin") {
+    return null;
+  }
+
+  const { data: activeSuperAdmin, error } = await adminSupabase
+    .from("platform_admins")
+    .select("user_id, role")
+    .eq("role", "super_admin")
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  const currentSuperAdmin = (activeSuperAdmin as PlatformAdminRoleRow | null) ?? null;
+
+  if (currentSuperAdmin?.user_id && currentSuperAdmin.user_id !== targetUserId) {
     return createApiErrorResponse({
-      status: 400,
-      code: "PRIMARY_SUPER_ADMIN_REVOKE_BLOCKED",
-      message: "Доступ основного super-admin нельзя отозвать.",
+      status: 409,
+      code: "SUPER_ADMIN_ALREADY_ASSIGNED",
+      message:
+        "В системе уже есть назначенный super-admin. Сначала переведи текущий аккаунт на другую роль или отзови доступ.",
     });
   }
 

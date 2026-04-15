@@ -8,10 +8,6 @@ import { AdminAiOperations } from "@/components/admin-ai-operations";
 import { AdminHealthDashboard } from "@/components/admin-health-dashboard";
 import { AdminOperationsInbox } from "@/components/admin-operations-inbox";
 import { PanelCard } from "@/components/panel-card";
-import {
-  PRIMARY_SUPER_ADMIN_EMAIL,
-  isPrimarySuperAdminEmail,
-} from "@/lib/admin-permissions";
 
 type PlatformAdminRole = "super_admin" | "support_admin" | "analyst" | null;
 
@@ -316,7 +312,7 @@ export function AdminDashboardWorkspace({
                 Главный доступ
               </p>
               <p className="mt-2 break-all text-sm font-semibold tracking-[0.02em] sm:text-xs sm:uppercase sm:tracking-[0.18em]">
-                {PRIMARY_SUPER_ADMIN_EMAIL}
+                {rootAdminRecord?.email ?? "super-admin"}
               </p>
             </div>
 
@@ -393,7 +389,7 @@ export function AdminDashboardWorkspace({
                   Последний вход главного администратора
                 </p>
                 <p className="mt-2 text-base font-semibold">
-                  {rootAdminRecord?.email ?? PRIMARY_SUPER_ADMIN_EMAIL}
+                  {rootAdminRecord?.email ?? "Роль super-admin назначена"}
                 </p>
                 <p className="mt-1 text-sm text-muted">
                   {formatDateTime(rootAdminRecord?.lastSignInAt)}
@@ -563,7 +559,7 @@ export function AdminDashboardWorkspace({
                       </p>
                       <p className="mt-1 text-muted">{formatAdminRole(admin.role)}</p>
                     </div>
-                    {isPrimarySuperAdminEmail(admin.email) ? (
+                    {admin.role === "super_admin" ? (
                       <span className="pill">главный доступ</span>
                     ) : null}
                   </div>
@@ -603,7 +599,9 @@ export function AdminDashboardWorkspace({
                 <p className="text-xs uppercase tracking-[0.18em] text-muted">
                   Закреплённый супер-админ
                 </p>
-                <p className="mt-3 text-lg font-semibold">{PRIMARY_SUPER_ADMIN_EMAIL}</p>
+                <p className="mt-3 text-lg font-semibold">
+                  {rootAdminRecord?.email ?? "Роль super-admin уже назначена"}
+                </p>
                 <p className="mt-2 text-sm leading-6 text-muted">
                   Эту роль нельзя переназначить из интерфейса на другой email.
                   Остальным аккаунтам доступны только обычные административные
