@@ -21,7 +21,14 @@
 - Входной экран и сама форма входа переведены в тот же light compact стиль через [page.tsx](/C:/fit/src/app/page.tsx) и [auth-form.tsx](/C:/fit/src/components/auth-form.tsx).
 - `/nutrition` перепакован как рабочий дневной экран, а не как длинная лента крупных блоков: обновлены [nutrition/page.tsx](/C:/fit/src/app/nutrition/page.tsx), [nutrition-tracker.tsx](/C:/fit/src/components/nutrition-tracker.tsx) и [nutrition-goal-adherence.tsx](/C:/fit/src/components/nutrition-goal-adherence.tsx). Убрано дублирование гигантского hero, укорочены тексты, уменьшены paddings/cards, ускорен доступ к `Фото`, `Штрихкоду`, продуктам и текущему логу.
 - Проверка tranche: `git diff --check`, `npm run lint`, `npm run typecheck`, `npm run build`, `npx eslint tests/e2e/mobile-pwa-regressions.spec.ts`, `npm run test:smoke`, `node scripts/run-playwright.mjs -- test tests/e2e/authenticated-app.spec.ts tests/e2e/mobile-pwa-regressions.spec.ts tests/e2e/nutrition-capture.spec.ts --workers=1` -> `7 passed / 8`, где единственный red был уже текстовым контрактом mobile suite, а после фикса проверки suite упёрся во внешний `Supabase` runtime (`ECONNRESET`, `page.goto timeout`) вместо layout-регрессии.
-- Общий прогресс `MASTER_PLAN`: `213 / 222` (`96%`). Прогресс текущего light compact подплана: `4 / 10` (`40%`).
+- Общий прогресс `MASTER_PLAN`: `215 / 222` (`97%`). Прогресс текущего light compact подплана: `6 / 10` (`60%`).
+
+### Light compact dashboard + workouts tranche
+
+- `Dashboard` и `Workouts` переведены на тот же светлый compact rhythm: обновлены [dashboard-workspace.tsx](/C:/fit/src/components/dashboard-workspace.tsx), [workouts/page.tsx](/C:/fit/src/app/workouts/page.tsx) и [weekly-program-builder.tsx](/C:/fit/src/components/weekly-program-builder.tsx).
+- У `Dashboard` убран тяжёлый dark hero-контраст: summary, следующий шаг и energy-блок теперь читаются как компактный рабочий обзор, а не как витрина больших промо-карточек.
+- У `Workouts` верхний уровень, метрики, табы и конструктор недели уплотнены под телефон: меньше вертикального воздуха, меньше oversized CTA и короче explanatory copy.
+- Проверка tranche: `npm run lint`, `npm run typecheck`, `npm run build`. Auth-based Playwright после этого снова уткнулся не в layout, а во внешний `Supabase` runtime (`global-auth-setup` timeout на `/dashboard`), поэтому этот blocker зафиксирован как инфраструктурный, а не как незавершённый UI slice.
 
 ## 2026-03-30
 

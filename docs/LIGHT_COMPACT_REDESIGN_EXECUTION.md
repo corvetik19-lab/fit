@@ -3,7 +3,7 @@
 Этот execution-doc фиксирует новый активный редизайн `fit`: светлый, компактный и mobile-first.
 Он заменяет `Dark Utility` как текущее направление развития UI, но не удаляет исторические документы.
 
-Текущий прогресс подплана: `4 / 10` (`40%`).
+Текущий прогресс подплана: `6 / 10` (`60%`).
 
 ## Как вести этот подплан
 
@@ -23,7 +23,7 @@
 - [x] Перевести глобальные токены и shared visual contract на светлую компактную систему.
 - [x] Пересобрать shell, top bar, drawer, bottom nav и shared `PageWorkspace` под mobile-first utility UX.
 - [x] Полностью переделать `/nutrition` и связанные nutrition surfaces так, чтобы экран стал компактным, понятным и удобным на телефоне.
-- [ ] Переделать `/dashboard` и `/workouts` под тот же light compact rhythm без oversized hero/card layout.
+- [x] Переделать `/dashboard` и `/workouts` под тот же light compact rhythm без oversized hero/card layout.
 - [ ] Переделать `/workouts/day/[dayId]` и focus-mode под более плотный рабочий mobile layout.
 - [ ] Переделать `/ai`, `/history` и `/settings` под единый light compact style.
 - [ ] Выровнять `/admin`, `/admin/users`, `/admin/users/[id]` под тот же визуальный контракт без возврата к bulky-карточкам.

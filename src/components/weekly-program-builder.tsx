@@ -37,7 +37,7 @@ type BuilderDay = {
 type BuilderPanelKey = "builder" | "active" | "templates" | "history";
 
 const inputClassName =
-  "w-full rounded-[1rem] border border-border bg-[color:var(--surface-container-high)] px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted focus:border-[color:var(--accent)] focus:ring-2 focus:ring-[color:var(--accent-soft)]";
+  "w-full rounded-[0.95rem] border border-border bg-white px-3.5 py-2.5 text-sm text-foreground outline-none transition placeholder:text-muted focus:border-[color:var(--accent)] focus:ring-2 focus:ring-[color:var(--accent-soft)]";
 
 const dayLabels: Record<number, string> = {
   1: "Понедельник",
@@ -474,19 +474,16 @@ export function WeeklyProgramBuilder({
   }
 
   return (
-    <div className="grid gap-6">
-      <section className="card card--hero p-5 sm:p-6">
+    <div className="grid gap-4">
+      <section className="surface-panel surface-panel--soft p-4 sm:p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="workspace-kicker">
-              Меню тренировок
-            </p>
-            <h2 className="app-display mt-2 text-2xl font-semibold text-foreground sm:text-3xl">
-              Управляй неделей как тренировочным циклом
+            <p className="workspace-kicker">Тренировки</p>
+            <h2 className="mt-2 text-lg font-semibold text-foreground sm:text-xl">
+              Неделя, шаблоны и библиотека в одном месте
             </h2>
-            <p className="mt-3 max-w-3xl text-sm leading-7 text-muted">
-              Здесь мы держим весь цикл рядом: собираем черновик, фиксируем активную неделю,
-              сохраняем шаблоны и поднимаем прошлые схемы без длинной ленты из равных блоков.
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
+              Собирай черновик, фиксируй активную неделю и быстро поднимай прошлые схемы.
             </p>
           </div>
           <span className="pill">
@@ -494,25 +491,25 @@ export function WeeklyProgramBuilder({
           </span>
         </div>
 
-        <div className="mt-5 grid gap-3 sm:grid-cols-3">
-          <article className="surface-panel surface-panel--soft p-4">
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          <article className="metric-tile p-3.5">
             <p className="workspace-kicker">Черновик</p>
-            <p className="mt-2 text-2xl font-semibold text-foreground">{days.length}</p>
-            <p className="mt-1 text-sm text-muted">тренировочных дней в сборке</p>
+            <p className="mt-2 text-xl font-semibold text-foreground">{days.length}</p>
+            <p className="mt-1 text-xs text-muted">дней в сборке</p>
           </article>
-          <article className="surface-panel surface-panel--soft p-4">
+          <article className="metric-tile p-3.5">
             <p className="workspace-kicker">Упражнения</p>
-            <p className="mt-2 text-2xl font-semibold text-foreground">
+            <p className="mt-2 text-xl font-semibold text-foreground">
               {totalPlannedExercises}
             </p>
-            <p className="mt-1 text-sm text-muted">слотов уже разложено по неделе</p>
+            <p className="mt-1 text-xs text-muted">слотов по неделе</p>
           </article>
-          <article className="surface-panel surface-panel--accent p-4">
+          <article className="metric-tile p-3.5">
             <p className="workspace-kicker">Активная неделя</p>
-            <p className="mt-2 text-2xl font-semibold text-foreground">
+            <p className="mt-2 text-xl font-semibold text-foreground">
               {activeProgram ? "В работе" : "Пусто"}
             </p>
-            <p className="mt-1 text-sm text-muted">
+            <p className="mt-1 text-xs text-muted">
               {activeProgram ? activeProgram.title : "Зафиксируй черновик, чтобы начать выполнение"}
             </p>
           </article>
@@ -521,7 +518,7 @@ export function WeeklyProgramBuilder({
         <div className="mt-4 md:hidden">
           <button
             aria-expanded={isMobilePanelMenuOpen}
-            className="section-chip flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
+            className="section-chip flex w-full items-center justify-between gap-3 px-3.5 py-2.5 text-left"
             onClick={() => setIsMobilePanelMenuOpen((current) => !current)}
             type="button"
           >
@@ -536,7 +533,7 @@ export function WeeklyProgramBuilder({
                 {activePanel?.description ?? "Выбери нужный блок"}
               </span>
             </span>
-            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-white/82 text-foreground">
+            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-white text-foreground">
               {isMobilePanelMenuOpen ? (
                 <ChevronUp size={18} strokeWidth={2.2} />
               ) : (
@@ -546,14 +543,14 @@ export function WeeklyProgramBuilder({
           </button>
 
           {isMobilePanelMenuOpen ? (
-            <div className="mt-3 grid gap-2 rounded-[1.75rem] border border-border bg-[color-mix(in_srgb,var(--surface)_94%,white)] p-3">
+            <div className="mt-3 grid gap-2 rounded-[1rem] border border-border bg-[color-mix(in_srgb,var(--surface)_94%,white)] p-3">
               {builderPanels.map((panel) => {
                 const isActive = panel.key === activePanelKey;
 
                 return (
                   <button
                     aria-pressed={isActive}
-                    className={`section-chip flex items-start justify-between gap-3 px-3 py-3 text-left ${
+                    className={`section-chip flex items-start justify-between gap-3 px-3 py-2.5 text-left ${
                       isActive ? "section-chip--active" : ""
                     }`}
                     key={panel.key}
@@ -569,7 +566,7 @@ export function WeeklyProgramBuilder({
                       </span>
                     </span>
                     {isActive ? (
-                      <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 text-emerald-600">
+                      <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-accent/20 bg-accent/10 text-accent-strong">
                         <Check size={16} strokeWidth={2.3} />
                       </span>
                     ) : null}
@@ -580,14 +577,14 @@ export function WeeklyProgramBuilder({
           ) : null}
         </div>
 
-        <div className="mt-4 hidden gap-3 md:flex md:flex-wrap">
+        <div className="mt-4 hidden gap-2.5 md:flex md:flex-wrap">
           {builderPanels.map((panel) => {
             const isActive = panel.key === activePanelKey;
 
             return (
               <button
                 aria-pressed={isActive}
-                className={`section-chip min-w-[12rem] px-4 py-3 text-left ${
+                className={`section-chip min-w-[11rem] px-3.5 py-2.5 text-left ${
                   isActive ? "section-chip--active" : ""
                 }`}
                 key={panel.key}
@@ -604,29 +601,27 @@ export function WeeklyProgramBuilder({
         </div>
 
         {error ? (
-          <p className="mt-4 rounded-2xl border border-red-300/60 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <p className="mt-4 rounded-[1rem] border border-[#d86a68]/25 bg-[#d86a68]/10 px-4 py-3 text-sm text-[#8f3735]">
             {error}
           </p>
         ) : null}
 
         {notice ? (
-          <p className="mt-4 rounded-2xl border border-emerald-300/60 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+          <p className="mt-4 rounded-[1rem] border border-accent/20 bg-accent/10 px-4 py-3 text-sm text-accent-strong">
             {notice}
           </p>
         ) : null}
       </section>
 
       {activePanelKey === "builder" ? (
-        <section className="card card--hero p-6">
+        <section className="surface-panel p-4 sm:p-5">
           <div className="mb-5">
-            <p className="workspace-kicker">
-              Конструктор недели
-            </p>
-            <h2 className="app-display mt-2 text-2xl font-semibold text-foreground sm:text-3xl">
+            <p className="workspace-kicker">Конструктор недели</p>
+            <h2 className="mt-2 text-xl font-semibold text-foreground sm:text-2xl">
               Собрать черновик недели
             </h2>
-            <p className="mt-3 max-w-3xl text-sm leading-7 text-muted">
-              Здесь собирается структура недели: дни, упражнения и плановые повторы. Фиксация недели и экран выполнения идут следующим отдельным шагом.
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">
+              Дни, упражнения и плановые повторы собираются здесь. Фиксация и выполнение идут следующим шагом.
             </p>
           </div>
 
@@ -653,7 +648,7 @@ export function WeeklyProgramBuilder({
             </label>
           </div>
 
-          <div className="mt-6 grid gap-5">
+          <div className="mt-5 grid gap-4">
             {days.map((day, index) => (
               <section className="surface-panel surface-panel--soft p-4" key={day.localId}>
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -813,13 +808,13 @@ export function WeeklyProgramBuilder({
       ) : null}
 
       {activePanelKey === "active" ? (
-        <section className="card card--hero p-6">
+        <section className="surface-panel p-4 sm:p-5">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
               <p className="workspace-kicker">
                 Моя неделя
               </p>
-              <h2 className="app-display mt-2 text-2xl font-semibold text-foreground sm:text-3xl">
+              <h2 className="mt-2 text-xl font-semibold text-foreground sm:text-2xl">
                 Текущая активная неделя
               </h2>
             </div>
@@ -863,13 +858,13 @@ export function WeeklyProgramBuilder({
       ) : null}
 
       {activePanelKey === "templates" ? (
-        <section className="card card--hero p-6">
+        <section className="surface-panel p-4 sm:p-5">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
               <p className="workspace-kicker">
                 Шаблоны
               </p>
-              <h2 className="app-display mt-2 text-2xl font-semibold text-foreground sm:text-3xl">
+              <h2 className="mt-2 text-xl font-semibold text-foreground sm:text-2xl">
                 Шаблоны тренировок
               </h2>
             </div>
@@ -910,13 +905,13 @@ export function WeeklyProgramBuilder({
       ) : null}
 
       {activePanelKey === "history" ? (
-        <section className="card card--hero p-6">
+        <section className="surface-panel p-4 sm:p-5">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
               <p className="workspace-kicker">
                 Программы
               </p>
-              <h2 className="app-display mt-2 text-2xl font-semibold text-foreground sm:text-3xl">
+              <h2 className="mt-2 text-xl font-semibold text-foreground sm:text-2xl">
                 История программ недели
               </h2>
             </div>

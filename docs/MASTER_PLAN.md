@@ -13,7 +13,7 @@
 
 Р­С‚РѕС‚ С„Р°Р№Р» вЂ” С‚РµРєСѓС‰РёР№ production-hardening backlog РїСЂРѕРµРєС‚Р°. РћРЅ РѕС‚СЂР°Р¶Р°РµС‚ С„Р°РєС‚РёС‡РµСЃРєРѕРµ СЃРѕСЃС‚РѕСЏРЅРёРµ СЂРµРїРѕР·РёС‚РѕСЂРёСЏ РЅР° `2026-03-31`.
 
-Текущий прогресс execution checklist: `213 / 222` (`96%`).
+Текущий прогресс execution checklist: `215 / 222` (`97%`).
 
 ## РўРµРєСѓС‰Р°СЏ Р±Р°Р·Р°
 
@@ -1435,7 +1435,7 @@
 - [x] [FRONTEND.md](/C:/fit/docs/FRONTEND.md), [docs/README.md](/C:/fit/docs/README.md) и [AGENTS.md](/C:/fit/AGENTS.md) переведены на новый active source of truth: теперь текущий прогресс нужно показывать по новому active execution-doc, а не по историческому закрытому redesign-плану.
 - [x] Глобальный visual contract, shell и shared workspace переведены на светлый compact mobile-first язык через [globals.css](/C:/fit/src/app/globals.css), [app-shell-frame.tsx](/C:/fit/src/components/app-shell-frame.tsx), [app-shell-nav.tsx](/C:/fit/src/components/app-shell-nav.tsx) и [page-workspace.tsx](/C:/fit/src/components/page-workspace.tsx).
 - [x] `/nutrition` и связанные nutrition surfaces переведены на новый компактный светлый daily-use ритм через [nutrition/page.tsx](/C:/fit/src/app/nutrition/page.tsx), [nutrition-tracker.tsx](/C:/fit/src/components/nutrition-tracker.tsx) и [nutrition-goal-adherence.tsx](/C:/fit/src/components/nutrition-goal-adherence.tsx).
-- [ ] `/dashboard` и `/workouts` ещё нужно довести до того же light compact контракта без старых oversized hero/card blocks.
+- [x] `/dashboard` и `/workouts` доведены до того же light compact контракта без старых oversized hero/card blocks.
 - [ ] `/workouts/day/[dayId]` и focus-mode ещё нужно довести до более плотного рабочего mobile layout.
 - [ ] `/ai`, `/history` и `/settings` ещё нужно выровнять под единый light compact style.
 - [ ] `/admin`, `/admin/users`, `/admin/users/[id]` и финальный mobile regression tranche остаются следующим открытым slice.

@@ -122,7 +122,7 @@ function SectionButton({
   return (
     <button
       aria-pressed={active}
-      className={`section-chip w-full px-4 py-3 text-left md:min-w-[12rem] md:w-auto ${
+      className={`section-chip w-full px-3.5 py-2.5 text-left md:min-w-[11rem] md:w-auto ${
         active ? "section-chip--active" : ""
       }`}
       onClick={onClick}
@@ -130,10 +130,10 @@ function SectionButton({
     >
       <div className="flex items-start gap-3">
         <span
-          className={`inline-flex h-10 w-10 items-center justify-center rounded-2xl ${
+          className={`inline-flex h-9 w-9 items-center justify-center rounded-[0.95rem] ${
             active
               ? "bg-accent text-white"
-              : "bg-[color-mix(in_srgb,var(--accent-soft)_24%,var(--surface-elevated))] text-accent"
+              : "bg-[color-mix(in_srgb,var(--accent-soft)_24%,white)] text-accent-strong"
           }`}
         >
           <Icon size={18} strokeWidth={2.1} />
@@ -174,7 +174,7 @@ function DashboardSurfaceCard({
   className?: string;
 }) {
   return (
-    <article className={`surface-panel p-5 sm:p-6 ${className}`.trim()}>
+    <article className={`surface-panel p-4 sm:p-5 ${className}`.trim()}>
       {children}
     </article>
   );
@@ -248,31 +248,30 @@ export function DashboardWorkspace({
   return (
     <div className="grid gap-4 sm:gap-5">
       <section className="grid gap-4 xl:grid-cols-[1.08fr_0.92fr]">
-        <article className="athletic-hero-card p-5 sm:p-6">
-          <div className="relative z-10 space-y-5">
+        <article className="surface-panel surface-panel--accent p-4 sm:p-5">
+          <div className="space-y-4">
             <div className="flex flex-wrap gap-2">
-              <span className="athletic-hero-chip">
+              <span className="pill">
                 {viewerName ?? "fit athlete"}
               </span>
-              <span className="athletic-hero-chip">
+              <span className="pill">
                 {dashboardSourceLabel}
                 {dashboardUpdatedAt
                   ? ` · ${dashboardDateFormatter.format(new Date(dashboardUpdatedAt))}`
                   : ""}
               </span>
               {viewerEmail ? (
-                <span className="athletic-hero-chip">{viewerEmail}</span>
+                <span className="pill">{viewerEmail}</span>
               ) : null}
             </div>
 
-            <div className="space-y-3">
-              <p className="workspace-kicker text-white/74">Сегодня в фокусе</p>
-              <h2 className="athletic-hero-title">
+            <div className="space-y-2">
+              <p className="workspace-kicker">Сегодня в фокусе</p>
+              <h2 className="app-display text-[1.7rem] font-semibold tracking-tight text-foreground sm:text-[2.1rem]">
                 {getWeekCycleLabel(snapshot.activePrograms)}
               </h2>
-              <p className="max-w-xl text-sm leading-7 text-white/78 sm:text-base">
-                Это короткий срез по ритму: тренировки, питание и AI-подсказка
-                собраны в одном экране без перегруза и лишних блоков.
+              <p className="max-w-xl text-sm leading-6 text-muted">
+                Короткий срез по ритму: тренировки, питание и AI-подсказка на одном рабочем экране.
               </p>
             </div>
 
@@ -292,7 +291,7 @@ export function DashboardWorkspace({
           <DashboardSurfaceCard className="flex items-start justify-between gap-4">
             <div className="space-y-3">
               <p className="workspace-kicker">Следующее действие</p>
-              <p className="text-xl font-semibold leading-8 text-foreground">
+              <p className="text-lg font-semibold leading-7 text-foreground">
                 {workoutPrioritySignal?.action ??
                   nutritionPrioritySignal?.action ??
                   "Открой тренировки и продолжай текущую неделю."}
@@ -301,7 +300,7 @@ export function DashboardWorkspace({
                 Самый короткий путь в работу: одно решение, один следующий шаг.
               </p>
             </div>
-            <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[color-mix(in_srgb,var(--accent-soft)_26%,var(--surface-elevated))] text-accent">
+            <div className="inline-flex h-10 w-10 items-center justify-center rounded-[0.95rem] bg-[color-mix(in_srgb,var(--accent-soft)_26%,white)] text-accent-strong">
               <ArrowRight size={18} strokeWidth={2.1} />
             </div>
           </DashboardSurfaceCard>
@@ -310,7 +309,7 @@ export function DashboardWorkspace({
             <div className="flex items-start justify-between gap-4">
               <div className="space-y-2">
                 <p className="workspace-kicker">Средняя энергия</p>
-                <p className="text-4xl font-black tracking-tight text-accent">
+                <p className="text-3xl font-black tracking-tight text-accent">
                   {formatNumber(aiContext.nutritionInsights.avgKcalLast7)}
                   <span className="ml-2 text-lg font-medium text-muted">
                     ккал
@@ -321,7 +320,7 @@ export function DashboardWorkspace({
                   {formatNumber(aiContext.nutritionInsights.avgProteinLast7, "г")}
                 </p>
               </div>
-              <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[color-mix(in_srgb,var(--accent-soft)_26%,var(--surface-elevated))] text-accent">
+              <div className="inline-flex h-10 w-10 items-center justify-center rounded-[0.95rem] bg-[color-mix(in_srgb,var(--accent-soft)_26%,white)] text-accent-strong">
                 <Sparkles size={18} strokeWidth={2.1} />
               </div>
             </div>
@@ -329,17 +328,17 @@ export function DashboardWorkspace({
         </div>
       </section>
 
-      <section className="card p-4 sm:p-5">
+      <section className="surface-panel surface-panel--soft p-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <p className="workspace-kicker">Разделы обзора</p>
-            <h2 className="app-display text-xl font-semibold text-foreground sm:text-2xl">
-              Открой только тот слой аналитики, который нужен сейчас
+            <h2 className="text-base font-semibold text-foreground sm:text-lg">
+              Открой только нужный слой аналитики
             </h2>
           </div>
 
           <Link
-            className="action-button action-button--primary px-4 py-3 text-sm"
+            className="action-button action-button--primary px-4 py-2.5 text-sm"
             href={"/ai" as Route}
           >
             Открыть AI
@@ -350,7 +349,7 @@ export function DashboardWorkspace({
         <div className="mt-4 md:hidden">
           <button
             aria-expanded={isMobileMenuOpen}
-            className="section-chip flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
+            className="section-chip flex w-full items-center justify-between gap-3 px-3.5 py-2.5 text-left"
             data-testid="dashboard-workspace-mobile-trigger"
             onClick={() => setIsMobileMenuOpen((current) => !current)}
             type="button"
