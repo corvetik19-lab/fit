@@ -214,8 +214,8 @@ function formatPercent(value: number | null) {
 
 function getStatusTone(active: boolean) {
   return active
-    ? "border border-emerald-500/25 bg-emerald-500/12 text-emerald-100"
-    : "border border-amber-500/25 bg-amber-500/12 text-amber-100";
+    ? "border border-emerald-500/25 bg-emerald-500/12 text-emerald-900"
+    : "border border-amber-500/25 bg-amber-500/12 text-amber-900";
 }
 
 function formatConfigState(missingKeys: string[]) {
@@ -591,17 +591,17 @@ export function AdminHealthDashboard({
             </div>
           </div>
 
-          {error ? <p className="rounded-2xl border border-red-500/25 bg-red-500/12 px-4 py-3 text-sm text-red-100">{error}</p> : null}
+          {error ? <p className="rounded-2xl border border-red-500/25 bg-red-500/12 px-4 py-3 text-sm text-red-900">{error}</p> : null}
           {isDegraded ? (
-            <p className="rounded-2xl border border-amber-500/25 bg-amber-500/12 px-4 py-3 text-sm text-amber-100">
+            <p className="rounded-2xl border border-amber-500/25 bg-amber-500/12 px-4 py-3 text-sm text-amber-900">
               Часть служебных источников сейчас недоступна. Панель показывает безопасный резервный снимок и может временно не отражать последние изменения.
             </p>
           ) : null}
-          {smokeTestMessage ? <p className="rounded-2xl border border-sky-500/25 bg-sky-500/12 px-4 py-3 text-sm text-sky-100">{smokeTestMessage}</p> : null}
-          {dashboardWarmMessage ? <p className="rounded-2xl border border-sky-500/25 bg-sky-500/12 px-4 py-3 text-sm text-sky-100">{dashboardWarmMessage}</p> : null}
-          {nutritionSummariesMessage ? <p className="rounded-2xl border border-sky-500/25 bg-sky-500/12 px-4 py-3 text-sm text-sky-100">{nutritionSummariesMessage}</p> : null}
-          {knowledgeReindexMessage ? <p className="rounded-2xl border border-sky-500/25 bg-sky-500/12 px-4 py-3 text-sm text-sky-100">{knowledgeReindexMessage}</p> : null}
-          {billingReconcileMessage ? <p className="rounded-2xl border border-sky-500/25 bg-sky-500/12 px-4 py-3 text-sm text-sky-100">{billingReconcileMessage}</p> : null}
+          {smokeTestMessage ? <p className="rounded-2xl border border-sky-500/25 bg-sky-500/12 px-4 py-3 text-sm text-sky-900">{smokeTestMessage}</p> : null}
+          {dashboardWarmMessage ? <p className="rounded-2xl border border-sky-500/25 bg-sky-500/12 px-4 py-3 text-sm text-sky-900">{dashboardWarmMessage}</p> : null}
+          {nutritionSummariesMessage ? <p className="rounded-2xl border border-sky-500/25 bg-sky-500/12 px-4 py-3 text-sm text-sky-900">{nutritionSummariesMessage}</p> : null}
+          {knowledgeReindexMessage ? <p className="rounded-2xl border border-sky-500/25 bg-sky-500/12 px-4 py-3 text-sm text-sky-900">{knowledgeReindexMessage}</p> : null}
+          {billingReconcileMessage ? <p className="rounded-2xl border border-sky-500/25 bg-sky-500/12 px-4 py-3 text-sm text-sky-900">{billingReconcileMessage}</p> : null}
 
           <div className="flex flex-wrap gap-2">
             {readinessCards.map(([label, ready]) => (
@@ -736,12 +736,12 @@ export function AdminHealthDashboard({
 
       <PanelCard caption="Операции" title="Очереди и действия">
         <div className="grid gap-4">
-          <p className={`rounded-2xl border px-4 py-3 text-sm ${hasSyncBacklog ? "border-amber-500/25 bg-amber-500/12 text-amber-100" : "border-emerald-500/25 bg-emerald-500/12 text-emerald-100"}`}>
+          <p className={`rounded-2xl border px-4 py-3 text-sm ${hasSyncBacklog ? "border-amber-500/25 bg-amber-500/12 text-amber-900" : "border-emerald-500/25 bg-emerald-500/12 text-emerald-900"}`}>
             {hasSyncBacklog
               ? "Есть накопившиеся задачи. Проверь ниже, где уже нужен операторский контроль."
               : "Критичных очередей сейчас нет. Основные процессы проходят штатно."}
           </p>
-          <p className={`rounded-2xl border px-4 py-3 text-sm ${hasBillingAttention ? "border-amber-500/25 bg-amber-500/12 text-amber-100" : "border-emerald-500/25 bg-emerald-500/12 text-emerald-100"}`}>
+          <p className={`rounded-2xl border px-4 py-3 text-sm ${hasBillingAttention ? "border-amber-500/25 bg-amber-500/12 text-amber-900" : "border-emerald-500/25 bg-emerald-500/12 text-emerald-900"}`}>
             {hasBillingAttention
               ? "В оплатах есть задачи, которым нужен контроль: просрочки, ручные проверки или ошибки сверки."
               : "По оплате всё спокойно: активные подписки и свежая сверка на месте."}

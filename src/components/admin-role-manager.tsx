@@ -200,7 +200,7 @@ export function AdminRoleManager({
         </label>
 
         {!targetCanBeSuperAdmin ? (
-          <p className="rounded-2xl border border-sky-500/25 bg-sky-500/12 px-4 py-3 text-sm text-sky-100">
+          <p className="rounded-2xl border border-sky-500/25 bg-sky-500/12 px-4 py-3 text-sm text-sky-900">
             Главный доступ закреплён только за {PRIMARY_SUPER_ADMIN_EMAIL}.
           </p>
         ) : null}
@@ -237,26 +237,26 @@ export function AdminRoleManager({
         </div>
 
         {!canManageRoles ? (
-          <p className="rounded-2xl border border-amber-500/25 bg-amber-500/12 px-4 py-3 text-sm text-amber-100">
+          <p className="rounded-2xl border border-amber-500/25 bg-amber-500/12 px-4 py-3 text-sm text-amber-900">
             Менять роли может только главный супер-админ.
           </p>
         ) : null}
 
         {isSelf ? (
-          <p className="rounded-2xl border border-sky-500/25 bg-sky-500/12 px-4 py-3 text-sm text-sky-100">
+          <p className="rounded-2xl border border-sky-500/25 bg-sky-500/12 px-4 py-3 text-sm text-sky-900">
             Нельзя снять административный доступ с собственного аккаунта.
           </p>
         ) : null}
       </div>
 
       {error ? (
-        <p className="mt-4 rounded-2xl border border-red-500/25 bg-red-500/12 px-4 py-3 text-sm text-red-100">
+        <p className="mt-4 rounded-2xl border border-red-500/25 bg-red-500/12 px-4 py-3 text-sm text-red-900">
           {error}
         </p>
       ) : null}
 
       {notice ? (
-        <p className="mt-4 rounded-2xl border border-emerald-500/25 bg-emerald-500/12 px-4 py-3 text-sm text-emerald-100">
+        <p className="mt-4 rounded-2xl border border-emerald-500/25 bg-emerald-500/12 px-4 py-3 text-sm text-emerald-900">
           {notice}
         </p>
       ) : null}

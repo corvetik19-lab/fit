@@ -68,7 +68,10 @@ export function AppShellFrame({
   }, [immersive, isMobile]);
 
   const showAssistantWidget =
-    Boolean(viewer) && !hideAssistantWidget && !isMobileDrawerOpen;
+    Boolean(viewer) &&
+    !hideAssistantWidget &&
+    !isMobileDrawerOpen &&
+    !viewer?.isPlatformAdmin;
   const brandLabel = getViewerBadge(viewer);
   const viewerIdentity = viewer?.fullName ?? viewer?.email ?? "Аккаунт fit";
 

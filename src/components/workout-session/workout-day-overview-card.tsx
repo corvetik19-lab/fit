@@ -36,15 +36,15 @@ export function WorkoutDayOverviewCard({
   workoutDayHref: Route;
 }) {
   return (
-    <section className="grid gap-4">
-      <div className="card card--hero overflow-hidden p-5 sm:p-6">
+    <section className="grid gap-3.5">
+      <div className="card overflow-hidden p-4 sm:p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-2">
             <p className="workspace-kicker">День тренировки</p>
-            <h2 className="app-display text-2xl font-semibold text-foreground sm:text-3xl">
+            <h2 className="text-xl font-semibold text-foreground sm:text-2xl">
               {dayLabels[day.day_of_week] ?? `День ${day.day_of_week}`}
             </h2>
-            <p className="text-sm leading-6 text-muted">
+            <p className="text-sm leading-5 text-muted">
               {day.program_title} · {formatWeekRange(day)}
             </p>
           </div>
@@ -57,28 +57,28 @@ export function WorkoutDayOverviewCard({
           </div>
         </div>
 
-        <div className="mt-5 grid gap-3 sm:grid-cols-3">
+        <div className="mt-4 grid gap-2.5 sm:grid-cols-3">
           {[
             ["Упражнения", String(day.exercises.length)],
             ["Подходы", `${completedSetsCount}/${totalSetsCount}`],
             ["Таймер", formatDurationSeconds(day.session_duration_seconds ?? 0)],
           ].map(([label, value]) => (
-            <article className="surface-panel surface-panel--soft p-4" key={label}>
+            <article className="metric-tile p-3.5" key={label}>
               <p className="workspace-kicker">{label}</p>
-              <p className="mt-2 text-2xl font-semibold text-foreground">{value}</p>
+              <p className="mt-1.5 text-xl font-semibold text-foreground">{value}</p>
             </article>
           ))}
         </div>
       </div>
 
-      <section className="card p-5 sm:p-6">
+      <section className="surface-panel p-4 sm:p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="workspace-kicker">Обзор дня</p>
-            <h3 className="mt-2 text-xl font-semibold text-foreground sm:text-2xl">
+            <h3 className="mt-1.5 text-lg font-semibold text-foreground sm:text-xl">
               Состояние выполнения
             </h3>
-            <p className="mt-2 text-sm leading-6 text-muted">
+            <p className="mt-1.5 text-sm leading-5 text-muted">
               Последнее локальное сохранение: {formatSnapshotTime(lastSnapshotAt)}
             </p>
           </div>
@@ -91,7 +91,7 @@ export function WorkoutDayOverviewCard({
           </Link>
         </div>
 
-        <div className="mt-5 grid gap-3 sm:grid-cols-3">
+        <div className="mt-4 grid gap-2.5 sm:grid-cols-3">
           {[
             [
               "Тоннаж",
@@ -105,15 +105,15 @@ export function WorkoutDayOverviewCard({
             ],
             ["Заполнено подходов", `${completedSetsCount} из ${totalSetsCount}`],
           ].map(([label, value]) => (
-            <article className="surface-panel p-4" key={label}>
+            <article className="metric-tile p-3.5" key={label}>
               <p className="workspace-kicker">{label}</p>
-              <p className="mt-2 text-lg font-semibold text-foreground">{value}</p>
+              <p className="mt-1.5 text-base font-semibold text-foreground">{value}</p>
             </article>
           ))}
         </div>
 
-        <div className="mt-5 flex flex-wrap gap-2">{statusActions}</div>
-        <div className="mt-4">{notices}</div>
+        <div className="mt-4 flex flex-wrap gap-2">{statusActions}</div>
+        <div className="mt-3.5">{notices}</div>
       </section>
     </section>
   );

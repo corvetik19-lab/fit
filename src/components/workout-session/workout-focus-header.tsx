@@ -64,12 +64,12 @@ export function WorkoutFocusHeader({
   const dayTitle = dayLabels[day.day_of_week] ?? `День ${day.day_of_week}`;
 
   return (
-    <section className="sticky top-[calc(0.75rem+env(safe-area-inset-top))] z-20">
-      <div className="card card--hero overflow-hidden p-4 sm:p-5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <div className="flex items-center gap-3">
-              <span className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] text-lg font-semibold text-[color:var(--on-primary)] shadow-[0_20px_40px_-28px_rgba(32,99,175,0.8)]">
+    <section className="sticky top-[calc(0.5rem+env(safe-area-inset-top))] z-20">
+      <div className="surface-panel overflow-hidden p-3.5 sm:p-4">
+        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2.5 sm:gap-3">
+              <span className="inline-flex h-9 w-9 items-center justify-center rounded-[0.9rem] bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] text-sm font-semibold text-[color:var(--on-primary)] shadow-[0_20px_40px_-28px_rgba(32,99,175,0.52)] sm:h-10 sm:w-10 sm:text-base">
                 fit
               </span>
               <div className="min-w-0">
@@ -79,10 +79,10 @@ export function WorkoutFocusHeader({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 justify-end gap-1.5 sm:items-center sm:gap-2">
             <button
               aria-label="Вернуться к обычному виду"
-              className="action-button action-button--secondary px-3 py-2.5 text-xs sm:text-sm"
+              className="action-button action-button--secondary h-9 whitespace-nowrap rounded-full px-2.5 text-[11px] sm:h-10 sm:px-3 sm:text-sm"
               data-testid="workout-regular-mode-button"
               onClick={onReturnToRegularMode}
               type="button"
@@ -91,7 +91,7 @@ export function WorkoutFocusHeader({
             </button>
             <button
               aria-expanded={!isFocusHeaderCollapsed}
-              className="inline-flex h-11 w-11 items-center justify-center rounded-[1rem] bg-[color:var(--surface-container-high)] text-[color:var(--foreground)] transition hover:bg-[color:var(--surface-container-highest)]"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-[0.9rem] bg-[color:var(--surface-elevated)] text-[color:var(--foreground)] transition hover:bg-[color:var(--surface-container-highest)] sm:h-10 sm:w-10"
               data-testid="workout-focus-header-toggle"
               onClick={onToggleCollapsed}
               type="button"
@@ -107,13 +107,13 @@ export function WorkoutFocusHeader({
 
         {!isFocusHeaderCollapsed ? (
           <>
-            <div className="mt-4 grid gap-3 sm:grid-cols-[1.2fr_0.8fr]">
-              <div className="surface-panel surface-panel--soft p-4">
+            <div className="mt-3.5 grid gap-2.5 sm:grid-cols-[1.2fr_0.8fr]">
+              <div className="metric-tile p-3.5">
                 <p className="workspace-kicker">{`Упражнение ${safeActiveExerciseIndex + 1} из ${totalExercises}`}</p>
-                <h2 className="mt-2 text-2xl font-semibold leading-tight text-foreground sm:text-[1.9rem]">
+                <h2 className="mt-1.5 text-xl font-semibold leading-tight text-foreground sm:text-[1.65rem]">
                   {activeExerciseTitle ?? "Продолжай текущий шаг"}
                 </h2>
-                <div className="mt-3 flex flex-wrap gap-2">
+                <div className="mt-2.5 flex flex-wrap gap-2">
                   <span className="pill">{dayStatusLabels[day.status] ?? day.status}</span>
                   <span className="pill">
                     {currentExerciseIsComplete ? "Шаг сохранён" : "В работе"}
@@ -121,19 +121,19 @@ export function WorkoutFocusHeader({
                 </div>
               </div>
 
-              <div className="surface-panel surface-panel--accent p-4">
+              <div className="surface-panel surface-panel--accent p-3.5">
                 <p className="workspace-kicker">Таймер</p>
-                <p className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-[color:var(--on-primary)]">
+                <p className="mt-1.5 text-[1.65rem] font-semibold tracking-[-0.04em] text-[color:var(--on-primary)]">
                   {formatDurationSeconds(currentSessionDurationSeconds)}
                 </p>
-                <div className="mt-4 flex items-center gap-2">
+                <div className="mt-3 flex items-center gap-2">
                   <button
                     aria-label={
                       isTimerRunning
                         ? "Поставить таймер на паузу"
                         : "Запустить таймер тренировки"
                     }
-                    className="inline-flex h-11 w-11 items-center justify-center rounded-[0.95rem] bg-white/14 text-[color:var(--on-primary)] backdrop-blur transition hover:bg-white/22 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-[0.85rem] bg-white/14 text-[color:var(--on-primary)] backdrop-blur transition hover:bg-white/22 disabled:cursor-not-allowed disabled:opacity-50"
                     data-testid="workout-timer-toggle"
                     disabled={!day.is_locked || isPending || isSyncing}
                     onClick={isTimerRunning ? onPauseTimer : onStartTimer}
@@ -147,7 +147,7 @@ export function WorkoutFocusHeader({
                   </button>
                   <button
                     aria-label="Сбросить таймер тренировки"
-                    className="inline-flex h-11 w-11 items-center justify-center rounded-[0.95rem] bg-white/14 text-[color:var(--on-primary)] backdrop-blur transition hover:bg-white/22 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-[0.85rem] bg-white/14 text-[color:var(--on-primary)] backdrop-blur transition hover:bg-white/22 disabled:cursor-not-allowed disabled:opacity-50"
                     data-testid="workout-timer-reset"
                     disabled={
                       !day.is_locked ||
@@ -164,32 +164,32 @@ export function WorkoutFocusHeader({
               </div>
             </div>
 
-            <div className="mt-4 grid grid-cols-3 gap-2">
-              <div className="surface-panel p-3">
+            <div className="mt-3.5 grid grid-cols-3 gap-2">
+              <div className="metric-tile p-2.5">
                 <p className="workspace-kicker">Подходы</p>
-                <p className="mt-2 text-lg font-semibold text-foreground">
+                <p className="mt-1.5 text-base font-semibold text-foreground">
                   {completedSetsCount}
                   <span className="ml-1 text-sm text-muted">/ {totalSetsCount}</span>
                 </p>
               </div>
-              <div className="surface-panel p-3">
+              <div className="metric-tile p-2.5">
                 <p className="workspace-kicker">Упражнения</p>
-                <p className="mt-2 text-lg font-semibold text-foreground">
+                <p className="mt-1.5 text-base font-semibold text-foreground">
                   {completedExercisesCount}
                   <span className="ml-1 text-sm text-muted">/ {totalExercises}</span>
                 </p>
               </div>
-              <div className="surface-panel p-3">
+              <div className="metric-tile p-2.5">
                 <p className="workspace-kicker">Шаг</p>
-                <p className="mt-2 text-sm font-semibold text-foreground">
+                <p className="mt-1.5 text-sm font-semibold text-foreground">
                   {currentExerciseIsComplete ? "Готов" : "Продолжай"}
                 </p>
               </div>
             </div>
 
-            <div className="mt-4">{stepStrip}</div>
-            <div className="mt-4 flex flex-wrap gap-2">{statusActions}</div>
-            <div className="mt-4">{notices}</div>
+            <div className="mt-3.5">{stepStrip}</div>
+            <div className="mt-3.5 flex flex-wrap gap-2">{statusActions}</div>
+            <div className="mt-3.5">{notices}</div>
           </>
         ) : (
           <div className="mt-4 flex items-center justify-between gap-3">
@@ -199,7 +199,7 @@ export function WorkoutFocusHeader({
                 {activeExerciseTitle ?? "Продолжай текущий шаг"}
               </p>
             </div>
-            <div className="surface-panel px-3 py-2">
+            <div className="metric-tile px-3 py-2">
               <p className="workspace-kicker">Таймер</p>
               <p className="mt-1 text-sm font-semibold text-foreground">
                 {formatDurationSeconds(currentSessionDurationSeconds)}

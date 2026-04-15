@@ -67,11 +67,11 @@ export function SettingsBillingCenter({
   });
 
   return (
-    <section className="surface-panel p-5 sm:p-6" id="billing-center">
-      <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+    <section className="surface-panel p-4 sm:p-5" id="billing-center">
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="workspace-kicker">Доступ и оплата</p>
-          <h2 className="mt-2 text-2xl font-semibold tracking-tight text-foreground">
+          <h2 className="mt-1.5 text-lg font-semibold tracking-tight text-foreground sm:text-xl">
             Подписка, AI-функции и история доступа
           </h2>
         </div>
@@ -87,7 +87,7 @@ export function SettingsBillingCenter({
 
       {billingReturnNotice ? (
         <div
-          className={`mb-5 rounded-[1.35rem] border px-4 py-4 text-sm ${
+          className={`mb-4 rounded-[1.05rem] border px-3.5 py-3.5 text-sm ${
             billingReturnNotice.tone === "success"
               ? "border-emerald-500/30 bg-emerald-500/12 text-emerald-100"
               : "border-amber-400/30 bg-amber-500/10 text-amber-100"
@@ -140,9 +140,9 @@ export function SettingsBillingCenter({
         </div>
       ) : null}
 
-      <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
-        <div className="grid gap-4">
-          <article className="metric-tile p-5">
+      <div className="grid gap-3.5 xl:grid-cols-[1.05fr_0.95fr]">
+        <div className="grid gap-3.5">
+          <article className="metric-tile p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-sm font-semibold text-foreground">Текущий план</p>
@@ -160,7 +160,7 @@ export function SettingsBillingCenter({
               </span>
             </div>
 
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div className="mt-3.5 grid gap-2.5 sm:grid-cols-2">
               <div className="rounded-2xl border border-border bg-background/40 px-4 py-3 text-sm text-muted">
                 <p>
                   Статус:{" "}
@@ -198,7 +198,7 @@ export function SettingsBillingCenter({
               </div>
             </div>
 
-            <div className="mt-4 flex flex-wrap gap-3">
+            <div className="mt-3.5 flex flex-wrap gap-2.5">
               {isPrivilegedAccess ? (
                 <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/12 px-4 py-3 text-sm text-emerald-100">
                   Для корневого администратора все AI и premium-функции открыты
@@ -248,24 +248,24 @@ export function SettingsBillingCenter({
             {!isPrivilegedAccess &&
             (!billing.checkoutReady ||
               (access.subscription.isActive && !billing.managementReady)) ? (
-              <div className="mt-4 rounded-2xl border border-amber-400/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+              <div className="mt-3.5 rounded-[1rem] border border-amber-400/30 bg-amber-500/10 px-3.5 py-3 text-sm text-amber-100">
                 Платежный модуль еще не настроен полностью. Часть действий по
                 подписке может быть временно недоступна.
               </div>
             ) : null}
           </article>
 
-          <article className="surface-panel surface-panel--soft p-5">
-            <div className="mb-4">
+          <article className="surface-panel surface-panel--soft p-4">
+            <div className="mb-3.5">
               <p className="workspace-kicker">Функции</p>
-              <h3 className="mt-2 text-xl font-semibold tracking-tight text-foreground">
+              <h3 className="mt-1.5 text-lg font-semibold tracking-tight text-foreground">
                 Что доступно по текущему плану
               </h3>
             </div>
 
-            <div className="grid gap-3">
+            <div className="grid gap-2.5">
               {featureCards.map((feature) => (
-                <article className="metric-tile p-4 text-sm" key={feature.featureKey}>
+                <article className="metric-tile p-3.5 text-sm" key={feature.featureKey}>
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="font-semibold text-foreground">{feature.label}</p>
@@ -296,8 +296,8 @@ export function SettingsBillingCenter({
           </article>
         </div>
 
-        <div className="grid gap-4">
-          <article className="metric-tile p-5">
+        <div className="grid gap-3.5">
+          <article className="metric-tile p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-sm font-semibold text-foreground">Запросить доступ</p>
@@ -314,7 +314,7 @@ export function SettingsBillingCenter({
             </div>
 
             {activeReviewRequest ? (
-              <div className="mt-4 rounded-2xl border border-border bg-background/40 px-4 py-3 text-sm text-muted">
+              <div className="mt-3.5 rounded-2xl border border-border bg-background/40 px-3.5 py-3 text-sm text-muted">
                 <p>
                   Последний запрос:{" "}
                   <span className="text-foreground">
@@ -335,7 +335,7 @@ export function SettingsBillingCenter({
               </div>
             ) : blockedFeatures.length ? (
               <>
-                <div className="mt-4 grid gap-3">
+                <div className="mt-3.5 grid gap-2.5">
                   {blockedFeatures.map((feature) => {
                     const checked = selectedFeatures.includes(feature.featureKey);
 
@@ -363,7 +363,7 @@ export function SettingsBillingCenter({
                   })}
                 </div>
 
-                <label className="mt-4 grid gap-2 text-sm text-muted">
+                <label className="mt-3.5 grid gap-2 text-sm text-muted">
                   Комментарий
                   <textarea
                     className={`${settingsBillingInputClassName} min-h-24 resize-y`}
@@ -393,8 +393,8 @@ export function SettingsBillingCenter({
             )}
           </article>
 
-          <article className="metric-tile p-5">
-            <div className="mb-4">
+          <article className="metric-tile p-4">
+            <div className="mb-3.5">
               <p className="text-sm font-semibold text-foreground">История доступа</p>
               <p className="mt-1 text-sm leading-6 text-muted">
                 Здесь видны изменения подписки, ручных доступов и твоих запросов.

@@ -48,10 +48,10 @@ export function AdminUsersBulkActionsPanel({
   selectedUserCount: number;
 }) {
   return (
-    <div className="rounded-[32px] bg-[#12131a] p-6 text-white shadow-[0_30px_80px_-50px_rgba(0,0,0,0.58)] sm:p-7">
+    <div className="surface-panel surface-panel--accent p-4 sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/55">
+          <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted">
             Массовые действия
           </p>
           <h3 className="mt-3 text-xl font-bold">
@@ -59,18 +59,18 @@ export function AdminUsersBulkActionsPanel({
           </h3>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <span className="pill border-white/15 bg-white/10 text-white">
+          <span className="pill">
             Выбрано: {selectedUserCount}
           </span>
           <button
-            className="rounded-full border border-white/12 bg-white/6 px-3 py-2 text-xs font-semibold text-white/88 transition hover:bg-white/12"
+            className="action-button action-button--secondary px-3 py-2 text-xs"
             onClick={onToggleVisibleSelection}
             type="button"
           >
             {allVisibleSelected ? "Снять видимые" : "Выбрать видимые"}
           </button>
           <button
-            className="rounded-full border border-white/12 bg-white/6 px-3 py-2 text-xs font-semibold text-white/88 transition hover:bg-white/12"
+            className="action-button action-button--secondary px-3 py-2 text-xs"
             onClick={onClearSelection}
             type="button"
           >
@@ -80,17 +80,17 @@ export function AdminUsersBulkActionsPanel({
       </div>
 
       {!canRunBulkActions ? (
-        <p className="mt-5 rounded-[24px] border border-amber-300/25 bg-amber-300/10 px-4 py-3 text-sm text-amber-100">
+        <p className="mt-4 rounded-[1rem] border border-amber-300/25 bg-amber-300/10 px-4 py-3 text-sm text-amber-900">
           Массовые действия доступны только закреплённому супер-админу{" "}
           {PRIMARY_SUPER_ADMIN_EMAIL}.
         </p>
       ) : null}
 
-      <div className="mt-6 grid gap-3 lg:grid-cols-[220px_1fr_220px_220px]">
-        <label className="grid gap-2 text-sm text-white/70">
+      <div className="mt-4 grid gap-3 lg:grid-cols-[220px_1fr_220px_220px]">
+        <label className="grid gap-2 text-sm text-muted">
           Действие
           <select
-            className="rounded-[22px] border border-white/12 bg-white/8 px-4 py-3 text-sm text-white outline-none transition focus:border-white/20 focus:ring-2 focus:ring-white/10"
+            className="rounded-[1rem] border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,white)] px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15"
             disabled={!canRunBulkActions || isBulkPending}
             onChange={(event) => onBulkActionChange(event.target.value as BulkAction)}
             value={bulkAction}
@@ -103,10 +103,10 @@ export function AdminUsersBulkActionsPanel({
           </select>
         </label>
 
-        <label className="grid gap-2 text-sm text-white/70">
+        <label className="grid gap-2 text-sm text-muted">
           Причина
           <input
-            className="rounded-[22px] border border-white/12 bg-white/8 px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/35 focus:border-white/20 focus:ring-2 focus:ring-white/10"
+            className="rounded-[1rem] border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,white)] px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted focus:border-accent focus:ring-2 focus:ring-accent/15"
             disabled={!canRunBulkActions || isBulkPending}
             onChange={(event) => onBulkReasonChange(event.target.value)}
             placeholder="Например: пробный доступ для группы теста"
@@ -115,10 +115,10 @@ export function AdminUsersBulkActionsPanel({
           />
         </label>
 
-        <label className="grid gap-2 text-sm text-white/70">
+        <label className="grid gap-2 text-sm text-muted">
           Дней доступа
           <input
-            className="rounded-[22px] border border-white/12 bg-white/8 px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/35 focus:border-white/20 focus:ring-2 focus:ring-white/10"
+            className="rounded-[1rem] border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,white)] px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted focus:border-accent focus:ring-2 focus:ring-accent/15"
             disabled={!canRunBulkActions || isBulkPending || bulkAction !== "grant_trial"}
             onChange={(event) => onBulkTrialDaysChange(event.target.value)}
             placeholder="14"
@@ -127,10 +127,10 @@ export function AdminUsersBulkActionsPanel({
           />
         </label>
 
-        <label className="grid gap-2 text-sm text-white/70">
+        <label className="grid gap-2 text-sm text-muted">
           Функция
           <input
-            className="rounded-[22px] border border-white/12 bg-white/8 px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/35 focus:border-white/20 focus:ring-2 focus:ring-white/10"
+            className="rounded-[1rem] border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,white)] px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted focus:border-accent focus:ring-2 focus:ring-accent/15"
             disabled={
               !canRunBulkActions ||
               isBulkPending ||
@@ -146,10 +146,10 @@ export function AdminUsersBulkActionsPanel({
 
       {bulkAction === "enable_entitlement" ? (
         <div className="mt-3 grid gap-3 lg:grid-cols-[220px_1fr]">
-          <label className="grid gap-2 text-sm text-white/70">
+          <label className="grid gap-2 text-sm text-muted">
             Лимит
             <input
-              className="rounded-[22px] border border-white/12 bg-white/8 px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/35 focus:border-white/20 focus:ring-2 focus:ring-white/10"
+              className="rounded-[1rem] border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,white)] px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted focus:border-accent focus:ring-2 focus:ring-accent/15"
               disabled={!canRunBulkActions || isBulkPending}
               onChange={(event) => onBulkLimitValueChange(event.target.value)}
               placeholder="1000"
@@ -162,7 +162,7 @@ export function AdminUsersBulkActionsPanel({
 
       <div className="mt-5 flex flex-wrap gap-3">
         <button
-          className="rounded-full bg-[#e53935] px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+          className="action-button action-button--primary disabled:cursor-not-allowed disabled:opacity-60"
           disabled={!canRunBulkActions || isBulkPending || !selectedUserCount}
           onClick={onSubmit}
           type="button"
@@ -170,7 +170,7 @@ export function AdminUsersBulkActionsPanel({
           {isBulkPending ? "Запускаю..." : "Запустить пакет"}
         </button>
         {bulkNotice ? (
-          <p className="rounded-[22px] border border-emerald-300/25 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
+          <p className="rounded-[1rem] border border-emerald-300/25 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-900">
             {bulkNotice}
           </p>
         ) : null}
@@ -185,24 +185,24 @@ export function AdminUsersBulkHistoryPanel({
   recentBulkWaves: RecentBulkWave[];
 }) {
   return (
-    <div className="surface-panel p-6 sm:p-7">
+    <div className="surface-panel p-4 sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted">
             История пакетов
           </p>
-          <h3 className="mt-3 text-xl font-bold text-foreground">
+          <h3 className="mt-2 text-lg font-semibold text-foreground">
             Последние массовые операции
           </h3>
         </div>
         <span className="pill">{recentBulkWaves.length}</span>
       </div>
 
-      <div className="mt-5 grid gap-3">
+      <div className="mt-4 grid gap-3">
         {recentBulkWaves.length ? (
           recentBulkWaves.map((wave) => (
             <article
-              className="rounded-[24px] bg-[color-mix(in_srgb,var(--surface-container-low)_78%,white)] px-4 py-4 text-sm"
+              className="metric-tile px-3.5 py-3 text-sm"
               key={wave.id}
             >
               <div className="flex flex-wrap items-start justify-between gap-3">

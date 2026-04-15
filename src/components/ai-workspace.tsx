@@ -257,14 +257,14 @@ function FlowCard({ currentStep }: { currentStep: AssistantFlowKey }) {
     assistantFlowSteps.find((step) => step.key === currentStep) ?? assistantFlowSteps[0];
 
   return (
-    <section className="card card--hero p-4 sm:p-5" data-testid="ai-assistant-flow">
+    <section className="surface-panel p-3.5 sm:p-4" data-testid="ai-assistant-flow">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="workspace-kicker">Сценарий AI</p>
-          <h2 className="app-display mt-2 text-2xl font-semibold text-foreground">
+          <h2 className="mt-1.5 text-lg font-semibold text-foreground sm:text-xl">
             От запроса до применения
           </h2>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">
+          <p className="mt-1.5 max-w-3xl text-sm leading-5 text-muted">
             AI не пишет планы за тебя молча. Сначала он понимает задачу, затем
             собирает контекст, показывает черновик и только после подтверждения
             переносит решение в продукт.
@@ -273,7 +273,7 @@ function FlowCard({ currentStep }: { currentStep: AssistantFlowKey }) {
         <span className="pill">Сейчас: {currentMeta.label}</span>
       </div>
 
-      <div className="mt-4 grid gap-3 xl:grid-cols-5">
+      <div className="mt-3.5 grid gap-2.5 xl:grid-cols-5">
         {assistantFlowSteps.map((step, index) => {
           const state = getFlowStepState(step.key, currentStep);
           const isDone = state === "done";
@@ -281,7 +281,7 @@ function FlowCard({ currentStep }: { currentStep: AssistantFlowKey }) {
 
           return (
             <article
-              className={`rounded-[1.75rem] border px-4 py-4 text-sm ${
+                className={`rounded-[1.1rem] border px-3.5 py-3.5 text-sm ${
                 isActive
                   ? "border-accent/24 bg-[color-mix(in_srgb,var(--accent-soft)_76%,white)] shadow-[0_24px_52px_-38px_rgba(0,64,224,0.28)]"
                   : isDone
@@ -305,13 +305,13 @@ function FlowCard({ currentStep }: { currentStep: AssistantFlowKey }) {
                 </span>
                 <p className="font-semibold text-foreground">{step.label}</p>
               </div>
-              <p className="mt-3 leading-6 text-muted">{step.description}</p>
+              <p className="mt-2 leading-5 text-muted">{step.description}</p>
             </article>
           );
         })}
       </div>
 
-      <div className="surface-panel mt-4 px-4 py-3 text-sm text-muted">
+      <div className="metric-tile mt-3.5 px-3.5 py-3 text-sm text-muted">
         <span className="font-semibold text-foreground">Следующий шаг.</span>{" "}
         {getNextFlowHint(currentStep)}
       </div>
@@ -329,23 +329,23 @@ function WorkspaceStatCard({
   value: string;
 }) {
   return (
-    <article className={`metric-tile p-4 ${tone === "accent" ? "surface-panel--accent" : ""}`}>
+    <article className={`metric-tile p-3.5 ${tone === "accent" ? "surface-panel--accent" : ""}`}>
       <p className="text-xs uppercase tracking-[0.18em] text-muted">{label}</p>
-      <p className="mt-3 text-3xl font-semibold text-foreground">{value}</p>
+      <p className="mt-2 text-2xl font-semibold text-foreground">{value}</p>
     </article>
   );
 }
 
 function PlansSection({ proposals }: { proposals: AiPlanProposalRow[] }) {
   return (
-    <section className="card card--hero p-5 sm:p-6">
+    <section className="surface-panel p-4 sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="workspace-kicker">Планы</p>
-          <h2 className="app-display mt-2 text-2xl font-semibold text-foreground">
+          <h2 className="mt-1.5 text-lg font-semibold text-foreground sm:text-xl">
             Черновики, подтверждение и перенос
           </h2>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">
+          <p className="mt-1.5 max-w-3xl text-sm leading-5 text-muted">
             Здесь лежат предложения AI по тренировкам и питанию. Их можно
             спокойно посмотреть, подтвердить и только потом применить в рабочие
             разделы приложения.
@@ -354,10 +354,10 @@ function PlansSection({ proposals }: { proposals: AiPlanProposalRow[] }) {
         <span className="pill">{proposals.length} в работе</span>
       </div>
 
-      <div className="mt-4 grid gap-3" id="ai-plans">
+      <div className="mt-3.5 grid gap-2.5" id="ai-plans">
         {proposals.length ? (
           proposals.map((proposal) => (
-            <article className="surface-panel p-4" key={proposal.id}>
+            <article className="metric-tile p-3.5" key={proposal.id}>
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
@@ -366,10 +366,10 @@ function PlansSection({ proposals }: { proposals: AiPlanProposalRow[] }) {
                     </span>
                     <span className="pill">{formatProposalStatus(proposal.status)}</span>
                   </div>
-                  <p className="mt-3 text-base font-semibold text-foreground">
+                  <p className="mt-2.5 text-base font-semibold text-foreground">
                     {parseProposalTitle(proposal)}
                   </p>
-                  <p className="mt-2 text-sm leading-6 text-muted">
+                  <p className="mt-1.5 text-sm leading-5 text-muted">
                     {parseProposalSummary(proposal) ||
                       "Параметры черновика уже сохранены и готовы к проверке."}
                   </p>
@@ -379,14 +379,14 @@ function PlansSection({ proposals }: { proposals: AiPlanProposalRow[] }) {
                 </p>
               </div>
 
-              <div className="mt-4 flex flex-wrap gap-2">
+              <div className="mt-3 flex flex-wrap gap-2">
                 {proposal.status !== "applied" ? (
                   <span className="toggle-chip toggle-chip--active px-3 py-1.5 text-xs font-semibold">
                     Можно подтвердить или применить прямо из чата
                   </span>
                 ) : (
                   <Link
-                    className="toggle-chip px-3 py-2 text-sm font-semibold"
+                      className="toggle-chip px-3 py-1.5 text-sm font-semibold"
                     href={proposal.proposal_type === "meal_plan" ? "/nutrition" : "/workouts"}
                   >
                     Открыть раздел
@@ -396,7 +396,7 @@ function PlansSection({ proposals }: { proposals: AiPlanProposalRow[] }) {
             </article>
           ))
         ) : (
-          <div className="surface-panel border-dashed px-4 py-6 text-sm leading-6 text-muted">
+          <div className="metric-tile border-dashed px-3.5 py-5 text-sm leading-5 text-muted">
             Здесь появятся черновики, которые AI соберёт по твоим запросам.
           </div>
         )}
@@ -593,10 +593,10 @@ export function AiWorkspace({
   }
 
   return (
-    <div className="grid gap-5">
-      <section className="card card--hero overflow-hidden p-5 sm:p-6 lg:p-8">
-        <div className="grid gap-5 xl:grid-cols-[1.08fr_0.92fr]">
-          <div className="space-y-4">
+    <div className="grid gap-4">
+      <section className="surface-panel overflow-hidden p-4 sm:p-5">
+        <div className="grid gap-4 xl:grid-cols-[1.08fr_0.92fr]">
+          <div className="space-y-3.5">
             <div className="flex flex-wrap gap-2">
               <span className="pill">AI коуч</span>
               <span className="pill">
@@ -607,11 +607,11 @@ export function AiWorkspace({
               </span>
             </div>
 
-            <div className="space-y-3">
-              <h1 className="app-display max-w-4xl text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+            <div className="space-y-2.5">
+              <h1 className="max-w-4xl text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
                 Чат, контекст и перенос решений в один рабочий AI-экран.
               </h1>
-              <p className="max-w-3xl text-sm leading-7 text-muted sm:text-base">
+              <p className="max-w-3xl text-sm leading-5 text-muted sm:text-[0.95rem]">
                 Здесь остаются только полезные поверхности: сам диалог, история,
                 факты, предложения по планам и быстрый разбор фото еды. На
                 телефоне экран ощущается как компактная PWA-панель, а не как
@@ -619,7 +619,7 @@ export function AiWorkspace({
               </p>
             </div>
 
-            <div className="grid gap-3 md:grid-cols-3">
+            <div className="grid gap-2.5 md:grid-cols-3">
               {summaryCards.map((card) => (
                 <WorkspaceStatCard
                   key={card.label}
@@ -631,16 +631,16 @@ export function AiWorkspace({
             </div>
           </div>
 
-          <div className="grid gap-3">
-            <article className="athletic-hero-card p-5">
+          <div className="grid gap-2.5">
+            <article className="surface-panel surface-panel--accent p-4">
               <div className="relative z-[1]">
                 <p className="athletic-hero-chip">Сейчас в фокусе</p>
-                <p className="mt-4 text-xl font-semibold text-white">
+                <p className="mt-2.5 text-lg font-semibold text-[color:var(--on-primary)]">
                   AI-коуч остаётся proposal-first: сначала анализ, затем
                   черновик, потом подтверждение и только после этого перенос в
                   продукт.
                 </p>
-                <div className="mt-5 flex flex-wrap gap-2">
+                <div className="mt-3.5 flex flex-wrap gap-2">
                   <span className="athletic-hero-chip">
                     {proposals.length} черновиков
                   </span>
@@ -653,7 +653,7 @@ export function AiWorkspace({
 
             <div className="flex flex-wrap gap-2">
               <button
-                className="toggle-chip px-4 py-2 text-sm font-semibold"
+                className="toggle-chip px-3.5 py-1.5 text-sm font-semibold"
                 onClick={returnToApp}
                 type="button"
               >
@@ -661,7 +661,7 @@ export function AiWorkspace({
                 Вернуться к дашборду
               </button>
               <Link
-                className="toggle-chip toggle-chip--active px-4 py-2 text-sm font-semibold"
+                className="toggle-chip toggle-chip--active px-3.5 py-1.5 text-sm font-semibold"
                 href="/dashboard#ai"
               >
                 Открыть AI-сводку
@@ -673,21 +673,21 @@ export function AiWorkspace({
 
       <FlowCard currentStep={currentFlowStep} />
 
-      <section className="card card--hero p-4 sm:p-5">
+      <section className="surface-panel p-3.5 sm:p-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="workspace-kicker">Разделы AI</p>
-            <h2 className="app-display mt-2 text-2xl font-semibold text-foreground">
+            <h2 className="mt-1.5 text-lg font-semibold text-foreground sm:text-xl">
               Открывай только нужный слой рабочего экрана
             </h2>
           </div>
           <span className="pill">Сейчас: {activeMeta.label}</span>
         </div>
 
-        <div className="mt-4 md:hidden">
+        <div className="mt-3.5 md:hidden">
           <button
             aria-expanded={isMobileMenuOpen}
-            className="section-chip flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
+            className="section-chip flex w-full items-center justify-between gap-3 px-3.5 py-2.5 text-left"
             data-testid="ai-workspace-mobile-trigger"
             onClick={() => setIsMobileMenuOpen((current) => !current)}
             type="button"
@@ -703,7 +703,7 @@ export function AiWorkspace({
                 {activeMeta.description}
               </span>
             </span>
-            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,var(--surface))] text-foreground shadow-[0_18px_32px_-26px_rgba(0,64,224,0.18)]">
+            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,var(--surface))] text-foreground shadow-[0_18px_32px_-26px_rgba(0,64,224,0.18)]">
               {isMobileMenuOpen ? (
                 <ChevronUp size={18} strokeWidth={2.2} />
               ) : (
@@ -713,7 +713,7 @@ export function AiWorkspace({
           </button>
 
           {isMobileMenuOpen ? (
-            <div className="mt-3 grid gap-2 rounded-3xl border border-border bg-[color-mix(in_srgb,var(--surface-overlay)_92%,var(--surface-elevated))] p-3 shadow-[0_30px_60px_-48px_rgba(18,32,27,0.34)]">
+            <div className="mt-2.5 grid gap-2 rounded-[1.4rem] border border-border bg-[color-mix(in_srgb,var(--surface-overlay)_92%,var(--surface-elevated))] p-2.5 shadow-[0_30px_60px_-48px_rgba(18,32,27,0.34)]">
               {sectionMeta.map((section) => {
                 const Icon = section.icon;
                 const isActive = section.key === activeSection;
@@ -760,7 +760,7 @@ export function AiWorkspace({
           ) : null}
         </div>
 
-        <div className="mt-4 hidden items-center gap-2 overflow-x-auto pb-1 md:flex">
+        <div className="mt-3.5 hidden items-center gap-2 overflow-x-auto pb-1 md:flex">
           {sectionMeta.map((section) => {
             const Icon = section.icon;
             const isActive = section.key === activeSection;
@@ -782,13 +782,13 @@ export function AiWorkspace({
           })}
         </div>
 
-        <div className="surface-panel mt-4 px-4 py-3 text-sm text-muted">
+        <div className="metric-tile mt-3.5 px-3.5 py-3 text-sm text-muted">
           <span className="font-semibold text-foreground">{activeMeta.label}.</span>{" "}
           {activeMeta.description}
         </div>
       </section>
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_22rem]">
+      <div className="grid gap-3.5 xl:grid-cols-[minmax(0,1.15fr)_22rem]">
         <div className="min-w-0">
           <AiChatPanel
             access={chatAccess}

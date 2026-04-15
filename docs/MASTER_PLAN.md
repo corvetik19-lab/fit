@@ -1,4 +1,4 @@
-﻿# Master Plan РїСЂРѕРµРєС‚Р° `fit`
+# Master Plan РїСЂРѕРµРєС‚Р° `fit`
 
 ## РљР°Рє РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ СЌС‚РѕС‚ РїР»Р°РЅ
 
@@ -13,7 +13,7 @@
 
 Р­С‚РѕС‚ С„Р°Р№Р» вЂ” С‚РµРєСѓС‰РёР№ production-hardening backlog РїСЂРѕРµРєС‚Р°. РћРЅ РѕС‚СЂР°Р¶Р°РµС‚ С„Р°РєС‚РёС‡РµСЃРєРѕРµ СЃРѕСЃС‚РѕСЏРЅРёРµ СЂРµРїРѕР·РёС‚РѕСЂРёСЏ РЅР° `2026-03-31`.
 
-Текущий прогресс execution checklist: `215 / 222` (`97%`).
+Текущий прогресс execution checklist: `220 / 223` (`99%`).
 
 ## РўРµРєСѓС‰Р°СЏ Р±Р°Р·Р°
 
@@ -1436,6 +1436,32 @@
 - [x] Глобальный visual contract, shell и shared workspace переведены на светлый compact mobile-first язык через [globals.css](/C:/fit/src/app/globals.css), [app-shell-frame.tsx](/C:/fit/src/components/app-shell-frame.tsx), [app-shell-nav.tsx](/C:/fit/src/components/app-shell-nav.tsx) и [page-workspace.tsx](/C:/fit/src/components/page-workspace.tsx).
 - [x] `/nutrition` и связанные nutrition surfaces переведены на новый компактный светлый daily-use ритм через [nutrition/page.tsx](/C:/fit/src/app/nutrition/page.tsx), [nutrition-tracker.tsx](/C:/fit/src/components/nutrition-tracker.tsx) и [nutrition-goal-adherence.tsx](/C:/fit/src/components/nutrition-goal-adherence.tsx).
 - [x] `/dashboard` и `/workouts` доведены до того же light compact контракта без старых oversized hero/card blocks.
-- [ ] `/workouts/day/[dayId]` и focus-mode ещё нужно довести до более плотного рабочего mobile layout.
-- [ ] `/ai`, `/history` и `/settings` ещё нужно выровнять под единый light compact style.
-- [ ] `/admin`, `/admin/users`, `/admin/users/[id]` и финальный mobile regression tranche остаются следующим открытым slice.
+- [x] `/workouts/day/[dayId]` и focus-mode доведены до более плотного рабочего mobile layout.
+- [x] `/ai`, `/history` и `/settings` выровнены под единый light compact style.
+- [x] Финальный mobile regression tranche по light compact redesign закрыт: multi-viewport пакет `360 / 390 / 430px` теперь зелёный на чистом production-like сервере и больше не зависит от старого brittle bootstrap `/dashboard`.
+
+## 2026-04-15 Light Compact mobile regression closeout
+
+- [x] Auth bootstrap для Playwright стабилизирован через [global-auth-setup.ts](/C:/fit/tests/e2e/global-auth-setup.ts), [auth.ts](/C:/fit/tests/e2e/helpers/auth.ts) и [supabase-admin.ts](/C:/fit/tests/e2e/helpers/supabase-admin.ts): storage state теперь заранее получает корректный Supabase cookie и onboarding bootstrap через service-role helper, а не ломается на старом SSR-переходе в `/dashboard`.
+- [x] Финальный mobile regression contract расширен и зафиксирован в [mobile-pwa-regressions.spec.ts](/C:/fit/tests/e2e/mobile-pwa-regressions.spec.ts): user/admin surfaces и workout focus-mode проверяются на `360x780`, `390x844` и `430x932`, включая drawer, section switching, отсутствие horizontal overflow и compact focus-header.
+- [x] Platform-admin mobile shell синхронизирован с ожиданиями regression suite через [app-shell-frame.tsx](/C:/fit/src/components/app-shell-frame.tsx): assistant FAB скрыт для operator surfaces и больше не наезжает на admin CTA на телефоне.
+- [x] Workout focus-header дожат под узкие viewport в [workout-focus-header.tsx](/C:/fit/src/components/workout-session/workout-focus-header.tsx): логотип, кнопки и spacing уплотнены так, чтобы toggle и возврат к обычному виду оставались в пределах экрана.
+- [x] Verification tranche зелёная: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:smoke`, `npm run report:master-progress`, `node scripts/run-playwright.mjs PLAYWRIGHT_BASE_URL=http://127.0.0.1:3112 -- test tests/e2e/mobile-pwa-regressions.spec.ts --workers=1` -> `9 passed`, `node scripts/run-playwright.mjs PLAYWRIGHT_BASE_URL=http://127.0.0.1:3112 -- test tests/e2e/authenticated-app.spec.ts tests/e2e/admin-app.spec.ts --workers=1` -> `9 passed`.
+- [x] Общий progress execution checklist после закрытия active `Light Compact` redesign-подплана вырос до `220 / 223` (`99%`); незакрытыми остаются только внешние runtime/env блокеры вне UI.
+
+## 2026-04-15 Light Compact workouts/day + AI/history/settings tranche
+
+- [x] Экран тренировки и focus-mode уплотнены под light compact mobile rhythm через [workout-day-session.tsx](/C:/fit/src/components/workout-day-session.tsx), [workout-day-overview-card.tsx](/C:/fit/src/components/workout-session/workout-day-overview-card.tsx), [workout-day-context-card.tsx](/C:/fit/src/components/workout-session/workout-day-context-card.tsx), [workout-exercise-card.tsx](/C:/fit/src/components/workout-session/workout-exercise-card.tsx) и [workout-focus-header.tsx](/C:/fit/src/components/workout-session/workout-focus-header.tsx).
+- [x] /ai, /history и /settings переведены в тот же светлый compact контракт через [ai-workspace.tsx](/C:/fit/src/components/ai-workspace.tsx), [history/page.tsx](/C:/fit/src/app/history/page.tsx), [settings/page.tsx](/C:/fit/src/app/settings/page.tsx), [settings-billing-center.tsx](/C:/fit/src/components/settings-billing-center.tsx) и [settings-data-center.tsx](/C:/fit/src/components/settings-data-center.tsx).
+- [x] Проверка tranche: 
+pm run lint, 
+pm run typecheck, 
+pm run build, 
+pm run test:smoke -> 5 passed. Auth-based Playwright для mobile/auth по-прежнему упирается во внешний runtime bootstrap /dashboard (page.goto timeout), а не в layout-регрессию нового UI.
+
+## 2026-04-15 Light Compact admin tranche
+
+- [x] `/admin`, `/admin/users`, `/admin/users/[id]` переведены на тот же светлый compact-контракт через [admin-dashboard-workspace.tsx](/C:/fit/src/components/admin-dashboard-workspace.tsx), [admin-users-directory.tsx](/C:/fit/src/components/admin-users-directory.tsx), [admin-users-bulk-actions.tsx](/C:/fit/src/components/admin-users-bulk-actions.tsx), [admin-health-dashboard.tsx](/C:/fit/src/components/admin-health-dashboard.tsx), [admin-operations-inbox.tsx](/C:/fit/src/components/admin-operations-inbox.tsx), [admin-user-detail.tsx](/C:/fit/src/components/admin-user-detail.tsx), [admin-user-detail-sections.tsx](/C:/fit/src/components/admin-user-detail-sections.tsx) и связанными admin action/eval modules.
+- [x] Admin-статусы, degraded banners и operator actions переведены на светлую палитру без тёмных legacy-блоков: предупреждения и success/error surfaces больше не используют `text-*-100`, а крупные hero/panel surfaces ужаты до компактного mobile-first ритма.
+- [x] Базовые code-gates по admin tranche зелёные: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:smoke` -> `5 passed`.
+- [x] Auth-based Playwright для `tests/e2e/admin-app.spec.ts` и `tests/e2e/mobile-pwa-regressions.spec.ts` по-прежнему блокируется на внешнем bootstrap `/dashboard` в [global-auth-setup.ts](/C:/fit/tests/e2e/global-auth-setup.ts); это зафиксировано как runtime/auth blocker verification, а не как незавершённый UI slice.

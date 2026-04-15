@@ -98,7 +98,7 @@ export function AdminUserActions({
       <div className="grid gap-6">
         <div className="grid gap-4">
           {!canQueueSupportActions ? (
-            <p className="rounded-2xl border border-amber-500/25 bg-amber-500/12 px-4 py-3 text-sm text-amber-100">
+            <p className="rounded-2xl border border-amber-500/25 bg-amber-500/12 px-4 py-3 text-sm text-amber-900">
               Для этого аккаунта доступен только просмотр этого блока.
             </p>
           ) : null}
@@ -276,7 +276,7 @@ export function AdminUserActions({
           </div>
 
           {!canManageBilling ? (
-            <p className="rounded-2xl border border-amber-500/25 bg-amber-500/12 px-4 py-3 text-sm text-amber-100">
+            <p className="rounded-2xl border border-amber-500/25 bg-amber-500/12 px-4 py-3 text-sm text-amber-900">
               Управление оплатой и доступами доступно только корневому администратору.
             </p>
           ) : null}
@@ -423,13 +423,13 @@ export function AdminUserActions({
       </div>
 
       {error ? (
-        <p className="mt-4 rounded-2xl border border-red-500/25 bg-red-500/12 px-4 py-3 text-sm text-red-100">
+        <p className="mt-4 rounded-2xl border border-red-500/25 bg-red-500/12 px-4 py-3 text-sm text-red-900">
           {error}
         </p>
       ) : null}
 
       {notice ? (
-        <p className="mt-4 rounded-2xl border border-emerald-500/25 bg-emerald-500/12 px-4 py-3 text-sm text-emerald-100">
+        <p className="mt-4 rounded-2xl border border-emerald-500/25 bg-emerald-500/12 px-4 py-3 text-sm text-emerald-900">
           {notice}
         </p>
       ) : null}

@@ -70,7 +70,7 @@ export function WorkoutExerciseCard({
 
   return (
     <article
-      className={`card p-4 sm:p-5 ${
+      className={`surface-panel p-3.5 sm:p-4 ${
         isMobileFocusMode ? "border-[color:var(--accent-soft)]/40" : ""
       }`}
       data-complete={isExerciseComplete ? "true" : "false"}
@@ -82,10 +82,10 @@ export function WorkoutExerciseCard({
           <p className="workspace-kicker">
             {isMobileFocusMode ? `Упражнение ${index + 1} из ${totalExercises}` : "Упражнение"}
           </p>
-          <h3 className="mt-2 text-xl font-semibold leading-tight text-foreground sm:text-2xl">
+          <h3 className="mt-1.5 text-lg font-semibold leading-tight text-foreground sm:text-xl">
             {exercise.exercise_title_snapshot}
           </h3>
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="mt-2.5 flex flex-wrap gap-2">
             <span className="pill">{`${exercise.sets_count} подход.`}</span>
             <span className="pill">{isExerciseComplete ? "Сохранено" : "Активный шаг"}</span>
           </div>
@@ -94,7 +94,7 @@ export function WorkoutExerciseCard({
         <div className="flex flex-wrap items-center gap-2">
           {isExerciseComplete && !isExerciseEditable ? (
             <button
-              className="action-button action-button--secondary px-4 py-2.5 text-sm"
+              className="action-button action-button--secondary h-10 px-3.5 text-sm"
               data-testid={`workout-exercise-edit-${index + 1}`}
               disabled={!dayIsLocked || isPending || isSyncing}
               onClick={() => onSetExerciseEditing(exercise.id, true)}
@@ -106,7 +106,7 @@ export function WorkoutExerciseCard({
 
           {isExerciseEditable ? (
             <button
-              className="action-button action-button--primary px-4 py-2.5 text-sm"
+              className="action-button action-button--primary h-10 px-3.5 text-sm"
               data-testid={`workout-exercise-save-${index + 1}`}
               disabled={!dayIsLocked || isPending || isSyncing || !isExerciseReadyToSave}
               onClick={() => onSaveExercise(exercise)}
@@ -118,8 +118,8 @@ export function WorkoutExerciseCard({
         </div>
       </div>
 
-      <div className="mt-5 grid gap-3">
-        <div className="grid grid-cols-[0.95fr_1fr_1fr_0.8fr] gap-3 px-2 text-center">
+      <div className="mt-4 grid gap-2.5">
+        <div className="grid grid-cols-[0.9fr_1fr_1fr_0.8fr] gap-2.5 px-1.5 text-center">
           <p className="text-left text-[10px] font-bold uppercase tracking-[0.2em] text-muted">
             Сет
           </p>
@@ -154,9 +154,9 @@ export function WorkoutExerciseCard({
         ))}
       </div>
 
-      <div className="surface-panel mt-4 p-4">
+      <div className="metric-tile mt-3.5 p-3.5">
         <p className="workspace-kicker">Подсказка</p>
-        <p className="mt-2 text-sm leading-6 text-muted">
+        <p className="mt-1.5 text-sm leading-5 text-muted">
           {isExerciseComplete && !isExerciseDirty
             ? "Шаг уже сохранён. Если нужно поправить цифры, открой редактирование и сохрани упражнение заново."
             : "Сначала заполни повторы, вес и RPE во всех подходах. После сохранения откроется следующий шаг."}
@@ -214,8 +214,8 @@ function WorkoutSetRow({
         : "bg-[color:var(--surface-container-high)]";
 
   return (
-    <div className={`rounded-[1.15rem] px-3 py-4 transition ${rowClassName}`}>
-      <div className="grid grid-cols-[0.95fr_1fr_1fr_0.8fr] items-center gap-3 text-center">
+    <div className={`rounded-[1rem] px-2.5 py-3 transition ${rowClassName}`}>
+      <div className="grid grid-cols-[0.9fr_1fr_1fr_0.8fr] items-center gap-2.5 text-center">
         <div className="flex items-center gap-2 text-left">
           <span
             className={`flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-extrabold ${
@@ -234,7 +234,7 @@ function WorkoutSetRow({
         <div className="flex justify-center">
           {isExerciseEditable ? (
             <input
-              className={`${inputClassName} h-11 rounded-[0.95rem] border-0 bg-transparent px-0 py-0 text-center font-semibold shadow-none focus:ring-0`}
+                className={`${inputClassName} h-10 rounded-[0.85rem] border-0 bg-transparent px-0 py-0 text-center font-semibold shadow-none focus:ring-0`}
               data-testid={`workout-set-${set.id}-weight`}
               disabled={!dayIsLocked || isPending || isSyncing || !isExerciseEditable}
               inputMode="decimal"
@@ -257,7 +257,7 @@ function WorkoutSetRow({
         <div className="flex justify-center">
           {isExerciseEditable ? (
             <select
-              className={`${inputClassName} h-11 rounded-[0.95rem] border-0 bg-transparent px-0 py-0 text-center font-semibold text-[color:var(--accent)] shadow-none focus:ring-0`}
+              className={`${inputClassName} h-10 rounded-[0.85rem] border-0 bg-transparent px-0 py-0 text-center font-semibold text-[color:var(--accent)] shadow-none focus:ring-0`}
               data-testid={`workout-set-${set.id}-reps`}
               disabled={!dayIsLocked || isPending || isSyncing || !isExerciseEditable}
               onChange={(event) =>
@@ -285,7 +285,7 @@ function WorkoutSetRow({
         <div className="flex justify-center">
           {isExerciseEditable ? (
             <select
-              className={`${inputClassName} h-11 rounded-[0.95rem] border-0 bg-transparent px-0 py-0 text-center font-semibold shadow-none focus:ring-0`}
+              className={`${inputClassName} h-10 rounded-[0.85rem] border-0 bg-transparent px-0 py-0 text-center font-semibold shadow-none focus:ring-0`}
               data-testid={`workout-set-${set.id}-rpe`}
               disabled={!dayIsLocked || isPending || isSyncing || !isExerciseEditable}
               onChange={(event) =>
@@ -314,7 +314,7 @@ function WorkoutSetRow({
         </div>
       </div>
 
-      <div className="mt-3 flex items-center justify-between gap-3 px-1">
+      <div className="mt-2.5 flex items-center justify-between gap-3 px-1">
         <p className="text-xs text-muted">План: {formatPlannedRepTarget(set)} повторов</p>
         <p className="text-xs text-muted">Последний RPE: {formatOptionalRpe(set.actual_rpe)}</p>
       </div>

@@ -1,4 +1,4 @@
-﻿# AI Worklog
+# AI Worklog
 
 ## Как читать этот файл
 
@@ -1578,3 +1578,17 @@
 - В [mobile-pwa-regressions.spec.ts](/C:/fit/tests/e2e/mobile-pwa-regressions.spec.ts) перевёл workout focus-mode regression на `data-testid="workout-regular-mode-button"` из [workout-focus-header.tsx](/C:/fit/src/components/workout-session/workout-focus-header.tsx), чтобы тест проверял поведение, а не устаревший текст кнопки.
 - Финальная проверка зелёная: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run verify:supabase-runtime`, `node scripts/run-playwright.mjs -- test tests/e2e/authenticated-app.spec.ts --workers=1` -> `2 passed`, `node scripts/run-playwright.mjs -- test tests/e2e/admin-app.spec.ts --workers=1` -> `7 passed`, `node scripts/run-playwright.mjs -- test tests/e2e/mobile-pwa-regressions.spec.ts --workers=1` -> `3 passed`.
 - После этого общий прогресс [MASTER_PLAN.md](/C:/fit/docs/MASTER_PLAN.md) вырос до `209 / 214` (`98%`), а текущий `Dark Utility` execution-doc закрыт как `10 / 10` (`100%`).
+
+## 2026-04-15 Light Compact admin tranche
+
+- Перевёл `/admin`, `/admin/users` и `/admin/users/[id]` на светлый compact mobile-first контракт через [admin-dashboard-workspace.tsx](/C:/fit/src/components/admin-dashboard-workspace.tsx), [admin-users-directory.tsx](/C:/fit/src/components/admin-users-directory.tsx), [admin-users-bulk-actions.tsx](/C:/fit/src/components/admin-users-bulk-actions.tsx), [admin-health-dashboard.tsx](/C:/fit/src/components/admin-health-dashboard.tsx), [admin-operations-inbox.tsx](/C:/fit/src/components/admin-operations-inbox.tsx), [admin-user-detail.tsx](/C:/fit/src/components/admin-user-detail.tsx) и связанные operator/action/eval surfaces.
+- Убрал из admin-слоя тяжёлые тёмные панели и старые `text-*-100` статусы: degraded banners, KPI, health panels, inbox, bulk actions и detail cards теперь используют светлую палитру, более плотные отступы и компактные metric-tiles.
+- Проверка tranche зелёная по code-gates: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:smoke` -> `5 passed`.
+- Auth-based Playwright для `tests/e2e/admin-app.spec.ts` и `tests/e2e/mobile-pwa-regressions.spec.ts` по-прежнему упирается во внешний bootstrap `/dashboard` в [global-auth-setup.ts](/C:/fit/tests/e2e/global-auth-setup.ts); это зафиксировано как runtime blocker verification, а не как незавершённый UI-код.
+
+## 2026-04-15 Light Compact mobile regression closeout
+
+- Дожал auth/bootstrap слой для mobile regression: [global-auth-setup.ts](/C:/fit/tests/e2e/global-auth-setup.ts), [auth.ts](/C:/fit/tests/e2e/helpers/auth.ts) и [supabase-admin.ts](/C:/fit/tests/e2e/helpers/supabase-admin.ts) теперь заранее готовят storage state и onboarding test data через service-role helper, без хрупкого перехода в `/dashboard`.
+- Расширил и стабилизировал [mobile-pwa-regressions.spec.ts](/C:/fit/tests/e2e/mobile-pwa-regressions.spec.ts): user/admin surfaces и workout focus-mode теперь проверяются на `360x780`, `390x844` и `430x932`, с drawer, section switching, отсутствием horizontal overflow и compact focus-header.
+- Синхронизировал mobile shell под эти ожидания: в [app-shell-frame.tsx](/C:/fit/src/components/app-shell-frame.tsx) assistant FAB скрыт для platform admin, а в [workout-focus-header.tsx](/C:/fit/src/components/workout-session/workout-focus-header.tsx) уплотнены логотип, spacing и action-кнопки для узких экранов.
+- Проверка зелёная: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:smoke`, `node scripts/run-playwright.mjs PLAYWRIGHT_BASE_URL=http://127.0.0.1:3112 -- test tests/e2e/mobile-pwa-regressions.spec.ts --workers=1` -> `9 passed`, `node scripts/run-playwright.mjs PLAYWRIGHT_BASE_URL=http://127.0.0.1:3112 -- test tests/e2e/authenticated-app.spec.ts tests/e2e/admin-app.spec.ts --workers=1` -> `9 passed`.

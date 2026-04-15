@@ -67,13 +67,13 @@ export function AdminBootstrapForm({
       </label>
 
       {error ? (
-        <p className="rounded-2xl border border-red-500/25 bg-red-500/12 px-4 py-3 text-sm text-red-100">
+        <p className="rounded-2xl border border-red-500/25 bg-red-500/12 px-4 py-3 text-sm text-red-900">
           {error}
         </p>
       ) : null}
 
       {notice ? (
-        <p className="rounded-2xl border border-emerald-500/25 bg-emerald-500/12 px-4 py-3 text-sm text-emerald-100">
+        <p className="rounded-2xl border border-emerald-500/25 bg-emerald-500/12 px-4 py-3 text-sm text-emerald-900">
           {notice}
         </p>
       ) : null}

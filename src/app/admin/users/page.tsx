@@ -76,9 +76,9 @@ export default async function AdminUsersPage() {
       title="Пользователи и управление доступом"
       viewer={toAppShellViewer(viewer)}
     >
-      <section className="card overflow-hidden p-6 sm:p-8">
-        <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-          <div className="space-y-5">
+      <section className="surface-panel overflow-hidden p-4 sm:p-5">
+        <div className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
+          <div className="space-y-4">
             <div className="flex flex-wrap gap-2">
               <span className="pill">Пользователи</span>
               {showAdminRoles ? (
@@ -89,11 +89,11 @@ export default async function AdminUsersPage() {
               ) : null}
             </div>
 
-            <div className="space-y-3">
-              <h2 className="max-w-4xl text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+            <div className="space-y-2.5">
+              <h2 className="max-w-4xl text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
                 Удобный каталог для поиска пользователей, доступа и важных случаев.
               </h2>
-              <p className="max-w-3xl text-sm leading-7 text-muted sm:text-base">
+              <p className="max-w-3xl text-sm leading-6 text-muted">
                 Здесь удобно искать пользователя по email или ID, проверять активность,
                 подписку, очередь задач и сразу переходить в полную карточку без лишних
                 экранов и служебного шума.
@@ -136,11 +136,11 @@ export default async function AdminUsersPage() {
               ],
             ].map(([label, detail]) => (
               <article
-                className="surface-panel surface-panel--soft p-5 text-sm"
+                className="metric-tile p-3.5 text-sm"
                 key={label}
               >
                 <p className="font-semibold text-foreground">{label}</p>
-                <p className="mt-2 leading-7 text-muted">{detail}</p>
+                <p className="mt-2 leading-6 text-muted">{detail}</p>
               </article>
             ))}
           </div>

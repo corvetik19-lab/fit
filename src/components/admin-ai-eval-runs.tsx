@@ -234,7 +234,7 @@ export function AdminAiEvalRuns({
 
       <div className="grid gap-4">
         {!canQueueAiEvalRuns ? (
-          <p className="rounded-2xl border border-amber-500/25 bg-amber-500/12 px-4 py-3 text-sm text-amber-100">
+          <p className="rounded-2xl border border-amber-500/25 bg-amber-500/12 px-4 py-3 text-sm text-amber-900">
             Для этого аккаунта в разделе качества доступен только просмотр.
           </p>
         ) : null}
@@ -312,13 +312,13 @@ export function AdminAiEvalRuns({
         ) : null}
 
         {error ? (
-          <p className="rounded-2xl border border-red-500/25 bg-red-500/12 px-4 py-3 text-sm text-red-100">
+          <p className="rounded-2xl border border-red-500/25 bg-red-500/12 px-4 py-3 text-sm text-red-900">
             {error}
           </p>
         ) : null}
 
         {notice ? (
-          <p className="rounded-2xl border border-emerald-500/25 bg-emerald-500/12 px-4 py-3 text-sm text-emerald-100">
+          <p className="rounded-2xl border border-emerald-500/25 bg-emerald-500/12 px-4 py-3 text-sm text-emerald-900">
             {notice}
           </p>
         ) : null}
@@ -340,17 +340,17 @@ export function AdminAiEvalRuns({
                   <div className="flex flex-wrap gap-2">
                     <span className="pill">{formatStatus(run.status)}</span>
                     {run.summary?.isScheduled ? (
-                      <span className="rounded-full border border-sky-500/25 bg-sky-500/12 px-3 py-1 text-xs font-semibold text-sky-100">
+                      <span className="rounded-full border border-sky-500/25 bg-sky-500/12 px-3 py-1 text-xs font-semibold text-sky-900">
                         по расписанию
                       </span>
                     ) : null}
                     {run.summary?.qualityGatePassed === true ? (
-                      <span className="rounded-full border border-emerald-500/25 bg-emerald-500/12 px-3 py-1 text-xs font-semibold text-emerald-100">
+                      <span className="rounded-full border border-emerald-500/25 bg-emerald-500/12 px-3 py-1 text-xs font-semibold text-emerald-900">
                         порог пройден
                       </span>
                     ) : null}
                     {run.summary?.qualityGatePassed === false ? (
-                      <span className="rounded-full border border-red-500/25 bg-red-500/12 px-3 py-1 text-xs font-semibold text-red-100">
+                      <span className="rounded-full border border-red-500/25 bg-red-500/12 px-3 py-1 text-xs font-semibold text-red-900">
                         нужен разбор
                       </span>
                     ) : null}

@@ -85,33 +85,33 @@ export default async function SettingsPage() {
       title="Профиль, доступ и личные данные"
       viewer={toAppShellViewer(viewer)}
     >
-      <div className="grid gap-6">
-        <section className="grid gap-4">
-          <div className="grid gap-3">
+      <div className="grid gap-4">
+        <section className="grid gap-3.5">
+          <div className="grid gap-2.5">
             <p className="workspace-kicker text-accent">Личный контур</p>
-            <h1 className="app-display text-3xl font-black tracking-[-0.08em] text-foreground sm:text-4xl">
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
               {formatUppercaseName(profileName)}
             </h1>
-            <p className="max-w-2xl text-sm leading-7 text-muted">
+            <p className="max-w-2xl text-sm leading-5 text-muted">
               Здесь собраны профиль, доступ, история оплаты и действия с личными
               данными. Экран должен оставаться коротким, понятным и удобным на
               телефоне, без ощущения перегруженной панели.
             </p>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-3">
-            <article className="surface-panel p-5">
+          <div className="grid gap-2.5 sm:grid-cols-3">
+            <article className="metric-tile p-3.5">
               <p className="workspace-kicker">Текущий вес</p>
-              <p className="mt-3 text-4xl font-black tracking-tight text-foreground">
+              <p className="mt-2 text-2xl font-semibold tracking-tight text-foreground">
                 {formatMetricValue(currentWeightKg, "кг")}
               </p>
             </article>
 
-            <article className="surface-panel p-5">
+            <article className="metric-tile p-3.5">
               <p className="workspace-kicker">
                 {bodyFatPct !== null ? "Жировая масса" : "Ритм недели"}
               </p>
-              <p className="mt-3 text-4xl font-black tracking-tight text-foreground">
+              <p className="mt-2 text-2xl font-semibold tracking-tight text-foreground">
                 {bodyFatPct !== null
                   ? formatMetricValue(bodyFatPct, "%")
                   : weeklyTrainingDays !== null
@@ -120,9 +120,9 @@ export default async function SettingsPage() {
               </p>
             </article>
 
-            <article className="surface-panel p-5">
+            <article className="metric-tile p-3.5">
               <p className="workspace-kicker">Статус доступа</p>
-              <p className="mt-3 text-2xl font-semibold tracking-tight text-foreground">
+              <p className="mt-2 text-lg font-semibold tracking-tight text-foreground">
                 {accessStatus}
               </p>
               <p className="mt-2 text-sm text-muted">{goalLabel}</p>
@@ -130,17 +130,17 @@ export default async function SettingsPage() {
           </div>
         </section>
 
-        <section className="surface-panel surface-panel--accent p-6 sm:p-7">
+        <section className="surface-panel surface-panel--accent p-4 sm:p-5">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="space-y-3">
               <div className="flex flex-wrap gap-2">
                 <span className="pill">{accessStatus}</span>
                 <span className="pill">{goalLabel}</span>
               </div>
-              <h2 className="app-display text-3xl font-black tracking-[-0.08em] text-foreground sm:text-4xl">
+              <h2 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
                 fit access
               </h2>
-              <p className="max-w-2xl text-sm leading-7 text-muted">
+              <p className="max-w-2xl text-sm leading-5 text-muted">
                 Сверху только быстрые действия, ниже — полноценные billing и
                 data-сценарии. Вся информация про доступ должна читаться за пару
                 секунд без длинного скролла и лишних промежуточных экранов.
@@ -158,11 +158,11 @@ export default async function SettingsPage() {
           </div>
         </section>
 
-        <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-          <article className="surface-panel p-5 sm:p-6">
+        <section className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
+          <article className="surface-panel p-4 sm:p-5">
             <div className="mb-5">
               <p className="workspace-kicker">Профиль</p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-tight text-foreground">
+              <h2 className="mt-1.5 text-lg font-semibold tracking-tight text-foreground sm:text-xl">
                 Контекст и основные параметры
               </h2>
             </div>
@@ -215,10 +215,10 @@ export default async function SettingsPage() {
             </div>
           </article>
 
-          <article className="surface-panel p-5 sm:p-6" id="profile-context">
+          <article className="surface-panel p-4 sm:p-5" id="profile-context">
             <div className="mb-5">
               <p className="workspace-kicker">Профиль</p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-tight text-foreground">
+              <h2 className="mt-1.5 text-lg font-semibold tracking-tight text-foreground sm:text-xl">
                 Сессия и тренерский контекст
               </h2>
             </div>
@@ -261,7 +261,7 @@ export default async function SettingsPage() {
           </article>
         </section>
 
-        <section className="grid gap-6">
+        <section className="grid gap-4">
           <div id="billing-center">
             <SettingsBillingCenter
               access={access}
@@ -279,14 +279,14 @@ export default async function SettingsPage() {
           </div>
         </section>
 
-        <section className="surface-panel p-5 sm:p-6">
+        <section className="surface-panel p-4 sm:p-5">
           <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
             <div>
               <p className="workspace-kicker">Сессия</p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-tight text-foreground">
+              <h2 className="mt-1.5 text-lg font-semibold tracking-tight text-foreground sm:text-xl">
                 Завершить сеанс
               </h2>
-              <p className="mt-2 max-w-xl text-sm leading-7 text-muted">
+              <p className="mt-1.5 max-w-xl text-sm leading-5 text-muted">
                 Если нужно выйти с этого устройства, сделай это здесь. После
                 выхода форма входа снова откроется как стартовый экран.
               </p>

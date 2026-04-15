@@ -90,7 +90,7 @@ export function AdminUserDetail({
         >
           Назад к каталогу
         </Link>
-        <p className="rounded-2xl border border-red-500/25 bg-red-500/12 px-4 py-3 text-sm text-red-100">
+        <p className="rounded-2xl border border-red-500/25 bg-red-500/12 px-4 py-3 text-sm text-red-900">
           {error ?? "Карточка пользователя не найдена."}
         </p>
       </section>
@@ -122,7 +122,7 @@ export function AdminUserDetail({
 
   return (
     <div className="grid gap-6">
-      <section className="card card--hero p-6 sm:p-8">
+      <section className="surface-panel surface-panel--accent p-4 sm:p-5">
         <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="workspace-kicker">Пользователь</p>
@@ -150,7 +150,7 @@ export function AdminUserDetail({
 
         {isDegraded ? (
           <p
-            className="mt-4 rounded-2xl border border-amber-400/25 bg-amber-500/12 px-4 py-3 text-sm text-amber-100"
+            className="mt-4 rounded-2xl border border-amber-400/25 bg-amber-500/12 px-4 py-3 text-sm text-amber-900"
             data-testid="admin-user-detail-degraded-banner"
           >
             Часть служебных данных временно недоступна. Карточка показана из
@@ -159,14 +159,14 @@ export function AdminUserDetail({
         ) : null}
 
         {canViewRoleDetails && !detail.superAdminPolicy.targetCanBeSuperAdmin ? (
-          <p className="mt-4 rounded-2xl border border-sky-400/25 bg-sky-500/12 px-4 py-3 text-sm text-sky-100">
+          <p className="mt-4 rounded-2xl border border-sky-400/25 bg-sky-500/12 px-4 py-3 text-sm text-sky-900">
             Главный доступ нельзя назначить этому пользователю. Он закреплён только
             за {detail.superAdminPolicy.primaryEmail}.
           </p>
         ) : null}
 
         {detail.adminState?.is_suspended ? (
-          <p className="mt-4 rounded-2xl border border-amber-400/25 bg-amber-500/12 px-4 py-3 text-sm text-amber-100">
+          <p className="mt-4 rounded-2xl border border-amber-400/25 bg-amber-500/12 px-4 py-3 text-sm text-amber-900">
             Аккаунт сейчас ограничен. С какого момента:{" "}
             {formatDateTime(detail.adminState.suspended_at)}. Причина:{" "}
             {detail.adminState.state_reason ?? "не указана"}.

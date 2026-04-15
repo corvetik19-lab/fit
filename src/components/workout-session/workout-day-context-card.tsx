@@ -24,20 +24,20 @@ export function WorkoutDayContextCard({
   textAreaClassName: string;
 }) {
   return (
-    <section className="rounded-[1.8rem] bg-[color:var(--surface-bright)] px-6 py-6 shadow-[0_24px_64px_-50px_rgba(24,29,63,0.22)]">
-      <div className="mb-4">
+    <section className="surface-panel p-4 sm:p-5">
+      <div className="mb-3.5">
         <p className="text-[10px] font-extrabold uppercase tracking-[0.24em] text-[color:var(--accent)]">
           Контекст дня
         </p>
-        <h3 className="mt-2 font-headline text-[1.7rem] font-bold text-[color:var(--foreground)]">
+        <h3 className="mt-1.5 text-lg font-semibold text-[color:var(--foreground)] sm:text-xl">
           Вес и заметка
         </h3>
-        <p className="mt-2 text-sm leading-7 text-[color:var(--muted)]">
+        <p className="mt-1.5 text-sm leading-5 text-[color:var(--muted)]">
           Эти данные помогают видеть самочувствие и восстановление по тренировке.
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-[0.8fr_1.2fr_auto] md:items-end">
+      <div className="grid gap-3.5 md:grid-cols-[0.8fr_1.2fr_auto] md:items-end">
         <label className="grid gap-2 text-sm text-[color:var(--muted)]">
           Вес тела утром, кг
           <input
@@ -62,7 +62,7 @@ export function WorkoutDayContextCard({
         </label>
 
         <button
-          className="rounded-[1rem] bg-[color:var(--accent)] px-5 py-3 text-sm font-semibold text-[color:var(--on-primary)] shadow-[0_22px_48px_-34px_rgba(0,64,224,0.55)] transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-55"
+          className="action-button action-button--primary h-11 px-4 text-sm"
           disabled={!dayIsLocked || isPending || isSyncing}
           onClick={onSave}
           type="button"

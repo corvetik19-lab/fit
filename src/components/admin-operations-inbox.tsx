@@ -127,17 +127,17 @@ function formatStatus(value: string) {
 function getStatusTone(value: string) {
   switch (value) {
     case "completed":
-      return "border border-emerald-500/25 bg-emerald-500/12 text-emerald-100";
+      return "border border-emerald-500/25 bg-emerald-500/12 text-emerald-900";
     case "failed":
-      return "border border-red-500/25 bg-red-500/12 text-red-100";
+      return "border border-red-500/25 bg-red-500/12 text-red-900";
     case "holding":
-      return "border border-amber-500/25 bg-amber-500/12 text-amber-100";
+      return "border border-amber-500/25 bg-amber-500/12 text-amber-900";
     case "processing":
-      return "border border-sky-500/25 bg-sky-500/12 text-sky-100";
+      return "border border-sky-500/25 bg-sky-500/12 text-sky-900";
     case "canceled":
-      return "border border-white/10 bg-white/6 text-slate-200";
+      return "border border-slate-300 bg-slate-100 text-slate-700";
     default:
-      return "border border-white/10 bg-white/6 text-foreground";
+      return "border border-slate-300 bg-slate-100 text-slate-700";
   }
 }
 
@@ -385,26 +385,26 @@ export function AdminOperationsInbox({
           </div>
 
           {!canManageOperations ? (
-            <p className="rounded-2xl border border-amber-500/25 bg-amber-500/12 px-4 py-3 text-sm text-amber-100">
+            <p className="rounded-2xl border border-amber-500/25 bg-amber-500/12 px-4 py-3 text-sm text-amber-900">
               Для этого аккаунта в этом разделе доступен только просмотр.
             </p>
           ) : null}
 
           {error ? (
-            <p className="rounded-2xl border border-red-500/25 bg-red-500/12 px-4 py-3 text-sm text-red-100">
+            <p className="rounded-2xl border border-red-500/25 bg-red-500/12 px-4 py-3 text-sm text-red-900">
               {error}
             </p>
           ) : null}
 
           {isDegraded ? (
-            <p className="rounded-2xl border border-amber-500/25 bg-amber-500/12 px-4 py-3 text-sm text-amber-100">
+            <p className="rounded-2xl border border-amber-500/25 bg-amber-500/12 px-4 py-3 text-sm text-amber-900">
               Очередь операций показана из резервного снимка. Часть фоновых данных
               сейчас недоступна, поэтому обновления могут появляться с задержкой.
             </p>
           ) : null}
 
           {notice ? (
-            <p className="rounded-2xl border border-emerald-500/25 bg-emerald-500/12 px-4 py-3 text-sm text-emerald-100">
+            <p className="rounded-2xl border border-emerald-500/25 bg-emerald-500/12 px-4 py-3 text-sm text-emerald-900">
               {notice}
             </p>
           ) : null}
@@ -537,7 +537,7 @@ export function AdminOperationsInbox({
                 );
               })
             ) : (
-              <p className="rounded-2xl border border-emerald-500/25 bg-emerald-500/12 px-4 py-3 text-sm text-emerald-100">
+              <p className="rounded-2xl border border-emerald-500/25 bg-emerald-500/12 px-4 py-3 text-sm text-emerald-900">
                 Открытых операций в очередях сейчас нет.
               </p>
             )}

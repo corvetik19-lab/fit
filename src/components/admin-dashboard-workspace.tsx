@@ -207,13 +207,13 @@ function HeroMetricCard({
     index === 1
       ? "bg-accent text-white shadow-[0_24px_60px_-36px_rgba(0,64,224,0.55)]"
       : index === 2
-        ? "border border-rose-500/20 bg-[linear-gradient(180deg,rgba(244,63,94,0.18),rgba(21,29,39,0.96))] text-rose-50"
-        : "surface-panel surface-panel--soft text-foreground";
+        ? "border border-rose-500/20 bg-rose-500/12 text-rose-900"
+        : "metric-tile text-foreground";
   const mutedClass =
-    index === 1 ? "text-white/78" : index === 2 ? "text-rose-100/78" : "text-muted";
+    index === 1 ? "text-white/78" : index === 2 ? "text-rose-900/75" : "text-muted";
 
   return (
-    <article className={`rounded-[32px] p-6 ${toneClass}`}>
+    <article className={`rounded-[1.15rem] p-3.5 ${toneClass}`}>
       <div className="flex items-start justify-between gap-3">
         <p className={`font-mono text-[10px] uppercase tracking-[0.24em] ${mutedClass}`}>
           {label}
@@ -222,8 +222,8 @@ function HeroMetricCard({
           {index === 0 ? "обзор" : index === 1 ? "в фокусе" : index === 2 ? "контроль" : "сводка"}
         </span>
       </div>
-      <p className="mt-5 text-4xl font-black tracking-tight">{value}</p>
-      <p className={`mt-3 text-sm leading-6 ${mutedClass}`}>{detail}</p>
+      <p className="mt-3 text-2xl font-semibold tracking-tight">{value}</p>
+      <p className={`mt-2 text-sm leading-5 ${mutedClass}`}>{detail}</p>
     </article>
   );
 }
@@ -238,12 +238,12 @@ function SpotlightCard({
   title: string;
 }) {
   return (
-    <article className="surface-panel p-6">
+    <article className="surface-panel p-4">
       <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-muted">
         {caption}
       </p>
-      <h3 className="mt-3 text-xl font-bold text-foreground">{title}</h3>
-      <div className="mt-5 grid gap-3">{children}</div>
+      <h3 className="mt-2 text-lg font-semibold text-foreground">{title}</h3>
+      <div className="mt-4 grid gap-3">{children}</div>
     </article>
   );
 }
@@ -303,15 +303,15 @@ export function AdminDashboardWorkspace({
   const recentAudit = adminAuditLogs.slice(0, 4);
 
   return (
-    <div className="flex min-w-0 w-full flex-col gap-6">
-      <section className="card card--hero min-w-0 w-full max-w-full overflow-hidden p-6 sm:p-8">
-        <div className="grid min-w-0 gap-8 xl:grid-cols-[1.12fr_0.88fr]">
-          <div className="min-w-0 space-y-5">
+    <div className="flex min-w-0 w-full flex-col gap-5">
+      <section className="surface-panel min-w-0 w-full max-w-full overflow-hidden p-4 sm:p-5">
+        <div className="grid min-w-0 gap-5 xl:grid-cols-[1.12fr_0.88fr]">
+          <div className="min-w-0 space-y-4">
             <div className="flex flex-wrap gap-2">
               <span className="pill">fit Admin</span>
               <span className="pill">Роль: {operatorRole}</span>
             </div>
-            <div className="rounded-[1.45rem] bg-[color:var(--accent-soft)] px-4 py-3 text-[color:var(--accent-strong)] sm:max-w-max">
+            <div className="surface-panel surface-panel--soft px-3.5 py-3 text-[color:var(--accent-strong)] sm:max-w-max">
               <p className="text-[10px] font-bold uppercase tracking-[0.22em]">
                 Главный доступ
               </p>
@@ -320,11 +320,11 @@ export function AdminDashboardWorkspace({
               </p>
             </div>
 
-            <div className="space-y-3">
-              <h1 className="app-display max-w-4xl text-4xl text-foreground sm:text-5xl">
+            <div className="space-y-2.5">
+              <h1 className="max-w-4xl text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
                 Операторский центр для пользователей, качества AI и жизненно важных процессов.
               </h1>
-              <p className="max-w-3xl text-sm leading-7 text-muted sm:text-base">
+              <p className="max-w-3xl text-sm leading-6 text-muted">
                 Экран собран по языку stitch_: крупные KPI, быстрые действия,
                 отдельные сигналы, системное здоровье и AI-операции в одной
                 спокойной вертикали без перегруженной таблицы.
@@ -354,48 +354,48 @@ export function AdminDashboardWorkspace({
             </div>
           </div>
 
-          <div className="rounded-[36px] bg-[#12131a] p-6 text-white shadow-[0_30px_80px_-50px_rgba(0,0,0,0.6)]">
-            <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-white/60">
+          <div className="surface-panel surface-panel--soft p-4">
+            <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-muted">
               Быстрый статус
             </p>
             <div className="mt-5 grid gap-3">
-              <div className="rounded-[28px] bg-white/8 p-4">
-                <p className="text-xs uppercase tracking-[0.18em] text-white/55">
+              <div className="metric-tile p-3.5">
+                <p className="text-xs uppercase tracking-[0.18em] text-muted">
                   Текущий оператор
                 </p>
                 <p className="mt-2 break-all text-lg font-semibold">
                   {viewer.user.email ?? "email не найден"}
                 </p>
-                <p className="mt-2 text-sm text-white/60">Роль: {operatorRole}</p>
+                <p className="mt-2 text-sm text-muted">Роль: {operatorRole}</p>
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-[24px] bg-white/8 p-4">
-                  <p className="text-xs uppercase tracking-[0.18em] text-white/55">
+                <div className="metric-tile p-3.5">
+                  <p className="text-xs uppercase tracking-[0.18em] text-muted">
                     Главный доступ
                   </p>
-                  <p className="mt-2 text-2xl font-black">{rootCount}</p>
-                  <p className="mt-1 text-sm text-white/60">
+                  <p className="mt-2 text-xl font-semibold text-foreground">{rootCount}</p>
+                  <p className="mt-1 text-sm text-muted">
                     нарушений: {superAdminPolicyViolations}
                   </p>
                 </div>
-                <div className="rounded-[24px] bg-white/8 p-4">
-                  <p className="text-xs uppercase tracking-[0.18em] text-white/55">
+                <div className="metric-tile p-3.5">
+                  <p className="text-xs uppercase tracking-[0.18em] text-muted">
                     База AI
                   </p>
-                  <p className="mt-2 text-2xl font-black">{knowledgeEmbeddingsCount}</p>
-                  <p className="mt-1 text-sm text-white/60">
+                  <p className="mt-2 text-xl font-semibold text-foreground">{knowledgeEmbeddingsCount}</p>
+                  <p className="mt-1 text-sm text-muted">
                     чанков: {knowledgeChunksCount}
                   </p>
                 </div>
               </div>
-              <div className="rounded-[24px] bg-gradient-to-br from-white/12 to-white/4 p-4">
-                <p className="text-xs uppercase tracking-[0.18em] text-white/55">
+              <div className="metric-tile p-3.5">
+                <p className="text-xs uppercase tracking-[0.18em] text-muted">
                   Последний вход главного администратора
                 </p>
                 <p className="mt-2 text-base font-semibold">
                   {rootAdminRecord?.email ?? PRIMARY_SUPER_ADMIN_EMAIL}
                 </p>
-                <p className="mt-1 text-sm text-white/60">
+                <p className="mt-1 text-sm text-muted">
                   {formatDateTime(rootAdminRecord?.lastSignInAt)}
                 </p>
               </div>
@@ -417,7 +417,7 @@ export function AdminDashboardWorkspace({
 
         {isDegraded ? (
           <p
-            className="mt-6 rounded-[28px] border border-amber-400/25 bg-amber-500/12 px-5 py-4 text-sm leading-7 text-amber-100"
+            className="mt-5 rounded-[1rem] border border-amber-400/25 bg-amber-500/12 px-4 py-3 text-sm leading-6 text-amber-900"
             data-testid="admin-page-degraded-banner"
           >
             Панель временно работает из резервного снимка. Часть служебных
@@ -436,7 +436,7 @@ export function AdminDashboardWorkspace({
             {supportActions.length ? (
               supportActions.slice(0, 3).map((action) => (
                 <article
-                  className="flex items-start justify-between gap-3 rounded-[28px] bg-[color-mix(in_srgb,var(--surface-container-low)_78%,white)] px-5 py-4"
+                  className="metric-tile flex items-start justify-between gap-3 px-3.5 py-3"
                   key={action.id}
                 >
                   <div>
@@ -472,22 +472,22 @@ export function AdminDashboardWorkspace({
         <div className="grid gap-6">
           <SpotlightCard caption="AI" title="Контур качества и пересборки знаний">
             <div className="grid gap-3 sm:grid-cols-2">
-              <article className="rounded-[28px] bg-[color-mix(in_srgb,var(--surface-container-low)_78%,white)] p-5">
+              <article className="metric-tile p-3.5">
                 <p className="text-xs uppercase tracking-[0.18em] text-muted">
                   AI-сигналы
                 </p>
-                <p className="mt-3 text-3xl font-black text-foreground">
+                <p className="mt-2 text-2xl font-semibold text-foreground">
                   {aiSafetyEventsCount}
                 </p>
                 <p className="mt-2 text-sm leading-6 text-muted">
                   событий безопасности и контентных ограничений
                 </p>
               </article>
-              <article className="rounded-[28px] bg-[color-mix(in_srgb,var(--surface-container-low)_78%,white)] p-5">
+              <article className="metric-tile p-3.5">
                 <p className="text-xs uppercase tracking-[0.18em] text-muted">
                   Планов AI
                 </p>
-                <p className="mt-3 text-3xl font-black text-foreground">
+                <p className="mt-2 text-2xl font-semibold text-foreground">
                   {aiPlanProposalsCount}
                 </p>
                 <p className="mt-2 text-sm leading-6 text-muted">
@@ -496,7 +496,7 @@ export function AdminDashboardWorkspace({
               </article>
             </div>
 
-              <article className="surface-panel surface-panel--soft p-4 text-sm">
+            <article className="metric-tile p-3.5 text-sm">
               <p className="font-semibold text-foreground">
                 Последние обновления базы знаний
               </p>
@@ -553,7 +553,7 @@ export function AdminDashboardWorkspace({
             <div className="grid gap-3">
               {recentRoster.map((admin) => (
                 <article
-                  className="rounded-[24px] bg-[color-mix(in_srgb,var(--surface-container-low)_78%,white)] px-4 py-3 text-sm"
+                  className="metric-tile px-3.5 py-3 text-sm"
                   key={`${admin.user_id}-${admin.created_at}`}
                 >
                   <div className="flex items-start justify-between gap-3">
@@ -599,12 +599,12 @@ export function AdminDashboardWorkspace({
 
           {canUseSuperAdminConsole ? (
             <SpotlightCard caption="Root" title="Политика главного доступа">
-              <article className="rounded-[28px] bg-[#12131a] p-5 text-white">
-                <p className="text-xs uppercase tracking-[0.18em] text-white/55">
+              <article className="surface-panel surface-panel--soft p-4">
+                <p className="text-xs uppercase tracking-[0.18em] text-muted">
                   Закреплённый супер-админ
                 </p>
                 <p className="mt-3 text-lg font-semibold">{PRIMARY_SUPER_ADMIN_EMAIL}</p>
-                <p className="mt-2 text-sm leading-6 text-white/65">
+                <p className="mt-2 text-sm leading-6 text-muted">
                   Эту роль нельзя переназначить из интерфейса на другой email.
                   Остальным аккаунтам доступны только обычные административные
                   роли с аудитом.
@@ -618,7 +618,7 @@ export function AdminDashboardWorkspace({
               <div className="grid gap-3">
                 {recentUsers.map((user) => (
                   <Link
-                    className="rounded-[24px] bg-[color-mix(in_srgb,var(--surface-container-low)_78%,white)] px-4 py-4 text-sm transition hover:translate-y-[-1px]"
+                    className="metric-tile px-3.5 py-3 text-sm transition hover:translate-y-[-1px]"
                     href={`/admin/users/${user.user_id}` as Route}
                     key={user.user_id}
                   >

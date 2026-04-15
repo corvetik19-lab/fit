@@ -39,11 +39,11 @@ export function SettingsDataCenter({
   } = useSettingsDataCenterState(initialSnapshot);
 
   return (
-    <section className="surface-panel p-5 sm:p-6">
-      <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+    <section className="surface-panel p-4 sm:p-5">
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="workspace-kicker">Управление данными</p>
-          <h2 className="mt-2 text-2xl font-semibold tracking-tight text-foreground">
+          <h2 className="mt-1.5 text-lg font-semibold tracking-tight text-foreground sm:text-xl">
             Выгрузка данных и удаление аккаунта
           </h2>
         </div>
@@ -57,8 +57,8 @@ export function SettingsDataCenter({
         </button>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <div className="metric-tile p-5">
+      <div className="grid gap-3.5 lg:grid-cols-2">
+        <div className="metric-tile p-4">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-sm font-semibold text-foreground">Архив данных</p>
@@ -74,14 +74,14 @@ export function SettingsDataCenter({
             </span>
           </div>
 
-          <div className="mt-4 rounded-2xl border border-border bg-background/40 px-4 py-3 text-sm text-muted">
+          <div className="mt-3.5 rounded-2xl border border-border bg-background/40 px-3.5 py-3 text-sm text-muted">
             <p>
               Последнее обновление: {formatSettingsDataDateTime(latestExport?.updatedAt)}
             </p>
             <p className="mt-1">{getExportNextStep(snapshot)}</p>
           </div>
 
-          <div className="mt-4 flex flex-wrap gap-3">
+          <div className="mt-3.5 flex flex-wrap gap-2.5">
             <button
               className="action-button action-button--primary"
               disabled={isPending || hasActiveExport}
@@ -101,7 +101,7 @@ export function SettingsDataCenter({
             ) : null}
           </div>
 
-          <div className="mt-5 grid gap-3">
+          <div className="mt-4 grid gap-2.5">
             {snapshot.exportJobs.length ? (
               snapshot.exportJobs.map((job) => (
                 <div className="rounded-2xl border border-border bg-background/40 px-4 py-3" key={job.id}>
@@ -136,7 +136,7 @@ export function SettingsDataCenter({
           </div>
         </div>
 
-        <div className="metric-tile p-5">
+        <div className="metric-tile p-4">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-sm font-semibold text-foreground">Удаление аккаунта</p>
@@ -154,7 +154,7 @@ export function SettingsDataCenter({
             </span>
           </div>
 
-          <div className="mt-4 rounded-2xl border border-border bg-background/40 px-4 py-3 text-sm text-muted">
+          <div className="mt-3.5 rounded-2xl border border-border bg-background/40 px-3.5 py-3 text-sm text-muted">
             <p>
               Активный hold до:{" "}
               {formatSettingsDataDateTime(snapshot.deletionRequest?.holdUntil)}
@@ -162,7 +162,7 @@ export function SettingsDataCenter({
             <p className="mt-1">{getDeletionNextStep(snapshot)}</p>
           </div>
 
-          <label className="mt-4 grid gap-2 text-sm text-muted">
+          <label className="mt-3.5 grid gap-2 text-sm text-muted">
             Причина удаления
             <textarea
               className={`${settingsDataInputClassName} min-h-24 resize-y`}
@@ -172,7 +172,7 @@ export function SettingsDataCenter({
             />
           </label>
 
-          <div className="mt-4 flex flex-wrap gap-3">
+          <div className="mt-3.5 flex flex-wrap gap-2.5">
             <button
               className="action-button action-button--primary"
               disabled={isPending || hasActiveDeletion}
@@ -196,15 +196,15 @@ export function SettingsDataCenter({
         </div>
       </div>
 
-      <div className="mt-5 surface-panel surface-panel--soft p-5">
-        <div className="mb-4">
+      <div className="mt-4 surface-panel surface-panel--soft p-4">
+        <div className="mb-3.5">
           <p className="workspace-kicker">История операций</p>
-          <h3 className="mt-2 text-xl font-semibold tracking-tight text-foreground">
+          <h3 className="mt-1.5 text-lg font-semibold tracking-tight text-foreground">
             Выгрузка и удаление
           </h3>
         </div>
 
-        <div className="grid gap-3">
+        <div className="grid gap-2.5">
           {snapshot.privacyEvents.length ? (
             snapshot.privacyEvents.map((event) => (
               <div

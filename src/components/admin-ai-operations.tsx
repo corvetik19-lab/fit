@@ -84,19 +84,19 @@ export function AdminAiOperations({
   return (
     <div className="grid gap-4">
       {error ? (
-        <p className="rounded-2xl border border-red-500/25 bg-red-500/12 px-4 py-3 text-sm text-red-100">
+        <p className="rounded-2xl border border-red-500/25 bg-red-500/12 px-4 py-3 text-sm text-red-900">
           {error}
         </p>
       ) : null}
 
       {notice ? (
-        <p className="rounded-2xl border border-emerald-500/25 bg-emerald-500/12 px-4 py-3 text-sm text-emerald-100">
+        <p className="rounded-2xl border border-emerald-500/25 bg-emerald-500/12 px-4 py-3 text-sm text-emerald-900">
           {notice}
         </p>
       ) : null}
 
       {!canRunReindex ? (
-        <p className="rounded-2xl border border-amber-500/25 bg-amber-500/12 px-4 py-3 text-sm text-amber-100">
+        <p className="rounded-2xl border border-amber-500/25 bg-amber-500/12 px-4 py-3 text-sm text-amber-900">
           Для этого аккаунта в этом разделе доступен только просмотр.
         </p>
       ) : null}

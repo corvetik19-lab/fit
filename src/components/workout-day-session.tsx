@@ -27,9 +27,9 @@ import { useWorkoutDaySync } from "@/components/workout-session/use-workout-day-
 import { useWorkoutSessionTimer } from "@/components/workout-session/use-workout-session-timer";
 
 const inputClassName =
-  "w-full rounded-[1rem] border border-border bg-[color:var(--surface-container-high)] px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted focus:border-[color:var(--accent)] focus:ring-2 focus:ring-[color:var(--accent-soft)]";
+  "w-full rounded-[0.95rem] border border-border bg-[color:var(--surface-elevated)] px-3.5 py-2.5 text-sm text-foreground outline-none transition placeholder:text-muted focus:border-[color:var(--accent)] focus:ring-2 focus:ring-[color:var(--accent-soft)]";
 
-const textAreaClassName = `${inputClassName} min-h-28 resize-y`;
+const textAreaClassName = `${inputClassName} min-h-24 resize-y`;
 
 export function WorkoutDaySession({
   initialDay,
@@ -305,7 +305,7 @@ export function WorkoutDaySession({
   );
 
   return (
-    <div className="grid gap-5">
+    <div className="grid gap-4">
       {isMobileFocusMode ? (
         <WorkoutFocusHeader
           activeExerciseTitle={activeExercise?.exercise_title_snapshot ?? null}
@@ -380,7 +380,7 @@ export function WorkoutDaySession({
         />
       ) : null}
 
-      <section className="grid gap-4">
+      <section className="grid gap-3.5">
         {visibleExerciseEntries.length ? (
           visibleExerciseEntries.map(({ exercise, index }) => {
             const isExerciseComplete = isCompletedWorkoutExercise(exercise);

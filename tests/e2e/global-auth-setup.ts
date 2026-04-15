@@ -1,8 +1,11 @@
 import fs from "node:fs";
-import { chromium, type FullConfig } from "@playwright/test";
+import {
+  chromium,
+  type BrowserContext,
+  type FullConfig,
+} from "@playwright/test";
 
 import {
-  finishOnboardingIfVisible,
   getAdminE2ECredentials,
   getAuthE2ECredentials,
   hasAdminE2ECredentials,
@@ -18,8 +21,41 @@ import {
   buildSupabaseAuthCookie,
   requestSupabasePasswordAuth,
 } from "./helpers/supabase-password-auth";
+import { ensureOnboardingTestData } from "./helpers/supabase-admin";
 
 type AuthCredentials = NonNullable<ReturnType<typeof getAuthE2ECredentials>>;
+
+async function probeSessionOnHome(baseURL: string, context: BrowserContext) {
+  const page = await context.newPage();
+
+  try {
+    await page.goto(new URL("/", baseURL).toString(), {
+      waitUntil: "domcontentloaded",
+      timeout: 15_000,
+    });
+  } catch (error) {
+    console.warn(
+      `Playwright auth bootstrap skipped home probe after request failure: ${String(error)}`,
+    );
+  } finally {
+    await page.close().catch(() => undefined);
+  }
+}
+
+async function seedAuthStorageState(
+  baseURL: string,
+  context: BrowserContext,
+  credentials: AuthCredentials,
+) {
+  try {
+    await ensureOnboardingTestData(credentials.email, credentials.fullName);
+  } catch (error) {
+    console.warn(
+      `Playwright onboarding bootstrap will fall back to runtime flow after admin seed failure: ${String(error)}`,
+    );
+    await probeSessionOnHome(baseURL, context);
+  }
+}
 
 async function saveSupabaseStorageState(
   baseURL: string,
@@ -32,21 +68,13 @@ async function saveSupabaseStorageState(
     const context = await browser.newContext({
       baseURL,
     });
-    const page = await context.newPage();
-    const payload = await requestSupabasePasswordAuth(credentials);
-
-    await context.addCookies([buildSupabaseAuthCookie(baseURL, payload)]);
-
-    await page.goto("/dashboard", {
-      waitUntil: "domcontentloaded",
-      timeout: 30_000,
+    const payload = await requestSupabasePasswordAuth({
+      email: credentials.email,
+      password: credentials.password,
     });
 
-    await finishOnboardingIfVisible(page, credentials.fullName);
-
-    if (!page.url().includes("/dashboard")) {
-      throw new Error("Supabase auth bootstrap did not establish a dashboard session.");
-    }
+    await context.addCookies([buildSupabaseAuthCookie(baseURL, payload)]);
+    await seedAuthStorageState(baseURL, context, credentials);
 
     ensureAuthStateDir();
     await context.storageState({

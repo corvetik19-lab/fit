@@ -49,6 +49,15 @@ const defaultOnboardingPayload = {
   weightKg: 80,
 } satisfies Omit<OnboardingPayload, "fullName">;
 
+export function buildDefaultOnboardingPayload(
+  fullName: string,
+): OnboardingPayload {
+  return {
+    ...defaultOnboardingPayload,
+    fullName,
+  };
+}
+
 export function getAuthE2ECredentials(): AuthCredentials | null {
   if (!authEmail || !authPassword) {
     return null;
@@ -296,10 +305,7 @@ function resolveRequestUrl(page: Page, url: string) {
 }
 
 async function completeOnboardingViaApi(page: Page, fullName: string) {
-  const payload: OnboardingPayload = {
-    ...defaultOnboardingPayload,
-    fullName,
-  };
+  const payload = buildDefaultOnboardingPayload(fullName);
 
   const response = await page.context().request.fetch(
     resolveRequestUrl(page, "/api/onboarding"),

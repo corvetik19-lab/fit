@@ -37,7 +37,7 @@ function DirectoryMetricCard({
   detail?: string;
 }) {
   return (
-    <article className="surface-panel p-5">
+    <article className="metric-tile p-3.5">
       <p className="text-sm text-muted">{label}</p>
       <p className="mt-2 text-2xl font-semibold text-foreground">{value}</p>
       {detail ? <p className="mt-2 text-sm leading-6 text-muted">{detail}</p> : null}
@@ -106,7 +106,7 @@ export function AdminUsersDirectory({
 
   if (isLoading) {
     return (
-      <section className="card p-6">
+      <section className="surface-panel p-4">
         <p className="text-sm text-muted">Загружаю каталог пользователей...</p>
       </section>
     );
@@ -114,8 +114,8 @@ export function AdminUsersDirectory({
 
   if (error) {
     return (
-      <section className="card p-6">
-        <p className="rounded-2xl border border-red-500/25 bg-red-500/12 px-4 py-3 text-sm text-red-100">
+      <section className="surface-panel p-4">
+        <p className="rounded-2xl border border-red-500/25 bg-red-500/12 px-4 py-3 text-sm text-red-900">
           {error}
         </p>
       </section>
@@ -123,9 +123,10 @@ export function AdminUsersDirectory({
   }
 
   return (
-    <section className="card card--hero p-6 sm:p-8" data-testid="admin-users-directory">
-      <div className="grid gap-6 2xl:grid-cols-[1.12fr_0.88fr]">
-        <div className="space-y-5">
+    <section className="space-y-5" data-testid="admin-users-directory">
+      <div className="surface-panel p-4 sm:p-5">
+        <div className="grid gap-5 2xl:grid-cols-[1.12fr_0.88fr]">
+        <div className="space-y-4">
           <div className="flex flex-wrap gap-2">
             <span className="pill">Пользователи</span>
             <span className="pill">Каталог: {summary.total}</span>
@@ -134,11 +135,11 @@ export function AdminUsersDirectory({
             ) : null}
           </div>
 
-          <div className="space-y-3">
-            <h2 className="max-w-4xl text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+          <div className="space-y-2.5">
+            <h2 className="max-w-4xl text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
               Пользователи, доступы, подписки и очередь действий в одном рабочем экране.
             </h2>
-            <p className="max-w-3xl text-sm leading-7 text-muted sm:text-base">
+            <p className="max-w-3xl text-sm leading-6 text-muted">
               Здесь удобно искать пользователя, смотреть его активность, состояние подписки,
               очередь задач и сразу переходить в подробную карточку без лишнего служебного шума.
             </p>
@@ -186,22 +187,23 @@ export function AdminUsersDirectory({
             value={String(summary.paid)}
           />
         </div>
+        </div>
       </div>
 
       {isDegraded ? (
-        <div className="mt-6 rounded-[28px] border border-amber-400/25 bg-amber-500/12 px-5 py-4 text-sm text-amber-100">
+        <div className="rounded-[1rem] border border-amber-400/25 bg-amber-500/12 px-4 py-3 text-sm text-amber-900">
           Каталог пользователей показан из резервного снимка. Часть служебных источников
           временно не ответила, поэтому отдельные сигналы и сводки могут быть неполными.
         </div>
       ) : null}
 
-      <div className="surface-panel mt-6 p-5 sm:p-6">
+      <div className="surface-panel p-4 sm:p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
               Фильтры
             </p>
-            <h3 className="mt-2 text-xl font-semibold text-foreground">
+            <h3 className="mt-2 text-lg font-semibold text-foreground">
               Быстрый отбор по активности и важным случаям
             </h3>
           </div>
@@ -219,7 +221,7 @@ export function AdminUsersDirectory({
         </div>
 
         <div className="mt-5 grid gap-3 lg:grid-cols-[minmax(0,1.25fr)_220px_220px_220px]">
-        <label className="grid gap-2 text-sm text-muted lg:col-span-1">
+          <label className="grid gap-2 text-sm text-muted lg:col-span-1">
           Поиск по имени, email или ID
           <input
             className="w-full rounded-2xl border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,var(--surface))] px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15"
@@ -228,7 +230,7 @@ export function AdminUsersDirectory({
             type="text"
             value={searchQuery}
           />
-        </label>
+          </label>
 
         {canViewRoleDetails ? (
           <label className="grid gap-2 text-sm text-muted">
@@ -289,7 +291,7 @@ export function AdminUsersDirectory({
         </label>
       </div>
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-2 2xl:grid-cols-6">
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 2xl:grid-cols-6">
         {[
           ["Найдено", String(summary.total), "пользователей в текущем списке"],
           ["Активны 7 дней", String(summary.active7d), "живая пользовательская активность"],
@@ -309,12 +311,11 @@ export function AdminUsersDirectory({
             value={value}
           />
         ))}
-      </div>
-      </div>
+        </div>
 
       <div className="mt-6 grid gap-4 2xl:grid-cols-[1.15fr_0.85fr]">
         {canViewRoleDetails ? (
-          <article className="surface-panel surface-panel--soft border border-sky-400/25 p-5 text-sm text-sky-100">
+          <article className="surface-panel surface-panel--soft border border-sky-400/25 p-4 text-sm text-sky-900">
             <p className="font-semibold text-foreground">
               Главный доступ закреплён отдельно и защищён от случайных изменений.
             </p>
@@ -324,7 +325,7 @@ export function AdminUsersDirectory({
             </p>
           </article>
         ) : (
-          <article className="surface-panel surface-panel--soft p-5 text-sm">
+          <article className="surface-panel surface-panel--soft p-4 text-sm">
             <p className="font-semibold text-foreground">
               Каталог показывает только рабочие данные по пользователям.
             </p>
@@ -335,7 +336,7 @@ export function AdminUsersDirectory({
           </article>
         )}
 
-        <article className="surface-panel surface-panel--soft p-5 text-sm">
+        <article className="surface-panel surface-panel--soft p-4 text-sm">
           <p className="font-semibold text-foreground">Что видно в одном экране</p>
           <p className="mt-2 leading-7 text-muted">
             Активность по тренировкам, питанию и ИИ, очередь задач, выгрузка данных, удаление,
@@ -370,13 +371,13 @@ export function AdminUsersDirectory({
       </div>
 
       <div className="mb-5 grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
-        <article className="surface-panel p-5">
+        <article className="surface-panel p-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted">
                 Cohorts
               </p>
-              <h3 className="mt-2 text-lg font-semibold text-foreground">
+              <h3 className="mt-2 text-base font-semibold text-foreground">
                 Распределение по активности и качеству данных
               </h3>
             </div>
@@ -412,7 +413,7 @@ export function AdminUsersDirectory({
               },
             ].map(({ label, value, bucket }) => (
               <button
-                className={`rounded-2xl border px-4 py-4 text-left transition hover:translate-y-[-1px] ${activityToneClasses[bucket]}`}
+                className={`rounded-[1rem] border px-3.5 py-3 text-left transition hover:translate-y-[-1px] ${activityToneClasses[bucket]}`}
                 key={label}
                 onClick={() => {
                   if (bucket === "today" || bucket === "seven_days") {
@@ -449,7 +450,7 @@ export function AdminUsersDirectory({
               ["Нарушения главного доступа", catalogSummary.hygiene.rootPolicyViolations],
             ].map(([label, value]) => (
               <div
-                className="surface-panel surface-panel--soft px-4 py-3 text-sm"
+                className="metric-tile px-3.5 py-3 text-sm"
                 key={label}
               >
                 <p className="text-muted">{label}</p>
@@ -459,13 +460,13 @@ export function AdminUsersDirectory({
           </div>
         </article>
 
-        <article className="surface-panel p-5">
+        <article className="surface-panel p-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted">
                 Операции
               </p>
-              <h3 className="mt-2 text-lg font-semibold text-foreground">
+              <h3 className="mt-2 text-base font-semibold text-foreground">
                 Главные приоритеты
               </h3>
             </div>
@@ -488,7 +489,7 @@ export function AdminUsersDirectory({
               ["Платящих без активности", catalogSummary.billing.paidButStale],
             ].map(([label, value]) => (
               <div
-                className="surface-panel surface-panel--soft px-4 py-3 text-sm"
+                className="metric-tile px-3.5 py-3 text-sm"
                 key={label}
               >
                 <p className="text-muted">{label}</p>
@@ -500,7 +501,7 @@ export function AdminUsersDirectory({
       </div>
 
       <div className="mb-5 grid gap-4 xl:grid-cols-2">
-        <article className="surface-panel p-5">
+        <article className="surface-panel p-4">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted">
@@ -517,7 +518,7 @@ export function AdminUsersDirectory({
             {segments.priorityQueue.length ? (
               segments.priorityQueue.map((user) => (
                 <Link
-                  className="surface-panel surface-panel--soft px-4 py-3 text-sm transition hover:border-accent/40 hover:bg-[color-mix(in_srgb,var(--surface-elevated)_96%,var(--surface))]"
+                className="metric-tile px-3.5 py-3 text-sm transition hover:border-accent/40 hover:bg-[color-mix(in_srgb,var(--surface-elevated)_96%,var(--surface))]"
                   href={`/admin/users/${user.user_id}` as Route}
                   key={user.user_id}
                 >
@@ -570,7 +571,7 @@ export function AdminUsersDirectory({
         </article>
 
         <div className="grid gap-4">
-          <article className="surface-panel p-5">
+          <article className="surface-panel p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted">
@@ -593,7 +594,7 @@ export function AdminUsersDirectory({
               {segments.inactivePaid.length ? (
                 segments.inactivePaid.map((user) => (
                   <Link
-                    className="surface-panel surface-panel--soft px-4 py-3 text-sm transition hover:border-accent/40 hover:bg-[color-mix(in_srgb,var(--surface-elevated)_96%,var(--surface))]"
+                className="metric-tile px-3.5 py-3 text-sm transition hover:border-accent/40 hover:bg-[color-mix(in_srgb,var(--surface-elevated)_96%,var(--surface))]"
                     href={`/admin/users/${user.user_id}` as Route}
                     key={user.user_id}
                   >
@@ -622,7 +623,7 @@ export function AdminUsersDirectory({
             </div>
           </article>
 
-          <article className="surface-panel p-5">
+          <article className="surface-panel p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted">
@@ -638,7 +639,7 @@ export function AdminUsersDirectory({
               <div className="grid gap-3">
                 {segments.newestUsers.map((user) => (
                   <Link
-                    className="surface-panel surface-panel--soft px-4 py-3 text-sm transition hover:border-accent/40 hover:bg-[color-mix(in_srgb,var(--surface-elevated)_96%,var(--surface))]"
+                className="metric-tile px-3.5 py-3 text-sm transition hover:border-accent/40 hover:bg-[color-mix(in_srgb,var(--surface-elevated)_96%,var(--surface))]"
                     href={`/admin/users/${user.user_id}` as Route}
                     key={user.user_id}
                   >
@@ -689,7 +690,7 @@ export function AdminUsersDirectory({
 
             return (
               <article
-                className="surface-panel p-5 shadow-[0_18px_60px_-42px_rgba(15,23,42,0.28)]"
+                className="surface-panel p-4 shadow-[0_18px_60px_-42px_rgba(15,23,42,0.18)]"
                 key={user.user_id}
               >
                 <div className="flex flex-wrap items-start justify-between gap-4">
@@ -736,34 +737,34 @@ export function AdminUsersDirectory({
                     {activityLabels[user.activity.bucket]}
                   </span>
                   {user.flags.is_primary_super_admin ? (
-                    <span className="rounded-full border border-amber-400/25 bg-amber-500/12 px-3 py-1 text-xs font-semibold text-amber-100">
+                    <span className="rounded-full border border-amber-400/25 bg-amber-500/12 px-3 py-1 text-xs font-semibold text-amber-900">
                       Главный супер-админ
                     </span>
                   ) : null}
                   {user.operations.has_backlog ? (
-                    <span className="rounded-full border border-rose-400/25 bg-rose-500/12 px-3 py-1 text-xs font-semibold text-rose-100">
+                    <span className="rounded-full border border-rose-400/25 bg-rose-500/12 px-3 py-1 text-xs font-semibold text-rose-900">
                       Есть очередь
                     </span>
                   ) : null}
                   {user.billing.is_active ? (
-                    <span className="rounded-full border border-emerald-500/25 bg-emerald-500/12 px-3 py-1 text-xs font-semibold text-emerald-100">
+                    <span className="rounded-full border border-emerald-500/25 bg-emerald-500/12 px-3 py-1 text-xs font-semibold text-emerald-900">
                       Подписка активна
                     </span>
                   ) : null}
                   {user.flags.never_signed_in ? (
-                    <span className="rounded-full border border-slate-500/25 bg-slate-500/12 px-3 py-1 text-xs font-semibold text-slate-100">
+                    <span className="rounded-full border border-slate-500/25 bg-slate-500/12 px-3 py-1 text-xs font-semibold text-slate-800">
                       Без входов
                     </span>
                   ) : null}
                   {!user.flags.has_profile ? (
-                    <span className="rounded-full border border-amber-400/25 bg-amber-500/12 px-3 py-1 text-xs font-semibold text-amber-100">
+                    <span className="rounded-full border border-amber-400/25 bg-amber-500/12 px-3 py-1 text-xs font-semibold text-amber-900">
                       Без профиля
                     </span>
                   ) : null}
                 </div>
 
                 <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                  <article className="surface-panel surface-panel--soft p-4">
+                  <article className="metric-tile p-3.5">
                     <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted">
                       Тренировки
                     </p>
@@ -778,7 +779,7 @@ export function AdminUsersDirectory({
                     </p>
                   </article>
 
-                  <article className="surface-panel surface-panel--soft p-4">
+                  <article className="metric-tile p-3.5">
                     <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted">
                       Питание
                     </p>
@@ -791,7 +792,7 @@ export function AdminUsersDirectory({
                     </p>
                   </article>
 
-                  <article className="surface-panel surface-panel--soft p-4">
+                  <article className="metric-tile p-3.5">
                     <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted">
                       ИИ
                     </p>
@@ -804,7 +805,7 @@ export function AdminUsersDirectory({
                     </p>
                   </article>
 
-                  <article className="surface-panel surface-panel--soft p-4">
+                  <article className="metric-tile p-3.5">
                     <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted">
                       Операции
                     </p>
@@ -880,6 +881,8 @@ export function AdminUsersDirectory({
               : "В профилях пока нет данных. Как только пользователи пройдут онбординг и начнут активность, они появятся здесь."}
           </p>
         )}
+      </div>
+
       </div>
     </section>
   );

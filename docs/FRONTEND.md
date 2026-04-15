@@ -189,7 +189,7 @@ Frontend делится на три уровня:
 - Для активного light compact направления текущий execution-doc: [LIGHT_COMPACT_REDESIGN_EXECUTION.md](/C:/fit/docs/LIGHT_COMPACT_REDESIGN_EXECUTION.md).
 - Для auth/workspace-контракта теперь опираемся на реальные заголовки экранов и shell-title, а не на скрытые mobile toggles. Это зафиксировано в [authenticated-app.spec.ts](/C:/fit/tests/e2e/authenticated-app.spec.ts).
 - Для workout focus-mode regression базовым контрактом считается `data-testid="workout-regular-mode-button"` из [workout-focus-header.tsx](/C:/fit/src/components/workout-session/workout-focus-header.tsx); test не должен зависеть от текстового label кнопки.
-- При следующих визуальных правках в `Dark Utility`-слое minimum regression package:
+- При следующих визуальных правках в активном `Light Compact`-слое minimum regression package:
   - `npm run lint`
   - `npm run typecheck`
   - `npm run build`
@@ -230,3 +230,27 @@ Frontend делится на три уровня:
 - `/admin`, `/admin/users`, `/admin/users/[id]` считаются частью того же dark utility языка, но с operator-first плотностью: тёмные рабочие surfaces, короткие статусы, ясные action-points, без consumer-style hero-блоков.
 - Для admin detail обязательны server-first fallback states: если Supabase/Auth деградирует, экран должен показать пригодный degraded snapshot, а не бесконечный loading-state. Этот контракт держат [admin-user-detail-state.ts](/C:/fit/src/components/admin-user-detail-state.ts), [admin/users/[id]/page.tsx](/C:/fit/src/app/admin/users/[id]/page.tsx) и [admin user detail route](/C:/fit/src/app/api/admin/users/[id]/route.ts).
 - Полный admin e2e-пакет пока нельзя считать окончательным visual gate из-за внешнего `Supabase/Auth` runtime; при точечных UI-правках опираемся на таргетированные admin-сценарии и отдельно фиксируем внешний blocker, если снова появляются `ECONNRESET`, `ConnectTimeout` или `502`.
+
+## 2026-04-15 Light compact workouts/day + AI/history/settings contract
+
+- /workouts/day/[dayId] и focus-mode теперь считаются частью активного light compact mobile контракта: плотный header, более короткие metrics, компактные exercise cards и уменьшенные input/action sizes важнее визуальной декоративности.
+- /ai должен читаться как рабочий coaching console, а не как промо-сцена: краткий верхний summary, компактные flow cards, плотные section-controls и минимум вторичных больших блоков.
+- /history и /settings теперь проектируются как короткие utility-first экраны. Метрики, списки, billing/data actions и timeline-события должны занимать меньше вертикального пространства и быстрее сканироваться на 390px.
+
+## 2026-04-15 Light compact admin contract
+
+- `/admin`, `/admin/users` и `/admin/users/[id]` теперь считаются частью активного light compact mobile контракта: светлые operator surfaces, компактные KPI и короткие status banners важнее прежних крупных dark-hero блоков.
+- Admin health, operations inbox, bulk actions, AI eval и карточка пользователя должны использовать светлую палитру с тёмным текстом и умеренными отступами. Возврат к `text-*-100`, тёмным панелям и раздутым warning-карточкам считается регрессией.
+- Минимальный verification package для admin UI:
+  - `npm run lint`
+  - `npm run typecheck`
+  - `npm run build`
+  - `npm run test:smoke`
+  - auth-based `admin-app` и `mobile-pwa-regressions` запускаются только если bootstrap `/dashboard` проходит. Если [global-auth-setup.ts](/C:/fit/tests/e2e/global-auth-setup.ts) снова падает на `page.goto("/dashboard")`, это фиксируется как внешний runtime blocker, а не как визуальный провал tranche.
+
+## 2026-04-15 Light compact mobile regression baseline
+
+- Активный mobile regression contract для light compact UI теперь закрыт и фиксирован на трёх viewport: `360x780`, `390x844`, `430x932`.
+- Базовый multi-viewport suite: [mobile-pwa-regressions.spec.ts](/C:/fit/tests/e2e/mobile-pwa-regressions.spec.ts). Он покрывает user shell, admin shell, section switching, drawer, отсутствие horizontal overflow и workout focus-mode.
+- Auth bootstrap для этих проверок теперь подготавливает storage state и onboarding данные заранее через [global-auth-setup.ts](/C:/fit/tests/e2e/global-auth-setup.ts) и [supabase-admin.ts](/C:/fit/tests/e2e/helpers/supabase-admin.ts), поэтому regression больше не зависит от старого SSR-перехода в `/dashboard`.
+- Для platform admin assistant FAB на мобильном shell считается запрещённым overlay-сценарием; контракт закреплён в [app-shell-frame.tsx](/C:/fit/src/components/app-shell-frame.tsx) и проверяется в admin mobile regression.

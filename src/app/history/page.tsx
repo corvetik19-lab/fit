@@ -114,36 +114,36 @@ export default async function HistoryPage() {
       title="История циклов, AI-решений и операций с данными"
       viewer={toAppShellViewer(viewer)}
     >
-      <div className="grid gap-6">
-        <section className="grid gap-4">
-          <div className="grid gap-3">
+      <div className="grid gap-4">
+        <section className="grid gap-3.5">
+          <div className="grid gap-2.5">
             <p className="workspace-kicker text-accent">Личный архив</p>
-            <h1 className="app-display text-3xl font-black tracking-[-0.08em] text-foreground sm:text-4xl">
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
               История действий и прошлых циклов
             </h1>
-            <p className="max-w-2xl text-sm leading-7 text-muted">
+            <p className="max-w-2xl text-sm leading-5 text-muted">
               Здесь собраны завершенные недели, AI-решения и события по данным.
               Экран нужен не для красоты, а чтобы быстро понять, что именно мы
               уже меняли и к чему можно вернуться.
             </p>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-3">
-            <article className="surface-panel p-5">
+          <div className="grid gap-2.5 sm:grid-cols-3">
+            <article className="metric-tile p-3.5">
               <p className="workspace-kicker">Завершено недель</p>
-              <p className="mt-3 text-4xl font-black tracking-tight text-foreground">
+              <p className="mt-2 text-2xl font-semibold tracking-tight text-foreground">
                 {completedPrograms.length}
               </p>
             </article>
-            <article className="surface-panel p-5">
+            <article className="metric-tile p-3.5">
               <p className="workspace-kicker">AI-решений</p>
-              <p className="mt-3 text-4xl font-black tracking-tight text-foreground">
+              <p className="mt-2 text-2xl font-semibold tracking-tight text-foreground">
                 {proposals.length}
               </p>
             </article>
-            <article className="surface-panel p-5">
+            <article className="metric-tile p-3.5">
               <p className="workspace-kicker">Операций с данными</p>
-              <p className="mt-3 text-4xl font-black tracking-tight text-foreground">
+              <p className="mt-2 text-2xl font-semibold tracking-tight text-foreground">
                 {settingsSnapshot.privacyEvents.length}
               </p>
             </article>
@@ -152,16 +152,16 @@ export default async function HistoryPage() {
 
         <section className="overflow-x-auto pb-1">
           <div className="flex min-w-max gap-3">
-            <a className="section-chip section-chip--active px-4 py-3 text-sm font-semibold" href="#history-feed">
+            <a className="section-chip section-chip--active px-3.5 py-2.5 text-sm font-semibold" href="#history-feed">
               Лента
             </a>
-            <a className="section-chip px-4 py-3 text-sm font-semibold" href="#history-programs">
+            <a className="section-chip px-3.5 py-2.5 text-sm font-semibold" href="#history-programs">
               Программы
             </a>
-            <a className="section-chip px-4 py-3 text-sm font-semibold" href="#history-ai">
+            <a className="section-chip px-3.5 py-2.5 text-sm font-semibold" href="#history-ai">
               AI
             </a>
-            <a className="section-chip px-4 py-3 text-sm font-semibold" href="#history-data">
+            <a className="section-chip px-3.5 py-2.5 text-sm font-semibold" href="#history-data">
               Данные
             </a>
           </div>
@@ -171,7 +171,7 @@ export default async function HistoryPage() {
           {timelineItems.length ? (
             timelineItems.slice(0, 6).map((item) => (
               <article
-                className={`rounded-[1.5rem] p-5 ${
+                className={`rounded-[1.1rem] p-3.5 ${
                   item.kind === "ai" ? "surface-panel surface-panel--accent" : "surface-panel"
                 }`}
                 key={`${item.kind}-${item.title}-${item.when}`}
@@ -179,10 +179,10 @@ export default async function HistoryPage() {
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
                     <p className="workspace-kicker">{getTimelineKindLabel(item.kind)}</p>
-                    <h2 className="mt-3 text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+                    <h2 className="mt-2 text-lg font-semibold tracking-tight text-foreground sm:text-xl">
                       {item.title}
                     </h2>
-                    <p className="mt-2 text-sm leading-7 text-muted">{item.detail}</p>
+                    <p className="mt-1.5 text-sm leading-5 text-muted">{item.detail}</p>
                   </div>
 
                   {item.href ? (
@@ -194,17 +194,17 @@ export default async function HistoryPage() {
               </article>
             ))
           ) : (
-            <article className="surface-panel p-5 text-sm text-muted">
+            <article className="metric-tile p-3.5 text-sm text-muted">
               История пока пустая. Как только появятся завершенные недели,
               AI-предложения или операции с данными, они соберутся здесь.
             </article>
           )}
         </section>
 
-        <section className="grid gap-4" id="history-programs">
+        <section className="grid gap-3" id="history-programs">
           <div>
             <p className="workspace-kicker">Программы</p>
-            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-foreground">
+            <h2 className="mt-1.5 text-lg font-semibold tracking-tight text-foreground sm:text-xl">
               Прошлые циклы и рабочие недели
             </h2>
           </div>
@@ -215,10 +215,10 @@ export default async function HistoryPage() {
                 const firstDay = program.days[0] ?? null;
 
                 return (
-                  <article className="surface-panel p-5" key={program.id}>
+                  <article className="surface-panel p-3.5" key={program.id}>
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <h3 className="text-xl font-semibold tracking-tight text-foreground">
+                        <h3 className="text-lg font-semibold tracking-tight text-foreground">
                           {program.title}
                         </h3>
                         <p className="mt-2 text-sm text-muted">
@@ -228,25 +228,25 @@ export default async function HistoryPage() {
                       <span className="pill">{formatProgramStatus(program.status)}</span>
                     </div>
 
-                    <div className="mt-5 grid grid-cols-3 gap-3">
-                      <div className="metric-tile p-4">
-                        <p className="text-3xl font-black tracking-tight text-foreground">
+                    <div className="mt-3.5 grid grid-cols-3 gap-2.5">
+                      <div className="metric-tile p-3">
+                        <p className="text-2xl font-semibold tracking-tight text-foreground">
                           {program.days.length}
                         </p>
                         <p className="mt-1 text-xs uppercase tracking-[0.18em] text-muted">
                           дней
                         </p>
                       </div>
-                      <div className="metric-tile p-4">
-                        <p className="text-3xl font-black tracking-tight text-foreground">
+                      <div className="metric-tile p-3">
+                        <p className="text-2xl font-semibold tracking-tight text-foreground">
                           {program.days.reduce((sum, day) => sum + day.exercises.length, 0)}
                         </p>
                         <p className="mt-1 text-xs uppercase tracking-[0.18em] text-muted">
                           упражнений
                         </p>
                       </div>
-                      <div className="metric-tile p-4">
-                        <p className="text-3xl font-black tracking-tight text-foreground">
+                      <div className="metric-tile p-3">
+                        <p className="text-2xl font-semibold tracking-tight text-foreground">
                           {program.is_locked ? "Да" : "Нет"}
                         </p>
                         <p className="mt-1 text-xs uppercase tracking-[0.18em] text-muted">
@@ -256,7 +256,7 @@ export default async function HistoryPage() {
                     </div>
 
                     {firstDay ? (
-                      <div className="mt-5">
+                      <div className="mt-3.5">
                         <Link
                           className="action-button action-button--primary w-full justify-center"
                           href={`/workouts/day/${firstDay.id}` as Route}
@@ -269,17 +269,17 @@ export default async function HistoryPage() {
                 );
               })
             ) : (
-              <article className="surface-panel p-5 text-sm text-muted">
+              <article className="metric-tile p-3.5 text-sm text-muted">
                 Архив недель пока пуст.
               </article>
             )}
           </div>
         </section>
 
-        <section className="grid gap-4" id="history-ai">
+        <section className="grid gap-3" id="history-ai">
           <div>
             <p className="workspace-kicker">AI</p>
-            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-foreground">
+            <h2 className="mt-1.5 text-lg font-semibold tracking-tight text-foreground sm:text-xl">
               Черновики, подтверждения и примененные решения
             </h2>
           </div>
@@ -288,7 +288,7 @@ export default async function HistoryPage() {
             {proposals.length ? (
               proposals.map((proposal) => (
                 <article
-                  className={`rounded-[1.5rem] p-5 ${
+                  className={`rounded-[1.1rem] p-3.5 ${
                     proposal.status === "applied"
                       ? "surface-panel surface-panel--accent"
                       : "surface-panel"
@@ -300,7 +300,7 @@ export default async function HistoryPage() {
                       <p className="workspace-kicker">
                         {formatProposalType(proposal.proposal_type)}
                       </p>
-                      <h3 className="mt-3 text-xl font-semibold tracking-tight text-foreground">
+                      <h3 className="mt-2 text-lg font-semibold tracking-tight text-foreground">
                         {formatProposalStatus(proposal.status)}
                       </h3>
                       <p className="mt-2 text-sm text-muted">
@@ -313,33 +313,30 @@ export default async function HistoryPage() {
                 </article>
               ))
             ) : (
-              <article className="surface-panel p-5 text-sm text-muted">
+              <article className="metric-tile p-3.5 text-sm text-muted">
                 История AI-предложений пока пустая.
               </article>
             )}
           </div>
         </section>
 
-        <section className="grid gap-4" id="history-data">
+        <section className="grid gap-3" id="history-data">
           <div>
             <p className="workspace-kicker">Данные</p>
-            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-foreground">
+            <h2 className="mt-1.5 text-lg font-semibold tracking-tight text-foreground sm:text-xl">
               Экспорт и приватность
             </h2>
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-2">
-            <article className="surface-panel p-5">
-              <h3 className="text-xl font-semibold tracking-tight text-foreground">
+          <div className="grid gap-3 lg:grid-cols-2">
+            <article className="surface-panel p-3.5">
+              <h3 className="text-lg font-semibold tracking-tight text-foreground">
                 Выгрузки профиля
               </h3>
               <div className="mt-4 grid gap-3">
                 {settingsSnapshot.exportJobs.length ? (
                   settingsSnapshot.exportJobs.map((job) => (
-                    <div
-                      className="metric-tile p-4 text-sm text-muted"
-                      key={job.id}
-                    >
+                    <div className="metric-tile p-3 text-sm text-muted" key={job.id}>
                       <p className="font-semibold text-foreground">{job.status}</p>
                       <p className="mt-1">
                         {fullDateFormatter.format(new Date(job.createdAt))}
@@ -347,24 +344,21 @@ export default async function HistoryPage() {
                     </div>
                   ))
                 ) : (
-                  <div className="metric-tile p-4 text-sm text-muted">
+                  <div className="metric-tile p-3 text-sm text-muted">
                     Выгрузок пока не было.
                   </div>
                 )}
               </div>
             </article>
 
-            <article className="surface-panel p-5">
-              <h3 className="text-xl font-semibold tracking-tight text-foreground">
+            <article className="surface-panel p-3.5">
+              <h3 className="text-lg font-semibold tracking-tight text-foreground">
                 События приватности
               </h3>
               <div className="mt-4 grid gap-3">
                 {settingsSnapshot.privacyEvents.length ? (
                   settingsSnapshot.privacyEvents.map((event) => (
-                    <div
-                      className="metric-tile p-4 text-sm text-muted"
-                      key={event.id}
-                    >
+                    <div className="metric-tile p-3 text-sm text-muted" key={event.id}>
                       <p className="font-semibold text-foreground">
                         {event.kind === "deletion" ? "Удаление аккаунта" : "Операция с данными"}
                       </p>
@@ -375,7 +369,7 @@ export default async function HistoryPage() {
                     </div>
                   ))
                 ) : (
-                  <div className="metric-tile p-4 text-sm text-muted">
+                  <div className="metric-tile p-3 text-sm text-muted">
                     Событий приватности пока нет.
                   </div>
                 )}
