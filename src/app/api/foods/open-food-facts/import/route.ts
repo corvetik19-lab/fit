@@ -11,7 +11,10 @@ import {
   lookupOpenFoodFactsProduct,
   openFoodFactsBarcodePattern,
 } from "@/lib/nutrition/open-food-facts";
+import { withTransientRetry } from "@/lib/runtime-retry";
+import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { readServerUserOrNull } from "@/lib/supabase/server-user";
 
 const payloadSchema = z.object({
   barcode: z.string().trim().regex(openFoodFactsBarcodePattern),
@@ -46,10 +49,8 @@ function buildImportedFoodPayload(
 
 export async function POST(request: Request) {
   try {
-    const supabase = await createServerSupabaseClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const authSupabase = await createServerSupabaseClient();
+    const user = await readServerUserOrNull(authSupabase, request);
 
     if (!user) {
       return createApiErrorResponse({
@@ -60,7 +61,48 @@ export async function POST(request: Request) {
     }
 
     const { barcode } = payloadSchema.parse(await request.json());
-    const product = await lookupOpenFoodFactsProduct(barcode);
+    const writeSupabase = createAdminSupabaseClient();
+    const existingFoodsByBarcode = await withTransientRetry(
+      async () => {
+        const { data, error } = await writeSupabase
+          .from("foods")
+          .select(foodSelect)
+          .eq("user_id", user.id)
+          .eq("barcode", barcode)
+          .order("updated_at", { ascending: false })
+          .limit(1);
+
+        if (error) {
+          throw error;
+        }
+
+        return (data ?? []) as NutritionFood[];
+      },
+      {
+        attempts: 4,
+        delaysMs: [500, 1_500, 3_000],
+      },
+    );
+    const existingFoodByBarcode = existingFoodsByBarcode[0] ?? null;
+
+    if (existingFoodByBarcode) {
+      return Response.json({
+        data: existingFoodByBarcode,
+        meta: {
+          existed: true,
+          imported: false,
+          source: existingFoodByBarcode.source,
+        },
+      });
+    }
+
+    const product = await withTransientRetry(
+      async () => await lookupOpenFoodFactsProduct(barcode),
+      {
+        attempts: 4,
+        delaysMs: [800, 2_000, 4_000],
+      },
+    );
 
     if (!product) {
       return createApiErrorResponse({
@@ -70,49 +112,69 @@ export async function POST(request: Request) {
       });
     }
 
-    const { data: existingFoods, error: existingFoodError } = await supabase
-      .from("foods")
-      .select(foodSelect)
-      .eq("user_id", user.id)
-      .eq("barcode", product.barcode)
-      .order("updated_at", { ascending: false })
-      .limit(1);
+    const existingFoods = await withTransientRetry(
+      async () => {
+        const { data, error } = await writeSupabase
+          .from("foods")
+          .select(foodSelect)
+          .eq("user_id", user.id)
+          .eq("barcode", product.barcode)
+          .order("updated_at", { ascending: false })
+          .limit(1);
 
-    if (existingFoodError) {
-      throw existingFoodError;
-    }
+        if (error) {
+          throw error;
+        }
 
-    const existingFood = ((existingFoods ?? [])[0] as NutritionFood | undefined) ?? null;
+        return (data ?? []) as NutritionFood[];
+      },
+      {
+        attempts: 4,
+        delaysMs: [500, 1_500, 3_000],
+      },
+    );
+
+    const existingFood = existingFoods[0] ?? null;
 
     if (existingFood?.source === "open_food_facts") {
-      const { data, error } = await supabase
-        .from("foods")
-        .update(
-          buildFoodUpdateData({
-            name: product.name,
-            brand: product.brand,
-            kcal: Math.max(0, Math.round(product.kcal ?? 0)),
-            protein: Math.max(0, product.protein ?? 0),
-            fat: Math.max(0, product.fat ?? 0),
-            carbs: Math.max(0, product.carbs ?? 0),
-            barcode: product.barcode,
-            image_url: product.imageUrl,
-            ingredients_text: product.ingredientsText,
-            quantity: product.quantity,
-            serving_size: product.servingSize,
-          }),
-        )
-        .eq("id", existingFood.id)
-        .eq("user_id", user.id)
-        .select(foodSelect)
-        .single();
+      const data = await withTransientRetry(
+        async () => {
+          const { data: updatedFood, error } = await writeSupabase
+            .from("foods")
+            .update(
+              buildFoodUpdateData({
+                name: product.name,
+                brand: product.brand,
+                kcal: Math.max(0, Math.round(product.kcal ?? 0)),
+                protein: Math.max(0, product.protein ?? 0),
+                fat: Math.max(0, product.fat ?? 0),
+                carbs: Math.max(0, product.carbs ?? 0),
+                barcode: product.barcode,
+                image_url: product.imageUrl,
+                ingredients_text: product.ingredientsText,
+                quantity: product.quantity,
+                serving_size: product.servingSize,
+              }),
+            )
+            .eq("id", existingFood.id)
+            .eq("user_id", user.id)
+            .select(foodSelect)
+            .single();
 
-      if (error) {
-        throw error;
-      }
+          if (error) {
+            throw error;
+          }
+
+          return updatedFood as NutritionFood;
+        },
+        {
+          attempts: 4,
+          delaysMs: [500, 1_500, 3_000],
+        },
+      );
 
       return Response.json({
-        data: data as NutritionFood,
+        data,
         meta: {
           existed: true,
           imported: true,
@@ -142,18 +204,28 @@ export async function POST(request: Request) {
       });
     }
 
-    const { data, error } = await supabase
-      .from("foods")
-      .insert(importPayload)
-      .select(foodSelect)
-      .single();
+    const data = await withTransientRetry(
+      async () => {
+        const { data: insertedFood, error } = await writeSupabase
+          .from("foods")
+          .insert(importPayload)
+          .select(foodSelect)
+          .single();
 
-    if (error) {
-      throw error;
-    }
+        if (error) {
+          throw error;
+        }
+
+        return insertedFood as NutritionFood;
+      },
+      {
+        attempts: 4,
+        delaysMs: [500, 1_500, 3_000],
+      },
+    );
 
     return Response.json({
-      data: data as NutritionFood,
+      data,
       meta: {
         existed: false,
         imported: true,

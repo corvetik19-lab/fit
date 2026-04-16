@@ -225,3 +225,11 @@
 - chat/generation runtime — рабочий;
 - retrieval runtime — рабочий в degrade-safe text-only режиме;
 - AI product surface — можно развивать дальше без ожидания live embeddings unblock.
+
+## 2026-04-16 Live runtime status
+
+- Актуальный ручной proof-of-work для AI и nutrition лежит в [manual-functional-check.latest.json](/C:/fit/output/manual-functional-check.latest.json) и [manual-functional-check.latest.summary.txt](/C:/fit/output/manual-functional-check.latest.summary.txt).
+- Текущий живой статус server-side routes под `super_admin`: `/api/ai/chat` -> `200`, `/api/ai/meal-plan` -> `200`, `/api/ai/workout-plan` -> `200`, `/api/foods/open-food-facts/[barcode]` -> `200`, `/api/foods/open-food-facts/import` -> `200`, `/api/ai/meal-photo` -> `200`, `/api/nutrition/photo-import` -> `200`.
+- Safety-контур подтверждён отдельным живым запросом: опасный prompt на английском возвращает `blocked: true` и безопасный отказ, даже когда generation идёт через fallback.
+- Важно: live provider-path всё ещё частично деградирует по внешним причинам (`OpenRouter`/embeddings runtime), поэтому chat и plan generation местами работают в `deterministic_fallback`; это считается корректным degrade-safe поведением, а не production-quality live AI.
+- Photo-import теперь не падает на локальном runtime: после удаления лишнего inner-timeout route стабильно сохраняет результат meal-photo анализа в `foods`, даже когда storage upload уходит в inline-image fallback.

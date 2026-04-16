@@ -15,25 +15,23 @@ import {
   BILLING_FEATURE_KEYS,
   createFeatureAccessDeniedResponse,
   incrementFeatureUsage,
+  readPlatformAdminRoleOrNull,
   readUserBillingAccessOrFallback,
 } from "@/lib/billing-access";
 import { hasAiRuntimeEnv } from "@/lib/env";
 import { logger } from "@/lib/logger";
 import { withTimeout, withTransientRetry } from "@/lib/runtime-retry";
 import { hasRiskyIntent } from "@/lib/safety";
+import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { readServerUserOrNull } from "@/lib/supabase/server-user";
 
 const MEAL_PLAN_USAGE_TIMEOUT_MS = 5_000;
 
 export async function POST(request: Request) {
   try {
     const supabase = await createServerSupabaseClient();
-    const {
-      data: { user },
-    } = await withTransientRetry(async () => await supabase.auth.getUser(), {
-      attempts: 4,
-      delaysMs: [500, 1_500, 3_000, 5_000],
-    });
+    const user = await readServerUserOrNull(supabase, request);
 
     if (!user) {
       return createApiErrorResponse({
@@ -42,6 +40,8 @@ export async function POST(request: Request) {
         message: getAiPlanAuthMessage("meal"),
       });
     }
+
+    const adminSupabase = createAdminSupabaseClient();
 
     const body = mealPlanRequestSchema.parse(
       await request.json().catch(() => ({})),
@@ -55,10 +55,21 @@ export async function POST(request: Request) {
       });
     }
 
+    let platformAdminRole = null;
+    try {
+      platformAdminRole = await readPlatformAdminRoleOrNull(adminSupabase, user.id);
+    } catch (error) {
+      logger.warn("meal plan admin role lookup skipped", {
+        error,
+        userId: user.id,
+      });
+    }
+
     const access = await withTransientRetry(
       async () =>
         await readUserBillingAccessOrFallback(supabase, user.id, {
           email: user.email,
+          role: platformAdminRole,
         }),
       {
         attempts: 3,
@@ -79,7 +90,7 @@ export async function POST(request: Request) {
       });
     }
 
-    const proposal = await generateMealPlanProposalForUser(supabase, user.id, {
+    const proposal = await generateMealPlanProposalForUser(adminSupabase, user.id, {
       goal: body.goal ?? null,
       kcalTarget: body.kcalTarget ?? null,
       dietaryNotes: body.dietaryNotes ?? undefined,
@@ -91,7 +102,7 @@ export async function POST(request: Request) {
         async () =>
           await withTimeout(
             incrementFeatureUsage(
-              supabase,
+              adminSupabase,
               user.id,
               BILLING_FEATURE_KEYS.mealPlan,
             ),

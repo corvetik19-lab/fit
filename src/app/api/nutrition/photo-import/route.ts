@@ -1,7 +1,11 @@
+import { createHash } from "node:crypto";
+
+import { StorageClient } from "@supabase/storage-js";
 import { ZodError, z } from "zod";
 
 import { mealPhotoAnalysisSchema } from "@/lib/ai/schemas";
 import { createApiErrorResponse } from "@/lib/api/error-response";
+import { publicEnv, serverEnv } from "@/lib/env";
 import { logger } from "@/lib/logger";
 import { recalculateDailyNutritionSummary } from "@/lib/nutrition/meal-logging";
 import {
@@ -9,13 +13,17 @@ import {
   type NutritionItemSnapshot,
 } from "@/lib/nutrition/nutrition-write-model";
 import { buildFoodCreateData } from "@/lib/nutrition/nutrition-self-service";
+import { withTimeout, withTransientRetry } from "@/lib/runtime-retry";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { readServerUserOrNull } from "@/lib/supabase/server-user";
 
 export const runtime = "nodejs";
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 const NUTRITION_CAPTURE_BUCKET = "nutrition-captures";
+const INLINE_IMAGE_FALLBACK_MAX_BYTES = 1_500_000;
+const NUTRITION_PHOTO_IMPORT_DB_TIMEOUT_MS = 25_000;
 
 const payloadSchema = z.object({
   analysis: mealPhotoAnalysisSchema,
@@ -31,7 +39,7 @@ function buildIngredientsText(
   notes: string | null | undefined,
 ) {
   const composition = analysis.items
-    .map((item) => `${item.name} — ${item.portion}`)
+    .map((item) => `${item.name} - ${item.portion}`)
     .join(", ");
 
   if (notes) {
@@ -41,32 +49,60 @@ function buildIngredientsText(
   return `${analysis.summary}\n\nСостав на фото: ${composition}`;
 }
 
+function createNutritionCaptureStorageClient() {
+  if (
+    !publicEnv.NEXT_PUBLIC_SUPABASE_URL ||
+    !serverEnv.SUPABASE_SERVICE_ROLE_KEY
+  ) {
+    throw new Error("Missing Supabase storage upload environment variables.");
+  }
+
+  return new StorageClient(
+    `${publicEnv.NEXT_PUBLIC_SUPABASE_URL}/storage/v1`,
+    {
+      Authorization: `Bearer ${serverEnv.SUPABASE_SERVICE_ROLE_KEY}`,
+      apikey: serverEnv.SUPABASE_SERVICE_ROLE_KEY,
+    },
+    undefined,
+    { useNewHostname: true },
+  );
+}
+
 async function uploadNutritionCaptureImage(userId: string, image: File) {
+  const imageBuffer = Buffer.from(await image.arrayBuffer());
+
   try {
-    const adminSupabase = createAdminSupabaseClient();
+    const storageClient = createNutritionCaptureStorageClient();
     const extension =
       image.name.split(".").pop()?.trim().toLowerCase() ||
       image.type.split("/").pop()?.trim().toLowerCase() ||
       "jpg";
     const safeExtension = extension.replace(/[^a-z0-9]/g, "") || "jpg";
     const storagePath = `${userId}/${new Date().toISOString().slice(0, 10)}/${crypto.randomUUID()}.${safeExtension}`;
-    const imageBytes = await image.arrayBuffer();
 
-    const { error: uploadError } = await adminSupabase.storage
-      .from(NUTRITION_CAPTURE_BUCKET)
-      .upload(storagePath, imageBytes, {
-        cacheControl: "3600",
-        contentType: image.type,
-        upsert: false,
-      });
+    await withTransientRetry(
+      async () => {
+        const { error } = await storageClient
+          .from(NUTRITION_CAPTURE_BUCKET)
+          .upload(storagePath, imageBuffer, {
+            cacheControl: "3600",
+            contentType: image.type,
+            upsert: false,
+          });
 
-    if (uploadError) {
-      throw uploadError;
-    }
+        if (error) {
+          throw error;
+        }
+      },
+      {
+        attempts: 5,
+        delaysMs: [800, 2_000, 4_000, 6_500],
+      },
+    );
 
     const {
       data: { publicUrl },
-    } = adminSupabase.storage.from(NUTRITION_CAPTURE_BUCKET).getPublicUrl(storagePath);
+    } = storageClient.from(NUTRITION_CAPTURE_BUCKET).getPublicUrl(storagePath);
 
     return {
       publicUrl,
@@ -74,6 +110,23 @@ async function uploadNutritionCaptureImage(userId: string, image: File) {
     };
   } catch (error) {
     logger.warn("nutrition photo import image upload skipped", { error });
+
+    if (
+      image.type.startsWith("image/") &&
+      imageBuffer.length <= INLINE_IMAGE_FALLBACK_MAX_BYTES
+    ) {
+      logger.warn("nutrition photo import is using inline image fallback", {
+        imageBytes: imageBuffer.length,
+        userId,
+      });
+
+      return {
+        publicUrl: null,
+        storagePath: null,
+        previewUrl: `data:${image.type};base64,${imageBuffer.toString("base64")}`,
+      };
+    }
+
     return null;
   }
 }
@@ -81,30 +134,40 @@ async function uploadNutritionCaptureImage(userId: string, image: File) {
 async function removeNutritionCaptureImage(storagePath: string) {
   try {
     const adminSupabase = createAdminSupabaseClient();
-    await adminSupabase.storage.from(NUTRITION_CAPTURE_BUCKET).remove([storagePath]);
+    await adminSupabase.storage
+      .from(NUTRITION_CAPTURE_BUCKET)
+      .remove([storagePath]);
   } catch (error) {
-    logger.warn("nutrition photo import image cleanup failed", { error, storagePath });
+    logger.warn("nutrition photo import image cleanup failed", {
+      error,
+      storagePath,
+    });
   }
 }
 
 export async function POST(request: Request) {
+  let authenticatedUserId: string | null = null;
   let uploadedImagePath: string | null = null;
   let createdFoodId: string | null = null;
+  let createdMealId: string | null = null;
   let shouldRollbackFood = false;
+  let persistenceCommitted = false;
 
   try {
-    const supabase = await createServerSupabaseClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const authSupabase = await createServerSupabaseClient();
+    const user = await readServerUserOrNull(authSupabase, request);
 
     if (!user) {
       return createApiErrorResponse({
         status: 401,
         code: "AUTH_REQUIRED",
-        message: "Нужно войти в аккаунт, чтобы сохранять продукты с камеры.",
+        message:
+          "Нужно войти в аккаунт, чтобы сохранять продукты с камеры.",
       });
     }
+
+    authenticatedUserId = user.id;
+    const writeSupabase = createAdminSupabaseClient();
 
     const formData = await request.formData();
     const image = formData.get("image");
@@ -124,7 +187,7 @@ export async function POST(request: Request) {
       return createApiErrorResponse({
         status: 400,
         code: "NUTRITION_PHOTO_IMPORT_IMAGE_INVALID",
-        message: "В import photo flow можно передавать только изображение.",
+        message: "В photo import можно передавать только изображения.",
       });
     }
 
@@ -155,31 +218,61 @@ export async function POST(request: Request) {
     const eatenAt = new Date().toISOString();
     const summaryDate = eatenAt.slice(0, 10);
 
-    const { data: food, error: foodError } = await supabase
-      .from("foods")
-      .insert(
-        buildFoodCreateData(user.id, {
-          name: payload.analysis.title,
-          source: "ai_photo",
-          kcal: payload.analysis.estimatedKcal,
-          protein: payload.analysis.macros.protein,
-          fat: payload.analysis.macros.fat,
-          carbs: payload.analysis.macros.carbs,
-          image_url: uploadedImage?.publicUrl ?? null,
-          ingredients_text: buildIngredientsText(payload.analysis, payload.notes),
-          serving_size: "1 порция",
-        }),
-      )
-      .select(foodSelect)
-      .single();
+    const foodId = createdFoodId ?? crypto.randomUUID();
+    createdFoodId = foodId;
+    const food = await withTransientRetry(
+      async () => {
+        const { error } = await writeSupabase.from("foods").upsert(
+          {
+            id: foodId,
+            ...buildFoodCreateData(user.id, {
+              name: payload.analysis.title,
+              source: "ai_photo",
+              kcal: payload.analysis.estimatedKcal,
+              protein: payload.analysis.macros.protein,
+              fat: payload.analysis.macros.fat,
+              carbs: payload.analysis.macros.carbs,
+                image_url:
+                  uploadedImage?.storagePath && uploadedImage.publicUrl
+                    ? uploadedImage.publicUrl
+                    : null,
+                ingredients_text: buildIngredientsText(
+                  payload.analysis,
+                  payload.notes,
+                ).slice(0, 900),
+              serving_size: "1 порция",
+            }),
+          },
+          {
+            onConflict: "id",
+          },
+        );
 
-    if (foodError) {
-      throw foodError;
-    }
+        if (error) {
+          throw error;
+        }
 
-    createdFoodId = food.id;
+        const { data, error: selectError } = await writeSupabase
+          .from("foods")
+          .select(foodSelect)
+          .eq("id", foodId)
+          .single();
+
+        if (selectError) {
+          throw selectError;
+        }
+
+        return data;
+      },
+      {
+        attempts: 6,
+        delaysMs: [500, 1_500, 3_000, 5_000, 8_000],
+      },
+    );
 
     if (payload.mode === "food") {
+      persistenceCommitted = true;
+
       return Response.json({
         data: {
           food,
@@ -187,25 +280,51 @@ export async function POST(request: Request) {
         meta: {
           addedToMeal: false,
           imageStored: Boolean(uploadedImage?.publicUrl),
+          imagePreviewUrl:
+            uploadedImage?.publicUrl ?? uploadedImage?.previewUrl ?? null,
         },
       });
     }
 
     shouldRollbackFood = true;
 
-    const { data: meal, error: mealError } = await supabase
-      .from("meals")
-      .insert({
-        eaten_at: eatenAt,
-        source: "manual",
-        user_id: user.id,
-      })
-      .select("id, eaten_at")
-      .single();
+    const mealId = createdMealId ?? crypto.randomUUID();
+    createdMealId = mealId;
+    const meal = await withTransientRetry(
+      async () => {
+        const { error } = await withTimeout(Promise.resolve(writeSupabase.from("meals").upsert(
+          {
+            id: mealId,
+            eaten_at: eatenAt,
+            source: "manual",
+            user_id: user.id,
+          },
+          {
+            onConflict: "id",
+          },
+        )), NUTRITION_PHOTO_IMPORT_DB_TIMEOUT_MS, "nutrition photo import meal upsert");
 
-    if (mealError) {
-      throw mealError;
-    }
+        if (error) {
+          throw error;
+        }
+
+        const { data, error: selectError } = await withTimeout(Promise.resolve(writeSupabase
+          .from("meals")
+          .select("id, eaten_at")
+          .eq("id", mealId)
+          .single()), NUTRITION_PHOTO_IMPORT_DB_TIMEOUT_MS, "nutrition photo import meal select");
+
+        if (selectError) {
+          throw selectError;
+        }
+
+        return data;
+      },
+      {
+        attempts: 6,
+        delaysMs: [500, 1_500, 3_000, 5_000, 8_000],
+      },
+    );
 
     const itemSnapshots: NutritionItemSnapshot[] = [
       {
@@ -219,20 +338,80 @@ export async function POST(request: Request) {
       },
     ];
 
-    const { error: mealItemsError } = await supabase
-      .from("meal_items")
-      .insert(buildMealItemInsertPayload(user.id, meal.id, itemSnapshots));
+    try {
+      const mealItemPayload = buildMealItemInsertPayload(
+        user.id,
+        meal.id,
+        itemSnapshots,
+      ).map((item, index) => ({
+        id: createHash("sha1")
+          .update(`${meal.id}:${item.food_id}:${index}`)
+          .digest("hex")
+          .slice(0, 32)
+          .replace(
+            /(.{8})(.{4})(.{4})(.{4})(.{12})/,
+            "$1-$2-$3-$4-$5",
+          ),
+        ...item,
+      }));
 
-    if (mealItemsError) {
-      await supabase.from("meals").delete().eq("id", meal.id).eq("user_id", user.id);
+      await withTransientRetry(
+        async () => {
+          const { error } = await withTimeout(Promise.resolve(writeSupabase
+            .from("meal_items")
+            .upsert(mealItemPayload, {
+              onConflict: "id",
+            })), NUTRITION_PHOTO_IMPORT_DB_TIMEOUT_MS, "nutrition photo import meal items upsert");
+
+          if (error) {
+            throw error;
+          }
+        },
+        {
+          attempts: 6,
+          delaysMs: [500, 1_500, 3_000, 5_000, 8_000],
+        },
+      );
+    } catch (mealItemsError) {
+      await writeSupabase
+        .from("meals")
+        .delete()
+        .eq("id", meal.id)
+        .eq("user_id", user.id);
+      createdMealId = null;
       throw mealItemsError;
     }
 
-    const summary = await recalculateDailyNutritionSummary(
-      supabase,
-      user.id,
-      summaryDate,
-    );
+    persistenceCommitted = true;
+
+    let summary = null;
+    let summaryDeferred = false;
+
+    try {
+      summary = await withTransientRetry(
+        async () =>
+          await withTimeout(
+            recalculateDailyNutritionSummary(
+              writeSupabase,
+              user.id,
+              summaryDate,
+            ),
+            NUTRITION_PHOTO_IMPORT_DB_TIMEOUT_MS,
+            "nutrition photo import summary recalculation",
+          ),
+        {
+          attempts: 4,
+          delaysMs: [500, 1_500, 3_000],
+        },
+      );
+    } catch (summaryError) {
+      summaryDeferred = true;
+      logger.warn("nutrition photo import summary recalculation skipped", {
+        error: summaryError,
+        summaryDate,
+        userId: user.id,
+      });
+    }
 
     return Response.json({
       data: {
@@ -243,23 +422,41 @@ export async function POST(request: Request) {
       meta: {
         addedToMeal: true,
         imageStored: Boolean(uploadedImage?.publicUrl),
+        imagePreviewUrl:
+          uploadedImage?.publicUrl ?? uploadedImage?.previewUrl ?? null,
+        summaryDeferred,
       },
     });
   } catch (error) {
-    if (shouldRollbackFood && createdFoodId) {
+    if (!persistenceCommitted && createdMealId && authenticatedUserId) {
       try {
-        const rollbackSupabase = await createServerSupabaseClient();
-        const {
-          data: { user },
-        } = await rollbackSupabase.auth.getUser();
+        const rollbackSupabase = createAdminSupabaseClient();
+        await rollbackSupabase
+          .from("meals")
+          .delete()
+          .eq("id", createdMealId)
+          .eq("user_id", authenticatedUserId);
+      } catch (rollbackError) {
+        logger.warn("nutrition photo import meal rollback failed", {
+          createdMealId,
+          error: rollbackError,
+        });
+      }
+    }
 
-        if (user) {
-          await rollbackSupabase
-            .from("foods")
-            .delete()
-            .eq("id", createdFoodId)
-            .eq("user_id", user.id);
-        }
+    if (
+      !persistenceCommitted &&
+      shouldRollbackFood &&
+      createdFoodId &&
+      authenticatedUserId
+    ) {
+      try {
+        const rollbackSupabase = createAdminSupabaseClient();
+        await rollbackSupabase
+          .from("foods")
+          .delete()
+          .eq("id", createdFoodId)
+          .eq("user_id", authenticatedUserId);
       } catch (rollbackError) {
         logger.warn("nutrition photo import food rollback failed", {
           createdFoodId,
@@ -286,7 +483,8 @@ export async function POST(request: Request) {
     return createApiErrorResponse({
       status: 500,
       code: "NUTRITION_PHOTO_IMPORT_FAILED",
-      message: "Не удалось сохранить результат фотоанализа в питание.",
+      message:
+        "Не удалось сохранить результат фотоанализа в питание.",
     });
   }
 }

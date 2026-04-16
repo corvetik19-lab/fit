@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { PlatformAdminRole } from "@/lib/admin-permissions";
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import { logger } from "@/lib/logger";
+import { withTransientRetry } from "@/lib/runtime-retry";
 
 export const BILLING_FEATURE_KEYS = {
   aiChat: "ai_chat",
@@ -87,6 +88,14 @@ type PlatformAdminRow = {
 
 const ACTIVE_SUBSCRIPTION_STATUSES = new Set(["active", "trial"]);
 const MONTHLY_WINDOW = "monthly";
+const PLATFORM_ADMIN_ROLE_CACHE_TTL_MS = 5 * 60_000;
+
+type PlatformAdminRoleCacheEntry = {
+  expiresAt: number;
+  role: PlatformAdminRole | null;
+};
+
+const platformAdminRoleCache = new Map<string, PlatformAdminRoleCacheEntry>();
 
 const FEATURE_CONFIG: BillingFeatureConfigMap = {
   ai_chat: {
@@ -97,15 +106,13 @@ const FEATURE_CONFIG: BillingFeatureConfigMap = {
   },
   meal_plan: {
     label: "AI-план питания",
-    description:
-      "Сборка плана питания в черновик и применение его в приложении.",
+    description: "Сборка плана питания в черновик и применение его в приложении.",
     metricKey: "ai_meal_plan_generations",
     requiresSubscription: true,
   },
   workout_plan: {
     label: "AI-план тренировок",
-    description:
-      "Сборка тренировочной недели в черновик и применение её в приложении.",
+    description: "Сборка тренировочной недели в черновик и применение её в приложении.",
     metricKey: "ai_workout_plan_generations",
     requiresSubscription: true,
   },
@@ -256,6 +263,31 @@ function isPrivilegedBillingAccess(input?: {
   return input?.role === "super_admin";
 }
 
+function readCachedPlatformAdminRole(userId: string) {
+  const cachedRole = platformAdminRoleCache.get(userId);
+
+  if (!cachedRole) {
+    return null;
+  }
+
+  if (cachedRole.expiresAt <= Date.now()) {
+    platformAdminRoleCache.delete(userId);
+    return null;
+  }
+
+  return cachedRole.role;
+}
+
+function writeCachedPlatformAdminRole(
+  userId: string,
+  role: PlatformAdminRole | null,
+) {
+  platformAdminRoleCache.set(userId, {
+    role,
+    expiresAt: Date.now() + PLATFORM_ADMIN_ROLE_CACHE_TTL_MS,
+  });
+}
+
 function buildPrivilegedBillingAccessSnapshot(
   featureKeys: BillingFeatureKey[],
 ): UserBillingAccessSnapshot {
@@ -291,6 +323,41 @@ function buildPrivilegedBillingAccessSnapshot(
   };
 }
 
+export async function readPlatformAdminRoleOrNull(
+  supabase: Pick<SupabaseClient, "from">,
+  userId: string,
+) {
+  const cachedRole = readCachedPlatformAdminRole(userId);
+
+  if (cachedRole) {
+    return cachedRole;
+  }
+
+  const platformAdminResult = await withTransientRetry(
+    async () =>
+      await supabase
+        .from("platform_admins")
+        .select("role")
+        .eq("user_id", userId)
+        .maybeSingle(),
+    {
+      attempts: 4,
+      delaysMs: [500, 1_500, 3_000],
+    },
+  );
+
+  if (platformAdminResult.error) {
+    throw platformAdminResult.error;
+  }
+
+  const platformAdmin =
+    (platformAdminResult.data as PlatformAdminRow | null) ?? null;
+
+  const role = platformAdmin?.role ?? null;
+  writeCachedPlatformAdminRole(userId, role);
+  return role;
+}
+
 export async function readUserBillingAccess(
   supabase: Pick<SupabaseClient, "from">,
   userId: string,
@@ -308,23 +375,12 @@ export async function readUserBillingAccess(
     return buildPrivilegedBillingAccessSnapshot(featureKeys);
   }
 
-  const platformAdminResult = await supabase
-    .from("platform_admins")
-    .select("role")
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  if (platformAdminResult.error) {
-    throw platformAdminResult.error;
-  }
-
-  const platformAdmin =
-    (platformAdminResult.data as PlatformAdminRow | null) ?? null;
+  const platformAdminRole = await readPlatformAdminRoleOrNull(supabase, userId);
 
   if (
     isPrivilegedBillingAccess({
       email: options?.email,
-      role: platformAdmin?.role ?? null,
+      role: platformAdminRole,
     })
   ) {
     return buildPrivilegedBillingAccessSnapshot(featureKeys);
@@ -332,24 +388,45 @@ export async function readUserBillingAccess(
 
   const [subscriptionResult, entitlementsResult, usageCountersResult] =
     await Promise.all([
-      supabase
-        .from("subscriptions")
-        .select("status, provider, current_period_end, updated_at")
-        .eq("user_id", userId)
-        .order("updated_at", { ascending: false })
-        .limit(1)
-        .maybeSingle(),
-      supabase
-        .from("entitlements")
-        .select("feature_key, is_enabled, limit_value")
-        .eq("user_id", userId)
-        .in("feature_key", featureKeys),
-      supabase
-        .from("usage_counters")
-        .select("id, metric_key, metric_window, usage_count, reset_at")
-        .eq("user_id", userId)
-        .eq("metric_window", MONTHLY_WINDOW)
-        .in("metric_key", metricKeys),
+      withTransientRetry(
+        async () =>
+          await supabase
+            .from("subscriptions")
+            .select("status, provider, current_period_end, updated_at")
+            .eq("user_id", userId)
+            .order("updated_at", { ascending: false })
+            .limit(1)
+            .maybeSingle(),
+        {
+          attempts: 4,
+          delaysMs: [500, 1_500, 3_000],
+        },
+      ),
+      withTransientRetry(
+        async () =>
+          await supabase
+            .from("entitlements")
+            .select("feature_key, is_enabled, limit_value")
+            .eq("user_id", userId)
+            .in("feature_key", featureKeys),
+        {
+          attempts: 4,
+          delaysMs: [500, 1_500, 3_000],
+        },
+      ),
+      withTransientRetry(
+        async () =>
+          await supabase
+            .from("usage_counters")
+            .select("id, metric_key, metric_window, usage_count, reset_at")
+            .eq("user_id", userId)
+            .eq("metric_window", MONTHLY_WINDOW)
+            .in("metric_key", metricKeys),
+        {
+          attempts: 4,
+          delaysMs: [500, 1_500, 3_000],
+        },
+      ),
     ]);
 
   if (subscriptionResult.error) {

@@ -1,5 +1,11 @@
 import { z } from "zod";
 
+const maxInlineImageUrlLength = 2_500_000;
+
+function isInlineImageDataUrl(value: string) {
+  return /^data:image\/[a-z0-9.+-]+;base64,[a-z0-9+/=]+$/iu.test(value.trim());
+}
+
 export const optionalImageUrlSchema = z.preprocess(
   (value) => {
     if (typeof value === "string" && value.trim().length === 0) {
@@ -8,7 +14,15 @@ export const optionalImageUrlSchema = z.preprocess(
 
     return value;
   },
-  z.string().trim().url().max(2048).nullable().optional(),
+  z
+    .string()
+    .trim()
+    .max(maxInlineImageUrlLength)
+    .refine((value) => isAbsoluteHttpUrl(value) || isInlineImageDataUrl(value), {
+      message: "Expected an absolute image URL or inline image data URL.",
+    })
+    .nullable()
+    .optional(),
 );
 
 export function normalizeOptionalImageUrl(value: string | null | undefined) {
@@ -17,12 +31,18 @@ export function normalizeOptionalImageUrl(value: string | null | undefined) {
 }
 
 export function isAbsoluteHttpUrl(value: string | null | undefined) {
-  if (!value?.trim()) {
+  const trimmed = value?.trim();
+
+  if (!trimmed) {
     return false;
   }
 
+  if (isInlineImageDataUrl(trimmed)) {
+    return true;
+  }
+
   try {
-    const url = new URL(value);
+    const url = new URL(trimmed);
     return url.protocol === "http:" || url.protocol === "https:";
   } catch {
     return false;

@@ -12,6 +12,8 @@ const OPEN_FOOD_FACTS_FIELDS = [
 ].join(",");
 
 export const openFoodFactsBarcodePattern = /^[0-9]{6,32}$/u;
+const OPEN_FOOD_FACTS_RETRY_DELAYS_MS = [600, 1_200, 2_400] as const;
+const OPEN_FOOD_FACTS_HTTP_RETRY_DELAYS_MS = [1_200, 2_500, 5_000] as const;
 
 type OpenFoodFactsProductPayload = {
   brands?: string | null;
@@ -46,6 +48,58 @@ export type OpenFoodFactsProduct = {
   quantity: string | null;
   servingSize: string | null;
 };
+
+async function fetchOpenFoodFactsJson(url: string) {
+  let lastError: unknown = null;
+
+  for (let attempt = 0; attempt < OPEN_FOOD_FACTS_RETRY_DELAYS_MS.length + 1; attempt += 1) {
+    try {
+      return await fetch(url, {
+        cache: "no-store",
+        headers: {
+          "User-Agent": "fit-platform/1.0 (nutrition barcode lookup)",
+        },
+        signal: AbortSignal.timeout(10_000),
+      });
+    } catch (error) {
+      lastError = error;
+
+      if (attempt >= OPEN_FOOD_FACTS_RETRY_DELAYS_MS.length) {
+        throw error;
+      }
+
+      await new Promise((resolve) =>
+        setTimeout(resolve, OPEN_FOOD_FACTS_RETRY_DELAYS_MS[attempt]),
+      );
+    }
+  }
+
+  throw lastError instanceof Error
+    ? lastError
+    : new Error("OPEN_FOOD_FACTS_FETCH_FAILED");
+}
+
+async function lookupOpenFoodFactsProductLegacy(barcode: string) {
+  const response = await fetchOpenFoodFactsJson(
+    `${OPEN_FOOD_FACTS_BASE_URL}/api/v0/product/${barcode}.json`,
+  );
+
+  if (!response.ok) {
+    if (response.status === 404) {
+      return null;
+    }
+
+    throw new Error(`OPEN_FOOD_FACTS_HTTP_${response.status}`);
+  }
+
+  const payload = (await response.json()) as OpenFoodFactsLookupResponse;
+
+  if (payload.status !== 1 || !payload.product) {
+    return null;
+  }
+
+  return normalizeOpenFoodFactsProduct(barcode, payload.product);
+}
 
 function normalizeBarcode(value: string) {
   return value.replace(/\s+/gu, "").trim();
@@ -146,29 +200,88 @@ export async function lookupOpenFoodFactsProduct(barcode: string) {
     return null;
   }
 
-  const response = await fetch(
-    `${OPEN_FOOD_FACTS_BASE_URL}/api/v2/product/${normalizedBarcode}?fields=${OPEN_FOOD_FACTS_FIELDS}`,
-    {
-      cache: "no-store",
-      headers: {
-        "User-Agent": "fit-platform/1.0 (nutrition barcode lookup)",
-      },
-      signal: AbortSignal.timeout(10_000),
-    },
-  );
+  let lastError: unknown = null;
+  let response: Response | null = null;
+
+  for (let attempt = 0; attempt < OPEN_FOOD_FACTS_RETRY_DELAYS_MS.length + 1; attempt += 1) {
+    try {
+      response = await fetchOpenFoodFactsJson(
+        `${OPEN_FOOD_FACTS_BASE_URL}/api/v2/product/${normalizedBarcode}?fields=${OPEN_FOOD_FACTS_FIELDS}`,
+      );
+      lastError = null;
+      break;
+    } catch (error) {
+      lastError = error;
+
+      if (attempt >= OPEN_FOOD_FACTS_RETRY_DELAYS_MS.length) {
+        throw error;
+      }
+
+      await new Promise((resolve) =>
+        setTimeout(resolve, OPEN_FOOD_FACTS_RETRY_DELAYS_MS[attempt]),
+      );
+    }
+  }
+
+  if (!response) {
+    throw lastError instanceof Error
+      ? lastError
+      : new Error("OPEN_FOOD_FACTS_FETCH_FAILED");
+  }
 
   if (!response.ok) {
     if (response.status === 404) {
       return null;
     }
 
-    throw new Error(`OPEN_FOOD_FACTS_HTTP_${response.status}`);
+    if (
+      (response.status === 429 || response.status >= 500) &&
+      OPEN_FOOD_FACTS_HTTP_RETRY_DELAYS_MS.length > 0
+    ) {
+      for (const delayMs of OPEN_FOOD_FACTS_HTTP_RETRY_DELAYS_MS) {
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+
+        const retryResponse = await fetchOpenFoodFactsJson(
+          `${OPEN_FOOD_FACTS_BASE_URL}/api/v2/product/${normalizedBarcode}?fields=${OPEN_FOOD_FACTS_FIELDS}`,
+        );
+
+        if (retryResponse.ok) {
+          const retryPayload = (await retryResponse.json()) as OpenFoodFactsLookupResponse;
+
+          if (retryPayload.status !== 1 || !retryPayload.product) {
+            return null;
+          }
+
+          return normalizeOpenFoodFactsProduct(normalizedBarcode, retryPayload.product);
+        }
+
+        if (retryResponse.status === 404) {
+          return null;
+        }
+
+        response = retryResponse;
+
+        if (retryResponse.status !== 429 && retryResponse.status < 500) {
+          break;
+        }
+      }
+    }
+
+    try {
+      return await lookupOpenFoodFactsProductLegacy(normalizedBarcode);
+    } catch (legacyError) {
+      if (response.status === 404) {
+        return null;
+      }
+
+      throw legacyError;
+    }
   }
 
   const payload = (await response.json()) as OpenFoodFactsLookupResponse;
 
   if (payload.status !== 1 || !payload.product) {
-    return null;
+    return await lookupOpenFoodFactsProductLegacy(normalizedBarcode);
   }
 
   return normalizeOpenFoodFactsProduct(normalizedBarcode, payload.product);

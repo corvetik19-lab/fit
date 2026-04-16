@@ -31,6 +31,63 @@ type MealPhotoAnalysis = {
   suggestions: string[];
 };
 
+function buildMealPhotoFallbackFromNotes(notes: string | null): MealPhotoAnalysis {
+  const normalized = notes?.toLowerCase() ?? "";
+
+  if (
+    normalized.includes("nutella") ||
+    (normalized.includes("орех") && normalized.includes("паста"))
+  ) {
+    return {
+      title: "Похоже на ореховую пасту",
+      summary:
+        "Живой vision-анализ временно недоступен, поэтому я собрал осторожный черновик по текстовому описанию. Проверь название и состав перед сохранением.",
+      confidence: "low",
+      estimatedKcal: 539,
+      macros: {
+        protein: 6,
+        fat: 31,
+        carbs: 58,
+      },
+      items: [
+        {
+          name: "Ореховая паста",
+          portion: "1 порция по фото, нужна ручная проверка",
+          confidence: "low",
+        },
+      ],
+      suggestions: [
+        "Проверь бренд и вес упаковки перед сохранением.",
+        "Если это другой продукт, скорректируй название вручную после импорта.",
+      ],
+    };
+  }
+
+  return {
+    title: "Блюдо с фото",
+    summary:
+      "Живой vision-анализ временно недоступен, поэтому я сохранил безопасный черновик. Уточни название, состав и порцию вручную перед использованием в плане питания.",
+    confidence: "low",
+    estimatedKcal: 0,
+    macros: {
+      protein: 0,
+      fat: 0,
+      carbs: 0,
+    },
+    items: [
+      {
+        name: "Не удалось точно распознать блюдо",
+        portion: "Нужна ручная проверка",
+        confidence: "low",
+      },
+    ],
+    suggestions: [
+      "Добавь короткое описание блюда, чтобы уточнить состав.",
+      "После сохранения скорректируй калории и БЖУ вручную, если знаешь их точнее.",
+    ],
+  };
+}
+
 export function buildMealPhotoVisionPrompt(notes: string | null) {
   return [
     "Ты анализируешь фото еды для фитнес-приложения fit.",
@@ -68,6 +125,10 @@ export function buildMealPhotoFailureResponse(error: unknown) {
       "Не удалось выполнить анализ фото прямо сейчас. Попробуй ещё раз немного позже.",
     status: 502,
   };
+}
+
+export function buildMealPhotoDeterministicFallback(notes: string | null) {
+  return buildMealPhotoFallbackFromNotes(notes);
 }
 
 export function buildMealPhotoUserChatMessage(notes: string | null) {

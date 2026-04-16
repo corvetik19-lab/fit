@@ -34,7 +34,7 @@ type WorkoutPlan = z.infer<typeof workoutPlanSchema>;
 
 const PLAN_CONTEXT_TIMEOUT_MS = 8_000;
 const PLAN_KNOWLEDGE_TIMEOUT_MS = 6_000;
-const PLAN_AI_TIMEOUT_MS = 10_000;
+const PLAN_AI_TIMEOUT_MS = 18_000;
 const PLAN_PROPOSAL_PERSIST_TIMEOUT_MS = 8_000;
 
 function truncateText(value: string, maxLength: number) {

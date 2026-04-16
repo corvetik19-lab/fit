@@ -63,13 +63,16 @@ import {
   BILLING_FEATURE_KEYS,
   createFeatureAccessDeniedResponse,
   incrementFeatureUsage,
+  readPlatformAdminRoleOrNull,
   readUserBillingAccessOrFallback,
 } from "@/lib/billing-access";
 import { hasAiRuntimeEnv } from "@/lib/env";
 import { logger } from "@/lib/logger";
 import { withTimeout, withTransientRetry } from "@/lib/runtime-retry";
 import { hasRiskyIntent } from "@/lib/safety";
+import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { readServerUserOrNull } from "@/lib/supabase/server-user";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -513,12 +516,7 @@ export async function POST(request: Request) {
     const body = assistantRequestSchema.parse(await request.json());
     const allowWebSearch = body.allowWebSearch ?? false;
     const supabase = await createServerSupabaseClient();
-    const {
-      data: { user },
-    } = await withTransientRetry(async () => await supabase.auth.getUser(), {
-      attempts: 4,
-      delaysMs: [500, 1_500, 3_000, 5_000],
-    });
+    const user = await readServerUserOrNull(supabase, request);
 
     if (!user) {
       return createApiErrorResponse({
@@ -528,10 +526,24 @@ export async function POST(request: Request) {
       });
     }
 
+    let platformAdminRole = null;
+    try {
+      platformAdminRole = await readPlatformAdminRoleOrNull(
+        createAdminSupabaseClient(),
+        user.id,
+      );
+    } catch (error) {
+      logger.warn("ai assistant admin role lookup skipped", {
+        error,
+        userId: user.id,
+      });
+    }
+
     const access = await withTransientRetry(
       async () =>
         await readUserBillingAccessOrFallback(supabase, user.id, {
           email: user.email,
+          role: platformAdminRole,
         }),
       {
         attempts: 3,
@@ -562,14 +574,22 @@ export async function POST(request: Request) {
       content: lastUserText,
     });
     await touchAiChatSession(supabase, user.id, session.id);
-    await withTransientRetry(
-      async () =>
-        await incrementFeatureUsage(supabase, user.id, BILLING_FEATURE_KEYS.aiChat),
-      {
-        attempts: 3,
-        delaysMs: [500, 1_500, 3_000],
-      },
-    );
+    try {
+      await withTransientRetry(
+        async () =>
+          await incrementFeatureUsage(supabase, user.id, BILLING_FEATURE_KEYS.aiChat),
+        {
+          attempts: 3,
+          delaysMs: [500, 1_500, 3_000],
+        },
+      );
+    } catch (error) {
+      logger.warn("ai assistant usage increment skipped", {
+        error,
+        sessionId: session.id,
+        userId: user.id,
+      });
+    }
 
     const guardrail = detectAssistantGuardrail(lastUserText);
 

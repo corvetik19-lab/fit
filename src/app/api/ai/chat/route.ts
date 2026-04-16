@@ -2,6 +2,7 @@ import { generateText } from "ai";
 import { z } from "zod";
 
 import {
+  type AiChatMessageRow,
   createAiChatMessage,
   ensureAiChatSession,
   isAiChatSessionError,
@@ -32,19 +33,40 @@ import {
   BILLING_FEATURE_KEYS,
   createFeatureAccessDeniedResponse,
   incrementFeatureUsage,
+  readPlatformAdminRoleOrNull,
   readUserBillingAccessOrFallback,
 } from "@/lib/billing-access";
 import { hasAiRuntimeEnv } from "@/lib/env";
 import { logger } from "@/lib/logger";
-import { withTimeout, withTransientRetry } from "@/lib/runtime-retry";
+import {
+  isTransientRuntimeError,
+  withTimeout,
+  withTransientRetry,
+} from "@/lib/runtime-retry";
 import { hasRiskyIntent } from "@/lib/safety";
+import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { readServerUserOrNull } from "@/lib/supabase/server-user";
 
 export const runtime = "nodejs";
 
-const CHAT_CONTEXT_TIMEOUT_MS = 10_000;
-const CHAT_KNOWLEDGE_TIMEOUT_MS = 8_000;
-const CHAT_AI_TIMEOUT_MS = 12_000;
+const CHAT_CONTEXT_TIMEOUT_MS = 8_000;
+const CHAT_KNOWLEDGE_TIMEOUT_MS = 6_000;
+const CHAT_AI_TIMEOUT_MS = 9_000;
+
+function buildSyntheticChatMessage(input: {
+  content: string;
+  role: "assistant" | "user";
+  sessionId: string;
+}): AiChatMessageRow {
+  return {
+    id: crypto.randomUUID(),
+    session_id: input.sessionId,
+    role: input.role,
+    content: input.content,
+    created_at: new Date().toISOString(),
+  };
+}
 
 const chatRequestSchema = z.object({
   sessionId: z.string().uuid().optional(),
@@ -92,6 +114,8 @@ async function loadChatKnowledge(
   }
 }
 
+// Kept temporarily to avoid a large encoding-only rewrite of this file.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function buildDeterministicChatReply(input: {
   knowledge: Awaited<ReturnType<typeof loadChatKnowledge>>;
   message: string;
@@ -120,6 +144,81 @@ function buildDeterministicChatReply(input: {
     `Опираюсь на сохранённый факт (${topKnowledge.sourceType}): ${excerpt}`,
     "Если нужно, я могу продолжить с этим контекстом и собрать более конкретный черновик по питанию или тренировкам.",
   ].join("\n\n");
+}
+
+function buildDeterministicChatReplyClean(input: {
+  knowledge: Awaited<ReturnType<typeof loadChatKnowledge>>;
+  message: string;
+}) {
+  const topKnowledge = input.knowledge[0];
+  const intro =
+    "Сейчас живой AI-ответ недоступен, поэтому я даю резервный разбор по сохранённому контексту и истории.";
+  const focus = `Запрос: ${input.message.trim()}`;
+
+  if (!topKnowledge) {
+    return [
+      intro,
+      focus,
+      "В контексте сейчас нет достаточно свежих персональных фактов. Попробуй уточнить цель, приложить фото еды или попросить собрать черновик плана.",
+    ].join("\n\n");
+  }
+
+  const excerpt =
+    topKnowledge.content.length > 220
+      ? `${topKnowledge.content.slice(0, 220)}...`
+      : topKnowledge.content;
+
+  return [
+    intro,
+    focus,
+    `Опираюсь на сохранённый факт (${topKnowledge.sourceType}): ${excerpt}`,
+    "Если нужно, я могу продолжить с этим контекстом и собрать более конкретный черновик по питанию или тренировкам.",
+  ].join("\n\n");
+}
+
+function normalizeAssistantReply(content: string) {
+  return content.replace(/\u0000/g, "").trim();
+}
+
+function isLikelyIncompleteAssistantReply(input: {
+  content: string;
+  finishReason?: string | null;
+}) {
+  const normalized = normalizeAssistantReply(input.content);
+
+  if (!normalized) {
+    return true;
+  }
+
+  const finishReason = (input.finishReason ?? "").toLowerCase();
+
+  if (finishReason === "length") {
+    return true;
+  }
+
+  if (normalized.length < 120) {
+    return false;
+  }
+
+  const lastLine = normalized.split(/\r?\n/).at(-1)?.trim() ?? normalized;
+
+  if (!lastLine) {
+    return true;
+  }
+
+  if (/[,:;\-–—]$/.test(lastLine)) {
+    return true;
+  }
+
+  if (/[.!?…)]$/.test(lastLine)) {
+    return false;
+  }
+
+  if (/^(?:[-•]|\d+[.)])\s/.test(lastLine)) {
+    return false;
+  }
+
+  return true;
 }
 
 async function ensureExactKnowledgeSources(input: {
@@ -194,6 +293,8 @@ async function ensureExactKnowledgeSources(input: {
 }
 
 export async function POST(request: Request) {
+  let fallbackMessage: string | null = null;
+
   try {
     if (!hasAiRuntimeEnv()) {
       return createApiErrorResponse({
@@ -204,13 +305,9 @@ export async function POST(request: Request) {
     }
 
     const body = chatRequestSchema.parse(await request.json());
+    fallbackMessage = body.message;
     const supabase = await createServerSupabaseClient();
-    const {
-      data: { user },
-    } = await withTransientRetry(async () => await supabase.auth.getUser(), {
-      attempts: 4,
-      delaysMs: [500, 1_500, 3_000, 5_000],
-    });
+    const user = await readServerUserOrNull(supabase, request);
 
     if (!user) {
       return createApiErrorResponse({
@@ -219,6 +316,8 @@ export async function POST(request: Request) {
         message: AI_CHAT_UNAUTHORIZED_MESSAGE,
       });
     }
+
+    const adminSupabase = createAdminSupabaseClient();
 
     if (!body.sessionId && hasRiskyIntent(body.message)) {
       return Response.json({
@@ -239,10 +338,21 @@ export async function POST(request: Request) {
       });
     }
 
+    let platformAdminRole = null;
+    try {
+      platformAdminRole = await readPlatformAdminRoleOrNull(adminSupabase, user.id);
+    } catch (error) {
+      logger.warn("ai chat admin role lookup skipped", {
+        error,
+        userId: user.id,
+      });
+    }
+
     const access = await withTransientRetry(
       async () =>
         await readUserBillingAccessOrFallback(supabase, user.id, {
           email: user.email,
+          role: platformAdminRole,
         }),
       {
         attempts: 3,
@@ -255,48 +365,122 @@ export async function POST(request: Request) {
       return createFeatureAccessDeniedResponse(feature);
     }
 
-    const session = await ensureAiChatSession(
-      supabase,
-      user.id,
-      body.sessionId,
-      body.message,
-    );
-
-    await touchAiChatSession(supabase, user.id, session.id);
-    await withTransientRetry(
+    const session = await withTransientRetry(
       async () =>
-        await incrementFeatureUsage(supabase, user.id, BILLING_FEATURE_KEYS.aiChat),
+        await ensureAiChatSession(
+          adminSupabase,
+          user.id,
+          body.sessionId,
+          body.message,
+        ),
       {
-        attempts: 3,
+        attempts: 4,
         delaysMs: [500, 1_500, 3_000],
       },
     );
 
-    const userMessage = await createAiChatMessage(supabase, {
-      userId: user.id,
-      sessionId: session.id,
-      role: "user",
-      content: body.message,
-    });
+    try {
+      await withTransientRetry(
+        async () => await touchAiChatSession(adminSupabase, user.id, session.id),
+        {
+          attempts: 4,
+          delaysMs: [500, 1_500, 3_000],
+        },
+      );
+    } catch (error) {
+      logger.warn("ai chat initial session touch skipped", {
+        error,
+        sessionId: session.id,
+        userId: user.id,
+      });
+    }
+    try {
+      await withTransientRetry(
+        async () =>
+          await incrementFeatureUsage(adminSupabase, user.id, BILLING_FEATURE_KEYS.aiChat),
+        {
+          attempts: 3,
+          delaysMs: [500, 1_500, 3_000],
+        },
+      );
+    } catch (error) {
+      logger.warn("ai chat usage increment skipped", {
+        error,
+        sessionId: session.id,
+        userId: user.id,
+      });
+    }
+
+    let userMessage: AiChatMessageRow;
+    let didPersistUserMessage = true;
+    try {
+      userMessage = await createAiChatMessage(adminSupabase, {
+        userId: user.id,
+        sessionId: session.id,
+        role: "user",
+        content: body.message,
+      });
+    } catch (error) {
+      didPersistUserMessage = false;
+      logger.warn("ai chat user message persistence skipped", {
+        error,
+        sessionId: session.id,
+        userId: user.id,
+      });
+      userMessage = buildSyntheticChatMessage({
+        sessionId: session.id,
+        role: "user",
+        content: body.message,
+      });
+    }
 
     if (hasRiskyIntent(body.message)) {
       const safeReply = buildAiChatSafetyFallback();
-      const assistantMessage = await createAiChatMessage(supabase, {
-        userId: user.id,
-        sessionId: session.id,
-        role: "assistant",
-        content: safeReply,
-      });
-
-      await supabase.from("ai_safety_events").insert({
-        user_id: user.id,
-        route_key: "ai_chat",
-        action: "blocked_risky_prompt",
-        prompt_excerpt: body.message.slice(0, 300),
-        payload: {
+      let assistantMessage: AiChatMessageRow;
+      try {
+        assistantMessage = await createAiChatMessage(adminSupabase, {
+          userId: user.id,
           sessionId: session.id,
-        },
-      });
+          role: "assistant",
+          content: safeReply,
+        });
+      } catch (error) {
+        logger.warn("ai chat safety assistant persistence skipped", {
+          error,
+          sessionId: session.id,
+          userId: user.id,
+        });
+        assistantMessage = buildSyntheticChatMessage({
+          sessionId: session.id,
+          role: "assistant",
+          content: safeReply,
+        });
+      }
+
+      try {
+        await withTransientRetry(
+          async () =>
+            await adminSupabase.from("ai_safety_events").insert({
+              user_id: user.id,
+              route_key: "ai_chat",
+              action: "blocked_risky_prompt",
+              prompt_excerpt: body.message.slice(0, 300),
+              payload: {
+                sessionId: session.id,
+              },
+            }),
+          {
+            attempts: 3,
+            delaysMs: [500, 1_500, 3_000],
+          },
+        );
+      } catch (error) {
+        logger.warn("ai chat safety event persistence skipped", {
+          error,
+          sessionId: session.id,
+          userId: user.id,
+        });
+      }
 
       return Response.json({
         data: {
@@ -313,22 +497,51 @@ export async function POST(request: Request) {
     const guardrail = detectAssistantGuardrail(body.message);
 
     if (guardrail) {
-      const assistantMessage = await createAiChatMessage(supabase, {
-        userId: user.id,
-        sessionId: session.id,
-        role: "assistant",
-        content: guardrail.response,
-      });
-
-      await supabase.from("ai_safety_events").insert({
-        user_id: user.id,
-        route_key: "ai_chat",
-        action: guardrail.kind,
-        prompt_excerpt: body.message.slice(0, 300),
-        payload: {
+      let assistantMessage: AiChatMessageRow;
+      try {
+        assistantMessage = await createAiChatMessage(adminSupabase, {
+          userId: user.id,
           sessionId: session.id,
-        },
-      });
+          role: "assistant",
+          content: guardrail.response,
+        });
+      } catch (error) {
+        logger.warn("ai chat guardrail assistant persistence skipped", {
+          error,
+          sessionId: session.id,
+          userId: user.id,
+        });
+        assistantMessage = buildSyntheticChatMessage({
+          sessionId: session.id,
+          role: "assistant",
+          content: guardrail.response,
+        });
+      }
+
+      try {
+        await withTransientRetry(
+          async () =>
+            await adminSupabase.from("ai_safety_events").insert({
+              user_id: user.id,
+              route_key: "ai_chat",
+              action: guardrail.kind,
+              prompt_excerpt: body.message.slice(0, 300),
+              payload: {
+                sessionId: session.id,
+              },
+            }),
+          {
+            attempts: 3,
+            delaysMs: [500, 1_500, 3_000],
+          },
+        );
+      } catch (error) {
+        logger.warn("ai chat guardrail event persistence skipped", {
+          error,
+          sessionId: session.id,
+          userId: user.id,
+        });
+      }
 
       return Response.json({
         data: {
@@ -342,16 +555,28 @@ export async function POST(request: Request) {
       });
     }
 
-    const [retrievedKnowledge, userContext, recentMessages] = await Promise.all([
-      loadChatKnowledge(supabase, user.id, body.message),
-      loadChatContext(supabase, user.id),
-      listAiChatMessages(supabase, user.id, session.id, 12),
+    const [retrievedKnowledge, userContext, persistedRecentMessages] = await Promise.all([
+      loadChatKnowledge(adminSupabase, user.id, body.message),
+      loadChatContext(adminSupabase, user.id),
+      listAiChatMessages(adminSupabase, user.id, session.id, 12),
     ]);
+    const recentMessages = didPersistUserMessage
+      ? persistedRecentMessages
+      : [
+          ...persistedRecentMessages,
+          {
+            id: userMessage.id,
+            session_id: session.id,
+            role: "user" as const,
+            content: body.message,
+            created_at: userMessage.created_at,
+          },
+        ];
     const finalKnowledge = await ensureExactKnowledgeSources({
       knowledge: retrievedKnowledge,
       limit: 6,
       message: body.message,
-      supabase,
+      supabase: adminSupabase,
       userId: user.id,
     });
 
@@ -360,43 +585,100 @@ export async function POST(request: Request) {
     let assistantContent: string;
 
     try {
-      const result = await withTimeout(
-        withTransientRetry(() =>
-          generateText({
-            maxOutputTokens: AI_CHAT_MAX_OUTPUT_TOKENS,
-            model: models.chat,
-            system: promptBuilder({
-              allowWebSearch: false,
-              context: userContext,
-              knowledge: finalKnowledge,
+      let generatedContent = "";
+      let generationFinishReason: string | null = null;
+
+      for (let attempt = 0; attempt < 1; attempt += 1) {
+        const result = await withTimeout(
+          withTransientRetry(() =>
+            generateText({
+              maxOutputTokens: AI_CHAT_MAX_OUTPUT_TOKENS,
+              model: models.chat,
+              system: promptBuilder({
+                allowWebSearch: false,
+                context: userContext,
+                knowledge: finalKnowledge,
+              }),
+              messages: toModelMessages(recentMessages),
             }),
-            messages: toModelMessages(recentMessages),
-          }),
-        ),
-        CHAT_AI_TIMEOUT_MS,
-        "ai chat generation",
-      );
-      assistantContent = result.text;
+          ),
+          CHAT_AI_TIMEOUT_MS,
+          "ai chat generation",
+        );
+
+        generatedContent = normalizeAssistantReply(result.text);
+        generationFinishReason = String(result.finishReason ?? "");
+
+        if (
+          !isLikelyIncompleteAssistantReply({
+            content: generatedContent,
+            finishReason: generationFinishReason,
+          })
+        ) {
+          break;
+        }
+
+        logger.warn("ai chat received incomplete provider reply", {
+          attempt: attempt + 1,
+          finishReason: generationFinishReason,
+          sessionId: session.id,
+          userId: user.id,
+        });
+
+        if (attempt === 0) {
+          throw new Error("AI_CHAT_INCOMPLETE_RESPONSE");
+        }
+      }
+
+      assistantContent = generatedContent;
     } catch (error) {
       logger.warn("ai chat is using deterministic fallback reply", {
         error,
         sessionId: session.id,
         userId: user.id,
       });
-      assistantContent = buildDeterministicChatReply({
+      assistantContent = buildDeterministicChatReplyClean({
         knowledge: finalKnowledge,
         message: body.message,
       });
     }
 
-    const assistantMessage = await createAiChatMessage(supabase, {
-      userId: user.id,
-      sessionId: session.id,
-      role: "assistant",
-      content: assistantContent,
-    });
+    let assistantMessage: AiChatMessageRow;
+    try {
+      assistantMessage = await createAiChatMessage(adminSupabase, {
+        userId: user.id,
+        sessionId: session.id,
+        role: "assistant",
+        content: assistantContent,
+      });
+    } catch (error) {
+      logger.warn("ai chat assistant message persistence skipped", {
+        error,
+        sessionId: session.id,
+        userId: user.id,
+      });
+      assistantMessage = buildSyntheticChatMessage({
+        sessionId: session.id,
+        role: "assistant",
+        content: assistantContent,
+      });
+    }
 
-    await touchAiChatSession(supabase, user.id, session.id);
+    try {
+      await withTransientRetry(
+        async () => await touchAiChatSession(adminSupabase, user.id, session.id),
+        {
+          attempts: 4,
+          delaysMs: [500, 1_500, 3_000],
+        },
+      );
+    } catch (error) {
+      logger.warn("ai chat final session touch skipped", {
+        error,
+        sessionId: session.id,
+        userId: user.id,
+      });
+    }
 
     return Response.json({
       data: {
@@ -436,6 +718,30 @@ export async function POST(request: Request) {
     }
 
     logger.error("ai chat route failed", { error });
+
+    if (fallbackMessage && isTransientRuntimeError(error)) {
+      const fallbackContent = hasRiskyIntent(fallbackMessage)
+        ? buildAiChatSafetyFallback()
+        : buildDeterministicChatReplyClean({
+            knowledge: [],
+            message: fallbackMessage,
+          });
+
+      return Response.json({
+        data: {
+          sessionId: null,
+          sessionTitle: null,
+          blocked: hasRiskyIntent(fallbackMessage),
+          userMessage: null,
+          assistantMessage: buildSyntheticChatMessage({
+            sessionId: "",
+            role: "assistant",
+            content: fallbackContent,
+          }),
+          sources: [],
+        },
+      });
+    }
 
     return createApiErrorResponse({
       status: isAiProviderConfigurationFailure(error) ? 503 : 502,

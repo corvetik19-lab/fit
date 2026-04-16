@@ -7,7 +7,10 @@ import {
   lookupOpenFoodFactsProduct,
   openFoodFactsBarcodePattern,
 } from "@/lib/nutrition/open-food-facts";
+import { withTransientRetry } from "@/lib/runtime-retry";
+import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { readServerUserOrNull } from "@/lib/supabase/server-user";
 
 const paramsSchema = z.object({
   barcode: z.string().trim().regex(openFoodFactsBarcodePattern),
@@ -17,14 +20,12 @@ const foodSelect =
   "id, name, brand, source, kcal, protein, fat, carbs, barcode, image_url, ingredients_text, quantity, serving_size, created_at, updated_at";
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ barcode: string }> },
 ) {
   try {
-    const supabase = await createServerSupabaseClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const authSupabase = await createServerSupabaseClient();
+    const user = await readServerUserOrNull(authSupabase, request);
 
     if (!user) {
       return createApiErrorResponse({
@@ -35,7 +36,14 @@ export async function GET(
     }
 
     const { barcode } = paramsSchema.parse(await params);
-    const product = await lookupOpenFoodFactsProduct(barcode);
+    const readSupabase = createAdminSupabaseClient();
+    const product = await withTransientRetry(
+      async () => await lookupOpenFoodFactsProduct(barcode),
+      {
+        attempts: 4,
+        delaysMs: [800, 2_000, 4_000],
+      },
+    );
 
     if (!product) {
       return createApiErrorResponse({
@@ -45,21 +53,31 @@ export async function GET(
       });
     }
 
-    const { data: existingFoods, error: existingFoodError } = await supabase
-      .from("foods")
-      .select(foodSelect)
-      .eq("user_id", user.id)
-      .eq("barcode", product.barcode)
-      .order("updated_at", { ascending: false })
-      .limit(1);
+    const existingFoods = await withTransientRetry(
+      async () => {
+        const { data, error } = await readSupabase
+          .from("foods")
+          .select(foodSelect)
+          .eq("user_id", user.id)
+          .eq("barcode", product.barcode)
+          .order("updated_at", { ascending: false })
+          .limit(1);
 
-    if (existingFoodError) {
-      throw existingFoodError;
-    }
+        if (error) {
+          throw error;
+        }
+
+        return (data ?? []) as NutritionFood[];
+      },
+      {
+        attempts: 4,
+        delaysMs: [500, 1_500, 3_000],
+      },
+    );
 
     return Response.json({
       data: {
-        existingFood: ((existingFoods ?? [])[0] as NutritionFood | undefined) ?? null,
+        existingFood: existingFoods[0] ?? null,
         product,
       },
     });
