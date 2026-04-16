@@ -5,16 +5,8 @@ import { NutritionTracker } from "@/components/nutrition-tracker";
 import { PageWorkspace } from "@/components/page-workspace";
 import { readUserBillingAccessOrFallback } from "@/lib/billing-access";
 import { logger } from "@/lib/logger";
-import { withTransientRetry } from "@/lib/runtime-retry";
 import {
   getNutritionSummary,
-  type NutritionFood,
-  type NutritionMeal,
-  type NutritionMealTemplate,
-  type NutritionRecipe,
-  type NutritionSummary,
-  type NutritionSummaryTrendPoint,
-  type NutritionTargets,
   getNutritionTargets,
   getTodaySummaryDate,
   listMealTemplates,
@@ -22,7 +14,15 @@ import {
   listNutritionRecipes,
   listNutritionSummaryTrend,
   listRecentMeals,
+  type NutritionFood,
+  type NutritionMeal,
+  type NutritionMealTemplate,
+  type NutritionRecipe,
+  type NutritionSummary,
+  type NutritionSummaryTrendPoint,
+  type NutritionTargets,
 } from "@/lib/nutrition/meal-logging";
+import { withTransientRetry } from "@/lib/runtime-retry";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireReadyViewer } from "@/lib/viewer";
 
@@ -202,10 +202,10 @@ export default async function NutritionPage({ searchParams }: NutritionPageProps
     >
       <PageWorkspace
         badges={[
-          viewer.profile?.full_name ?? viewer.user.email ?? "fit",
           `Сегодня: ${todaySummaryDate}`,
+          `${foods.length} продуктов`,
         ]}
-        description="Сначала баланс и быстрые действия, затем журнал, база продуктов и история."
+        description="Открой только нужный слой: баланс дня, фото и штрихкод или рабочий журнал."
         metrics={[
           {
             label: "Продукты",
@@ -269,7 +269,7 @@ export default async function NutritionPage({ searchParams }: NutritionPageProps
         ]}
         initialSectionKey={initialSectionKey}
         storageKey="nutrition-page"
-        title="Рацион и дневной журнал в одном экране"
+        title="Питание без перегруза"
       />
     </AppShell>
   );

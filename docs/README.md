@@ -63,3 +63,13 @@
 - Во всех execution-docs прогресс вести через `[ ]` и `[x]`.
 - Developer-facing документация ведётся на русском языке.
 - Для пользовательского статуса по плану использовать `npm run report:master-progress`.
+
+## 2026-04-16 UI consistency
+
+- Активный execution-doc по мобильной UI-санации: [UI_CONSISTENCY_MOBILE_EXECUTION.md](/C:/fit/docs/UI_CONSISTENCY_MOBILE_EXECUTION.md)
+- Основные артефакты текущего tranche: вход, shell, PageWorkspace и `/nutrition`.
+
+## 2026-04-16 Mobile style refinement
+
+- Активный follow-up execution-doc по следующей волне мобильной доводки: [MOBILE_STYLE_REFINEMENT_EXECUTION.md](/C:/fit/docs/MOBILE_STYLE_REFINEMENT_EXECUTION.md)
+- Основные артефакты: `output/mobile-login-refined.png`, `output/mobile-dashboard-refined.png`, `output/mobile-nutrition-refined.png`, `output/mobile-ai-refined.png`, `output/mobile-settings-refined.png`

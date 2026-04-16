@@ -7,7 +7,7 @@ import { startTransition, useState, type FormEvent } from "react";
 type Mode = "sign-in" | "sign-up";
 
 const fieldClassName =
-  "w-full rounded-[1rem] border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted focus:border-accent focus:ring-2 focus:ring-accent/10";
+  "w-full rounded-[0.82rem] border border-border bg-white/92 px-3.5 py-2.5 text-sm text-foreground outline-none transition placeholder:text-muted focus:border-accent focus:ring-2 focus:ring-accent/10";
 
 export function AuthForm() {
   const [mode, setMode] = useState<Mode>("sign-in");
@@ -80,7 +80,7 @@ export function AuthForm() {
           | null;
 
         if (!response.ok) {
-          setError(payload?.message ?? "Не удалось выполнить вход.");
+          setError(payload?.message ?? "Не удалось войти в аккаунт.");
           return;
         }
 
@@ -98,9 +98,9 @@ export function AuthForm() {
   }
 
   return (
-    <section className="w-full max-w-[25rem]">
-      <div className="grid gap-5 rounded-[1.3rem] border border-border bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(247,241,232,0.98))] p-4 shadow-[0_18px_38px_-26px_rgba(31,43,56,0.18)] sm:p-5">
-        <div className="inline-flex rounded-[1rem] border border-border bg-[color-mix(in_srgb,var(--surface-strong)_92%,white)] p-1">
+    <section className="w-full max-w-[21rem]">
+      <div className="grid gap-3.5">
+        <div className="inline-flex rounded-[0.82rem] border border-border bg-white/82 p-1 shadow-[0_14px_28px_-28px_rgba(31,43,56,0.18)] backdrop-blur-sm">
           {([
             ["sign-in", "Вход"],
             ["sign-up", "Регистрация"],
@@ -109,9 +109,9 @@ export function AuthForm() {
 
             return (
               <button
-                className={`flex-1 rounded-[0.95rem] px-3 py-2 text-sm font-semibold transition ${
+                className={`flex-1 rounded-[0.8rem] px-3 py-2 text-sm font-semibold transition ${
                   active
-                    ? "bg-[linear-gradient(135deg,#2063af,#24bcb5)] text-white shadow-[0_12px_22px_-18px_rgba(35,152,185,0.45)]"
+                    ? "bg-[linear-gradient(135deg,#2063af,#24bcb5)] text-white shadow-[0_10px_18px_-18px_rgba(35,152,185,0.45)]"
                     : "text-muted hover:text-foreground"
                 }`}
                 key={nextMode}
@@ -128,7 +128,7 @@ export function AuthForm() {
           })}
         </div>
 
-        <form className="grid gap-4" onSubmit={submit}>
+        <form className="grid gap-3" onSubmit={submit}>
           {mode === "sign-up" ? (
             <label className="grid gap-2">
               <span className="px-1 text-[0.68rem] font-bold uppercase tracking-[0.16em] text-muted">
@@ -192,19 +192,19 @@ export function AuthForm() {
           </label>
 
           {error ? (
-            <p className="rounded-[1rem] border border-[#d86a68]/25 bg-[#d86a68]/10 px-4 py-3 text-sm text-[#8f3735]">
+            <p className="rounded-[0.82rem] border border-[#d86a68]/25 bg-[#d86a68]/10 px-3.5 py-2.5 text-sm text-[#8f3735]">
               {error}
             </p>
           ) : null}
 
           {notice ? (
-            <p className="rounded-[1rem] border border-accent/20 bg-accent/10 px-4 py-3 text-sm text-accent-strong">
+            <p className="rounded-[0.82rem] border border-accent/20 bg-accent/10 px-3.5 py-2.5 text-sm text-accent-strong">
               {notice}
             </p>
           ) : null}
 
           <button
-            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[1rem] border border-[#24bcb5]/18 bg-[linear-gradient(135deg,#2063af,#2398b9,#24bcb5)] px-5 py-3 text-sm font-bold text-white shadow-[0_14px_24px_-18px_rgba(35,152,185,0.45)] transition hover:translate-y-[-1px] disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[0.82rem] border border-[#24bcb5]/18 bg-[linear-gradient(135deg,#2063af,#2398b9,#24bcb5)] px-4 py-2.5 text-sm font-bold text-white shadow-[0_12px_20px_-18px_rgba(35,152,185,0.45)] transition hover:translate-y-[-1px] disabled:cursor-not-allowed disabled:opacity-60"
             disabled={
               isPending ||
               !email.trim() ||

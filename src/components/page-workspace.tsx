@@ -66,7 +66,7 @@ function SectionButton({
   return (
     <button
       aria-pressed={active}
-      className={`section-chip w-full px-3.5 py-2.5 text-left md:min-w-[11rem] md:w-auto ${
+      className={`section-chip w-full px-3 py-2 text-left md:min-w-[10rem] md:w-auto ${
         active ? "section-chip--active" : ""
       }`}
       data-testid={`page-workspace-option-${sectionKey}`}
@@ -193,16 +193,13 @@ export function PageWorkspace({
   }
 
   return (
-    <div className="grid gap-4 sm:gap-5">
-      <section className="surface-panel surface-panel--soft p-3.5 sm:p-4">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+    <div className="grid gap-3.5 sm:gap-4">
+      <section className="surface-panel surface-panel--soft p-3">
+        <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-1">
-            <p className="workspace-kicker">Рабочий экран</p>
-            <h2 className="text-base font-semibold text-foreground sm:text-lg">
+            <p className="workspace-kicker">Экран</p>
+            <p className="text-sm font-semibold text-foreground">
               Оставь только нужные блоки
-            </h2>
-            <p className="max-w-2xl text-sm leading-6 text-muted">
-              На телефоне важен фокус: обзор, меню и текущий раздел можно скрыть по отдельности.
             </p>
           </div>
 
@@ -233,11 +230,11 @@ export function PageWorkspace({
       </section>
 
       {!hiddenBlocks.hero ? (
-        <section className="surface-panel surface-panel--soft overflow-hidden p-4 sm:p-5">
-          <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr] lg:items-start">
-            <div className="space-y-4">
+        <section className="surface-panel surface-panel--soft overflow-hidden p-3 sm:p-3.5">
+          <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr] lg:items-start">
+            <div className="space-y-2.5">
               {badges.length ? (
-                <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
+                <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
                   {badges.map((badge) => (
                     <span className="pill" key={badge} title={badge}>
                       {badge}
@@ -246,9 +243,9 @@ export function PageWorkspace({
                 </div>
               ) : null}
 
-              <div className="space-y-3">
-                <p className="workspace-kicker">Фокус дня</p>
-                <h2 className="app-display max-w-4xl text-[1.65rem] font-semibold tracking-tight text-foreground sm:text-[2rem]">
+              <div className="space-y-2">
+                <p className="workspace-kicker">Фокус</p>
+                <h2 className="app-display max-w-4xl text-[1.2rem] font-semibold tracking-tight text-foreground sm:text-[1.45rem]">
                   {title}
                 </h2>
                 <p className="max-w-3xl text-sm leading-6 text-muted">
@@ -257,16 +254,16 @@ export function PageWorkspace({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
               {metrics.map((metric) => (
-                <article className="metric-tile min-w-0 p-3.5" key={metric.label}>
-                  <p className="truncate text-[11px] uppercase tracking-[0.18em] text-muted">
+                <article className="metric-tile p-2.5 sm:p-3" key={metric.label}>
+                  <p className="truncate text-[10px] uppercase tracking-[0.16em] text-muted">
                     {metric.label}
                   </p>
-                  <p className="mt-2 truncate text-xl font-semibold text-foreground sm:text-2xl">
+                  <p className="mt-1 truncate text-base font-semibold text-foreground sm:text-lg">
                     {metric.value}
                   </p>
-                  <p className="mt-1.5 text-xs leading-5 text-muted">{metric.note}</p>
+                  <p className="mt-1 text-[0.72rem] leading-5 text-muted">{metric.note}</p>
                 </article>
               ))}
             </div>
@@ -275,13 +272,11 @@ export function PageWorkspace({
       ) : null}
 
       {!hiddenBlocks.menu ? (
-        <section className="surface-panel surface-panel--soft p-4">
+        <section className="surface-panel surface-panel--soft p-3">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               <p className="workspace-kicker">Разделы</p>
-              <h2 className="text-base font-semibold text-foreground sm:text-lg">
-                Переключай только нужный слой
-              </h2>
+              <p className="text-sm font-semibold text-foreground">Открой только нужный слой</p>
             </div>
 
             {activeSection ? (
@@ -291,10 +286,10 @@ export function PageWorkspace({
             ) : null}
           </div>
 
-          <div className="mt-4 md:hidden">
+          <div className="mt-3 md:hidden">
             <button
               aria-expanded={isMobileMenuOpen}
-              className="section-chip flex w-full items-center justify-between gap-3 px-3.5 py-2.5 text-left"
+              className="section-chip flex w-full items-center justify-between gap-3 px-3 py-2 text-left"
               data-testid="page-workspace-mobile-trigger"
               onClick={() => setIsMobileMenuOpen((current) => !current)}
               type="button"
@@ -312,7 +307,7 @@ export function PageWorkspace({
                   </span>
                 ) : null}
               </span>
-              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--accent-soft)_24%,white)] text-accent-strong">
+              <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--accent-soft)_24%,white)] text-accent-strong">
                 {isMobileMenuOpen ? (
                   <ChevronUp size={18} strokeWidth={2.2} />
                 ) : (
@@ -329,7 +324,7 @@ export function PageWorkspace({
                   return (
                     <button
                       aria-pressed={isActive}
-                      className={`section-chip flex w-full items-start justify-between gap-3 px-3 py-2.5 text-left ${
+                      className={`section-chip flex w-full items-start justify-between gap-3 px-3 py-2 text-left ${
                         isActive ? "section-chip--active" : ""
                       }`}
                       data-testid={`page-workspace-mobile-option-${section.key}`}
@@ -346,8 +341,8 @@ export function PageWorkspace({
                         </span>
                       </span>
                       {isActive ? (
-                        <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--accent-soft)_32%,white)] text-accent-strong">
-                          <Check size={16} strokeWidth={2.2} />
+                        <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--accent-soft)_32%,white)] text-accent-strong">
+                          <Check size={15} strokeWidth={2.2} />
                         </span>
                       ) : null}
                     </button>
@@ -357,7 +352,7 @@ export function PageWorkspace({
             ) : null}
           </div>
 
-          <div className="mt-4 hidden gap-3 md:flex md:flex-wrap">
+          <div className="mt-3 hidden gap-2.5 md:flex md:flex-wrap">
             {sections.map((section) => (
               <SectionButton
                 active={activeSection?.key === section.key}

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import type { ReactNode } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 
 import { AiAssistantWidget } from "@/components/ai-assistant-widget";
 import { AppShellNav } from "@/components/app-shell-nav";
@@ -43,29 +43,9 @@ export function AppShellFrame({
   viewer,
 }: AppShellFrameProps) {
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia("(max-width: 1023px)");
-    const syncViewport = () => setIsMobile(mediaQuery.matches);
-
-    syncViewport();
-    mediaQuery.addEventListener("change", syncViewport);
-
-    return () => mediaQuery.removeEventListener("change", syncViewport);
-  }, []);
-
-  const topPaddingClassName = useMemo(() => {
-    if (immersive) {
-      return "pt-[calc(0.75rem+env(safe-area-inset-top))] sm:pt-4";
-    }
-
-    if (isMobile) {
-      return "pt-[calc(4.5rem+env(safe-area-inset-top))]";
-    }
-
-    return "pt-[calc(5.35rem+env(safe-area-inset-top))] xl:pt-[5.7rem]";
-  }, [immersive, isMobile]);
+  const topPaddingClassName = immersive
+    ? "pt-[calc(0.75rem+env(safe-area-inset-top))] sm:pt-4"
+    : "pt-[calc(3.8rem+env(safe-area-inset-top))] lg:pt-[calc(4.55rem+env(safe-area-inset-top))] xl:pt-[4.85rem]";
 
   const showAssistantWidget =
     Boolean(viewer) &&
@@ -78,11 +58,11 @@ export function AppShellFrame({
   return (
     <div className="min-h-dvh">
       {!immersive ? (
-        <header className="fixed inset-x-0 top-0 z-30 overflow-x-clip pt-[calc(0.65rem+env(safe-area-inset-top))]">
+        <header className="fixed inset-x-0 top-0 z-30 overflow-x-clip pt-[calc(0.55rem+env(safe-area-inset-top))]">
           <div className="mx-4 sm:mx-6 lg:mx-auto lg:max-w-[1500px] lg:px-10">
-            <div className="surface-panel surface-panel--soft flex w-full items-center justify-between gap-3 rounded-[1.1rem] px-3 py-2.5 sm:px-4">
+            <div className="surface-panel surface-panel--soft flex w-full items-center justify-between gap-3 rounded-[0.9rem] px-3 py-1.5 sm:px-4">
               <div className="flex min-w-0 items-center gap-3">
-                <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[1rem] border border-border bg-[color-mix(in_srgb,var(--accent-soft)_32%,white)] p-2">
+                <div className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[0.8rem] border border-border bg-[color-mix(in_srgb,var(--accent-soft)_32%,white)] p-2">
                   <Image
                     alt="fit"
                     className="h-full w-full object-contain"
@@ -94,10 +74,12 @@ export function AppShellFrame({
                 </div>
 
                 <div className="min-w-0">
-                  <p className="app-display truncate text-lg font-black tracking-[-0.08em] text-foreground">
+                  <p className="app-display truncate text-[0.96rem] font-black tracking-[-0.08em] text-foreground sm:text-base">
                     {brandLabel}
                   </p>
-                  <p className="workspace-kicker mt-1 text-[0.6rem]">{eyebrow}</p>
+                  <p className="workspace-kicker mt-1 text-[0.58rem]">
+                    {eyebrow}
+                  </p>
                 </div>
               </div>
 
@@ -116,19 +98,24 @@ export function AppShellFrame({
                   </span>
                 </div>
 
-                <AppShellNav
-                  minimal={isMobile}
-                  onDrawerOpenChange={setIsMobileDrawerOpen}
-                  viewer={viewer}
-                />
+                <div className="lg:hidden">
+                  <AppShellNav
+                    minimal
+                    onDrawerOpenChange={setIsMobileDrawerOpen}
+                    viewer={viewer}
+                  />
+                </div>
+
+                <div className="hidden lg:block">
+                  <AppShellNav
+                    minimal={false}
+                    onDrawerOpenChange={setIsMobileDrawerOpen}
+                    viewer={viewer}
+                  />
+                </div>
               </div>
             </div>
 
-            <div className="px-1 pb-1 pt-2 lg:hidden">
-              <p className="truncate text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-muted">
-                {title}
-              </p>
-            </div>
           </div>
         </header>
       ) : null}
