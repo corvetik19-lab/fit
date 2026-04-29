@@ -280,11 +280,11 @@ export const activitySourceLabels: Record<
 };
 
 export const activityToneClasses: Record<ActivityBucket, string> = {
-  today: "border-emerald-500/25 bg-emerald-500/12 text-emerald-100",
-  seven_days: "border-sky-500/25 bg-sky-500/12 text-sky-100",
-  thirty_days: "border-amber-500/25 bg-amber-500/12 text-amber-100",
-  stale: "border-rose-500/25 bg-rose-500/12 text-rose-100",
-  never: "border-white/10 bg-white/6 text-slate-200",
+  today: "border-emerald-500/25 bg-emerald-500/12 text-emerald-800",
+  seven_days: "border-sky-500/25 bg-sky-500/12 text-sky-800",
+  thirty_days: "border-amber-500/25 bg-amber-500/12 text-amber-800",
+  stale: "border-rose-500/25 bg-rose-500/12 text-rose-800",
+  never: "border-slate-500/20 bg-slate-500/10 text-slate-700",
 };
 
 export function formatDate(value: string | null) {
@@ -326,6 +326,16 @@ export function formatBulkAction(value: string) {
     default:
       return value.replaceAll("_", " ");
   }
+}
+
+function normalizeBulkTrialDays(value: string) {
+  const parsed = Number(value);
+
+  if (!Number.isInteger(parsed)) {
+    return 14;
+  }
+
+  return Math.min(Math.max(parsed, 1), 365);
 }
 
 export function buildVisibleUsersSummary(
@@ -448,7 +458,7 @@ export function buildBulkActionRequest(input: {
   };
 
   if (input.bulkAction === "grant_trial") {
-    body.duration_days = Number(input.bulkTrialDays) || 14;
+    body.duration_days = normalizeBulkTrialDays(input.bulkTrialDays);
   }
 
   if (input.bulkAction === "enable_entitlement") {

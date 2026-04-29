@@ -11,7 +11,8 @@ import { withTimeout, withTransientRetry } from "@/lib/runtime-retry";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { requireViewer } from "@/lib/viewer";
 
-const ADMIN_DASHBOARD_TIMEOUT_MS = 4_000;
+const ADMIN_DASHBOARD_TIMEOUT_MS =
+  process.env.PLAYWRIGHT_TEST_HOOKS === "1" ? 2_000 : 10_000;
 
 function formatDateTime(value: string | null | undefined) {
   if (!value) {
@@ -61,20 +62,22 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           <div className="grid gap-4 md:grid-cols-[1.1fr_0.9fr]">
             <article className="surface-panel surface-panel--soft p-5 text-sm">
               <p className="font-semibold text-foreground">
-                Главный доступ закреплён за одним email и не открывается обычному аккаунту.
+                Для доступа нужна назначенная админ-роль на платформе.
               </p>
               <p className="mt-3 leading-7 text-muted">
-                Админ-панель видна только назначенным ролям. Главный доступ отдельно
-                закреплён за{" "}
-                <span className="font-semibold text-foreground">ролью super-admin</span>
-                . Если вход уже выполнен под этим email, но панель не видна, обнови
-                сессию или авторизуйся заново.
+                Панель открывается только администраторам. Главный доступ
+                закрепляется за ролью{" "}
+                <span className="font-semibold text-foreground">super-admin</span>.
+                Если роль уже назначена, но экран не открывается, обнови сессию
+                или войди заново.
               </p>
             </article>
 
             <article className="surface-panel p-5 text-sm">
               <p className="font-semibold text-foreground">Текущий аккаунт</p>
-              <p className="mt-3 text-muted">{viewer.user.email ?? "Email не найден"}</p>
+              <p className="mt-3 break-all text-muted">
+                {viewer.user.email ?? "Email не найден"}
+              </p>
               <p className="mt-2 text-muted">
                 Последний вход:{" "}
                 <span className="text-foreground">

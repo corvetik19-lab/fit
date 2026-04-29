@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
@@ -186,13 +186,13 @@ export function AdminUserContentSection({
   }
 
   return (
-    <section className="grid gap-6" data-testid="admin-user-detail-content-section">
-      <section className="card p-6">
-        <div className="mb-5">
+    <section className="grid gap-4" data-testid="admin-user-detail-content-section">
+      <section className="surface-panel p-4 sm:p-5">
+        <div className="mb-4">
           <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
             Контент
           </p>
-          <h2 className="mt-2 text-2xl font-semibold text-foreground">
+          <h2 className="mt-1.5 text-lg font-semibold text-foreground">
             Изображения упражнений и продуктов
           </h2>
           <p className="mt-3 max-w-3xl text-sm leading-7 text-muted">
@@ -213,7 +213,7 @@ export function AdminUserContentSection({
           </p>
         ) : null}
 
-        <div className="grid gap-6 xl:grid-cols-2">
+        <div className="grid gap-4 xl:grid-cols-2">
           <div className="grid gap-4">
             <div className="flex items-center justify-between gap-3">
               <div>

@@ -3,7 +3,9 @@ import { z } from "zod";
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import { logger } from "@/lib/logger";
 import { withTransientRetry } from "@/lib/runtime-retry";
+import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { readServerUserOrNull } from "@/lib/supabase/server-user";
 import {
   defaultRepRangePresetKey,
   getRepRangePreset,
@@ -11,6 +13,11 @@ import {
 } from "@/lib/workout/rep-ranges";
 import { insertWorkoutSetsWithRepRangeFallback } from "@/lib/workout/workout-sets";
 import { listWeeklyPrograms } from "@/lib/workout/weekly-programs";
+
+const WEEKLY_PROGRAM_RETRY_CONFIG = {
+  attempts: 4,
+  delaysMs: [300, 800, 1_500, 2_500] as const,
+};
 
 const weeklyProgramExerciseSchema = z.object({
   exerciseLibraryId: z.string().uuid(),
@@ -46,12 +53,10 @@ function buildExerciseTitleMap(rows: Array<{ id: string; title: string }>) {
   return titleMap;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const supabase = await createServerSupabaseClient();
-    const {
-      data: { user },
-    } = await withTransientRetry(async () => await supabase.auth.getUser());
+    const authSupabase = await createServerSupabaseClient();
+    const user = await readServerUserOrNull(authSupabase, request);
 
     if (!user) {
       return createApiErrorResponse({
@@ -61,8 +66,10 @@ export async function GET() {
       });
     }
 
-    const data = await withTransientRetry(async () =>
-      await listWeeklyPrograms(supabase, user.id),
+    const dataSupabase = createAdminSupabaseClient();
+    const data = await withTransientRetry(
+      async () => await listWeeklyPrograms(dataSupabase, user.id),
+      WEEKLY_PROGRAM_RETRY_CONFIG,
     );
 
     return Response.json({ data });
@@ -81,10 +88,8 @@ export async function POST(request: Request) {
   let createdProgramId: string | null = null;
 
   try {
-    const supabase = await createServerSupabaseClient();
-    const {
-      data: { user },
-    } = await withTransientRetry(async () => await supabase.auth.getUser());
+    const authSupabase = await createServerSupabaseClient();
+    const user = await readServerUserOrNull(authSupabase, request);
 
     if (!user) {
       return createApiErrorResponse({
@@ -94,6 +99,7 @@ export async function POST(request: Request) {
       });
     }
 
+    const dataSupabase = createAdminSupabaseClient();
     const payload = weeklyProgramCreateSchema.parse(await request.json());
     const uniqueDays = new Set<number>();
 
@@ -119,11 +125,12 @@ export async function POST(request: Request) {
 
     const { data: exerciseRows, error: exerciseRowsError } =
       await withTransientRetry(async () =>
-        await supabase
+        await dataSupabase
           .from("exercise_library")
           .select("id, title")
           .in("id", exerciseIds)
           .eq("is_archived", false),
+        WEEKLY_PROGRAM_RETRY_CONFIG,
       );
 
     if (exerciseRowsError) {
@@ -143,7 +150,7 @@ export async function POST(request: Request) {
 
     const { data: programRow, error: programError } = await withTransientRetry(
       async () =>
-        await supabase
+        await dataSupabase
           .from("weekly_programs")
           .insert({
             user_id: user.id,
@@ -157,10 +164,7 @@ export async function POST(request: Request) {
             "id, title, status, week_start_date, week_end_date, is_locked, created_at",
           )
           .single(),
-      {
-        attempts: 4,
-        delaysMs: [500, 1_500, 3_000, 5_000],
-      },
+      WEEKLY_PROGRAM_RETRY_CONFIG,
     );
 
     if (programError) {
@@ -172,7 +176,7 @@ export async function POST(request: Request) {
     for (const day of payload.days) {
       const { data: dayRow, error: dayError } = await withTransientRetry(
         async () =>
-          await supabase
+          await dataSupabase
             .from("workout_days")
             .insert({
               user_id: user.id,
@@ -182,10 +186,7 @@ export async function POST(request: Request) {
             })
             .select("id")
             .single(),
-        {
-          attempts: 4,
-          delaysMs: [500, 1_500, 3_000, 5_000],
-        },
+        WEEKLY_PROGRAM_RETRY_CONFIG,
       );
 
       if (dayError) {
@@ -208,7 +209,7 @@ export async function POST(request: Request) {
         const { data: workoutExerciseRow, error: workoutExerciseError } =
           await withTransientRetry(
             async () =>
-              await supabase
+              await dataSupabase
             .from("workout_exercises")
             .insert({
               user_id: user.id,
@@ -222,10 +223,7 @@ export async function POST(request: Request) {
             })
             .select("id")
             .single(),
-            {
-              attempts: 4,
-              delaysMs: [500, 1_500, 3_000, 5_000],
-            },
+            WEEKLY_PROGRAM_RETRY_CONFIG,
           );
 
         if (workoutExerciseError) {
@@ -247,7 +245,11 @@ export async function POST(request: Request) {
           }),
         );
 
-        await insertWorkoutSetsWithRepRangeFallback(supabase, setsPayload);
+        await withTransientRetry(
+          async () =>
+            await insertWorkoutSetsWithRepRangeFallback(dataSupabase, setsPayload),
+          WEEKLY_PROGRAM_RETRY_CONFIG,
+        );
       }
     }
 
@@ -256,9 +258,10 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     if (createdProgramId) {
-      const supabase = await createServerSupabaseClient();
-      const rollbackResult = await withTransientRetry(async () =>
-        await supabase.from("weekly_programs").delete().eq("id", createdProgramId),
+      const supabase = createAdminSupabaseClient();
+      const rollbackResult = await withTransientRetry(
+        async () => await supabase.from("weekly_programs").delete().eq("id", createdProgramId),
+        WEEKLY_PROGRAM_RETRY_CONFIG,
       );
 
       if (rollbackResult.error) {

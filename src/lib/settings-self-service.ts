@@ -15,6 +15,8 @@ import {
 import { buildUserDataExportArchive } from "@/lib/settings-export-archive";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { readServerUserOrNull } from "@/lib/supabase/server-user";
+import { repairMojibakeDeep } from "@/lib/text/repair-mojibake";
 
 export type AuthenticatedSettingsContext = {
   supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>;
@@ -45,11 +47,11 @@ type SettingsActionResult<T> =
       ok: false;
     } & SettingsActionFailure);
 
-export async function getAuthenticatedSettingsContext(): Promise<AuthenticatedSettingsContext | null> {
+export async function getAuthenticatedSettingsContext(
+  request?: Request,
+): Promise<AuthenticatedSettingsContext | null> {
   const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await readServerUserOrNull(supabase, request);
 
   if (!user) {
     return null;
@@ -105,10 +107,10 @@ export async function loadSettingsBillingCenterData(
     }),
   ]);
 
-  return {
+  return repairMojibakeDeep({
     access,
     snapshot,
-  };
+  });
 }
 
 export async function queueSettingsDataExport(
@@ -279,7 +281,7 @@ export async function requestSettingsBillingAccessReview(input: {
     };
   }
 
-  const { error: reviewRequestError } = await adminSupabase
+  const { data: reviewRequestRow, error: reviewRequestError } = await adminSupabase
     .from("support_actions")
     .insert({
       action: "billing_access_review",
@@ -292,7 +294,9 @@ export async function requestSettingsBillingAccessReview(input: {
       },
       status: "queued",
       target_user_id: input.userId,
-    });
+    })
+    .select("id, status, payload, created_at, updated_at")
+    .single();
 
   if (reviewRequestError) {
     throw reviewRequestError;
@@ -308,7 +312,19 @@ export async function requestSettingsBillingAccessReview(input: {
     userId: input.userId,
   });
 
-  return { ok: true as const };
+  return {
+    ok: true as const,
+    reviewRequest: reviewRequestRow
+      ? repairMojibakeDeep({
+          createdAt: reviewRequestRow.created_at,
+          id: reviewRequestRow.id,
+          note: input.note ?? null,
+          requestedFeatures: dedupedFeatures,
+          status: reviewRequestRow.status as "completed" | "failed" | "queued",
+          updatedAt: reviewRequestRow.updated_at ?? reviewRequestRow.created_at,
+        })
+      : null,
+  };
 }
 
 export async function buildSettingsExportDownload(input: {

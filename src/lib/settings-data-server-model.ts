@@ -199,6 +199,8 @@ export function mapBillingSubscriptionEvent(
   const status = readString(payload, "status");
   const periodEnd = readString(payload, "currentPeriodEnd");
   const provider = readString(payload, "provider");
+  const durationDays = readNullableNumber(payload, "durationDays");
+  const previousPeriodEnd = readString(payload, "previousPeriodEnd");
   const featureKey = readString(payload, "featureKey");
   const isEnabled = readNullableBoolean(payload, "isEnabled");
   const limitValue = readNullableNumber(payload, "limitValue");
@@ -210,6 +212,15 @@ export function mapBillingSubscriptionEvent(
   const subscriptionDetail = [status ? `Статус: ${status}.` : null, providerDetail, periodDetail]
     .filter(Boolean)
     .join(" ");
+  const subscriptionExtensionDetail = [
+    subscriptionDetail,
+    typeof durationDays === "number" ? `Добавлено дней: ${durationDays}.` : null,
+    previousPeriodEnd
+      ? `Предыдущий срок: ${new Date(previousPeriodEnd).toLocaleString("ru-RU")}.`
+      : null,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   switch (row.event_type) {
     case "admin_grant_trial":
@@ -218,6 +229,9 @@ export function mapBillingSubscriptionEvent(
         createdAt: row.created_at,
         detail: subscriptionDetail || "Для аккаунта включён trial-период.",
         id: row.id,
+        ...(subscriptionExtensionDetail
+          ? { detail: subscriptionExtensionDetail }
+          : {}),
         kind: "subscription",
         title: "Выдан trial",
         tone: "success",

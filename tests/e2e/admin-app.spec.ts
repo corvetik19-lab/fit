@@ -13,7 +13,10 @@ test.use({
   storageState: ADMIN_STORAGE_STATE_PATH,
 });
 
+const usesLocalPlaywrightAuth = process.env.PLAYWRIGHT_SKIP_AUTH_SETUP === "1";
+
 test.describe("admin app", () => {
+  test.describe.configure({ timeout: 90_000 });
   test.skip(
     !hasAdminE2ECredentials(),
     "requires PLAYWRIGHT_ADMIN_EMAIL and PLAYWRIGHT_ADMIN_PASSWORD",
@@ -117,11 +120,17 @@ test.describe("admin app", () => {
       page.getByTestId("admin-user-actions-billing-panel"),
     ).toBeVisible();
     await expect(
+      page.getByTestId("admin-user-actions-subscription-action"),
+    ).toHaveValue("grant_trial");
+    await expect(
       page.getByTestId("admin-user-actions-billing-reconcile"),
     ).toBeVisible();
     await page.getByTestId("admin-user-detail-section-billing").click();
     await expect(
       page.getByTestId("admin-user-detail-billing-section"),
+    ).toBeVisible();
+    await expect(
+      page.getByTestId("admin-user-detail-billing-access-summary-card"),
     ).toBeVisible();
     await expect(page.getByText("Текущая подписка").first()).toBeVisible();
     await expect(page.getByText("Платёжный профиль").first()).toBeVisible();
@@ -149,6 +158,10 @@ test.describe("admin app", () => {
   });
 
   test("root admin can update user content asset images", async ({ page }) => {
+    test.skip(
+      usesLocalPlaywrightAuth,
+      "local Playwright auth uses synthetic users without database rows",
+    );
     test.setTimeout(90_000);
 
     const targetUserEmail = process.env.PLAYWRIGHT_TEST_EMAIL;

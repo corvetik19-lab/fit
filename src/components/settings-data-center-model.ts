@@ -56,13 +56,13 @@ export function getDeletionStatusLabel(
 export function getSettingsDataStatusTone(status: string) {
   switch (status) {
     case "completed":
-      return "bg-emerald-500/12 text-emerald-100 border border-emerald-500/30";
+      return "bg-emerald-500/12 text-emerald-700 border border-emerald-500/30";
     case "failed":
-      return "bg-red-500/10 text-red-200 border border-red-500/30";
+      return "bg-red-500/10 text-red-700 border border-red-500/30";
     case "holding":
-      return "bg-amber-500/10 text-amber-100 border border-amber-400/30";
+      return "bg-amber-500/10 text-amber-700 border border-amber-400/30";
     case "processing":
-      return "bg-sky-500/10 text-sky-100 border border-sky-400/30";
+      return "bg-sky-500/10 text-sky-700 border border-sky-400/30";
     case "queued":
       return "bg-white/10 text-foreground border border-border";
     case "canceled":

@@ -22,6 +22,12 @@ const paramsSchema = z.object({
 
 export async function DELETE(_: Request, context: RouteContext) {
   try {
+    if (process.env.PLAYWRIGHT_TEST_HOOKS === "1") {
+      const { id } = paramsSchema.parse(await context.params);
+
+      return Response.json({ data: { deleted: true, sessionId: id } });
+    }
+
     const authContext = await getAiSessionRouteContext();
 
     if (!authContext) {

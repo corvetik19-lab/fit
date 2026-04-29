@@ -11,6 +11,8 @@ import {
   LayoutPanelTop,
 } from "lucide-react";
 
+import { RepairMojibakeTree } from "@/components/repair-mojibake-tree";
+
 type PageWorkspaceMetric = {
   label: string;
   note: string;
@@ -47,7 +49,7 @@ const defaultHiddenBlocks: HiddenBlocksState = {
 };
 
 function getVisibilityStorageKey(storageKey?: string) {
-  return storageKey ? `fit:${storageKey}:workspace-visibility` : null;
+  return storageKey ? `fitora:${storageKey}:workspace-visibility` : null;
 }
 
 function SectionButton({
@@ -66,7 +68,7 @@ function SectionButton({
   return (
     <button
       aria-pressed={active}
-      className={`section-chip w-full px-3 py-2 text-left md:min-w-[10rem] md:w-auto ${
+      className={`section-chip w-full px-3 py-2.5 text-left md:min-w-[9.5rem] md:w-auto ${
         active ? "section-chip--active" : ""
       }`}
       data-testid={`page-workspace-option-${sectionKey}`}
@@ -74,7 +76,7 @@ function SectionButton({
       type="button"
     >
       <span className="block text-sm font-semibold text-foreground">{label}</span>
-      <span className="mt-1 block text-xs leading-5 text-muted">
+      <span className="mt-0.5 block text-xs leading-5 text-muted">
         {description}
       </span>
     </button>
@@ -193,181 +195,194 @@ export function PageWorkspace({
   }
 
   return (
-    <div className="grid gap-3.5 sm:gap-4">
-      <section className="surface-panel surface-panel--soft p-3">
-        <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
-          <div className="space-y-1">
-            <p className="workspace-kicker">Экран</p>
-            <p className="text-sm font-semibold text-foreground">
-              Оставь только нужные блоки
-            </p>
+    <RepairMojibakeTree>
+      <div className="grid gap-2.5 sm:gap-3.5">
+        <section className="surface-panel surface-panel--soft hidden p-3 xl:block">
+          <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
+            <div className="space-y-1">
+              <p className="workspace-kicker">Экран</p>
+              <p className="text-sm font-semibold text-foreground">
+                Оставь на экране только нужные блоки
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <VisibilityButton
+                active={!hiddenBlocks.hero}
+                icon={hiddenBlocks.hero ? Eye : EyeOff}
+                label={
+                  hiddenBlocks.hero ? "Показать обзор" : "Скрыть обзор"
+                }
+                onClick={() => toggleBlockVisibility("hero")}
+                testId="page-workspace-visibility-hero"
+              />
+              <VisibilityButton
+                active={!hiddenBlocks.menu}
+                icon={hiddenBlocks.menu ? LayoutPanelTop : EyeOff}
+                label={hiddenBlocks.menu ? "Показать меню" : "Скрыть меню"}
+                onClick={() => toggleBlockVisibility("menu")}
+                testId="page-workspace-visibility-menu"
+              />
+              <VisibilityButton
+                active={!hiddenBlocks.section}
+                icon={hiddenBlocks.section ? Eye : EyeOff}
+                label={
+                  hiddenBlocks.section ? "Показать раздел" : "Скрыть раздел"
+                }
+                onClick={() => toggleBlockVisibility("section")}
+                testId="page-workspace-visibility-section"
+              />
+            </div>
           </div>
+        </section>
 
-          <div className="flex flex-wrap gap-2">
-            <VisibilityButton
-              active={!hiddenBlocks.hero}
-              icon={hiddenBlocks.hero ? Eye : EyeOff}
-              label={hiddenBlocks.hero ? "Показать обзор" : "Скрыть обзор"}
-              onClick={() => toggleBlockVisibility("hero")}
-              testId="page-workspace-visibility-hero"
-            />
-            <VisibilityButton
-              active={!hiddenBlocks.menu}
-              icon={hiddenBlocks.menu ? LayoutPanelTop : EyeOff}
-              label={hiddenBlocks.menu ? "Показать меню" : "Скрыть меню"}
-              onClick={() => toggleBlockVisibility("menu")}
-              testId="page-workspace-visibility-menu"
-            />
-            <VisibilityButton
-              active={!hiddenBlocks.section}
-              icon={hiddenBlocks.section ? Eye : EyeOff}
-              label={hiddenBlocks.section ? "Показать раздел" : "Скрыть раздел"}
-              onClick={() => toggleBlockVisibility("section")}
-              testId="page-workspace-visibility-section"
-            />
-          </div>
-        </div>
-      </section>
-
-      {!hiddenBlocks.hero ? (
-        <section className="surface-panel surface-panel--soft overflow-hidden p-3 sm:p-3.5">
-          <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr] lg:items-start">
-            <div className="space-y-2.5">
-              {badges.length ? (
-                <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
-                  {badges.map((badge) => (
-                    <span className="pill" key={badge} title={badge}>
-                      {badge}
-                    </span>
-                  ))}
-                </div>
-              ) : null}
-
+        {!hiddenBlocks.hero ? (
+          <section className="surface-panel surface-panel--soft overflow-hidden p-2.5 sm:p-3.5">
+            <div className="grid gap-2.5 lg:grid-cols-[1.1fr_0.9fr] lg:items-start">
               <div className="space-y-2">
-                <p className="workspace-kicker">Фокус</p>
-                <h2 className="app-display max-w-4xl text-[1.2rem] font-semibold tracking-tight text-foreground sm:text-[1.45rem]">
-                  {title}
-                </h2>
-                <p className="max-w-3xl text-sm leading-6 text-muted">
-                  {description}
+                {badges.length ? (
+                  <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
+                    {badges.map((badge) => (
+                      <span className="pill" key={badge} title={badge}>
+                        {badge}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+
+                <div className="space-y-1.5">
+                  <p className="workspace-kicker">Фокус</p>
+                  <h2 className="app-display max-w-4xl text-[1.06rem] font-semibold leading-tight tracking-tight text-foreground sm:text-[1.45rem]">
+                    {title}
+                  </h2>
+                  <p className="max-w-3xl text-[0.78rem] leading-5 text-muted sm:text-sm sm:leading-6">
+                    {description}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-1.5 sm:gap-2.5">
+                {metrics.map((metric) => (
+                  <article
+                    className="metric-tile p-2 sm:p-3"
+                    key={metric.label}
+                  >
+                    <p className="truncate text-[9px] uppercase tracking-[0.15em] text-muted sm:text-[10px]">
+                      {metric.label}
+                    </p>
+                    <p className="mt-0.5 truncate text-[0.95rem] font-semibold text-foreground sm:mt-1 sm:text-lg">
+                      {metric.value}
+                    </p>
+                    <p className="mt-1 hidden text-[0.72rem] leading-5 text-muted sm:block">
+                      {metric.note}
+                    </p>
+                  </article>
+                ))}
+              </div>
+            </div>
+          </section>
+        ) : null}
+
+        {!hiddenBlocks.menu ? (
+          <section className="surface-panel surface-panel--soft p-2.5 sm:p-3">
+            <div className="hidden flex-col gap-3 sm:flex sm:flex-row sm:items-start sm:justify-between">
+              <div className="space-y-1">
+                <p className="workspace-kicker">Разделы</p>
+                <p className="text-sm font-semibold text-foreground">
+                  Открой только нужный слой
                 </p>
               </div>
+
+              {activeSection ? (
+                <span className="pill" title={activeSection.label}>
+                  {activeSection.label}
+                </span>
+              ) : null}
             </div>
 
-            <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
-              {metrics.map((metric) => (
-                <article className="metric-tile p-2.5 sm:p-3" key={metric.label}>
-                  <p className="truncate text-[10px] uppercase tracking-[0.16em] text-muted">
-                    {metric.label}
-                  </p>
-                  <p className="mt-1 truncate text-base font-semibold text-foreground sm:text-lg">
-                    {metric.value}
-                  </p>
-                  <p className="mt-1 text-[0.72rem] leading-5 text-muted">{metric.note}</p>
-                </article>
+            <div className="md:hidden">
+              <button
+                aria-expanded={isMobileMenuOpen}
+                className="section-chip flex w-full items-center justify-between gap-2.5 px-3 py-2.5 text-left"
+                data-testid="page-workspace-mobile-trigger"
+                onClick={() => setIsMobileMenuOpen((current) => !current)}
+                type="button"
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[11px] uppercase tracking-[0.18em] text-muted">
+                    Текущий раздел
+                  </span>
+                  <span className="mt-1 block truncate text-sm font-semibold text-foreground">
+                    {activeSection?.label ?? "Выбери раздел"}
+                  </span>
+                  {activeSection ? (
+                    <span className="mt-0.5 hidden text-xs leading-5 text-muted sm:block">
+                      {activeSection.description}
+                    </span>
+                  ) : null}
+                </span>
+                <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border bg-white text-accent-strong">
+                  {isMobileMenuOpen ? (
+                    <ChevronUp size={18} strokeWidth={2.2} />
+                  ) : (
+                    <ChevronDown size={18} strokeWidth={2.2} />
+                  )}
+                </span>
+              </button>
+
+              {isMobileMenuOpen ? (
+                <div className="mt-2 grid gap-1.5">
+                  {sections.map((section) => {
+                    const isActive = activeSection?.key === section.key;
+
+                    return (
+                      <button
+                        aria-pressed={isActive}
+                        className={`section-chip flex w-full items-start justify-between gap-2.5 px-3 py-2.5 text-left ${
+                          isActive ? "section-chip--active" : ""
+                        }`}
+                        data-testid={`page-workspace-mobile-option-${section.key}`}
+                        key={section.key}
+                        onClick={() => handleSectionSelect(section.key)}
+                        type="button"
+                      >
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-sm font-semibold text-foreground">
+                            {section.label}
+                          </span>
+                          <span className="mt-0.5 hidden text-xs leading-5 text-muted sm:block">
+                            {section.description}
+                          </span>
+                        </span>
+                        {isActive ? (
+                          <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--accent-soft)_32%,white)] text-accent-strong">
+                            <Check size={15} strokeWidth={2.2} />
+                          </span>
+                        ) : null}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : null}
+            </div>
+
+            <div className="mt-0 hidden gap-2 overflow-x-auto pb-1 md:flex md:flex-nowrap">
+              {sections.map((section) => (
+                <SectionButton
+                  active={activeSection?.key === section.key}
+                  description={section.description}
+                  key={section.key}
+                  label={section.label}
+                  sectionKey={section.key}
+                  onClick={() => handleSectionSelect(section.key)}
+                />
               ))}
             </div>
-          </div>
-        </section>
-      ) : null}
+          </section>
+        ) : null}
 
-      {!hiddenBlocks.menu ? (
-        <section className="surface-panel surface-panel--soft p-3">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div className="space-y-1">
-              <p className="workspace-kicker">Разделы</p>
-              <p className="text-sm font-semibold text-foreground">Открой только нужный слой</p>
-            </div>
-
-            {activeSection ? (
-              <span className="pill" title={activeSection.label}>
-                {activeSection.label}
-              </span>
-            ) : null}
-          </div>
-
-          <div className="mt-3 md:hidden">
-            <button
-              aria-expanded={isMobileMenuOpen}
-              className="section-chip flex w-full items-center justify-between gap-3 px-3 py-2 text-left"
-              data-testid="page-workspace-mobile-trigger"
-              onClick={() => setIsMobileMenuOpen((current) => !current)}
-              type="button"
-            >
-              <span className="min-w-0 flex-1">
-                <span className="block text-[11px] uppercase tracking-[0.18em] text-muted">
-                  Текущий раздел
-                </span>
-                <span className="mt-1 block truncate text-sm font-semibold text-foreground">
-                  {activeSection?.label ?? "Выбери раздел"}
-                </span>
-                {activeSection ? (
-                  <span className="mt-1 block text-xs leading-5 text-muted">
-                    {activeSection.description}
-                  </span>
-                ) : null}
-              </span>
-              <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--accent-soft)_24%,white)] text-accent-strong">
-                {isMobileMenuOpen ? (
-                  <ChevronUp size={18} strokeWidth={2.2} />
-                ) : (
-                  <ChevronDown size={18} strokeWidth={2.2} />
-                )}
-              </span>
-            </button>
-
-            {isMobileMenuOpen ? (
-              <div className="mt-3 grid gap-2">
-                {sections.map((section) => {
-                  const isActive = activeSection?.key === section.key;
-
-                  return (
-                    <button
-                      aria-pressed={isActive}
-                      className={`section-chip flex w-full items-start justify-between gap-3 px-3 py-2 text-left ${
-                        isActive ? "section-chip--active" : ""
-                      }`}
-                      data-testid={`page-workspace-mobile-option-${section.key}`}
-                      key={section.key}
-                      onClick={() => handleSectionSelect(section.key)}
-                      type="button"
-                    >
-                      <span className="min-w-0 flex-1">
-                        <span className="block text-sm font-semibold text-foreground">
-                          {section.label}
-                        </span>
-                        <span className="mt-1 block text-xs leading-5 text-muted">
-                          {section.description}
-                        </span>
-                      </span>
-                      {isActive ? (
-                        <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--accent-soft)_32%,white)] text-accent-strong">
-                          <Check size={15} strokeWidth={2.2} />
-                        </span>
-                      ) : null}
-                    </button>
-                  );
-                })}
-              </div>
-            ) : null}
-          </div>
-
-          <div className="mt-3 hidden gap-2.5 md:flex md:flex-wrap">
-            {sections.map((section) => (
-              <SectionButton
-                active={activeSection?.key === section.key}
-                description={section.description}
-                key={section.key}
-                label={section.label}
-                sectionKey={section.key}
-                onClick={() => handleSectionSelect(section.key)}
-              />
-            ))}
-          </div>
-        </section>
-      ) : null}
-
-      {!hiddenBlocks.section ? activeSection?.content : null}
-    </div>
+        {!hiddenBlocks.section ? activeSection?.content : null}
+      </div>
+    </RepairMojibakeTree>
   );
 }

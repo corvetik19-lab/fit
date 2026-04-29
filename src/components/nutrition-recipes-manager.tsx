@@ -9,7 +9,7 @@ import type {
 } from "@/lib/nutrition/meal-logging";
 
 const inputClassName =
-  "w-full rounded-2xl border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_88%,var(--surface))] px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15";
+  "w-full rounded-[0.95rem] border border-border bg-white px-3.5 py-2.5 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/10";
 
 type RecipeDraftItem = {
   localId: string;
@@ -193,7 +193,7 @@ export function NutritionRecipesManager({
   function applyRecipe(recipe: NutritionRecipe) {
     if (recipe.items.some((item) => !item.food_id)) {
       setError(
-        "В рецепте есть продукты, которых уже нет в базе. Сначала обнови рецепт или верни продукты.",
+        "В рецепте есть продукты, которых уже нет в базе. Обнови рецепт или верни продукты.",
       );
       return;
     }
@@ -203,32 +203,33 @@ export function NutritionRecipesManager({
   }
 
   return (
-    <section className="card p-6">
-      <div className="mb-5 flex items-center justify-between gap-3">
-        <div>
-          <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
-            Рецепты
-          </p>
-          <h2 className="mt-2 text-2xl font-semibold text-foreground">
-            Рецепты и состав блюд
+    <section className="surface-panel p-3.5 sm:p-4">
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="workspace-kicker">Рецепты</p>
+          <h2 className="mt-1 text-lg font-semibold text-foreground">
+            Состав блюд
           </h2>
+          <p className="mt-1 text-sm leading-5 text-muted">
+            Собери рецепт из продуктов и добавляй его в дневник одним нажатием.
+          </p>
         </div>
         <div className="pill">{recipes.length}</div>
       </div>
 
       {error ? (
-        <p className="mb-4 rounded-2xl border border-red-500/25 bg-red-500/12 px-4 py-3 text-sm text-red-100">
+        <p className="mb-3 rounded-2xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
         </p>
       ) : null}
 
       {notice ? (
-        <p className="mb-4 rounded-2xl border border-emerald-500/25 bg-emerald-500/12 px-4 py-3 text-sm text-emerald-100">
+        <p className="mb-3 rounded-2xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
           {notice}
         </p>
       ) : null}
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-3 sm:grid-cols-2">
         <label className="grid gap-2 text-sm text-muted sm:col-span-2">
           Название рецепта
           <input
@@ -252,29 +253,26 @@ export function NutritionRecipesManager({
           />
         </label>
         <label className="grid gap-2 text-sm text-muted sm:col-span-2">
-          Инструкции
+          Инструкция
           <textarea
             className={`${inputClassName} min-h-24 resize-y`}
             onChange={(event) => setInstructions(event.target.value)}
-            placeholder="Короткое описание приготовления или подсказки по порционированию"
+            placeholder="Коротко: как приготовить и как делить на порции"
             value={instructions}
           />
         </label>
       </div>
 
-      <div className="mt-5 grid gap-3">
+      <div className="mt-4 grid gap-2.5">
         {items.map((item, index) => (
-          <div
-            className="rounded-2xl border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_84%,var(--surface))] p-4"
-            key={item.localId}
-          >
-            <div className="mb-3 flex items-center justify-between gap-3">
+          <div className="surface-panel surface-panel--soft p-3" key={item.localId}>
+            <div className="mb-2.5 flex items-center justify-between gap-3">
               <p className="text-sm font-semibold text-foreground">
                 Ингредиент {index + 1}
               </p>
               {items.length > 1 ? (
                 <button
-                  className="rounded-full border border-border px-3 py-2 text-xs font-medium text-foreground transition hover:bg-[color-mix(in_srgb,var(--surface-elevated)_96%,var(--surface))]"
+                  className="action-button action-button--secondary px-3 py-2 text-xs"
                   onClick={() => removeItem(item.localId)}
                   type="button"
                 >
@@ -283,7 +281,7 @@ export function NutritionRecipesManager({
               ) : null}
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-[1fr_160px]">
+            <div className="grid gap-3 sm:grid-cols-[1fr_140px]">
               <label className="grid gap-2 text-sm text-muted">
                 Продукт
                 <select
@@ -320,42 +318,32 @@ export function NutritionRecipesManager({
         ))}
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-3">
-        <button
-          className="rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:bg-[color-mix(in_srgb,var(--surface-elevated)_96%,var(--surface))]"
-          onClick={appendItem}
-          type="button"
-        >
+      <div className="mt-3 flex flex-wrap gap-2">
+        <button className="action-button action-button--soft" onClick={appendItem} type="button">
           Добавить ингредиент
         </button>
       </div>
 
-      <div className="mt-6 rounded-3xl border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_88%,var(--surface))] p-5">
-        <p className="text-sm font-medium text-foreground">Предварительный расчёт рецепта</p>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <p className="text-sm text-muted">
-            Всего калорий:{" "}
-            <span className="font-semibold text-foreground">{Math.round(preview.kcal)}</span>
+      <div className="surface-panel surface-panel--accent mt-4 p-3">
+        <p className="workspace-kicker">Предварительный расчёт</p>
+        <div className="mt-2 grid grid-cols-2 gap-2 text-sm text-muted">
+          <p>
+            Калории: <span className="font-semibold text-foreground">{Math.round(preview.kcal)}</span>
           </p>
-          <p className="text-sm text-muted">
-            Белки:{" "}
-            <span className="font-semibold text-foreground">
-              {formatMacro(preview.protein)} г
-            </span>
+          <p>
+            Белки: <span className="font-semibold text-foreground">{formatMacro(preview.protein)} г</span>
           </p>
-          <p className="text-sm text-muted">
-            Жиры:{" "}
-            <span className="font-semibold text-foreground">{formatMacro(preview.fat)} г</span>
+          <p>
+            Жиры: <span className="font-semibold text-foreground">{formatMacro(preview.fat)} г</span>
           </p>
-          <p className="text-sm text-muted">
-            Углеводы:{" "}
-            <span className="font-semibold text-foreground">{formatMacro(preview.carbs)} г</span>
+          <p>
+            Углеводы: <span className="font-semibold text-foreground">{formatMacro(preview.carbs)} г</span>
           </p>
         </div>
       </div>
 
       <button
-        className="mt-6 rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+        className="action-button action-button--primary mt-4"
         disabled={
           isPending ||
           !title.trim() ||
@@ -367,31 +355,29 @@ export function NutritionRecipesManager({
         {isPending ? "Сохраняю..." : "Сохранить рецепт"}
       </button>
 
-      <div className="mt-8 grid gap-3">
+      <div className="mt-5 grid gap-2.5">
         {recipes.length ? (
           recipes.map((recipe) => (
-            <article
-              className="rounded-2xl border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_84%,var(--surface))] p-4"
-              key={recipe.id}
-            >
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <p className="text-lg font-semibold text-foreground">{recipe.title}</p>
-                  <p className="text-sm text-muted">
-                    {Math.round(recipe.totals.kcal)} ккал на рецепт · {formatMacro(recipe.servings)}{" "}
-                    порц.
+            <article className="surface-panel surface-panel--soft p-3" key={recipe.id}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="line-clamp-2 text-base font-semibold text-foreground">
+                    {recipe.title}
+                  </p>
+                  <p className="mt-1 text-sm text-muted">
+                    {Math.round(recipe.totals.kcal)} ккал на рецепт · {formatMacro(recipe.servings)} порц.
                   </p>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
                   <button
-                    className="rounded-full border border-border px-3 py-2 text-sm font-medium text-foreground transition hover:bg-[color-mix(in_srgb,var(--surface-elevated)_96%,var(--surface))]"
+                    className="action-button action-button--secondary px-3 py-2 text-xs"
                     onClick={() => applyRecipe(recipe)}
                     type="button"
                   >
-                    В лог питания
+                    В лог
                   </button>
                   <button
-                    className="rounded-full border border-border px-3 py-2 text-sm font-medium text-foreground transition hover:bg-[color-mix(in_srgb,var(--surface-elevated)_96%,var(--surface))]"
+                    className="action-button action-button--secondary px-3 py-2 text-xs"
                     onClick={() => deleteRecipe(recipe.id)}
                     type="button"
                   >
@@ -400,9 +386,9 @@ export function NutritionRecipesManager({
                 </div>
               </div>
               {recipe.instructions ? (
-                <p className="mt-3 text-sm leading-7 text-muted">{recipe.instructions}</p>
+                <p className="mt-2 text-sm leading-6 text-muted">{recipe.instructions}</p>
               ) : null}
-              <ul className="mt-3 grid gap-2 text-sm text-muted">
+              <ul className="mt-2 grid gap-1.5 text-sm text-muted">
                 {recipe.items.map((item) => (
                   <li key={item.id}>
                     {item.food_name_snapshot} · {formatMacro(Number(item.servings))} порц.
@@ -412,9 +398,8 @@ export function NutritionRecipesManager({
             </article>
           ))
         ) : (
-          <p className="text-sm leading-7 text-muted">
-            Пока нет рецептов. Добавь первый рецепт, чтобы быстро собирать повторяющиеся
-            блюда и загружать их в лог питания.
+          <p className="text-sm leading-6 text-muted">
+            Пока нет рецептов. Добавь первый, чтобы быстрее собирать повторяющиеся блюда.
           </p>
         )}
       </div>

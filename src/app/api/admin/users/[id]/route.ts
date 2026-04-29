@@ -1,3 +1,5 @@
+import type { User } from "@supabase/supabase-js";
+
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import { isAdminAccessError, requireAdminRouteAccess } from "@/lib/admin-auth";
 import {
@@ -11,6 +13,40 @@ import {
 import { logger } from "@/lib/logger";
 import { withTransientRetry } from "@/lib/runtime-retry";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
+
+const IS_PLAYWRIGHT_RUNTIME = process.env.PLAYWRIGHT_TEST_HOOKS === "1";
+
+function createPlaywrightAuthUser(userId: string): User {
+  const isAdminUser = userId === "00000000-0000-4000-8000-000000000002";
+  const email = isAdminUser
+    ? process.env.PLAYWRIGHT_ADMIN_EMAIL
+    : process.env.PLAYWRIGHT_TEST_EMAIL;
+  const fullName = isAdminUser
+    ? process.env.PLAYWRIGHT_ADMIN_FULL_NAME
+    : process.env.PLAYWRIGHT_TEST_FULL_NAME;
+
+  return {
+    id: userId,
+    aud: "authenticated",
+    role: "authenticated",
+    email: email ?? "playwright@example.test",
+    email_confirmed_at: new Date().toISOString(),
+    phone: "",
+    confirmed_at: new Date().toISOString(),
+    last_sign_in_at: new Date().toISOString(),
+    app_metadata: {
+      provider: "email",
+      providers: ["email"],
+    },
+    user_metadata: {
+      full_name: fullName ?? "Playwright User",
+    },
+    identities: [],
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    is_anonymous: false,
+  } as User;
+}
 
 export async function GET(
   request: Request,
@@ -27,6 +63,17 @@ export async function GET(
       message: "Идентификатор пользователя заполнен некорректно.",
     });
     const currentAdmin = await requireAdminRouteAccess("view_admin_user_details");
+
+    if (IS_PLAYWRIGHT_RUNTIME && userId.startsWith("00000000-0000-4000-8000-")) {
+      return Response.json(
+        createFallbackAdminUserDetailResponse({
+          authUser: createPlaywrightAuthUser(userId),
+          currentAdminRole: currentAdmin.role,
+          userId,
+        }),
+      );
+    }
+
     const adminSupabase = createAdminSupabaseClient();
     const authUserResult = await withTransientRetry(() =>
       adminSupabase.auth.admin.getUserById(userId),

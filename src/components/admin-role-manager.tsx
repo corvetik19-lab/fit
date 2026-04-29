@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 
@@ -136,12 +136,12 @@ export function AdminRoleManager({
   }
 
   return (
-    <section className="card p-6">
-      <div className="mb-5">
+    <section className="surface-panel p-4 sm:p-5">
+      <div className="mb-4">
         <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
           Доступ
         </p>
-        <h2 className="mt-2 text-2xl font-semibold text-foreground">
+        <h2 className="mt-1.5 text-lg font-semibold text-foreground">
           Роль администратора
         </h2>
         <p className="mt-2 text-sm leading-7 text-muted">

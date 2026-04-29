@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { startTransition, useState } from "react";
 
@@ -29,7 +29,7 @@ export function AdminUserActions({
   const [exportFormat, setExportFormat] = useState("json_csv_zip");
   const [subscriptionAction, setSubscriptionAction] = useState("grant_trial");
   const [subscriptionDays, setSubscriptionDays] = useState("14");
-  const [provider, setProvider] = useState("admin_console");
+  const [provider, setProvider] = useState("admin_trial");
   const [entitlementAction, setEntitlementAction] =
     useState("enable_entitlement");
   const [featureKey, setFeatureKey] = useState("ai_chat");
@@ -46,6 +46,30 @@ export function AdminUserActions({
     currentAdminRole,
     currentUserEmail,
   );
+  const usesSubscriptionDuration =
+    subscriptionAction === "grant_trial" ||
+    subscriptionAction === "activate_subscription";
+  const parsedSubscriptionDays = Number(subscriptionDays);
+  const isSubscriptionDaysInvalid =
+    usesSubscriptionDuration &&
+    (!Number.isInteger(parsedSubscriptionDays) ||
+      parsedSubscriptionDays < 1 ||
+      parsedSubscriptionDays > 365);
+
+  function handleSubscriptionActionChange(nextAction: string) {
+    setSubscriptionAction(nextAction);
+
+    if (nextAction === "grant_trial" && provider.trim() === "admin_console") {
+      setProvider("admin_trial");
+    }
+
+    if (
+      nextAction === "activate_subscription" &&
+      provider.trim() === "admin_trial"
+    ) {
+      setProvider("admin_console");
+    }
+  }
 
   function submitJsonAction(
     endpoint: string,
@@ -85,17 +109,17 @@ export function AdminUserActions({
   }
 
   return (
-    <section className="card p-6">
-      <div className="mb-5">
+    <section className="surface-panel p-4 sm:p-5">
+      <div className="mb-4">
         <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
           Действия
         </p>
-        <h2 className="mt-2 text-2xl font-semibold text-foreground">
+        <h2 className="mt-1.5 text-lg font-semibold text-foreground">
           Поддержка, данные и доступы
         </h2>
       </div>
 
-      <div className="grid gap-6">
+      <div className="grid gap-4">
         <div className="grid gap-4">
           {!canQueueSupportActions ? (
             <p className="rounded-2xl border border-amber-500/25 bg-amber-500/12 px-4 py-3 text-sm text-amber-900">
@@ -287,11 +311,16 @@ export function AdminUserActions({
                 Действие с подпиской
                 <select
                   className={inputClassName}
+                  data-testid="admin-user-actions-subscription-action"
                   disabled={!canManageBilling || isPending}
-                  onChange={(event) => setSubscriptionAction(event.target.value)}
+                  onChange={(event) =>
+                    handleSubscriptionActionChange(event.target.value)
+                  }
                   value={subscriptionAction}
                 >
-                  <option value="grant_trial">Выдать пробный период</option>
+                  <option value="grant_trial">
+                    Выдать / продлить тестовый доступ
+                  </option>
                   <option value="activate_subscription">Включить подписку</option>
                   <option value="mark_past_due">Отметить как неоплаченную</option>
                   <option value="cancel_subscription">Отменить подписку</option>
@@ -304,34 +333,51 @@ export function AdminUserActions({
                   className={inputClassName}
                   disabled={!canManageBilling || isPending}
                   onChange={(event) => setProvider(event.target.value)}
-                  placeholder="admin_console"
+                  placeholder="admin_trial"
                   type="text"
                   value={provider}
                 />
+                <span className="text-xs leading-5 text-muted">
+                  Для тестового доступа используй `admin_trial`; для ручной подписки -
+                  `admin_console`.
+                </span>
               </label>
 
               <label className="grid gap-2 text-sm text-muted">
-                Период, дней
+                Дней добавить
                 <input
                   className={inputClassName}
-                  disabled={!canManageBilling || isPending}
+                  disabled={
+                    !canManageBilling || isPending || !usesSubscriptionDuration
+                  }
+                  max={365}
+                  min={1}
                   onChange={(event) => setSubscriptionDays(event.target.value)}
                   placeholder="14"
+                  step={1}
                   type="number"
                   value={subscriptionDays}
                 />
+                <span className="text-xs leading-5 text-muted">
+                  Повторная выдача тестового доступа добавит дни к текущей будущей
+                  дате окончания.
+                </span>
               </label>
 
               <button
                 className="action-button action-button--secondary px-5 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-60"
                 data-testid="admin-user-actions-billing-reconcile"
-                disabled={!canManageBilling || isPending}
+                disabled={
+                  !canManageBilling || isPending || isSubscriptionDaysInvalid
+                }
                 onClick={() =>
                   submitJsonAction(
                     `/api/admin/users/${userId}/billing`,
                     {
                       action: subscriptionAction,
-                      duration_days: Number(subscriptionDays) || undefined,
+                      duration_days: usesSubscriptionDuration
+                        ? parsedSubscriptionDays
+                        : undefined,
                       provider: provider.trim() || undefined,
                       reason,
                     },

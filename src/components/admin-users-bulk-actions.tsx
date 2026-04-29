@@ -116,8 +116,11 @@ export function AdminUsersBulkActionsPanel({
           <input
             className="rounded-[1rem] border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,white)] px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted focus:border-accent focus:ring-2 focus:ring-accent/15"
             disabled={!canRunBulkActions || isBulkPending || bulkAction !== "grant_trial"}
+            max={365}
+            min={1}
             onChange={(event) => onBulkTrialDaysChange(event.target.value)}
             placeholder="14"
+            step={1}
             type="number"
             value={bulkTrialDays}
           />

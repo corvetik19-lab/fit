@@ -79,3 +79,9 @@ GitHub-поверхность для advisory review и prompt-contract прав
 - [x] Следующий tranche по orchestration/governance/self-evolving слою вынесен в
   [CODEX_AGENT_AUTONOMY_PLAN.md](/C:/fit/docs/CODEX_AGENT_AUTONOMY_PLAN.md), чтобы review-contract
   и autonomous mainline lane развивались раздельно и не смешивали GitHub review с automation policy.
+
+## 2026-04-16 CLI-only verification follow-up
+
+- [x] Root [AGENTS.md](/C:/fit/AGENTS.md) закреплён в CLI-only режиме для browser/deploy verification: browser-проверки теперь обязаны идти через `playwright-cli`, а rollout verification — через `vercel inspect --wait` или repo wrapper `npm run wait:vercel-deploy -- <deployment-url-or-id>`.
+- [x] [CODEX_PLAYBOOK.md](/C:/fit/docs/CODEX_PLAYBOOK.md) и [CODEX_ONBOARDING.md](/C:/fit/docs/CODEX_ONBOARDING.md) синхронизированы с тем же контрактом, чтобы agent layer не возвращался к Vercel/Playwright MCP в канонических workflow.
+- [x] [verify-codex.mjs](/C:/fit/scripts/verify-codex.mjs) теперь валит проверку, если в `AGENTS.md`, `CODEX_PLAYBOOK.md` или `CODEX_ONBOARDING.md` пропали `playwright-cli` / `vercel inspect` или вернулись legacy-ссылки на `Vercel MCP` / `Playwright MCP`.

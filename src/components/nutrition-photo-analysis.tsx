@@ -31,7 +31,7 @@ type NutritionPhotoAnalysisProps = {
 };
 
 const inputClassName =
-  "w-full rounded-2xl border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_88%,var(--surface))] px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15 disabled:cursor-not-allowed disabled:opacity-60";
+  "w-full rounded-[0.95rem] border border-border bg-white px-3.5 py-2.5 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/10 disabled:cursor-not-allowed disabled:opacity-60";
 
 function formatConfidence(value: MealPhotoAnalysis["confidence"]) {
   switch (value) {
@@ -151,7 +151,7 @@ export function NutritionPhotoAnalysis({
 
   function importResult(mode: "food" | "meal") {
     if (!file || !result) {
-      setError("Сначала получи AI-разбор фото, а потом сохраняй его в питание.");
+      setError("Сначала получи AI-разбор фото, потом сохраняй его в питание.");
       return;
     }
 
@@ -203,7 +203,7 @@ export function NutritionPhotoAnalysis({
 
         setNotice(
           payload.meta?.imageStored === false
-            ? `${baseNotice} Изображение не удалось сохранить в storage, но запись в питании уже создана.`
+            ? `${baseNotice} Изображение не удалось сохранить в storage, но запись уже создана.`
             : baseNotice,
         );
 
@@ -215,60 +215,56 @@ export function NutritionPhotoAnalysis({
   }
 
   return (
-    <section className="card card--hero p-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="workspace-kicker">AI-помощник</p>
-          <h2 className="app-display mt-2 text-2xl font-semibold text-foreground sm:text-3xl">
-            Сними еду и сразу загрузи её в приложение
+    <section className="surface-panel p-3.5 sm:p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="workspace-kicker">Фото еды</p>
+          <h2 className="mt-1 text-lg font-semibold text-foreground">
+            Сними блюдо и загрузи в питание
           </h2>
-          <p className="mt-3 max-w-2xl text-sm leading-7 text-muted">
-            Камера нужна не только для оценки КБЖУ. После анализа снимок можно
-            сохранить как новый продукт и сразу добавить в дневник питания.
+          <p className="mt-1 text-sm leading-5 text-muted">
+            AI оценит состав, а результат можно сохранить как продукт или сразу добавить в дневник.
           </p>
           {!access.allowed ? (
             <Link
-              className="action-button action-button--secondary mt-3"
+              className="action-button action-button--secondary mt-3 px-4 py-2.5 text-sm"
               href="/settings#billing-center"
             >
-              Открыть billing center
+              Открыть доступ
             </Link>
           ) : null}
         </div>
 
-        <div className="surface-panel surface-panel--soft px-5 py-4 text-sm text-muted">
-          <p>
-            Использовано: {access.usage.count}
+        <div className="metric-tile hidden min-w-[8rem] px-3 py-2 text-sm sm:block">
+          <p className="workspace-kicker">AI</p>
+          <p className="mt-1 text-sm font-semibold text-foreground">
+            {access.usage.count}
             {typeof access.usage.limit === "number" ? ` / ${access.usage.limit}` : ""}
           </p>
-          <p className="mt-1">Источник доступа: {access.source}</p>
-          {access.reason ? (
-            <p className="mt-2 text-amber-200">{access.reason}</p>
-          ) : null}
         </div>
       </div>
 
       {error ? (
-        <p className="mt-5 rounded-2xl border border-red-500/25 bg-red-500/12 px-4 py-3 text-sm text-red-100">
+        <p className="mt-3 rounded-2xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
         </p>
       ) : null}
 
       {notice ? (
-        <div className="mt-5 rounded-2xl border border-emerald-500/25 bg-emerald-500/12 px-4 py-3 text-sm text-emerald-100">
+        <div className="mt-3 rounded-2xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
           <p>{notice}</p>
-          <div className="mt-3 flex flex-wrap gap-3">
+          <div className="mt-3 flex flex-wrap gap-2">
             <Link
-              className="action-button action-button--secondary"
+              className="action-button action-button--secondary px-4 py-2.5 text-sm"
               href="/nutrition?section=log&panel=foods"
             >
-              Открыть продукты
+              Продукты
             </Link>
             <Link
-              className="action-button action-button--soft"
+              className="action-button action-button--soft px-4 py-2.5 text-sm"
               href="/nutrition?section=log&panel=log"
             >
-              Открыть дневник
+              Дневник
             </Link>
           </div>
         </div>
@@ -292,11 +288,11 @@ export function NutritionPhotoAnalysis({
         type="file"
       />
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-[0.92fr_1.08fr]">
-        <div className="grid gap-4">
-          <div className="grid gap-3 sm:grid-cols-2">
+      <div className="mt-4 grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
+        <div className="grid gap-3">
+          <div className="grid grid-cols-2 gap-2">
             <button
-              className="action-button action-button--soft"
+              className="action-button action-button--primary"
               data-testid="nutrition-photo-open-camera"
               disabled={!access.allowed}
               onClick={() => cameraInputRef.current?.click()}
@@ -313,7 +309,7 @@ export function NutritionPhotoAnalysis({
               type="button"
             >
               <ImagePlus size={16} strokeWidth={2.2} />
-              Из галереи
+              Галерея
             </button>
           </div>
 
@@ -321,32 +317,31 @@ export function NutritionPhotoAnalysis({
 
           {previewUrl ? (
             <div
-              className="overflow-hidden rounded-[28px] border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_90%,var(--surface))] shadow-[0_22px_60px_rgba(0,0,0,0.28)]"
+              className="overflow-hidden rounded-[1.25rem] border border-border bg-white"
               data-testid="nutrition-photo-preview"
             >
               <Image
                 alt="Предпросмотр фото блюда"
-                className="h-72 w-full object-cover"
-                height={288}
+                className="h-60 w-full object-cover"
+                height={240}
                 src={previewUrl}
                 unoptimized
                 width={640}
               />
             </div>
           ) : (
-            <div className="surface-panel surface-panel--soft flex min-h-72 items-center justify-center rounded-[28px] px-5 py-6 text-center text-sm leading-7 text-muted">
-              Здесь появится кадр с камеры. Лучше всего работают чёткие фото
-              тарелки или упаковки при хорошем свете.
+            <div className="surface-panel surface-panel--soft flex min-h-56 items-center justify-center rounded-[1.25rem] px-5 py-6 text-center text-sm leading-6 text-muted">
+              Здесь появится кадр с камеры. Лучше всего работают чёткие фото тарелки или упаковки при хорошем свете.
             </div>
           )}
 
           <label className="grid gap-2 text-sm text-muted">
             Контекст для AI
             <textarea
-              className={`${inputClassName} min-h-32 resize-y`}
+              className={`${inputClassName} min-h-24 resize-y`}
               disabled={!access.allowed}
               onChange={(event) => setNotes(event.target.value)}
-              placeholder="Например: это был обед после тренировки, на фото рис, курица и овощи."
+              placeholder="Например: обед после тренировки, на фото рис, курица и овощи."
               value={notes}
             />
           </label>
@@ -362,70 +357,47 @@ export function NutritionPhotoAnalysis({
           </button>
         </div>
 
-        <div className="surface-panel surface-panel--soft p-5">
+        <div className="surface-panel surface-panel--soft p-3.5 sm:p-4">
           {result ? (
-            <div className="grid gap-5">
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                  <p className="text-xl font-semibold text-foreground">
+            <div className="grid gap-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-lg font-semibold text-foreground">
                     {result.title}
                   </p>
-                  <p className="mt-2 text-sm leading-7 text-muted">
+                  <p className="mt-1 text-sm leading-6 text-muted">
                     {result.summary}
                   </p>
                 </div>
-                <div className="pill">
-                  Уверенность: {formatConfidence(result.confidence)}
-                </div>
+                <div className="pill">AI: {formatConfidence(result.confidence)}</div>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                <article className="surface-panel p-4">
-                  <p className="text-sm text-muted">Калории</p>
-                  <p className="mt-2 text-2xl font-semibold text-foreground">
-                    {result.estimatedKcal} ккал
-                  </p>
-                </article>
-                <article className="surface-panel p-4">
-                  <p className="text-sm text-muted">Белки</p>
-                  <p className="mt-2 text-2xl font-semibold text-foreground">
-                    {result.macros.protein} г
-                  </p>
-                </article>
-                <article className="surface-panel p-4">
-                  <p className="text-sm text-muted">Жиры</p>
-                  <p className="mt-2 text-2xl font-semibold text-foreground">
-                    {result.macros.fat} г
-                  </p>
-                </article>
-                <article className="surface-panel p-4">
-                  <p className="text-sm text-muted">Углеводы</p>
-                  <p className="mt-2 text-2xl font-semibold text-foreground">
-                    {result.macros.carbs} г
-                  </p>
-                </article>
+              <div className="grid grid-cols-2 gap-2">
+                <Metric label="Калории" value={`${result.estimatedKcal} ккал`} />
+                <Metric label="Белки" value={`${result.macros.protein} г`} />
+                <Metric label="Жиры" value={`${result.macros.fat} г`} />
+                <Metric label="Углеводы" value={`${result.macros.carbs} г`} />
               </div>
 
-              <div className="grid gap-4 lg:grid-cols-2">
-                <div className="rounded-2xl border border-border bg-white/70 p-4">
+              <div className="grid gap-3 lg:grid-cols-2">
+                <div className="rounded-2xl border border-border bg-white/75 p-3">
                   <p className="text-sm font-semibold text-foreground">
-                    Что AI увидел на фото
+                    Что видно на фото
                   </p>
-                  <ul className="mt-3 grid gap-2 text-sm leading-7 text-muted">
+                  <ul className="mt-2 grid gap-1.5 text-sm leading-6 text-muted">
                     {result.items.map((item) => (
                       <li key={`${item.name}-${item.portion}`}>
-                        {item.name} · {item.portion} · уверенность{" "}
-                        {formatConfidence(item.confidence)}
+                        {item.name} · {item.portion} · {formatConfidence(item.confidence)}
                       </li>
                     ))}
                   </ul>
                 </div>
 
-                <div className="rounded-2xl border border-border bg-white/70 p-4">
+                <div className="rounded-2xl border border-border bg-white/75 p-3">
                   <p className="text-sm font-semibold text-foreground">
                     Что делать дальше
                   </p>
-                  <ul className="mt-3 grid gap-2 text-sm leading-7 text-muted">
+                  <ul className="mt-2 grid gap-1.5 text-sm leading-6 text-muted">
                     {result.suggestions.map((suggestion) => (
                       <li key={suggestion}>{suggestion}</li>
                     ))}
@@ -433,7 +405,7 @@ export function NutritionPhotoAnalysis({
                 </div>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-2 sm:grid-cols-2">
                 <button
                   className="action-button action-button--secondary"
                   data-testid="nutrition-photo-save-food"
@@ -444,10 +416,10 @@ export function NutritionPhotoAnalysis({
                   {activeImportMode === "food" ? (
                     <>
                       <LoaderCircle className="animate-spin" size={16} strokeWidth={2.2} />
-                      Сохраняю продукт...
+                      Сохраняю...
                     </>
                   ) : (
-                    "Сохранить как продукт"
+                    "Сохранить продукт"
                   )}
                 </button>
                 <button
@@ -460,28 +432,35 @@ export function NutritionPhotoAnalysis({
                   {activeImportMode === "meal" ? (
                     <>
                       <LoaderCircle className="animate-spin" size={16} strokeWidth={2.2} />
-                      Добавляю в дневник...
+                      Добавляю...
                     </>
                   ) : (
-                    "Сохранить и добавить в дневник"
+                    "Добавить в дневник"
                   )}
                 </button>
               </div>
             </div>
           ) : (
-            <div className="grid gap-3 text-sm leading-7 text-muted">
+            <div className="grid gap-2 text-sm leading-6 text-muted">
               <p>
-                После анализа здесь появятся состав блюда, ориентировочные калории и
-                КБЖУ.
+                После анализа здесь появятся состав блюда, ориентировочные калории и КБЖУ.
               </p>
               <p>
-                Дальше результат можно будет одним нажатием сохранить как новый
-                продукт или сразу занести в дневник питания.
+                Результат можно сохранить как новый продукт или одним действием добавить в дневник питания.
               </p>
             </div>
           )}
         </div>
       </div>
     </section>
+  );
+}
+
+function Metric({ label, value }: { label: string; value: string }) {
+  return (
+    <article className="metric-tile p-2.5">
+      <p className="workspace-kicker">{label}</p>
+      <p className="mt-1 text-sm font-semibold text-foreground">{value}</p>
+    </article>
   );
 }

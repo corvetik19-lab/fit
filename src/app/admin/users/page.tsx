@@ -14,7 +14,8 @@ import { withTimeout, withTransientRetry } from "@/lib/runtime-retry";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { requirePlatformAdminViewer } from "@/lib/viewer";
 
-const ADMIN_USERS_PAGE_TIMEOUT_MS = 4_000;
+const ADMIN_USERS_PAGE_TIMEOUT_MS =
+  process.env.PLAYWRIGHT_TEST_HOOKS === "1" ? 2_000 : 4_000;
 
 export default async function AdminUsersPage() {
   const viewer = await requirePlatformAdminViewer();
@@ -70,12 +71,12 @@ export default async function AdminUsersPage() {
     <AppShell
       eyebrow="Админ"
       hideAssistantWidget
-      title="Пользователи и управление доступом"
+      title="Пользователи"
       viewer={toAppShellViewer(viewer)}
     >
-      <section className="surface-panel overflow-hidden p-4 sm:p-5">
-        <div className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
-          <div className="space-y-4">
+      <section className="surface-panel overflow-hidden p-4">
+        <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
+          <div className="space-y-3">
             <div className="flex flex-wrap gap-2">
               <span className="pill">Пользователи</span>
               {showAdminRoles ? (
@@ -87,25 +88,24 @@ export default async function AdminUsersPage() {
             </div>
 
             <div className="space-y-2.5">
-              <h2 className="max-w-4xl text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-                Удобный каталог для поиска пользователей, доступа и важных случаев.
+              <h2 className="max-w-4xl text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+                Каталог пользователей, доступа и важных случаев.
               </h2>
-              <p className="max-w-3xl text-sm leading-6 text-muted">
-                Здесь удобно искать пользователя по email или ID, проверять
-                активность, подписку, очередь задач и сразу переходить в полную
-                карточку без лишних экранов и служебного шума.
+              <p className="max-w-3xl text-sm leading-5 text-muted">
+                Поиск, активность, подписка, очередь задач и переход в карточку
+                остаются доступны в одном мобильном рабочем экране.
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-3">
+            <div className="grid gap-2.5 sm:flex sm:flex-wrap">
               <Link
-                className="rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90"
+                className="action-button action-button--primary w-full sm:w-auto"
                 href={"/admin" as Route}
               >
                 Вернуться в центр управления
               </Link>
               <Link
-                className="action-button action-button--secondary px-5 py-3 text-sm"
+                className="action-button action-button--secondary w-full sm:w-auto"
                 href={`/admin/users/${viewer.user.id}` as Route}
               >
                 Открыть мою карточку
@@ -113,7 +113,7 @@ export default async function AdminUsersPage() {
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-2.5 sm:grid-cols-2">
             {[
               [
                 "Поиск и фильтры",
@@ -132,9 +132,9 @@ export default async function AdminUsersPage() {
                 "Тренировки, питание, ИИ, оплата и история действий в одном месте.",
               ],
             ].map(([label, detail]) => (
-              <article className="metric-tile p-3.5 text-sm" key={label}>
+              <article className="metric-tile p-3 text-sm" key={label}>
                 <p className="font-semibold text-foreground">{label}</p>
-                <p className="mt-2 leading-6 text-muted">{detail}</p>
+                <p className="mt-1.5 leading-5 text-muted">{detail}</p>
               </article>
             ))}
           </div>

@@ -2,7 +2,9 @@ import { z } from "zod";
 
 import { createApiErrorResponse } from "@/lib/api/error-response";
 import { logger } from "@/lib/logger";
+import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { readServerUserOrNull } from "@/lib/supabase/server-user";
 import { getWorkoutDayDetail } from "@/lib/workout/weekly-programs";
 
 const syncPullSchema = z.object({
@@ -13,10 +15,8 @@ const syncPullSchema = z.object({
 
 export async function GET(request: Request) {
   try {
-    const supabase = await createServerSupabaseClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const authSupabase = await createServerSupabaseClient();
+    const user = await readServerUserOrNull(authSupabase, request);
 
     if (!user) {
       return createApiErrorResponse({
@@ -33,7 +33,8 @@ export async function GET(request: Request) {
       cursor: searchParams.get("cursor") ?? undefined,
     });
     const nextCursor = new Date().toISOString();
-    const snapshot = await getWorkoutDayDetail(supabase, user.id, parsed.dayId);
+    const dataSupabase = createAdminSupabaseClient();
+    const snapshot = await getWorkoutDayDetail(dataSupabase, user.id, parsed.dayId);
 
     if (!snapshot) {
       return createApiErrorResponse({

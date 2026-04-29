@@ -426,8 +426,8 @@ export function WorkoutDaySession({
             );
           })
         ) : (
-          <section className="card p-5 sm:p-6">
-            <p className="text-sm leading-7 text-[color:var(--muted)]">
+          <section className="surface-panel p-4">
+            <p className="text-sm leading-6 text-muted">
               В этом дне пока нет упражнений. Вернись к неделе и добавь хотя бы один шаг.
             </p>
           </section>

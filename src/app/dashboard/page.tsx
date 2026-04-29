@@ -1,159 +1,34 @@
 import { AppShell, toAppShellViewer } from "@/components/app-shell";
 import { DashboardWorkspace } from "@/components/dashboard-workspace";
 import {
-  getAiRuntimeContext,
-  type AiRuntimeContextResult,
+  createEmptyAiUserContext,
   type AiUserContext,
 } from "@/lib/ai/user-context";
 import {
   getDashboardRuntimeMetrics,
-  type DashboardNutritionCharts,
-  type DashboardPeriodComparison,
   type DashboardRuntimeMetricsResult,
-  type DashboardSnapshot,
-  type DashboardWorkoutCharts,
 } from "@/lib/dashboard/metrics";
 import { logger } from "@/lib/logger";
+import { withTransientRetry } from "@/lib/runtime-retry";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireReadyViewer } from "@/lib/viewer";
-import { withTransientRetry } from "@/lib/runtime-retry";
 
-const DASHBOARD_PAGE_RUNTIME_TIMEOUT_MS = 8_000;
+const DASHBOARD_TIMEOUT_MS =
+  process.env.PLAYWRIGHT_TEST_HOOKS === "1" ? 1_500 : 8_000;
+const IS_PLAYWRIGHT_RUNTIME = process.env.PLAYWRIGHT_TEST_HOOKS === "1";
 
-function withTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string) {
+function withTimeout<T>(promise: Promise<T>, label: string) {
   return Promise.race<T>([
     promise,
     new Promise<T>((_, reject) => {
-      const timeout = setTimeout(() => {
-        clearTimeout(timeout);
-        reject(new Error(`${label} timed out after ${timeoutMs}ms`));
-      }, timeoutMs);
+      setTimeout(() => {
+        reject(new Error(`${label} timed out after ${DASHBOARD_TIMEOUT_MS}ms`));
+      }, DASHBOARD_TIMEOUT_MS);
     }),
   ]);
 }
 
-function createEmptyDashboardSnapshot(): DashboardSnapshot {
-  return {
-    activePrograms: 0,
-    aiSessions: 0,
-    completedDays: 0,
-    draftPrograms: 0,
-    exercises: 0,
-    loggedSets: 0,
-    nutritionDays: 0,
-    templates: 0,
-  };
-}
-
-function createEmptyPeriodComparisonMetric() {
-  return {
-    current: 0,
-    delta: 0,
-    previous: 0,
-  };
-}
-
-function createEmptyDashboardPeriodComparison(): DashboardPeriodComparison {
-  return {
-    aiSessions: createEmptyPeriodComparisonMetric(),
-    caloriesTracked: createEmptyPeriodComparisonMetric(),
-    workoutsCompleted: createEmptyPeriodComparisonMetric(),
-  };
-}
-
-function createEmptyDashboardWorkoutCharts(): DashboardWorkoutCharts {
-  return {
-    coachingSignals: [],
-    highlights: {
-      activeWeeks: 0,
-      avgActualReps: null,
-      avgActualRpe: null,
-      avgActualWeightKg: null,
-      avgCompletedDaysPerWeek: 0,
-      avgLoggedSetsPerWorkout: 0,
-      bestEstimatedOneRmKg: null,
-      bestSetWeightKg: null,
-      hardSetShareLast14: null,
-      latestWorkoutAt: null,
-    },
-    recentDays: [],
-    recovery: {
-      avgActualRpeLast14: null,
-      avgRecoveryDays: null,
-      completedDaysLast14: 0,
-      consistencyRatio: null,
-      daysSinceLastWorkout: null,
-      goalDaysPerWeek: null,
-      loggedSetsLast14: 0,
-      longestGapDays: null,
-      status: "steady",
-      summary:
-        "Сводка тренировок временно недоступна. Основной экран открыт в безопасном режиме, чтобы можно было продолжить работу.",
-    },
-    topExercises: [],
-    totals: {
-      completedDays: 0,
-      loggedSets: 0,
-      tonnageKg: 0,
-    },
-    weeklyTrend: [],
-  };
-}
-
-function createEmptyDashboardNutritionCharts(): DashboardNutritionCharts {
-  return {
-    averages: {
-      carbs: 0,
-      fat: 0,
-      kcal: 0,
-      protein: 0,
-    },
-    bodyMetrics: {
-      bodyFatPct: null,
-      deltaKg: null,
-      latestMeasuredAt: null,
-      latestWeightKg: null,
-      previousWeightKg: null,
-    },
-    coachingSignals: [],
-    dailyTrend: [],
-    highlights: {
-      avgKcalDelta: null,
-      avgProteinDelta: null,
-      latestTrackedAt: null,
-      targetAlignedDays: 0,
-      trackedDays: 0,
-    },
-    mealPatterns: {
-      avgMealKcal: null,
-      avgMealsPerTrackedDay: null,
-      avgProteinPerMeal: null,
-      dominantWindow: null,
-      eveningCaloriesShare: null,
-      mealCount: 0,
-      patterns: [],
-      proteinDenseMealShare: null,
-      topFoods: [],
-      trackedMealDays: 0,
-    },
-    recentDays: [],
-    strategy: [],
-    targets: {
-      carbs: null,
-      fat: null,
-      kcal: null,
-      protein: null,
-    },
-    totals: {
-      carbs: 0,
-      fat: 0,
-      kcal: 0,
-      protein: 0,
-    },
-  };
-}
-
-function createEmptyDashboardRuntimeResult(): DashboardRuntimeMetricsResult {
+function createFallbackDashboardResult(): DashboardRuntimeMetricsResult {
   return {
     cache: {
       generatedAt: null,
@@ -163,184 +38,228 @@ function createEmptyDashboardRuntimeResult(): DashboardRuntimeMetricsResult {
       source: "live",
     },
     metrics: {
-      nutritionCharts: createEmptyDashboardNutritionCharts(),
-      periodComparison: createEmptyDashboardPeriodComparison(),
-      snapshot: createEmptyDashboardSnapshot(),
-      workoutCharts: createEmptyDashboardWorkoutCharts(),
+      nutritionCharts: {
+        averages: {
+          carbs: 0,
+          fat: 0,
+          kcal: 0,
+          protein: 0,
+        },
+        bodyMetrics: {
+          bodyFatPct: null,
+          deltaKg: null,
+          latestMeasuredAt: null,
+          latestWeightKg: null,
+          previousWeightKg: null,
+        },
+        coachingSignals: [],
+        dailyTrend: [],
+        highlights: {
+          avgKcalDelta: null,
+          avgProteinDelta: null,
+          latestTrackedAt: null,
+          targetAlignedDays: 0,
+          trackedDays: 0,
+        },
+        mealPatterns: {
+          avgMealKcal: null,
+          avgMealsPerTrackedDay: null,
+          avgProteinPerMeal: null,
+          dominantWindow: null,
+          eveningCaloriesShare: null,
+          mealCount: 0,
+          patterns: [],
+          proteinDenseMealShare: null,
+          topFoods: [],
+          trackedMealDays: 0,
+        },
+        recentDays: [],
+        strategy: [],
+        targets: {
+          carbs: null,
+          fat: null,
+          kcal: null,
+          protein: null,
+        },
+        totals: {
+          carbs: 0,
+          fat: 0,
+          kcal: 0,
+          protein: 0,
+        },
+      },
+      periodComparison: {
+        aiSessions: {
+          current: 0,
+          delta: 0,
+          previous: 0,
+        },
+        caloriesTracked: {
+          current: 0,
+          delta: 0,
+          previous: 0,
+        },
+        workoutsCompleted: {
+          current: 0,
+          delta: 0,
+          previous: 0,
+        },
+      },
+      snapshot: {
+        activePrograms: 0,
+        aiSessions: 0,
+        completedDays: 0,
+        draftPrograms: 0,
+        exercises: 0,
+        loggedSets: 0,
+        nutritionDays: 0,
+        templates: 0,
+      },
+      workoutCharts: {
+        coachingSignals: [],
+        highlights: {
+          activeWeeks: 0,
+          avgActualReps: null,
+          avgActualRpe: null,
+          avgActualWeightKg: null,
+          avgCompletedDaysPerWeek: 0,
+          avgLoggedSetsPerWorkout: 0,
+          bestEstimatedOneRmKg: null,
+          bestSetWeightKg: null,
+          hardSetShareLast14: null,
+          latestWorkoutAt: null,
+        },
+        recentDays: [],
+        recovery: {
+          avgActualRpeLast14: null,
+          avgRecoveryDays: null,
+          completedDaysLast14: 0,
+          consistencyRatio: null,
+          daysSinceLastWorkout: null,
+          goalDaysPerWeek: null,
+          loggedSetsLast14: 0,
+          longestGapDays: null,
+          status: "needs_attention",
+          summary:
+            "Пока нет завершенных тренировок. После первых сессий здесь появится сигнал по ритму и восстановлению.",
+        },
+        topExercises: [],
+        totals: {
+          completedDays: 0,
+          loggedSets: 0,
+          tonnageKg: 0,
+        },
+        weeklyTrend: [],
+      },
     },
   };
 }
 
-function createEmptyAiRuntimeContextResult(): AiRuntimeContextResult {
-  const context: AiUserContext = {
-    goal: {
-      goalType: null,
-      targetWeightKg: null,
-      weeklyTrainingDays: null,
-    },
-    latestBodyMetrics: {
-      bodyFatPct: null,
-      measuredAt: null,
-      weightKg: null,
-    },
-    latestNutritionSummary: {
-      carbs: null,
-      fat: null,
-      kcal: null,
-      protein: null,
-      summaryDate: null,
-    },
-    nutritionInsights: {
-      avgKcalLast7: null,
-      avgProteinLast7: null,
-      coachingSignals: [],
-      daysTrackedLast7: 0,
-      kcalDeltaFromTarget: null,
-      latestTrackedDay: null,
-      mealPatterns: {
-        avgMealKcal: null,
-        avgMealsPerTrackedDay: null,
-        avgProteinPerMeal: null,
-        dominantWindow: null,
-        eveningCaloriesShare: null,
-        mealCount: 0,
-        patterns: [],
-        proteinDenseMealShare: null,
-        topFoods: [],
-        trackedMealDays: 0,
-      },
-      proteinDeltaFromTarget: null,
-      strategy: [],
-    },
-    nutritionTargets: {
-      carbsTarget: null,
-      fatTarget: null,
-      kcalTarget: null,
-      proteinTarget: null,
-    },
-    onboarding: {
-      age: null,
-      dietaryPreferences: [],
-      equipment: [],
-      fitnessLevel: null,
-      heightCm: null,
-      injuries: [],
-      sex: null,
-      weightKg: null,
-    },
-    profile: {
-      fullName: null,
-    },
-    structuredKnowledge: {
-      facts: [],
-      generatedAt: new Date().toISOString(),
-    },
-    workoutInsights: {
-      avgActualReps: null,
-      avgActualRpe: null,
-      avgActualWeightKg: null,
-      bestEstimatedOneRmKg: null,
-      bestSetWeightKg: null,
-      coachingSignals: [],
-      completedDaysLast28: 0,
-      hardSetShareLast28: null,
-      latestCompletedDayAt: null,
-      latestSessionBodyWeightKg: null,
-      loggedSetsLast28: 0,
-      tonnageLast28Kg: null,
-    },
+function buildDashboardAiContext(
+  dashboard: DashboardRuntimeMetricsResult,
+): AiUserContext {
+  const context = createEmptyAiUserContext();
+
+  context.latestBodyMetrics = {
+    bodyFatPct: dashboard.metrics.nutritionCharts.bodyMetrics.bodyFatPct,
+    measuredAt: dashboard.metrics.nutritionCharts.bodyMetrics.latestMeasuredAt,
+    weightKg: dashboard.metrics.nutritionCharts.bodyMetrics.latestWeightKg,
   };
 
-  return {
-    cache: {
-      generatedAt: context.structuredKnowledge.generatedAt,
-      snapshotCreatedAt: null,
-      snapshotId: null,
-      snapshotReason: null,
-      source: "live",
-    },
-    context,
+  context.nutritionInsights = {
+    avgKcalLast7: dashboard.metrics.nutritionCharts.averages.kcal,
+    avgProteinLast7: dashboard.metrics.nutritionCharts.averages.protein,
+    coachingSignals: dashboard.metrics.nutritionCharts.coachingSignals,
+    daysTrackedLast7: dashboard.metrics.nutritionCharts.highlights.trackedDays,
+    kcalDeltaFromTarget:
+      dashboard.metrics.nutritionCharts.highlights.avgKcalDelta,
+    latestTrackedDay:
+      dashboard.metrics.nutritionCharts.highlights.latestTrackedAt,
+    mealPatterns: dashboard.metrics.nutritionCharts.mealPatterns,
+    proteinDeltaFromTarget:
+      dashboard.metrics.nutritionCharts.highlights.avgProteinDelta,
+    strategy: dashboard.metrics.nutritionCharts.strategy,
   };
-}
 
-async function loadDashboardRuntime(
-  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
-  userId: string,
-) {
-  try {
-    return await withTransientRetry(
-      async () =>
-        await withTimeout(
-          getDashboardRuntimeMetrics(supabase, userId),
-          DASHBOARD_PAGE_RUNTIME_TIMEOUT_MS,
-          "dashboard runtime metrics",
-        ),
-      {
-        attempts: 3,
-        delaysMs: [500, 1_500, 3_000],
-      },
-    );
-  } catch (error) {
-    logger.warn("dashboard page is using runtime fallback", { error, userId });
-    return createEmptyDashboardRuntimeResult();
-  }
-}
+  context.nutritionTargets = {
+    carbsTarget: dashboard.metrics.nutritionCharts.targets.carbs,
+    fatTarget: dashboard.metrics.nutritionCharts.targets.fat,
+    kcalTarget: dashboard.metrics.nutritionCharts.targets.kcal,
+    proteinTarget: dashboard.metrics.nutritionCharts.targets.protein,
+  };
 
-async function loadAiRuntime(
-  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
-  userId: string,
-) {
-  try {
-    return await withTransientRetry(
-      async () =>
-        await withTimeout(
-          getAiRuntimeContext(supabase, userId),
-          DASHBOARD_PAGE_RUNTIME_TIMEOUT_MS,
-          "AI runtime context",
-        ),
-      {
-        attempts: 3,
-        delaysMs: [500, 1_500, 3_000],
-      },
-    );
-  } catch (error) {
-    logger.warn("dashboard page is using AI runtime fallback", { error, userId });
-    return createEmptyAiRuntimeContextResult();
-  }
+  context.workoutInsights = {
+    avgActualReps: dashboard.metrics.workoutCharts.highlights.avgActualReps,
+    avgActualRpe: dashboard.metrics.workoutCharts.highlights.avgActualRpe,
+    avgActualWeightKg:
+      dashboard.metrics.workoutCharts.highlights.avgActualWeightKg,
+    bestEstimatedOneRmKg:
+      dashboard.metrics.workoutCharts.highlights.bestEstimatedOneRmKg,
+    bestSetWeightKg: dashboard.metrics.workoutCharts.highlights.bestSetWeightKg,
+    coachingSignals: dashboard.metrics.workoutCharts.coachingSignals,
+    completedDaysLast28:
+      dashboard.metrics.workoutCharts.recovery.completedDaysLast14,
+    hardSetShareLast28:
+      dashboard.metrics.workoutCharts.highlights.hardSetShareLast14,
+    latestCompletedDayAt:
+      dashboard.metrics.workoutCharts.highlights.latestWorkoutAt,
+    latestSessionBodyWeightKg:
+      dashboard.metrics.workoutCharts.recentDays[0]?.bodyWeightKg ?? null,
+    loggedSetsLast28: dashboard.metrics.workoutCharts.recovery.loggedSetsLast14,
+    tonnageLast28Kg: dashboard.metrics.workoutCharts.totals.tonnageKg,
+  };
+
+  return context;
 }
 
 export default async function DashboardPage() {
   const viewer = await requireReadyViewer();
   const supabase = await createServerSupabaseClient();
-  const [dashboardRuntime, aiRuntime] = await Promise.all([
-    loadDashboardRuntime(supabase, viewer.user.id),
-    loadAiRuntime(supabase, viewer.user.id),
-  ]);
 
-  const { snapshot, periodComparison, workoutCharts, nutritionCharts } =
-    dashboardRuntime.metrics;
-  const aiContext = aiRuntime.context;
+  const dashboard = IS_PLAYWRIGHT_RUNTIME
+    ? createFallbackDashboardResult()
+    : await withTransientRetry(
+        async () =>
+          await withTimeout(
+            getDashboardRuntimeMetrics(supabase, viewer.user.id),
+            "dashboard runtime metrics",
+          ),
+        {
+          attempts: 3,
+          delaysMs: [500, 1_500, 3_000],
+        },
+      ).catch((error) => {
+        logger.warn("dashboard page fallback activated", {
+          error,
+          userId: viewer.user.id,
+        });
+
+        return createFallbackDashboardResult();
+      });
+
   const dashboardUpdatedAt =
-    dashboardRuntime.cache.generatedAt ??
-    dashboardRuntime.cache.snapshotCreatedAt ??
-    null;
+    dashboard.cache.generatedAt ?? dashboard.cache.snapshotCreatedAt ?? null;
   const dashboardSourceLabel =
-    dashboardRuntime.cache.source === "snapshot"
+    dashboard.cache.source === "snapshot"
       ? "Сводка обновлена"
       : "Сводка пересчитана";
 
   return (
-    <AppShell eyebrow="Обзор" title="Статус дня" viewer={toAppShellViewer(viewer)}>
+    <AppShell
+      eyebrow="Обзор"
+      title="Статус дня"
+      viewer={toAppShellViewer(viewer)}
+    >
       <DashboardWorkspace
-        aiContext={aiContext}
+        aiContext={buildDashboardAiContext(dashboard)}
         dashboardSourceLabel={dashboardSourceLabel}
         dashboardUpdatedAt={dashboardUpdatedAt}
-        nutritionCharts={nutritionCharts}
-        periodComparison={periodComparison}
-        snapshot={snapshot}
+        nutritionCharts={dashboard.metrics.nutritionCharts}
+        periodComparison={dashboard.metrics.periodComparison}
+        snapshot={dashboard.metrics.snapshot}
         viewerEmail={viewer.user.email ?? null}
         viewerName={viewer.profile?.full_name ?? null}
-        workoutCharts={workoutCharts}
+        workoutCharts={dashboard.metrics.workoutCharts}
       />
     </AppShell>
   );

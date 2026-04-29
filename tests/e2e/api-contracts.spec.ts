@@ -8,7 +8,11 @@ import {
 } from "./helpers/auth-state";
 import { navigateStable } from "./helpers/navigation";
 import { fetchJson } from "./helpers/http";
-import { findAuthUserIdByEmail } from "./helpers/supabase-admin";
+import {
+  createSupabaseAdminTestClient,
+  findAuthUserIdByEmail,
+  withAdminRetry,
+} from "./helpers/supabase-admin";
 import {
   ensureSettingsBillingReviewRequest,
   ensureSettingsDeletionRequest,
@@ -42,6 +46,8 @@ function buildAssistantMessages() {
     },
   ];
 }
+
+const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
 test.describe("api contracts without auth", () => {
   test.use({
@@ -1013,6 +1019,171 @@ test.describe("api contracts with admin access", () => {
     expect((invalidBillingPayload.body as { code?: string } | null)?.code).toBe(
       "ADMIN_BILLING_INVALID",
     );
+  });
+
+  test("admin billing route extends trial access from current future period", async ({
+    page,
+  }) => {
+    test.setTimeout(180_000);
+
+    const userId = await findAuthUserIdByEmail(
+      process.env.PLAYWRIGHT_TEST_EMAIL ?? "leva@leva.ru",
+    );
+    const adminSupabase = createSupabaseAdminTestClient();
+    const now = Date.now();
+    const initialPeriodEnd = new Date(now + 5 * DAY_IN_MS).toISOString();
+    const latestSortTime = new Date(now + DAY_IN_MS).toISOString();
+
+    const { data: staleSubscriptions, error: staleSubscriptionsError } =
+      await withAdminRetry(
+        async () =>
+          await adminSupabase
+            .from("subscriptions")
+            .select("id")
+            .eq("user_id", userId)
+            .eq("provider", "admin_trial_e2e"),
+      );
+
+    expect(staleSubscriptionsError).toBeNull();
+
+    const staleSubscriptionIds = (staleSubscriptions ?? []).map(
+      (subscription) => subscription.id,
+    );
+
+    if (staleSubscriptionIds.length) {
+      await withAdminRetry(
+        async () =>
+          await adminSupabase
+            .from("subscription_events")
+            .delete()
+            .in("subscription_id", staleSubscriptionIds),
+      );
+      await withAdminRetry(
+        async () =>
+          await adminSupabase
+            .from("subscriptions")
+            .delete()
+            .in("id", staleSubscriptionIds),
+      );
+    }
+
+    const { data: seededSubscription, error: seedError } = await withAdminRetry(
+      async () =>
+        await adminSupabase
+          .from("subscriptions")
+          .insert({
+            user_id: userId,
+            provider: "admin_trial_e2e",
+            status: "trial",
+            current_period_start: new Date(now - DAY_IN_MS).toISOString(),
+            current_period_end: initialPeriodEnd,
+            updated_at: latestSortTime,
+          })
+          .select("id")
+          .single(),
+    );
+
+    expect(seedError).toBeNull();
+    expect(seededSubscription?.id).toBeTruthy();
+
+    try {
+      const grantTrialResult = await fetchJson<{
+        data?: {
+          subscription?: {
+            admin_duration_days?: number | null;
+            admin_previous_period_end?: string | null;
+            current_period_end?: string | null;
+            provider?: string | null;
+            status?: string | null;
+          };
+        };
+      }>(page, {
+        method: "POST",
+        url: `/api/admin/users/${userId}/billing`,
+        body: {
+          action: "grant_trial",
+          duration_days: 2,
+          provider: "admin_trial",
+          reason: "e2e trial extension contract",
+        },
+        maxAttempts: 1,
+        timeoutMs: 90_000,
+      });
+
+      expect(grantTrialResult.status).toBe(200);
+      expect(grantTrialResult.body?.data?.subscription?.status).toBe("trial");
+      expect(grantTrialResult.body?.data?.subscription?.provider).toBe(
+        "admin_trial",
+      );
+      expect(
+        grantTrialResult.body?.data?.subscription?.admin_duration_days,
+      ).toBe(2);
+      expect(
+        grantTrialResult.body?.data?.subscription?.admin_previous_period_end,
+      ).toBeTruthy();
+      expect(
+        new Date(
+          grantTrialResult.body!.data!.subscription!.admin_previous_period_end!,
+        ).getTime(),
+      ).toBe(new Date(initialPeriodEnd).getTime());
+
+      const nextPeriodEnd =
+        grantTrialResult.body?.data?.subscription?.current_period_end;
+      expect(nextPeriodEnd).toBeTruthy();
+      expect(new Date(nextPeriodEnd!).getTime()).toBeGreaterThanOrEqual(
+        new Date(initialPeriodEnd).getTime() + 2 * DAY_IN_MS - 5_000,
+      );
+
+      const { data: subscriptionEvent, error: eventError } =
+        await withAdminRetry(
+          async () =>
+            await adminSupabase
+              .from("subscription_events")
+              .select("payload")
+              .eq("subscription_id", seededSubscription!.id)
+              .eq("event_type", "admin_grant_trial")
+              .order("created_at", { ascending: false })
+              .limit(1)
+              .maybeSingle(),
+        );
+
+      expect(eventError).toBeNull();
+      const eventPayload = subscriptionEvent?.payload as
+        | Record<string, unknown>
+        | null
+        | undefined;
+      expect(eventPayload?.durationDays).toBe(2);
+      expect(eventPayload?.previousPeriodEnd).toBeTruthy();
+      expect(new Date(String(eventPayload?.previousPeriodEnd)).getTime()).toBe(
+        new Date(initialPeriodEnd).getTime(),
+      );
+    } finally {
+      await withAdminRetry(
+        async () =>
+          await adminSupabase
+            .from("subscription_events")
+            .delete()
+            .eq("subscription_id", seededSubscription!.id),
+      );
+      await withAdminRetry(
+        async () =>
+          await adminSupabase
+            .from("admin_audit_logs")
+            .delete()
+            .eq("target_user_id", userId)
+            .eq("action", "admin_grant_trial")
+            .contains("payload", {
+              subscriptionId: seededSubscription!.id,
+            }),
+      );
+      await withAdminRetry(
+        async () =>
+          await adminSupabase
+            .from("subscriptions")
+            .delete()
+            .eq("id", seededSubscription!.id),
+      );
+    }
   });
 
   test("admin queue routes reject invalid payloads before side effects", async ({

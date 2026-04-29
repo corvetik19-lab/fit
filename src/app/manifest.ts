@@ -1,23 +1,16 @@
-﻿import type { MetadataRoute } from "next";
+import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "fit",
-    short_name: "fit",
-    description:
-      "Фитнес-платформа с офлайн-поддержкой для тренировок, питания, статистики и AI-планирования.",
+    name: "fitora",
+    short_name: "fitora",
+    description: "Тренировки, питание и прогресс в одном ритме.",
     start_url: "/dashboard",
     display: "standalone",
-    background_color: "#0d1218",
-    theme_color: "#0d1218",
+    background_color: "#f8fbff",
+    theme_color: "#2563EB",
     lang: "ru",
     icons: [
-      {
-        src: "/icon.svg",
-        sizes: "any",
-        type: "image/svg+xml",
-        purpose: "any",
-      },
       {
         src: "/icon-192.png",
         sizes: "192x192",

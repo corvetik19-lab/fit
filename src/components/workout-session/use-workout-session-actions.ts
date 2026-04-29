@@ -529,7 +529,9 @@ export function useWorkoutSessionActions({
           } else {
             markOnline();
             setNotice("Упражнение сохранено.");
-            await pullLatestDaySnapshot({ force: true }).catch(() => null);
+            // The saved step should immediately unlock the next CTA while the
+            // server snapshot quietly refreshes in the background.
+            void pullLatestDaySnapshot({ force: true }).catch(() => null);
           }
         } catch (saveError) {
           setDay(previousDay);

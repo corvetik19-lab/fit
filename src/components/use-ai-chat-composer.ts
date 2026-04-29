@@ -3,6 +3,7 @@
 import { useCallback, type KeyboardEvent, type MutableRefObject } from "react";
 
 import type { AiSurfaceNotice } from "@/components/ai-chat-panel-model";
+import type { AiAgentLaunchContext } from "@/lib/ai/agent-intents";
 
 export function useAiChatComposer({
   accessAllowed,
@@ -11,6 +12,7 @@ export function useAiChatComposer({
   createRemoteSession,
   draft,
   isComposerBusy,
+  launchContext,
   onBeforeSend,
   selectedImage,
   sendMessage,
@@ -24,11 +26,20 @@ export function useAiChatComposer({
   createRemoteSession: (titleSeed: string) => Promise<string>;
   draft: string;
   isComposerBusy: boolean;
+  launchContext?: AiAgentLaunchContext | null;
   onBeforeSend?: (text: string) => void;
   selectedImage: File | null;
   sendMessage: (
     message: { text: string },
-    options: { body: { allowWebSearch: boolean; sessionId?: string } },
+    options: {
+      body: {
+        allowWebSearch: boolean;
+        contextPayload?: Record<string, string>;
+        intent?: AiAgentLaunchContext["intent"];
+        sessionId?: string;
+        sourceRoute?: AiAgentLaunchContext["sourceRoute"];
+      };
+    },
   ) => void;
   sessionIdRef: MutableRefObject<string | null>;
   setDraft: (value: string) => void;
@@ -53,6 +64,13 @@ export function useAiChatComposer({
           {
             body: {
               allowWebSearch,
+              ...(launchContext
+                ? {
+                    contextPayload: launchContext.contextPayload,
+                    intent: launchContext.intent,
+                    sourceRoute: launchContext.sourceRoute,
+                  }
+                : {}),
               sessionId: nextSessionId,
             },
           },
@@ -75,6 +93,7 @@ export function useAiChatComposer({
       createRemoteSession,
       draft,
       isComposerBusy,
+      launchContext,
       onBeforeSend,
       sendMessage,
       sessionIdRef,

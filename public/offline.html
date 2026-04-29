@@ -3,18 +3,18 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#14614b" />
-    <title>fit offline</title>
+    <meta name="theme-color" content="#2563EB" />
+    <title>fitora offline</title>
     <style>
       :root {
         color-scheme: light;
-        --background: #f5f4ee;
-        --surface: rgba(255, 253, 247, 0.94);
-        --foreground: #181613;
-        --muted: #6f675b;
-        --accent: #14614b;
-        --accent-soft: #d7efe7;
-        --border: rgba(24, 22, 19, 0.1);
+        --background: #f8fbff;
+        --surface: rgba(255, 255, 255, 0.94);
+        --foreground: #0f172a;
+        --muted: #64748b;
+        --accent: #2563eb;
+        --accent-soft: #dff7ff;
+        --border: rgba(15, 23, 42, 0.1);
       }
 
       * {
@@ -27,8 +27,9 @@
         font-family: Manrope, "Segoe UI", sans-serif;
         color: var(--foreground);
         background:
-          radial-gradient(circle at top right, rgba(20, 97, 75, 0.16), transparent 24%),
-          linear-gradient(180deg, #faf8f2 0%, var(--background) 100%);
+          radial-gradient(circle at top right, rgba(45, 212, 191, 0.18), transparent 24%),
+          radial-gradient(circle at top left, rgba(37, 99, 235, 0.12), transparent 24%),
+          linear-gradient(180deg, #ffffff 0%, var(--background) 100%);
       }
 
       main {
@@ -41,7 +42,7 @@
         border: 1px solid var(--border);
         border-radius: 28px;
         background: var(--surface);
-        box-shadow: 0 18px 45px rgba(24, 22, 19, 0.08);
+        box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
         padding: 32px;
       }
 
@@ -130,7 +131,7 @@
   <body>
     <main>
       <section class="card">
-        <div class="eyebrow">fit offline</div>
+        <div class="eyebrow">fitora offline</div>
         <h1>Соединение недоступно, но shell приложения уже на устройстве.</h1>
         <p>
           Статические ассеты, manifest и offline fallback закешированы service worker-ом.

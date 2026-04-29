@@ -96,3 +96,14 @@
 - Root [AGENTS.md](/C:/fit/AGENTS.md) и [CODEX_PLAYBOOK.md](/C:/fit/docs/CODEX_PLAYBOOK.md) усилены правилом: deploy-oriented tranche не считаются завершёнными, пока Vercel deployment не дошёл до terminal state без ошибок через Vercel MCP или CLI fallback.
 - В репозиторий добавлены команды [master-plan-progress.mjs](/C:/fit/scripts/master-plan-progress.mjs) и [wait-for-vercel-deployment.mjs](/C:/fit/scripts/wait-for-vercel-deployment.mjs), а `README` и docs теперь закрепляют `npm run report:master-progress` и `npm run wait:vercel-deploy -- <deployment-url-or-id>` как стандартные operational entrypoints.
 - Release docs [RELEASE_CHECKLIST.md](/C:/fit/docs/RELEASE_CHECKLIST.md), [PROD_READY.md](/C:/fit/docs/PROD_READY.md) и [RUNTIME_ENV_HANDOFF.md](/C:/fit/docs/RUNTIME_ENV_HANDOFF.md) синхронизированы с новым deploy-wait contract.
+
+## 2026-04-16 CLI-only verification addendum
+
+- Root [AGENTS.md](/C:/fit/AGENTS.md), [CODEX_PLAYBOOK.md](/C:/fit/docs/CODEX_PLAYBOOK.md) и [CODEX_ONBOARDING.md](/C:/fit/docs/CODEX_ONBOARDING.md) уточнены: для `fit` browser verification идёт только через Playwright CLI, а deploy/runtime verification — только через Vercel CLI и repo wrapper `npm run wait:vercel-deploy -- <deployment-url-or-id>`.
+- Для этого follow-up [verify-codex.mjs](/C:/fit/scripts/verify-codex.mjs) получил guard против возврата к `Vercel MCP` / `Playwright MCP` в канонических agent docs.
+
+## 2026-04-28 AI Agent redesign addendum
+
+- Сложный AI/UI tranche проведён через evaluator-loop и зафиксирован в [FITORA_AI_AGENT_REDESIGN_EXECUTION.md](/C:/fit/docs/FITORA_AI_AGENT_REDESIGN_EXECUTION.md): baseline был mini-chat widget + полноценный `/ai`, stop condition - widget launcher + intent-prefill в основном `AiChatPanel`.
+- Для будущих AI surface изменений обязательный минимум остается тем же: typed intent/API contract, `AI_STACK.md`, `MASTER_PLAN.md`, `AI_WORKLOG.md`, targeted Playwright и честная фиксация provider/fallback blockers.
+- Проверочный пакет этого tranche: `lint`, `typecheck`, `build`, `test:smoke`, targeted `ai-workspace`.

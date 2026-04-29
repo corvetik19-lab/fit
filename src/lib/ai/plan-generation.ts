@@ -14,6 +14,7 @@ import {
 } from "@/lib/ai/user-context";
 import { logger } from "@/lib/logger";
 import { withTimeout, withTransientRetry } from "@/lib/runtime-retry";
+import { repairMojibakeDeep } from "@/lib/text/repair-mojibake";
 
 type MealPlanGenerationInput = {
   dietaryNotes?: string;
@@ -34,7 +35,7 @@ type WorkoutPlan = z.infer<typeof workoutPlanSchema>;
 
 const PLAN_CONTEXT_TIMEOUT_MS = 8_000;
 const PLAN_KNOWLEDGE_TIMEOUT_MS = 6_000;
-const PLAN_AI_TIMEOUT_MS = 18_000;
+const PLAN_AI_TIMEOUT_MS = 30_000;
 const PLAN_PROPOSAL_PERSIST_TIMEOUT_MS = 8_000;
 
 function truncateText(value: string, maxLength: number) {
@@ -101,7 +102,7 @@ function buildCompactContextSummary(context: AiUserContext) {
 }
 
 function buildPersistedContextSnapshot(context: AiUserContext) {
-  return {
+  return repairMojibakeDeep({
     goalType: context.goal.goalType ?? null,
     weeklyTrainingDays: context.goal.weeklyTrainingDays ?? null,
     weightKg: context.latestBodyMetrics.weightKg ?? context.onboarding.weightKg ?? null,
@@ -111,7 +112,7 @@ function buildPersistedContextSnapshot(context: AiUserContext) {
     equipment: context.onboarding.equipment.slice(0, 8),
     injuries: context.onboarding.injuries.slice(0, 6),
     dietaryPreferences: context.onboarding.dietaryPreferences.slice(0, 6),
-  };
+  });
 }
 
 function buildPersistedKnowledgeSummary(
@@ -336,7 +337,7 @@ function buildDeterministicMealPlan(input: {
     mealsPerDay: input.mealsPerDay,
   });
 
-  return {
+  return repairMojibakeDeep({
     title: `План питания: ${resolveGoalLabel(input.goal)}`,
     caloriesTarget: input.kcalTarget,
     macros: {
@@ -349,7 +350,7 @@ function buildDeterministicMealPlan(input: {
       kcal: mealCalories[index] ?? Math.floor(input.kcalTarget / input.mealsPerDay),
       items: template.items,
     })),
-  };
+  });
 }
 
 function hasEquipment(equipment: string[], patterns: RegExp[]) {
@@ -492,6 +493,135 @@ function buildDeterministicWorkoutPlan(input: {
   };
 }
 
+function buildReadableDeterministicMealPlan(input: {
+  context: AiUserContext;
+  dietaryNotes: string;
+  goal: string;
+  kcalTarget: number;
+  mealsPerDay: number;
+}): MealPlan {
+  const weightKg =
+    input.context.latestBodyMetrics.weightKg ?? input.context.onboarding.weightKg ?? 80;
+  const proteinTarget = roundPositiveInt(
+    input.context.nutritionTargets.proteinTarget ??
+      weightKg * (input.goal === "muscle_gain" ? 2 : 1.8),
+    120,
+  );
+  const fatTarget = roundPositiveInt(
+    input.context.nutritionTargets.fatTarget ?? (input.kcalTarget * 0.28) / 9,
+    55,
+  );
+  const carbsTarget = roundPositiveInt(
+    (input.kcalTarget - proteinTarget * 4 - fatTarget * 9) / 4,
+    90,
+  );
+  const mealCalories = distributeIntegers(
+    input.kcalTarget,
+    resolveMealWeights(input.mealsPerDay),
+  );
+  const templates: Array<{ name: string; items: string[] }> = [
+    { name: "Breakfast", items: ["Oats", "Greek yogurt", "Berries", "Fruit"] },
+    {
+      name: "Lunch",
+      items: ["Chicken or turkey", "Rice or buckwheat", "Vegetables"],
+    },
+    {
+      name: "Snack",
+      items: ["Cottage cheese or yogurt", "Fruit", "Nuts"],
+    },
+    {
+      name: "Dinner",
+      items: ["Fish or lean beef", "Potatoes or quinoa", "Salad"],
+    },
+    { name: "Second snack", items: ["Kefir or yogurt", "Fruit"] },
+  ].slice(0, input.mealsPerDay);
+
+  return {
+    title: `Meal plan: ${input.goal}`,
+    caloriesTarget: input.kcalTarget,
+    macros: {
+      protein: proteinTarget,
+      fat: fatTarget,
+      carbs: carbsTarget,
+    },
+    meals: templates.map((template, index) => ({
+      name: template.name,
+      kcal:
+        mealCalories[index] ?? Math.floor(input.kcalTarget / input.mealsPerDay),
+      items: template.items,
+    })),
+  };
+}
+
+function buildReadableDeterministicWorkoutPlan(input: {
+  context: AiUserContext;
+  daysPerWeek: number;
+  equipment: string[];
+  focus: string;
+  goal: string;
+}): WorkoutPlan {
+  const days = [
+    {
+      day: "Day 1",
+      focus: `Pull and back (${input.focus || "strength"})`,
+      exercises: [
+        { name: "Pull-ups or assisted pull-ups", sets: 4, reps: "5-8" },
+        { name: "Dumbbell row", sets: 4, reps: "8-10" },
+        { name: "Lateral raise", sets: 3, reps: "12-15" },
+        { name: "Plank", sets: 3, reps: "30-45 sec" },
+      ],
+    },
+    {
+      day: "Day 2",
+      focus: "Legs, push, and trunk stability",
+      exercises: [
+        { name: "Goblet squat", sets: 4, reps: "6-8" },
+        { name: "Romanian deadlift", sets: 3, reps: "8-10" },
+        { name: "Dumbbell bench press", sets: 4, reps: "6-10" },
+        { name: "Dead bug", sets: 3, reps: "8-10 each side" },
+        { name: "Bulgarian split squat", sets: 3, reps: "8-10" },
+      ],
+    },
+    {
+      day: "Day 3",
+      focus: "Full body and steady progress",
+      exercises: [
+        { name: "Pull-up or row variation", sets: 4, reps: "5-8" },
+        { name: "Dumbbell bench press", sets: 4, reps: "6-10" },
+        { name: "Goblet squat", sets: 4, reps: "6-8" },
+        { name: "Standing dumbbell press", sets: 3, reps: "8-10" },
+        { name: "Plank", sets: 3, reps: "30-45 sec" },
+      ],
+    },
+    {
+      day: "Day 4",
+      focus: "Controlled volume and recovery",
+      exercises: [
+        { name: "Row variation", sets: 4, reps: "8-10" },
+        { name: "Standing dumbbell press", sets: 3, reps: "8-10" },
+        { name: "Romanian deadlift", sets: 3, reps: "8-10" },
+        { name: "Lateral raise", sets: 3, reps: "12-15" },
+      ],
+    },
+    {
+      day: "Day 5",
+      focus: "Light full body technique",
+      exercises: [
+        { name: "Goblet squat", sets: 3, reps: "8-10" },
+        { name: "Pull variation", sets: 3, reps: "8-10" },
+        { name: "Push-up or dumbbell press", sets: 3, reps: "8-12" },
+        { name: "Plank", sets: 3, reps: "30-45 sec" },
+      ],
+    },
+  ].slice(0, Math.max(1, Math.min(input.daysPerWeek, 5)));
+
+  return {
+    title: `Workout plan: ${input.goal}`,
+    summary: `Plan for ${input.daysPerWeek} training days per week with focus on ${input.focus || "basic strength"}. Keep 1-2 reps in reserve and stay consistent.`,
+    days,
+  };
+}
+
 function buildMealPlanPrompt(input: {
   context: AiUserContext;
   dietaryNotes: string;
@@ -570,15 +700,16 @@ export async function generateMealPlanProposalForUser(
     schema: mealPlanSchema,
     userId,
   });
-  const proposal =
+  const proposal = repairMojibakeDeep(
     aiProposal ??
-    buildDeterministicMealPlan({
-      context,
-      dietaryNotes,
-      goal,
-      kcalTarget,
-      mealsPerDay,
-    });
+      buildReadableDeterministicMealPlan({
+        context,
+        dietaryNotes,
+        goal,
+        kcalTarget,
+        mealsPerDay,
+      }),
+  );
 
   return persistPlanProposal(supabase, {
     userId,
@@ -634,15 +765,16 @@ export async function generateWorkoutPlanProposalForUser(
     schema: workoutPlanSchema,
     userId,
   });
-  const proposal =
+  const proposal = repairMojibakeDeep(
     aiProposal ??
-    buildDeterministicWorkoutPlan({
-      context,
-      daysPerWeek,
-      equipment,
-      focus,
-      goal,
-    });
+      buildReadableDeterministicWorkoutPlan({
+        context,
+        daysPerWeek,
+        equipment,
+        focus,
+        goal,
+      }),
+  );
 
   return persistPlanProposal(supabase, {
     userId,

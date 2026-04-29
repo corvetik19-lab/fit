@@ -13,6 +13,7 @@ const dateFormatter = new Intl.DateTimeFormat("ru-RU", {
   hour: "2-digit",
   minute: "2-digit",
 });
+const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
 export function formatSettingsDateTime(value: string | null | undefined) {
   if (!value) {
@@ -79,6 +80,10 @@ export function formatSubscriptionProvider(
       return "CloudPayments";
     case "stripe":
       return "Stripe";
+    case "admin_trial":
+      return "тестовый доступ";
+    case "admin_console":
+      return "ручное управление";
     case "manual":
       return "ручное подключение";
     case "system":
@@ -86,6 +91,73 @@ export function formatSubscriptionProvider(
     default:
       return provider ?? "не задан";
   }
+}
+
+export function getSubscriptionDaysRemaining(value: string | null | undefined) {
+  if (!value) {
+    return "без даты окончания";
+  }
+
+  const endTime = new Date(value).getTime();
+
+  if (!Number.isFinite(endTime)) {
+    return "без даты окончания";
+  }
+
+  const remainingDays = Math.ceil((endTime - Date.now()) / DAY_IN_MS);
+
+  if (remainingDays <= 0) {
+    return "истёк";
+  }
+
+  return `${remainingDays} дн.`;
+}
+
+export function getSubscriptionAccessBadge(
+  status: string | null,
+  isPrivilegedAccess: boolean,
+) {
+  if (isPrivilegedAccess) {
+    return "корневой доступ";
+  }
+
+  if (status === "trial") {
+    return "тестовый доступ";
+  }
+
+  if (status === "active") {
+    return "подписка активна";
+  }
+
+  if (status === "past_due") {
+    return "нужна оплата";
+  }
+
+  return "без подписки";
+}
+
+export function getSubscriptionAccessSummary(
+  status: string | null,
+  currentPeriodEnd: string | null | undefined,
+  isPrivilegedAccess: boolean,
+) {
+  if (isPrivilegedAccess) {
+    return "Администраторский профиль: функции открыты без ограничения срока.";
+  }
+
+  if (status === "trial") {
+    return `Тестовый период активен, осталось ${getSubscriptionDaysRemaining(currentPeriodEnd)}.`;
+  }
+
+  if (status === "active") {
+    return `Подписка активна, текущий период: ${formatSettingsDateTime(currentPeriodEnd)}.`;
+  }
+
+  if (status === "past_due") {
+    return "Подписка требует оплаты или ручной проверки.";
+  }
+
+  return "Расширенный доступ не активен.";
 }
 
 export function formatUsageLimit(value: number | null | undefined) {
@@ -112,11 +184,11 @@ export function formatReviewStatus(value: string) {
 export function getStatusTone(value: string) {
   switch (value) {
     case "completed":
-      return "bg-emerald-500/12 text-emerald-100 border border-emerald-500/30";
+      return "bg-emerald-500/12 text-emerald-700 border border-emerald-500/30";
     case "failed":
-      return "bg-red-500/10 text-red-200 border border-red-500/30";
+      return "bg-red-500/10 text-red-700 border border-red-500/30";
     case "queued":
-      return "bg-amber-500/10 text-amber-100 border border-amber-400/30";
+      return "bg-amber-500/10 text-amber-700 border border-amber-400/30";
     default:
       return "bg-white/10 text-foreground border border-border";
   }

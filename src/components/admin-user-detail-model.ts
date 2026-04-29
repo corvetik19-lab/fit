@@ -349,6 +349,18 @@ export function formatBillingProvider(value: string | null | undefined) {
     return "Stripe";
   }
 
+  if (value === "admin_trial") {
+    return "тестовый доступ";
+  }
+
+  if (value === "admin_console") {
+    return "ручное управление";
+  }
+
+  if (value === "manual") {
+    return "ручное подключение";
+  }
+
   return formatSnakeLabel(value);
 }
 

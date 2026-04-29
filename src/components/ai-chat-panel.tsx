@@ -3,7 +3,7 @@
 import { DefaultChatTransport } from "ai";
 import { useChat } from "@ai-sdk/react";
 import { useRouter } from "next/navigation";
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 
 import { AiChatComposer } from "@/components/ai-chat-composer";
 import { AiChatNotices } from "@/components/ai-chat-notices";
@@ -30,6 +30,7 @@ export function AiChatPanel({
   initialSessionId,
   initialSessionTitle,
   initialMessages,
+  launchContext,
   mealPhotoAccess,
   onSessionTouched,
 }: AiChatPanelProps) {
@@ -56,6 +57,7 @@ export function AiChatPanel({
     initialSessionTitle,
     onSessionTouched,
   });
+  const didApplyLaunchContextRef = useRef(false);
 
   const initialUiMessages = useMemo(
     () => toUiMessages(initialMessages),
@@ -139,6 +141,7 @@ export function AiChatPanel({
     accessAllowed: access.allowed,
     allowWebSearch,
     analyzeMealPhoto,
+    launchContext,
     createRemoteSession,
     draft,
     isComposerBusy,
@@ -155,9 +158,27 @@ export function AiChatPanel({
     setNotice,
   });
 
+  useEffect(() => {
+    if (
+      didApplyLaunchContextRef.current ||
+      !launchContext ||
+      initialMessages.length > 0
+    ) {
+      return;
+    }
+
+    didApplyLaunchContextRef.current = true;
+    setDraft(launchContext.starterPrompt);
+    setNotice({
+      kind: "info",
+      message: `Сценарий подготовлен: ${launchContext.title}. Проверь текст и отправь, когда будешь готов.`,
+    });
+    window.requestAnimationFrame(() => composerRef.current?.focus());
+  }, [initialMessages.length, launchContext, setDraft, setNotice]);
+
   return (
     <section
-      className="card card--hero flex min-h-[72dvh] flex-col overflow-hidden p-4 sm:p-5 lg:min-h-[78dvh]"
+      className="surface-panel flex min-h-[72dvh] flex-col overflow-hidden p-3.5 sm:p-4 lg:min-h-[78dvh]"
       data-testid="ai-chat-panel"
       data-hydrated="true"
     >
@@ -182,22 +203,6 @@ export function AiChatPanel({
       />
 
       <div className="mt-4 grid gap-3">
-        <div className="surface-panel surface-panel--accent px-4 py-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <p className="workspace-kicker">Рабочий режим</p>
-              <p className="mt-1 text-sm font-semibold text-foreground">
-                Один экран для диалога, фото еды, web search и применения плана.
-              </p>
-            </div>
-            <span className="pill">
-              {transcriptMessages.length
-                ? `${transcriptMessages.length} сообщений`
-                : "новая сессия"}
-            </span>
-          </div>
-        </div>
-
         <AiChatNotices
           accessAllowed={access.allowed}
           accessReason={access.reason ?? null}

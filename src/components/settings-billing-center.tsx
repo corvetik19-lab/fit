@@ -14,9 +14,13 @@ import {
   formatSubscriptionStatus,
   formatUsageLimit,
   getStatusTone,
+  getSubscriptionAccessBadge,
+  getSubscriptionAccessSummary,
+  getSubscriptionDaysRemaining,
   getTimelineTone,
   settingsBillingInputClassName,
 } from "@/components/settings-billing-center-model";
+import { RepairMojibakeTree } from "@/components/repair-mojibake-tree";
 import { useSettingsBillingCenterState } from "@/components/use-settings-billing-center-state";
 import type { BillingProvider } from "@/lib/billing-provider";
 import type { UserBillingAccessSnapshot } from "@/lib/billing-access";
@@ -67,7 +71,8 @@ export function SettingsBillingCenter({
   });
 
   return (
-    <section className="surface-panel p-4 sm:p-5" id="billing-center">
+    <RepairMojibakeTree>
+      <section className="surface-panel p-4 sm:p-5" id="billing-center">
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="workspace-kicker">Доступ и оплата</p>
@@ -89,8 +94,8 @@ export function SettingsBillingCenter({
         <div
           className={`mb-4 rounded-[1.05rem] border px-3.5 py-3.5 text-sm ${
             billingReturnNotice.tone === "success"
-              ? "border-emerald-500/30 bg-emerald-500/12 text-emerald-100"
-              : "border-amber-400/30 bg-amber-500/10 text-amber-100"
+              ? "border-emerald-500/30 bg-emerald-500/12 text-emerald-700"
+              : "border-amber-400/30 bg-amber-500/10 text-amber-700"
           }`}
         >
           <p className="font-semibold">{billingReturnNotice.title}</p>
@@ -180,6 +185,15 @@ export function SettingsBillingCenter({
                     )}
                   </span>
                 </p>
+                <p className="mt-1">
+                  Тип доступа:{" "}
+                  <span className="text-foreground">
+                    {getSubscriptionAccessBadge(
+                      access.subscription.status,
+                      isPrivilegedAccess,
+                    )}
+                  </span>
+                </p>
               </div>
 
               <div className="rounded-2xl border border-border bg-background/40 px-4 py-3 text-sm text-muted">
@@ -187,6 +201,14 @@ export function SettingsBillingCenter({
                   Период до:{" "}
                   <span className="text-foreground">
                     {formatSettingsDateTime(access.subscription.currentPeriodEnd)}
+                  </span>
+                </p>
+                <p className="mt-1">
+                  Осталось:{" "}
+                  <span className="text-foreground">
+                    {getSubscriptionDaysRemaining(
+                      access.subscription.currentPeriodEnd,
+                    )}
                   </span>
                 </p>
                 <p className="mt-1">
@@ -198,9 +220,17 @@ export function SettingsBillingCenter({
               </div>
             </div>
 
+            <p className="mt-3 rounded-2xl border border-border bg-background/40 px-4 py-3 text-sm leading-6 text-muted">
+              {getSubscriptionAccessSummary(
+                access.subscription.status,
+                access.subscription.currentPeriodEnd,
+                isPrivilegedAccess,
+              )}
+            </p>
+
             <div className="mt-3.5 flex flex-wrap gap-2.5">
               {isPrivilegedAccess ? (
-                <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/12 px-4 py-3 text-sm text-emerald-100">
+                <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/12 px-4 py-3 text-sm text-emerald-700">
                   Для корневого администратора все AI и premium-функции открыты
                   постоянно и не зависят от подписки.
                 </div>
@@ -221,7 +251,7 @@ export function SettingsBillingCenter({
                   </button>
                 ) : (
                   <span className="rounded-2xl border border-border px-4 py-3 text-xs font-semibold text-muted">
-                    Управление подпиской пока остается внутри fit и через поддержку.
+                    Управление подпиской пока остается внутри fitora и через поддержку.
                   </span>
                 )
               ) : (
@@ -248,7 +278,7 @@ export function SettingsBillingCenter({
             {!isPrivilegedAccess &&
             (!billing.checkoutReady ||
               (access.subscription.isActive && !billing.managementReady)) ? (
-              <div className="mt-3.5 rounded-[1rem] border border-amber-400/30 bg-amber-500/10 px-3.5 py-3 text-sm text-amber-100">
+              <div className="mt-3.5 rounded-[1rem] border border-amber-400/30 bg-amber-500/10 px-3.5 py-3 text-sm text-amber-700">
                 Платежный модуль еще не настроен полностью. Часть действий по
                 подписке может быть временно недоступна.
               </div>
@@ -287,7 +317,7 @@ export function SettingsBillingCenter({
                       {formatSettingsDateTime(feature.usage.resetAt)}
                     </p>
                     {feature.reason ? (
-                      <p className="text-amber-200">{feature.reason}</p>
+                      <p className="text-amber-700">{feature.reason}</p>
                     ) : null}
                   </div>
                 </article>
@@ -387,7 +417,7 @@ export function SettingsBillingCenter({
                 </button>
               </>
             ) : (
-              <div className="mt-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/12 px-4 py-3 text-sm text-emerald-100">
+              <div className="mt-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/12 px-4 py-3 text-sm text-emerald-700">
                 Сейчас все AI-функции доступны по твоему текущему плану.
               </div>
             )}
@@ -443,16 +473,17 @@ export function SettingsBillingCenter({
       </div>
 
       {notice ? (
-        <p className="mt-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/12 px-4 py-3 text-sm text-emerald-100">
+        <p className="mt-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/12 px-4 py-3 text-sm text-emerald-700">
           {notice}
         </p>
       ) : null}
 
       {error ? (
-        <p className="mt-4 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+        <p className="mt-4 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-700">
           {error}
         </p>
       ) : null}
-    </section>
+      </section>
+    </RepairMojibakeTree>
   );
 }

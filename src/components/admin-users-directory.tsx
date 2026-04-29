@@ -7,6 +7,7 @@ import {
   AdminUsersBulkActionsPanel,
   AdminUsersBulkHistoryPanel,
 } from "@/components/admin-users-bulk-actions";
+import { CompactDisclosure } from "@/components/compact-disclosure";
 import {
   canUseRootAdminControls,
   type PlatformAdminRole,
@@ -36,10 +37,10 @@ function DirectoryMetricCard({
   detail?: string;
 }) {
   return (
-    <article className="metric-tile p-3.5">
+    <article className="metric-tile p-3">
       <p className="text-sm text-muted">{label}</p>
-      <p className="mt-2 text-2xl font-semibold text-foreground">{value}</p>
-      {detail ? <p className="mt-2 text-sm leading-6 text-muted">{detail}</p> : null}
+      <p className="mt-1.5 text-xl font-semibold text-foreground">{value}</p>
+      {detail ? <p className="mt-1.5 text-sm leading-5 text-muted">{detail}</p> : null}
     </article>
   );
 }
@@ -122,10 +123,10 @@ export function AdminUsersDirectory({
   }
 
   return (
-    <section className="space-y-5" data-testid="admin-users-directory">
-      <div className="surface-panel p-4 sm:p-5">
-        <div className="grid gap-5 2xl:grid-cols-[1.12fr_0.88fr]">
-        <div className="space-y-4">
+    <section className="space-y-4" data-testid="admin-users-directory">
+      <div className="surface-panel p-4">
+        <div className="grid gap-4 2xl:grid-cols-[1.08fr_0.92fr]">
+        <div className="space-y-3">
           <div className="flex flex-wrap gap-2">
             <span className="pill">Пользователи</span>
             <span className="pill">Каталог: {summary.total}</span>
@@ -135,22 +136,22 @@ export function AdminUsersDirectory({
           </div>
 
           <div className="space-y-2.5">
-            <h2 className="max-w-4xl text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+            <h2 className="max-w-4xl text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
               Пользователи, доступы, подписки и очередь действий в одном рабочем экране.
             </h2>
-            <p className="max-w-3xl text-sm leading-6 text-muted">
+            <p className="max-w-3xl text-sm leading-5 text-muted">
               Здесь удобно искать пользователя, смотреть его активность, состояние подписки,
               очередь задач и сразу переходить в подробную карточку без лишнего служебного шума.
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-3">
-            <button className="action-button action-button--primary" onClick={reloadCatalog} type="button">
+          <div className="grid gap-2.5 sm:flex sm:flex-wrap">
+            <button className="action-button action-button--primary w-full sm:w-auto" onClick={reloadCatalog} type="button">
               Обновить каталог
             </button>
             {isFiltered ? (
               <button
-                className="action-button action-button--secondary"
+                className="action-button action-button--secondary w-full sm:w-auto"
                 onClick={resetFilters}
                 type="button"
               >
@@ -160,7 +161,7 @@ export function AdminUsersDirectory({
           </div>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-2.5 sm:grid-cols-2">
           <DirectoryMetricCard
             detail="активные профили в текущем представлении"
             label="Видимых пользователей"
@@ -196,13 +197,13 @@ export function AdminUsersDirectory({
         </div>
       ) : null}
 
-      <div className="surface-panel p-4 sm:p-5">
+      <div className="surface-panel p-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
               Фильтры
             </p>
-            <h3 className="mt-2 text-lg font-semibold text-foreground">
+            <h3 className="mt-1.5 text-base font-semibold text-foreground">
               Быстрый отбор по активности и важным случаям
             </h3>
           </div>
@@ -219,11 +220,11 @@ export function AdminUsersDirectory({
           </div>
         </div>
 
-        <div className="mt-5 grid gap-3 lg:grid-cols-[minmax(0,1.25fr)_220px_220px_220px]">
+        <div className="mt-4 grid gap-2.5 lg:grid-cols-[minmax(0,1.25fr)_220px_220px_220px]">
           <label className="grid gap-2 text-sm text-muted lg:col-span-1">
           Поиск по имени, email или ID
           <input
-            className="w-full rounded-2xl border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,var(--surface))] px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15"
+            className="w-full rounded-[0.8rem] border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,var(--surface))] px-3.5 py-2.5 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15"
             onChange={(event) => setSearchQuery(event.target.value)}
             placeholder="Например: corvetik1@yandex.ru"
             type="text"
@@ -235,7 +236,7 @@ export function AdminUsersDirectory({
           <label className="grid gap-2 text-sm text-muted">
             Роль
             <select
-              className="w-full rounded-2xl border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,var(--surface))] px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15"
+              className="w-full rounded-[0.8rem] border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,var(--surface))] px-3.5 py-2.5 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15"
               onChange={(event) =>
                 setRoleFilter(
                   event.target.value as
@@ -260,7 +261,7 @@ export function AdminUsersDirectory({
         <label className="grid gap-2 text-sm text-muted">
           Активность
           <select
-            className="w-full rounded-2xl border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,var(--surface))] px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15"
+            className="w-full rounded-[0.8rem] border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,var(--surface))] px-3.5 py-2.5 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15"
             onChange={(event) => setActivityFilter(event.target.value as ActivityFilter)}
             value={activityFilter}
           >
@@ -276,7 +277,7 @@ export function AdminUsersDirectory({
         <label className="grid gap-2 text-sm text-muted">
           Сортировка
           <select
-            className="w-full rounded-2xl border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,var(--surface))] px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15"
+            className="w-full rounded-[0.8rem] border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,var(--surface))] px-3.5 py-2.5 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15"
             onChange={(event) => setSortKey(event.target.value as AdminUsersSortKey)}
             value={sortKey}
           >
@@ -344,32 +345,47 @@ export function AdminUsersDirectory({
         </article>
       </div>
 
-      <div className="mt-6 grid gap-4 2xl:grid-cols-[1.15fr_0.85fr]">
-        <AdminUsersBulkActionsPanel
-          allVisibleSelected={allVisibleSelected}
-          bulkAction={bulkAction}
-          bulkFeatureKey={bulkFeatureKey}
-          bulkLimitValue={bulkLimitValue}
-          bulkNotice={bulkNotice}
-          bulkReason={bulkReason}
-          bulkTrialDays={bulkTrialDays}
-          canRunBulkActions={canRunBulkActions}
-          isBulkPending={isBulkPending}
-          onBulkActionChange={setBulkAction}
-          onBulkFeatureKeyChange={setBulkFeatureKey}
-          onBulkLimitValueChange={setBulkLimitValue}
-          onBulkReasonChange={setBulkReason}
-          onBulkTrialDaysChange={setBulkTrialDays}
-          onClearSelection={clearSelection}
-          onSubmit={submitBulkAction}
-          onToggleVisibleSelection={toggleVisibleSelection}
-          selectedUserCount={selectedUserIds.length}
-        />
+      <CompactDisclosure
+        badge={String(selectedUserIds.length)}
+        className="mt-4"
+        eyebrow="Массовые действия"
+        summary="Доступно только для критичных админ-операций и выбранных пользователей."
+        title="Bulk-операции и история"
+      >
+        <div className="grid gap-3 2xl:grid-cols-[1.15fr_0.85fr]">
+          <AdminUsersBulkActionsPanel
+            allVisibleSelected={allVisibleSelected}
+            bulkAction={bulkAction}
+            bulkFeatureKey={bulkFeatureKey}
+            bulkLimitValue={bulkLimitValue}
+            bulkNotice={bulkNotice}
+            bulkReason={bulkReason}
+            bulkTrialDays={bulkTrialDays}
+            canRunBulkActions={canRunBulkActions}
+            isBulkPending={isBulkPending}
+            onBulkActionChange={setBulkAction}
+            onBulkFeatureKeyChange={setBulkFeatureKey}
+            onBulkLimitValueChange={setBulkLimitValue}
+            onBulkReasonChange={setBulkReason}
+            onBulkTrialDaysChange={setBulkTrialDays}
+            onClearSelection={clearSelection}
+            onSubmit={submitBulkAction}
+            onToggleVisibleSelection={toggleVisibleSelection}
+            selectedUserCount={selectedUserIds.length}
+          />
 
-        <AdminUsersBulkHistoryPanel recentBulkWaves={recentBulkWaves} />
-      </div>
+          <AdminUsersBulkHistoryPanel recentBulkWaves={recentBulkWaves} />
+        </div>
+      </CompactDisclosure>
 
-      <div className="mb-5 grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
+      <CompactDisclosure
+        badge={String(catalogSummary.totalUsers)}
+        className="mb-4"
+        eyebrow="Сегменты"
+        summary="Cohorts, качество данных и операционные приоритеты."
+        title="Распределение и операции"
+      >
+      <div className="grid gap-3 xl:grid-cols-[1.05fr_0.95fr]">
         <article className="surface-panel p-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
@@ -498,8 +514,16 @@ export function AdminUsersDirectory({
           </div>
         </article>
       </div>
+      </CompactDisclosure>
 
-      <div className="mb-5 grid gap-4 xl:grid-cols-2">
+      <CompactDisclosure
+        badge={String(segments.priorityQueue.length)}
+        className="mb-4"
+        eyebrow="Приоритет"
+        summary="Кого разобрать сейчас, риск оплаты, новые и активные аккаунты."
+        title="Очередь внимания"
+      >
+      <div className="grid gap-3 xl:grid-cols-2">
         <article className="surface-panel p-4">
           <div className="flex items-start justify-between gap-3">
             <div>
@@ -678,6 +702,7 @@ export function AdminUsersDirectory({
           </article>
         </div>
       </div>
+      </CompactDisclosure>
 
       <div className="grid gap-5">
         {users.length ? (
@@ -762,7 +787,14 @@ export function AdminUsersDirectory({
                   ) : null}
                 </div>
 
-                <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                <CompactDisclosure
+                  badge={String(user.operations.pending_support_actions)}
+                  className="mt-3"
+                  eyebrow="Сводка"
+                  summary={`${user.workout.logged_sets} сетов, ${user.nutrition.meals} приемов пищи, ${user.ai.messages} AI-сообщений.`}
+                  title="Активность и операции"
+                >
+                  <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-4">
                   <article className="metric-tile p-3.5">
                     <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted">
                       Тренировки
@@ -821,7 +853,7 @@ export function AdminUsersDirectory({
                   </article>
                 </div>
 
-                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border/70 pt-4 text-sm text-muted">
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-border/70 pt-3 text-sm text-muted">
                   <div className="flex flex-wrap gap-4">
                     <span>
                       Последняя активность:{" "}
@@ -869,7 +901,8 @@ export function AdminUsersDirectory({
                   >
                     Открыть карточку
                   </Link>
-                </div>
+                  </div>
+                </CompactDisclosure>
               </article>
             );
           })

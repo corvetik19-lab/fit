@@ -1,8 +1,10 @@
 import { z } from "zod";
 
 import { createApiErrorResponse } from "@/lib/api/error-response";
+import { readUserBillingAccessOrFallback } from "@/lib/billing-access";
 import { BILLING_FEATURE_KEYS } from "@/lib/billing-access";
 import { logger } from "@/lib/logger";
+import { createEmptySettingsDataSnapshot } from "@/lib/settings-data-server-model";
 import {
   getAuthenticatedSettingsContext,
   loadSettingsBillingCenterData,
@@ -22,9 +24,9 @@ const settingsBillingActionSchema = z.object({
   note: z.string().trim().max(300).optional(),
 });
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const context = await getAuthenticatedSettingsContext();
+    const context = await getAuthenticatedSettingsContext(request);
 
     if (!context) {
       return createApiErrorResponse({
@@ -54,7 +56,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const context = await getAuthenticatedSettingsContext();
+    const context = await getAuthenticatedSettingsContext(request);
 
     if (!context) {
       return createApiErrorResponse({
@@ -81,13 +83,22 @@ export async function POST(request: Request) {
       });
     }
 
-    const data = await loadSettingsBillingCenterData(
+    const access = await readUserBillingAccessOrFallback(
       context.supabase,
       context.user.id,
-      context.user.email,
+      {
+        email: context.user.email,
+      },
     );
+    const snapshot = createEmptySettingsDataSnapshot();
+    snapshot.billingReviewRequest = reviewResult.reviewRequest;
 
-    return Response.json({ data });
+    return Response.json({
+      data: {
+        access,
+        snapshot,
+      },
+    });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return createApiErrorResponse({

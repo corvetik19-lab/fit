@@ -20,10 +20,60 @@ import {
 import {
   buildSupabaseAuthCookie,
   requestSupabasePasswordAuth,
+  type SupabaseAuthResponse,
 } from "./helpers/supabase-password-auth";
 import { ensureOnboardingTestData } from "./helpers/supabase-admin";
 
 type AuthCredentials = NonNullable<ReturnType<typeof getAuthE2ECredentials>>;
+
+function writeSyntheticStorageState(
+  baseURL: string,
+  filePath: string,
+  credentials: AuthCredentials | null,
+) {
+  if (!credentials) {
+    writeEmptyStorageState(filePath);
+    return;
+  }
+
+  const expiresAt = Math.floor(Date.now() / 1_000) + 24 * 60 * 60;
+  const payload = {
+    access_token: `playwright-access-${credentials.email}`,
+    expires_at: expiresAt,
+    expires_in: 24 * 60 * 60,
+    refresh_token: `playwright-refresh-${credentials.email}`,
+    token_type: "bearer",
+    user: {
+      id:
+        credentials.email === getAdminE2ECredentials()?.email
+          ? "00000000-0000-4000-8000-000000000002"
+          : "00000000-0000-4000-8000-000000000001",
+      aud: "authenticated",
+      role: "authenticated",
+      email: credentials.email,
+      user_metadata: {
+        full_name: credentials.fullName,
+      },
+      app_metadata: {
+        provider: "email",
+        providers: ["email"],
+      },
+    },
+  } satisfies SupabaseAuthResponse;
+
+  ensureAuthStateDir();
+  fs.writeFileSync(
+    filePath,
+    JSON.stringify(
+      {
+        cookies: [buildSupabaseAuthCookie(baseURL, payload)],
+        origins: [],
+      },
+      null,
+      2,
+    ),
+  );
+}
 
 async function probeSessionOnHome(baseURL: string, context: BrowserContext) {
   const page = await context.newPage();
@@ -86,45 +136,65 @@ async function saveSupabaseStorageState(
   }
 }
 
-export default async function globalAuthSetup(config: FullConfig) {
-  ensureAuthStateDir();
-
-  if (process.env.PLAYWRIGHT_SKIP_AUTH_SETUP === "1") {
-    if (!fs.existsSync(USER_STORAGE_STATE_PATH)) {
-      writeEmptyStorageState(USER_STORAGE_STATE_PATH);
-    }
-
-    if (!fs.existsSync(ADMIN_STORAGE_STATE_PATH)) {
-      writeEmptyStorageState(ADMIN_STORAGE_STATE_PATH);
-    }
-
+async function saveStorageStateOrReuseExisting(
+  baseURL: string,
+  filePath: string,
+  credentials: AuthCredentials | null,
+) {
+  if (!credentials) {
+    writeEmptyStorageState(filePath);
     return;
   }
+
+  try {
+    await saveSupabaseStorageState(baseURL, filePath, credentials);
+  } catch (error) {
+    const canReuseExistingState =
+      fs.existsSync(filePath) && fs.statSync(filePath).size > 0;
+
+    if (!canReuseExistingState) {
+      throw error;
+    }
+
+    console.warn(
+      `Playwright auth bootstrap reused existing storage state after transient auth failure for ${credentials.email}: ${String(error)}`,
+    );
+  }
+}
+
+export default async function globalAuthSetup(config: FullConfig) {
+  ensureAuthStateDir();
 
   const baseURL =
     config.projects.find((project) => typeof project.use.baseURL === "string")?.use
       .baseURL ?? "http://127.0.0.1:3000";
 
-  if (hasAuthE2ECredentials()) {
-    const credentials = getAuthE2ECredentials();
+  if (process.env.PLAYWRIGHT_SKIP_AUTH_SETUP === "1") {
+    writeSyntheticStorageState(baseURL, USER_STORAGE_STATE_PATH, getAuthE2ECredentials());
+    writeSyntheticStorageState(
+      baseURL,
+      ADMIN_STORAGE_STATE_PATH,
+      getAdminE2ECredentials(),
+    );
+    return;
+  }
 
-    if (!credentials) {
-      writeEmptyStorageState(USER_STORAGE_STATE_PATH);
-    } else {
-      await saveSupabaseStorageState(baseURL, USER_STORAGE_STATE_PATH, credentials);
-    }
+  if (hasAuthE2ECredentials()) {
+    await saveStorageStateOrReuseExisting(
+      baseURL,
+      USER_STORAGE_STATE_PATH,
+      getAuthE2ECredentials(),
+    );
   } else {
     writeEmptyStorageState(USER_STORAGE_STATE_PATH);
   }
 
   if (hasAdminE2ECredentials()) {
-    const credentials = getAdminE2ECredentials();
-
-    if (!credentials) {
-      writeEmptyStorageState(ADMIN_STORAGE_STATE_PATH);
-    } else {
-      await saveSupabaseStorageState(baseURL, ADMIN_STORAGE_STATE_PATH, credentials);
-    }
+    await saveStorageStateOrReuseExisting(
+      baseURL,
+      ADMIN_STORAGE_STATE_PATH,
+      getAdminE2ECredentials(),
+    );
   } else {
     writeEmptyStorageState(ADMIN_STORAGE_STATE_PATH);
   }

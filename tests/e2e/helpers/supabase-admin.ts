@@ -1,13 +1,60 @@
 import { loadEnvConfig } from "@next/env";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-import { buildDefaultOnboardingPayload } from "./auth";
+import {
+  buildDefaultOnboardingPayload,
+  getAdminE2ECredentials,
+  getAuthE2ECredentials,
+} from "./auth";
+import { requestSupabasePasswordAuth } from "./supabase-password-auth";
 
 loadEnvConfig(process.cwd());
 
 let adminClient: SupabaseClient | null = null;
-const ADMIN_RETRY_DELAYS_MS = [750, 1_500, 3_000, 5_000] as const;
+const ADMIN_RETRY_DELAYS_MS = [750, 1_500, 3_000, 5_000, 8_000, 12_000] as const;
 const authUserIdByEmailCache = new Map<string, string>();
+const isLocalPlaywrightAuth = process.env.PLAYWRIGHT_SKIP_AUTH_SETUP === "1";
+
+function readUserIdFromAuthPayload(payload: { user: Record<string, unknown> }) {
+  const userId = payload.user.id;
+
+  return typeof userId === "string" && userId.length > 0 ? userId : null;
+}
+
+async function resolveKnownPlaywrightUserIdByEmail(email: string) {
+  const normalizedEmail = email.trim().toLowerCase();
+  const knownCredentials = [
+    getAuthE2ECredentials(),
+    getAdminE2ECredentials(),
+  ].filter(
+    (
+      credentials,
+    ): credentials is NonNullable<
+      ReturnType<typeof getAuthE2ECredentials>
+    > => Boolean(credentials),
+  );
+
+  const matchingCredentials = knownCredentials.find(
+    (credentials) => credentials.email.trim().toLowerCase() === normalizedEmail,
+  );
+
+  if (!matchingCredentials) {
+    return null;
+  }
+
+  const payload = await requestSupabasePasswordAuth({
+    email: matchingCredentials.email,
+    password: matchingCredentials.password,
+  });
+  const userId = readUserIdFromAuthPayload(payload);
+
+  if (!userId) {
+    return null;
+  }
+
+  authUserIdByEmailCache.set(normalizedEmail, userId);
+  return userId;
+}
 
 function getRequiredEnv(name: "NEXT_PUBLIC_SUPABASE_URL" | "SUPABASE_SERVICE_ROLE_KEY") {
   const value = process.env[name]?.trim();
@@ -38,12 +85,42 @@ export function createSupabaseAdminTestClient() {
   return adminClient;
 }
 
-async function withAdminRetry<T>(factory: () => Promise<T>) {
+export async function withAdminRetry<T>(factory: () => Promise<T>) {
   let lastError: unknown = null;
 
   for (let attempt = 0; attempt < ADMIN_RETRY_DELAYS_MS.length; attempt += 1) {
     try {
-      return await factory();
+      const result = await factory();
+
+      if (
+        result &&
+        typeof result === "object" &&
+        "error" in result &&
+        result.error &&
+        typeof result.error === "object"
+      ) {
+        const errorRecord = result.error as {
+          details?: string;
+          message?: string;
+        };
+        const serializedError = [
+          errorRecord.message ?? "",
+          errorRecord.details ?? "",
+          JSON.stringify(result.error),
+        ]
+          .filter(Boolean)
+          .join(" ");
+
+        if (
+          serializedError.includes("fetch failed") ||
+          serializedError.includes("ECONNRESET") ||
+          serializedError.includes("terminated")
+        ) {
+          throw new Error(serializedError);
+        }
+      }
+
+      return result;
     } catch (error) {
       lastError = error;
 
@@ -66,6 +143,32 @@ export async function findAuthUserIdByEmail(email: string) {
 
   if (cached) {
     return cached;
+  }
+
+  if (isLocalPlaywrightAuth) {
+    const adminEmail = getAdminE2ECredentials()?.email.trim().toLowerCase();
+    const userEmail = getAuthE2ECredentials()?.email.trim().toLowerCase();
+    const syntheticUserId =
+      normalizedEmail === adminEmail
+        ? "00000000-0000-4000-8000-000000000002"
+        : normalizedEmail === userEmail
+          ? "00000000-0000-4000-8000-000000000001"
+          : null;
+
+    if (syntheticUserId) {
+      authUserIdByEmailCache.set(normalizedEmail, syntheticUserId);
+      return syntheticUserId;
+    }
+  }
+
+  try {
+    const userId = await resolveKnownPlaywrightUserIdByEmail(email);
+
+    if (userId) {
+      return userId;
+    }
+  } catch {
+    // Fall back to service-role lookup below when password auth is transiently unavailable.
   }
 
   const supabase = createSupabaseAdminTestClient();

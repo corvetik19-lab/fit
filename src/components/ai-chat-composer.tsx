@@ -41,7 +41,8 @@ export function AiChatComposer({
 }: AiChatComposerProps) {
   return (
     <form
-      className="surface-panel mt-4 p-3 sm:p-4"
+      className="surface-panel mt-3 p-3"
+      id="ai-chat-composer"
       onSubmit={(event) => {
         event.preventDefault();
         onSubmit();
@@ -52,11 +53,11 @@ export function AiChatComposer({
           {selectedImageUrl ? (
             <Image
               alt="Выбранное фото еды"
-              className="h-16 w-16 rounded-2xl object-cover"
-              height={64}
+              className="h-14 w-14 rounded-2xl object-cover"
+              height={56}
               src={selectedImageUrl}
               unoptimized
-              width={64}
+              width={56}
             />
           ) : null}
 
@@ -64,9 +65,8 @@ export function AiChatComposer({
             <p className="truncate text-sm font-semibold text-foreground">
               {selectedImage.name}
             </p>
-            <p className="mt-1 text-xs text-muted">
-              Сначала AI разберёт фото, потом можно попросить заменить продукты,
-              объяснить состав или собрать план питания.
+            <p className="mt-1 text-xs leading-5 text-muted">
+              AI разберёт фото и сохранит результат в текущей сессии.
             </p>
           </div>
 
@@ -82,49 +82,44 @@ export function AiChatComposer({
       ) : null}
 
       <textarea
-        className="min-h-32 w-full resize-none rounded-[1.7rem] border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_90%,var(--surface))] px-4 py-4 text-sm leading-7 text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15 disabled:cursor-not-allowed disabled:opacity-60"
+        className="min-h-28 w-full resize-none rounded-[1.25rem] border border-border bg-white px-4 py-3 text-sm leading-6 text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/10 disabled:cursor-not-allowed disabled:opacity-60"
         data-testid="ai-chat-composer"
         disabled={!accessAllowed}
         onChange={(event) => onDraftChange(event.target.value)}
         onKeyDown={onKeyDown}
         placeholder={
           selectedImage
-            ? "Например: это мой ужин после тренировки, оцени состав и подскажи, как его улучшить."
-            : "Задай вопрос AI-коучу, попроси план или разбор прогресса."
+            ? "Например: это ужин после тренировки, оцени состав и подскажи, как улучшить."
+            : "Спроси AI-коуча про питание, тренировку, прогресс или план."
         }
         ref={composerRef}
         value={draft}
       />
 
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <p className="workspace-kicker">Что будет дальше</p>
-          <p className="mt-1 text-sm text-muted">
-            {selectedImage
-              ? "Фото будет проанализировано и останется внутри текущей сессии."
-              : allowWebSearch
-                ? "Поиск в интернете включён для этого запроса."
-                : "Поиск в интернете выключен."}
-          </p>
-        </div>
+      <div className="mt-3 flex items-center justify-between gap-3">
+        <p className="min-w-0 flex-1 text-xs leading-5 text-muted">
+          {selectedImage
+            ? "Фото будет проанализировано перед ответом."
+            : allowWebSearch
+              ? "Поиск в интернете включён."
+              : "Поиск в интернете выключен."}
+        </p>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex shrink-0 gap-2">
           {isBusy ? (
             <button
-              className="toggle-chip px-4 py-3 text-sm font-semibold"
+              className="toggle-chip px-3 py-2 text-xs font-semibold"
               data-testid="ai-chat-stop"
               onClick={onStop}
               type="button"
             >
-              <span className="inline-flex items-center gap-2">
-                <Square size={16} strokeWidth={2.2} />
-                Остановить
-              </span>
+              <Square size={15} strokeWidth={2.2} />
+              Стоп
             </button>
           ) : null}
 
           <button
-            className="toggle-chip toggle-chip--active px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
+            className="toggle-chip toggle-chip--active px-4 py-2 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-60 sm:text-sm"
             data-testid="ai-chat-submit"
             disabled={
               isComposerBusy ||
@@ -136,14 +131,14 @@ export function AiChatComposer({
           >
             <span className="inline-flex items-center gap-2">
               {isComposerBusy ? (
-                <LoaderCircle className="animate-spin" size={16} />
+                <LoaderCircle className="animate-spin" size={15} />
               ) : null}
               {selectedImage
                 ? isAnalyzingImage
-                  ? "Анализирую фото..."
-                  : "Разобрать фото"
+                  ? "Анализ..."
+                  : "Разобрать"
                 : isBusy
-                  ? "Отправляю..."
+                  ? "Думаю..."
                   : "Отправить"}
             </span>
           </button>

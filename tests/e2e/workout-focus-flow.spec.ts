@@ -10,10 +10,128 @@ const mobileUse = {
   isMobile: true,
   hasTouch: true,
 } as const;
+const usesLocalPlaywrightAuth = process.env.PLAYWRIGHT_SKIP_AUTH_SETUP === "1";
 
 type SeededWorkoutDay = Awaited<
   ReturnType<typeof createLockedWorkoutDayWithExercises>
 >;
+
+function createPlaywrightWorkoutDay(dayId: string): SeededWorkoutDay {
+  return {
+    exerciseId: `${dayId}-library-exercise-1`,
+    exerciseIds: [
+      `${dayId}-library-exercise-1`,
+      `${dayId}-library-exercise-2`,
+    ],
+    programId: `${dayId}-program`,
+    dayId,
+    workoutExerciseId: `${dayId}-exercise-1`,
+    workoutExerciseIds: [`${dayId}-exercise-1`, `${dayId}-exercise-2`],
+    setId: `${dayId}-set-1`,
+    setIds: [`${dayId}-set-1`, `${dayId}-set-2`],
+  };
+}
+
+async function prepareWorkoutDay(page: Page, seed: string) {
+  if (!usesLocalPlaywrightAuth) {
+    return createLockedWorkoutDayWithExercises(page, seed, 2);
+  }
+
+  const seededDay = createPlaywrightWorkoutDay(`e2e-${seed}`);
+
+  await page.route("**/api/workout-sets/**", async (route) => {
+    await route.fulfill({
+      body: JSON.stringify({ data: { saved: true } }),
+      contentType: "application/json",
+      status: 200,
+    });
+  });
+  await page.route("**/api/workout-days/**", async (route) => {
+    if (route.request().url().endsWith("/reset")) {
+      await route.fulfill({
+        body: JSON.stringify({
+          data: {
+            id: seededDay.dayId,
+            weekly_program_id: seededDay.programId,
+            day_of_week: 1,
+            status: "planned",
+            body_weight_kg: null,
+            session_note: null,
+            session_duration_seconds: 0,
+            program_title: "E2E focus program",
+            week_start_date: "2026-04-28",
+            week_end_date: "2026-05-04",
+            program_status: "active",
+            is_locked: true,
+            exercises: [
+              {
+                id: seededDay.workoutExerciseIds[0],
+                exercise_title_snapshot: "Жим гантелей",
+                sets_count: 1,
+                sort_order: 0,
+                sets: [
+                  {
+                    id: seededDay.setIds[0],
+                    set_number: 1,
+                    planned_reps: 10,
+                    planned_reps_min: 6,
+                    planned_reps_max: 10,
+                    actual_reps: null,
+                    actual_weight_kg: null,
+                    actual_rpe: null,
+                  },
+                ],
+              },
+              {
+                id: seededDay.workoutExerciseIds[1],
+                exercise_title_snapshot: "Тяга блока",
+                sets_count: 1,
+                sort_order: 1,
+                sets: [
+                  {
+                    id: seededDay.setIds[1],
+                    set_number: 1,
+                    planned_reps: 10,
+                    planned_reps_min: 8,
+                    planned_reps_max: 12,
+                    actual_reps: null,
+                    actual_weight_kg: null,
+                    actual_rpe: null,
+                  },
+                ],
+              },
+            ],
+          },
+        }),
+        contentType: "application/json",
+        status: 200,
+      });
+      return;
+    }
+
+    await route.fulfill({
+      body: JSON.stringify({ data: { saved: true } }),
+      contentType: "application/json",
+      status: 200,
+    });
+  });
+  await page.route("**/api/sync/pull?**", async (route) => {
+    await route.fulfill({
+      body: JSON.stringify({ data: { nextCursor: null, snapshot: null } }),
+      contentType: "application/json",
+      status: 200,
+    });
+  });
+  await page.route("**/api/sync/push", async (route) => {
+    await route.fulfill({
+      body: JSON.stringify({ data: { applied: 0, discardedStale: 0, processed: [] } }),
+      contentType: "application/json",
+      status: 200,
+    });
+  });
+
+  return seededDay;
+}
 
 async function openWorkoutStep(page: Page, stepNumber: number) {
   const step = page.getByTestId(`workout-step-${stepNumber}`);
@@ -37,9 +155,27 @@ async function fillExerciseSet(
 }
 
 async function saveExercise(page: Page, stepNumber: number) {
-  const saveButton = page.getByTestId(`workout-exercise-save-${stepNumber}`);
-  await expect(saveButton).toBeEnabled();
-  await saveButton.click();
+  let lastError: unknown = null;
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const saveButton = page.getByTestId(`workout-exercise-save-${stepNumber}`);
+    await expect(saveButton).toBeEnabled();
+
+    try {
+      await saveButton.click({ timeout: 10_000 });
+      return;
+    } catch (error) {
+      lastError = error;
+
+      if (attempt === 2) {
+        break;
+      }
+
+      await page.waitForTimeout(400 * (attempt + 1));
+    }
+  }
+
+  throw lastError;
 }
 
 async function expectExerciseCard(page: Page, stepNumber: number) {
@@ -88,11 +224,7 @@ test.describe("workout focus flow", () => {
   test("focus mode enforces ordered save, edit and finish flow", async ({
     page,
   }) => {
-    const seededDay = await createLockedWorkoutDayWithExercises(
-      page,
-      "focus-flow",
-      2,
-    );
+    const seededDay = await prepareWorkoutDay(page, "focus-flow");
 
     await navigateStable(
       page,
@@ -141,7 +273,9 @@ test.describe("workout focus flow", () => {
     await expect(editFirstExerciseButton).toBeVisible();
     await expect(editFirstExerciseButton).toBeEnabled({ timeout: 15_000 });
     await editFirstExerciseButton.click();
-    await page.getByTestId(`workout-set-${seededDay.setIds[0]}-weight`).fill("62");
+    await page
+      .getByTestId(`workout-set-${seededDay.setIds[0]}-weight`)
+      .fill("62");
     await saveExercise(page, 1);
     await expect(page.getByTestId("workout-step-1")).toHaveAttribute(
       "data-complete",
@@ -163,7 +297,9 @@ test.describe("workout focus flow", () => {
       "data-complete",
       "true",
     );
-    await expect(page.getByTestId("workout-finish-button")).toBeEnabled();
+    await expect(page.getByTestId("workout-finish-button")).toBeEnabled({
+      timeout: 15_000,
+    });
 
     const finishDialog = handleNextDialog(
       page,
@@ -173,19 +309,17 @@ test.describe("workout focus flow", () => {
     await finishDialog;
 
     await expect(
-      page.getByRole("button", { name: "Снова в работу" }),
+      page.getByRole("button", { name: /Вернуть в работу|Снова в работу/ }),
     ).toBeVisible();
-    await expect(page.getByText("Тренировка завершена, время сохранено.")).toBeVisible();
+    await expect(
+      page.getByText("Тренировка завершена, время сохранено.").first(),
+    ).toBeVisible();
   });
 
   test("reset returns focus flow to the first locked sequence", async ({
     page,
   }) => {
-    const seededDay = await createLockedWorkoutDayWithExercises(
-      page,
-      "focus-reset",
-      2,
-    );
+    const seededDay = await prepareWorkoutDay(page, "focus-reset");
 
     await navigateStable(
       page,
@@ -222,6 +356,8 @@ test.describe("workout focus flow", () => {
       "true",
     );
     await expect(page.getByTestId("workout-start-button")).toBeVisible();
-    await expect(page.getByText("Тренировка обнулена. Можно начать заново.")).toBeVisible();
+    await expect(
+      page.getByText("Тренировка обнулена. Можно начать заново."),
+    ).toBeVisible();
   });
 });

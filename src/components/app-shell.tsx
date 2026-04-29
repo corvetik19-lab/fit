@@ -1,7 +1,9 @@
 import type { ReactNode } from "react";
 
 import { AppShellFrame } from "@/components/app-shell-frame";
+import { RepairMojibakeTree } from "@/components/repair-mojibake-tree";
 import { logger } from "@/lib/logger";
+import { repairMojibakeText } from "@/lib/text/repair-mojibake";
 import type { Viewer } from "@/lib/viewer";
 import { getViewer } from "@/lib/viewer";
 
@@ -65,13 +67,13 @@ export async function AppShell({
   return (
     <AppShellFrame
       compactHeader={compactHeader}
-      eyebrow={eyebrow}
+      eyebrow={repairMojibakeText(eyebrow)}
       hideAssistantWidget={hideAssistantWidget}
       immersive={immersive}
-      title={title}
+      title={repairMojibakeText(title)}
       viewer={viewer}
     >
-      {children}
+      <RepairMojibakeTree>{children}</RepairMojibakeTree>
     </AppShellFrame>
   );
 }

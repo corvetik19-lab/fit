@@ -105,7 +105,7 @@ export async function POST(request: Request) {
           const subscription = await applyAdminSubscriptionAction(adminSupabase, {
             action: "grant_trial",
             durationDays: payload.duration_days,
-            provider: "admin_console",
+            provider: "admin_trial",
             userId,
           });
 
@@ -116,6 +116,9 @@ export async function POST(request: Request) {
               batchId,
               subscriptionId: subscription.id,
               currentPeriodEnd: subscription.current_period_end,
+              durationDays: subscription.admin_duration_days,
+              periodBase: subscription.admin_period_base,
+              previousPeriodEnd: subscription.admin_previous_period_end,
             },
             reason: payload.reason ?? "bulk trial grant",
             targetUserId: userId,
@@ -127,6 +130,11 @@ export async function POST(request: Request) {
               actorUserId: user.id,
               batchId,
               currentPeriodEnd: subscription.current_period_end,
+              durationDays: subscription.admin_duration_days,
+              periodBase: subscription.admin_period_base,
+              previousPeriodEnd: subscription.admin_previous_period_end,
+              provider: subscription.provider,
+              status: subscription.status,
             },
             subscriptionId: subscription.id,
             userId,

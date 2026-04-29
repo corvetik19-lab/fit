@@ -347,9 +347,7 @@ test.describe("nutrition capture flow", () => {
       /\/nutrition(?:\?section=photo)?$/,
     );
     await page
-      .getByRole("heading", {
-        name: "Сними еду и сразу загрузи её в приложение",
-      })
+      .getByTestId("nutrition-photo-open-gallery")
       .waitFor({ state: "visible", timeout: 15_000 });
 
     const photoChooser = page.waitForEvent("filechooser");
@@ -376,10 +374,10 @@ test.describe("nutrition capture flow", () => {
       ),
     ).toBeVisible();
     await expect(
-      page.getByRole("link", { name: "Открыть продукты" }),
+      page.locator('a[href="/nutrition?section=log&panel=foods"]'),
     ).toBeVisible();
     await expect(
-      page.getByRole("link", { name: "Открыть дневник" }),
+      page.locator('a[href="/nutrition?section=log&panel=log"]'),
     ).toBeVisible();
   });
 });

@@ -109,6 +109,9 @@ export async function POST(
         payload: {
           actorUserId: user.id,
           currentPeriodEnd: subscription.current_period_end,
+          durationDays: subscription.admin_duration_days,
+          periodBase: subscription.admin_period_base,
+          previousPeriodEnd: subscription.admin_previous_period_end,
           provider: subscription.provider,
           status: subscription.status,
         },
@@ -124,6 +127,9 @@ export async function POST(
         status: subscription.status,
         provider: subscription.provider,
         currentPeriodEnd: subscription.current_period_end,
+        durationDays: subscription.admin_duration_days,
+        periodBase: subscription.admin_period_base,
+        previousPeriodEnd: subscription.admin_previous_period_end,
       };
     }
 

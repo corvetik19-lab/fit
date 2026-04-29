@@ -42,13 +42,13 @@ export function AiChatTranscript({
 }) {
   return (
     <div
-      className="surface-panel surface-panel--soft mt-4 flex-1 overflow-y-auto p-3 sm:p-4"
+      className="surface-panel surface-panel--soft mt-3 flex-1 overflow-y-auto p-3"
       data-testid="ai-chat-transcript"
       ref={scrollViewportRef}
     >
-      <div className="grid gap-4">
+      <div className="grid gap-3">
         {messages.length ? (
-          messages.map((message) => (
+          messages.map((message, messageIndex) => (
             <article
               className={`chat-bubble ${
                 message.role === "assistant"
@@ -58,7 +58,7 @@ export function AiChatTranscript({
               data-message-id={message.id}
               data-role={message.role}
               data-testid="ai-transcript-message"
-              key={message.id}
+              key={`${message.id}-${message.role}-${messageIndex}`}
             >
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="text-sm font-semibold text-foreground">
@@ -161,7 +161,7 @@ export function AiChatTranscript({
                   if (part.type === "tool-call") {
                     return (
                       <div
-                        className="rounded-2xl border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_84%,var(--surface))] px-4 py-3 text-sm text-muted"
+                        className="rounded-2xl border border-border bg-white px-4 py-3 text-sm text-muted"
                         key={`${message.id}-tool-call-${index}`}
                       >
                         Выполняю действие: {part.toolName}
@@ -176,15 +176,14 @@ export function AiChatTranscript({
           ))
         ) : (
           <div
-            className="surface-panel border-dashed px-4 py-6"
+            className="surface-panel border-dashed px-4 py-5"
             data-testid="ai-transcript-empty"
           >
             <p className="text-sm font-semibold text-foreground">
-              Здесь появятся разбор, план и история решений.
+              Здесь появится диалог с AI-коучем.
             </p>
             <p className="mt-2 text-sm leading-6 text-muted">
-              Начни с одного запроса: попроси оценить прогресс, собрать
-              тренировку, составить план питания или разобрать фото еды.
+              Начни с одного запроса: оцени прогресс, собери тренировку, составь план питания или разбери фото еды.
             </p>
           </div>
         )}

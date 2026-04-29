@@ -1,8 +1,13 @@
 import { expect, type Page } from "@playwright/test";
 
+import { finishOnboardingIfVisible, signInAndFinishOnboarding, signInAsAdmin } from "./auth";
+
 async function waitForMainReady(page: Page) {
   await page.locator("main").waitFor({ state: "visible", timeout: 15_000 });
   await page.waitForLoadState("domcontentloaded");
+  await page.waitForLoadState("networkidle", { timeout: 10_000 }).catch(
+    () => undefined,
+  );
 }
 
 function isRecoverableNavigationError(error: unknown) {
@@ -23,6 +28,7 @@ export async function navigateStable(
   targetUrl: RegExp,
 ) {
   let lastError: unknown = null;
+  const isAdminTarget = targetPath.startsWith("/admin");
 
   for (let attempt = 0; attempt < 3; attempt += 1) {
     try {
@@ -56,6 +62,19 @@ export async function navigateStable(
 
       if (attempt === 2 || !isRecoverable) {
         throw error;
+      }
+
+      if (
+        page.url().endsWith("/") ||
+        page.url().includes("/auth") ||
+        page.url().includes("/onboarding")
+      ) {
+        if (isAdminTarget) {
+          await signInAsAdmin(page);
+        } else {
+          await signInAndFinishOnboarding(page);
+          await finishOnboardingIfVisible(page);
+        }
       }
 
       await page.waitForTimeout(500);

@@ -12,6 +12,7 @@ import {
   getSettingsDataTimelineTone,
   settingsDataInputClassName,
 } from "@/components/settings-data-center-model";
+import { RepairMojibakeTree } from "@/components/repair-mojibake-tree";
 import { useSettingsDataCenterState } from "@/components/use-settings-data-center-state";
 import type { SettingsDataSnapshot } from "@/lib/settings-data";
 
@@ -39,7 +40,8 @@ export function SettingsDataCenter({
   } = useSettingsDataCenterState(initialSnapshot);
 
   return (
-    <section className="surface-panel p-4 sm:p-5">
+    <RepairMojibakeTree>
+      <section className="surface-panel p-4 sm:p-5">
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="workspace-kicker">Управление данными</p>
@@ -240,16 +242,17 @@ export function SettingsDataCenter({
       </div>
 
       {notice ? (
-        <p className="mt-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/12 px-4 py-3 text-sm text-emerald-100">
+        <p className="mt-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/12 px-4 py-3 text-sm text-emerald-700">
           {notice}
         </p>
       ) : null}
 
       {error ? (
-        <p className="mt-4 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+        <p className="mt-4 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-700">
           {error}
         </p>
       ) : null}
-    </section>
+      </section>
+    </RepairMojibakeTree>
   );
 }

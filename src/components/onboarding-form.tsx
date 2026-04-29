@@ -1,6 +1,12 @@
 "use client";
 
-import { CheckCircle2, Dumbbell, Flame, HeartPulse, Utensils } from "lucide-react";
+import {
+  CheckCircle2,
+  Dumbbell,
+  Flame,
+  HeartPulse,
+  Utensils,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { startTransition, useMemo, useState } from "react";
 
@@ -25,7 +31,14 @@ type OnboardingFormProps = {
 };
 
 const inputClassName =
-  "w-full rounded-[1.2rem] border-none bg-[#f1edec] px-4 py-4 text-sm text-foreground outline-none transition placeholder:text-[#8d8a8f] focus:bg-white focus:ring-2 focus:ring-accent/18";
+  "w-full rounded-[1rem] border border-border bg-white/92 px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted focus:border-accent focus:ring-2 focus:ring-accent/15";
+
+const goalOptions: Array<{ label: string; value: GoalType }> = [
+  { label: "Снижение веса", value: "fat_loss" },
+  { label: "Поддержание формы", value: "maintenance" },
+  { label: "Набор мышц", value: "muscle_gain" },
+  { label: "Выносливость", value: "performance" },
+];
 
 function splitList(value: string) {
   return value
@@ -35,23 +48,28 @@ function splitList(value: string) {
 }
 
 function SectionShell({
+  children,
+  description,
   index,
   title,
-  children,
 }: {
   children: React.ReactNode;
+  description: string;
   index: string;
   title: string;
 }) {
   return (
-    <section className="space-y-5">
-      <div className="flex items-center gap-3">
-        <span className="font-display text-4xl font-black tracking-[-0.08em] text-[#d8d4d3]">
+    <section className="surface-panel surface-panel--soft space-y-4 p-4">
+      <div className="flex items-start gap-3">
+        <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[0.9rem] bg-[color-mix(in_srgb,var(--accent-soft)_62%,white)] text-sm font-black text-accent-strong">
           {index}
         </span>
-        <h2 className="font-display text-lg font-bold uppercase tracking-[0.06em] text-foreground">
-          {title}
-        </h2>
+        <div className="min-w-0">
+          <h2 className="text-base font-bold tracking-tight text-foreground">
+            {title}
+          </h2>
+          <p className="mt-1 text-sm leading-6 text-muted">{description}</p>
+        </div>
       </div>
       {children}
     </section>
@@ -59,24 +77,22 @@ function SectionShell({
 }
 
 function InsightCard({
+  detail,
   icon: Icon,
   title,
-  detail,
 }: {
   detail: string;
   icon: typeof Dumbbell;
   title: string;
 }) {
   return (
-    <div className="rounded-[1.35rem] bg-[#f1edec] p-4">
-      <div className="flex items-center gap-3">
-        <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-white text-accent shadow-[0_16px_30px_-22px_rgba(0,64,224,0.24)]">
+    <div className="rounded-[1rem] border border-border bg-white/86 p-3">
+      <div className="flex items-start gap-3">
+        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.9rem] bg-[color-mix(in_srgb,var(--accent-soft)_62%,white)] text-accent-strong">
           <Icon size={18} strokeWidth={2.1} />
         </span>
-        <div>
-          <p className="font-display text-sm font-bold uppercase tracking-[0.06em] text-foreground">
-            {title}
-          </p>
+        <div className="min-w-0">
+          <p className="text-sm font-bold text-foreground">{title}</p>
           <p className="mt-1 text-xs leading-5 text-muted">{detail}</p>
         </div>
       </div>
@@ -138,7 +154,7 @@ export function OnboardingForm({
       return "Выбери частоту";
     }
 
-    return `${weeklyTrainingDays.trim()} трен./неделю`;
+    return `${weeklyTrainingDays.trim()} трен./нед.`;
   }, [weeklyTrainingDays]);
 
   function submit() {
@@ -180,9 +196,11 @@ export function OnboardingForm({
           return;
         }
 
-        setNotice("Профиль сохранён. Переходим в рабочее пространство.");
+        setNotice("Профиль сохранен. Переходим в рабочее пространство.");
         router.replace("/dashboard");
         router.refresh();
+      } catch {
+        setError("Сервис анкеты временно недоступен. Попробуй еще раз.");
       } finally {
         setIsPending(false);
       }
@@ -191,31 +209,35 @@ export function OnboardingForm({
 
   return (
     <div className="relative">
-      <div className="space-y-10 pb-24">
-        <div className="rounded-[2rem] bg-[#f6f3f2] p-6 shadow-[0_30px_60px_-46px_rgba(28,27,27,0.18)] sm:p-8">
-          <div className="grid gap-4 sm:grid-cols-3">
+      <div className="space-y-4 pb-28">
+        <section className="surface-panel surface-panel--accent p-4">
+          <div className="grid gap-3 sm:grid-cols-3">
             <InsightCard
               detail="Точка входа для персонального плана и AI-контекста."
               icon={CheckCircle2}
               title="Профиль"
             />
             <InsightCard
-              detail="Частота, уровень и цель помогут точно собрать нагрузку."
+              detail="Уровень, цель и частота помогут собрать нагрузку."
               icon={Dumbbell}
               title="Режим"
             />
             <InsightCard
-              detail={`Текущий аккаунт: ${userEmail}`}
+              detail={`Аккаунт: ${userEmail}`}
               icon={HeartPulse}
               title="Сессия"
             />
           </div>
-        </div>
+        </section>
 
-        <SectionShell index="01" title="Биометрия">
-          <div className="grid gap-4 sm:grid-cols-2">
+        <SectionShell
+          description="Базовые данные нужны для расчета нагрузки и питания."
+          index="01"
+          title="Биометрия"
+        >
+          <div className="grid gap-3 sm:grid-cols-2">
             <label className="grid gap-2 text-sm text-muted sm:col-span-2">
-              <span className="pl-1 text-[0.65rem] font-extrabold uppercase tracking-[0.22em] text-[#75747d]">
+              <span className="pl-1 text-[0.68rem] font-bold uppercase tracking-[0.16em]">
                 Имя
               </span>
               <input
@@ -228,7 +250,7 @@ export function OnboardingForm({
             </label>
 
             <label className="grid gap-2 text-sm text-muted">
-              <span className="pl-1 text-[0.65rem] font-extrabold uppercase tracking-[0.22em] text-[#75747d]">
+              <span className="pl-1 text-[0.68rem] font-bold uppercase tracking-[0.16em]">
                 Возраст
               </span>
               <input
@@ -241,7 +263,7 @@ export function OnboardingForm({
             </label>
 
             <label className="grid gap-2 text-sm text-muted">
-              <span className="pl-1 text-[0.65rem] font-extrabold uppercase tracking-[0.22em] text-[#75747d]">
+              <span className="pl-1 text-[0.68rem] font-bold uppercase tracking-[0.16em]">
                 Пол
               </span>
               <select
@@ -258,8 +280,8 @@ export function OnboardingForm({
             </label>
 
             <label className="grid gap-2 text-sm text-muted">
-              <span className="pl-1 text-[0.65rem] font-extrabold uppercase tracking-[0.22em] text-[#75747d]">
-                Рост (см)
+              <span className="pl-1 text-[0.68rem] font-bold uppercase tracking-[0.16em]">
+                Рост, см
               </span>
               <input
                 className={inputClassName}
@@ -271,8 +293,8 @@ export function OnboardingForm({
             </label>
 
             <label className="grid gap-2 text-sm text-muted">
-              <span className="pl-1 text-[0.65rem] font-extrabold uppercase tracking-[0.22em] text-[#75747d]">
-                Вес (кг)
+              <span className="pl-1 text-[0.68rem] font-bold uppercase tracking-[0.16em]">
+                Вес, кг
               </span>
               <input
                 className={inputClassName}
@@ -285,8 +307,8 @@ export function OnboardingForm({
             </label>
 
             <label className="grid gap-2 text-sm text-muted sm:col-span-2">
-              <span className="pl-1 text-[0.65rem] font-extrabold uppercase tracking-[0.22em] text-[#75747d]">
-                Целевой вес (кг)
+              <span className="pl-1 text-[0.68rem] font-bold uppercase tracking-[0.16em]">
+                Целевой вес, кг
               </span>
               <input
                 className={inputClassName}
@@ -300,11 +322,15 @@ export function OnboardingForm({
           </div>
         </SectionShell>
 
-        <SectionShell index="02" title="Тренировочный интеллект">
-          <div className="grid gap-4">
-            <div className="grid gap-4 sm:grid-cols-2">
+        <SectionShell
+          description="Выбери цель, уровень и рабочую частоту тренировок."
+          index="02"
+          title="Тренировочный режим"
+        >
+          <div className="grid gap-3">
+            <div className="grid gap-3 sm:grid-cols-2">
               <label className="grid gap-2 text-sm text-muted">
-                <span className="pl-1 text-[0.65rem] font-extrabold uppercase tracking-[0.22em] text-[#75747d]">
+                <span className="pl-1 text-[0.68rem] font-bold uppercase tracking-[0.16em]">
                   Уровень
                 </span>
                 <select
@@ -315,62 +341,64 @@ export function OnboardingForm({
                   <option value="">Выбери уровень</option>
                   <option value="beginner">Новичок</option>
                   <option value="intermediate">Средний</option>
-                  <option value="advanced">Профи</option>
+                  <option value="advanced">Продвинутый</option>
                 </select>
               </label>
 
               <label className="grid gap-2 text-sm text-muted">
-                <span className="pl-1 text-[0.65rem] font-extrabold uppercase tracking-[0.22em] text-[#75747d]">
+                <span className="pl-1 text-[0.68rem] font-bold uppercase tracking-[0.16em]">
                   Цель
                 </span>
                 <select
                   className={inputClassName}
-                  onChange={(event) => setGoalType(event.target.value as GoalType)}
+                  onChange={(event) =>
+                    setGoalType(event.target.value as GoalType)
+                  }
                   value={goalType}
                 >
-                  <option value="fat_loss">Снижение веса</option>
-                  <option value="maintenance">Поддержание формы</option>
-                  <option value="muscle_gain">Набор мышц</option>
-                  <option value="performance">Выносливость и результат</option>
+                  {goalOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
                 </select>
               </label>
             </div>
 
-            <div className="rounded-[1.5rem] bg-[#f6f3f2] p-5">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-[0.65rem] font-extrabold uppercase tracking-[0.22em] text-[#75747d]">
-                    Частота в неделю
-                  </p>
-                  <p className="mt-2 font-display text-xl font-bold tracking-[-0.05em] text-foreground">
-                    Рабочий ритм
+            <div className="rounded-[1rem] border border-border bg-white/86 p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
+                  <p className="workspace-kicker">Частота</p>
+                  <p className="mt-2 text-base font-bold text-foreground">
+                    Рабочий ритм недели
                   </p>
                 </div>
-                <span className="rounded-full bg-[color-mix(in_srgb,var(--accent-soft)_58%,white)] px-3 py-2 text-[0.65rem] font-extrabold uppercase tracking-[0.18em] text-accent">
-                  {readinessLabel}
-                </span>
+                <span className="pill self-start">{readinessLabel}</span>
               </div>
 
-              <div className="mt-4 grid grid-cols-4 gap-3 text-center">
-                {["3x", "4x", "5x", "6x"].map((item) => {
-                  const isActive = weeklyTrainingDays === item.replace("x", "");
+              <div className="mt-4 grid grid-cols-4 gap-2 text-center">
+                {["3", "4", "5", "6"].map((item) => {
+                  const isActive = weeklyTrainingDays === item;
                   return (
-                    <div
-                      className={`rounded-[1rem] px-3 py-4 font-display text-lg font-bold tracking-[-0.04em] ${
+                    <button
+                      aria-pressed={isActive}
+                      className={`rounded-[0.9rem] px-3 py-3 text-sm font-bold transition ${
                         isActive
-                          ? "bg-[linear-gradient(135deg,#0040e0,#2e5bff)] text-white shadow-[0_18px_36px_-24px_rgba(0,64,224,0.45)]"
-                          : "bg-[#ebe7e7] text-foreground"
+                          ? "bg-[linear-gradient(135deg,#2563EB,#0891FF,#2DD4BF)] text-white shadow-[0_16px_30px_-22px_rgba(8,145,255,0.45)]"
+                          : "bg-[#eef6ff] text-foreground hover:bg-white"
                       }`}
                       key={item}
+                      onClick={() => setWeeklyTrainingDays(item)}
+                      type="button"
                     >
-                      {item}
-                    </div>
+                      {item}x
+                    </button>
                   );
                 })}
               </div>
 
               <label className="mt-4 grid gap-2 text-sm text-muted">
-                <span className="pl-1 text-[0.65rem] font-extrabold uppercase tracking-[0.22em] text-[#75747d]">
+                <span className="pl-1 text-[0.68rem] font-bold uppercase tracking-[0.16em]">
                   Точное значение
                 </span>
                 <input
@@ -386,14 +414,18 @@ export function OnboardingForm({
           </div>
         </SectionShell>
 
-        <SectionShell index="03" title="Ограничения">
-          <div className="grid gap-4">
+        <SectionShell
+          description="Укажи доступный инвентарь и ограничения, чтобы план был безопаснее."
+          index="03"
+          title="Оборудование и ограничения"
+        >
+          <div className="grid gap-3">
             <label className="grid gap-2 text-sm text-muted">
-              <span className="pl-1 text-[0.65rem] font-extrabold uppercase tracking-[0.22em] text-[#75747d]">
+              <span className="pl-1 text-[0.68rem] font-bold uppercase tracking-[0.16em]">
                 Доступное оборудование
               </span>
               <textarea
-                className={`${inputClassName} min-h-28 resize-y`}
+                className={`${inputClassName} min-h-24 resize-y`}
                 onChange={(event) => setEquipment(event.target.value)}
                 placeholder="Например: штанга, стойка, скамья, гантели, турник"
                 value={equipment}
@@ -401,78 +433,40 @@ export function OnboardingForm({
             </label>
 
             <label className="grid gap-2 text-sm text-muted">
-              <span className="pl-1 text-[0.65rem] font-extrabold uppercase tracking-[0.22em] text-[#75747d]">
-                Ограничения или травмы
+              <span className="pl-1 text-[0.68rem] font-bold uppercase tracking-[0.16em]">
+                Травмы или ограничения
               </span>
               <textarea
                 className={`${inputClassName} min-h-24 resize-y`}
                 onChange={(event) => setInjuries(event.target.value)}
-                placeholder="Через запятую, если есть особые ограничения"
+                placeholder="Через запятую, если есть важные ограничения"
                 value={injuries}
               />
             </label>
           </div>
         </SectionShell>
 
-        <SectionShell index="04" title="Философия питания">
-          <div className="grid gap-4">
-            <div className="grid gap-3">
-              <div className="rounded-[1.4rem] border border-accent/20 bg-white p-4 shadow-[0_20px_40px_-30px_rgba(0,64,224,0.25)]">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-[color-mix(in_srgb,var(--accent-soft)_64%,white)] text-accent">
-                      <Utensils size={18} strokeWidth={2.1} />
-                    </span>
-                    <div>
-                      <p className="font-display text-sm font-bold uppercase tracking-[0.06em] text-foreground">
-                        Питание по профилю
-                      </p>
-                      <p className="mt-1 text-xs leading-5 text-muted">
-                        Любые важные ограничения, предпочтения и стиль рациона.
-                      </p>
-                    </div>
-                  </div>
-                  <CheckCircle2 className="text-accent" size={20} strokeWidth={2.1} />
-                </div>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-[1.25rem] bg-[#f1edec] p-4">
-                  <div className="flex items-center gap-3">
-                    <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white text-accent">
-                      <Flame size={18} strokeWidth={2.1} />
-                    </span>
-                    <div>
-                      <p className="font-display text-sm font-bold uppercase tracking-[0.06em] text-foreground">
-                        High protein
-                      </p>
-                      <p className="mt-1 text-xs leading-5 text-muted">
-                        Подходит, если задача — восстанавливаться и удерживать форму.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="rounded-[1.25rem] bg-[#f1edec] p-4">
-                  <div className="flex items-center gap-3">
-                    <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white text-accent">
-                      <HeartPulse size={18} strokeWidth={2.1} />
-                    </span>
-                    <div>
-                      <p className="font-display text-sm font-bold uppercase tracking-[0.06em] text-foreground">
-                        Без перегруза
-                      </p>
-                      <p className="mt-1 text-xs leading-5 text-muted">
-                        Мы учитываем ограничения и бережный режим восстановления.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+        <SectionShell
+          description="Эти данные помогут AI предлагать более реалистичный рацион."
+          index="04"
+          title="Питание"
+        >
+          <div className="grid gap-3">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <InsightCard
+                detail="Учитываем белок, восстановление и цель."
+                icon={Flame}
+                title="Рацион под цель"
+              />
+              <InsightCard
+                detail="Ограничения попадут в контекст AI-коуча."
+                icon={Utensils}
+                title="Предпочтения"
+              />
             </div>
 
             <label className="grid gap-2 text-sm text-muted">
-              <span className="pl-1 text-[0.65rem] font-extrabold uppercase tracking-[0.22em] text-[#75747d]">
+              <span className="pl-1 text-[0.68rem] font-bold uppercase tracking-[0.16em]">
                 Предпочтения и ограничения питания
               </span>
               <textarea
@@ -486,31 +480,31 @@ export function OnboardingForm({
         </SectionShell>
 
         {error ? (
-          <p className="rounded-[1.2rem] border border-red-300/70 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <p className="rounded-[1rem] border border-red-300/70 bg-red-50 px-4 py-3 text-sm text-red-700">
             {error}
           </p>
         ) : null}
 
         {notice ? (
-          <p className="rounded-[1.2rem] border border-emerald-300/70 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+          <p className="rounded-[1rem] border border-emerald-300/70 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
             {notice}
           </p>
         ) : null}
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-30 bg-[linear-gradient(180deg,rgba(252,249,248,0),rgba(252,249,248,0.94)_24%,rgba(252,249,248,1)_100%)] px-5 pb-[calc(1.1rem+env(safe-area-inset-bottom))] pt-6 sm:px-6">
-        <div className="mx-auto flex w-full max-w-[780px] items-center justify-between gap-4 rounded-[1.5rem] bg-white/90 px-4 py-3 shadow-[0_28px_54px_-40px_rgba(28,27,27,0.22)] backdrop-blur-xl">
+      <div className="fixed inset-x-0 bottom-0 z-30 bg-[linear-gradient(180deg,rgba(248,251,255,0),rgba(248,251,255,0.94)_24%,rgba(248,251,255,1)_100%)] px-4 pb-[calc(1.1rem+env(safe-area-inset-bottom))] pt-6 sm:px-6">
+        <div className="mx-auto flex w-full max-w-[780px] flex-col gap-3 rounded-[1.1rem] border border-border bg-white/94 px-4 py-3 shadow-[0_28px_54px_-40px_rgba(15,23,42,0.22)] backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between sm:gap-4">
           <div className="min-w-0">
-            <p className="text-[0.65rem] font-extrabold uppercase tracking-[0.22em] text-[#75747d]">
-              Готовность профиля
-            </p>
-            <p className="mt-1 font-display text-sm font-bold uppercase tracking-[0.06em] text-foreground">
-              {canSubmit ? "Можно запускать fit" : "Заполни обязательные поля"}
+            <p className="workspace-kicker">Готовность профиля</p>
+            <p className="mt-1 break-words text-sm font-bold text-foreground">
+              {canSubmit
+                ? "Можно запускать fitora"
+                : "Заполни обязательные поля"}
             </p>
           </div>
 
           <button
-            className="inline-flex min-w-[15rem] items-center justify-center rounded-[1.2rem] bg-[linear-gradient(135deg,#0040e0,#2e5bff)] px-5 py-4 text-sm font-extrabold uppercase tracking-[0.14em] text-white shadow-[0_20px_42px_-26px_rgba(0,64,224,0.52)] transition hover:translate-y-[-1px] hover:shadow-[0_22px_46px_-24px_rgba(0,64,224,0.58)] disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex w-full items-center justify-center rounded-[0.95rem] bg-[linear-gradient(135deg,#2563EB,#0891FF,#2DD4BF)] px-4 py-3 text-center text-sm font-extrabold text-white shadow-[0_20px_42px_-26px_rgba(8,145,255,0.52)] transition hover:translate-y-[-1px] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:min-w-[14rem]"
             disabled={isPending || !canSubmit}
             onClick={submit}
             type="button"

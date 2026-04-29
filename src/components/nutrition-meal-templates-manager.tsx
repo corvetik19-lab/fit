@@ -9,7 +9,7 @@ import type {
 } from "@/lib/nutrition/meal-logging";
 
 const inputClassName =
-  "w-full rounded-2xl border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_88%,var(--surface))] px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15";
+  "w-full rounded-[0.95rem] border border-border bg-white px-3.5 py-2.5 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/10";
 
 function formatMacro(value: number) {
   return value.toLocaleString("ru-RU", {
@@ -135,7 +135,7 @@ export function NutritionMealTemplatesManager({
   function applyTemplate(template: NutritionMealTemplate) {
     if (template.isReferenceOnly) {
       setError(
-        "Этот AI-шаблон сохранён как справочный. Его нужно вручную сопоставить с продуктами в базе перед быстрым применением.",
+        "Это справочный AI-шаблон. Сначала сопоставь его продукты с базой.",
       );
       return;
     }
@@ -146,7 +146,7 @@ export function NutritionMealTemplatesManager({
 
     if (hasMissingFoods) {
       setError(
-        "В шаблоне есть продукты, которых уже нет в базе. Сначала обнови шаблон через новый черновик.",
+        "В шаблоне есть продукты, которых уже нет в базе. Обнови шаблон через новый черновик.",
       );
       return;
     }
@@ -156,32 +156,33 @@ export function NutritionMealTemplatesManager({
   }
 
   return (
-    <section className="card p-6">
-      <div className="mb-5 flex items-center justify-between gap-3">
-        <div>
-          <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
-            Шаблоны
-          </p>
-          <h2 className="mt-2 text-2xl font-semibold text-foreground">
-            Быстрые шаблоны приёмов пищи
+    <section className="surface-panel p-3.5 sm:p-4">
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="workspace-kicker">Шаблоны</p>
+          <h2 className="mt-1 text-lg font-semibold text-foreground">
+            Быстрые приёмы пищи
           </h2>
+          <p className="mt-1 text-sm leading-5 text-muted">
+            Сохраняй текущий черновик и применяй повторяющиеся завтраки или перекусы.
+          </p>
         </div>
         <div className="pill">{templates.length}</div>
       </div>
 
       {error ? (
-        <p className="mb-4 rounded-2xl border border-red-500/25 bg-red-500/12 px-4 py-3 text-sm text-red-100">
+        <p className="mb-3 rounded-2xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
         </p>
       ) : null}
 
       {notice ? (
-        <p className="mb-4 rounded-2xl border border-emerald-500/25 bg-emerald-500/12 px-4 py-3 text-sm text-emerald-100">
+        <p className="mb-3 rounded-2xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
           {notice}
         </p>
       ) : null}
 
-      <div className="grid gap-4 sm:grid-cols-[1fr_220px]">
+      <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
         <label className="grid gap-2 text-sm text-muted">
           Название шаблона
           <input
@@ -193,7 +194,7 @@ export function NutritionMealTemplatesManager({
           />
         </label>
         <button
-          className="self-end rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+          className="action-button action-button--primary self-end"
           disabled={
             isPending ||
             !title.trim() ||
@@ -202,51 +203,38 @@ export function NutritionMealTemplatesManager({
           onClick={saveTemplate}
           type="button"
         >
-          {isPending ? "Сохраняю..." : "Сохранить текущий черновик"}
+          {isPending ? "Сохраняю..." : "Сохранить"}
         </button>
       </div>
 
-      <div className="mt-6 rounded-3xl border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_88%,var(--surface))] p-5">
-        <p className="text-sm font-medium text-foreground">Текущий черновик для шаблона</p>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <p className="text-sm text-muted">
-            Калории:{" "}
-            <span className="font-semibold text-foreground">
-              {Math.round(currentDraftPreview.kcal)}
-            </span>
+      <div className="surface-panel surface-panel--accent mt-4 p-3">
+        <p className="workspace-kicker">Текущий черновик</p>
+        <div className="mt-2 grid grid-cols-2 gap-2 text-sm text-muted">
+          <p>
+            Калории: <span className="font-semibold text-foreground">{Math.round(currentDraftPreview.kcal)}</span>
           </p>
-          <p className="text-sm text-muted">
-            Белки:{" "}
-            <span className="font-semibold text-foreground">
-              {formatMacro(currentDraftPreview.protein)} г
-            </span>
+          <p>
+            Белки: <span className="font-semibold text-foreground">{formatMacro(currentDraftPreview.protein)} г</span>
           </p>
-          <p className="text-sm text-muted">
-            Жиры:{" "}
-            <span className="font-semibold text-foreground">
-              {formatMacro(currentDraftPreview.fat)} г
-            </span>
+          <p>
+            Жиры: <span className="font-semibold text-foreground">{formatMacro(currentDraftPreview.fat)} г</span>
           </p>
-          <p className="text-sm text-muted">
-            Углеводы:{" "}
-            <span className="font-semibold text-foreground">
-              {formatMacro(currentDraftPreview.carbs)} г
-            </span>
+          <p>
+            Углеводы: <span className="font-semibold text-foreground">{formatMacro(currentDraftPreview.carbs)} г</span>
           </p>
         </div>
       </div>
 
-      <div className="mt-8 grid gap-3">
+      <div className="mt-5 grid gap-2.5">
         {templates.length ? (
           templates.map((template) => (
-            <article
-              className="rounded-2xl border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_84%,var(--surface))] p-4"
-              key={template.id}
-            >
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <p className="text-lg font-semibold text-foreground">{template.title}</p>
-                  <p className="text-sm text-muted">
+            <article className="surface-panel surface-panel--soft p-3" key={template.id}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="line-clamp-2 text-base font-semibold text-foreground">
+                    {template.title}
+                  </p>
+                  <p className="mt-1 text-sm text-muted">
                     {Math.round(template.totals.kcal)} ккал · Б{" "}
                     {formatMacro(template.totals.protein)} · Ж{" "}
                     {formatMacro(template.totals.fat)} · У{" "}
@@ -258,9 +246,9 @@ export function NutritionMealTemplatesManager({
                     </p>
                   ) : null}
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
                   <button
-                    className="rounded-full border border-border px-3 py-2 text-sm font-medium text-foreground transition hover:bg-[color-mix(in_srgb,var(--surface-elevated)_96%,var(--surface))]"
+                    className="action-button action-button--secondary px-3 py-2 text-xs"
                     disabled={template.isReferenceOnly}
                     onClick={() => applyTemplate(template)}
                     type="button"
@@ -268,7 +256,7 @@ export function NutritionMealTemplatesManager({
                     {template.isReferenceOnly ? "Справка" : "Применить"}
                   </button>
                   <button
-                    className="rounded-full border border-border px-3 py-2 text-sm font-medium text-foreground transition hover:bg-[color-mix(in_srgb,var(--surface-elevated)_96%,var(--surface))]"
+                    className="action-button action-button--secondary px-3 py-2 text-xs"
                     onClick={() => deleteTemplate(template.id)}
                     type="button"
                   >
@@ -276,7 +264,7 @@ export function NutritionMealTemplatesManager({
                   </button>
                 </div>
               </div>
-              <ul className="mt-3 grid gap-2 text-sm text-muted">
+              <ul className="mt-2 grid gap-1.5 text-sm text-muted">
                 {template.payload.items.map((item, index) => (
                   <li key={`${template.id}-${index}`}>
                     {item.foodNameSnapshot} · {formatMacro(Number(item.servings))} порц.
@@ -286,9 +274,8 @@ export function NutritionMealTemplatesManager({
             </article>
           ))
         ) : (
-          <p className="text-sm leading-7 text-muted">
-            Пока нет шаблонов питания. Сохрани текущий черновик как шаблон, чтобы быстро
-            заполнять повторяющиеся приёмы пищи.
+          <p className="text-sm leading-6 text-muted">
+            Пока нет шаблонов питания. Сохрани текущий черновик, чтобы быстрее заполнять повторяющиеся приёмы пищи.
           </p>
         )}
       </div>

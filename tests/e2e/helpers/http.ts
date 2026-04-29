@@ -23,7 +23,9 @@ export async function fetchJson<T = unknown>(
   page: Page,
   input: {
     body?: unknown;
+    maxAttempts?: number;
     method: "DELETE" | "GET" | "PATCH" | "POST" | "PUT";
+    timeoutMs?: number;
     url: string;
   },
 ) {
@@ -31,17 +33,45 @@ export async function fetchJson<T = unknown>(
   const requestPath = new URL(requestUrl).pathname;
   const isAiRoute = requestPath.startsWith("/api/ai/");
   const isAdminRoute = requestPath.startsWith("/api/admin/");
-  const maxAttempts = isAiRoute ? 2 : isAdminRoute ? 4 : 3;
+  const isWorkoutRoute = requestPath.startsWith("/api/weekly-programs");
+  const isExerciseRoute = requestPath.startsWith("/api/exercises");
+  const isSeedRoute = isWorkoutRoute || isExerciseRoute;
+  const maxAttempts =
+    input.maxAttempts ?? (isAiRoute ? 3 : isAdminRoute ? 4 : isSeedRoute ? 5 : 4);
+  const timeout =
+    input.timeoutMs ??
+    (isAiRoute
+      ? 90_000
+      : isAdminRoute
+        ? 20_000
+        : isSeedRoute
+          ? 15_000
+          : 45_000);
 
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     try {
-      const response = await page.context().request.fetch(requestUrl, {
-        method: input.method,
-        headers: input.body ? { "Content-Type": "application/json" } : undefined,
-        data: input.body ? JSON.stringify(input.body) : undefined,
-        failOnStatusCode: false,
-        timeout: isAiRoute ? 45_000 : isAdminRoute ? 45_000 : 30_000,
-      });
+      const cookies = await page.context().cookies(requestUrl);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
+      const cookieHeader = cookies
+        .map((cookie) => `${cookie.name}=${cookie.value}`)
+        .join("; ");
+      let response: Response;
+
+      try {
+        response = await fetch(requestUrl, {
+          method: input.method,
+          headers: {
+            ...(input.body ? { "Content-Type": "application/json" } : {}),
+            ...(cookieHeader ? { cookie: cookieHeader } : {}),
+          },
+          body: input.body ? JSON.stringify(input.body) : undefined,
+          redirect: "follow",
+          signal: controller.signal,
+        });
+      } finally {
+        clearTimeout(timeoutId);
+      }
 
       const rawBody = await response.text();
       let parsedBody: unknown = null;
@@ -56,25 +86,30 @@ export async function fetchJson<T = unknown>(
 
       if (
         attempt < maxAttempts - 1 &&
-        (response.status() === 401 ||
+        (response.status === 401 ||
           (isAdminRoute &&
-            (response.status() === 500 ||
-              response.status() === 502 ||
-              response.status() === 503 ||
-              response.status() === 504)) ||
-          (isAiRoute && (response.status() === 500 || response.status() === 502)))
+            (response.status === 500 ||
+              response.status === 502 ||
+              response.status === 503 ||
+              response.status === 504)) ||
+          (isSeedRoute &&
+            (response.status === 500 ||
+              response.status === 502 ||
+              response.status === 503 ||
+              response.status === 504)) ||
+          (isAiRoute && (response.status === 500 || response.status === 502)))
       ) {
-        await page.waitForTimeout(250 * (attempt + 1));
+        await page.waitForTimeout(500 * (attempt + 1));
         continue;
       }
 
       return {
-        status: response.status(),
+        status: response.status,
         body: parsedBody as T,
       } satisfies FetchResult<T>;
     } catch (error) {
       if (attempt < maxAttempts - 1 && error instanceof Error) {
-        await page.waitForTimeout(250 * (attempt + 1));
+        await page.waitForTimeout(500 * (attempt + 1));
         continue;
       }
 

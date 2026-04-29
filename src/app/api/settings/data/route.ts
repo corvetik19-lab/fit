@@ -22,9 +22,9 @@ const settingsDataActionSchema = z.discriminatedUnion("action", [
   }),
 ]);
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const context = await getAuthenticatedSettingsContext();
+    const context = await getAuthenticatedSettingsContext(request);
 
     if (!context) {
       return createApiErrorResponse({
@@ -53,7 +53,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const context = await getAuthenticatedSettingsContext();
+    const context = await getAuthenticatedSettingsContext(request);
 
     if (!context) {
       return createApiErrorResponse({
@@ -116,9 +116,9 @@ export async function POST(request: Request) {
   }
 }
 
-export async function DELETE() {
+export async function DELETE(request: Request) {
   try {
-    const context = await getAuthenticatedSettingsContext();
+    const context = await getAuthenticatedSettingsContext(request);
 
     if (!context) {
       return createApiErrorResponse({

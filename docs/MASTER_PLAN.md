@@ -13,7 +13,7 @@
 
 Р В­РЎвЂљР С•РЎвЂљ РЎвЂћР В°Р в„–Р В» РІР‚вЂќ РЎвЂљР ВµР С”РЎС“РЎвЂ°Р С‘Р в„– production-hardening backlog Р С—РЎР‚Р С•Р ВµР С”РЎвЂљР В°. Р С›Р Р… Р С•РЎвЂљРЎР‚Р В°Р В¶Р В°Р ВµРЎвЂљ РЎвЂћР В°Р С”РЎвЂљР С‘РЎвЂЎР ВµРЎРѓР С”Р С•Р Вµ РЎРѓР С•РЎРѓРЎвЂљР С•РЎРЏР Р…Р С‘Р Вµ РЎР‚Р ВµР С—Р С•Р В·Р С‘РЎвЂљР С•РЎР‚Р С‘РЎРЏ Р Р…Р В° `2026-03-31`.
 
-РўРµРєСѓС‰РёР№ РїСЂРѕРіСЂРµСЃСЃ execution checklist: `223 / 228` (`98%`).
+РўРµРєСѓС‰РёР№ РїСЂРѕРіСЂРµСЃСЃ execution checklist: `245 / 247` (`99%`).
 
 ## Р СћР ВµР С”РЎС“РЎвЂ°Р В°РЎРЏ Р В±Р В°Р В·Р В°
 
@@ -44,6 +44,16 @@
 - [ ] Production/staging env Р Р†РЎвЂ№Р В±РЎР‚Р В°Р Р…Р Р…Р С•Р С–Р С• РЎР‚Р С•РЎРѓРЎРѓР С‘Р в„–РЎРѓР С”Р С•Р С–Р С• Р С—Р В»Р В°РЎвЂљРЎвЂР В¶Р Р…Р С•Р С–Р С• Р С—РЎР‚Р С•Р Р†Р В°Р в„–Р Т‘Р ВµРЎР‚Р В° Р С–Р С•РЎвЂљР С•Р Р†РЎвЂ№.
 - [ ] Р В Р В°Р В±Р С•РЎвЂљР В°Р ВµРЎвЂљ Р В¶Р С‘Р Р†Р С•Р в„– Р С”Р С•Р Р…РЎвЂљРЎС“РЎР‚ `checkout -> return reconcile -> webhook -> billing center`.
 - [x] UI Р Р† `/settings` Р С‘ `/admin` Р С”Р С•РЎР‚РЎР‚Р ВµР С”РЎвЂљР Р…Р С• Р С—Р С•Р С”Р В°Р В·РЎвЂ№Р Р†Р В°Р ВµРЎвЂљ РЎРѓРЎвЂљР В°РЎвЂљРЎС“РЎРѓ Р С—Р С•Р Т‘Р С—Р С‘РЎРѓР С”Р С‘ Р С‘ РЎР‚Р В°РЎРѓРЎвЂ¦Р С•Р В¶Р Т‘Р ВµР Р…Р С‘РЎРЏ.
+
+### Milestone 2 addendum — Test access without live provider
+
+- [x] Тестовый доступ описан как `subscriptions.status = 'trial'` без новой параллельной таблицы.
+- [x] `grant_trial` продлевает период от `max(now, current_period_end)` и не сбрасывает будущую дату окончания.
+- [x] `subscription_events` и `admin_audit_logs` сохраняют `durationDays`, `periodBase`, `previousPeriodEnd`, `currentPeriodEnd`, `provider`, `status`.
+- [x] Admin single-user и bulk UI позволяют выдать/продлить тестовый доступ на `1..365` дней.
+- [x] `/admin/users/[id]` показывает отдельную карточку "Доступ пользователя" с типом доступа, остатком дней и датой окончания.
+- [x] `/settings` показывает trial как тестовый доступ, а не как безликий billing provider state.
+- [x] Regression package закрыт: `lint`, `typecheck`, `build`, targeted `settings-billing`, targeted `admin-app billing`, targeted `api-contracts extends`.
 
 ### Milestone 3 РІР‚вЂќ Android Wrapper
 
@@ -1562,3 +1572,62 @@ pm run test:smoke -> 5 passed. Auth-based Playwright РґР»СЏ mobile/auth Р
 - [x] Подтвердить mobile-внешний вид на `360 / 390 / 430` и синхронизировать docs для разработчиков.
 - Production-build артефакты: `output/mobile-login-refined.png`, `output/mobile-dashboard-refined.png`, `output/mobile-nutrition-refined.png`, `output/mobile-ai-refined.png`, `output/mobile-settings-refined.png`.
 - Проверка tranche: `npm run lint`, `npm run typecheck`, `npm run build`, `node scripts/run-playwright.mjs PLAYWRIGHT_BASE_URL=http://127.0.0.1:3152 -- test tests/e2e/mobile-pwa-regressions.spec.ts --workers=1` -> `9 passed`, `node scripts/run-playwright.mjs PLAYWRIGHT_BASE_URL=http://127.0.0.1:3152 -- test tests/e2e/authenticated-app.spec.ts -g "user can open main product sections after sign-in" --workers=1` -> `1 passed`, `npm run test:smoke` -> `5 passed`.
+
+## 2026-04-17 Live verification follow-up
+
+- Полная live-проверка продукта закрыта отдельным execution-doc: [FULL_APP_LIVE_VERIFICATION_EXECUTION.md](/C:/fit/docs/FULL_APP_LIVE_VERIFICATION_EXECUTION.md) -> `5 / 5 (100%)`.
+- На свежем production-like runtime `http://127.0.0.1:3235` зелёными подтверждены `authenticated-app`, `ai-workspace`, `nutrition-capture`, `workout-focus-flow`, `settings-billing`, `admin-app`, `mobile-pwa-regressions`, `ai-quality-gate` и `smoke`.
+- Ручной proof закреплён в [manual-functional-check.2026-04-17.json](/C:/fit/output/manual-functional-check.2026-04-17.json) и [manual-functional-check.2026-04-17.summary.txt](/C:/fit/output/manual-functional-check.2026-04-17.summary.txt): AI chat, safety block, meal/workout plans, barcode lookup/import, foods list, photo-import и settings routes подтверждены живыми `200`-ответами.
+- Verification harness усилен без изменения продуктовых контрактов: `navigation.ts` самовосстанавливает сессии, `http.ts` больше не зависит от flaky Playwright request path, а Supabase helper-ретраи теперь ловят и transient `result.error`.
+- Общий прогресс после этого tranche остаётся `223 / 228 (98%)`: открыты только внешние production/env блокеры по `CloudPayments`, `Sentry` и live AI provider path без fallback.
+
+## 2026-04-18 Mobile UI polish follow-up
+
+- [x] Исправлено переполнение в `/onboarding`: [onboarding-form.tsx](/C:/fit/src/components/onboarding-form.tsx) переведён на мобильный стек без выхода readiness-блока и sticky CTA за границы экрана.
+- [x] Shared mobile shell доведён под телефон: в [app-shell-frame.tsx](/C:/fit/src/components/app-shell-frame.tsx) добавлен корректный верхний отступ под fixed header, в [page-workspace.tsx](/C:/fit/src/components/page-workspace.tsx) и [nutrition-tracker.tsx](/C:/fit/src/components/nutrition-tracker.tsx) выровнены section chips, а [ai-assistant-widget.tsx](/C:/fit/src/components/ai-assistant-widget.tsx) закреплён внизу справа как постоянный floating trigger.
+- [x] Почищены контраст и overflow на ключевых экранах: [dashboard-workspace.tsx](/C:/fit/src/components/dashboard-workspace.tsx), [history/page.tsx](/C:/fit/src/app/history/page.tsx), [suspended/page.tsx](/C:/fit/src/app/suspended/page.tsx), [admin-users-directory-model.ts](/C:/fit/src/components/admin-users-directory-model.ts) и [globals.css](/C:/fit/src/app/globals.css) больше не оставляют белый текст на светлом фоне, вылезающие метрики и нечитаемые cohort badges.
+- [x] `/ai` упрощён до полезного рабочего слоя: [ai-chat-toolbar.tsx](/C:/fit/src/components/ai-chat-toolbar.tsx), [ai-chat-panel.tsx](/C:/fit/src/components/ai-chat-panel.tsx) и [ai-workspace.tsx](/C:/fit/src/components/ai-workspace.tsx) убрали лишние explanatory-блоки, сохранив chat/history/plans flow и подчистив тексты/заголовки.
+- [x] Полный mobile regression contour закрыт на актуальной Fitora-сборке: `mobile-pwa-regressions` проходит на `360 / 390 / 430`, широкий локальный Playwright-контур подтверждает user/admin mobile shell без overflow, а одиночный старый navigation-flake на `/nutrition` больше не воспроизводится.
+
+## 2026-04-28 Fitora full redesign execution
+
+- [x] Запущен и закрыт отдельный активный подплан полного редизайна [FITORA_REDESIGN_EXECUTION.md](/C:/fit/docs/FITORA_REDESIGN_EXECUTION.md): текущий план считается отдельно от общего `MASTER_PLAN`, финальное состояние `12 / 12 (100%)`, все пользовательские и admin-поверхности переведены на мобильный стиль `fitora` из референсов `C:\Users\User\Desktop\Фит`.
+- [x] Brand foundation `fitora` внедрен в PWA metadata, manifest, SVG/logo assets, PNG app icons, login, onboarding header и shared shell; текущий подплан [FITORA_REDESIGN_EXECUTION.md](/C:/fit/docs/FITORA_REDESIGN_EXECUTION.md) обновлен до `2 / 12 (17%)`.
+- [x] Глобальная дизайн-система, `PageWorkspace`, `/` и `/onboarding` переведены на compact mobile `fitora`-контракт с чистым русским UTF-8; текущий подплан [FITORA_REDESIGN_EXECUTION.md](/C:/fit/docs/FITORA_REDESIGN_EXECUTION.md) обновлен до `4 / 12 (33%)`.
+- [x] `/dashboard` пересобран как compact daily overview с чистыми строками, секциями `Сегодня / Тренировки / Питание / AI` и сохраненными runtime/chart контрактами; текущий подплан [FITORA_REDESIGN_EXECUTION.md](/C:/fit/docs/FITORA_REDESIGN_EXECUTION.md) обновлен до `5 / 12 (42%)`.
+- [x] `/workouts` и `/workouts/day/[dayId]` переведены на compact mobile `fitora`: focus header, day overview, context, notices, step strip, set tracking и пустое состояние без mojibake/overflow; текущий подплан [FITORA_REDESIGN_EXECUTION.md](/C:/fit/docs/FITORA_REDESIGN_EXECUTION.md) обновлен до `6 / 12 (50%)`.
+- [x] `/nutrition` переведен на светлый мобильный `fitora`: Open Food Facts, barcode scanner, фото еды, рецепты, шаблоны и карточки продуктов с изображениями приведены к единой компактной системе; текущий подплан [FITORA_REDESIGN_EXECUTION.md](/C:/fit/docs/FITORA_REDESIGN_EXECUTION.md) обновлен до `7 / 12 (58%)`.
+- [x] Shared shell закрыт: app header, bottom nav/drawer, `PageWorkspace` и floating AI widget приведены к `fitora`, виджет закреплен снизу справа и не конфликтует с мобильной навигацией; текущий подплан [FITORA_REDESIGN_EXECUTION.md](/C:/fit/docs/FITORA_REDESIGN_EXECUTION.md) обновлен до `8 / 12 (67%)`.
+- [x] `/ai` пересобран как chat-first coach: workspace, transcript, composer, notices, toolbar, tool cards, prompt library, history/context/plans sidebar и floating widget переписаны без mojibake и лишних explainers; текущий подплан [FITORA_REDESIGN_EXECUTION.md](/C:/fit/docs/FITORA_REDESIGN_EXECUTION.md) обновлен до `9 / 12 (75%)`.
+- [x] `/history`, `/settings`, `/billing/cloudpayments` и `/suspended` приведены к compact mobile utility-стилю `fitora`: чистый UTF-8, светлые контрастные статусы, уплотненные настройки/оплата и корректный suspended fallback; текущий подплан [FITORA_REDESIGN_EXECUTION.md](/C:/fit/docs/FITORA_REDESIGN_EXECUTION.md) обновлен до `10 / 12 (83%)`.
+- [x] `/admin`, `/admin/users` и `/admin/users/[id]` приведены к compact operator console в стиле `fitora`: светлые cohort/status tones, уплотненные hero/filter/detail surfaces, мобильные action rows и читаемая карточка пользователя; текущий подплан [FITORA_REDESIGN_EXECUTION.md](/C:/fit/docs/FITORA_REDESIGN_EXECUTION.md) обновлен до `11 / 12 (92%)`.
+- [x] Verification tail для редизайна закрыт: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:smoke` -> `5 passed`, широкий Playwright-контур `authenticated-app`, `nutrition-capture`, `ai-workspace`, `workout-focus-flow`, `settings-billing`, `admin-app`, `mobile-pwa-regressions` -> `26 passed / 1 skipped`. Свежие mobile screenshots `390x844` сохранены в [fitora-mobile-screens](/C:/fit/output/fitora-mobile-screens), contact sheet - [fitora-mobile-screens-contact-sheet.png](/C:/fit/output/fitora-mobile-screens-contact-sheet.png); текущий подплан [FITORA_REDESIGN_EXECUTION.md](/C:/fit/docs/FITORA_REDESIGN_EXECUTION.md) закрыт до `12 / 12 (100%)`.
+
+## 2026-04-28 Fitora compact reference alignment
+
+- [x] Довести повторный активный подплан [FITORA_COMPACT_REFERENCE_EXECUTION.md](/C:/fit/docs/FITORA_COMPACT_REFERENCE_EXECUTION.md) до полного соответствия референсам `C:\Users\User\Desktop\Фит`: точный логотип из `Стиль.png`, компактные мобильные экраны, отзывчивое нижнее меню, удобная AI-кнопка и свежая визуальная проверка скриншотами. Итог: текущий подплан закрыт `10 / 10 (100%)`, свежие proof-скриншоты сохранены в [fitora-compact-viewport-contact-sheet.png](/C:/fit/output/fitora-compact-viewport-contact-sheet.png) и [fitora-compact-full-contact-sheet.png](/C:/fit/output/fitora-compact-full-contact-sheet.png), verification зелёный: `lint`, `typecheck`, `build`, smoke `5 passed`, mobile `9 passed`, auth/AI/nutrition `7 passed`, workouts/settings/admin `10 passed / 1 skipped`.
+
+## 2026-04-28 Fitora UX compression follow-up
+
+- [x] Довести новый активный подплан [FITORA_UX_COMPRESSION_EXECUTION.md](/C:/fit/docs/FITORA_UX_COMPRESSION_EXECUTION.md) до `8 / 8 (100%)`: настройки и admin-поверхности стали компактнее на телефоне за счёт раскрываемых групп, короткого первого viewport, плотных action rows и свежих мобильных proof-скриншотов [fitora-ux-compression-contact-sheet.png](/C:/fit/output/fitora-ux-compression-contact-sheet.png).
+
+## 2026-04-28 Fitora AI Agent redesign
+
+- [x] Запущен и закрыт отдельный активный подплан [FITORA_AI_AGENT_REDESIGN_EXECUTION.md](/C:/fit/docs/FITORA_AI_AGENT_REDESIGN_EXECUTION.md): текущий план считается отдельно от общего `MASTER_PLAN`, итог `10 / 10 (100%)`.
+- [x] Введён typed intent contract [agent-intents.ts](/C:/fit/src/lib/ai/agent-intents.ts) для `general`, `daily_plan`, `screen_context`, `meal_plan`, `workout_plan`, `meal_photo`, `barcode`, `progress_review`, `memory_review`.
+- [x] Floating AI widget переделан из mini-chat в launcher/action sheet: он больше не дублирует `useChat`, transcript, composer и tool-card rendering.
+- [x] `/ai` получил route-intent запуск `/ai?intent=...&from=...`, launch context card, быстрые AI-действия и prefill основного composer без автозапуска.
+- [x] `AiChatPanel` остался единственным основным UI чата; длинные диалоги, фото еды и proposal actions выполняются только там.
+- [x] `/api/ai/assistant` принимает `intent`, `sourceRoute`, `contextPayload` без поломки streaming/tool flow.
+- [x] `/api/ai/chat` оставлен как legacy/eval route до отдельной деприкации, чтобы не сломать текущие AI gates.
+- [x] Developer docs синхронизированы: [FRONTEND.md](/C:/fit/docs/FRONTEND.md), [AI_STACK.md](/C:/fit/docs/AI_STACK.md), [CODEX_ROLLOUT_PLAN.md](/C:/fit/docs/CODEX_ROLLOUT_PLAN.md), [AI_WORKLOG.md](/C:/fit/docs/AI_WORKLOG.md).
+- [x] Regression coverage обновлён: [ai-workspace.spec.ts](/C:/fit/tests/e2e/ai-workspace.spec.ts) проверяет `widget -> intent -> /ai -> composer prefill`.
+- [x] Проверки закрыты: `lint`, `typecheck`, `build`, `test:smoke`, targeted `ai-workspace` -> green. Общий progress execution checklist после добавления и закрытия этого подплана: `238 / 240` (`99%`).
+
+## 2026-04-30 Live deploy и auth hardening
+
+- [x] Live audit показал, что `https://fit-platform-eta.vercel.app` ещё отдает старый бренд `fit`, а password placeholder визуально похож на уже введенный пароль, хотя чистая сессия не проходит без password.
+- [x] Production auth fallback усилен в [server-user.ts](/C:/fit/src/lib/supabase/server-user.ts): декодирование cookie/session без проверки Supabase теперь доступно только при `PLAYWRIGHT_TEST_HOOKS=1`, а обычный runtime принимает только проверенную Supabase-сессию или валидированный bearer-token.
+- [x] Форма входа в [auth-form.tsx](/C:/fit/src/components/auth-form.tsx) больше не показывает точки как placeholder, нормализует email перед отправкой и останавливает пустой email/password до запроса.
+- [x] Local production-like proof закрыт без test hooks: forged Supabase cookie на `/dashboard` редиректит на `/`, password value пустой, submit disabled без пароля; артефакт: [result.json](/C:/fit/output/live-auth-fix-local-2026-04-30/result.json).
+- [ ] Production rollout: Vercel CLI сейчас не авторизован для `fit-platform` (`Not authorized` / `Could not retrieve Project Settings`), поэтому нужен GitHub auto-deploy через push или Vercel token/login для прямого `vercel deploy --prod`.

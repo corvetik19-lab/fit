@@ -12,6 +12,7 @@ import {
   ChevronDown,
   ChevronUp,
   Dumbbell,
+  type LucideIcon,
   Sparkles,
 } from "lucide-react";
 
@@ -40,6 +41,13 @@ type DashboardWorkspaceProps = {
 
 type DashboardSectionKey = "summary" | "workouts" | "nutrition" | "ai";
 
+type DashboardSectionOption = {
+  description: string;
+  icon: LucideIcon;
+  key: DashboardSectionKey;
+  label: string;
+};
+
 const dashboardDateFormatter = new Intl.DateTimeFormat("ru-RU", {
   day: "2-digit",
   hour: "2-digit",
@@ -47,11 +55,11 @@ const dashboardDateFormatter = new Intl.DateTimeFormat("ru-RU", {
   month: "2-digit",
 });
 
-const sectionOptions = [
+const sectionOptions: DashboardSectionOption[] = [
   {
     key: "summary",
     label: "Сегодня",
-    description: "Ключевой статус дня и ближайшие действия.",
+    description: "Главный статус дня и ближайшие действия.",
     icon: BarChart3,
   },
   {
@@ -72,12 +80,7 @@ const sectionOptions = [
     description: "Контекст, советы и планирование.",
     icon: Sparkles,
   },
-] as const satisfies Array<{
-  description: string;
-  icon: typeof BarChart3;
-  key: DashboardSectionKey;
-  label: string;
-}>;
+];
 
 function formatCount(value: number) {
   return value.toLocaleString("ru-RU");
@@ -114,7 +117,7 @@ function DashboardSurfaceCard({
   className?: string;
 }) {
   return (
-    <article className={`surface-panel p-4 sm:p-5 ${className}`.trim()}>
+    <article className={`surface-panel p-3 sm:p-4 ${className}`.trim()}>
       {children}
     </article>
   );
@@ -128,9 +131,13 @@ function DashboardStatPlate({
   value: string;
 }) {
   return (
-    <div className="athletic-data-plate">
-      <span className="athletic-data-plate__value">{value}</span>
-      <span className="athletic-data-plate__label">{label}</span>
+    <div className="min-w-0 rounded-[0.78rem] border border-border/80 bg-white/84 px-2.5 py-2 shadow-[0_16px_32px_-30px_rgba(15,23,42,0.18)]">
+      <span className="block truncate text-base font-semibold tracking-tight text-foreground sm:text-xl">
+        {value}
+      </span>
+      <span className="mt-0.5 block truncate text-[0.58rem] uppercase tracking-[0.15em] text-muted sm:text-[0.68rem]">
+        {label}
+      </span>
     </div>
   );
 }
@@ -197,10 +204,10 @@ export function DashboardWorkspace({
 
   const summaryIntro =
     snapshot.activePrograms > 0
-      ? `Сейчас в работе ${formatCount(snapshot.activePrograms)} программы и ${formatCount(
+      ? `Сейчас в работе ${formatCount(snapshot.activePrograms)} программ и ${formatCount(
           snapshot.completedDays,
-        )} завершённых тренировок.`
-      : "Пока нет активного цикла. Лучше всего начать с короткой недели и первого рабочего ритма.";
+        )} завершенных тренировок.`
+      : "Пока нет активного цикла. Лучше начать с короткой недели и первого рабочего ритма.";
 
   function handleSectionSelect(nextSection: DashboardSectionKey) {
     setActiveSection(nextSection);
@@ -208,33 +215,39 @@ export function DashboardWorkspace({
   }
 
   return (
-    <div className="grid gap-4 sm:gap-5">
-      <section className="grid gap-4 xl:grid-cols-[1.12fr_0.88fr]">
+    <div className="grid gap-3 sm:gap-4">
+      <section className="grid gap-3 xl:grid-cols-[1.12fr_0.88fr]">
         <DashboardSurfaceCard className="surface-panel--accent">
-          <div className="space-y-4">
-            <div className="flex flex-wrap gap-2">
-              <span className="pill">{viewerName ?? "пользователь fit"}</span>
+          <div className="space-y-3">
+            <div className="flex flex-wrap gap-1.5">
+              <span className="pill">
+                {viewerName ?? "пользователь fitora"}
+              </span>
               <span className="pill">
                 {dashboardSourceLabel}
                 {dashboardUpdatedAt
-                  ? ` · ${dashboardDateFormatter.format(new Date(dashboardUpdatedAt))}`
+                  ? ` · ${dashboardDateFormatter.format(
+                      new Date(dashboardUpdatedAt),
+                    )}`
                   : ""}
               </span>
               {viewerEmail ? <span className="pill">{viewerEmail}</span> : null}
             </div>
 
-            <div className="space-y-2">
-              <p className="workspace-kicker">Сегодня в фокусе</p>
-              <h2 className="app-display text-[1.45rem] font-semibold tracking-tight text-foreground sm:text-[1.8rem]">
+            <div className="space-y-1.5">
+              <p className="workspace-kicker text-accent-strong">
+                Сегодня в фокусе
+              </p>
+              <h2 className="app-display text-[1.18rem] font-semibold leading-tight tracking-tight text-foreground sm:text-[1.65rem]">
                 {getWeekCycleLabel(snapshot.activePrograms)}
               </h2>
-              <p className="max-w-xl text-sm leading-6 text-muted">
+              <p className="max-w-xl text-[0.78rem] leading-5 text-foreground/75 sm:text-sm sm:leading-6">
                 Короткий срез по ритму: тренировки, питание и AI-подсказка без
-                длинных экранов и лишней аналитической тяжести.
+                лишней аналитической тяжести.
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-3">
+            <div className="grid grid-cols-3 gap-1.5 sm:flex sm:flex-wrap sm:gap-3">
               {heroStats.map((stat) => (
                 <DashboardStatPlate
                   key={stat.label}
@@ -249,21 +262,19 @@ export function DashboardWorkspace({
         <div className="grid gap-4">
           <DashboardSurfaceCard>
             <p className="workspace-kicker">Следующее действие</p>
-              <p className="mt-3 text-base font-semibold leading-7 text-foreground">
+            <p className="mt-3 text-base font-semibold leading-7 text-foreground">
               {workoutPrioritySignal?.action ??
                 nutritionPrioritySignal?.action ??
                 "Открой тренировки и продолжай текущую неделю."}
             </p>
-            <p className="mt-3 text-sm leading-6 text-muted">
-              {summaryIntro}
-            </p>
+            <p className="mt-3 text-sm leading-6 text-muted">{summaryIntro}</p>
           </DashboardSurfaceCard>
 
           <DashboardSurfaceCard>
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="workspace-kicker">Средняя энергия</p>
-                <p className="mt-3 text-2xl font-black tracking-tight text-accent">
+                <p className="mt-3 text-2xl font-black tracking-tight text-accent-strong">
                   {formatNumber(aiContext.nutritionInsights.avgKcalLast7)}
                   <span className="ml-2 text-lg font-medium text-muted">
                     ккал
@@ -271,7 +282,10 @@ export function DashboardWorkspace({
                 </p>
                 <p className="mt-2 text-sm leading-6 text-muted">
                   За 7 дней. Белок:{" "}
-                  {formatNumber(aiContext.nutritionInsights.avgProteinLast7, "г")}
+                  {formatNumber(
+                    aiContext.nutritionInsights.avgProteinLast7,
+                    "г",
+                  )}
                 </p>
               </div>
               <span className="inline-flex h-10 w-10 items-center justify-center rounded-[0.95rem] bg-[color-mix(in_srgb,var(--accent-soft)_26%,white)] text-accent-strong">
@@ -282,8 +296,8 @@ export function DashboardWorkspace({
         </div>
       </section>
 
-      <section className="surface-panel surface-panel--soft p-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <section className="surface-panel surface-panel--soft p-2.5 sm:p-3">
+        <div className="hidden flex-col gap-3 sm:flex sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1.5">
             <p className="workspace-kicker">Разделы обзора</p>
             <h2 className="text-base font-semibold text-foreground sm:text-lg">
@@ -300,26 +314,23 @@ export function DashboardWorkspace({
           </Link>
         </div>
 
-        <div className="mt-4 md:hidden">
+        <div className="md:hidden">
           <button
             aria-expanded={isMobileMenuOpen}
-            className="section-chip flex w-full items-center justify-between gap-3 px-3.5 py-2.5 text-left"
+            className="section-chip flex w-full items-center justify-between gap-2.5 px-3 py-2.5 text-left"
             data-testid="dashboard-workspace-mobile-trigger"
             onClick={() => setIsMobileMenuOpen((current) => !current)}
             type="button"
           >
             <span className="min-w-0 flex-1">
-              <span className="block text-[11px] uppercase tracking-[0.18em] text-muted">
+              <span className="block text-[10px] uppercase tracking-[0.16em] text-muted">
                 Текущий раздел
               </span>
-              <span className="mt-1 block text-sm font-semibold text-foreground">
+              <span className="mt-0.5 block text-sm font-semibold text-foreground">
                 {activeSectionMeta.label}
               </span>
-              <span className="mt-1 block text-xs leading-5 text-muted">
-                {activeSectionMeta.description}
-              </span>
             </span>
-            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--accent-soft)_24%,var(--surface-elevated))] text-accent">
+            <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--accent-soft)_24%,var(--surface-elevated))] text-accent-strong">
               {isMobileMenuOpen ? (
                 <ChevronUp size={18} strokeWidth={2.1} />
               ) : (
@@ -329,7 +340,7 @@ export function DashboardWorkspace({
           </button>
 
           {isMobileMenuOpen ? (
-            <div className="mt-3 grid gap-2">
+            <div className="mt-2 grid gap-1.5">
               {sectionOptions.map((section) => {
                 const isActive = activeSection === section.key;
                 const Icon = section.icon;
@@ -337,7 +348,7 @@ export function DashboardWorkspace({
                 return (
                   <button
                     aria-pressed={isActive}
-                    className={`section-chip flex w-full items-start justify-between gap-3 px-3 py-3 text-left ${
+                    className={`section-chip flex w-full items-start justify-between gap-2.5 px-3 py-2.5 text-left ${
                       isActive ? "section-chip--active" : ""
                     }`}
                     data-testid={`dashboard-workspace-option-${section.key}`}
@@ -347,10 +358,10 @@ export function DashboardWorkspace({
                   >
                     <span className="flex min-w-0 flex-1 items-start gap-3">
                       <span
-                    className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[0.8rem] ${
+                        className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[0.8rem] ${
                           isActive
                             ? "bg-accent text-white"
-                            : "bg-[color-mix(in_srgb,var(--accent-soft)_24%,var(--surface-elevated))] text-accent"
+                            : "bg-[color-mix(in_srgb,var(--accent-soft)_24%,var(--surface-elevated))] text-accent-strong"
                         }`}
                       >
                         <Icon size={17} strokeWidth={2.1} />
@@ -359,13 +370,13 @@ export function DashboardWorkspace({
                         <span className="block text-sm font-semibold text-foreground">
                           {section.label}
                         </span>
-                        <span className="mt-1 block text-xs leading-5 text-muted">
+                        <span className="mt-0.5 hidden text-xs leading-5 text-muted min-[390px]:block">
                           {section.description}
                         </span>
                       </span>
                     </span>
                     {isActive ? (
-                      <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--accent-soft)_24%,var(--surface-elevated))] text-accent">
+                      <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--accent-soft)_24%,var(--surface-elevated))] text-accent-strong">
                         <Check size={16} strokeWidth={2.1} />
                       </span>
                     ) : null}
@@ -376,7 +387,7 @@ export function DashboardWorkspace({
           ) : null}
         </div>
 
-        <div className="mt-4 hidden flex-wrap gap-3 md:flex">
+        <div className="mt-0 hidden flex-wrap gap-2 md:flex">
           {sectionOptions.map((section) => {
             const Icon = section.icon;
             const isActive = activeSection === section.key;
@@ -423,7 +434,7 @@ export function DashboardWorkspace({
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <p className="workspace-kicker">Активный план</p>
-                <h3 className="app-display mt-2 text-xl font-semibold text-foreground sm:text-2xl">
+                  <h3 className="app-display mt-2 text-xl font-semibold text-foreground sm:text-2xl">
                     {snapshot.activePrograms > 0
                       ? "План уже в работе"
                       : "Время собрать первую неделю"}
@@ -472,7 +483,7 @@ export function DashboardWorkspace({
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <p className="workspace-kicker">Короткие сигналы</p>
-                <h3 className="app-display mt-2 text-xl font-semibold text-foreground sm:text-2xl">
+                  <h3 className="app-display mt-2 text-xl font-semibold text-foreground sm:text-2xl">
                     Что важно не потерять сегодня
                   </h3>
                 </div>
@@ -492,8 +503,8 @@ export function DashboardWorkspace({
                   ))
                 ) : (
                   <div className="athletic-note-row">
-                    Как только появятся новые логи и свежие записи, здесь
-                    появится короткая сводка по нагрузке и питанию.
+                    Как только появятся новые логи и свежие записи, здесь будет
+                    короткая сводка по нагрузке и питанию.
                   </div>
                 )}
               </div>
@@ -518,21 +529,19 @@ export function DashboardWorkspace({
       {activeSection === "ai" ? (
         <section className="grid gap-4 xl:grid-cols-[1.02fr_0.98fr]">
           <DashboardSurfaceCard className="border-l-4 border-l-accent">
-            <p className="workspace-kicker text-accent">AI-коуч</p>
+            <p className="workspace-kicker text-accent-strong">AI-коуч</p>
             <h3 className="app-display mt-3 text-xl font-semibold text-foreground sm:text-2xl">
               Контекст уже собран для следующего решения
             </h3>
             <p className="mt-4 text-base leading-8 text-foreground sm:text-lg">
-              “
               {nutritionPrioritySignal?.summary ??
                 workoutPrioritySignal?.summary ??
                 "Открой AI, чтобы получить короткий разбор или новый черновик плана."}
-              ”
             </p>
 
             <div className="mt-5 grid gap-3 md:grid-cols-2">
               <div className="athletic-module-card">
-                <p className="workspace-kicker">Что уже учитывается</p>
+                <p className="workspace-kicker">Что учитывается</p>
                 <p className="mt-3 text-sm leading-7 text-muted">
                   Тоннаж, рабочие веса, RPE, питание, белок, замеры тела и
                   персональные ограничения.
@@ -542,7 +551,7 @@ export function DashboardWorkspace({
                 <p className="workspace-kicker">Что можно сделать</p>
                 <p className="mt-3 text-sm leading-7 text-muted">
                   Собрать новый план, запросить совет или применить
-                  подтверждённое предложение внутри приложения.
+                  подтвержденное предложение внутри приложения.
                 </p>
               </div>
             </div>
@@ -560,8 +569,8 @@ export function DashboardWorkspace({
                 нужно заново объяснять базу.
               </div>
               <div className="athletic-note-row">
-                Если нужен новый план, используй чат и proposal flow — черновик
-                сразу появится в рабочем сценарии.
+                Если нужен новый план, используй чат и proposal flow. Черновик
+                появится в рабочем сценарии.
               </div>
             </div>
 

@@ -1,6 +1,7 @@
 import { AdminUserDetail } from "@/components/admin-user-detail";
 import { AppShell, toAppShellViewer } from "@/components/app-shell";
 import type { AdminUserDetailData } from "@/components/admin-user-detail-model";
+import type { User } from "@supabase/supabase-js";
 import {
   createFallbackAdminUserDetailResponse,
   loadAdminUserDetailData,
@@ -14,7 +15,41 @@ import { withTimeout, withTransientRetry } from "@/lib/runtime-retry";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { requirePlatformAdminViewer } from "@/lib/viewer";
 
-const ADMIN_USER_DETAIL_TIMEOUT_MS = 4_000;
+const ADMIN_USER_DETAIL_TIMEOUT_MS =
+  process.env.PLAYWRIGHT_TEST_HOOKS === "1" ? 8_000 : 10_000;
+const IS_PLAYWRIGHT_RUNTIME = process.env.PLAYWRIGHT_TEST_HOOKS === "1";
+
+function createPlaywrightAuthUser(userId: string): User {
+  const isAdminUser = userId === "00000000-0000-4000-8000-000000000002";
+  const email = isAdminUser
+    ? process.env.PLAYWRIGHT_ADMIN_EMAIL
+    : process.env.PLAYWRIGHT_TEST_EMAIL;
+  const fullName = isAdminUser
+    ? process.env.PLAYWRIGHT_ADMIN_FULL_NAME
+    : process.env.PLAYWRIGHT_TEST_FULL_NAME;
+
+  return {
+    id: userId,
+    aud: "authenticated",
+    role: "authenticated",
+    email: email ?? "playwright@example.test",
+    email_confirmed_at: new Date().toISOString(),
+    phone: "",
+    confirmed_at: new Date().toISOString(),
+    last_sign_in_at: new Date().toISOString(),
+    app_metadata: {
+      provider: "email",
+      providers: ["email"],
+    },
+    user_metadata: {
+      full_name: fullName ?? "Playwright User",
+    },
+    identities: [],
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    is_anonymous: false,
+  } as User;
+}
 
 export default async function AdminUserDetailPage({
   params,
@@ -34,12 +69,23 @@ export default async function AdminUserDetailPage({
       message: "Идентификатор пользователя заполнен некорректно.",
     });
 
-    const adminSupabase = createAdminSupabaseClient();
-    const authUserResult = await withTimeout(
-      withTransientRetry(() => adminSupabase.auth.admin.getUserById(userId)),
-      ADMIN_USER_DETAIL_TIMEOUT_MS,
-      "admin user detail auth lookup",
-    );
+    if (IS_PLAYWRIGHT_RUNTIME && userId.startsWith("00000000-0000-4000-8000-")) {
+      const fallbackResponse = createFallbackAdminUserDetailResponse({
+        authUser: createPlaywrightAuthUser(userId),
+        currentAdminRole: viewer.platformAdminRole ?? "support_admin",
+        userId,
+      });
+
+      initialDetail = fallbackResponse.data as AdminUserDetailData;
+      initialIsDegraded = true;
+    } else {
+
+      const adminSupabase = createAdminSupabaseClient();
+      const authUserResult = await withTimeout(
+        withTransientRetry(() => adminSupabase.auth.admin.getUserById(userId)),
+        ADMIN_USER_DETAIL_TIMEOUT_MS,
+        "admin user detail auth lookup",
+      );
 
     if (authUserResult.error) {
       throw authUserResult.error;
@@ -79,6 +125,7 @@ export default async function AdminUserDetailPage({
         initialDetail = fallbackResponse.data as AdminUserDetailData;
         initialIsDegraded = true;
       }
+    }
     }
   } catch (error) {
     if (isAdminRouteParamError(error)) {

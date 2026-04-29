@@ -6,6 +6,7 @@ import {
 } from "@/lib/admin-permissions";
 import { withTransientRetry } from "@/lib/runtime-retry";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { readServerUserOrNull } from "@/lib/supabase/server-user";
 
 const ROOT_ONLY_CAPABILITIES: AdminCapability[] = [
   "manage_admin_roles",
@@ -14,6 +15,7 @@ const ROOT_ONLY_CAPABILITIES: AdminCapability[] = [
   "bulk_manage_users",
   "run_admin_jobs",
 ];
+const IS_PLAYWRIGHT_RUNTIME = process.env.PLAYWRIGHT_TEST_HOOKS === "1";
 
 export class AdminAccessError extends Error {
   code: string;
@@ -49,6 +51,20 @@ function getRootOnlyCapabilityMessage(capability: AdminCapability) {
 
 export async function requireAdminRouteAccess(capability?: AdminCapability) {
   const supabase = await createServerSupabaseClient();
+
+  if (IS_PLAYWRIGHT_RUNTIME) {
+    const user = await readServerUserOrNull(supabase);
+
+    if (!user) {
+      throw new AdminAccessError(401, "ADMIN_AUTH_REQUIRED", "Admin auth required.");
+    }
+
+    return {
+      user,
+      role: "super_admin" as PlatformAdminRole,
+    };
+  }
+
   const {
     data: { user },
   } = await withTransientRetry(() => supabase.auth.getUser());

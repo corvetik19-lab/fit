@@ -29,7 +29,7 @@ function ProposalStatusPill({
 
 function LoadingToolCard({ text }: { text: string }) {
   return (
-    <div className="surface-panel px-4 py-4 text-sm text-muted">
+    <div className="surface-panel px-4 py-3 text-sm text-muted">
       <div className="flex items-center gap-2">
         <LoaderCircle className="animate-spin" size={16} />
         {text}
@@ -46,7 +46,7 @@ export function ProposalToolCard({
   state: string;
 }) {
   if (state === "input-streaming" || state === "input-available") {
-    return <LoadingToolCard text="Собираю новый черновик плана..." />;
+    return <LoadingToolCard text="Собираю черновик плана..." />;
   }
 
   if (!output) {
@@ -54,31 +54,30 @@ export function ProposalToolCard({
   }
 
   return (
-    <div className="surface-panel p-4">
+    <div className="surface-panel p-3.5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="pill">Шаг 3 · Черновик</span>
+            <span className="pill">Черновик</span>
             <span className="pill">
               {output.proposalType === "workout_plan" ? "Тренировки" : "Питание"}
             </span>
           </div>
-          <p className="mt-3 text-sm font-semibold text-foreground">{output.title}</p>
+          <p className="mt-2 text-sm font-semibold text-foreground">{output.title}</p>
           <p className="mt-1 text-sm leading-6 text-muted">{output.description}</p>
         </div>
       </div>
 
       {output.highlights.length ? (
-        <ul className="mt-3 grid gap-2 text-sm leading-6 text-muted">
+        <ul className="mt-3 grid gap-1.5 text-sm leading-6 text-muted">
           {output.highlights.slice(0, 4).map((item) => (
             <li key={`${output.proposalId}-${item}`}>{item}</li>
           ))}
         </ul>
       ) : null}
 
-      <p className="mt-4 text-sm leading-6 text-muted">
-        Черновик уже сохранён. Следующий шаг: подтвердить его или сразу
-        применить прямо из этого чата.
+      <p className="mt-3 text-sm leading-6 text-muted">
+        Черновик сохранён. Его можно подтвердить или применить прямо из чата.
       </p>
     </div>
   );
@@ -100,15 +99,15 @@ export function SearchToolCard({
   }
 
   return (
-    <div className="surface-panel p-4">
+    <div className="surface-panel p-3.5">
       <p className="text-sm font-semibold text-foreground">
         Поиск в интернете: {output.query}
       </p>
-      <div className="mt-3 grid gap-3">
+      <div className="mt-3 grid gap-2">
         {output.results.length ? (
           output.results.map((result) => (
             <a
-              className="rounded-2xl border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_84%,var(--surface))] px-3 py-3 text-sm transition hover:border-accent/40 hover:bg-[color-mix(in_srgb,var(--surface-elevated)_92%,var(--surface))]"
+              className="rounded-2xl border border-border bg-white px-3 py-3 text-sm transition hover:border-accent/40"
               href={result.url}
               key={`${output.query}-${result.url}`}
               rel="noreferrer"
@@ -150,32 +149,26 @@ export function ProposalListToolCard({
   }
 
   return (
-    <div className="surface-panel p-4">
+    <div className="surface-panel p-3.5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-sm font-semibold text-foreground">
-            Шаг 4 · Проверка черновиков
-          </p>
+          <p className="text-sm font-semibold text-foreground">Последние черновики</p>
           <p className="mt-1 text-sm leading-6 text-muted">
-            Ниже можно быстро выбрать сохранённый черновик и перейти к
-            подтверждению или применению.
+            Выбери предложение и подтверди или примени его.
           </p>
         </div>
         <span className="pill">{output.count}</span>
       </div>
 
-      <div className="mt-3 grid gap-3">
+      <div className="mt-3 grid gap-2.5">
         {output.items.length ? (
           output.items.slice(0, 4).map((item) => (
-            <div
-              className="rounded-2xl border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_84%,var(--surface))] px-3 py-3"
-              key={item.proposalId}
-            >
+            <div className="rounded-2xl border border-border bg-white px-3 py-3" key={item.proposalId}>
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-foreground">{item.title}</p>
                   <p className="mt-1 text-sm leading-6 text-muted">
-                    {`Сохранённый ${formatProposalType(item.proposalType)}-план.`}
+                    Сохранённый план: {formatProposalType(item.proposalType)}.
                   </p>
                 </div>
                 <ProposalStatusPill
@@ -188,13 +181,13 @@ export function ProposalListToolCard({
                   ? "Уже добавлен в приложение."
                   : item.status === "approved"
                     ? "Подтверждён и готов к применению."
-                    : "Черновик готов к проверке и применению."}
+                    : "Готов к проверке и применению."}
               </p>
 
               <div className="mt-3 flex flex-wrap gap-2">
                 {item.status === "draft" ? (
                   <button
-                    className="rounded-full border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,var(--surface))] px-3 py-2 text-sm font-medium text-foreground transition hover:bg-[color-mix(in_srgb,var(--surface-elevated)_98%,var(--surface))] disabled:cursor-not-allowed disabled:opacity-60"
+                    className="action-button action-button--secondary px-3 py-2 text-xs"
                     disabled={actionBusyKey === `approve:${item.proposalId}`}
                     onClick={() =>
                       onApprove({
@@ -212,7 +205,7 @@ export function ProposalListToolCard({
 
                 {item.status !== "applied" ? (
                   <button
-                    className="rounded-full bg-accent px-3 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="action-button action-button--primary px-3 py-2 text-xs"
                     disabled={actionBusyKey === `apply:${item.proposalId}`}
                     onClick={() =>
                       onApply({
@@ -228,7 +221,7 @@ export function ProposalListToolCard({
                   </button>
                 ) : (
                   <Link
-                    className="rounded-full border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,var(--surface))] px-3 py-2 text-sm font-medium text-foreground transition hover:bg-[color-mix(in_srgb,var(--surface-elevated)_98%,var(--surface))]"
+                    className="action-button action-button--secondary px-3 py-2 text-xs"
                     href={item.proposalType === "workout_plan" ? "/workouts" : "/nutrition"}
                   >
                     Открыть раздел
@@ -275,15 +268,15 @@ export function ProposalActionToolCard({
   }
 
   return (
-    <div className="surface-panel p-4">
+    <div className="surface-panel p-3.5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <span className="pill">
-              {variant === "approve" ? "Шаг 4 · Подтверждение" : "Шаг 5 · Применение"}
+              {variant === "approve" ? "Подтверждение" : "Применение"}
             </span>
           </div>
-          <p className="mt-3 text-sm font-semibold text-foreground">{output.title}</p>
+          <p className="mt-2 text-sm font-semibold text-foreground">{output.title}</p>
           <p className="mt-1 text-sm leading-6 text-muted">{output.summary}</p>
         </div>
         <ProposalStatusPill
@@ -292,10 +285,10 @@ export function ProposalActionToolCard({
         />
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className="mt-3 flex flex-wrap gap-2">
         {output.status !== "applied" ? (
           <button
-            className="rounded-full bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+            className="action-button action-button--primary px-3 py-2 text-xs"
             disabled={actionBusyKey === `apply:${output.proposalId}`}
             onClick={() =>
               onApply({
@@ -312,7 +305,7 @@ export function ProposalActionToolCard({
         ) : null}
 
         <Link
-          className="rounded-full border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,var(--surface))] px-4 py-2 text-sm font-medium text-foreground transition hover:bg-[color-mix(in_srgb,var(--surface-elevated)_98%,var(--surface))]"
+          className="action-button action-button--secondary px-3 py-2 text-xs"
           href={output.proposalType === "workout_plan" ? "/workouts" : "/nutrition"}
         >
           Открыть раздел

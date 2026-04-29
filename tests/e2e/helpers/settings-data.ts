@@ -91,7 +91,7 @@ export async function ensureSettingsBillingReviewRequest(page: Page) {
     url: "/api/settings/billing",
     body: {
       action: "request_access_review",
-      feature_keys: ["ai_chat"],
+      feature_keys: ["meal_plan"],
       note: "Playwright billing review request",
     },
   });

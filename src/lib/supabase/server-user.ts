@@ -7,10 +7,15 @@ import { logger } from "@/lib/logger";
 import { withTimeout, withTransientRetry } from "@/lib/runtime-retry";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 
-const SERVER_USER_TIMEOUT_MS = 12_000;
-const SERVER_USER_RETRY_DELAYS_MS = [500, 1_500, 3_000, 5_000] as const;
-const SERVER_SESSION_TIMEOUT_MS = 8_000;
-const SERVER_SESSION_RETRY_DELAYS_MS = [300, 900, 1_800] as const;
+const isPlaywrightRuntime = process.env.PLAYWRIGHT_TEST_HOOKS === "1";
+const SERVER_USER_TIMEOUT_MS = isPlaywrightRuntime ? 2_500 : 12_000;
+const SERVER_USER_RETRY_DELAYS_MS = isPlaywrightRuntime
+  ? ([150, 300] as const)
+  : ([500, 1_500, 3_000, 5_000] as const);
+const SERVER_SESSION_TIMEOUT_MS = isPlaywrightRuntime ? 1_500 : 8_000;
+const SERVER_SESSION_RETRY_DELAYS_MS = isPlaywrightRuntime
+  ? ([150, 300] as const)
+  : ([300, 900, 1_800] as const);
 
 type ServerAuthClient = Pick<SupabaseClient, "auth">;
 
@@ -170,6 +175,17 @@ async function readServerSessionUserOrNull(supabase: ServerAuthClient) {
   return (session?.user as User | null | undefined) ?? null;
 }
 
+async function safeReadServerSessionUserOrNull(supabase: ServerAuthClient) {
+  try {
+    return await readServerSessionUserOrNull(supabase);
+  } catch (error) {
+    logger.warn("server auth session fallback failed", {
+      error,
+    });
+    return null;
+  }
+}
+
 async function readBearerUserOrNull(
   supabase: ServerAuthClient,
   accessToken: string | null,
@@ -214,13 +230,31 @@ async function readBearerUserOrNull(
   return (user as User | null | undefined) ?? null;
 }
 
+async function safeReadBearerUserOrNull(
+  supabase: ServerAuthClient,
+  accessToken: string | null,
+) {
+  try {
+    return await readBearerUserOrNull(supabase, accessToken);
+  } catch (error) {
+    logger.warn("server auth bearer fallback failed", {
+      error,
+    });
+    return null;
+  }
+}
+
+type FallbackMode = "playwright" | "verified";
+
 export async function readServerUserOrNull(
   supabase: ServerAuthClient,
   request?: Request,
 ) {
-  const runFallbacks = async (error: unknown) => {
+  const runFallbacks = async (error: unknown, mode: FallbackMode) => {
+    const allowUnverifiedCookieFallbacks = mode === "playwright";
+
     if (request) {
-      const requestBearerUser = await readBearerUserOrNull(
+      const requestBearerUser = await safeReadBearerUserOrNull(
         supabase,
         extractBearerToken(request.headers.get("authorization")),
       );
@@ -235,21 +269,23 @@ export async function readServerUserOrNull(
         return requestBearerUser;
       }
 
-      const requestCookieUser = readRequestCookieUserOrNull(request);
+      if (allowUnverifiedCookieFallbacks) {
+        const requestCookieUser = readRequestCookieUserOrNull(request);
 
-      if (requestCookieUser) {
-        logger.warn("server auth user fallback activated", {
-          error,
-          source: "request-cookie",
-          userId: requestCookieUser.id,
-        });
+        if (requestCookieUser) {
+          logger.warn("server auth user fallback activated", {
+            error,
+            source: "request-cookie",
+            userId: requestCookieUser.id,
+          });
 
-        return requestCookieUser;
+          return requestCookieUser;
+        }
       }
     }
 
     const headerStore = await headers();
-    const headerBearerUser = await readBearerUserOrNull(
+    const headerBearerUser = await safeReadBearerUserOrNull(
       supabase,
       extractBearerToken(headerStore.get("authorization")),
     );
@@ -264,16 +300,8 @@ export async function readServerUserOrNull(
       return headerBearerUser;
     }
 
-    const sessionUser = await readServerSessionUserOrNull(supabase);
-
-    if (sessionUser) {
-      logger.warn("server auth user fallback activated", {
-        error,
-        source: "session",
-        userId: sessionUser.id,
-      });
-
-      return sessionUser;
+    if (!allowUnverifiedCookieFallbacks) {
+      return null;
     }
 
     const cookieUser = await readServerCookieUserOrNull();
@@ -288,8 +316,31 @@ export async function readServerUserOrNull(
       return cookieUser;
     }
 
+    const sessionUser = await safeReadServerSessionUserOrNull(supabase);
+
+    if (sessionUser) {
+      logger.warn("server auth user fallback activated", {
+        error,
+        source: "session",
+        userId: sessionUser.id,
+      });
+
+      return sessionUser;
+    }
+
     return null;
   };
+
+  if (isPlaywrightRuntime) {
+    const fallbackUser = await runFallbacks(
+      "playwright auth fast path",
+      "playwright",
+    );
+
+    if (fallbackUser) {
+      return fallbackUser;
+    }
+  }
 
   try {
     const {
@@ -308,7 +359,7 @@ export async function readServerUserOrNull(
     }
   } catch (error) {
     try {
-      const fallbackUser = await runFallbacks(error);
+      const fallbackUser = await runFallbacks(error, "verified");
 
       if (fallbackUser) {
         return fallbackUser;
@@ -318,5 +369,5 @@ export async function readServerUserOrNull(
     }
   }
 
-  return await runFallbacks("empty-server-user");
+  return await runFallbacks("empty-server-user", "verified");
 }

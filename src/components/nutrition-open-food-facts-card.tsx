@@ -8,7 +8,7 @@ import { NutritionBarcodeScanner } from "@/components/nutrition-barcode-scanner"
 import type { NutritionFood } from "@/lib/nutrition/meal-logging";
 
 const inputClassName =
-  "w-full rounded-2xl border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_88%,var(--surface))] px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15";
+  "w-full rounded-[0.95rem] border border-border bg-white px-3.5 py-2.5 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/10";
 
 type LookupPreview = {
   barcode: string;
@@ -70,9 +70,7 @@ export function NutritionOpenFoodFactsCard({
     try {
       const response = await fetch(
         `/api/foods/open-food-facts/${encodeURIComponent(normalizedBarcode)}`,
-        {
-          method: "GET",
-        },
+        { method: "GET" },
       );
 
       const payload = (await response.json().catch(() => null)) as
@@ -149,33 +147,32 @@ export function NutritionOpenFoodFactsCard({
 
   return (
     <section
-      className="surface-panel surface-panel--soft p-5"
+      className="surface-panel surface-panel--soft p-3.5 sm:p-4"
       data-testid={`nutrition-open-food-facts-card-${mode}`}
     >
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
           <p className="workspace-kicker">Open Food Facts</p>
-          <h3 className="mt-2 text-xl font-semibold text-foreground sm:text-2xl">
-            Сканер упаковки и быстрый импорт
+          <h3 className="mt-1 text-lg font-semibold text-foreground">
+            Штрихкод и быстрый импорт
           </h3>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">
-            Найдём продукт по штрихкоду, покажем состав и картинку, а потом
-            сохраним его в твою базу без ручного ввода КБЖУ.
+          <p className="mt-1 text-sm leading-5 text-muted">
+            Найдём продукт, состав, КБЖУ и фото упаковки без ручного ввода.
           </p>
         </div>
 
         <button
-          className="action-button action-button--secondary px-4 py-2.5 text-sm"
+          className="action-button action-button--secondary shrink-0 px-3 py-2 text-xs"
           onClick={() => setIsScannerOpen((current) => !current)}
           type="button"
         >
-          <ScanBarcode size={16} strokeWidth={2.2} />
-          {isScannerOpen ? "Скрыть сканер" : "Открыть сканер"}
+          <ScanBarcode size={15} strokeWidth={2.2} />
+          {isScannerOpen ? "Скрыть" : "Сканер"}
         </button>
       </div>
 
       {isScannerOpen ? (
-        <div className="mt-5">
+        <div className="mt-3">
           <NutritionBarcodeScanner
             onClose={() => setIsScannerOpen(false)}
             onDetected={handleScannerDetected}
@@ -183,7 +180,7 @@ export function NutritionOpenFoodFactsCard({
         </div>
       ) : null}
 
-      <div className="mt-5 grid gap-3 md:grid-cols-[1fr_auto_auto]">
+      <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto_auto]">
         <input
           className={inputClassName}
           inputMode="numeric"
@@ -207,43 +204,43 @@ export function NutritionOpenFoodFactsCard({
           type="button"
         >
           <Camera size={16} strokeWidth={2.2} />
-          Снять упаковку
+          Камера
         </button>
       </div>
 
       {error ? (
-        <p className="mt-4 rounded-2xl border border-red-500/25 bg-red-500/12 px-4 py-3 text-sm text-red-100">
+        <p className="mt-3 rounded-2xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
         </p>
       ) : null}
 
       {lookupResult ? (
         <article
-          className="surface-panel mt-5 p-4 sm:p-5"
+          className="surface-panel mt-3 p-3.5 sm:p-4"
           data-testid={`nutrition-open-food-facts-preview-${mode}`}
         >
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,168px)_1fr]">
-            <div className="overflow-hidden rounded-[1.5rem] border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_90%,var(--surface))]">
+          <div className="grid gap-3 sm:grid-cols-[112px_1fr]">
+            <div className="overflow-hidden rounded-[1.15rem] border border-border bg-white">
               {lookupResult.product.imageUrl ? (
                 <Image
                   alt={lookupResult.product.name}
-                  className="h-full w-full object-cover"
-                  height={168}
+                  className="h-[112px] w-full object-cover"
+                  height={112}
                   src={lookupResult.product.imageUrl}
                   unoptimized
-                  width={168}
+                  width={112}
                 />
               ) : (
-                <div className="flex h-[168px] items-center justify-center bg-[color-mix(in_srgb,var(--accent-soft)_50%,white)] text-sm font-medium text-accent">
+                <div className="flex h-[112px] items-center justify-center bg-[color:var(--accent-soft)] text-sm font-medium text-accent">
                   Нет фото
                 </div>
               )}
             </div>
 
-            <div>
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <p className="text-xl font-semibold text-foreground">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="line-clamp-2 text-base font-semibold text-foreground">
                     {lookupResult.product.name}
                   </p>
                   <p className="mt-1 text-sm text-muted">
@@ -256,91 +253,76 @@ export function NutritionOpenFoodFactsCard({
                       : ""}
                   </p>
                 </div>
-                <span className="pill">Штрихкод: {lookupResult.product.barcode}</span>
+                <span className="pill">#{lookupResult.product.barcode}</span>
               </div>
 
-              <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                <div className="surface-panel surface-panel--soft p-3">
-                  <p className="workspace-kicker">Ккал / 100 г</p>
-                  <p className="mt-2 text-lg font-semibold text-foreground">
-                    {lookupResult.product.kcal === null
-                      ? "нет данных"
-                      : `${Math.round(lookupResult.product.kcal)} ккал`}
-                  </p>
-                </div>
-                <div className="surface-panel surface-panel--soft p-3">
-                  <p className="workspace-kicker">Белки</p>
-                  <p className="mt-2 text-lg font-semibold text-foreground">
-                    {formatMacro(lookupResult.product.protein)}
-                  </p>
-                </div>
-                <div className="surface-panel surface-panel--soft p-3">
-                  <p className="workspace-kicker">Жиры</p>
-                  <p className="mt-2 text-lg font-semibold text-foreground">
-                    {formatMacro(lookupResult.product.fat)}
-                  </p>
-                </div>
-                <div className="surface-panel surface-panel--soft p-3">
-                  <p className="workspace-kicker">Углеводы</p>
-                  <p className="mt-2 text-lg font-semibold text-foreground">
-                    {formatMacro(lookupResult.product.carbs)}
-                  </p>
-                </div>
-              </div>
-
-              <div className="surface-panel surface-panel--accent mt-4 p-4">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Sparkles className="text-accent" size={16} strokeWidth={2.2} />
-                  <p className="text-sm font-semibold text-foreground">Состав</p>
-                </div>
-                <p className="mt-2 text-sm leading-6 text-muted">
-                  {lookupResult.product.ingredientsText ??
-                    "В Open Food Facts нет текстового состава для этого продукта."}
-                </p>
-                <a
-                  className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-accent transition hover:opacity-80"
-                  href={lookupResult.product.productUrl}
-                  rel="noreferrer"
-                  target="_blank"
-                >
-                  Открыть карточку продукта в Open Food Facts
-                </a>
-              </div>
-
-              <div className="mt-4 flex flex-wrap gap-3">
-                {lookupResult.existingFood ? (
-                  <>
-                    <button
-                      className="action-button border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-semibold text-emerald-700 hover:bg-emerald-100"
-                      data-testid={`nutrition-open-food-facts-use-existing-${mode}`}
-                      onClick={() =>
-                        onResolveFood(lookupResult.existingFood as NutritionFood, "existing")
-                      }
-                      type="button"
-                    >
-                      <Check size={16} strokeWidth={2.2} />
-                      {localActionLabel}
-                    </button>
-                    <span className="inline-flex items-center rounded-full border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,var(--surface))] px-4 py-3 text-sm text-muted">
-                      Этот продукт уже есть в твоей базе.
-                    </span>
-                  </>
-                ) : (
-                  <button
-                    className="action-button action-button--primary"
-                    data-testid={`nutrition-open-food-facts-import-${mode}`}
-                    disabled={isImporting}
-                    onClick={() => void importFood()}
-                    type="button"
-                  >
-                    {isImporting ? "Импортирую..." : primaryActionLabel}
-                  </button>
-                )}
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <Metric label="Ккал / 100 г" value={lookupResult.product.kcal === null ? "нет" : `${Math.round(lookupResult.product.kcal)} ккал`} />
+                <Metric label="Белки" value={formatMacro(lookupResult.product.protein)} />
+                <Metric label="Жиры" value={formatMacro(lookupResult.product.fat)} />
+                <Metric label="Углеводы" value={formatMacro(lookupResult.product.carbs)} />
               </div>
             </div>
+          </div>
+
+          <div className="surface-panel surface-panel--accent mt-3 p-3">
+            <div className="flex items-center gap-2">
+              <Sparkles className="text-accent" size={16} strokeWidth={2.2} />
+              <p className="text-sm font-semibold text-foreground">Состав</p>
+            </div>
+            <p className="mt-2 text-sm leading-6 text-muted">
+              {lookupResult.product.ingredientsText ??
+                "В Open Food Facts нет текстового состава для этого продукта."}
+            </p>
+            <a
+              className="mt-2 inline-flex text-sm font-medium text-accent transition hover:opacity-80"
+              href={lookupResult.product.productUrl}
+              rel="noreferrer"
+              target="_blank"
+            >
+              Открыть карточку в Open Food Facts
+            </a>
+          </div>
+
+          <div className="mt-3 flex flex-wrap gap-2">
+            {lookupResult.existingFood ? (
+              <>
+                <button
+                  className="action-button border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 hover:bg-emerald-100"
+                  data-testid={`nutrition-open-food-facts-use-existing-${mode}`}
+                  onClick={() =>
+                    onResolveFood(lookupResult.existingFood as NutritionFood, "existing")
+                  }
+                  type="button"
+                >
+                  <Check size={16} strokeWidth={2.2} />
+                  {localActionLabel}
+                </button>
+                <span className="pill">Уже есть в базе</span>
+              </>
+            ) : (
+              <button
+                className="action-button action-button--primary"
+                data-testid={`nutrition-open-food-facts-import-${mode}`}
+                disabled={isImporting}
+                onClick={() => void importFood()}
+                type="button"
+              >
+                {isImporting ? "Импортирую..." : primaryActionLabel}
+              </button>
+            )}
           </div>
         </article>
       ) : null}
     </section>
+  );
+}
+
+function Metric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="metric-tile p-2.5">
+      <p className="workspace-kicker">{label}</p>
+      <p className="mt-1 text-sm font-semibold text-foreground">{value}</p>
+    </div>
   );
 }

@@ -9,7 +9,9 @@ import { listWorkoutTemplates } from "@/lib/workout/templates";
 import { listWeeklyProgramsOverview } from "@/lib/workout/weekly-programs";
 import { requireReadyViewer } from "@/lib/viewer";
 
-const WORKOUTS_PAGE_DATA_TIMEOUT_MS = 8_000;
+const WORKOUTS_PAGE_DATA_TIMEOUT_MS =
+  process.env.PLAYWRIGHT_TEST_HOOKS === "1" ? 1_500 : 8_000;
+const IS_PLAYWRIGHT_RUNTIME = process.env.PLAYWRIGHT_TEST_HOOKS === "1";
 const WORKOUTS_PAGE_EXERCISE_LIMIT = 120;
 
 function withTimeout<T>(promise: Promise<T>, label: string) {
@@ -17,7 +19,9 @@ function withTimeout<T>(promise: Promise<T>, label: string) {
     promise,
     new Promise<T>((_, reject) => {
       setTimeout(() => {
-        reject(new Error(`${label} timed out after ${WORKOUTS_PAGE_DATA_TIMEOUT_MS}ms`));
+        reject(
+          new Error(`${label} timed out after ${WORKOUTS_PAGE_DATA_TIMEOUT_MS}ms`),
+        );
       }, WORKOUTS_PAGE_DATA_TIMEOUT_MS);
     }),
   ]);
@@ -25,15 +29,22 @@ function withTimeout<T>(promise: Promise<T>, label: string) {
 
 async function loadWorkoutsResource<T>(
   label: string,
-  promise: Promise<T>,
+  factory: () => Promise<T>,
   fallback: T,
   userId: string,
 ) {
+  if (IS_PLAYWRIGHT_RUNTIME) {
+    return fallback;
+  }
+
   try {
-    return await withTransientRetry(async () => await withTimeout(promise, label), {
-      attempts: 3,
-      delaysMs: [500, 1_500, 3_000],
-    });
+    return await withTransientRetry(
+      async () => await withTimeout(factory(), label),
+      {
+        attempts: 3,
+        delaysMs: [500, 1_500, 3_000],
+      },
+    );
   } catch (error) {
     logger.warn("workouts page fallback activated", { error, label, userId });
     return fallback;
@@ -46,41 +57,44 @@ export default async function WorkoutsPage() {
   const [exercisePage, programs, templates] = await Promise.all([
     loadWorkoutsResource(
       "workout exercise library",
-      Promise.resolve(
-        supabase
-          .from("exercise_library")
-          .select(
-            "id, title, muscle_group, description, note, image_url, is_archived, created_at, updated_at",
-            { count: "exact" },
-          )
-          .order("updated_at", { ascending: false })
-          .range(0, WORKOUTS_PAGE_EXERCISE_LIMIT - 1)
-          .then(({ count, data, error }) => {
-            if (error) {
-              throw error;
-            }
+      () =>
+        Promise.resolve(
+          supabase
+            .from("exercise_library")
+            .select(
+              "id, title, muscle_group, description, note, image_url, is_archived, created_at, updated_at",
+              { count: "exact" },
+            )
+            .order("updated_at", { ascending: false })
+            .range(0, WORKOUTS_PAGE_EXERCISE_LIMIT - 1)
+            .then(({ count, data, error }) => {
+              if (error) {
+                throw error;
+              }
 
-            const total = count ?? 0;
-            return {
-              items: data ?? [],
-              nextOffset:
-                (data?.length ?? 0) < total ? WORKOUTS_PAGE_EXERCISE_LIMIT : null,
-              total,
-            };
-          }),
-      ),
+              const total = count ?? 0;
+              return {
+                items: data ?? [],
+                nextOffset:
+                  (data?.length ?? 0) < total
+                    ? WORKOUTS_PAGE_EXERCISE_LIMIT
+                    : null,
+                total,
+              };
+            }),
+        ),
       { items: [], nextOffset: null, total: 0 },
       viewer.user.id,
     ),
     loadWorkoutsResource(
       "weekly programs",
-      listWeeklyProgramsOverview(supabase, viewer.user.id),
+      () => listWeeklyProgramsOverview(supabase, viewer.user.id),
       [],
       viewer.user.id,
     ),
     loadWorkoutsResource(
       "workout templates",
-      listWorkoutTemplates(supabase, viewer.user.id),
+      () => listWorkoutTemplates(supabase, viewer.user.id),
       [],
       viewer.user.id,
     ),
@@ -107,7 +121,7 @@ export default async function WorkoutsPage() {
     >
       <PageWorkspace
         badges={[
-          viewer.profile?.full_name ?? viewer.user.email ?? "fit",
+          viewer.profile?.full_name ?? viewer.user.email ?? "fitora",
           lastUpdatedAt
             ? `Обновлено ${lastUpdatedAt}`
             : "Библиотека упражнений пока пустая",

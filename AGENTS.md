@@ -21,7 +21,7 @@
 - Use `docs/CODEX_AGENT_AUTONOMY_PLAN.md`, `docs/CODEX_AGENT_GOVERNANCE.md`, and `docs/CODEX_AGENT_REGISTRY.md` when the task touches the agent layer itself.
 - Use `code_review.md` as the canonical detailed review contract for local and GitHub review behavior.
 - For difficult AI, UI, backend, or release problems, require an explicit evaluator loop: goal -> baseline -> evaluator -> artifacts -> stop condition.
-- For deploy-affecting work, do not claim rollout success until the Vercel deployment itself reaches a clean terminal state: use Vercel MCP first or fall back to `npm run wait:vercel-deploy -- <deployment-url-or-id>`.
+- For deploy-affecting work, do not claim rollout success until the Vercel deployment itself reaches a clean terminal state: verify it through Vercel CLI via `vercel inspect <deployment-url-or-id> --wait` or `npm run wait:vercel-deploy -- <deployment-url-or-id>`. Do not use Vercel MCP for rollout verification in this repository.
 - For self-evolving or autonomous agent-layer work, require the narrower governance loop: allowlist -> required gates -> artifacts -> commit/push policy.
 - Keep service-role operations server-only and log every privileged admin action.
 - After every substantial change, update `docs/AI_WORKLOG.md`, `docs/MASTER_PLAN.md`, and the relevant topical docs in `docs/`.
@@ -68,9 +68,9 @@
 - The separate Supabase MCP server `mcp__supabase-finappka__*` is reserved for project `gwqvolspdzhcutvzsdbo` (`finappka`) and must not be used for `fit` tasks.
 - Before applying migrations or writing data through MCP, verify the active project with `get_project_url` if there is any doubt about server targeting.
 - Use Supabase CLI only as a fallback when MCP is unavailable or cannot complete the required action.
-- Use Vercel tooling for project/env/deploy setup when available.
-- For deploy status and rollout confirmation, prefer Vercel MCP. If MCP is unavailable, use `vercel inspect <deployment-url-or-id> --wait` via `npm run wait:vercel-deploy -- <deployment-url-or-id>`.
-- Use Playwright for browser verification flows.
+- Use Vercel CLI for project/env/deploy setup and rollout verification in this repository. Do not use Vercel MCP.
+- For deploy status and rollout confirmation, use `vercel inspect <deployment-url-or-id> --wait` or `npm run wait:vercel-deploy -- <deployment-url-or-id>`.
+- Use Playwright CLI (`playwright-cli`, or `npx --package @playwright/cli playwright-cli`) for browser verification flows. Do not use Playwright MCP.
 
 ## Current repository state
 - The repo started as an empty bootstrap target and is now being converted into the web platform described above.

@@ -644,9 +644,9 @@ export function NutritionTracker({
         </div>
 
         <div className="mt-4 md:hidden">
-            <button
-              aria-expanded={isMobilePanelMenuOpen}
-              className="section-chip flex w-full items-center justify-between gap-3 px-3 py-2 text-left"
+          <button
+            aria-expanded={isMobilePanelMenuOpen}
+            className="section-chip flex w-full items-center justify-between gap-3 px-3.5 py-3 text-left"
             onClick={() => setIsMobilePanelMenuOpen((current) => !current)}
             type="button"
           >
@@ -657,6 +657,11 @@ export function NutritionTracker({
               <span className="mt-1 block truncate text-sm font-semibold text-foreground">
                 {activePanel?.label ?? "Выбери раздел"}
               </span>
+              {activePanel ? (
+                <span className="mt-1 block text-xs leading-5 text-muted">
+                  {activePanel.description}
+                </span>
+              ) : null}
             </span>
             <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-white text-foreground">
               {isMobilePanelMenuOpen ? (
@@ -675,7 +680,7 @@ export function NutritionTracker({
                 return (
                   <button
                     aria-pressed={isActive}
-                    className={`section-chip flex items-start justify-between gap-3 px-3 py-2 text-left ${
+                    className={`section-chip flex items-start justify-between gap-3 px-3.5 py-3 text-left ${
                       isActive ? "section-chip--active" : ""
                     }`}
                     data-testid={`nutrition-panel-mobile-${panel.key}`}
@@ -703,14 +708,14 @@ export function NutritionTracker({
           ) : null}
         </div>
 
-        <div className="mt-3 hidden gap-2 md:flex md:flex-wrap">
+        <div className="mt-3 hidden gap-2 overflow-x-auto pb-1 md:flex md:flex-nowrap">
           {trackerPanels.map((panel) => {
             const isActive = panel.key === activePanelKey;
 
             return (
               <button
                 aria-pressed={isActive}
-                className={`section-chip min-w-[9rem] px-3 py-2 text-left ${
+                className={`section-chip min-w-[9.5rem] px-3.5 py-3 text-left ${
                   isActive ? "section-chip--active" : ""
                 }`}
                 data-testid={`nutrition-panel-${panel.key}`}

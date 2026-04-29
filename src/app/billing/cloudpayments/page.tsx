@@ -13,7 +13,7 @@ export default async function CloudpaymentsBillingPage() {
       title="CloudPayments"
       viewer={toAppShellViewer(viewer)}
     >
-      <div className="mx-auto flex w-full max-w-5xl items-start justify-center py-4 sm:py-6">
+      <div className="mx-auto flex w-full max-w-2xl items-start justify-center py-1 sm:py-4">
         <CloudpaymentsCheckout />
       </div>
     </AppShell>

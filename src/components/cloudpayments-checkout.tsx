@@ -146,7 +146,7 @@ export function CloudpaymentsCheckout() {
 
   return (
     <section
-      className="surface-panel surface-panel--accent mx-auto max-w-2xl p-6 sm:p-7"
+      className="surface-panel surface-panel--accent mx-auto w-full max-w-xl p-4 sm:p-5"
       data-testid="cloudpayments-checkout-page"
     >
       <Script
@@ -155,46 +155,46 @@ export function CloudpaymentsCheckout() {
         strategy="afterInteractive"
       />
 
-      <div className="space-y-3">
+      <div className="space-y-2.5">
         <p className="workspace-kicker text-accent">CloudPayments</p>
         <h1
-          className="app-display text-3xl font-black tracking-[-0.08em] text-foreground sm:text-4xl"
+          className="app-display text-2xl font-black tracking-[-0.08em] text-foreground sm:text-3xl"
           data-testid="cloudpayments-checkout-heading"
         >
-          Оплата подписки fit Premium
+          Оплата подписки fitora Premium
         </h1>
-        <p className="max-w-xl text-sm leading-7 text-muted">
+        <p className="max-w-xl text-sm leading-6 text-muted">
           Откроем безопасную форму оплаты и после завершения вернем тебя в
           центр управления доступом.
         </p>
       </div>
 
-      <div className="mt-6 grid gap-3 sm:grid-cols-3">
-        <article className="metric-tile p-4 text-sm text-muted">
+      <div className="mt-4 grid gap-2.5 sm:grid-cols-3">
+        <article className="metric-tile p-3.5 text-sm text-muted">
           <p className="workspace-kicker">Статус формы</p>
-          <p className="mt-3 text-base font-semibold text-foreground">
+          <p className="mt-2 text-base font-semibold text-foreground">
             {getCheckoutStatusLabel(checkoutState, isReady)}
           </p>
         </article>
 
-        <article className="metric-tile p-4 text-sm text-muted">
+        <article className="metric-tile p-3.5 text-sm text-muted">
           <p className="workspace-kicker">Сумма</p>
-          <p className="mt-3 text-base font-semibold text-foreground">
+          <p className="mt-2 text-base font-semibold text-foreground">
             {intent ? `${intent.amount.toLocaleString("ru-RU")} ₽` : "Ожидание"}
           </p>
         </article>
 
-        <article className="metric-tile p-4 text-sm text-muted">
+        <article className="metric-tile p-3.5 text-sm text-muted">
           <p className="workspace-kicker">Тариф</p>
-          <p className="mt-3 text-base font-semibold text-foreground">
-            {intent?.description ?? "fit Premium"}
+          <p className="mt-2 text-base font-semibold text-foreground">
+            {intent?.description ?? "fitora Premium"}
           </p>
         </article>
       </div>
 
-      <div className="mt-6 flex flex-wrap gap-3">
+      <div className="mt-5 grid gap-2.5 sm:grid-cols-2">
         <button
-          className="action-button action-button--primary"
+          className="action-button action-button--primary w-full"
           data-testid="cloudpayments-checkout-open"
           disabled={!isReady || checkoutState === "running"}
           onClick={() => void openWidget()}
@@ -204,7 +204,7 @@ export function CloudpaymentsCheckout() {
         </button>
 
         <a
-          className="action-button action-button--secondary"
+          className="action-button action-button--secondary w-full"
           data-testid="cloudpayments-checkout-back"
           href="/settings?section=billing"
         >
@@ -213,7 +213,7 @@ export function CloudpaymentsCheckout() {
       </div>
 
       {error ? (
-        <p className="mt-4 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+        <p className="mt-4 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-700">
           {error}
         </p>
       ) : null}

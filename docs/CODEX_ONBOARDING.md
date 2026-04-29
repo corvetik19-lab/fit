@@ -89,7 +89,8 @@
   - какие поверхности входят в allowlist и denied surfaces;
   - какой verification-пакет нужен для docs/process drift;
   - где лежат artifacts autonomous run-ов.
-  - как подтверждается deploy-ready статус через Vercel MCP или `npm run wait:vercel-deploy`.
+  - как browser-проверки запускаются через Playwright CLI (`playwright-cli` или `npx --package @playwright/cli playwright-cli`).
+  - как подтверждается deploy-ready статус через Vercel CLI (`vercel inspect --wait`) или `npm run wait:vercel-deploy`.
 
 ## 3. Формат результата после onboarding
 

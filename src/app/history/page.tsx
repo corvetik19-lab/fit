@@ -3,11 +3,17 @@ import Link from "next/link";
 
 import { AppShell, toAppShellViewer } from "@/components/app-shell";
 import { listAiPlanProposals } from "@/lib/ai/proposals";
+import { logger } from "@/lib/logger";
 import { withTransientRetry } from "@/lib/runtime-retry";
-import { loadSettingsDataSnapshot } from "@/lib/settings-data-server";
+import { loadSettingsDataSnapshotOrFallback } from "@/lib/settings-data-server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { listWeeklyPrograms } from "@/lib/workout/weekly-programs";
 import { requireReadyViewer } from "@/lib/viewer";
+
+const IS_PLAYWRIGHT_RUNTIME = process.env.PLAYWRIGHT_TEST_HOOKS === "1";
+const HISTORY_RETRY_OPTIONS = IS_PLAYWRIGHT_RUNTIME
+  ? { attempts: 1, delaysMs: [100] as const }
+  : { attempts: 3, delaysMs: [500, 1_500, 3_000] as const };
 
 const rangeFormatter = new Intl.DateTimeFormat("ru-RU", {
   day: "numeric",
@@ -75,22 +81,46 @@ function getTimelineKindLabel(kind: TimelineItem["kind"]) {
   }
 }
 
+async function loadHistorySlice<T>({
+  fallback,
+  factory,
+  label,
+  userId,
+}: {
+  fallback: T;
+  factory: () => Promise<T>;
+  label: string;
+  userId: string;
+}) {
+  try {
+    return await withTransientRetry(factory, HISTORY_RETRY_OPTIONS);
+  } catch (error) {
+    logger.warn("history slice load failed, using fallback", {
+      error,
+      label,
+      userId,
+    });
+    return fallback;
+  }
+}
+
 export default async function HistoryPage() {
   const viewer = await requireReadyViewer();
   const supabase = await createServerSupabaseClient();
   const [programs, proposals, settingsSnapshot] = await Promise.all([
-    withTransientRetry(async () => await listWeeklyPrograms(supabase, viewer.user.id, 24), {
-      attempts: 3,
-      delaysMs: [500, 1_500, 3_000],
+    loadHistorySlice({
+      fallback: [] as Awaited<ReturnType<typeof listWeeklyPrograms>>,
+      factory: async () => await listWeeklyPrograms(supabase, viewer.user.id, 24),
+      label: "history weekly programs",
+      userId: viewer.user.id,
     }),
-    withTransientRetry(async () => await listAiPlanProposals(supabase, viewer.user.id, 12), {
-      attempts: 3,
-      delaysMs: [500, 1_500, 3_000],
+    loadHistorySlice({
+      fallback: [] as Awaited<ReturnType<typeof listAiPlanProposals>>,
+      factory: async () => await listAiPlanProposals(supabase, viewer.user.id, 12),
+      label: "history ai proposals",
+      userId: viewer.user.id,
     }),
-    withTransientRetry(async () => await loadSettingsDataSnapshot(supabase, viewer.user.id), {
-      attempts: 3,
-      delaysMs: [500, 1_500, 3_000],
-    }),
+    loadSettingsDataSnapshotOrFallback(supabase, viewer.user.id),
   ]);
 
   const completedPrograms = programs.filter((program) => program.is_locked);
@@ -121,63 +151,44 @@ export default async function HistoryPage() {
   return (
     <AppShell
       eyebrow="История"
-      title="История циклов, AI-решений и операций с данными"
+      title="История циклов, AI-решений и данных"
       viewer={toAppShellViewer(viewer)}
     >
-      <div className="grid gap-4">
-        <section className="grid gap-3.5">
-          <div className="grid gap-2.5">
-            <p className="workspace-kicker text-accent">Личный архив</p>
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-              История действий и прошлых циклов
-            </h1>
-            <p className="max-w-2xl text-sm leading-5 text-muted">
-              Здесь собраны завершенные недели, AI-решения и события по данным.
-              Экран нужен не для красоты, а чтобы быстро понять, что именно мы
-              уже меняли и к чему можно вернуться.
-            </p>
-          </div>
+      <div className="grid gap-3.5">
+        <section className="surface-panel p-3.5 sm:p-4">
+          <p className="workspace-kicker">Личный архив</p>
+          <h1 className="mt-1 text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+            История действий
+          </h1>
+          <p className="mt-1 text-sm leading-5 text-muted">
+            Завершённые недели, AI-планы и события по данным собраны в одном коротком журнале.
+          </p>
 
-          <div className="grid gap-2.5 sm:grid-cols-3">
-            <article className="metric-tile p-3.5">
-              <p className="workspace-kicker">Завершено недель</p>
-              <p className="mt-2 text-2xl font-semibold tracking-tight text-foreground">
-                {completedPrograms.length}
-              </p>
-            </article>
-            <article className="metric-tile p-3.5">
-              <p className="workspace-kicker">AI-решений</p>
-              <p className="mt-2 text-2xl font-semibold tracking-tight text-foreground">
-                {proposals.length}
-              </p>
-            </article>
-            <article className="metric-tile p-3.5">
-              <p className="workspace-kicker">Операций с данными</p>
-              <p className="mt-2 text-2xl font-semibold tracking-tight text-foreground">
-                {settingsSnapshot.privacyEvents.length}
-              </p>
-            </article>
+          <div className="mt-3 grid grid-cols-3 gap-2">
+            <Metric label="Недели" value={completedPrograms.length.toString()} />
+            <Metric label="AI" value={proposals.length.toString()} />
+            <Metric label="Данные" value={settingsSnapshot.privacyEvents.length.toString()} />
           </div>
         </section>
 
         <section className="overflow-x-auto pb-1">
-          <div className="flex min-w-max gap-3">
-            <a className="section-chip section-chip--active px-3.5 py-2.5 text-sm font-semibold" href="#history-feed">
+          <div className="flex min-w-max gap-2">
+            <a className="section-chip section-chip--active px-3 py-2 text-sm font-semibold" href="#history-feed">
               Лента
             </a>
-            <a className="section-chip px-3.5 py-2.5 text-sm font-semibold" href="#history-programs">
+            <a className="section-chip px-3 py-2 text-sm font-semibold" href="#history-programs">
               Программы
             </a>
-            <a className="section-chip px-3.5 py-2.5 text-sm font-semibold" href="#history-ai">
+            <a className="section-chip px-3 py-2 text-sm font-semibold" href="#history-ai">
               AI
             </a>
-            <a className="section-chip px-3.5 py-2.5 text-sm font-semibold" href="#history-data">
+            <a className="section-chip px-3 py-2 text-sm font-semibold" href="#history-data">
               Данные
             </a>
           </div>
         </section>
 
-        <section className="grid gap-3" id="history-feed">
+        <section className="grid gap-2.5" id="history-feed">
           {timelineItems.length ? (
             timelineItems.slice(0, 6).map((item) => (
               <article
@@ -186,17 +197,17 @@ export default async function HistoryPage() {
                 }`}
                 key={`${item.kind}-${item.title}-${item.when}`}
               >
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="workspace-kicker">{getTimelineKindLabel(item.kind)}</p>
-                    <h2 className="mt-2 text-lg font-semibold tracking-tight text-foreground sm:text-xl">
+                    <h2 className="mt-1.5 line-clamp-2 text-base font-semibold tracking-tight text-foreground">
                       {item.title}
                     </h2>
-                    <p className="mt-1.5 text-sm leading-5 text-muted">{item.detail}</p>
+                    <p className="mt-1 text-sm leading-5 text-muted">{item.detail}</p>
                   </div>
 
                   {item.href ? (
-                    <Link className="action-button action-button--secondary shrink-0" href={item.href}>
+                    <Link className="action-button action-button--secondary shrink-0 px-3 py-2 text-xs" href={item.href}>
                       Открыть
                     </Link>
                   ) : null}
@@ -205,189 +216,180 @@ export default async function HistoryPage() {
             ))
           ) : (
             <article className="metric-tile p-3.5 text-sm text-muted">
-              История пока пустая. Как только появятся завершенные недели,
-              AI-предложения или операции с данными, они соберутся здесь.
+              История пока пустая.
             </article>
           )}
         </section>
 
-        <section className="grid gap-3" id="history-programs">
-          <div>
-            <p className="workspace-kicker">Программы</p>
-            <h2 className="mt-1.5 text-lg font-semibold tracking-tight text-foreground sm:text-xl">
-              Прошлые циклы и рабочие недели
-            </h2>
-          </div>
+        <section className="grid gap-2.5" id="history-programs">
+          <SectionHeading eyebrow="Программы" title="Прошлые циклы" />
 
-          <div className="grid gap-3">
-            {programs.length ? (
-              programs.map((program) => {
-                const firstDay = program.days[0] ?? null;
+          {programs.length ? (
+            programs.map((program) => {
+              const firstDay = program.days[0] ?? null;
 
-                return (
-                  <article className="surface-panel p-3.5" key={program.id}>
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <h3 className="text-lg font-semibold tracking-tight text-foreground">
-                          {program.title}
-                        </h3>
-                        <p className="mt-2 text-sm text-muted">
-                          {formatDateRange(program.week_start_date, program.week_end_date)}
-                        </p>
-                      </div>
-                      <span className="pill">{formatProgramStatus(program.status)}</span>
-                    </div>
-
-                    <div className="mt-3.5 grid grid-cols-3 gap-2.5">
-                      <div className="metric-tile p-3">
-                        <p className="text-2xl font-semibold tracking-tight text-foreground">
-                          {program.days.length}
-                        </p>
-                        <p className="mt-1 text-xs uppercase tracking-[0.18em] text-muted">
-                          дней
-                        </p>
-                      </div>
-                      <div className="metric-tile p-3">
-                        <p className="text-2xl font-semibold tracking-tight text-foreground">
-                          {program.days.reduce((sum, day) => sum + day.exercises.length, 0)}
-                        </p>
-                        <p className="mt-1 text-xs uppercase tracking-[0.18em] text-muted">
-                          упражнений
-                        </p>
-                      </div>
-                      <div className="metric-tile p-3">
-                        <p className="text-2xl font-semibold tracking-tight text-foreground">
-                          {program.is_locked ? "Да" : "Нет"}
-                        </p>
-                        <p className="mt-1 text-xs uppercase tracking-[0.18em] text-muted">
-                          зафиксирована
-                        </p>
-                      </div>
-                    </div>
-
-                    {firstDay ? (
-                      <div className="mt-3.5">
-                        <Link
-                          className="action-button action-button--primary w-full justify-center"
-                          href={`/workouts/day/${firstDay.id}` as Route}
-                        >
-                          Открыть день {firstDay.day_of_week}
-                        </Link>
-                      </div>
-                    ) : null}
-                  </article>
-                );
-              })
-            ) : (
-              <article className="metric-tile p-3.5 text-sm text-muted">
-                Архив недель пока пуст.
-              </article>
-            )}
-          </div>
-        </section>
-
-        <section className="grid gap-3" id="history-ai">
-          <div>
-            <p className="workspace-kicker">AI</p>
-            <h2 className="mt-1.5 text-lg font-semibold tracking-tight text-foreground sm:text-xl">
-              Черновики, подтверждения и примененные решения
-            </h2>
-          </div>
-
-          <div className="grid gap-3">
-            {proposals.length ? (
-              proposals.map((proposal) => (
-                <article
-                  className={`rounded-[1.1rem] p-3.5 ${
-                    proposal.status === "applied"
-                      ? "surface-panel surface-panel--accent"
-                      : "surface-panel"
-                  }`}
-                  key={proposal.id}
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-3">
+              return (
+                <article className="surface-panel p-3.5" key={program.id}>
+                  <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="workspace-kicker">
-                        {formatProposalType(proposal.proposal_type)}
-                      </p>
-                      <h3 className="mt-2 text-lg font-semibold tracking-tight text-foreground">
-                        {formatProposalStatus(proposal.status)}
+                      <h3 className="line-clamp-2 text-base font-semibold tracking-tight text-foreground">
+                        {program.title}
                       </h3>
-                      <p className="mt-2 text-sm text-muted">
-                        {fullDateFormatter.format(new Date(proposal.updated_at))}
+                      <p className="mt-1 text-sm text-muted">
+                        {formatDateRange(program.week_start_date, program.week_end_date)}
                       </p>
                     </div>
-
-                    <span className="pill">{proposal.id.slice(0, 8)}</span>
+                    <span className="pill">{formatProgramStatus(program.status)}</span>
                   </div>
+
+                  <div className="mt-3 grid grid-cols-3 gap-2">
+                    <Metric label="Дней" value={program.days.length.toString()} />
+                    <Metric
+                      label="Упр."
+                      value={program.days
+                        .reduce((sum, day) => sum + day.exercises.length, 0)
+                        .toString()}
+                    />
+                    <Metric label="Фикс." value={program.is_locked ? "Да" : "Нет"} />
+                  </div>
+
+                  {firstDay ? (
+                    <div className="mt-3">
+                      <Link
+                        className="action-button action-button--primary w-full justify-center"
+                        href={`/workouts/day/${firstDay.id}` as Route}
+                      >
+                        Открыть день {firstDay.day_of_week}
+                      </Link>
+                    </div>
+                  ) : null}
                 </article>
-              ))
-            ) : (
-              <article className="metric-tile p-3.5 text-sm text-muted">
-                История AI-предложений пока пустая.
-              </article>
-            )}
-          </div>
+              );
+            })
+          ) : (
+            <article className="metric-tile p-3.5 text-sm text-muted">
+              Архив недель пока пуст.
+            </article>
+          )}
         </section>
 
-        <section className="grid gap-3" id="history-data">
-          <div>
-            <p className="workspace-kicker">Данные</p>
-            <h2 className="mt-1.5 text-lg font-semibold tracking-tight text-foreground sm:text-xl">
-              Экспорт и приватность
-            </h2>
-          </div>
+        <section className="grid gap-2.5" id="history-ai">
+          <SectionHeading eyebrow="AI" title="Черновики и решения" />
 
-          <div className="grid gap-3 lg:grid-cols-2">
-            <article className="surface-panel p-3.5">
-              <h3 className="text-lg font-semibold tracking-tight text-foreground">
-                Выгрузки профиля
-              </h3>
-              <div className="mt-4 grid gap-3">
-                {settingsSnapshot.exportJobs.length ? (
-                  settingsSnapshot.exportJobs.map((job) => (
-                    <div className="metric-tile p-3 text-sm text-muted" key={job.id}>
-                      <p className="font-semibold text-foreground">{job.status}</p>
-                      <p className="mt-1">
-                        {fullDateFormatter.format(new Date(job.createdAt))}
-                      </p>
-                    </div>
-                  ))
-                ) : (
-                  <div className="metric-tile p-3 text-sm text-muted">
-                    Выгрузок пока не было.
+          {proposals.length ? (
+            proposals.map((proposal) => (
+              <article
+                className={`rounded-[1.1rem] p-3.5 ${
+                  proposal.status === "applied"
+                    ? "surface-panel surface-panel--accent"
+                    : "surface-panel"
+                }`}
+                key={proposal.id}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="workspace-kicker">
+                      {formatProposalType(proposal.proposal_type)}
+                    </p>
+                    <h3 className="mt-1.5 text-base font-semibold tracking-tight text-foreground">
+                      {formatProposalStatus(proposal.status)}
+                    </h3>
+                    <p className="mt-1 text-sm text-muted">
+                      {fullDateFormatter.format(new Date(proposal.updated_at))}
+                    </p>
                   </div>
-                )}
-              </div>
-            </article>
 
-            <article className="surface-panel p-3.5">
-              <h3 className="text-lg font-semibold tracking-tight text-foreground">
-                События приватности
-              </h3>
-              <div className="mt-4 grid gap-3">
-                {settingsSnapshot.privacyEvents.length ? (
-                  settingsSnapshot.privacyEvents.map((event) => (
-                    <div className="metric-tile p-3 text-sm text-muted" key={event.id}>
-                      <p className="font-semibold text-foreground">
-                        {event.kind === "deletion" ? "Удаление аккаунта" : "Операция с данными"}
-                      </p>
-                      <p className="mt-1">{event.title}</p>
-                      <p className="mt-1">
-                        {fullDateFormatter.format(new Date(event.createdAt))}
-                      </p>
-                    </div>
-                  ))
-                ) : (
-                  <div className="metric-tile p-3 text-sm text-muted">
-                    Событий приватности пока нет.
-                  </div>
-                )}
-              </div>
+                  <span className="pill">{proposal.id.slice(0, 8)}</span>
+                </div>
+              </article>
+            ))
+          ) : (
+            <article className="metric-tile p-3.5 text-sm text-muted">
+              История AI-предложений пока пустая.
             </article>
+          )}
+        </section>
+
+        <section className="grid gap-2.5" id="history-data">
+          <SectionHeading eyebrow="Данные" title="Экспорт и приватность" />
+
+          <div className="grid gap-2.5 lg:grid-cols-2">
+            <DataCard
+              empty="Выгрузок пока не было."
+              items={settingsSnapshot.exportJobs.map((job) => ({
+                id: job.id,
+                title: job.status,
+                detail: fullDateFormatter.format(new Date(job.createdAt)),
+              }))}
+              title="Выгрузки профиля"
+            />
+            <DataCard
+              empty="Событий приватности пока нет."
+              items={settingsSnapshot.privacyEvents.map((event) => ({
+                id: event.id,
+                title:
+                  event.kind === "deletion"
+                    ? "Удаление аккаунта"
+                    : "Операция с данными",
+                detail: `${event.title} · ${fullDateFormatter.format(new Date(event.createdAt))}`,
+              }))}
+              title="События приватности"
+            />
           </div>
         </section>
       </div>
     </AppShell>
+  );
+}
+
+function Metric({ label, value }: { label: string; value: string }) {
+  return (
+    <article className="metric-tile p-2.5">
+      <p className="workspace-kicker">{label}</p>
+      <p className="mt-1 text-base font-semibold tracking-tight text-foreground">
+        {value}
+      </p>
+    </article>
+  );
+}
+
+function SectionHeading({ eyebrow, title }: { eyebrow: string; title: string }) {
+  return (
+    <div>
+      <p className="workspace-kicker">{eyebrow}</p>
+      <h2 className="mt-1 text-lg font-semibold tracking-tight text-foreground">
+        {title}
+      </h2>
+    </div>
+  );
+}
+
+function DataCard({
+  empty,
+  items,
+  title,
+}: {
+  empty: string;
+  items: Array<{ detail: string; id: string; title: string }>;
+  title: string;
+}) {
+  return (
+    <article className="surface-panel p-3.5">
+      <h3 className="text-base font-semibold tracking-tight text-foreground">
+        {title}
+      </h3>
+      <div className="mt-3 grid gap-2">
+        {items.length ? (
+          items.map((item) => (
+            <div className="metric-tile p-3 text-sm text-muted" key={item.id}>
+              <p className="font-semibold text-foreground">{item.title}</p>
+              <p className="mt-1">{item.detail}</p>
+            </div>
+          ))
+        ) : (
+          <div className="metric-tile p-3 text-sm text-muted">{empty}</div>
+        )}
+      </div>
+    </article>
   );
 }

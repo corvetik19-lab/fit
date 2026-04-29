@@ -14,11 +14,13 @@ function parseArgs(argv) {
 async function readMasterPlanProgress() {
   const markdown = await readFile(MASTER_PLAN_PATH, "utf8");
   const match = markdown.match(
-    /Текущий прогресс execution checklist:\s*`(\d+)\s*\/\s*(\d+)`\s*\(`(\d+)%`\)/u,
+    /execution checklist:\s*`(\d+)\s*\/\s*(\d+)`\s*\(`(\d+)%`\)/u,
   );
 
   if (!match) {
-    throw new Error("Не удалось найти строку текущего прогресса в docs/MASTER_PLAN.md");
+    throw new Error(
+      "Не удалось найти строку текущего прогресса в docs/MASTER_PLAN.md",
+    );
   }
 
   const [, done, total, percent] = match;

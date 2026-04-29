@@ -19,6 +19,7 @@ import {
   SETTINGS_PRIVACY_AUDIT_ACTIONS,
 } from "@/lib/settings-data-server-model";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
+import { repairMojibakeDeep } from "@/lib/text/repair-mojibake";
 
 async function loadSettingsPrivacyEvents(userId: string) {
   try {
@@ -152,7 +153,7 @@ export async function loadSettingsDataSnapshot(
     throw deletionRequestResult.error;
   }
 
-  return {
+  return repairMojibakeDeep({
     billingEvents,
     billingReviewRequest,
     deletionRequest: deletionRequestResult.data
@@ -160,7 +161,7 @@ export async function loadSettingsDataSnapshot(
       : null,
     exportJobs: (exportJobsResult.data ?? []).map(mapExportJob),
     privacyEvents,
-  };
+  });
 }
 
 export async function loadSettingsDataSnapshotOrFallback(

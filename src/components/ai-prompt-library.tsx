@@ -30,19 +30,22 @@ const BUILT_IN_PROMPTS: BuiltInPromptTemplate[] = [
     id: "progress-review",
     title: "Разбор прогресса",
     subtitle: "Понять, что улучшить уже на этой неделе.",
-    prompt: "Разбери мой текущий прогресс и подскажи, что улучшить на этой неделе.",
+    prompt:
+      "Разбери мой текущий прогресс и подскажи, что улучшить на этой неделе.",
   },
   {
     id: "light-workout",
     title: "Тренировка без перегруза",
     subtitle: "Собрать безопасную сессию по моей истории.",
-    prompt: "Собери тренировку без перегруза с учётом моей истории.",
+    prompt:
+      "Собери тренировку без перегруза с учётом моей истории и текущего восстановления.",
   },
   {
     id: "meal-plan",
     title: "План питания на день",
-    subtitle: "С упором на белок, восстановление и удобство.",
-    prompt: "Составь план питания на день с упором на белок и восстановление.",
+    subtitle: "Упор на белок, восстановление и удобство.",
+    prompt:
+      "Составь план питания на день с упором на белок и восстановление.",
   },
   {
     id: "meal-photo",
@@ -237,7 +240,7 @@ export function AiPromptLibrary({
 
   return (
     <div
-      className="fixed inset-0 z-[90] flex items-end justify-center bg-[rgba(24,22,19,0.42)] px-3 py-3 backdrop-blur-[10px] sm:items-center sm:px-6 sm:py-6"
+      className="fixed inset-0 z-[90] flex items-end justify-center bg-[rgba(15,23,42,0.36)] px-3 py-3 backdrop-blur-[10px] sm:items-center sm:px-6 sm:py-6"
       data-testid="ai-prompt-library"
       onClick={(event) => {
         if (event.target === event.currentTarget) {
@@ -245,19 +248,20 @@ export function AiPromptLibrary({
         }
       }}
     >
-      <div className="flex max-h-[min(88dvh,52rem)] w-full max-w-3xl flex-col overflow-hidden rounded-[2rem] border border-border bg-[color-mix(in_srgb,var(--surface-overlay)_94%,var(--surface))] shadow-[0_30px_90px_-34px_rgba(24,22,19,0.52)]">
-        <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-5 sm:px-6">
+      <div className="flex max-h-[min(88dvh,52rem)] w-full max-w-3xl flex-col overflow-hidden rounded-[1.6rem] border border-border bg-white shadow-[0_30px_90px_-34px_rgba(15,23,42,0.45)]">
+        <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-4 sm:px-6">
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-foreground">Шаблоны запросов</p>
+            <p className="text-sm font-semibold text-foreground">
+              Шаблоны запросов
+            </p>
             <p className="mt-1 text-sm leading-6 text-muted">
-              Готовые варианты и твои собственные запросы. Шаблон просто
-              вставляется в поле ввода и не засоряет переписку.
+              Готовые и свои запросы. Шаблон вставляется в поле ввода и не засоряет переписку.
             </p>
           </div>
 
           <button
             aria-label="Закрыть библиотеку шаблонов"
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,var(--surface))] text-foreground transition hover:bg-[color-mix(in_srgb,var(--surface-elevated)_98%,var(--surface))]"
+            className="chat-toolbar-button shrink-0"
             onClick={handleClose}
             type="button"
           >
@@ -265,23 +269,23 @@ export function AiPromptLibrary({
           </button>
         </div>
 
-        <div className="flex flex-col gap-4 border-b border-border px-5 py-4 sm:flex-row sm:items-center sm:px-6">
+        <div className="flex flex-col gap-3 border-b border-border px-5 py-4 sm:flex-row sm:items-center sm:px-6">
           <label className="relative min-w-0 flex-1">
             <Search
               className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted"
               size={16}
             />
             <input
-              className="h-12 w-full rounded-full border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,var(--surface))] pl-11 pr-4 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15"
+              className="h-11 w-full rounded-full border border-border bg-white pl-11 pr-4 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/10"
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Поиск по готовым и сохранённым шаблонам"
+              placeholder="Поиск по шаблонам"
               ref={searchInputRef}
               value={search}
             />
           </label>
 
           <button
-            className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,var(--surface))] px-4 text-sm font-medium text-foreground transition hover:bg-[color-mix(in_srgb,var(--surface-elevated)_98%,var(--surface))]"
+            className="action-button action-button--secondary h-11 justify-center px-4 text-sm"
             data-testid="ai-prompt-library-toggle-create"
             onClick={() => setIsCreating((current) => !current)}
             type="button"
@@ -292,24 +296,24 @@ export function AiPromptLibrary({
         </div>
 
         {isCreating ? (
-          <div className="grid gap-3 border-b border-border bg-[color-mix(in_srgb,var(--surface-elevated)_82%,var(--surface))] px-5 py-4 sm:px-6">
+          <div className="grid gap-3 border-b border-border bg-[color:var(--surface-soft)] px-5 py-4 sm:px-6">
             <input
-              className="h-12 w-full rounded-2xl border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,var(--surface))] px-4 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15"
+              className="h-11 w-full rounded-2xl border border-border bg-white px-4 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/10"
               data-testid="ai-prompt-library-new-title"
               onChange={(event) => setNewTitle(event.target.value)}
               placeholder="Название шаблона"
               value={newTitle}
             />
             <textarea
-              className="min-h-28 w-full resize-none rounded-3xl border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,var(--surface))] px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15"
+              className="min-h-24 w-full resize-none rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/10"
               data-testid="ai-prompt-library-new-prompt"
               onChange={(event) => setNewPrompt(event.target.value)}
-              placeholder="Например: составь план питания на 3 дня с учётом моих последних тренировок и текущей цели."
+              placeholder="Например: составь план питания на 3 дня с учётом последних тренировок."
               value={newPrompt}
             />
             <div className="flex flex-wrap gap-2">
               <button
-                className="rounded-full bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                className="action-button action-button--primary"
                 data-testid="ai-prompt-library-save"
                 disabled={!newTitle.trim() || !newPrompt.trim()}
                 onClick={handleCreatePrompt}
@@ -318,7 +322,7 @@ export function AiPromptLibrary({
                 Сохранить шаблон
               </button>
               <button
-                className="rounded-full border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,var(--surface))] px-4 py-2 text-sm font-medium text-foreground transition hover:bg-[color-mix(in_srgb,var(--surface-elevated)_98%,var(--surface))]"
+                className="action-button action-button--secondary"
                 onClick={resetCreateForm}
                 type="button"
               >
@@ -329,47 +333,12 @@ export function AiPromptLibrary({
         ) : null}
 
         <div className="grid flex-1 gap-5 overflow-y-auto px-5 py-5 sm:px-6">
-          <div className="grid gap-3">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-sm font-semibold text-foreground">Готовые шаблоны</p>
-              <span className="pill">{filteredBuiltInPrompts.length}</span>
-            </div>
-
-            {filteredBuiltInPrompts.length ? (
-              <div className="grid gap-3 lg:grid-cols-2">
-                {filteredBuiltInPrompts.map((item) => (
-                  <div className="rounded-3xl border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_86%,var(--surface))] p-4" key={item.id}>
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold text-foreground">{item.title}</p>
-                        <p className="mt-1 text-sm leading-6 text-muted">{item.subtitle}</p>
-                      </div>
-                      <span className="pill">Готово</span>
-                    </div>
-
-                    <p className="mt-4 rounded-2xl bg-[color-mix(in_srgb,var(--accent-soft)_18%,var(--surface-elevated))] px-3 py-3 text-sm leading-6 text-foreground">
-                      {item.prompt}
-                    </p>
-
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      <button
-                        className="inline-flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
-                        onClick={() => handleSelectPrompt(item.prompt)}
-                        type="button"
-                      >
-                        <WandSparkles size={15} strokeWidth={2.1} />
-                        Вставить
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="rounded-3xl border border-dashed border-border bg-[color-mix(in_srgb,var(--surface-elevated)_80%,var(--surface))] px-4 py-5 text-sm leading-6 text-muted">
-                По текущему поиску готовые шаблоны не найдены.
-              </div>
-            )}
-          </div>
+          <PromptGroup
+            emptyText="По текущему поиску готовые шаблоны не найдены."
+            items={filteredBuiltInPrompts}
+            label="Готовые шаблоны"
+            onSelect={handleSelectPrompt}
+          />
 
           <div className="grid gap-3">
             <div className="flex items-center justify-between gap-3">
@@ -381,7 +350,7 @@ export function AiPromptLibrary({
               <div className="grid gap-3 lg:grid-cols-2">
                 {filteredCustomPrompts.map((item) => (
                   <div
-                    className="rounded-3xl border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_86%,var(--surface))] p-4"
+                    className="surface-panel surface-panel--soft p-3.5"
                     data-testid="ai-custom-prompt-card"
                     key={item.id}
                   >
@@ -395,13 +364,13 @@ export function AiPromptLibrary({
                       <span className="pill">Моё</span>
                     </div>
 
-                    <p className="mt-4 rounded-2xl bg-[color-mix(in_srgb,var(--accent-soft)_18%,var(--surface-elevated))] px-3 py-3 text-sm leading-6 text-foreground">
+                    <p className="mt-3 rounded-2xl bg-white px-3 py-3 text-sm leading-6 text-foreground">
                       {item.prompt}
                     </p>
 
-                    <div className="mt-4 flex flex-wrap gap-2">
+                    <div className="mt-3 flex flex-wrap gap-2">
                       <button
-                        className="inline-flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
+                        className="action-button action-button--primary px-4 py-2 text-sm"
                         data-testid="ai-custom-prompt-insert"
                         onClick={() => handleSelectPrompt(item.prompt)}
                         type="button"
@@ -410,7 +379,7 @@ export function AiPromptLibrary({
                         Вставить
                       </button>
                       <button
-                        className="inline-flex items-center gap-2 rounded-full border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,var(--surface))] px-4 py-2 text-sm font-medium text-foreground transition hover:bg-[color-mix(in_srgb,var(--surface-elevated)_98%,var(--surface))]"
+                        className="action-button action-button--secondary px-4 py-2 text-sm"
                         onClick={() => handleDeletePrompt(item.id)}
                         type="button"
                       >
@@ -422,14 +391,69 @@ export function AiPromptLibrary({
                 ))}
               </div>
             ) : (
-              <div className="rounded-3xl border border-dashed border-border bg-[color-mix(in_srgb,var(--surface-elevated)_80%,var(--surface))] px-4 py-5 text-sm leading-6 text-muted">
-                Здесь будут твои шаблоны. Можно сохранять часто используемые
-                запросы для чата, разборов прогресса, питания и тренировок.
+              <div className="surface-panel border-dashed px-4 py-5 text-sm leading-6 text-muted">
+                Здесь будут твои шаблоны для чата, питания и тренировок.
               </div>
             )}
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function PromptGroup({
+  emptyText,
+  items,
+  label,
+  onSelect,
+}: {
+  emptyText: string;
+  items: BuiltInPromptTemplate[];
+  label: string;
+  onSelect: (prompt: string) => void;
+}) {
+  return (
+    <div className="grid gap-3">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm font-semibold text-foreground">{label}</p>
+        <span className="pill">{items.length}</span>
+      </div>
+
+      {items.length ? (
+        <div className="grid gap-3 lg:grid-cols-2">
+          {items.map((item) => (
+            <div className="surface-panel surface-panel--soft p-3.5" key={item.id}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-foreground">{item.title}</p>
+                  <p className="mt-1 text-sm leading-6 text-muted">{item.subtitle}</p>
+                </div>
+                <span className="pill">Готово</span>
+              </div>
+
+              <p className="mt-3 rounded-2xl bg-white px-3 py-3 text-sm leading-6 text-foreground">
+                {item.prompt}
+              </p>
+
+              <div className="mt-3">
+                <button
+                  className="action-button action-button--primary px-4 py-2 text-sm"
+                  onClick={() => onSelect(item.prompt)}
+                  type="button"
+                >
+                  <WandSparkles size={15} strokeWidth={2.1} />
+                  Вставить
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="surface-panel border-dashed px-4 py-5 text-sm leading-6 text-muted">
+          {emptyText}
+        </div>
+      )}
     </div>
   );
 }

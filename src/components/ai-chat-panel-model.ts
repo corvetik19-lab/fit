@@ -1,6 +1,7 @@
 import type { UIMessage } from "ai";
 
 import type { AiChatSessionRow } from "@/lib/ai/chat";
+import type { AiAgentLaunchContext } from "@/lib/ai/agent-intents";
 import type { FeatureAccessSnapshot } from "@/lib/billing-access";
 
 export type ChatMessage = {
@@ -137,6 +138,7 @@ export type AiChatPanelProps = {
   initialSessionId: string | null;
   initialSessionTitle: string | null;
   initialMessages: ChatMessage[];
+  launchContext?: AiAgentLaunchContext | null;
   mealPhotoAccess: FeatureAccessSnapshot;
   onSessionTouched?: (session: AiChatSessionRow) => void;
 };

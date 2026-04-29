@@ -37,6 +37,10 @@ import {
   buildAssistantWorkoutPlanApplyLabel,
 } from "@/lib/ai/assistant-runtime-copy";
 import {
+  AI_AGENT_INTENTS,
+  AI_AGENT_SOURCE_ROUTES,
+} from "@/lib/ai/agent-intents";
+import {
   buildCompactSportsCoachPrompt,
   buildSportsDomainSystemPrompt,
   detectAssistantGuardrail,
@@ -83,8 +87,11 @@ const ASSISTANT_AI_TIMEOUT_MS = 18_000;
 
 const assistantRequestSchema = z.object({
   allowWebSearch: z.boolean().optional(),
+  contextPayload: z.record(z.string(), z.string()).optional(),
+  intent: z.enum(AI_AGENT_INTENTS).optional(),
   messages: z.array(z.custom<UIMessage>()),
   sessionId: z.string().uuid().optional(),
+  sourceRoute: z.enum(AI_AGENT_SOURCE_ROUTES).optional(),
 });
 
 type AssistantProposalOutput = {

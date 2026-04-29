@@ -1,17 +1,23 @@
 export const AI_MEAL_PHOTO_NOT_CONFIGURED_MESSAGE =
-  "Анализ фото временно недоступен. Контур обработки изображений ещё не настроен.";
+  "Meal photo analysis is temporarily unavailable. The image-analysis runtime is not configured yet.";
+
 export const AI_MEAL_PHOTO_UNAUTHORIZED_MESSAGE =
-  "Нужно войти в аккаунт, чтобы использовать ИИ-анализ фото.";
+  "You need to sign in before using AI meal-photo analysis.";
+
 export const AI_MEAL_PHOTO_IMAGE_REQUIRED_MESSAGE =
-  "Нужно приложить изображение блюда.";
+  "Please attach a food image first.";
+
 export const AI_MEAL_PHOTO_IMAGE_INVALID_MESSAGE =
-  "Поддерживаются только изображения.";
+  "Only image files are supported.";
+
 export const AI_MEAL_PHOTO_TOO_LARGE_MESSAGE =
-  "Изображение слишком большое. Используй файл до 8 МБ.";
+  "The image is too large. Please use a file up to 8 MB.";
+
 export const AI_MEAL_PHOTO_SAFETY_MESSAGE =
-  "Комментарий к фото вышел за безопасный контур приложения. Переформулируй запрос в рамках питания и фитнеса.";
+  "The meal-photo note went outside the safe food-and-fitness scope. Please rephrase it inside a nutrition context.";
+
 export const AI_MEAL_PHOTO_SCHEMA_INVALID_MESSAGE =
-  "AI вернул неполный анализ фото. Попробуй другое фото блюда или более чёткий ракурс.";
+  "The AI model returned an incomplete meal-photo analysis. Please try a clearer image or another angle.";
 
 type MealPhotoAnalysis = {
   title: string;
@@ -34,14 +40,11 @@ type MealPhotoAnalysis = {
 function buildMealPhotoFallbackFromNotes(notes: string | null): MealPhotoAnalysis {
   const normalized = notes?.toLowerCase() ?? "";
 
-  if (
-    normalized.includes("nutella") ||
-    (normalized.includes("орех") && normalized.includes("паста"))
-  ) {
+  if (normalized.includes("nutella") || normalized.includes("hazelnut spread")) {
     return {
-      title: "Похоже на ореховую пасту",
+      title: "Likely a hazelnut spread",
       summary:
-        "Живой vision-анализ временно недоступен, поэтому я собрал осторожный черновик по текстовому описанию. Проверь название и состав перед сохранением.",
+        "Live vision analysis is temporarily unavailable, so this is a cautious fallback draft based on the text context only. Please verify the brand, serving size, and nutrition before saving it.",
       confidence: "low",
       estimatedKcal: 539,
       macros: {
@@ -51,22 +54,22 @@ function buildMealPhotoFallbackFromNotes(notes: string | null): MealPhotoAnalysi
       },
       items: [
         {
-          name: "Ореховая паста",
-          portion: "1 порция по фото, нужна ручная проверка",
+          name: "Hazelnut spread",
+          portion: "One photo-based serving, needs manual review",
           confidence: "low",
         },
       ],
       suggestions: [
-        "Проверь бренд и вес упаковки перед сохранением.",
-        "Если это другой продукт, скорректируй название вручную после импорта.",
+        "Check the brand and package size before saving.",
+        "If this is a different product, rename it manually after import.",
       ],
     };
   }
 
   return {
-    title: "Блюдо с фото",
+    title: "Food from photo",
     summary:
-      "Живой vision-анализ временно недоступен, поэтому я сохранил безопасный черновик. Уточни название, состав и порцию вручную перед использованием в плане питания.",
+      "Live vision analysis is temporarily unavailable, so this is a safe fallback draft. Please review the title, composition, and portion manually before using it in your nutrition log.",
     confidence: "low",
     estimatedKcal: 0,
     macros: {
@@ -76,26 +79,26 @@ function buildMealPhotoFallbackFromNotes(notes: string | null): MealPhotoAnalysi
     },
     items: [
       {
-        name: "Не удалось точно распознать блюдо",
-        portion: "Нужна ручная проверка",
+        name: "Dish could not be identified with confidence",
+        portion: "Manual review required",
         confidence: "low",
       },
     ],
     suggestions: [
-      "Добавь короткое описание блюда, чтобы уточнить состав.",
-      "После сохранения скорректируй калории и БЖУ вручную, если знаешь их точнее.",
+      "Add a short description of the dish to help with identification.",
+      "After saving, adjust calories and macros manually if you know the exact values.",
     ],
   };
 }
 
 export function buildMealPhotoVisionPrompt(notes: string | null) {
   return [
-    "Ты анализируешь фото еды для фитнес-приложения fit.",
-    "Верни только структурированный объект анализа блюда.",
-    "Пиши summary и suggestions только по-русски.",
-    "Не давай медицинских советов и не выдумывай ингредиенты, если фото неясное.",
-    "Если уверенность низкая, честно укажи это и снизь confidence.",
-    `Дополнительный пользовательский контекст: ${notes ?? "без дополнительного контекста"}.`,
+    "You are analyzing a food photo for the fit app.",
+    "Return only the structured meal-photo object.",
+    "Keep summary and suggestions in English.",
+    "Do not invent ingredients if the photo is unclear.",
+    "If confidence is low, say so directly and lower the confidence field.",
+    `Additional user context: ${notes ?? "no extra context"}.`,
   ].join(" ");
 }
 
@@ -114,7 +117,7 @@ export function buildMealPhotoFailureResponse(error: unknown) {
     return {
       code: "AI_PROVIDER_UNAVAILABLE" as const,
       message:
-        "Анализ фото временно недоступен. Провайдер не активирован для обработки изображений.",
+        "Meal photo analysis is temporarily unavailable because the provider is not active for image processing.",
       status: 503,
     };
   }
@@ -122,7 +125,7 @@ export function buildMealPhotoFailureResponse(error: unknown) {
   return {
     code: "MEAL_PHOTO_FAILED" as const,
     message:
-      "Не удалось выполнить анализ фото прямо сейчас. Попробуй ещё раз немного позже.",
+      "Meal photo analysis could not be completed right now. Please try again a bit later.",
     status: 502,
   };
 }
@@ -133,18 +136,18 @@ export function buildMealPhotoDeterministicFallback(notes: string | null) {
 
 export function buildMealPhotoUserChatMessage(notes: string | null) {
   return notes?.trim()
-    ? `Загрузил фото еды. Контекст: ${notes.trim()}`
-    : "Загрузил фото еды для анализа.";
+    ? `Uploaded a food photo. Context: ${notes.trim()}`
+    : "Uploaded a food photo for analysis.";
 }
 
 export function formatMealPhotoConfidence(value: "low" | "medium" | "high") {
   switch (value) {
     case "high":
-      return "высокая";
+      return "high";
     case "medium":
-      return "средняя";
+      return "medium";
     default:
-      return "низкая";
+      return "low";
   }
 }
 
@@ -154,27 +157,27 @@ export function buildMealPhotoAssistantChatMessage(result: MealPhotoAnalysis) {
       ? result.items
           .map(
             (item) =>
-              `- ${item.name} • ${item.portion} • уверенность ${formatMealPhotoConfidence(item.confidence)}`,
+              `- ${item.name} • ${item.portion} • confidence ${formatMealPhotoConfidence(item.confidence)}`,
           )
           .join("\n")
-      : "- Состав блюда определить точно не удалось.";
+      : "- Could not identify the visible food confidently.";
   const suggestions =
     result.suggestions.length > 0
       ? result.suggestions.map((item) => `- ${item}`).join("\n")
-      : "- Можно продолжить вопросом про рецепт, замены или план питания.";
+      : "- You can continue with a follow-up question about substitutions or meal planning.";
 
   return [
     `### ${result.title}`,
     result.summary,
     "",
-    `Оценка: **${result.estimatedKcal} ккал**`,
-    `Белки: **${result.macros.protein} г** • Жиры: **${result.macros.fat} г** • Углеводы: **${result.macros.carbs} г**`,
-    `Уверенность анализа: **${formatMealPhotoConfidence(result.confidence)}**`,
+    `Estimate: **${result.estimatedKcal} kcal**`,
+    `Protein: **${result.macros.protein} g** • Fat: **${result.macros.fat} g** • Carbs: **${result.macros.carbs} g**`,
+    `Confidence: **${formatMealPhotoConfidence(result.confidence)}**`,
     "",
-    "Что видно на фото:",
+    "What is visible in the photo:",
     items,
     "",
-    "Что можно сделать дальше:",
+    "What to do next:",
     suggestions,
   ].join("\n");
 }

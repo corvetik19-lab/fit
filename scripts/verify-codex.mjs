@@ -144,6 +144,12 @@ function requireSubstring(errors, text, file, fragment) {
   }
 }
 
+function forbidSubstring(errors, text, file, fragment) {
+  if (text.includes(fragment)) {
+    errors.push(`${file}: forbidden legacy reference "${fragment}"`);
+  }
+}
+
 async function main() {
   const errors = [];
 
@@ -209,6 +215,24 @@ async function main() {
   requireSubstring(errors, rootAgents, "AGENTS.md", "## Prompt contract");
   requireSubstring(errors, rootAgents, "AGENTS.md", "report:master-progress");
   requireSubstring(errors, rootAgents, "AGENTS.md", "wait:vercel-deploy");
+  requireSubstring(errors, rootAgents, "AGENTS.md", "playwright-cli");
+  requireSubstring(errors, rootAgents, "AGENTS.md", "vercel inspect");
+  forbidSubstring(errors, rootAgents, "AGENTS.md", "use Vercel MCP first");
+  forbidSubstring(errors, rootAgents, "AGENTS.md", "Use Playwright for browser verification flows.");
+
+  const playbook = await readUtf8("docs/CODEX_PLAYBOOK.md");
+  requireSubstring(errors, playbook, "docs/CODEX_PLAYBOOK.md", "playwright-cli");
+  requireSubstring(errors, playbook, "docs/CODEX_PLAYBOOK.md", "vercel inspect");
+  requireSubstring(errors, playbook, "docs/CODEX_PLAYBOOK.md", "wait:vercel-deploy");
+  forbidSubstring(errors, playbook, "docs/CODEX_PLAYBOOK.md", "Предпочтительный путь: Vercel MCP");
+  forbidSubstring(errors, playbook, "docs/CODEX_PLAYBOOK.md", "Browser-проверки — через Playwright.");
+  forbidSubstring(errors, playbook, "docs/CODEX_PLAYBOOK.md", "Ожидание и triage deploy — через Vercel MCP");
+
+  const onboarding = await readUtf8("docs/CODEX_ONBOARDING.md");
+  requireSubstring(errors, onboarding, "docs/CODEX_ONBOARDING.md", "playwright-cli");
+  requireSubstring(errors, onboarding, "docs/CODEX_ONBOARDING.md", "vercel inspect");
+  requireSubstring(errors, onboarding, "docs/CODEX_ONBOARDING.md", "wait:vercel-deploy");
+  forbidSubstring(errors, onboarding, "docs/CODEX_ONBOARDING.md", "как подтверждается deploy-ready статус через Vercel MCP");
 
   const reviewContract = await readUtf8("code_review.md");
   requireSubstring(errors, reviewContract, "code_review.md", "@codex review");

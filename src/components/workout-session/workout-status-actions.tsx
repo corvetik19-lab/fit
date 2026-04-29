@@ -30,10 +30,10 @@ export function WorkoutStatusActions({
   pendingMutationCount,
 }: WorkoutStatusActionsProps) {
   const primaryButtonClassName = compact
-    ? "action-button action-button--primary px-4 py-3 text-[11px] uppercase tracking-[0.14em]"
+    ? "action-button action-button--primary px-4 py-2.5 text-xs"
     : "action-button action-button--primary";
   const secondaryButtonClassName = compact
-    ? "action-button action-button--secondary px-4 py-3 text-[11px] uppercase tracking-[0.14em]"
+    ? "action-button action-button--secondary px-4 py-2.5 text-xs"
     : "action-button action-button--secondary";
 
   return (
@@ -69,7 +69,7 @@ export function WorkoutStatusActions({
           onClick={() => onUpdateDayStatus("in_progress")}
           type="button"
         >
-          Снова в работу
+          Вернуть в работу
         </button>
       ) : null}
 

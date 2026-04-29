@@ -1,22 +1,25 @@
 import { isAiProviderConfigurationFailure } from "@/lib/ai/runtime-errors";
 
 export const AI_CHAT_NOT_CONFIGURED_MESSAGE =
-  "Сервис ИИ временно недоступен. Контур чата ещё не настроен.";
+  "AI chat is temporarily unavailable. The chat runtime is not configured yet.";
+
 export const AI_CHAT_UNAUTHORIZED_MESSAGE =
-  "Нужно войти в аккаунт, чтобы открыть чат с ИИ.";
+  "You need to sign in before opening the AI chat.";
+
 export const AI_CHAT_INVALID_PAYLOAD_MESSAGE =
-  "Запрос к чату с ИИ заполнен некорректно.";
+  "The AI chat request payload is invalid.";
 
 const AI_CHAT_PROVIDER_MESSAGE =
-  "Сервис ИИ временно недоступен. Провайдер не активирован для чата и живых ответов.";
+  "AI chat is temporarily unavailable because the provider is not active for live responses.";
+
 const AI_CHAT_RUNTIME_MESSAGE =
-  "Сервис ИИ временно не ответил. Попробуй ещё раз немного позже.";
+  "AI chat did not answer in time. Please try again in a moment.";
 
 export function buildAiChatSafetyFallback() {
   return [
-    "Я не помогаю с опасными или экстремальными рекомендациями.",
-    "Если вопрос касается сильного дефицита, обезвоживания, выраженной боли или медицинских симптомов, безопаснее получить очную консультацию врача.",
-    "Я могу помочь только с более безопасным и реалистичным планом по тренировкам, питанию и восстановлению.",
+    "I cannot help with dangerous or extreme recommendations.",
+    "If this is about severe restriction, dehydration, serious pain, or medical symptoms, the safer next step is an in-person medical consultation.",
+    "I can still help with a safer and more realistic plan for training, nutrition, and recovery.",
   ].join(" ");
 }
 

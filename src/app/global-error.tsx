@@ -28,8 +28,8 @@ export default function GlobalError({
               Что-то пошло не так
             </h1>
             <p className="mt-3 text-sm leading-7 text-muted">
-              Приложение столкнулось с неожиданной ошибкой. Отчёт уже отправлен в
-              мониторинг, и экран можно попробовать открыть заново.
+              Экран столкнулся с неожиданной ошибкой. Отчёт уже отправлен в мониторинг,
+              а страницу можно безопасно открыть заново.
             </p>
             {error.digest ? (
               <p className="mt-4 rounded-2xl bg-stone-100 px-4 py-3 font-mono text-xs text-stone-700">

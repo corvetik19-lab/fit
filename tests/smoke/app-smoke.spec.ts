@@ -3,9 +3,9 @@ import { expect, test } from "@playwright/test";
 test("smoke page is reachable", async ({ page }) => {
   await page.goto("/smoke");
 
-  await expect(page).toHaveTitle(/fit smoke/i);
+  await expect(page).toHaveTitle(/fitora smoke/i);
   await expect(page.getByTestId("smoke-status")).toHaveText("ok");
-  await expect(page.getByRole("heading", { name: "fit smoke" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "fitora smoke" })).toBeVisible();
 });
 
 test("health api returns ok", async ({ request }) => {
@@ -32,7 +32,7 @@ test("pwa assets are reachable", async ({ request }) => {
 
   expect(manifest.name).toContain("fit");
   expect(Array.isArray(manifest.icons)).toBeTruthy();
-  expect(offlineHtml).toContain("fit offline");
+  expect(offlineHtml).toContain("fitora offline");
 });
 
 test("pwa surface exposes install metadata", async ({ page, request }) => {
@@ -48,7 +48,7 @@ test("pwa surface exposes install metadata", async ({ page, request }) => {
   );
   await expect(page.locator('meta[name="application-name"]')).toHaveAttribute(
     "content",
-    "fit",
+    "fitora",
   );
 
   const [manifestResponse, serviceWorkerResponse] = await Promise.all([
@@ -65,8 +65,8 @@ test("pwa surface exposes install metadata", async ({ page, request }) => {
   expect(manifest.display).toBe("standalone");
   expect(manifest.start_url).toBe("/dashboard");
   expect(manifest.lang).toBe("ru");
-  expect(manifest.theme_color).toBe("#0d1218");
-  expect(manifest.background_color).toBe("#0d1218");
+  expect(manifest.theme_color).toBe("#2563EB");
+  expect(manifest.background_color).toBe("#f8fbff");
   expect(manifest.icons).toEqual(
     expect.arrayContaining([
       expect.objectContaining({

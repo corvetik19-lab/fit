@@ -1,5 +1,13 @@
 # Frontend `fit`
 
+## 2026-04-28 Fitora redesign source of truth
+
+- Активный визуальный поток теперь [FITORA_REDESIGN_EXECUTION.md](/C:/fit/docs/FITORA_REDESIGN_EXECUTION.md), а дизайнерский handoff - [FITORA_MOBILE_BRIEF.md](/C:/fit/docs/design-handoff/FITORA_MOBILE_BRIEF.md).
+- Пользовательский бренд: `fitora`; техническое имя репозитория и внутренних сервисов остается `fit`.
+- Визуальный контракт: светлый mobile-first интерфейс, Manrope, палитра `#2563EB / #0891FF / #06B6D4 / #2DD4BF / #0F172A / #64748B / #E2E8F0`, compact app bar, bottom nav, floating AI widget справа снизу.
+- Запрещено возвращать oversized CTA, декоративные hero-блоки, темные legacy-surfaces и видимый mojibake в изменяемых пользовательских областях.
+- При каждом существенном UI-срезе обновлять `FITORA_REDESIGN_EXECUTION.md`, `MASTER_PLAN.md`, `AI_WORKLOG.md` и запускать минимум `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:smoke`.
+
 ## Стек
 
 - Next.js 16 + App Router
@@ -141,6 +149,11 @@ Frontend делится на три уровня:
 
 - AI остаётся chat-first workspace;
 - transcript, composer, history и proposal actions остаются частью одного сценария.
+- С 2026-04-28 `/ai` считается полноценным AI Agent Center, а floating AI widget - только launcher/action sheet.
+- Виджет не должен импортировать `useChat`, хранить отдельный transcript или дублировать composer; все длинные диалоги идут через `AiChatPanel`.
+- Контекстный запуск AI идет через `/ai?intent=...&from=...`; composer получает prefill, но пользователь сам отправляет запрос.
+- Быстрые сценарии агента: план питания, план тренировок, фото еды, штрихкод/Open Food Facts, анализ прогресса, текущий экран и память AI.
+- Proposal-first invariant сохраняется: AI предлагает план, но не применяет его без явного подтверждения.
 
 ### Settings и billing
 
@@ -262,3 +275,35 @@ Frontend делится на три уровня:
 - В этой волне пересобраны: [page.tsx](/C:/fit/src/app/page.tsx), [auth-form.tsx](/C:/fit/src/components/auth-form.tsx), [app-shell-frame.tsx](/C:/fit/src/components/app-shell-frame.tsx), [page-workspace.tsx](/C:/fit/src/components/page-workspace.tsx), [nutrition-goal-adherence.tsx](/C:/fit/src/components/nutrition-goal-adherence.tsx), [nutrition-tracker.tsx](/C:/fit/src/components/nutrition-tracker.tsx), [nutrition/page.tsx](/C:/fit/src/app/nutrition/page.tsx), [dashboard-workspace.tsx](/C:/fit/src/components/dashboard-workspace.tsx), [globals.css](/C:/fit/src/app/globals.css).
 - Новые базовые visual-артефакты production-build: `output/mobile-login-refined.png`, `output/mobile-dashboard-refined.png`, `output/mobile-nutrition-refined.png`, `output/mobile-ai-refined.png`, `output/mobile-settings-refined.png`.
 - Минимальный regression package этого tranche: `npm run lint`, `npm run typecheck`, `npm run build`, `node scripts/run-playwright.mjs PLAYWRIGHT_BASE_URL=http://127.0.0.1:3152 -- test tests/e2e/mobile-pwa-regressions.spec.ts --workers=1`, `node scripts/run-playwright.mjs PLAYWRIGHT_BASE_URL=http://127.0.0.1:3152 -- test tests/e2e/authenticated-app.spec.ts -g "user can open main product sections after sign-in" --workers=1`, `npm run test:smoke`.
+
+## 2026-04-28 Fitora mobile redesign verification
+
+- Активный Fitora-подплан закрыт: [FITORA_REDESIGN_EXECUTION.md](/C:/fit/docs/FITORA_REDESIGN_EXECUTION.md) -> `12 / 12 (100%)`.
+- Визуальный source of truth для следующего UI-цикла: [fitora-mobile-screens-contact-sheet.png](/C:/fit/output/fitora-mobile-screens-contact-sheet.png), отдельные `390x844` скриншоты лежат в [fitora-mobile-screens](/C:/fit/output/fitora-mobile-screens).
+- Обязательный regression package после правок Fitora UI: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:smoke`, затем `node scripts/run-playwright.mjs PLAYWRIGHT_SKIP_AUTH_SETUP=1 -- test tests/e2e/authenticated-app.spec.ts tests/e2e/nutrition-capture.spec.ts tests/e2e/ai-workspace.spec.ts tests/e2e/workout-focus-flow.spec.ts tests/e2e/settings-billing.spec.ts tests/e2e/admin-app.spec.ts tests/e2e/mobile-pwa-regressions.spec.ts --workers=1 --reporter=list`.
+- `/history` теперь обязан деградировать в fallback-архив, а не в global error, если Supabase/Auth временно отдаёт `PGRST301`, `ECONNRESET` или timeout. `/suspended` имеет только Playwright-only visual hook `?__test_suspended=1`; production-пользователь по-прежнему видит этот экран только при реальном `adminState.is_suspended`.
+
+## 2026-04-28 Fitora UX compression
+
+- Активный подплан закрыт: [FITORA_UX_COMPRESSION_EXECUTION.md](/C:/fit/docs/FITORA_UX_COMPRESSION_EXECUTION.md) -> `8 / 8 (100%)`.
+- Новый стандарт для длинных utility/admin-экранов: вторичные сценарии группируются через [compact-disclosure.tsx](/C:/fit/src/components/compact-disclosure.tsx), а не через бесконечную ленту одинаковых карточек.
+- `/settings` обязан сохранять быстрый первый viewport: личная сводка, `fitora access`, затем раскрываемые `profile / billing / data / session`. Query `?section=billing` должен открывать billing сразу.
+- `/admin`, `/admin/users`, `/admin/users/[id]` должны оставаться operator-first: основные действия и статус сверху, bulk/cohorts/audit/deep metrics в disclosure-группах.
+- Свежий visual proof: [fitora-ux-compression-contact-sheet.png](/C:/fit/output/fitora-ux-compression-contact-sheet.png), отдельные PNG в [fitora-ux-compression-screens](/C:/fit/output/fitora-ux-compression-screens).
+
+## 2026-04-28 Compact reference alignment
+
+- Активный повторный подплан закрыт: [FITORA_COMPACT_REFERENCE_EXECUTION.md](/C:/fit/docs/FITORA_COMPACT_REFERENCE_EXECUTION.md) -> `10 / 10 (100%)`.
+- Визуальный источник для бренда теперь `C:\Users\User\Desktop\Фит\Стиль.png`: точные PNG-ассеты лежат в `public/fitora-logo-clean.png`, `public/fitora-mark-clean.png`, `public/fitora-brand-clean.png`, `public/fitora-app-icon-clean.png`, `public/icon-192.png`, `public/icon-512.png`, `public/apple-touch-icon.png`.
+- Login, metadata, manifest, header, bottom nav, drawer, AI FAB, `PageWorkspace`, dashboard и AI workspace уплотнены под mobile-first стиль `fitora`: меньше hero-тяжести, меньше вертикальных отступов, больше первого полезного действия в первом viewport.
+- Свежая визуальная проверка: [fitora-compact-viewport-contact-sheet.png](/C:/fit/output/fitora-compact-viewport-contact-sheet.png), [fitora-compact-full-contact-sheet.png](/C:/fit/output/fitora-compact-full-contact-sheet.png), отдельные PNG в [fitora-compact-screens](/C:/fit/output/fitora-compact-screens).
+- Проверки: `npm run lint`, `npm run typecheck`, `npm run build`, smoke `5 passed`, `mobile-pwa-regressions` `9 passed`, `authenticated-app + ai-workspace + nutrition-capture` `7 passed`, `workout-focus-flow + settings-billing + admin-app` `10 passed / 1 skipped`.
+- Следующий UX-срез для `/settings` и admin full-page должен быть collapsible/accordion-группировкой сценариев, а не очередным уменьшением цветов/радиусов: эти экраны длинные из-за количества рабочих controls, но их первый viewport и shell уже приведены к единому compact-reference стилю.
+
+## 2026-04-29 Trial access UI contract
+
+- `/admin/users/[id]` должен показывать billing-доступ в единой секции `AdminUserBillingSection`: отдельная карточка "Доступ пользователя", текущая подписка, платёжный профиль, лимиты и история подписки.
+- Admin action panel по умолчанию предлагает "Выдать / продлить тестовый доступ", provider `admin_trial`, поле "Дней добавить" ограничено `1..365`.
+- Bulk action для тестового доступа нормализует количество дней и не должен позволять нулевые/отрицательные периоды.
+- `/settings?section=billing` показывает trial как тестовый доступ с понятным остатком дней, датой окончания и provider label, а не как сырой billing status.
+- E2E для неидемпотентного admin billing POST не должен делать автоматические повторы одного и того же POST; используем один запрос с длинным timeout.

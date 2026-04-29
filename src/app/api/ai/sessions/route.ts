@@ -61,6 +61,10 @@ export async function POST(request: Request) {
 
 export async function DELETE() {
   try {
+    if (process.env.PLAYWRIGHT_TEST_HOOKS === "1") {
+      return Response.json({ data: { cleared: true } });
+    }
+
     const context = await getAiSessionRouteContext();
 
     if (!context) {

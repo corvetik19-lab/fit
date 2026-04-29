@@ -23,7 +23,7 @@ export function WorkoutStepStrip({
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2.5">
       <div className="flex items-center justify-between gap-3">
         <p className="workspace-kicker">Шаги тренировки</p>
         <p className="text-xs text-muted">Открываются по порядку</p>
@@ -39,10 +39,10 @@ export function WorkoutStepStrip({
             <div
               className={`h-1.5 flex-1 rounded-full transition ${
                 isExerciseStepComplete || isActive
-                  ? "bg-[color:var(--accent)]"
+                  ? "bg-accent"
                   : isStepUnlocked
-                    ? "bg-[color:var(--primary-fixed)]"
-                    : "bg-[color:var(--surface-container-highest)]"
+                    ? "bg-[color:var(--accent-soft)]"
+                    : "bg-border"
               }`}
               key={`workout-step-bar-${exercise.id}`}
             />
@@ -59,12 +59,12 @@ export function WorkoutStepStrip({
           return (
             <button
               aria-pressed={isActive}
-              className={`min-w-[4.25rem] shrink-0 rounded-[1rem] px-3 py-3 text-center transition ${
+              className={`min-w-[4.25rem] shrink-0 rounded-[1rem] px-3 py-2.5 text-center transition ${
                 isActive
-                  ? "bg-[color:var(--accent)] text-[color:var(--on-primary)] shadow-[0_22px_40px_-30px_rgba(0,64,224,0.58)]"
+                  ? "bg-accent text-white shadow-[0_22px_40px_-30px_rgba(8,145,255,0.58)]"
                   : isStepUnlocked
-                    ? "bg-[color:var(--surface-container-high)] text-[color:var(--foreground)] hover:bg-[color:var(--surface-container-highest)]"
-                    : "bg-[color:var(--surface-container-low)] text-slate-400 opacity-90"
+                    ? "bg-white text-foreground hover:bg-[color:var(--surface-elevated)]"
+                    : "bg-[color:var(--surface-soft)] text-muted opacity-75"
               }`}
               data-complete={isExerciseStepComplete ? "true" : "false"}
               data-locked={isStepUnlocked ? "false" : "true"}
@@ -88,7 +88,7 @@ export function WorkoutStepStrip({
                     index + 1
                   )}
                 </span>
-                <span className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-80">
+                <span className="text-[10px] font-bold uppercase tracking-[0.16em] opacity-80">
                   {isExerciseStepComplete
                     ? "Готов"
                     : isActive
@@ -112,12 +112,12 @@ export function WorkoutStepStrip({
           return (
             <button
               aria-pressed={isActive}
-              className={`min-w-[8.9rem] shrink-0 rounded-[1.1rem] px-3 py-3 text-left transition ${
+              className={`min-w-[8.9rem] shrink-0 rounded-[1.1rem] px-3 py-2.5 text-left transition ${
                 isActive
-                  ? "bg-[color:var(--surface-container-high)] text-[color:var(--foreground)]"
+                  ? "bg-[color:var(--accent-soft)] text-foreground"
                   : isStepUnlocked
-                    ? "bg-[color:var(--surface-container-low)] text-[color:var(--foreground)] hover:bg-[color:var(--surface-container-high)]"
-                    : "bg-[color:var(--surface-container-low)] text-slate-400 opacity-85"
+                    ? "bg-white text-foreground hover:bg-[color:var(--surface-elevated)]"
+                    : "bg-[color:var(--surface-soft)] text-muted opacity-75"
               }`}
               data-complete={isExerciseStepComplete ? "true" : "false"}
               data-locked={isStepUnlocked ? "false" : "true"}
@@ -132,8 +132,8 @@ export function WorkoutStepStrip({
               type="button"
             >
               <div className="min-w-0">
-                <span className="block text-[10px] font-bold uppercase tracking-[0.2em] text-muted">
-                  {`Шаг ${index + 1}`}
+                <span className="block text-[10px] font-bold uppercase tracking-[0.16em] text-muted">
+                  Шаг {index + 1}
                 </span>
                 <span className="mt-1 block truncate text-sm font-semibold">
                   {exercise.exercise_title_snapshot}

@@ -1,22 +1,31 @@
 "use client";
 
 import Link from "next/link";
+import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import {
   Brain,
+  Camera,
   Check,
-  CheckCircle2,
   ChevronDown,
   ChevronLeft,
   ChevronUp,
   ClipboardList,
+  Dumbbell,
   History,
+  ScanBarcode,
   Sparkles,
+  Utensils,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { AiChatPanel } from "@/components/ai-chat-panel";
 import { AiWorkspaceSidebar } from "@/components/ai-workspace-sidebar";
+import {
+  createAiAgentLaunchHref,
+  type AiAgentLaunchContext,
+  type AiAgentIntent,
+} from "@/lib/ai/agent-intents";
 import type { AiChatMessageRow, AiChatSessionRow } from "@/lib/ai/chat";
 import type { AiPlanProposalRow } from "@/lib/ai/proposals";
 import { mealPlanSchema, workoutPlanSchema } from "@/lib/ai/schemas";
@@ -24,13 +33,13 @@ import type { AiStructuredKnowledgeSnapshot } from "@/lib/ai/structured-knowledg
 import type { FeatureAccessSnapshot } from "@/lib/billing-access";
 
 type WorkspaceSectionKey = "history" | "context" | "plans";
-type AssistantFlowKey = "request" | "analysis" | "proposal" | "approve" | "apply";
 
 type AiWorkspaceProps = {
   chatAccess: FeatureAccessSnapshot;
   initialMessages: AiChatMessageRow[];
   initialSessionId: string | null;
   initialSessionTitle: string | null;
+  launchContext: AiAgentLaunchContext | null;
   mealPhotoAccess: FeatureAccessSnapshot;
   proposals: AiPlanProposalRow[];
   recentSessions: AiChatSessionRow[];
@@ -52,46 +61,58 @@ const sectionMeta: Array<{
   {
     key: "context",
     label: "Контекст",
-    description: "Факты и сигналы, на которые AI опирается в ответах.",
+    description: "Факты, на которые AI опирается в ответах.",
     icon: Brain,
   },
   {
     key: "plans",
     label: "Планы",
-    description: "Черновики, подтверждение и перенос в тренировки или питание.",
+    description: "Черновики тренировок и питания, созданные AI.",
     icon: ClipboardList,
   },
 ];
 
-const assistantFlowSteps: Array<{
+const agentActionMeta: Array<{
   description: string;
-  key: AssistantFlowKey;
+  icon: typeof Sparkles;
+  intent: AiAgentIntent;
   label: string;
+  title: string;
 }> = [
   {
-    key: "request",
-    label: "Запрос",
-    description: "Сформулируй задачу или приложи фото еды.",
+    description: "Рацион, калории и приемы пищи как черновик с подтверждением.",
+    icon: Utensils,
+    intent: "meal_plan",
+    label: "Питание",
+    title: "План питания",
   },
   {
-    key: "analysis",
-    label: "Анализ",
-    description: "AI подтягивает контекст, историю и свежие сигналы.",
+    description: "Неделя тренировок, нагрузка и адаптация под цель.",
+    icon: Dumbbell,
+    intent: "workout_plan",
+    label: "Тренировки",
+    title: "План тренировок",
   },
   {
-    key: "proposal",
-    label: "Черновик",
-    description: "Появляется структурированное предложение по плану или разбору.",
+    description: "Загрузка изображения блюда прямо в чат AI-коуча.",
+    icon: Camera,
+    intent: "meal_photo",
+    label: "Фото",
+    title: "Разбор еды",
   },
   {
-    key: "approve",
-    label: "Подтверждение",
-    description: "Ты проверяешь детали и утверждаешь нужный вариант.",
+    description: "Состав, КБЖУ и вывод по продукту после Open Food Facts.",
+    icon: ScanBarcode,
+    intent: "barcode",
+    label: "Штрихкод",
+    title: "Разбор продукта",
   },
   {
-    key: "apply",
-    label: "Применение",
-    description: "План переносится в рабочие разделы приложения.",
+    description: "История, факты и следующий практичный шаг.",
+    icon: History,
+    intent: "progress_review",
+    label: "Прогресс",
+    title: "Анализ прогресса",
   },
 ];
 
@@ -169,61 +190,6 @@ function parseProposalSummary(proposal: AiPlanProposalRow) {
     .join(" · ");
 }
 
-function getCurrentFlowStep(
-  messagesCount: number,
-  proposals: AiPlanProposalRow[],
-): AssistantFlowKey {
-  if (proposals.some((proposal) => proposal.status === "applied")) {
-    return "apply";
-  }
-
-  if (proposals.some((proposal) => proposal.status === "approved")) {
-    return "approve";
-  }
-
-  if (proposals.some((proposal) => proposal.status === "draft")) {
-    return "proposal";
-  }
-
-  if (messagesCount > 0) {
-    return "analysis";
-  }
-
-  return "request";
-}
-
-function getFlowStepState(step: AssistantFlowKey, current: AssistantFlowKey) {
-  const currentIndex = assistantFlowSteps.findIndex((item) => item.key === current);
-  const stepIndex = assistantFlowSteps.findIndex((item) => item.key === step);
-
-  if (stepIndex < currentIndex) {
-    return "done";
-  }
-
-  if (stepIndex === currentIndex) {
-    return "active";
-  }
-
-  return "pending";
-}
-
-function getNextFlowHint(current: AssistantFlowKey) {
-  switch (current) {
-    case "request":
-      return "Сформулируй задачу в чате, чтобы AI начал анализ.";
-    case "analysis":
-      return "Дождись ответа или черновика прямо в ленте диалога.";
-    case "proposal":
-      return "Открой раздел «Планы» или подтверди карточку предложения в чате.";
-    case "approve":
-      return "После подтверждения можно сразу перенести план в рабочий раздел.";
-    case "apply":
-      return "Готово: переходи в тренировки или питание и работай с новым планом.";
-    default:
-      return "";
-  }
-}
-
 async function fetchMutationWithTimeout(
   input: Parameters<typeof fetch>[0],
   init?: RequestInit,
@@ -252,73 +218,6 @@ function clearSessionQueryParam() {
   window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
 }
 
-function FlowCard({ currentStep }: { currentStep: AssistantFlowKey }) {
-  const currentMeta =
-    assistantFlowSteps.find((step) => step.key === currentStep) ?? assistantFlowSteps[0];
-
-  return (
-    <section className="surface-panel p-3.5 sm:p-4" data-testid="ai-assistant-flow">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="workspace-kicker">Сценарий AI</p>
-          <h2 className="mt-1.5 text-lg font-semibold text-foreground sm:text-xl">
-            От запроса до применения
-          </h2>
-          <p className="mt-1.5 max-w-3xl text-sm leading-5 text-muted">
-            AI не пишет планы за тебя молча. Сначала он понимает задачу, затем
-            собирает контекст, показывает черновик и только после подтверждения
-            переносит решение в продукт.
-          </p>
-        </div>
-        <span className="pill">Сейчас: {currentMeta.label}</span>
-      </div>
-
-      <div className="mt-3.5 grid gap-2.5 xl:grid-cols-5">
-        {assistantFlowSteps.map((step, index) => {
-          const state = getFlowStepState(step.key, currentStep);
-          const isDone = state === "done";
-          const isActive = state === "active";
-
-          return (
-            <article
-                className={`rounded-[1.1rem] border px-3.5 py-3.5 text-sm ${
-                isActive
-                  ? "border-accent/24 bg-[color-mix(in_srgb,var(--accent-soft)_76%,white)] shadow-[0_24px_52px_-38px_rgba(0,64,224,0.28)]"
-                  : isDone
-                    ? "border-emerald-500/25 bg-emerald-500/12"
-                    : "border-border bg-[color-mix(in_srgb,var(--surface-elevated)_84%,var(--surface))]"
-              }`}
-              data-flow-state={state}
-              key={step.key}
-            >
-              <div className="flex items-center gap-2">
-                <span
-                  className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold ${
-                    isActive
-                      ? "bg-accent text-white"
-                      : isDone
-                      ? "bg-emerald-500 text-white"
-                        : "bg-[color-mix(in_srgb,var(--surface-elevated)_96%,var(--surface))] text-muted"
-                  }`}
-                >
-                  {isDone ? <CheckCircle2 size={14} strokeWidth={2.2} /> : index + 1}
-                </span>
-                <p className="font-semibold text-foreground">{step.label}</p>
-              </div>
-              <p className="mt-2 leading-5 text-muted">{step.description}</p>
-            </article>
-          );
-        })}
-      </div>
-
-      <div className="metric-tile mt-3.5 px-3.5 py-3 text-sm text-muted">
-        <span className="font-semibold text-foreground">Следующий шаг.</span>{" "}
-        {getNextFlowHint(currentStep)}
-      </div>
-    </section>
-  );
-}
-
 function WorkspaceStatCard({
   label,
   tone = "default",
@@ -329,52 +228,142 @@ function WorkspaceStatCard({
   value: string;
 }) {
   return (
-    <article className={`metric-tile p-3.5 ${tone === "accent" ? "surface-panel--accent" : ""}`}>
-      <p className="text-xs uppercase tracking-[0.18em] text-muted">{label}</p>
-      <p className="mt-2 text-2xl font-semibold text-foreground">{value}</p>
+    <article className={`metric-tile p-2 ${tone === "accent" ? "surface-panel--accent" : ""}`}>
+      <p className="workspace-kicker text-[0.55rem]">{label}</p>
+      <p className="mt-0.5 text-base font-semibold text-foreground">{value}</p>
     </article>
+  );
+}
+
+function AiLaunchContextCard({
+  launchContext,
+}: {
+  launchContext: AiAgentLaunchContext | null;
+}) {
+  if (!launchContext) {
+    return null;
+  }
+
+  return (
+    <section
+      className="surface-panel surface-panel--accent p-3.5 sm:p-4"
+      data-testid="ai-launch-context"
+    >
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex flex-wrap gap-1.5">
+            <span className="pill">{launchContext.badge}</span>
+            <span className="pill">из раздела {launchContext.sourceLabel}</span>
+          </div>
+          <h2 className="mt-2 text-base font-semibold text-foreground sm:text-lg">
+            {launchContext.title}
+          </h2>
+          <p className="mt-1 text-sm leading-5 text-muted">
+            {launchContext.description}
+          </p>
+        </div>
+        <a
+          className="toggle-chip toggle-chip--active shrink-0 px-3 py-2 text-xs font-semibold"
+          href="#ai-chat-composer"
+        >
+          Начать в чате
+        </a>
+      </div>
+    </section>
+  );
+}
+
+function AiAgentActionDeck({
+  sourceRoute,
+}: {
+  sourceRoute: AiAgentLaunchContext["sourceRoute"];
+}) {
+  return (
+    <section className="surface-panel p-3 sm:p-3.5" data-testid="ai-agent-actions">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="workspace-kicker">AI-действия</p>
+          <h2 className="mt-1 text-base font-semibold text-foreground">
+            Что может сделать агент
+          </h2>
+        </div>
+        <span className="pill">proposal-first</span>
+      </div>
+
+      <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
+        {agentActionMeta.map((action) => {
+          const Icon = action.icon;
+
+          return (
+            <Link
+              className="section-chip flex min-w-0 items-start gap-2.5 px-3 py-2.5 text-left"
+              href={createAiAgentLaunchHref({
+                intent: action.intent,
+                sourceRoute,
+              }) as Route}
+              key={action.intent}
+            >
+              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[0.9rem] bg-[color:var(--accent-soft)] text-accent-strong">
+                <Icon size={17} strokeWidth={2.2} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="pill px-2 py-1 text-[0.62rem]">
+                  {action.label}
+                </span>
+                <span className="mt-1 block text-sm font-semibold">
+                  {action.title}
+                </span>
+                <span className="mt-1 line-clamp-2 text-xs leading-5 text-muted">
+                  {action.description}
+                </span>
+              </span>
+            </Link>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 
 function PlansSection({ proposals }: { proposals: AiPlanProposalRow[] }) {
   return (
-    <section className="surface-panel p-4 sm:p-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
+    <section className="surface-panel p-3.5 sm:p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
           <p className="workspace-kicker">Планы</p>
-          <h2 className="mt-1.5 text-lg font-semibold text-foreground sm:text-xl">
-            Черновики, подтверждение и перенос
+          <h2 className="mt-1 text-lg font-semibold text-foreground">
+            Черновики AI
           </h2>
-          <p className="mt-1.5 max-w-3xl text-sm leading-5 text-muted">
-            Здесь лежат предложения AI по тренировкам и питанию. Их можно
-            спокойно посмотреть, подтвердить и только потом применить в рабочие
-            разделы приложения.
+          <p className="mt-1 text-sm leading-5 text-muted">
+            Предложения по тренировкам и питанию остаются proposal-first.
           </p>
         </div>
-        <span className="pill">{proposals.length} в работе</span>
+        <span className="pill">{proposals.length}</span>
       </div>
 
-      <div className="mt-3.5 grid gap-2.5" id="ai-plans">
+      <div className="mt-3 grid gap-2.5" id="ai-plans">
         {proposals.length ? (
           proposals.map((proposal) => (
-            <article className="metric-tile p-3.5" key={proposal.id}>
-              <div className="flex flex-wrap items-start justify-between gap-3">
+            <article className="metric-tile p-3" key={proposal.id}>
+              <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="pill">
-                      {proposal.proposal_type === "meal_plan" ? "Питание" : "Тренировки"}
+                      {proposal.proposal_type === "meal_plan"
+                        ? "Питание"
+                        : "Тренировки"}
                     </span>
                     <span className="pill">{formatProposalStatus(proposal.status)}</span>
                   </div>
-                  <p className="mt-2.5 text-base font-semibold text-foreground">
+                  <p className="mt-2 break-words text-base font-semibold text-foreground">
                     {parseProposalTitle(proposal)}
                   </p>
-                  <p className="mt-1.5 text-sm leading-5 text-muted">
+                  <p className="mt-1 break-words text-sm leading-5 text-muted">
                     {parseProposalSummary(proposal) ||
-                      "Параметры черновика уже сохранены и готовы к проверке."}
+                      "Параметры черновика сохранены и готовы к проверке."}
                   </p>
                 </div>
-                <p className="text-xs text-muted">
+                <p className="shrink-0 text-xs text-muted">
                   {dateFormatter.format(new Date(proposal.updated_at))}
                 </p>
               </div>
@@ -382,11 +371,11 @@ function PlansSection({ proposals }: { proposals: AiPlanProposalRow[] }) {
               <div className="mt-3 flex flex-wrap gap-2">
                 {proposal.status !== "applied" ? (
                   <span className="toggle-chip toggle-chip--active px-3 py-1.5 text-xs font-semibold">
-                    Можно подтвердить или применить прямо из чата
+                    Подтверждение и применение доступны из чата
                   </span>
                 ) : (
                   <Link
-                      className="toggle-chip px-3 py-1.5 text-sm font-semibold"
+                    className="toggle-chip px-3 py-1.5 text-sm font-semibold"
                     href={proposal.proposal_type === "meal_plan" ? "/nutrition" : "/workouts"}
                   >
                     Открыть раздел
@@ -410,6 +399,7 @@ export function AiWorkspace({
   initialMessages,
   initialSessionId,
   initialSessionTitle,
+  launchContext,
   mealPhotoAccess,
   proposals,
   recentSessions,
@@ -429,19 +419,9 @@ export function AiWorkspace({
     setActiveChatSessionId(initialSessionId);
   }, [initialSessionId]);
 
-  const currentFlowStep = useMemo(
-    () => getCurrentFlowStep(initialMessages.length, proposals),
-    [initialMessages.length, proposals],
-  );
-
   function upsertSession(session: AiChatSessionRow) {
     const sessionAlreadyKnown = sessionList.some((item) => item.id === session.id);
 
-    // Do not force-remount the active chat panel when a brand-new local
-    // session is created from inside the panel itself. The panel already owns
-    // that session locally, and flipping the outer active session id here would
-    // change the keyed AiChatPanel instance mid-request and drop the in-flight
-    // assistant stream before the transcript can render.
     if (sessionAlreadyKnown || session.id === initialSessionId) {
       setActiveChatSessionId(session.id);
     }
@@ -508,7 +488,7 @@ export function AiWorkspace({
       return;
     }
 
-    if (!window.confirm("Очистить всю историю AI-чатов? Это действие нельзя отменить.")) {
+    if (!window.confirm("Очистить всю историю AI-чатов? Это нельзя отменить.")) {
       return;
     }
 
@@ -572,17 +552,17 @@ export function AiWorkspace({
     activeChatSessionId !== null && activeChatSessionId === initialSessionId;
   const summaryCards = [
     {
-      label: "Чатов в истории",
+      label: "Чатов",
       tone: "default" as const,
       value: sessionList.length.toLocaleString("ru-RU"),
     },
     {
-      label: "Фактов в контексте",
+      label: "Фактов",
       tone: "default" as const,
       value: structuredKnowledge.facts.length.toLocaleString("ru-RU"),
     },
     {
-      label: "Черновиков",
+      label: "Планов",
       tone: "accent" as const,
       value: proposals.length.toLocaleString("ru-RU"),
     },
@@ -603,117 +583,71 @@ export function AiWorkspace({
   }
 
   return (
-    <div className="grid gap-4">
-      <section className="surface-panel overflow-hidden p-4 sm:p-5">
-        <div className="grid gap-4 xl:grid-cols-[1.08fr_0.92fr]">
-          <div className="space-y-3.5">
-            <div className="flex flex-wrap gap-2">
-              <span className="pill">AI коуч</span>
-              <span className="pill">
-                {mealPhotoAccess.allowed ? "Фото еды включено" : "Фото еды отключено"}
-              </span>
+    <div className="grid gap-2.5 sm:gap-3">
+      <section className="surface-panel p-2.5 sm:p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex flex-wrap gap-1.5">
+              <span className="pill">AI-коуч</span>
               <span className="pill">
                 {chatAccess.allowed ? "Чат доступен" : "Доступ ограничен"}
               </span>
+              <span className="pill">
+                {mealPhotoAccess.allowed ? "Фото еды включено" : "Фото еды выключено"}
+              </span>
             </div>
-
-            <div className="space-y-2.5">
-              <h1 className="max-w-4xl text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-                Чат, контекст и перенос решений в один рабочий AI-экран.
-              </h1>
-              <p className="max-w-3xl text-sm leading-5 text-muted sm:text-[0.95rem]">
-                Здесь остаются только полезные поверхности: сам диалог, история,
-                факты, предложения по планам и быстрый разбор фото еды. На
-                телефоне экран ощущается как компактная PWA-панель, а не как
-                набор перегруженных виджетов.
-              </p>
-            </div>
-
-            <div className="grid gap-2.5 md:grid-cols-3">
-              {summaryCards.map((card) => (
-                <WorkspaceStatCard
-                  key={card.label}
-                  label={card.label}
-                  tone={card.tone}
-                  value={card.value}
-                />
-              ))}
-            </div>
+            <h1 className="mt-2 text-[1.12rem] font-semibold leading-tight tracking-tight text-foreground sm:text-2xl">
+              Чат, планы и контекст
+            </h1>
+            <p className="mt-1 text-[0.78rem] leading-5 text-muted sm:text-sm">
+              Задавай вопросы, собирай план питания или тренировку и подтверждай предложения перед применением.
+            </p>
           </div>
 
-          <div className="grid gap-2.5">
-            <article className="surface-panel surface-panel--accent p-4">
-              <div className="relative z-[1]">
-                <p className="athletic-hero-chip">Сейчас в фокусе</p>
-                <p className="mt-2.5 text-lg font-semibold text-[color:var(--on-primary)]">
-                  AI-коуч остаётся proposal-first: сначала анализ, затем
-                  черновик, потом подтверждение и только после этого перенос в
-                  продукт.
-                </p>
-                <div className="mt-3.5 flex flex-wrap gap-2">
-                  <span className="athletic-hero-chip">
-                    {proposals.length} черновиков
-                  </span>
-                  <span className="athletic-hero-chip">
-                    {structuredKnowledge.facts.length} фактов в контексте
-                  </span>
-                </div>
-              </div>
-            </article>
+          <button
+            className="toggle-chip shrink-0 px-2.5 py-2 text-xs font-semibold"
+            onClick={returnToApp}
+            type="button"
+          >
+            <ChevronLeft size={16} strokeWidth={2.2} />
+            Назад
+          </button>
+        </div>
 
-            <div className="flex flex-wrap gap-2">
-              <button
-                className="toggle-chip px-3.5 py-1.5 text-sm font-semibold"
-                onClick={returnToApp}
-                type="button"
-              >
-                <ChevronLeft size={16} strokeWidth={2.2} />
-                Вернуться к дашборду
-              </button>
-              <Link
-                className="toggle-chip toggle-chip--active px-3.5 py-1.5 text-sm font-semibold"
-                href="/dashboard#ai"
-              >
-                Открыть AI-сводку
-              </Link>
-            </div>
-          </div>
+        <div className="mt-2.5 grid grid-cols-3 gap-1.5 sm:gap-2">
+          {summaryCards.map((card) => (
+            <WorkspaceStatCard
+              key={card.label}
+              label={card.label}
+              tone={card.tone}
+              value={card.value}
+            />
+          ))}
         </div>
       </section>
 
-      <FlowCard currentStep={currentFlowStep} />
+      <AiLaunchContextCard launchContext={launchContext} />
 
-      <section className="surface-panel p-3.5 sm:p-4">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <p className="workspace-kicker">Разделы AI</p>
-            <h2 className="mt-1.5 text-lg font-semibold text-foreground sm:text-xl">
-              Открывай только нужный слой рабочего экрана
-            </h2>
-          </div>
-          <span className="pill">Сейчас: {activeMeta.label}</span>
-        </div>
+      <AiAgentActionDeck sourceRoute={launchContext?.sourceRoute ?? "ai"} />
 
-        <div className="mt-3.5 md:hidden">
+      <section className="surface-panel p-2.5 sm:p-3">
+        <div className="md:hidden">
           <button
             aria-expanded={isMobileMenuOpen}
-            className="section-chip flex w-full items-center justify-between gap-3 px-3.5 py-2.5 text-left"
+            className="section-chip flex w-full items-center justify-between gap-2.5 px-3 py-2.5 text-left"
             data-testid="ai-workspace-mobile-trigger"
             onClick={() => setIsMobileMenuOpen((current) => !current)}
             type="button"
           >
             <span className="min-w-0 flex-1">
-              <span className="block text-xs uppercase tracking-[0.18em] text-muted">
+              <span className="block text-[10px] uppercase tracking-[0.16em] text-muted">
                 Раздел AI
               </span>
-              <span className="mt-1 block text-sm font-semibold text-foreground">
+              <span className="mt-0.5 block text-sm font-semibold text-foreground">
                 {activeMeta.label}
               </span>
-              <span className="mt-1 block text-xs leading-5 text-muted">
-                {activeMeta.description}
-              </span>
             </span>
-            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,var(--surface))] text-foreground shadow-[0_18px_32px_-26px_rgba(0,64,224,0.18)]">
+            <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border bg-white text-foreground">
               {isMobileMenuOpen ? (
                 <ChevronUp size={18} strokeWidth={2.2} />
               ) : (
@@ -723,7 +657,7 @@ export function AiWorkspace({
           </button>
 
           {isMobileMenuOpen ? (
-            <div className="mt-2.5 grid gap-2 rounded-[1.4rem] border border-border bg-[color-mix(in_srgb,var(--surface-overlay)_92%,var(--surface-elevated))] p-2.5 shadow-[0_30px_60px_-48px_rgba(18,32,27,0.34)]">
+            <div className="mt-2 grid gap-1.5 rounded-[1rem] border border-border bg-white p-1.5">
               {sectionMeta.map((section) => {
                 const Icon = section.icon;
                 const isActive = section.key === activeSection;
@@ -731,7 +665,7 @@ export function AiWorkspace({
                 return (
                   <button
                     aria-pressed={isActive}
-                    className={`section-chip flex w-full items-start justify-between gap-3 px-3 py-3 text-left ${
+                    className={`section-chip flex w-full items-start justify-between gap-2.5 px-3 py-2.5 text-left ${
                       isActive ? "section-chip--active" : "border-transparent"
                     }`}
                     data-testid={`ai-workspace-option-${section.key}`}
@@ -740,26 +674,20 @@ export function AiWorkspace({
                     type="button"
                   >
                     <span className="flex min-w-0 flex-1 items-start gap-3">
-                      <span
-                        className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl ${
-                          isActive
-                            ? "border border-accent/15 bg-[color-mix(in_srgb,var(--accent-soft)_72%,white)] text-accent"
-                            : "bg-accent/8 text-accent"
-                        }`}
-                      >
+                      <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-[color:var(--accent-soft)] text-accent">
                         <Icon size={17} strokeWidth={2.2} />
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block text-sm font-semibold">
                           {section.label}
                         </span>
-                        <span className="mt-1 block text-xs leading-5 text-muted">
+                        <span className="mt-0.5 hidden text-xs leading-5 text-muted min-[390px]:block">
                           {section.description}
                         </span>
                       </span>
                     </span>
                     {isActive ? (
-                      <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-emerald-500/25 bg-emerald-500/12 text-emerald-200">
+                      <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-emerald-300 bg-emerald-50 text-emerald-700">
                         <Check size={16} strokeWidth={2.3} />
                       </span>
                     ) : null}
@@ -770,7 +698,7 @@ export function AiWorkspace({
           ) : null}
         </div>
 
-        <div className="mt-3.5 hidden items-center gap-2 overflow-x-auto pb-1 md:flex">
+        <div className="hidden items-center gap-2 overflow-x-auto md:flex">
           {sectionMeta.map((section) => {
             const Icon = section.icon;
             const isActive = section.key === activeSection;
@@ -778,7 +706,7 @@ export function AiWorkspace({
             return (
               <button
                 aria-pressed={isActive}
-                className={`section-chip inline-flex items-center gap-2 px-4 py-2 text-sm font-medium ${
+                className={`section-chip inline-flex min-w-[9rem] items-center gap-2 px-3 py-2.5 text-sm font-medium ${
                   isActive ? "section-chip--active" : ""
                 }`}
                 key={section.key}
@@ -791,21 +719,17 @@ export function AiWorkspace({
             );
           })}
         </div>
-
-        <div className="metric-tile mt-3.5 px-3.5 py-3 text-sm text-muted">
-          <span className="font-semibold text-foreground">{activeMeta.label}.</span>{" "}
-          {activeMeta.description}
-        </div>
       </section>
 
-      <div className="grid gap-3.5 xl:grid-cols-[minmax(0,1.15fr)_22rem]">
+      <div className="grid gap-2.5 xl:grid-cols-[minmax(0,1.15fr)_22rem]">
         <div className="min-w-0">
           <AiChatPanel
             access={chatAccess}
             initialMessages={shouldReuseServerSession ? initialMessages : []}
             initialSessionId={shouldReuseServerSession ? initialSessionId : null}
             initialSessionTitle={shouldReuseServerSession ? initialSessionTitle : null}
-            key={`${chatPanelResetVersion}:${activeChatSessionId ?? "new-chat"}`}
+            key={`${chatPanelResetVersion}:${activeChatSessionId ?? "new-chat"}:${launchContext?.intent ?? "no-intent"}`}
+            launchContext={launchContext}
             mealPhotoAccess={mealPhotoAccess}
             onSessionTouched={upsertSession}
           />

@@ -25,21 +25,17 @@ export function AiChatToolbar({
 }: AiChatToolbarProps) {
   return (
     <div
-      className="flex flex-wrap items-start justify-between gap-3 border-b border-border/80 pb-4"
+      className="flex items-start justify-between gap-3 border-b border-border/80 pb-3"
       data-testid="ai-chat-toolbar"
     >
       <div className="min-w-0 flex-1">
-        <p className="workspace-kicker">Сессия AI-коуча</p>
-        <p className="mt-2 truncate text-base font-semibold text-foreground">
+        <p className="workspace-kicker">AI-чат</p>
+        <p className="mt-1 truncate text-base font-semibold text-foreground">
           {sessionTitle?.trim() || "Новый чат"}
-        </p>
-        <p className="mt-1 text-sm leading-6 text-muted">
-          Быстрый режим для вопросов, разбора прогресса, фото еды и сборки
-          плана без лишних переходов по экрану.
         </p>
       </div>
 
-      <div className="flex flex-wrap items-center justify-end gap-2">
+      <div className="flex shrink-0 items-center justify-end gap-1.5">
         <button
           aria-label={
             allowWebSearch
@@ -81,12 +77,12 @@ export function AiChatToolbar({
         </button>
 
         <button
-          className="toggle-chip px-4 py-2 text-sm font-semibold"
+          className="toggle-chip px-3 py-2 text-xs font-semibold sm:text-sm"
           data-testid="ai-chat-reset"
           onClick={onReset}
           type="button"
         >
-          Новый чат
+          Новый
         </button>
       </div>
     </div>

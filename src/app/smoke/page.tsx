@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "fit smoke",
+  title: "fitora smoke",
 };
 
 export default function SmokePage() {
@@ -9,7 +9,7 @@ export default function SmokePage() {
     <main className="mx-auto flex min-h-dvh max-w-3xl items-center justify-center px-6 py-16">
       <section className="card w-full max-w-xl space-y-4 p-8 text-center">
         <p className="pill mx-auto">smoke check</p>
-        <h1 className="text-3xl font-semibold text-foreground">fit smoke</h1>
+        <h1 className="text-3xl font-semibold text-foreground">fitora smoke</h1>
         <p className="text-sm leading-7 text-muted">
           Эта страница нужна для базовой проверки production-сборки, SSR и PWA
           ассетов без логина и без внешних сервисов.

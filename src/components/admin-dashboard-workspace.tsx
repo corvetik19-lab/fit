@@ -1,13 +1,17 @@
 "use client";
 
 import type { Route } from "next";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import type { ReactNode } from "react";
 
 import { AdminAiEvalRuns } from "@/components/admin-ai-eval-runs";
 import { AdminAiOperations } from "@/components/admin-ai-operations";
 import { AdminHealthDashboard } from "@/components/admin-health-dashboard";
 import { AdminOperationsInbox } from "@/components/admin-operations-inbox";
+import { CompactDisclosure } from "@/components/compact-disclosure";
 import { PanelCard } from "@/components/panel-card";
+import { RepairMojibakeTree } from "@/components/repair-mojibake-tree";
 
 type PlatformAdminRole = "super_admin" | "support_admin" | "analyst" | null;
 
@@ -201,25 +205,25 @@ function HeroMetricCard({
 }) {
   const toneClass =
     index === 1
-      ? "bg-accent text-white shadow-[0_24px_60px_-36px_rgba(0,64,224,0.55)]"
+      ? "border border-sky-500/20 bg-sky-500/12 text-sky-900"
       : index === 2
         ? "border border-rose-500/20 bg-rose-500/12 text-rose-900"
         : "metric-tile text-foreground";
   const mutedClass =
-    index === 1 ? "text-white/78" : index === 2 ? "text-rose-900/75" : "text-muted";
+    index === 1 ? "text-sky-900/75" : index === 2 ? "text-rose-900/75" : "text-muted";
 
   return (
-    <article className={`rounded-[1.15rem] p-3.5 ${toneClass}`}>
+    <article className={`min-w-0 rounded-[0.86rem] p-3 ${toneClass}`}>
       <div className="flex items-start justify-between gap-3">
         <p className={`font-mono text-[10px] uppercase tracking-[0.24em] ${mutedClass}`}>
           {label}
         </p>
-        <span className={`pill ${index === 1 ? "border-white/20 bg-white/10 text-white" : ""}`}>
+        <span className="pill">
           {index === 0 ? "обзор" : index === 1 ? "в фокусе" : index === 2 ? "контроль" : "сводка"}
         </span>
       </div>
-      <p className="mt-3 text-2xl font-semibold tracking-tight">{value}</p>
-      <p className={`mt-2 text-sm leading-5 ${mutedClass}`}>{detail}</p>
+      <p className="mt-2 text-xl font-semibold tracking-tight">{value}</p>
+      <p className={`mt-1.5 text-sm leading-5 ${mutedClass}`}>{detail}</p>
     </article>
   );
 }
@@ -230,16 +234,16 @@ function SpotlightCard({
   title,
 }: {
   caption: string;
-  children: React.ReactNode;
+  children: ReactNode;
   title: string;
 }) {
   return (
-    <article className="surface-panel p-4">
+    <article className="surface-panel min-w-0 p-4">
       <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-muted">
         {caption}
       </p>
-      <h3 className="mt-2 text-lg font-semibold text-foreground">{title}</h3>
-      <div className="mt-4 grid gap-3">{children}</div>
+      <h3 className="mt-1.5 text-base font-semibold text-foreground">{title}</h3>
+      <div className="mt-3 grid gap-2.5">{children}</div>
     </article>
   );
 }
@@ -250,7 +254,7 @@ function ActionChip({
   testId,
   tone = "secondary",
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
   href: Route;
   testId?: string;
   tone?: "primary" | "secondary";
@@ -259,8 +263,8 @@ function ActionChip({
     <Link
       className={
         tone === "primary"
-          ? "action-button action-button--primary"
-          : "action-button action-button--secondary"
+          ? "action-button action-button--primary w-full sm:w-auto"
+          : "action-button action-button--secondary w-full sm:w-auto"
       }
       data-testid={testId}
       href={href}
@@ -292,6 +296,10 @@ export function AdminDashboardWorkspace({
   users,
   viewer,
 }: AdminDashboardWorkspaceProps) {
+  const searchParams = useSearchParams();
+  const forceDegradedBanner =
+    searchParams.get("__test_admin_dashboard_fallback") === "1";
+  const showDegradedBanner = isDegraded || forceDegradedBanner;
   const operatorRole = formatAdminRole(viewer.platformAdminRole ?? "analyst");
   const rootCount = adminRoster.filter((item) => item.role === "super_admin").length;
   const recentUsers = users.slice(0, 4);
@@ -299,15 +307,27 @@ export function AdminDashboardWorkspace({
   const recentAudit = adminAuditLogs.slice(0, 4);
 
   return (
-    <div className="flex min-w-0 w-full flex-col gap-5">
-      <section className="surface-panel min-w-0 w-full max-w-full overflow-hidden p-4 sm:p-5">
-        <div className="grid min-w-0 gap-5 xl:grid-cols-[1.12fr_0.88fr]">
-          <div className="min-w-0 space-y-4">
+    <RepairMojibakeTree>
+      <div className="flex min-w-0 w-full flex-col gap-4">
+      <section className="surface-panel min-w-0 w-full max-w-full overflow-hidden p-4">
+        <div className="grid min-w-0 gap-4 xl:grid-cols-[1.08fr_0.92fr]">
+          <div className="min-w-0 space-y-3">
             <div className="flex flex-wrap gap-2">
               <span className="pill">fit Admin</span>
               <span className="pill">Роль: {operatorRole}</span>
             </div>
-            <div className="surface-panel surface-panel--soft px-3.5 py-3 text-[color:var(--accent-strong)] sm:max-w-max">
+
+            <div className="space-y-2.5">
+              <h1 className="max-w-4xl text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+                Операторский центр пользователей, AI-качества и важных процессов.
+              </h1>
+              <p className="max-w-3xl text-sm leading-5 text-muted">
+                Здесь собраны ключевые метрики, очередь действий, здоровье AI-контура и
+                быстрые переходы к пользователям без тяжёлого табличного слоя сверху.
+              </p>
+            </div>
+
+            <div className="surface-panel surface-panel--soft px-3 py-2.5 text-[color:var(--accent-strong)] sm:max-w-max">
               <p className="text-[10px] font-bold uppercase tracking-[0.22em]">
                 Главный доступ
               </p>
@@ -316,18 +336,7 @@ export function AdminDashboardWorkspace({
               </p>
             </div>
 
-            <div className="space-y-2.5">
-              <h1 className="max-w-4xl text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-                Операторский центр для пользователей, качества AI и жизненно важных процессов.
-              </h1>
-              <p className="max-w-3xl text-sm leading-6 text-muted">
-                Экран собран по языку stitch_: крупные KPI, быстрые действия,
-                отдельные сигналы, системное здоровье и AI-операции в одной
-                спокойной вертикали без перегруженной таблицы.
-              </p>
-            </div>
-
-            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <div className="grid gap-2.5 sm:flex sm:flex-wrap">
               <ActionChip
                 href={"/admin/users" as Route}
                 testId="admin-page-open-users-link"
@@ -350,12 +359,12 @@ export function AdminDashboardWorkspace({
             </div>
           </div>
 
-          <div className="surface-panel surface-panel--soft p-4">
+          <div className="surface-panel surface-panel--soft min-w-0 p-4">
             <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-muted">
               Быстрый статус
             </p>
-            <div className="mt-5 grid gap-3">
-              <div className="metric-tile p-3.5">
+            <div className="mt-4 grid gap-2.5">
+              <div className="metric-tile min-w-0 p-3">
                 <p className="text-xs uppercase tracking-[0.18em] text-muted">
                   Текущий оператор
                 </p>
@@ -364,8 +373,9 @@ export function AdminDashboardWorkspace({
                 </p>
                 <p className="mt-2 text-sm text-muted">Роль: {operatorRole}</p>
               </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="metric-tile p-3.5">
+
+              <div className="grid gap-2.5 sm:grid-cols-2">
+                <div className="metric-tile min-w-0 p-3">
                   <p className="text-xs uppercase tracking-[0.18em] text-muted">
                     Главный доступ
                   </p>
@@ -374,22 +384,25 @@ export function AdminDashboardWorkspace({
                     нарушений: {superAdminPolicyViolations}
                   </p>
                 </div>
-                <div className="metric-tile p-3.5">
+                <div className="metric-tile min-w-0 p-3">
                   <p className="text-xs uppercase tracking-[0.18em] text-muted">
                     База AI
                   </p>
-                  <p className="mt-2 text-xl font-semibold text-foreground">{knowledgeEmbeddingsCount}</p>
+                  <p className="mt-2 text-xl font-semibold text-foreground">
+                    {knowledgeEmbeddingsCount}
+                  </p>
                   <p className="mt-1 text-sm text-muted">
                     чанков: {knowledgeChunksCount}
                   </p>
                 </div>
               </div>
-              <div className="metric-tile p-3.5">
+
+              <div className="metric-tile min-w-0 p-3">
                 <p className="text-xs uppercase tracking-[0.18em] text-muted">
                   Последний вход главного администратора
                 </p>
-                <p className="mt-2 text-base font-semibold">
-                  {rootAdminRecord?.email ?? "Роль super-admin назначена"}
+                <p className="mt-2 break-all text-base font-semibold">
+                  {rootAdminRecord?.email ?? "Роль super-admin ещё не назначена"}
                 </p>
                 <p className="mt-1 text-sm text-muted">
                   {formatDateTime(rootAdminRecord?.lastSignInAt)}
@@ -399,7 +412,7 @@ export function AdminDashboardWorkspace({
           </div>
         </div>
 
-        <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-5 grid gap-2.5 md:grid-cols-2 xl:grid-cols-4">
           {heroMetrics.map((metric, index) => (
             <HeroMetricCard
               detail={metric.detail}
@@ -411,20 +424,27 @@ export function AdminDashboardWorkspace({
           ))}
         </div>
 
-        {isDegraded ? (
+        {showDegradedBanner ? (
           <p
             className="mt-5 rounded-[1rem] border border-amber-400/25 bg-amber-500/12 px-4 py-3 text-sm leading-6 text-amber-900"
             data-testid="admin-page-degraded-banner"
           >
-            Панель временно работает из резервного снимка. Часть служебных
-            источников не ответила, поэтому показатели и списки могут быть
-            неполными до следующего обновления.
+            Панель временно работает из резервного снимка. Часть служебных источников
+            не ответила, поэтому показатели и списки могут быть неполными до следующего обновления.
           </p>
         ) : null}
       </section>
 
-      <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-        <div className="grid gap-6">
+      <div className="grid gap-2.5 xl:grid-cols-[1.08fr_0.92fr]">
+        <div className="grid gap-2.5 min-w-0">
+          <CompactDisclosure
+            badge={String(supportActions.length)}
+            defaultOpen
+            eyebrow="Операции"
+            summary="Очередь поддержки, health-check и действия оператора."
+            title="Рабочий центр"
+          >
+            <div className="grid gap-3">
           <SpotlightCard
             caption="Операции"
             title="Сигналы, которые требуют решения прямо сейчас"
@@ -432,27 +452,29 @@ export function AdminDashboardWorkspace({
             {supportActions.length ? (
               supportActions.slice(0, 3).map((action) => (
                 <article
-                  className="metric-tile flex items-start justify-between gap-3 px-3.5 py-3"
+                  className="metric-tile min-w-0 px-3.5 py-3"
                   key={action.id}
                 >
-                  <div>
-                    <p className="font-semibold text-foreground">
-                      {formatSupportAction(action.action)}
-                    </p>
-                    <p className="mt-1 text-sm text-muted">
-                      {formatStatus(action.status)} · {formatDateTime(action.created_at)}
-                    </p>
-                    <p className="mt-1 break-all text-xs text-muted">
-                      Пользователь: {action.target_user_id ?? "не указан"}
-                    </p>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-semibold text-foreground">
+                        {formatSupportAction(action.action)}
+                      </p>
+                      <p className="mt-1 text-sm text-muted">
+                        {formatStatus(action.status)} · {formatDateTime(action.created_at)}
+                      </p>
+                      <p className="mt-1 break-all text-xs text-muted">
+                        Пользователь: {action.target_user_id ?? "не указан"}
+                      </p>
+                    </div>
+                    <span className="pill">{formatStatus(action.status)}</span>
                   </div>
-                  <span className="pill">{formatStatus(action.status)}</span>
                 </article>
               ))
             ) : (
               <p className="text-sm leading-7 text-muted">
-                В очереди поддержки сейчас спокойно. Новые ручные действия
-                появятся здесь сразу после постановки в обработку.
+                В очереди поддержки спокойно. Новые ручные действия появятся здесь сразу
+                после постановки в обработку.
               </p>
             )}
           </SpotlightCard>
@@ -463,12 +485,21 @@ export function AdminDashboardWorkspace({
             canRunAdminJobs={canUseSuperAdminConsole}
             canTriggerSentrySmokeTest={canUseSuperAdminConsole}
           />
+            </div>
+          </CompactDisclosure>
         </div>
 
-        <div className="grid gap-6">
-          <SpotlightCard caption="AI" title="Контур качества и пересборки знаний">
+        <div className="grid gap-2.5 min-w-0">
+          <CompactDisclosure
+            badge={String(aiSafetyEventsCount)}
+            eyebrow="AI"
+            summary="Качество ответов, eval-запуски, аудит доступа и новые профили."
+            title="AI, аудит и команда"
+          >
+            <div className="grid gap-3">
+          <SpotlightCard caption="AI" title="Качество ответов и пересборка базы знаний">
             <div className="grid gap-3 sm:grid-cols-2">
-              <article className="metric-tile p-3.5">
+              <article className="metric-tile min-w-0 p-3.5">
                 <p className="text-xs uppercase tracking-[0.18em] text-muted">
                   AI-сигналы
                 </p>
@@ -476,12 +507,12 @@ export function AdminDashboardWorkspace({
                   {aiSafetyEventsCount}
                 </p>
                 <p className="mt-2 text-sm leading-6 text-muted">
-                  событий безопасности и контентных ограничений
+                  событий безопасности и ограничений контента
                 </p>
               </article>
-              <article className="metric-tile p-3.5">
+              <article className="metric-tile min-w-0 p-3.5">
                 <p className="text-xs uppercase tracking-[0.18em] text-muted">
-                  Планов AI
+                  AI-планы
                 </p>
                 <p className="mt-2 text-2xl font-semibold text-foreground">
                   {aiPlanProposalsCount}
@@ -492,7 +523,7 @@ export function AdminDashboardWorkspace({
               </article>
             </div>
 
-            <article className="metric-tile p-3.5 text-sm">
+            <article className="metric-tile min-w-0 p-3.5 text-sm">
               <p className="font-semibold text-foreground">
                 Последние обновления базы знаний
               </p>
@@ -519,14 +550,14 @@ export function AdminDashboardWorkspace({
               <div className="grid gap-3">
                 {aiSafetyEvents.slice(0, 3).map((event) => (
                   <article
-                    className="surface-panel surface-panel--soft px-4 py-3 text-sm"
+                    className="surface-panel surface-panel--soft min-w-0 px-4 py-3 text-sm"
                     key={event.id}
                   >
                     <p className="font-semibold text-foreground">
                       {formatRouteKey(event.route_key)} · {event.action}
                     </p>
                     <p className="mt-1 text-muted">{formatDateTime(event.created_at)}</p>
-                    <p className="mt-2 text-muted">
+                    <p className="mt-2 break-words text-muted">
                       {event.prompt_excerpt || "Фрагмент запроса не сохранён."}
                     </p>
                   </article>
@@ -549,12 +580,12 @@ export function AdminDashboardWorkspace({
             <div className="grid gap-3">
               {recentRoster.map((admin) => (
                 <article
-                  className="metric-tile px-3.5 py-3 text-sm"
+                  className="metric-tile min-w-0 px-3.5 py-3 text-sm"
                   key={`${admin.user_id}-${admin.created_at}`}
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="font-semibold text-foreground">
+                    <div className="min-w-0">
+                      <p className="break-all font-semibold text-foreground">
                         {admin.email ?? admin.user_id}
                       </p>
                       <p className="mt-1 text-muted">{formatAdminRole(admin.role)}</p>
@@ -574,13 +605,13 @@ export function AdminDashboardWorkspace({
               {recentAudit.length ? (
                 recentAudit.map((entry) => (
                   <article
-                    className="surface-panel surface-panel--soft px-4 py-3 text-sm"
+                    className="surface-panel surface-panel--soft min-w-0 px-4 py-3 text-sm"
                     key={entry.id}
                   >
                     <p className="font-semibold text-foreground">
                       {formatAuditAction(entry.action)}
                     </p>
-                    <p className="mt-1 text-muted">
+                    <p className="mt-1 break-words text-muted">
                       {entry.reason ?? "Без пояснения"} · {formatDateTime(entry.created_at)}
                     </p>
                   </article>
@@ -599,13 +630,12 @@ export function AdminDashboardWorkspace({
                 <p className="text-xs uppercase tracking-[0.18em] text-muted">
                   Закреплённый супер-админ
                 </p>
-                <p className="mt-3 text-lg font-semibold">
+                <p className="mt-3 break-all text-lg font-semibold">
                   {rootAdminRecord?.email ?? "Роль super-admin уже назначена"}
                 </p>
                 <p className="mt-2 text-sm leading-6 text-muted">
-                  Эту роль нельзя переназначить из интерфейса на другой email.
-                  Остальным аккаунтам доступны только обычные административные
-                  роли с аудитом.
+                  Эту роль нельзя переназначить на другой email через интерфейс. Остальным
+                  аккаунтам доступны обычные административные роли с аудитом.
                 </p>
               </article>
             </SpotlightCard>
@@ -616,7 +646,7 @@ export function AdminDashboardWorkspace({
               <div className="grid gap-3">
                 {recentUsers.map((user) => (
                   <Link
-                    className="metric-tile px-3.5 py-3 text-sm transition hover:translate-y-[-1px]"
+                    className="metric-tile min-w-0 px-3.5 py-3 text-sm transition hover:translate-y-[-1px]"
                     href={`/admin/users/${user.user_id}` as Route}
                     key={user.user_id}
                   >
@@ -632,8 +662,11 @@ export function AdminDashboardWorkspace({
               </div>
             </PanelCard>
           ) : null}
+            </div>
+          </CompactDisclosure>
         </div>
       </div>
-    </div>
+      </div>
+    </RepairMojibakeTree>
   );
 }

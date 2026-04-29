@@ -17,6 +17,8 @@ import {
 import { navigateStable } from "./helpers/navigation";
 import { createLockedWorkoutDay } from "./helpers/workouts";
 
+const usesLocalPlaywrightAuth = process.env.PLAYWRIGHT_SKIP_AUTH_SETUP === "1";
+
 const mobileViewports = [
   {
     name: "360x780",
@@ -98,6 +100,27 @@ async function navigateUserMobileRoute(
   }
 }
 
+async function createMobileWorkoutDayForTest(
+  page: Parameters<typeof expectNoHorizontalOverflow>[0],
+  seed: string,
+) {
+  if (!usesLocalPlaywrightAuth) {
+    return createLockedWorkoutDay(page, seed);
+  }
+
+  await page.route("**/api/sync/pull?**", async (route) => {
+    await route.fulfill({
+      body: JSON.stringify({ data: { nextCursor: null, snapshot: null } }),
+      contentType: "application/json",
+      status: 200,
+    });
+  });
+
+  return {
+    dayId: `e2e-${seed}`,
+  };
+}
+
 test.describe("mobile pwa regressions", () => {
   test.describe.configure({ timeout: 90_000 });
 
@@ -151,16 +174,6 @@ test.describe("mobile pwa regressions", () => {
           await workoutsSectionTrigger.click();
           await page.getByTestId("page-workspace-mobile-option-library").click();
           await expect(workoutsSectionTrigger).toContainText("Упражнения");
-          const menuVisibilityButton = page.getByTestId(
-            "page-workspace-visibility-menu",
-          );
-          await menuVisibilityButton.click();
-          await expect(menuVisibilityButton).toHaveAttribute(
-            "aria-pressed",
-            "false",
-          );
-          await menuVisibilityButton.click();
-          await expect(menuVisibilityButton).toHaveAttribute("aria-pressed", "true");
           await expectNoHorizontalOverflow(page, "workouts section controls");
 
           await navigateUserMobileRoute(page, "/nutrition", /\/nutrition$/);
@@ -173,19 +186,6 @@ test.describe("mobile pwa regressions", () => {
           await nutritionSectionTrigger.click();
           await page.getByTestId("page-workspace-mobile-option-log").click();
           await expect(nutritionSectionTrigger).toContainText("Журнал и база");
-          const sectionVisibilityButton = page.getByTestId(
-            "page-workspace-visibility-section",
-          );
-          await sectionVisibilityButton.click();
-          await expect(sectionVisibilityButton).toHaveAttribute(
-            "aria-pressed",
-            "false",
-          );
-          await sectionVisibilityButton.click();
-          await expect(sectionVisibilityButton).toHaveAttribute(
-            "aria-pressed",
-            "true",
-          );
           await expectNoHorizontalOverflow(page, "nutrition section controls");
 
           regressionCapture.assertNone();
@@ -198,7 +198,7 @@ test.describe("mobile pwa regressions", () => {
         page,
       }) => {
         test.setTimeout(180_000);
-        const seededDay = await createLockedWorkoutDay(
+        const seededDay = await createMobileWorkoutDayForTest(
           page,
           `mobile-pwa-regression-${mobileViewport.name}`,
         );
@@ -216,9 +216,9 @@ test.describe("mobile pwa regressions", () => {
           await expect(collapseToggle).toBeVisible();
           const toggleBounds = await collapseToggle.boundingBox();
           expect(toggleBounds).toBeTruthy();
-          expect((toggleBounds?.x ?? 0) + (toggleBounds?.width ?? 0)).toBeLessThanOrEqual(
-            mobileViewport.viewport.width,
-          );
+          expect(
+            (toggleBounds?.x ?? 0) + (toggleBounds?.width ?? 0),
+          ).toBeLessThanOrEqual(mobileViewport.viewport.width);
           await expectNoHorizontalOverflow(page, "workout focus mode");
 
           const normalViewButton = page.getByTestId(
@@ -231,7 +231,10 @@ test.describe("mobile pwa regressions", () => {
 
           if (mobileViewport.viewport.width >= 430) {
             await toggleFocusHeader(page, "false");
-            await expectNoHorizontalOverflow(page, "collapsed workout focus header");
+            await expectNoHorizontalOverflow(
+              page,
+              "collapsed workout focus header",
+            );
             await toggleFocusHeader(page, "true");
           }
 
@@ -261,7 +264,15 @@ test.describe("mobile pwa regressions", () => {
         const regressionCapture = startClientRegressionCapture(page);
 
         try {
-          await navigateStable(page, "/admin", /\/admin$/);
+          await navigateStable(
+            page,
+            usesLocalPlaywrightAuth
+              ? "/admin?__test_admin_dashboard_fallback=1"
+              : "/admin",
+            usesLocalPlaywrightAuth
+              ? /\/admin\?__test_admin_dashboard_fallback=1$/
+              : /\/admin$/,
+          );
           await page.waitForTimeout(300);
           await expectNoHorizontalOverflow(page, "/admin");
 

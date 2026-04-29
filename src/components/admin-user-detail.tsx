@@ -30,9 +30,9 @@ function SummaryMetricCard({
   value: string;
 }) {
   return (
-    <article className="surface-panel surface-panel--soft p-4">
+    <article className="surface-panel surface-panel--soft p-3">
       <p className="text-sm text-muted">{label}</p>
-      <p className="mt-2 text-xl font-semibold text-foreground">{value}</p>
+      <p className="mt-1.5 text-base font-semibold text-foreground">{value}</p>
     </article>
   );
 }
@@ -75,7 +75,7 @@ export function AdminUserDetail({
 
   if (isLoading) {
     return (
-      <section className="card p-6">
+      <section className="surface-panel p-4">
         <p className="text-sm text-muted">Загружаю карточку пользователя...</p>
       </section>
     );
@@ -83,7 +83,7 @@ export function AdminUserDetail({
 
   if (error || !detail) {
     return (
-      <section className="card p-6">
+      <section className="surface-panel p-4">
         <Link
           className="action-button action-button--secondary mb-4 inline-flex"
           href={"/admin/users" as Route}
@@ -121,12 +121,12 @@ export function AdminUserDetail({
   ];
 
   return (
-    <div className="grid gap-6">
-      <section className="surface-panel surface-panel--accent p-4 sm:p-5">
-        <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
+    <div className="grid gap-4">
+      <section className="surface-panel surface-panel--accent p-4">
+        <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="workspace-kicker">Пользователь</p>
-            <h2 className="app-display mt-3 text-2xl text-foreground sm:text-3xl">
+            <h2 className="app-display mt-2 text-xl text-foreground sm:text-2xl">
               {detail.profile?.full_name ?? "Без имени"}
             </h2>
             <p className="mt-2 break-all text-sm text-muted">{detail.id}</p>
@@ -142,7 +142,7 @@ export function AdminUserDetail({
           </Link>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-6">
+        <div className="grid grid-cols-2 gap-2.5 md:grid-cols-3 xl:grid-cols-6">
           {summaryMetrics.map(([label, value]) => (
             <SummaryMetricCard key={label} label={label} value={value} />
           ))}
@@ -174,14 +174,14 @@ export function AdminUserDetail({
         ) : null}
       </section>
 
-      <section className="surface-panel p-4 sm:p-5">
+      <section className="surface-panel p-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
               Разделы карточки
             </p>
             <h2
-              className="mt-2 text-xl font-semibold text-foreground"
+              className="mt-1.5 text-lg font-semibold text-foreground"
               data-testid="admin-user-detail-section-heading"
             >
               Открывай только нужный операторский контекст
@@ -190,14 +190,14 @@ export function AdminUserDetail({
           <span className="pill">{activeSectionMeta?.label ?? "Профиль"}</span>
         </div>
 
-        <div className="mt-4 grid gap-3 md:flex md:flex-wrap">
+        <div className="mt-3 flex gap-2 overflow-x-auto pb-1 md:flex-wrap">
           {adminUserDetailSections.map(({ key, label, description }) => {
             const isActive = activeSection === key;
 
             return (
               <button
                 aria-pressed={isActive}
-                className={`w-full rounded-3xl border px-4 py-3 text-left transition md:w-auto md:min-w-[14rem] ${
+                className={`min-w-[9.75rem] rounded-[0.85rem] border px-3 py-2 text-left transition md:min-w-[10.5rem] ${
                   isActive
                     ? "border-accent/20 bg-[color-mix(in_srgb,var(--accent-soft)_78%,white)] text-foreground shadow-[0_16px_38px_-34px_rgba(20,58,160,0.22)]"
                     : "border-border bg-[color-mix(in_srgb,var(--surface-elevated)_88%,var(--surface))] text-foreground hover:bg-[color-mix(in_srgb,var(--surface-elevated)_96%,var(--surface))]"

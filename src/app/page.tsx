@@ -3,6 +3,7 @@ import Image from "next/image";
 import { redirect } from "next/navigation";
 
 import { AuthForm } from "@/components/auth-form";
+import { RepairMojibakeTree } from "@/components/repair-mojibake-tree";
 import { getViewer } from "@/lib/viewer";
 
 export default async function Home() {
@@ -16,30 +17,28 @@ export default async function Home() {
 
   return (
     <main className="relative flex min-h-dvh items-center justify-center overflow-hidden bg-background px-5 py-6 sm:px-8 sm:py-10">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(36,188,181,0.07),transparent_26%),radial-gradient(circle_at_bottom_right,rgba(32,99,175,0.07),transparent_22%),linear-gradient(180deg,#fbf7f2_0%,#f5f2ed_54%,#efe8df_100%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_12%,rgba(8,145,255,0.16),transparent_30%),radial-gradient(circle_at_86%_8%,rgba(45,212,191,0.18),transparent_28%),radial-gradient(circle_at_85%_92%,rgba(37,99,235,0.10),transparent_32%),linear-gradient(180deg,#ffffff_0%,#f8fbff_48%,#edf7ff_100%)]" />
+      <div className="absolute left-6 top-10 h-32 w-32 rounded-full border border-white/80 opacity-70" />
+      <div className="absolute bottom-12 right-[-3rem] h-56 w-56 rounded-full border border-[#0891ff]/10" />
 
-      <div className="relative z-10 w-full max-w-[21.5rem]">
-        <header className="mb-6 flex flex-col items-center text-center sm:mb-7">
-          <Image
-            alt="fit"
-            className="h-24 w-24 object-contain drop-shadow-[0_16px_24px_rgba(35,152,185,0.18)] sm:h-28 sm:w-28"
-            height={112}
-            priority
-            src="/fit-logo.svg"
-            width={112}
-          />
-          <p className="mt-2.5 font-display text-[2.9rem] font-black tracking-[-0.1em] text-foreground sm:text-[3.35rem]">
-            fit
-          </p>
-          <p className="mt-2 max-w-[17.5rem] text-sm font-medium leading-6 text-muted sm:text-[0.92rem]">
-            Ежедневный ритм тренировок, питания и прогресса без лишнего шума.
-          </p>
-        </header>
+      <RepairMojibakeTree>
+        <div className="relative z-10 w-full max-w-[20.5rem]">
+          <header className="mb-5 flex flex-col items-center text-center sm:mb-6">
+            <Image
+              alt="fitora"
+              className="h-auto w-[min(100%,18.5rem)] object-contain drop-shadow-[0_18px_28px_rgba(8,145,255,0.12)]"
+              height={260}
+              priority
+              src="/fitora-brand-clean.png"
+              width={1364}
+            />
+          </header>
 
-        <section className="flex justify-center">
-          <AuthForm />
-        </section>
-      </div>
+          <section className="flex justify-center">
+            <AuthForm />
+          </section>
+        </div>
+      </RepairMojibakeTree>
     </main>
   );
 }

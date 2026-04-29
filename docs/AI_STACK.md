@@ -233,3 +233,13 @@
 - Safety-контур подтверждён отдельным живым запросом: опасный prompt на английском возвращает `blocked: true` и безопасный отказ, даже когда generation идёт через fallback.
 - Важно: live provider-path всё ещё частично деградирует по внешним причинам (`OpenRouter`/embeddings runtime), поэтому chat и plan generation местами работают в `deterministic_fallback`; это считается корректным degrade-safe поведением, а не production-quality live AI.
 - Photo-import теперь не падает на локальном runtime: после удаления лишнего inner-timeout route стабильно сохраняет результат meal-photo анализа в `foods`, даже когда storage upload уходит в inline-image fallback.
+
+## 2026-04-28 AI Agent launcher contract
+
+- Основная пользовательская AI-поверхность теперь `/ai`: chat-first AI Agent Center с `AiChatPanel`, историей, proposal cards, быстрыми сценариями и контекстом запуска.
+- Floating widget больше не является mini-chat. Он работает как launcher/action sheet и не должен дублировать `useChat`, transcript, composer или tool-card rendering.
+- Единый typed intent contract живет в [agent-intents.ts](/C:/fit/src/lib/ai/agent-intents.ts): `general`, `daily_plan`, `screen_context`, `meal_plan`, `workout_plan`, `meal_photo`, `barcode`, `progress_review`, `memory_review`.
+- Route contract: `/ai?intent=...&from=dashboard|workouts|nutrition|history|settings|admin|ai|unknown`.
+- `AiChatPanel` получает `launchContext`, один раз подставляет стартовый prompt и не отправляет запрос автоматически. Пользователь остается в proposal-first контуре.
+- `/api/ai/assistant` принимает `intent`, `sourceRoute` и `contextPayload`, сохраняя существующий streaming/tool contract. `/api/ai/chat` остается legacy/eval route до отдельной деприкации.
+- Regression proof: [ai-workspace.spec.ts](/C:/fit/tests/e2e/ai-workspace.spec.ts) проверяет `widget -> intent -> /ai -> composer prefill`.

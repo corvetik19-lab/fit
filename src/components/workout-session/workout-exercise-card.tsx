@@ -71,65 +71,69 @@ export function WorkoutExerciseCard({
   return (
     <article
       className={`surface-panel p-3.5 sm:p-4 ${
-        isMobileFocusMode ? "border-[color:var(--accent-soft)]/40" : ""
+        isMobileFocusMode ? "border-[color:var(--accent-soft)]/60" : ""
       }`}
       data-complete={isExerciseComplete ? "true" : "false"}
       data-editable={isExerciseEditable ? "true" : "false"}
       data-testid={`workout-exercise-card-${index + 1}`}
     >
-      <div className="flex flex-wrap items-start justify-between gap-3">
+      <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="workspace-kicker">
-            {isMobileFocusMode ? `Упражнение ${index + 1} из ${totalExercises}` : "Упражнение"}
+            {isMobileFocusMode
+              ? `Упражнение ${index + 1} из ${totalExercises}`
+              : "Упражнение"}
           </p>
-          <h3 className="mt-1.5 text-lg font-semibold leading-tight text-foreground sm:text-xl">
+          <h3 className="mt-1 text-lg font-semibold leading-tight text-foreground sm:text-xl">
             {exercise.exercise_title_snapshot}
           </h3>
-          <div className="mt-2.5 flex flex-wrap gap-2">
-            <span className="pill">{`${exercise.sets_count} подход.`}</span>
-            <span className="pill">{isExerciseComplete ? "Сохранено" : "Активный шаг"}</span>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <span className="pill">{exercise.sets_count} подход.</span>
+            <span className="pill">
+              {isExerciseComplete ? "Сохранено" : "Активный шаг"}
+            </span>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex shrink-0 flex-col gap-2">
           {isExerciseComplete && !isExerciseEditable ? (
             <button
-              className="action-button action-button--secondary h-10 px-3.5 text-sm"
+              className="action-button action-button--secondary h-9 px-3 text-xs"
               data-testid={`workout-exercise-edit-${index + 1}`}
               disabled={!dayIsLocked || isPending || isSyncing}
               onClick={() => onSetExerciseEditing(exercise.id, true)}
               type="button"
             >
-              Редактировать
+              Изменить
             </button>
           ) : null}
 
           {isExerciseEditable ? (
             <button
-              className="action-button action-button--primary h-10 px-3.5 text-sm"
+              className="action-button action-button--primary h-9 px-3 text-xs"
               data-testid={`workout-exercise-save-${index + 1}`}
               disabled={!dayIsLocked || isPending || isSyncing || !isExerciseReadyToSave}
               onClick={() => onSaveExercise(exercise)}
               type="button"
             >
-              {isExerciseComplete ? "Сохранить изменения" : "Сохранить"}
+              {isExerciseComplete ? "Сохранить" : "Готово"}
             </button>
           ) : null}
         </div>
       </div>
 
-      <div className="mt-4 grid gap-2.5">
-        <div className="grid grid-cols-[0.9fr_1fr_1fr_0.8fr] gap-2.5 px-1.5 text-center">
-          <p className="text-left text-[10px] font-bold uppercase tracking-[0.2em] text-muted">
+      <div className="mt-3 grid gap-2.5">
+        <div className="grid grid-cols-[0.8fr_1fr_1fr_0.8fr] gap-2 px-1 text-center">
+          <p className="text-left text-[10px] font-bold uppercase tracking-[0.16em] text-muted">
             Сет
           </p>
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted">
+          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted">
             Вес
           </p>
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted">
-            Повторы
+          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted">
+            Повт.
           </p>
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted">
+          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted">
             RPE
           </p>
         </div>
@@ -154,12 +158,12 @@ export function WorkoutExerciseCard({
         ))}
       </div>
 
-      <div className="metric-tile mt-3.5 p-3.5">
+      <div className="metric-tile mt-3 p-3">
         <p className="workspace-kicker">Подсказка</p>
-        <p className="mt-1.5 text-sm leading-5 text-muted">
+        <p className="mt-1 text-sm leading-5 text-muted">
           {isExerciseComplete && !isExerciseDirty
             ? "Шаг уже сохранён. Если нужно поправить цифры, открой редактирование и сохрани упражнение заново."
-            : "Сначала заполни повторы, вес и RPE во всех подходах. После сохранения откроется следующий шаг."}
+            : "Заполни повторы, вес и RPE во всех подходах. После сохранения откроется следующий шаг."}
         </p>
       </div>
     </article>
@@ -206,35 +210,35 @@ function WorkoutSetRow({
   const isActiveEntry = isExerciseEditable && activeEditableSetId === set.id;
   const isFutureRow = !isExerciseEditable && !hasPersistedValues;
   const rowClassName = hasPersistedValues
-    ? "bg-[color:var(--surface-container-low)]"
+    ? "bg-[color:var(--surface-soft)]"
     : isActiveEntry
-      ? "bg-[color:var(--surface-container-high)] ring-1 ring-[color:var(--accent)]"
+      ? "bg-white ring-1 ring-accent"
       : isFutureRow
-        ? "bg-[color:var(--surface-container-low)] opacity-55"
-        : "bg-[color:var(--surface-container-high)]";
+        ? "bg-[color:var(--surface-soft)] opacity-60"
+        : "bg-white";
 
   return (
-    <div className={`rounded-[1rem] px-2.5 py-3 transition ${rowClassName}`}>
-      <div className="grid grid-cols-[0.9fr_1fr_1fr_0.8fr] items-center gap-2.5 text-center">
-        <div className="flex items-center gap-2 text-left">
+    <div className={`rounded-[1rem] px-2.5 py-2.5 transition ${rowClassName}`}>
+      <div className="grid grid-cols-[0.8fr_1fr_1fr_0.8fr] items-center gap-2 text-center">
+        <div className="flex items-center gap-1.5 text-left">
           <span
             className={`flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-extrabold ${
               hasPersistedValues || isActiveEntry
-                ? "bg-[color:var(--accent)] text-[color:var(--on-primary)]"
-                : "bg-[color:var(--outline)] text-white"
+                ? "bg-accent text-white"
+                : "bg-border text-muted"
             }`}
           >
             {set.set_number}
           </span>
           {hasPersistedValues ? (
-            <CheckCircle2 className="text-[color:var(--accent)]" size={18} strokeWidth={2.15} />
+            <CheckCircle2 className="text-accent" size={17} strokeWidth={2.15} />
           ) : null}
         </div>
 
         <div className="flex justify-center">
           {isExerciseEditable ? (
             <input
-                className={`${inputClassName} h-10 rounded-[0.85rem] border-0 bg-transparent px-0 py-0 text-center font-semibold shadow-none focus:ring-0`}
+              className={`${inputClassName} h-10 rounded-[0.85rem] border-0 bg-transparent px-0 py-0 text-center font-semibold shadow-none focus:ring-0`}
               data-testid={`workout-set-${set.id}-weight`}
               disabled={!dayIsLocked || isPending || isSyncing || !isExerciseEditable}
               inputMode="decimal"
@@ -244,12 +248,12 @@ function WorkoutSetRow({
                   [set.id]: event.target.value,
                 }))
               }
-              placeholder={set.actual_weight_kg?.toString() ?? "—"}
+              placeholder={set.actual_weight_kg?.toString() ?? "0"}
               value={weightValue}
             />
           ) : (
-            <p className="text-lg font-semibold text-foreground">
-              {set.actual_weight_kg ?? "—"}
+            <p className="text-base font-semibold text-foreground">
+              {set.actual_weight_kg ?? "-"}
             </p>
           )}
         </div>
@@ -257,7 +261,7 @@ function WorkoutSetRow({
         <div className="flex justify-center">
           {isExerciseEditable ? (
             <select
-              className={`${inputClassName} h-10 rounded-[0.85rem] border-0 bg-transparent px-0 py-0 text-center font-semibold text-[color:var(--accent)] shadow-none focus:ring-0`}
+              className={`${inputClassName} h-10 rounded-[0.85rem] border-0 bg-transparent px-0 py-0 text-center font-semibold text-accent shadow-none focus:ring-0`}
               data-testid={`workout-set-${set.id}-reps`}
               disabled={!dayIsLocked || isPending || isSyncing || !isExerciseEditable}
               onChange={(event) =>
@@ -268,7 +272,7 @@ function WorkoutSetRow({
               }
               value={repsValue}
             >
-              <option value="">—</option>
+              <option value="">-</option>
               {getActualRepOptions(set).map((value) => (
                 <option key={value} value={value}>
                   {value}
@@ -276,8 +280,8 @@ function WorkoutSetRow({
               ))}
             </select>
           ) : (
-            <p className="text-lg font-semibold text-[color:var(--accent)]">
-              {set.actual_reps ?? "—"}
+            <p className="text-base font-semibold text-accent">
+              {set.actual_reps ?? "-"}
             </p>
           )}
         </div>
@@ -296,7 +300,7 @@ function WorkoutSetRow({
               }
               value={rpeValue}
             >
-              <option value="">—</option>
+              <option value="">-</option>
               {getRpeOptions().map((value) => (
                 <option key={value} value={value}>
                   {value.toLocaleString("ru-RU", {
@@ -307,16 +311,18 @@ function WorkoutSetRow({
               ))}
             </select>
           ) : (
-            <p className="text-lg font-semibold text-[color:var(--on-surface-variant)]">
-              {set.actual_rpe ?? "—"}
+            <p className="text-base font-semibold text-foreground">
+              {set.actual_rpe ?? "-"}
             </p>
           )}
         </div>
       </div>
 
-      <div className="mt-2.5 flex items-center justify-between gap-3 px-1">
-        <p className="text-xs text-muted">План: {formatPlannedRepTarget(set)} повторов</p>
-        <p className="text-xs text-muted">Последний RPE: {formatOptionalRpe(set.actual_rpe)}</p>
+      <div className="mt-2 flex items-center justify-between gap-3 px-1">
+        <p className="text-xs text-muted">
+          План: {formatPlannedRepTarget(set)} повт.
+        </p>
+        <p className="text-xs text-muted">RPE: {formatOptionalRpe(set.actual_rpe)}</p>
       </div>
     </div>
   );

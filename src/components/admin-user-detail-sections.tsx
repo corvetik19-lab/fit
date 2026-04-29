@@ -2,9 +2,7 @@
 
 import { AdminRoleManager } from "@/components/admin-role-manager";
 import {
-  AdminUserEntitlementsCard,
-  AdminUserSubscriptionEventsCard,
-  AdminUserUsageCountersCard,
+  AdminUserBillingSection as AdminUserBillingDetailsSection,
 } from "@/components/admin-user-detail-billing";
 import {
   AdminUserAdminAuditSection,
@@ -15,7 +13,6 @@ import {
 import { AdminUserActions } from "@/components/admin-user-actions";
 import {
   fitnessLevelLabels,
-  formatBillingProvider,
   formatDateTime,
   formatStatus,
   getUserLabel,
@@ -48,13 +45,13 @@ export function AdminUserProfileSection({
   userId: string;
 }) {
   return (
-    <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-      <section className="card p-6">
-        <div className="mb-5">
+    <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+      <section className="surface-panel p-4 sm:p-5">
+        <div className="mb-4">
           <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
             Профиль
           </p>
-          <h2 className="mt-2 text-2xl font-semibold text-foreground">
+          <h2 className="mt-1.5 text-lg font-semibold text-foreground">
             Основные данные и цели
           </h2>
         </div>
@@ -172,7 +169,7 @@ export function AdminUserProfileSection({
         </div>
       </section>
 
-      <div className="grid gap-6">
+      <div className="grid gap-4">
         {canViewRoleDetails ? (
           <AdminRoleManager
             currentAdminRole={currentAdminRole}
@@ -203,13 +200,13 @@ export function AdminUserActivitySection({
 }) {
   return (
     <>
-      <div className="grid gap-6 xl:grid-cols-2">
-        <section className="card p-6">
-          <div className="mb-5">
+      <div className="grid gap-4 xl:grid-cols-2">
+        <section className="surface-panel p-4 sm:p-5">
+          <div className="mb-4">
             <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
               Тренировки
             </p>
-            <h2 className="mt-2 text-2xl font-semibold text-foreground">
+            <h2 className="mt-1.5 text-lg font-semibold text-foreground">
               Статистика тренировок
             </h2>
           </div>
@@ -233,12 +230,12 @@ export function AdminUserActivitySection({
           </div>
         </section>
 
-        <section className="card p-6">
-          <div className="mb-5">
+        <section className="surface-panel p-4 sm:p-5">
+          <div className="mb-4">
             <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
               Питание
             </p>
-            <h2 className="mt-2 text-2xl font-semibold text-foreground">
+            <h2 className="mt-1.5 text-lg font-semibold text-foreground">
               Статистика питания
             </h2>
           </div>
@@ -262,13 +259,13 @@ export function AdminUserActivitySection({
         </section>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-2">
-        <section className="card p-6">
-          <div className="mb-5">
+      <div className="grid gap-4 xl:grid-cols-2">
+        <section className="surface-panel p-4 sm:p-5">
+          <div className="mb-4">
             <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
               ИИ
             </p>
-            <h2 className="mt-2 text-2xl font-semibold text-foreground">
+            <h2 className="mt-1.5 text-lg font-semibold text-foreground">
               ИИ и база знаний
             </h2>
           </div>
@@ -291,12 +288,12 @@ export function AdminUserActivitySection({
           </div>
         </section>
 
-        <section className="card p-6">
-          <div className="mb-5">
+        <section className="surface-panel p-4 sm:p-5">
+          <div className="mb-4">
             <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
               Жизненный цикл
             </p>
-            <h2 className="mt-2 text-2xl font-semibold text-foreground">
+            <h2 className="mt-1.5 text-lg font-semibold text-foreground">
               Данные, оплата и жизненный цикл
             </h2>
           </div>
@@ -333,17 +330,17 @@ export function AdminUserOperationsSection({
 }) {
   return (
     <>
-      <section className="card p-6">
-        <div className="mb-5">
+      <section className="surface-panel p-4 sm:p-5">
+        <div className="mb-4">
           <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
             Операции
           </p>
-          <h2 className="mt-2 text-2xl font-semibold text-foreground">
+          <h2 className="mt-1.5 text-lg font-semibold text-foreground">
             Очереди, выгрузки и ручные действия
           </h2>
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-3">
+        <div className="grid gap-4 xl:grid-cols-3">
           <div className="grid gap-4">
             <KeyValueCard
               rows={[
@@ -422,105 +419,5 @@ export function AdminUserBillingSection({
 }: {
   detail: AdminUserDetailData;
 }) {
-  return (
-    <section className="card p-6" data-testid="admin-user-detail-billing-section">
-      <div className="mb-5">
-        <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
-          Оплата и доступ
-        </p>
-        <h2 className="mt-2 text-2xl font-semibold text-foreground">
-          Подписка, лимиты и история доступа
-        </h2>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <KeyValueCard
-          rows={[
-            {
-              label: "Статус",
-              value: formatStatus(detail.stats.lifecycle.latestSubscription?.status),
-            },
-            {
-              label: "Провайдер",
-              value: formatBillingProvider(
-                detail.stats.lifecycle.latestSubscription?.provider,
-              ),
-            },
-            {
-              label: "Период до",
-              value: formatDateTime(
-                detail.stats.lifecycle.latestSubscription?.current_period_end,
-              ),
-            },
-            {
-              label: "Обновлено",
-              value: formatDateTime(
-                detail.stats.lifecycle.latestSubscription?.updated_at,
-              ),
-            },
-          ]}
-          title="Текущая подписка"
-        />
-
-        <KeyValueCard
-          rows={[
-            {
-              label: "Клиент",
-              value:
-                detail.stats.lifecycle.latestSubscription?.provider_customer_id ??
-                "Нет данных",
-            },
-            {
-              label: "Подписка",
-              value:
-                detail.stats.lifecycle.latestSubscription
-                  ?.provider_subscription_id ?? "Нет данных",
-            },
-            {
-              label: "Период с",
-              value: formatDateTime(
-                detail.stats.lifecycle.latestSubscription?.current_period_start,
-              ),
-            },
-            {
-              label: "Способ оплаты",
-              value: formatBillingProvider(
-                detail.stats.lifecycle.latestSubscription?.provider,
-              ),
-            },
-          ]}
-          title="Платёжный профиль"
-        />
-
-        <KeyValueCard
-          rows={[
-            {
-              label: "Доступы",
-              value: String(detail.stats.lifecycle.entitlements),
-            },
-            {
-                label: "Счётчики использования",
-              value: String(detail.stats.lifecycle.usageCounters),
-            },
-            {
-              label: "Выгрузки",
-              value: String(detail.stats.lifecycle.exportJobs),
-            },
-            {
-              label: "Удаления",
-              value: String(detail.stats.lifecycle.deletionRequests),
-            },
-          ]}
-          title="Доступы и лимиты"
-        />
-
-        <AdminUserEntitlementsCard detail={detail} />
-      </div>
-
-      <div className="mt-4 grid gap-4 xl:grid-cols-2">
-        <AdminUserUsageCountersCard detail={detail} />
-        <AdminUserSubscriptionEventsCard detail={detail} />
-      </div>
-    </section>
-  );
+  return <AdminUserBillingDetailsSection detail={detail} />;
 }

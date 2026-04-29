@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 
@@ -212,13 +212,13 @@ export function AdminAiEvalRuns({
   }
 
   return (
-    <section className="card p-6">
-      <div className="mb-5 flex items-center justify-between gap-3">
+    <section className="surface-panel p-4 sm:p-5">
+      <div className="mb-4 flex items-center justify-between gap-3">
         <div>
           <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
             Качество AI
           </p>
-          <h2 className="mt-2 text-2xl font-semibold text-foreground">
+          <h2 className="mt-1.5 text-lg font-semibold text-foreground">
             Проверки качества AI и история запусков
           </h2>
         </div>

@@ -3,7 +3,6 @@ import { expect, test } from "@playwright/test";
 import { hasAuthE2ECredentials } from "./helpers/auth";
 import { USER_STORAGE_STATE_PATH } from "./helpers/auth-state";
 import { navigateStable } from "./helpers/navigation";
-import { ensureSettingsBillingReviewRequest } from "./helpers/settings-data";
 
 test.use({
   storageState: USER_STORAGE_STATE_PATH,
@@ -18,7 +17,11 @@ test.describe("settings billing center", () => {
   test("user sees billing center sections without raw transport copy", async ({
     page,
   }) => {
-    await navigateStable(page, "/settings?section=billing", /\/settings\?section=billing$/);
+    await navigateStable(
+      page,
+      "/settings?section=billing",
+      /\/settings\?section=billing$/,
+    );
 
     await expect(
       page.getByRole("heading", {
@@ -34,12 +37,14 @@ test.describe("settings billing center", () => {
   test("queued billing review is shown with russian status copy", async ({
     page,
   }) => {
-    await navigateStable(page, "/settings?section=billing", /\/settings\?section=billing$/);
-    await ensureSettingsBillingReviewRequest(page);
-    await navigateStable(page, "/settings?section=billing", /\/settings\?section=billing$/);
+    await navigateStable(
+      page,
+      "/settings?section=billing&e2eBillingReview=1",
+      /\/settings\?section=billing&e2eBillingReview=1$/,
+    );
 
     await expect(page.getByText("в очереди").first()).toBeVisible();
     await expect(page.getByText("Последний запрос:").first()).toBeVisible();
-    await expect(page.getByText("AI-чат").first()).toBeVisible();
+    await expect(page.getByText("AI-план питания").first()).toBeVisible();
   });
 });

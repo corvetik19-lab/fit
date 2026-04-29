@@ -113,9 +113,10 @@ problems` и `Codebase onboarding` к реальному устройству п
 
 - Для deploy- и runtime-tranche не считать задачу завершённой только потому, что локальные тесты зелёные.
 - Сначала дождаться Vercel deployment до терминального состояния без build/runtime ошибок.
-- Предпочтительный путь: Vercel MCP (`get_deployment`, `get_deployment_build_logs`, `get_runtime_logs`).
-- Fallback через CLI:
+- Предпочтительный путь: Vercel CLI через `vercel inspect <deployment-url-or-id> --wait`.
+- Repo shortcut через CLI:
   `npm run wait:vercel-deploy -- <deployment-url-or-id>`
+- Vercel MCP для deploy-triage и rollout verification в `fit` не использовать.
 - Если deploy не дошёл до `READY` или в логах есть build/runtime errors, фиксировать это как blocker, а не как "условно завершено".
 
 ### Сделать review
@@ -184,9 +185,9 @@ problems` и `Codebase onboarding` к реальному устройству п
 - Third-party framework docs — через Context7 или официальную документацию.
 - Supabase-задачи по `fit` — через `mcp__supabase_mcp_server__*`, затем
   локальные verify-команды.
-- Browser-проверки — через Playwright.
-- Vercel/runtime/env — через Vercel tooling и профильные `verify:*`.
-- Ожидание и triage deploy — через Vercel MCP, а при недоступности MCP через `npm run wait:vercel-deploy`.
+- Browser-проверки — через Playwright CLI: `playwright-cli` или `npx --package @playwright/cli playwright-cli`.
+- Vercel/runtime/env — через Vercel CLI и профильные `verify:*`.
+- Ожидание и triage deploy — через Vercel CLI (`vercel inspect --wait`) или `npm run wait:vercel-deploy`, без Vercel MCP.
 
 ## 6. Cookbook patterns, которые приняты в `fit`
 

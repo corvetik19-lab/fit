@@ -14,25 +14,25 @@ type AiChatNoticesProps = {
 function NoticeCard({ notice }: { notice: AiSurfaceNotice }) {
   const styles =
     notice.kind === "success"
-      ? "border-emerald-500/25 bg-emerald-500/12 text-emerald-100"
+      ? "border-emerald-300 bg-emerald-50 text-emerald-700"
       : notice.kind === "info"
-        ? "border-sky-500/25 bg-sky-500/12 text-sky-100"
+        ? "border-sky-300 bg-sky-50 text-sky-700"
         : notice.kind === "provider"
-          ? "border-amber-500/25 bg-amber-500/12 text-amber-100"
-          : "border-red-500/25 bg-red-500/12 text-red-100";
+          ? "border-amber-300 bg-amber-50 text-amber-800"
+          : "border-red-300 bg-red-50 text-red-700";
 
   const title =
     notice.kind === "success"
       ? "Готово"
       : notice.kind === "info"
-        ? "Что важно знать"
+        ? "Важно"
         : notice.kind === "provider"
           ? "Сервис временно недоступен"
           : "Не удалось выполнить запрос";
 
   return (
     <div
-      className={`mt-4 rounded-2xl border px-4 py-3 text-sm ${styles}`}
+      className={`rounded-2xl border px-4 py-3 text-sm ${styles}`}
       data-testid={`ai-notice-${notice.kind}`}
     >
       <p className="font-semibold">{title}</p>
@@ -51,15 +51,16 @@ export function AiChatNotices({
     <>
       {!accessAllowed ? (
         <div
-          className="mt-4 rounded-2xl border border-amber-500/25 bg-amber-500/12 px-4 py-3 text-sm text-amber-100"
+          className="rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800"
           data-testid="ai-access-closed"
         >
           <p className="font-semibold">Доступ к AI закрыт</p>
           <p className="mt-1">
-            {accessReason ?? "AI-чат сейчас недоступен для текущего уровня доступа."}
+            {accessReason ??
+              "AI-чат сейчас недоступен для текущего уровня доступа."}
           </p>
           <Link
-            className="mt-3 inline-flex rounded-full border border-amber-400/30 bg-[color-mix(in_srgb,var(--surface-elevated)_92%,var(--surface))] px-4 py-2 font-semibold text-foreground transition hover:bg-[color-mix(in_srgb,var(--surface-elevated)_98%,var(--surface))]"
+            className="action-button action-button--secondary mt-3 px-4 py-2.5 text-sm"
             href="/settings#billing-center"
           >
             Открыть доступ

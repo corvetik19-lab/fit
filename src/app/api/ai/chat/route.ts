@@ -47,12 +47,13 @@ import { hasRiskyIntent } from "@/lib/safety";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { readServerUserOrNull } from "@/lib/supabase/server-user";
+import { repairMojibakeText } from "@/lib/text/repair-mojibake";
 
 export const runtime = "nodejs";
 
 const CHAT_CONTEXT_TIMEOUT_MS = 8_000;
 const CHAT_KNOWLEDGE_TIMEOUT_MS = 6_000;
-const CHAT_AI_TIMEOUT_MS = 9_000;
+const CHAT_AI_TIMEOUT_MS = 30_000;
 
 function buildSyntheticChatMessage(input: {
   content: string;
@@ -176,8 +177,140 @@ function buildDeterministicChatReplyClean(input: {
   ].join("\n\n");
 }
 
+function buildDeterministicChatReplyAdaptive(input: {
+  context?: Awaited<ReturnType<typeof loadChatContext>> | null;
+  knowledge: Awaited<ReturnType<typeof loadChatKnowledge>>;
+  message: string;
+}) {
+  const normalizedMessage = input.message.toLowerCase();
+  const proteinTarget = input.context?.nutritionTargets.proteinTarget ?? null;
+  const kcalTarget = input.context?.nutritionTargets.kcalTarget ?? null;
+  const weeklyTrainingDays = input.context?.goal.weeklyTrainingDays ?? null;
+
+  if (/(белок|protein)/i.test(normalizedMessage) && /(4|четыр|meal|прием)/i.test(normalizedMessage)) {
+    const perMealTarget =
+      typeof proteinTarget === "number" && proteinTarget > 0
+        ? Math.max(20, Math.round(proteinTarget / 4))
+        : 30;
+
+    return [
+      "Сейчас живой AI-ответ недоступен, поэтому я даю резервный разбор по сохранённому контексту и истории.",
+      `Запрос: ${input.message.trim()}`,
+      `Ориентир по белку: примерно ${perMealTarget} г на каждый из 4 приёма пищи. Так проще держать ровный аппетит и не добирать белок в последний приём.`,
+      "Практично распределить так: завтрак с белком, плотный обед, белковый перекус и ужин с мясом, рыбой или яйцами.",
+      "После силовой тренировки удобно, чтобы один из приёмов пищи в ближайшие 1-3 часа тоже содержал белок и умеренную порцию углеводов.",
+      typeof kcalTarget === "number"
+        ? `Текущая дневная цель по калориям: около ${kcalTarget} ккал. Если хочешь, я могу сразу разложить её в черновик рациона на день.`
+        : "Если хочешь, я могу сразу собрать пример меню на день под 4 приёма пищи и ровное насыщение.",
+    ].join("\n\n");
+  }
+
+  if (/(восстанов|recovery|устал|сон|перегруз)/i.test(normalizedMessage)) {
+    return [
+      "Сейчас живой AI-ответ недоступен, поэтому я даю резервный разбор по сохранённому контексту и истории.",
+      `Запрос: ${input.message.trim()}`,
+      "Два спокойных шага на ближайшую неделю: удерживай стабильное время сна хотя бы 4-5 дней подряд и не добавляй тренировочный объём, пока самочувствие не станет ровнее.",
+      "По питанию в такие недели обычно помогает не пропускать белок и воду, а углеводы не срезать слишком резко вокруг тренировки.",
+      typeof weeklyTrainingDays === "number"
+        ? `У тебя рабочий ритм около ${weeklyTrainingDays} тренировочных дней в неделю, поэтому сейчас важнее стабильность режима, чем попытка ускорить прогресс любой ценой.`
+        : "Если хочешь, я могу дальше помочь собрать тебе короткий анти-перегрузочный план на 7 дней.",
+    ].join("\n\n");
+  }
+
+  if (/(план|рацион|меню|трениров)/i.test(normalizedMessage)) {
+    return [
+      "Сейчас живой AI-ответ недоступен, поэтому я даю резервный разбор по сохранённому контексту и истории.",
+      `Запрос: ${input.message.trim()}`,
+      "Я могу продолжить это не только советом, но и черновиком плана. Для питания укажи цель и желаемое число приёмов пищи, а для тренировок — сколько дней в неделю хочешь тренироваться и какой фокус нужен.",
+      "Если хочешь быстрый результат, просто напиши: «Собери план питания на 4 приёма пищи» или «Собери план тренировок на 3 дня с упором на спину и грудь».",
+    ].join("\n\n");
+  }
+
+  return buildDeterministicChatReplyClean({
+    knowledge: input.knowledge,
+    message: input.message,
+  });
+}
+
+function buildReadableDeterministicChatReply(input: {
+  context?: Awaited<ReturnType<typeof loadChatContext>> | null;
+  knowledge: Awaited<ReturnType<typeof loadChatKnowledge>>;
+  message: string;
+}) {
+  const normalizedMessage = input.message.toLowerCase();
+  const proteinTarget = input.context?.nutritionTargets.proteinTarget ?? null;
+  const kcalTarget = input.context?.nutritionTargets.kcalTarget ?? null;
+  const weeklyTrainingDays = input.context?.goal.weeklyTrainingDays ?? null;
+  const intro =
+    "Live AI is temporarily unavailable, so I am giving you a safe fallback coaching answer from your saved context.";
+  const focus = `Request: ${input.message.trim()}`;
+
+  if (/(protein|meal)/i.test(normalizedMessage) && /\b4\b/.test(normalizedMessage)) {
+    const perMealTarget =
+      typeof proteinTarget === "number" && proteinTarget > 0
+        ? Math.max(20, Math.round(proteinTarget / 4))
+        : 30;
+
+    return [
+      intro,
+      focus,
+      `Protein target: about ${perMealTarget} g in each of 4 meals.`,
+      "A simple split is breakfast with protein, a solid lunch, one protein-focused snack, and dinner with meat, fish, eggs, or another reliable protein source.",
+      "After strength training, it helps if one of those meals lands within 1-3 hours and includes both protein and a moderate portion of carbs.",
+      typeof kcalTarget === "number"
+        ? `Current daily calories target: about ${kcalTarget} kcal. If you want, I can turn that into a day menu next.`
+        : "If you want, I can turn that into a simple 4-meal day menu next.",
+    ].join("\n\n");
+  }
+
+  if (/(recovery|sleep|fatigue|overreach|overload)/i.test(normalizedMessage)) {
+    return [
+      intro,
+      focus,
+      "Two calm changes for this week: keep sleep timing stable for at least 4-5 days in a row, and do not add more training volume until recovery feels steadier.",
+      "From a nutrition side, it usually helps to keep protein and water consistent and avoid cutting carbs too aggressively around training.",
+      typeof weeklyTrainingDays === "number"
+        ? `Your current rhythm looks like about ${weeklyTrainingDays} training days per week, so consistency matters more right now than pushing harder.`
+        : "If you want, I can turn that into a short 7-day recovery plan next.",
+    ].join("\n\n");
+  }
+
+  if (/(plan|meal plan|workout plan|nutrition plan|training plan)/i.test(normalizedMessage)) {
+    return [
+      intro,
+      focus,
+      "I can continue from this as a draft plan instead of just giving advice.",
+      "For nutrition, send calories and meals per day. For training, send days per week, equipment, and main focus.",
+      'Fast examples: "Build a 4-meal meal plan" or "Build a 3-day full body strength plan".',
+    ].join("\n\n");
+  }
+
+  const topKnowledge = input.knowledge[0];
+
+  if (!topKnowledge) {
+    return [
+      intro,
+      focus,
+      "There is not enough fresh personal context available right now.",
+      "Try clarifying the goal, attaching a food photo, or asking for a draft meal or workout plan.",
+    ].join("\n\n");
+  }
+
+  const excerpt =
+    topKnowledge.content.length > 220
+      ? `${topKnowledge.content.slice(0, 220)}...`
+      : topKnowledge.content;
+
+  return [
+    intro,
+    focus,
+    `Saved context used (${topKnowledge.sourceType}): ${excerpt}`,
+    "If you want, I can continue from this and turn it into a more concrete meal or workout draft.",
+  ].join("\n\n");
+}
+
 function normalizeAssistantReply(content: string) {
-  return content.replace(/\u0000/g, "").trim();
+  return repairMojibakeText(content.replace(/\u0000/g, "").trim());
 }
 
 function isLikelyIncompleteAssistantReply(input: {
@@ -588,11 +721,11 @@ export async function POST(request: Request) {
       let generatedContent = "";
       let generationFinishReason: string | null = null;
 
-      for (let attempt = 0; attempt < 1; attempt += 1) {
+      for (let attempt = 0; attempt < 2; attempt += 1) {
         const result = await withTimeout(
           withTransientRetry(() =>
             generateText({
-              maxOutputTokens: AI_CHAT_MAX_OUTPUT_TOKENS,
+              maxOutputTokens: AI_CHAT_MAX_OUTPUT_TOKENS + attempt * 400,
               model: models.chat,
               system: promptBuilder({
                 allowWebSearch: false,
@@ -625,7 +758,7 @@ export async function POST(request: Request) {
           userId: user.id,
         });
 
-        if (attempt === 0) {
+        if (attempt === 1) {
           throw new Error("AI_CHAT_INCOMPLETE_RESPONSE");
         }
       }
@@ -637,10 +770,13 @@ export async function POST(request: Request) {
         sessionId: session.id,
         userId: user.id,
       });
-      assistantContent = buildDeterministicChatReplyClean({
-        knowledge: finalKnowledge,
-        message: body.message,
-      });
+      assistantContent = repairMojibakeText(
+        buildReadableDeterministicChatReply({
+          context: userContext,
+          knowledge: finalKnowledge,
+          message: body.message,
+        }),
+      );
     }
 
     let assistantMessage: AiChatMessageRow;
@@ -722,7 +858,8 @@ export async function POST(request: Request) {
     if (fallbackMessage && isTransientRuntimeError(error)) {
       const fallbackContent = hasRiskyIntent(fallbackMessage)
         ? buildAiChatSafetyFallback()
-        : buildDeterministicChatReplyClean({
+        : buildDeterministicChatReplyAdaptive({
+            context: null,
             knowledge: [],
             message: fallbackMessage,
           });

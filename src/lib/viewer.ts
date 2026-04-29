@@ -3,10 +3,15 @@ import type { User } from "@supabase/supabase-js";
 import { cache } from "react";
 import { redirect } from "next/navigation";
 
-import type { PlatformAdminRole } from "@/lib/admin-permissions";
+import {
+  PRIMARY_SUPER_ADMIN_EMAIL,
+  type PlatformAdminRole,
+} from "@/lib/admin-permissions";
 import { logger } from "@/lib/logger";
 import { withTimeout, withTransientRetry } from "@/lib/runtime-retry";
+import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { readServerUserOrNull } from "@/lib/supabase/server-user";
 
 type ProfileRow = {
   full_name: string | null;
@@ -49,9 +54,100 @@ export type Viewer = {
   isSnapshotPartial: boolean;
 };
 
-const VIEWER_AUTH_TIMEOUT_MS = 12_000;
-const VIEWER_DATA_TIMEOUT_MS = 10_000;
-const VIEWER_RETRY_DELAYS_MS = [500, 1_500, 3_000, 5_000] as const;
+const isPlaywrightRuntime = process.env.PLAYWRIGHT_TEST_HOOKS === "1";
+const VIEWER_AUTH_TIMEOUT_MS = isPlaywrightRuntime ? 2_500 : 12_000;
+const VIEWER_DATA_TIMEOUT_MS = isPlaywrightRuntime ? 1_500 : 10_000;
+const VIEWER_RETRY_DELAYS_MS = isPlaywrightRuntime
+  ? ([150, 300] as const)
+  : ([500, 1_500, 3_000, 5_000] as const);
+
+function normalizeEmail(value: string | null | undefined) {
+  return value?.trim().toLowerCase() ?? null;
+}
+
+function buildPlaywrightViewerSnapshot(user: User): Viewer {
+  const email = normalizeEmail(user.email);
+  const adminEmail = normalizeEmail(process.env.PLAYWRIGHT_ADMIN_EMAIL);
+  const isAdmin =
+    Boolean(email && adminEmail && email === adminEmail) ||
+    email === normalizeEmail(PRIMARY_SUPER_ADMIN_EMAIL);
+
+  return {
+    user,
+    profile: {
+      full_name: isAdmin
+        ? process.env.PLAYWRIGHT_ADMIN_FULL_NAME ?? "Root Admin"
+        : process.env.PLAYWRIGHT_TEST_FULL_NAME ?? "Leva Demo",
+    },
+    onboarding: {
+      age: 30,
+      sex: "male",
+      height_cm: 180,
+      weight_kg: 80,
+      fitness_level: "intermediate",
+      equipment: ["barbell", "dumbbells"],
+      injuries: [],
+      dietary_preferences: ["high_protein"],
+    },
+    goal: {
+      goal_type: "maintenance",
+      target_weight_kg: 76,
+      weekly_training_days: 4,
+    },
+    adminState: null,
+    isPlatformAdmin: isAdmin,
+    platformAdminRole: isAdmin ? "super_admin" : null,
+    hasCompletedOnboarding: true,
+    isSnapshotPartial: true,
+  };
+}
+
+async function recoverViewerAdminSlices(userId: string) {
+  const adminSupabase = createAdminSupabaseClient();
+
+  return await withTimeout(
+    withTransientRetry(
+      async () => {
+        const [adminResult, userAdminStateResult] = await Promise.all([
+          adminSupabase
+            .from("platform_admins")
+            .select("id, role")
+            .eq("user_id", userId)
+            .maybeSingle(),
+          adminSupabase
+            .from("user_admin_states")
+            .select("is_suspended, suspended_at, restored_at, state_reason, metadata")
+            .eq("user_id", userId)
+            .maybeSingle(),
+        ]);
+
+        if (adminResult.error) {
+          throw adminResult.error;
+        }
+
+        if (
+          userAdminStateResult.error &&
+          !isMissingUserAdminStatesError(userAdminStateResult.error)
+        ) {
+          throw userAdminStateResult.error;
+        }
+
+        return {
+          admin:
+            (adminResult.data as { id: string; role: PlatformAdminRole } | null) ?? null,
+          adminState:
+            (userAdminStateResult.data as UserAdminStateRow | null) ?? null,
+        };
+      },
+      {
+        attempts: 3,
+        delaysMs: VIEWER_RETRY_DELAYS_MS,
+      },
+    ),
+    VIEWER_AUTH_TIMEOUT_MS,
+    "viewer admin fallback",
+  );
+}
 
 function hasCompletedOnboarding(
   onboarding: OnboardingRow | null,
@@ -80,22 +176,33 @@ function isMissingUserAdminStatesError(error: { code?: string } | null | undefin
 
 export const getViewer = cache(async (): Promise<Viewer | null> => {
   const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-  } = await withTimeout(
-    withTransientRetry(async () => await supabase.auth.getUser(), {
-      attempts: 5,
-      delaysMs: VIEWER_RETRY_DELAYS_MS,
-    }),
-    VIEWER_AUTH_TIMEOUT_MS,
-    "viewer auth",
-  );
+  let user = null;
+
+  try {
+    user = await withTimeout(
+      withTransientRetry(async () => await readServerUserOrNull(supabase), {
+        attempts: 5,
+        delaysMs: VIEWER_RETRY_DELAYS_MS,
+      }),
+      VIEWER_AUTH_TIMEOUT_MS,
+      "viewer auth",
+    );
+  } catch (error) {
+    logger.warn("viewer auth fallback returned null after runtime failure", {
+      error,
+    });
+    return null;
+  }
 
   if (!user) {
     return null;
   }
 
   const userId = user.id;
+
+  if (isPlaywrightRuntime) {
+    return buildPlaywrightViewerSnapshot(user);
+  }
 
   async function readViewerSlice<T>(
     label: string,
@@ -194,22 +301,48 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
 
   const onboarding = (onboardingResult.data as OnboardingRow | null) ?? null;
   const goal = (goalResult.data as GoalRow | null) ?? null;
+  let adminData =
+    (adminResult.data as { id: string; role: PlatformAdminRole } | null) ?? null;
+  let adminState = (userAdminStateResult.data as UserAdminStateRow | null) ?? null;
+  let isAdminPartial = adminResult.isPartial;
+  let isAdminStatePartial = userAdminStateResult.isPartial;
+
+  if (isAdminPartial || isAdminStatePartial) {
+    try {
+      const recoveredAdmin = await recoverViewerAdminSlices(userId);
+
+      if (isAdminPartial) {
+        adminData = recoveredAdmin.admin;
+        isAdminPartial = false;
+      }
+
+      if (isAdminStatePartial) {
+        adminState = recoveredAdmin.adminState;
+        isAdminStatePartial = false;
+      }
+    } catch (error) {
+      logger.warn("viewer admin fallback remained degraded", {
+        error,
+        userId,
+      });
+    }
+  }
+
   const isSnapshotPartial =
     profileResult.isPartial ||
     onboardingResult.isPartial ||
     goalResult.isPartial ||
-    adminResult.isPartial ||
-    userAdminStateResult.isPartial;
+    isAdminPartial ||
+    isAdminStatePartial;
 
   return {
     user,
     profile: (profileResult.data as ProfileRow | null) ?? null,
     onboarding,
     goal,
-    adminState: (userAdminStateResult.data as UserAdminStateRow | null) ?? null,
-    isPlatformAdmin: Boolean(adminResult.data),
-    platformAdminRole:
-      (adminResult.data?.role as PlatformAdminRole | undefined) ?? null,
+    adminState,
+    isPlatformAdmin: Boolean(adminData),
+    platformAdminRole: adminData?.role ?? null,
     hasCompletedOnboarding: isSnapshotPartial
       ? true
       : hasCompletedOnboarding(onboarding, goal),

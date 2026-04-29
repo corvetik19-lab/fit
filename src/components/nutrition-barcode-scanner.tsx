@@ -46,7 +46,7 @@ export function NutritionBarcodeScanner({
     if (!navigator.mediaDevices?.getUserMedia || !BarcodeDetectorApi) {
       setSupportsLiveScanner(false);
       setError(
-        "В этом браузере live-сканер штрихкода недоступен. Можно сфотографировать упаковку или ввести код вручную.",
+        "Live-сканер штрихкода недоступен в этом браузере. Можно выбрать фото упаковки или ввести код вручную.",
       );
       return;
     }
@@ -163,7 +163,7 @@ export function NutritionBarcodeScanner({
 
       if (!normalizedBarcode) {
         setError(
-          "Не удалось распознать штрихкод на фото. Попробуй снять упаковку ближе и без бликов.",
+          "Не удалось распознать штрихкод на фото. Сними упаковку ближе и без бликов.",
         );
         return;
       }
@@ -177,29 +177,28 @@ export function NutritionBarcodeScanner({
   }
 
   return (
-    <div className="rounded-[2rem] border border-border bg-[color-mix(in_srgb,var(--surface)_92%,white)] p-4 shadow-[0_30px_80px_-48px_rgba(15,23,42,0.3)]">
+    <div className="rounded-[1.4rem] border border-border bg-white p-3 shadow-[0_30px_80px_-48px_rgba(15,23,42,0.3)]">
       <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-muted">
-            Сканер штрихкода
-          </p>
-          <h3 className="mt-2 text-lg font-semibold text-foreground">
+        <div className="min-w-0">
+          <p className="workspace-kicker">Сканер штрихкода</p>
+          <h3 className="mt-1 text-base font-semibold text-foreground">
             Наведи камеру на упаковку
           </h3>
-          <p className="mt-2 text-sm leading-6 text-muted">
-            Лучше всего работает на чёткой упаковке при хорошем свете.
+          <p className="mt-1 text-sm leading-5 text-muted">
+            Лучше всего работает на чётком кадре при хорошем свете.
           </p>
         </div>
         <button
-          className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,var(--surface))] text-foreground transition hover:bg-[color-mix(in_srgb,var(--surface-elevated)_98%,var(--surface))]"
+          aria-label="Закрыть сканер"
+          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-white text-foreground transition hover:bg-[color:var(--surface-elevated)]"
           onClick={onClose}
           type="button"
         >
-          <X size={18} strokeWidth={2.2} />
+          <X size={17} strokeWidth={2.2} />
         </button>
       </div>
 
-      <div className="mt-4 overflow-hidden rounded-[1.75rem] border border-border bg-slate-950">
+      <div className="mt-3 overflow-hidden rounded-[1.25rem] border border-border bg-slate-950">
         {supportsLiveScanner ? (
           <div className="relative aspect-[4/5] w-full overflow-hidden">
             <video
@@ -210,8 +209,8 @@ export function NutritionBarcodeScanner({
               ref={videoRef}
             />
             <div className="pointer-events-none absolute inset-0 border-[14px] border-slate-950/40" />
-            <div className="pointer-events-none absolute inset-x-8 top-1/2 h-24 -translate-y-1/2 rounded-[1.5rem] border-2 border-emerald-300/90 shadow-[0_0_0_9999px_rgba(2,6,23,0.28)]" />
-            <div className="absolute left-4 top-4 inline-flex items-center gap-2 rounded-full bg-slate-950/70 px-3 py-2 text-xs font-medium text-white">
+            <div className="pointer-events-none absolute inset-x-8 top-1/2 h-24 -translate-y-1/2 rounded-[1.25rem] border-2 border-teal-300/90 shadow-[0_0_0_9999px_rgba(2,6,23,0.28)]" />
+            <div className="absolute left-3 top-3 inline-flex items-center gap-2 rounded-full bg-slate-950/70 px-3 py-2 text-xs font-medium text-white">
               <ScanLine size={14} strokeWidth={2.2} />
               {isReady ? "Сканирую..." : "Подключаю камеру..."}
             </div>
@@ -227,7 +226,7 @@ export function NutritionBarcodeScanner({
       </div>
 
       {error ? (
-        <div className="mt-4 flex items-start gap-2 rounded-2xl border border-amber-500/30 bg-amber-500/12 px-4 py-3 text-sm text-amber-100">
+        <div className="mt-3 flex items-start gap-2 rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800">
           <TriangleAlert className="mt-0.5 shrink-0" size={16} strokeWidth={2.2} />
           <p>{error}</p>
         </div>
@@ -242,13 +241,13 @@ export function NutritionBarcodeScanner({
         type="file"
       />
 
-      <div className="mt-4 flex flex-wrap gap-3">
+      <div className="mt-3 flex flex-wrap gap-2">
         <button
-          className="rounded-full border border-border bg-[color-mix(in_srgb,var(--surface-elevated)_92%,var(--surface))] px-4 py-2.5 text-sm font-semibold text-foreground transition hover:bg-[color-mix(in_srgb,var(--surface-elevated)_98%,var(--surface))]"
+          className="action-button action-button--secondary px-4 py-2.5 text-sm"
           onClick={() => fileInputRef.current?.click()}
           type="button"
         >
-          Считать с фото упаковки
+          Считать с фото
         </button>
       </div>
     </div>

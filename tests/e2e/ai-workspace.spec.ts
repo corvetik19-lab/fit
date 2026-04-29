@@ -9,6 +9,7 @@ import { navigateStable } from "./helpers/navigation";
 
 const PNG_1X1_BASE64 =
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9WnR9f8AAAAASUVORK5CYII=";
+const usesLocalPlaywrightAuth = process.env.PLAYWRIGHT_SKIP_AUTH_SETUP === "1";
 
 test.use({
   storageState: USER_STORAGE_STATE_PATH,
@@ -106,9 +107,7 @@ test.describe("ai workspace", () => {
     await expect(page.getByTestId("ai-chat-composer")).toBeVisible({
       timeout: 15_000,
     });
-    await expect(page.locator('[data-testid="ai-assistant-flow"]')).toContainText(
-      "От запроса до применения",
-    );
+    await expect(chatPanel.locator('[data-testid="ai-chat-toolbar"]')).toBeVisible();
 
     const webSearchToggle = chatPanel
       .locator('[data-testid="ai-chat-toolbar"]')
@@ -155,15 +154,43 @@ test.describe("ai workspace", () => {
     await expect(page.getByText("meal-photo.png", { exact: true })).toBeVisible();
   });
 
-  test("chat history supports single delete and bulk clear", async ({ page }) => {
-    test.setTimeout(90_000);
+  test("floating AI launcher opens full agent with intent prefill", async ({
+    page,
+  }) => {
+    test.setTimeout(60_000);
 
     await navigateStable(page, "/dashboard", /\/(dashboard|onboarding)$/);
     await finishOnboardingIfVisible(page);
+    await page.getByTestId("ai-assistant-widget-trigger").click();
+    await expect(page.getByTestId("ai-launcher-sheet")).toBeVisible();
+    await page.getByTestId("ai-launcher-action-meal-plan").click();
+    await expect(page).toHaveURL(/\/ai\?intent=meal_plan&from=dashboard/);
+    await expect(page.getByTestId("ai-launch-context")).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.getByTestId("ai-chat-composer")).toHaveValue(
+      /Составь черновик плана питания/,
+      { timeout: 15_000 },
+    );
+  });
 
-    await replaceAiChatHistory({ sessionCount: 2 });
+  test("chat history supports single delete and bulk clear", async ({ page }) => {
+    test.setTimeout(90_000);
 
-    await navigateStable(page, "/ai", /\/ai$/);
+    if (!usesLocalPlaywrightAuth) {
+      await navigateStable(page, "/dashboard", /\/(dashboard|onboarding)$/);
+      await finishOnboardingIfVisible(page);
+    }
+
+    if (!usesLocalPlaywrightAuth) {
+      await replaceAiChatHistory({ sessionCount: 2 });
+    }
+
+    await navigateStable(
+      page,
+      usesLocalPlaywrightAuth ? "/ai?e2eHistory=1" : "/ai",
+      usesLocalPlaywrightAuth ? /\/ai\?e2eHistory=1$/ : /\/ai$/,
+    );
 
     const sessionItems = page.locator('[data-testid="ai-session-item"]');
     await expect(sessionItems).toHaveCount(2, { timeout: 15_000 });

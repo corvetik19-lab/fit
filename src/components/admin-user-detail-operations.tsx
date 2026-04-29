@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import {
   formatAuditAction,
@@ -184,13 +184,13 @@ export function AdminUserOperationAuditSection({
   detail: AdminUserDetailData;
 }) {
   return (
-    <section className="card p-6">
-      <div className="mb-5 flex items-center justify-between gap-3">
+    <section className="surface-panel p-4 sm:p-5">
+      <div className="mb-4 flex items-center justify-between gap-3">
         <div>
           <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
             История операций
           </p>
-          <h2 className="mt-2 text-2xl font-semibold text-foreground">
+          <h2 className="mt-1.5 text-lg font-semibold text-foreground">
             Выгрузка данных и удаление аккаунта
           </h2>
         </div>
@@ -279,13 +279,13 @@ export function AdminUserAdminAuditSection({
   detail: AdminUserDetailData;
 }) {
   return (
-    <section className="card p-6">
-      <div className="mb-5 flex items-center justify-between gap-3">
+    <section className="surface-panel p-4 sm:p-5">
+      <div className="mb-4 flex items-center justify-between gap-3">
         <div>
           <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted">
             Аудит
           </p>
-          <h2 className="mt-2 text-2xl font-semibold text-foreground">
+          <h2 className="mt-1.5 text-lg font-semibold text-foreground">
             Последние административные изменения
           </h2>
         </div>

@@ -269,3 +269,12 @@ Production rollout CloudPayments зависит от реальных env:
 - При rollout schema changes учитывать, что Vercel может задеплоить код раньше, чем remote Supabase получит миграцию.
 - Для user-facing workout flow уже есть часть backward-compatible fallback-логики, но это не замена своевременному применению миграций.
 - Sync push/pull сейчас реально реализованы только для workout execution slice; остальные домены на полноценный incremental sync ещё не переведены.
+
+## 2026-04-29 Admin test access contract
+
+- Тестовый доступ хранится в существующей таблице `subscriptions`: `status = 'trial'`, срок в `current_period_end`, provider по умолчанию `admin_trial`.
+- Ручная подписка без live-provider хранится как `status = 'active'`, provider по умолчанию `admin_console`.
+- `applyAdminSubscriptionAction(...)` продлевает `grant_trial` и ручную активацию от `max(now, current_period_end)`, чтобы повторная выдача добавляла дни к будущему сроку, а не обнуляла период.
+- Admin payload для `subscription_events` и `admin_audit_logs` включает `durationDays`, `periodBase`, `previousPeriodEnd`, `currentPeriodEnd`, `provider`, `status`.
+- Billing mutations и audit/event inserts в `src/lib/admin-billing.ts` используют transient retry для кратких Supabase runtime-сбоев (`fetch failed`, `ECONNRESET`, `terminated`).
+- Схема БД не менялась; новых migrations для этого среза нет.

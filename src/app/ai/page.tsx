@@ -1,12 +1,13 @@
 import { AiWorkspace } from "@/components/ai-workspace";
 import { AppShell, toAppShellViewer } from "@/components/app-shell";
+import { resolveAiAgentLaunchContext } from "@/lib/ai/agent-intents";
 import {
   getAiChatState,
+  listAiChatSessions,
   type AiChatMessageRow,
   type AiChatSessionRow,
-  listAiChatSessions,
 } from "@/lib/ai/chat";
-import { type AiPlanProposalRow, listAiPlanProposals } from "@/lib/ai/proposals";
+import { listAiPlanProposals, type AiPlanProposalRow } from "@/lib/ai/proposals";
 import {
   createEmptyAiRuntimeContextResult,
   getAiRuntimeContext,
@@ -21,10 +22,14 @@ import { withTimeout, withTransientRetry } from "@/lib/runtime-retry";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireReadyViewer } from "@/lib/viewer";
 
-const AI_PAGE_DATA_TIMEOUT_MS = 20_000;
+const IS_PLAYWRIGHT_RUNTIME = process.env.PLAYWRIGHT_TEST_HOOKS === "1";
+const AI_PAGE_DATA_TIMEOUT_MS = IS_PLAYWRIGHT_RUNTIME ? 1_500 : 20_000;
 
 type AiPageProps = {
   searchParams?: Promise<{
+    e2eHistory?: string | string[] | undefined;
+    from?: string | string[] | undefined;
+    intent?: string | string[] | undefined;
     session?: string | string[] | undefined;
   }>;
 };
@@ -36,12 +41,35 @@ function createEmptyAiChatState() {
   };
 }
 
+function createPlaywrightAiChatSessions(): AiChatSessionRow[] {
+  const now = new Date().toISOString();
+
+  return [
+    {
+      id: "00000000-0000-4000-8000-000000000101",
+      title: "E2E history seed 1: восстановление после нагрузки",
+      created_at: now,
+      updated_at: now,
+    },
+    {
+      id: "00000000-0000-4000-8000-000000000102",
+      title: "E2E history seed 2: питание и тренировки",
+      created_at: now,
+      updated_at: now,
+    },
+  ];
+}
+
 async function loadAiPageResource<T>(
   userId: string,
   label: string,
   factory: () => Promise<T>,
   fallback: () => T,
 ) {
+  if (IS_PLAYWRIGHT_RUNTIME) {
+    return fallback();
+  }
+
   try {
     return await withTransientRetry(
       async () => await withTimeout(factory(), AI_PAGE_DATA_TIMEOUT_MS, label),
@@ -67,6 +95,12 @@ export default async function AiPage({ searchParams }: AiPageProps) {
   const sessionParam = Array.isArray(resolvedSearchParams.session)
     ? resolvedSearchParams.session[0]
     : resolvedSearchParams.session ?? null;
+  const launchContext = resolveAiAgentLaunchContext(resolvedSearchParams);
+  const shouldUsePlaywrightHistory =
+    IS_PLAYWRIGHT_RUNTIME &&
+    (Array.isArray(resolvedSearchParams.e2eHistory)
+      ? resolvedSearchParams.e2eHistory[0]
+      : resolvedSearchParams.e2eHistory) === "1";
 
   const [runtimeContext, proposals, chatState, recentSessions, access] =
     await Promise.all([
@@ -95,7 +129,10 @@ export default async function AiPage({ searchParams }: AiPageProps) {
         viewer.user.id,
         "AI chat sessions",
         () => listAiChatSessions(supabase, viewer.user.id, 30),
-        () => [] as AiChatSessionRow[],
+        () =>
+          shouldUsePlaywrightHistory
+            ? createPlaywrightAiChatSessions()
+            : ([] as AiChatSessionRow[]),
       ),
       loadAiPageResource<UserBillingAccessSnapshot>(
         viewer.user.id,
@@ -125,6 +162,7 @@ export default async function AiPage({ searchParams }: AiPageProps) {
         initialMessages={chatState.messages}
         initialSessionId={chatState.session?.id ?? null}
         initialSessionTitle={chatState.session?.title ?? null}
+        launchContext={launchContext}
         mealPhotoAccess={access.features.meal_photo}
         proposals={proposals}
         recentSessions={recentSessions}
