@@ -1772,3 +1772,10 @@
 - Усилил server auth в `src/lib/supabase/server-user.ts`: cookie/session decoding без проверки Supabase теперь работает только для `PLAYWRIGHT_TEST_HOOKS=1`; production fallback оставлен только для валидированного bearer-token.
 - Исправил `src/components/auth-form.tsx`: email триммится перед отправкой, пустые email/password ловятся на клиенте, placeholder пароля заменён на "Введите пароль".
 - Проверено: `npm run lint`, `npm run typecheck`, `npm run build`, local production-like proof без test hooks (`output/live-auth-fix-local-2026-04-30/result.json`). Vercel CLI rollout заблокирован авторизацией (`Not authorized`), следующий путь - push в GitHub для auto-deploy или Vercel token/login.
+
+## 2026-04-30 Public live proof after GitHub push
+
+- Запушил commit `bb85964` в `origin/main`; GitHub auto-deploy обновил внешний `https://fit-platform-eta.vercel.app`: HTML стал отдавать `title=fitora` и новые `fitora` assets.
+- Провёл live Playwright-проверку в clean mobile browser: password value пустой, placeholder `Введите пароль`, submit disabled без password и после заполнения только email.
+- Проверил auth hardening на live: forged Supabase cookie при открытии `/dashboard` редиректит на `/`, то есть production больше не принимает непроверенный cookie как пользователя.
+- Артефакт live-проверки: `output/live-fitora-production-check-2026-04-30/result.json`. Остаточный blocker: canonical Vercel terminal verification нельзя закрыть без Vercel CLI доступа (`Not authorized` / `Could not retrieve Project Settings`).
