@@ -13,7 +13,7 @@
 
 Р В­РЎвЂљР С•РЎвЂљ РЎвЂћР В°Р в„–Р В» РІР‚вЂќ РЎвЂљР ВµР С”РЎС“РЎвЂ°Р С‘Р в„– production-hardening backlog Р С—РЎР‚Р С•Р ВµР С”РЎвЂљР В°. Р С›Р Р… Р С•РЎвЂљРЎР‚Р В°Р В¶Р В°Р ВµРЎвЂљ РЎвЂћР В°Р С”РЎвЂљР С‘РЎвЂЎР ВµРЎРѓР С”Р С•Р Вµ РЎРѓР С•РЎРѓРЎвЂљР С•РЎРЏР Р…Р С‘Р Вµ РЎР‚Р ВµР С—Р С•Р В·Р С‘РЎвЂљР С•РЎР‚Р С‘РЎРЏ Р Р…Р В° `2026-03-31`.
 
-РўРµРєСѓС‰РёР№ РїСЂРѕРіСЂРµСЃСЃ execution checklist: `245 / 247` (`99%`).
+РўРµРєСѓС‰РёР№ РїСЂРѕРіСЂРµСЃСЃ execution checklist: `250 / 253` (`99%`).
 
 ## Р СћР ВµР С”РЎС“РЎвЂ°Р В°РЎРЏ Р В±Р В°Р В·Р В°
 
@@ -1636,9 +1636,9 @@ pm run test:smoke -> 5 passed. Auth-based Playwright РґР»СЏ mobile/auth Р
 
 ## 2026-04-30 AI Assistant streaming fix
 
-- [x] Запущен отдельный активный подплан [AI_ASSISTANT_STREAMING_FIX_EXECUTION.md](/C:/fit/docs/AI_ASSISTANT_STREAMING_FIX_EXECUTION.md): текущий план считается отдельно от общего `MASTER_PLAN`, начальное состояние `4 / 6 (67%)`.
+- [x] Запущен отдельный активный подплан [AI_ASSISTANT_STREAMING_FIX_EXECUTION.md](/C:/fit/docs/AI_ASSISTANT_STREAMING_FIX_EXECUTION.md): текущий план считается отдельно от общего `MASTER_PLAN`, текущее состояние `5 / 6 (83%)`.
 - [x] Причина non-streaming поведения найдена: обычная ветка [assistant/route.ts](/C:/fit/src/app/api/ai/assistant/route.ts) ждала полный `generateText` и отправляла один готовый `text-delta`.
 - [x] Runtime исправлен: generic `/api/ai/assistant` теперь возвращает `streamText(...).toUIMessageStreamResponse(...)`, сохраняя `onFinish` persistence и текущий tool/proposal contract.
 - [x] AI chat storage hardened: [chat.ts](/C:/fit/src/lib/ai/chat.ts) ремонтирует восстановимые mojibake-строки в session title и message content при записи/чтении.
-- [ ] Public production proof после GitHub auto-deploy: live `/api/ai/assistant` должен подтвердить `text/event-stream` с несколькими chunk во времени.
+- [x] Public production proof после GitHub auto-deploy: live `/api/ai/assistant` с реальной Supabase cookie-сессией вернул `200`, `text/event-stream`, `9` chunks и `3` `text-delta`; артефакт [stream-result.json](/C:/fit/output/ai-streaming-live-2026-04-30/stream-result.json).
 - [ ] Canonical Vercel terminal verification остаётся внешним blocker до восстановления Vercel CLI auth/token.

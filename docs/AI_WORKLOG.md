@@ -1787,3 +1787,10 @@
 - Усилил `src/lib/ai/chat.ts`: AI session title и message content теперь проходят через `repairMojibakeText` при записи и чтении. Это чинит восстановимый mojibake, но literal `????` из уже потерянного текста восстановить нельзя.
 - Проверено локально: `npm run lint`, `npm run typecheck`, `npm run build`, production-like SSE probe на `http://127.0.0.1:3251/api/ai/assistant` -> `text/event-stream`, `13` chunks. Артефакт: `output/ai-streaming-local-2026-04-30/stream-result.json`.
 - Общий `MASTER_PLAN` после добавления текущего подплана: будет пересчитан скриптом; текущий AI streaming plan: `4 / 6 (67%)` до public production proof.
+
+## 2026-04-30 AI Assistant live streaming proof
+
+- После push `c9ffeff` проверил публичный `https://fit-platform-eta.vercel.app/api/ai/assistant` через реальную Supabase cookie-сессию, как в браузере пользователя.
+- Live response: `200`, `text/event-stream`, `9` chunks, `3` `text-delta`; ответ начал приходить частями, а не одним готовым блоком. Артефакт: `output/ai-streaming-live-2026-04-30/stream-result.json`.
+- Bearer-only probe отдельно возвращал `502`, потому что route дальше использует server Supabase client/RLS и пользовательский сценарий должен идти через auth cookie. Это не воспроизводит browser flow.
+- Текущий AI streaming plan: `5 / 6 (83%)`; общий `MASTER_PLAN`: `250 / 253 (99%)`. Открыт только canonical Vercel terminal verification из-за неавторизованного Vercel CLI.

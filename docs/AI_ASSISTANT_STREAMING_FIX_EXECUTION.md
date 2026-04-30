@@ -7,7 +7,7 @@ SSE/UIMessage streaming в обычной ветке `/api/ai/assistant` и за
 причину, почему главная страница может сразу открывать dashboard без формы
 входа.
 
-Текущий прогресс подплана: `4 / 6` (`67%`).
+Текущий прогресс подплана: `5 / 6` (`83%`).
 
 ## Чеклист
 
@@ -15,7 +15,7 @@ SSE/UIMessage streaming в обычной ветке `/api/ai/assistant` и за
 - [x] Причина ответа одним блоком найдена: обычная ветка `/api/ai/assistant` использовала `generateText`, дожидалась полного ответа и отправляла один `text-delta` через статический UIMessage stream.
 - [x] Runtime исправлен: обычная ветка `/api/ai/assistant` теперь сразу возвращает `streamText(...).toUIMessageStreamResponse(...)`, а plan/tool ветка сохраняет существующий streaming/tool contract.
 - [x] Хранилище AI-чата усилено: session title и message content проходят через `repairMojibakeText` при записи и чтении, чтобы старые mojibake-строки не возвращались в UI и model context.
-- [ ] Public production proof после GitHub auto-deploy: live `/api/ai/assistant` должен вернуть `text/event-stream` с несколькими chunk/delta во времени, а не один финальный блок.
+- [x] Public production proof после GitHub auto-deploy: live `/api/ai/assistant` с реальной Supabase cookie-сессией вернул `200`, `text/event-stream`, `9` chunks и `3` `text-delta`; артефакт: [stream-result.json](/C:/fit/output/ai-streaming-live-2026-04-30/stream-result.json).
 - [ ] Canonical Vercel terminal verification: повторить `vercel inspect --wait` или `npm run wait:vercel-deploy -- <deployment>` после восстановления Vercel CLI auth/token.
 
 ## Evaluator Loop
@@ -27,7 +27,7 @@ SSE/UIMessage streaming в обычной ветке `/api/ai/assistant` и за
   `text-delta`.
 - Evaluator: локальный production-like SSE probe на `/api/ai/assistant` должен
   подтвердить `content-type: text/event-stream` и несколько chunk во времени.
-- Artifacts: [stream-result.json](/C:/fit/output/ai-streaming-local-2026-04-30/stream-result.json).
+- Artifacts: локальный [stream-result.json](/C:/fit/output/ai-streaming-local-2026-04-30/stream-result.json), live [stream-result.json](/C:/fit/output/ai-streaming-live-2026-04-30/stream-result.json).
 - Stop condition: `lint`, `typecheck`, `build` зелёные; локальный SSE probe
   показывает несколько chunk; после push отдельный live SSE probe подтверждает
   то же на `https://fit-platform-eta.vercel.app`.

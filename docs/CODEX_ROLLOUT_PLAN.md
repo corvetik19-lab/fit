@@ -112,4 +112,5 @@
 
 - Streaming-регрессия `/api/ai/assistant` проведена через отдельный evaluator-loop и зафиксирована в [AI_ASSISTANT_STREAMING_FIX_EXECUTION.md](/C:/fit/docs/AI_ASSISTANT_STREAMING_FIX_EXECUTION.md): baseline был `generateText` + один статический `text-delta`, stop condition - настоящий `streamText` SSE с несколькими chunk во времени.
 - Для user-facing AI runtime запрещено маскировать non-streaming путь под UIMessage stream: если ответ показывается пользователю в `/ai`, route должен отдавать настоящий поток или явно фиксировать provider/deploy blocker.
+- Public live proof после GitHub auto-deploy закрыт cookie-based проверкой browser flow: `/api/ai/assistant` вернул `200`, `text/event-stream`, `9` chunks и `3` `text-delta`.
 - Canonical Vercel terminal verification по этому tranche остаётся внешним blocker до восстановления Vercel CLI auth/token; публичный live proof и CLI terminal state учитываются отдельно.
