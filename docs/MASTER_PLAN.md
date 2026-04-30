@@ -1633,3 +1633,12 @@ pm run test:smoke -> 5 passed. Auth-based Playwright РґР»СЏ mobile/auth Р
 - [x] GitHub push `bb85964` сработал как auto-deploy: внешний `https://fit-platform-eta.vercel.app` теперь отдает `title=fitora`, новый login, пустой password value, placeholder `Введите пароль`, submit disabled без password.
 - [x] Live auth proof закрыт через Playwright clean browser: forged Supabase cookie на `/dashboard` редиректит на `/`, артефакт [result.json](/C:/fit/output/live-fitora-production-check-2026-04-30/result.json).
 - [ ] Canonical Vercel terminal verification остаётся внешним blocker: текущий Vercel CLI не авторизован для `fit-platform` (`Not authorized` / `Could not retrieve Project Settings`), поэтому `vercel inspect --wait` или `npm run wait:vercel-deploy -- <deployment>` нужно повторить после Vercel token/login.
+
+## 2026-04-30 AI Assistant streaming fix
+
+- [x] Запущен отдельный активный подплан [AI_ASSISTANT_STREAMING_FIX_EXECUTION.md](/C:/fit/docs/AI_ASSISTANT_STREAMING_FIX_EXECUTION.md): текущий план считается отдельно от общего `MASTER_PLAN`, начальное состояние `4 / 6 (67%)`.
+- [x] Причина non-streaming поведения найдена: обычная ветка [assistant/route.ts](/C:/fit/src/app/api/ai/assistant/route.ts) ждала полный `generateText` и отправляла один готовый `text-delta`.
+- [x] Runtime исправлен: generic `/api/ai/assistant` теперь возвращает `streamText(...).toUIMessageStreamResponse(...)`, сохраняя `onFinish` persistence и текущий tool/proposal contract.
+- [x] AI chat storage hardened: [chat.ts](/C:/fit/src/lib/ai/chat.ts) ремонтирует восстановимые mojibake-строки в session title и message content при записи/чтении.
+- [ ] Public production proof после GitHub auto-deploy: live `/api/ai/assistant` должен подтвердить `text/event-stream` с несколькими chunk во времени.
+- [ ] Canonical Vercel terminal verification остаётся внешним blocker до восстановления Vercel CLI auth/token.

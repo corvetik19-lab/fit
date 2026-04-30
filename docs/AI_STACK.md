@@ -243,3 +243,10 @@
 - `AiChatPanel` получает `launchContext`, один раз подставляет стартовый prompt и не отправляет запрос автоматически. Пользователь остается в proposal-first контуре.
 - `/api/ai/assistant` принимает `intent`, `sourceRoute` и `contextPayload`, сохраняя существующий streaming/tool contract. `/api/ai/chat` остается legacy/eval route до отдельной деприкации.
 - Regression proof: [ai-workspace.spec.ts](/C:/fit/tests/e2e/ai-workspace.spec.ts) проверяет `widget -> intent -> /ai -> composer prefill`.
+
+## 2026-04-30 AI Assistant streaming fix
+
+- Обычная ветка [assistant/route.ts](/C:/fit/src/app/api/ai/assistant/route.ts) больше не должна использовать `generateText` с последующей отправкой одного готового `text-delta`. Для user-facing `/ai` generic questions route обязан сразу возвращать `streamText(...).toUIMessageStreamResponse(...)`.
+- Tool/proposal ветка `/api/ai/assistant` сохраняет существующий contract: `streamText`, tool calls, `onFinish` persistence и proposal-first действия без автоматического применения пользовательских планов.
+- [chat.ts](/C:/fit/src/lib/ai/chat.ts) ремонтирует mojibake для AI session title и message content при записи и чтении. Это чинит восстановимые строки вида `Рџ...`; уже сохранённые literal `????` восстановить невозможно, потому что исходные символы потеряны.
+- Текущий execution-doc: [AI_ASSISTANT_STREAMING_FIX_EXECUTION.md](/C:/fit/docs/AI_ASSISTANT_STREAMING_FIX_EXECUTION.md). Локальный proof: [stream-result.json](/C:/fit/output/ai-streaming-local-2026-04-30/stream-result.json).

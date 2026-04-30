@@ -1779,3 +1779,11 @@
 - Провёл live Playwright-проверку в clean mobile browser: password value пустой, placeholder `Введите пароль`, submit disabled без password и после заполнения только email.
 - Проверил auth hardening на live: forged Supabase cookie при открытии `/dashboard` редиректит на `/`, то есть production больше не принимает непроверенный cookie как пользователя.
 - Артефакт live-проверки: `output/live-fitora-production-check-2026-04-30/result.json`. Остаточный blocker: canonical Vercel terminal verification нельзя закрыть без Vercel CLI доступа (`Not authorized` / `Could not retrieve Project Settings`).
+
+## 2026-04-30 AI Assistant streaming fix
+
+- Нашёл причину, почему `/ai` показывал ответ разом: generic ветка `/api/ai/assistant` использовала `generateText`, ждала полный ответ и только потом отправляла один статический `text-delta`.
+- Перевёл generic ветку assistant route на настоящий `streamText(...).toUIMessageStreamResponse(...)`, сохранив `onFinish` persistence и tool/proposal ветку.
+- Усилил `src/lib/ai/chat.ts`: AI session title и message content теперь проходят через `repairMojibakeText` при записи и чтении. Это чинит восстановимый mojibake, но literal `????` из уже потерянного текста восстановить нельзя.
+- Проверено локально: `npm run lint`, `npm run typecheck`, `npm run build`, production-like SSE probe на `http://127.0.0.1:3251/api/ai/assistant` -> `text/event-stream`, `13` chunks. Артефакт: `output/ai-streaming-local-2026-04-30/stream-result.json`.
+- Общий `MASTER_PLAN` после добавления текущего подплана: будет пересчитан скриптом; текущий AI streaming plan: `4 / 6 (67%)` до public production proof.

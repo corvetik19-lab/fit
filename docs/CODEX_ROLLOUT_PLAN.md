@@ -107,3 +107,9 @@
 - Сложный AI/UI tranche проведён через evaluator-loop и зафиксирован в [FITORA_AI_AGENT_REDESIGN_EXECUTION.md](/C:/fit/docs/FITORA_AI_AGENT_REDESIGN_EXECUTION.md): baseline был mini-chat widget + полноценный `/ai`, stop condition - widget launcher + intent-prefill в основном `AiChatPanel`.
 - Для будущих AI surface изменений обязательный минимум остается тем же: typed intent/API contract, `AI_STACK.md`, `MASTER_PLAN.md`, `AI_WORKLOG.md`, targeted Playwright и честная фиксация provider/fallback blockers.
 - Проверочный пакет этого tranche: `lint`, `typecheck`, `build`, `test:smoke`, targeted `ai-workspace`.
+
+## 2026-04-30 AI Assistant streaming addendum
+
+- Streaming-регрессия `/api/ai/assistant` проведена через отдельный evaluator-loop и зафиксирована в [AI_ASSISTANT_STREAMING_FIX_EXECUTION.md](/C:/fit/docs/AI_ASSISTANT_STREAMING_FIX_EXECUTION.md): baseline был `generateText` + один статический `text-delta`, stop condition - настоящий `streamText` SSE с несколькими chunk во времени.
+- Для user-facing AI runtime запрещено маскировать non-streaming путь под UIMessage stream: если ответ показывается пользователю в `/ai`, route должен отдавать настоящий поток или явно фиксировать provider/deploy blocker.
+- Canonical Vercel terminal verification по этому tranche остаётся внешним blocker до восстановления Vercel CLI auth/token; публичный live proof и CLI terminal state учитываются отдельно.

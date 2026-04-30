@@ -2,6 +2,7 @@ import type { ModelMessage, UIMessage } from "ai";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { withTransientRetry } from "@/lib/runtime-retry";
+import { repairMojibakeText } from "@/lib/text/repair-mojibake";
 
 export type AiChatSessionRow = {
   id: string;
@@ -35,13 +36,20 @@ export function isAiChatSessionError(error: unknown): error is AiChatSessionErro
 }
 
 function buildSessionTitle(input: string) {
-  const trimmed = input.trim();
+  const trimmed = repairMojibakeText(input).trim();
 
   if (trimmed.length <= 72) {
     return trimmed;
   }
 
   return `${trimmed.slice(0, 69)}...`;
+}
+
+function normalizeAiChatSession(row: AiChatSessionRow): AiChatSessionRow {
+  return {
+    ...row,
+    title: row.title ? repairMojibakeText(row.title) : null,
+  };
 }
 
 export async function createAiChatSession(
@@ -64,7 +72,7 @@ export async function createAiChatSession(
     throw error;
   }
 
-  return data as AiChatSessionRow;
+  return normalizeAiChatSession(data as AiChatSessionRow);
 }
 
 export async function ensureAiChatSession(
@@ -95,7 +103,7 @@ export async function ensureAiChatSession(
       );
     }
 
-    return data as AiChatSessionRow;
+    return normalizeAiChatSession(data as AiChatSessionRow);
   }
 
   return createAiChatSession(supabase, userId, firstPrompt);
@@ -144,7 +152,7 @@ export async function createAiChatMessage(
         user_id: input.userId,
         session_id: input.sessionId,
         role: input.role,
-        content: input.content,
+        content: repairMojibakeText(input.content),
       })
       .select("id, session_id, role, content, created_at")
       .single(),
@@ -206,7 +214,9 @@ export async function listAiChatSessions(
     throw sessionError;
   }
 
-  return (sessionData as AiChatSessionRow[] | null) ?? [];
+  return ((sessionData as AiChatSessionRow[] | null) ?? []).map(
+    normalizeAiChatSession,
+  );
 }
 
 export async function getAiChatState(
@@ -235,7 +245,9 @@ export async function getAiChatState(
       throw requestedSessionError;
     }
 
-    session = (requestedSession as AiChatSessionRow | null) ?? null;
+    session = requestedSession
+      ? normalizeAiChatSession(requestedSession as AiChatSessionRow)
+      : null;
   }
 
   if (!session && fallbackToLatest) {
@@ -254,7 +266,9 @@ export async function getAiChatState(
       throw latestSessionError;
     }
 
-    session = (latestSession as AiChatSessionRow | null) ?? null;
+    session = latestSession
+      ? normalizeAiChatSession(latestSession as AiChatSessionRow)
+      : null;
   }
 
   if (!session) {
@@ -280,7 +294,7 @@ export function toModelMessages(messages: AiChatMessageRow[]): ModelMessage[] {
     )
     .map((message) => ({
       role: message.role,
-      content: message.content,
+      content: repairMojibakeText(message.content),
     }));
 }
 
@@ -291,7 +305,7 @@ export function toUiMessages(messages: AiChatMessageRow[]): UIMessage[] {
     parts: [
       {
         type: "text",
-        text: message.content,
+        text: repairMojibakeText(message.content),
       },
     ],
   }));
